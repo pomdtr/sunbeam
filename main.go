@@ -102,8 +102,10 @@ func main() {
 	}
 	defer f.Close()
 
-	var commandDir = "/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts"
-	root := containers.NewRootContainer(commandDir)
+	commandDirs := make([]string, 0)
+	commandDirs = append(commandDirs, os.Getenv("SUNBEAM_COMMAND_DIR"))
+
+	root := containers.NewRootContainer(commandDirs)
 	m := NewModel(&root)
 
 	p := tea.NewProgram(m, tea.WithAltScreen())

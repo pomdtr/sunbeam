@@ -10,16 +10,16 @@ import (
 )
 
 type RootContainer struct {
-	commandDir string
+	commandDirs []string
 	list.Model
 }
 
-func NewRootContainer(commandDir string) RootContainer {
+func NewRootContainer(commandDirs []string) RootContainer {
 	d := list.NewDefaultDelegate()
 	l := list.New([]list.Item{}, d, 0, 0)
 	l.Title = "Commands"
 
-	return RootContainer{Model: l, commandDir: commandDir}
+	return RootContainer{Model: l, commandDirs: commandDirs}
 }
 
 func (container *RootContainer) Init() tea.Cmd {
@@ -28,10 +28,15 @@ func (container *RootContainer) Init() tea.Cmd {
 
 func (container *RootContainer) gatherScripts() tea.Msg {
 	log.Println("Gathering scripts")
-	scripts, err := commands.ScanDir(container.commandDir)
-	if err != nil {
-		return err
+	scripts := make([]commands.Script, 0)
+	for _, commandDir := range container.commandDirs {
+		dirScripts, err := commands.ScanDir(commandDir)
+		if err != nil {
+			return err
+		}
+		scripts = append(scripts, dirScripts...)
 	}
+
 	return scripts
 }
 
