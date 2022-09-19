@@ -1,47 +1,30 @@
 #!/usr/bin/env zx
 
-// @raycast.schemaVersion 1
-// @raycast.title List My Repositories
-// @raycast.mode command
-// @raycast.packageName Github
+// @sunbeam.schemaVersion 1
+// @sunbeam.title Search Repositories
+// @sunbeam.mode command
+// @sunbeam.packageName Github
 
 $.verbose = false;
 
-if (argv.pr) {
-  const out = await $`gh pr list --repo ${argv.pr} --json title,url`;
-  const prs = JSON.parse(out);
-  console.log(
-    JSON.stringify({
-      type: "list",
-      list: {
-        items: prs.map((pr) => ({
-          title: pr.title,
-          icon: "https://github.githubassets.com/favicons/favicon.svg",
-          actions: [
-            {
-              type: "open-url",
-              title: "Open in Browser",
-              url: pr.url,
-            },
-          ],
-        })),
-      },
-    })
+async function viewReadme() {
+  const res = await fetch(
+    `https://raw.githubusercontent.com/${repo}/main/README.md`
   );
-  process.exit(0);
+  const readme = await res.text();
+  output({
+    type: detail,
+    detail: {
+      markdown: readme,
+      actions: [{ type: "open-url", url: `https://github.com/${repo}` }],
+    },
+  });
 }
 
-var res;
-if (argv.owner) {
-  res =
-    await $`gh repo list ${argv.owner} --json nameWithOwner,description,url,stargazerCount,languages`;
-} else {
-  res = await $`gh api /users/pomdtr/repos --cache 3600s`;
-}
-const repos = JSON.parse(res);
-
-console.log(
-  JSON.stringify({
+async function listRepos() {
+  const res = await $`/usr/local/bin/gh api /users/pomdtr/repos --cache 3600s`;
+  const repos = JSON.parse(res);
+  return {
     type: "list",
     list: {
       title: "Repositories",
@@ -57,11 +40,69 @@ console.log(
           },
           {
             type: "callback",
+            title: "View Readme",
+            keybind: "r",
+            params: {
+              type: "readme",
+              repo: repo.full_name,
+            },
+          },
+          {
+            type: "callback",
             title: "List PRs",
-            args: ["--pr", repo.full_name],
+            keybind: "p",
+            params: {
+              type: "pr",
+              repo: repo.full_name,
+            },
           },
         ],
       })),
     },
-  })
-);
+  };
+}
+
+async function listPRs(repo) {
+  const res = await $`/usr/local/bin/gh api /repos/${repo}/pulls`;
+  const prs = JSON.parse(res);
+  return {
+    type: "list",
+    list: {
+      title: "Pull Requests",
+      items: prs.map((pr) => ({
+        title: pr.title,
+        subtitle: pr.user.login,
+        icon: "🔍",
+        actions: [
+          {
+            type: "open-url",
+            title: "Open in Browser",
+            url: pr.html_url,
+          },
+        ],
+      })),
+    },
+  };
+}
+
+function output(data) {
+  console.log(JSON.stringify(data));
+  process.exit(0);
+}
+
+// main
+
+const { params } = JSON.parse(await stdin());
+
+if (!params) {
+  output(await listRepos());
+}
+
+switch (params.type) {
+  case "readme":
+    const readme = await viewReadme(action.repo);
+    output(readme);
+  case "pr":
+    const prs = await listPRs(action.repo);
+    output(prs);
+}

@@ -608,3 +608,315 @@ debug 2022/09/19 01:36:58 Error: Key: 'ScriptResponse.Type' Error:Field validati
 debug 2022/09/19 01:37:01 Pushing 30 items
 debug 2022/09/19 01:38:21 Pushing 30 items
 debug 2022/09/19 01:38:28 Pushing 30 items
+debug 2022/09/19 02:24:54 Pushing 30 items
+debug 2022/09/19 02:29:49 Pushing 30 items
+debug 2022/09/19 02:37:37 Pushing 30 items
+debug 2022/09/19 10:04:43 Pushing 165 items
+debug 2022/09/19 10:05:56 Pushing 165 items
+debug 2022/09/19 10:41:02 Pushing 30 items
+debug 2022/09/19 10:41:05 Pushing 30 items
+debug 2022/09/19 10:41:06 Pushing 30 items
+debug 2022/09/19 10:41:07 Pushing 30 items
+debug 2022/09/19 10:41:08 Pushing 30 items
+debug 2022/09/19 10:41:08 Pushing 30 items
+debug 2022/09/19 10:41:09 Pushing 30 items
+debug 2022/09/19 10:41:10 Pushing 30 items
+debug 2022/09/19 10:41:10 Pushing 30 items
+debug 2022/09/19 10:41:11 Pushing 30 items
+debug 2022/09/19 10:41:36 Pushing 30 items
+debug 2022/09/19 10:41:38 callback
+debug 2022/09/19 10:52:00 Pushing 30 items
+debug 2022/09/19 10:52:05 Pushing 30 items
+debug 2022/09/19 10:52:17 Pushing 30 items
+debug 2022/09/19 10:52:23 Pushing 15 items
+debug 2022/09/19 10:54:23 Pushing 30 items
+debug 2022/09/19 11:52:39 Pushing 30 items
+debug 2022/09/19 11:57:08 Pushing 30 items
+debug 2022/09/19 11:59:16 Pushing 30 items
+debug 2022/09/19 11:59:48 Pushing 30 items
+debug 2022/09/19 11:59:53 Pushing 30 items
+debug 2022/09/19 11:59:55 Pushing 30 items
+debug 2022/09/19 12:00:05 Pushing 0 items
+debug 2022/09/19 12:00:09 Pushing 30 items
+debug 2022/09/19 12:00:12 Pushing 30 items
+debug 2022/09/19 12:00:20 Pushing 30 items
+debug 2022/09/19 12:00:30 Pushing 15 items
+debug 2022/09/19 12:02:57 Pushing 30 items
+debug 2022/09/19 12:03:07 Pushing 30 items
+debug 2022/09/19 12:03:10 Pushing 15 items
+debug 2022/09/19 12:09:46 Pushing 30 items
+debug 2022/09/19 12:09:59 Pushing 15 items
+debug 2022/09/19 12:15:16 Pushing 30 items
+debug 2022/09/19 12:15:21 Pushing 30 items
+debug 2022/09/19 12:18:42 Pushing 30 items
+debug 2022/09/19 12:19:39 Pushing 30 items
+debug 2022/09/19 12:19:40 Escape pressed
+debug 2022/09/19 12:21:30 Pushing 30 items
+debug 2022/09/19 12:24:17 Pushing 30 items
+debug 2022/09/19 12:24:19 Pushing 30 items
+debug 2022/09/19 12:24:28 Pushing 30 items
+debug 2022/09/19 12:25:39 Pushing 30 items
+debug 2022/09/19 12:25:41 Pushing 30 items
+debug 2022/09/19 12:25:43 Pushing 30 items
+debug 2022/09/19 12:26:04 Pushing 30 items
+debug 2022/09/19 12:26:07 Pushing 30 items
+debug 2022/09/19 12:26:18 Pushing 30 items
+debug 2022/09/19 12:26:42 Pushing 30 items
+debug 2022/09/19 12:26:43 Escape pressed
+debug 2022/09/19 12:27:12 Pushing 30 items
+debug 2022/09/19 12:28:12 Pushing 30 items
+debug 2022/09/19 12:28:31 Pushing 30 items
+debug 2022/09/19 12:28:31 filtering enabled: true
+debug 2022/09/19 12:29:46 Pushing 30 items
+debug 2022/09/19 12:30:19 Pushing 30 items
+debug 2022/09/19 12:30:20 Show Filtertrue
+debug 2022/09/19 12:36:14 Pushing 30 items
+debug 2022/09/19 12:36:22 Pushing 30 items
+debug 2022/09/19 12:38:28 Pushing 30 items
+debug 2022/09/19 12:39:00 Pushing 30 items
+debug 2022/09/19 12:39:14 Pushing 30 items
+debug 2022/09/19 12:42:20 Pushing 30 items
+debug 2022/09/19 12:42:53 Pushing 30 items
+debug 2022/09/19 12:43:29 Error: invalid item type
+debug 2022/09/19 12:43:32 Pushing 30 items
+debug 2022/09/19 12:43:36 Error: invalid item type
+debug 2022/09/19 12:43:40 Pushing 30 items
+debug 2022/09/19 12:43:42 Error: invalid item type
+debug 2022/09/19 12:43:47 Pushing 30 items
+debug 2022/09/19 12:43:53 Error: invalid item type
+debug 2022/09/19 12:44:15 Pushing 30 items
+debug 2022/09/19 12:44:17 Error: invalid item type
+debug 2022/09/19 12:44:57 Pushing 30 items
+debug 2022/09/19 12:45:14 Error: invalid item type
+debug 2022/09/19 12:45:49 Pushing 30 items
+debug 2022/09/19 12:45:50 Error: invalid item type {    []}
+debug 2022/09/19 12:47:11 Pushing 30 items
+debug 2022/09/19 12:47:20 Pushing 30 items
+debug 2022/09/19 12:47:21 Error: invalid item type <nil>
+debug 2022/09/19 12:52:33 Pushing 30 items
+debug 2022/09/19 12:52:36 Pushing 0 items
+debug 2022/09/19 12:53:23 Pushing 30 items
+debug 2022/09/19 12:53:33 Pushing 0 items
+debug 2022/09/19 12:54:14 Pushing 30 items
+debug 2022/09/19 12:55:06 Pushing 30 items
+debug 2022/09/19 12:56:45 Pushing 30 items
+debug 2022/09/19 12:57:01 Pushing 30 items
+debug 2022/09/19 12:57:26 Pushing 30 items
+debug 2022/09/19 12:57:32 Pushing 0 items
+debug 2022/09/19 14:04:41 Pushing 30 items
+debug 2022/09/19 14:05:03 Pushing 30 items
+debug 2022/09/19 14:09:05 Pushing 30 items
+debug 2022/09/19 14:09:09 Pushing 30 items
+debug 2022/09/19 14:09:11 Pushing 0 items
+debug 2022/09/19 14:09:44 Pushing 30 items
+debug 2022/09/19 14:10:52 Pushing 30 items
+debug 2022/09/19 14:10:57 Pushing 30 items
+debug 2022/09/19 14:10:59 Pushing 30 items
+debug 2022/09/19 14:11:00 Pushing 30 items
+debug 2022/09/19 14:11:02 Pushing 30 items
+debug 2022/09/19 14:11:04 Pushing 30 items
+debug 2022/09/19 14:11:16 Pushing 30 items
+debug 2022/09/19 14:18:28 Pushing 30 items
+debug 2022/09/19 14:18:41 Pushing 30 items
+debug 2022/09/19 14:19:03 Pushing 165 items
+debug 2022/09/19 14:19:07 Pushing 165 items
+debug 2022/09/19 14:19:08 Pushing 30 items
+debug 2022/09/19 14:19:29 Pushing 30 items
+debug 2022/09/19 14:19:32 Pushing 30 items
+debug 2022/09/19 14:19:34 Pushing 30 items
+debug 2022/09/19 14:19:38 Pushing 30 items
+debug 2022/09/19 14:19:54 Pushing 30 items
+debug 2022/09/19 14:19:56 Pushing 30 items
+debug 2022/09/19 14:19:57 Pushing 30 items
+debug 2022/09/19 14:20:28 Pushing 30 items
+debug 2022/09/19 14:20:59 Pushing 30 items
+debug 2022/09/19 14:21:02 Pushing 30 items
+debug 2022/09/19 14:21:03 Pushing 30 items
+debug 2022/09/19 14:21:04 Pushing 30 items
+debug 2022/09/19 14:21:06 Pushing 30 items
+debug 2022/09/19 14:21:07 Pushing 30 items
+debug 2022/09/19 14:21:11 Pushing 30 items
+debug 2022/09/19 14:24:04 Pushing 30 items
+debug 2022/09/19 14:27:58 Pushing 30 items
+debug 2022/09/19 14:28:18 Pushing 30 items
+debug 2022/09/19 14:30:37 Pushing 30 items
+debug 2022/09/19 14:30:48 Pushing 30 items
+debug 2022/09/19 14:31:09 Pushing 30 items
+debug 2022/09/19 14:31:19 Pushing 30 items
+debug 2022/09/19 14:39:49 Pushing 30 items
+debug 2022/09/19 14:42:28 Pushing 165 items
+debug 2022/09/19 14:47:16 Pushing 30 items
+debug 2022/09/19 14:48:04 Pushing 30 items
+debug 2022/09/19 16:02:04 Pushing 30 items
+debug 2022/09/19 16:05:55 Pushing 30 items
+debug 2022/09/19 16:06:35 Pushing 166 items
+debug 2022/09/19 16:06:37 Pushing 30 items
+debug 2022/09/19 16:06:46 Pushing 30 items
+debug 2022/09/19 16:07:33 Pushing 30 items
+debug 2022/09/19 16:08:42 Pushing 30 items
+debug 2022/09/19 16:11:54 &{/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts {true true true true true true item items Commands {  
+   [48;5;62m [0m[38;5;230;48;5;62m[0m[48;5;62m [0m [38;2;142;142;142m[0m [38;2;4;181;117m[0m [38;2;238;111;248m[0m    [38;2;163;159;165m[0m
+   [38;2;155;155;155m[0m [38;2;26;26;26m[0m [38;2;221;218;218m[0m [38;2;144;144;144m[0m      
+   [38;2;131;121;133m•[0m [38;2;221;218;218m•[0m [38;2;155;155;155m[0m [38;2;221;218;218m • [0m} {{[up k] {↑/k up} false} {[down j] {↓/j down} false} {[right l pgdown f d] {→/l/pgdn next page} false} {[left h pgup b u] {←/h/pgup prev page} false} {[home g] {g/home go to start} false} {[end G] {G/end go to end} false} {[/] {/ filter} false} {[esc] {esc clear filter} true} {[esc] {esc cancel} true} {[enter tab shift+tab ctrl+k up ctrl+j down] {enter apply filter} true} {[?] {? more} false} {[?] {? close help} false} {[q esc] {q quit} false} {[ctrl+c] { } false}} 0x1166a80 false <nil> <nil> {{[| / - \] 100000000} {map[7:{#8E8E8E #747373}] } 0 2 0} false 264 52 {1 0 15 1 [38;2;131;121;133m•[0m [38;2;221;218;218m•[0m %d/%d true true false true false} 0 {264 false  •       … {[38;2;221;218;218m[0m [38;2;144;144;144m[0m [38;2;178;178;178m[0m [38;2;221;218;218m[0m [38;2;144;144;144m[0m [38;2;178;178;178m[0m [38;2;221;218;218m[0m}} {<nil> Filter:   530ms 0 42 [38;2;4;181;117m[0m   [38;5;240m[0m [38;2;238;111;248m[0m 64 253 2 1 [] true false 0 0 0 0xc0000aa210 0 <nil>} 0 1s  <nil> [{/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/filebrowser.mjs {1 Browse Files command File Browser    false  }} {/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs {1 List My Repositories command Github    false  }}] [] {true {{map[7:{#1a1a1a #dddddd} 13:0 14:0 15:0 16:2] } {map[7:{#A49FA5 #777777} 13:0 14:0 15:0 16:2] } {map[7:{#EE6FF8 #EE6FF8} 13:0 14:0 15:0 16:1 23:{─ ─ │ │ ┌ ┐ ┘ └} 24:false 25:false 26:false 27:true 28:{#F793FF #AD58B4} 29:{#F793FF #AD58B4} 30:{#F793FF #AD58B4} 31:{#F793FF #AD58B4}] } {map[7:{#F793FF #AD58B4} 13:0 14:0 15:0 16:1 23:{─ ─ │ │ ┌ ┐ ┘ └} 24:false 25:false 26:false 27:true 28:{#F793FF #AD58B4} 29:{#F793FF #AD58B4} 30:{#F793FF #AD58B4} 31:{#F793FF #AD58B4}] } {map[7:{#A49FA5 #777777} 13:0 14:0 15:0 16:2] } {map[7:{#C2B8C2 #4D4D4D} 13:0 14:0 15:0 16:2] } {map[2:true] }} <nil> <nil> <nil> 2 1}}}
+debug 2022/09/19 16:12:33 &{/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts {true true true true true true item items Commands {  
+   [48;5;62m [0m[38;5;230;48;5;62m[0m[48;5;62m [0m [38;2;142;142;142m[0m [38;2;4;181;117m[0m [38;2;238;111;248m[0m    [38;2;163;159;165m[0m
+   [38;2;155;155;155m[0m [38;2;26;26;26m[0m [38;2;221;218;218m[0m [38;2;144;144;144m[0m      
+   [38;2;131;121;133m•[0m [38;2;221;218;218m•[0m [38;2;155;155;155m[0m [38;2;221;218;218m • [0m} {{[up k] {↑/k up} true} {[down j] {↓/j down} true} {[right l pgdown f d] {→/l/pgdn next page} true} {[left h pgup b u] {←/h/pgup prev page} true} {[home g] {g/home go to start} true} {[end G] {G/end go to end} true} {[/] {/ filter} true} {[esc] {esc clear filter} true} {[esc] {esc cancel} true} {[enter tab shift+tab ctrl+k up ctrl+j down] {enter apply filter} true} {[?] {? more} false} {[?] {? close help} false} {[q esc] {q quit} false} {[ctrl+c] { } false}} 0x1166a80 false <nil> <nil> {{[| / - \] 100000000} {map[7:{#8E8E8E #747373}] } 0 2 0} false 264 52 {1 0 15 1 [38;2;131;121;133m•[0m [38;2;221;218;218m•[0m %d/%d true true false true false} 0 {264 false  •       … {[38;2;221;218;218m[0m [38;2;144;144;144m[0m [38;2;178;178;178m[0m [38;2;221;218;218m[0m [38;2;144;144;144m[0m [38;2;178;178;178m[0m [38;2;221;218;218m[0m}} {<nil> Filter:   530ms 0 42 [38;2;4;181;117m[0m   [38;5;240m[0m [38;2;238;111;248m[0m 64 253 2 1 [] true false 0 0 0 0xc0000ac210 0 <nil>} 0 1s  <nil> [] [] {true {{map[7:{#1a1a1a #dddddd} 13:0 14:0 15:0 16:2] } {map[7:{#A49FA5 #777777} 13:0 14:0 15:0 16:2] } {map[7:{#EE6FF8 #EE6FF8} 13:0 14:0 15:0 16:1 23:{─ ─ │ │ ┌ ┐ ┘ └} 24:false 25:false 26:false 27:true 28:{#F793FF #AD58B4} 29:{#F793FF #AD58B4} 30:{#F793FF #AD58B4} 31:{#F793FF #AD58B4}] } {map[7:{#F793FF #AD58B4} 13:0 14:0 15:0 16:1 23:{─ ─ │ │ ┌ ┐ ┘ └} 24:false 25:false 26:false 27:true 28:{#F793FF #AD58B4} 29:{#F793FF #AD58B4} 30:{#F793FF #AD58B4} 31:{#F793FF #AD58B4}] } {map[7:{#A49FA5 #777777} 13:0 14:0 15:0 16:2] } {map[7:{#C2B8C2 #4D4D4D} 13:0 14:0 15:0 16:2] } {map[2:true] }} <nil> <nil> <nil> 2 1}}}
+debug 2022/09/19 16:13:03 Pushing 30 items
+debug 2022/09/19 16:14:17 Pushing 30 items
+debug 2022/09/19 16:14:53 0 0
+debug 2022/09/19 16:18:42 0 0
+debug 2022/09/19 16:19:21 Pushing 30 items
+debug 2022/09/19 17:09:23 Pushing 30 items
+debug 2022/09/19 17:09:32 Pushing 30 items
+debug 2022/09/19 17:10:24 Pushing 30 items
+debug 2022/09/19 17:10:34 Pushing 30 items
+debug 2022/09/19 17:22:20 Pushing 30 items
+debug 2022/09/19 17:25:09 Gathering scripts
+debug 2022/09/19 17:25:13 Pushing 30 items
+debug 2022/09/19 17:25:52 Gathering scripts
+debug 2022/09/19 17:30:12 Gathering scripts
+debug 2022/09/19 17:30:12 {130 52}
+debug 2022/09/19 17:30:12 [{/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/filebrowser.mjs {1 Browse Files command File Browser    false  }} {/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs {1 List All Repositories command Github    false  }}]
+debug 2022/09/19 17:30:16 down
+debug 2022/09/19 17:30:18 enter
+debug 2022/09/19 17:30:18 Pushing 30 items
+debug 2022/09/19 17:30:22 up
+debug 2022/09/19 17:30:23 down
+debug 2022/09/19 17:30:26 e
+debug 2022/09/19 17:30:29 {0xc0003561b0 <nil>}
+debug 2022/09/19 17:30:29 {}
+debug 2022/09/19 17:31:48 q
+debug 2022/09/19 17:31:50 Gathering scripts
+debug 2022/09/19 17:31:50 {130 52}
+debug 2022/09/19 17:31:50 [{/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/filebrowser.mjs {1 Browse Files command File Browser    false  }} {/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs {1 List All Repositories command Github    false  }}]
+debug 2022/09/19 17:31:51 down
+debug 2022/09/19 17:31:53 e
+debug 2022/09/19 17:32:04 Gathering scripts
+debug 2022/09/19 17:32:04 {0xc0000b0258 0x11e2580}
+debug 2022/09/19 17:32:04 {}
+debug 2022/09/19 17:32:04 [{/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/filebrowser.mjs {1 Browse Files command File Browser    false  }} {/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs {1 List Github Repositories command Github    false  }}]
+debug 2022/09/19 17:32:07 up
+debug 2022/09/19 17:32:08 down
+debug 2022/09/19 17:32:08 up
+debug 2022/09/19 17:32:32 j
+debug 2022/09/19 17:32:33 k
+debug 2022/09/19 17:32:33 k
+debug 2022/09/19 17:32:33 j
+debug 2022/09/19 17:32:34 j
+debug 2022/09/19 17:32:34 k
+debug 2022/09/19 17:32:34 j
+debug 2022/09/19 17:32:35 k
+debug 2022/09/19 17:32:35 j
+debug 2022/09/19 17:32:36 k
+debug 2022/09/19 17:32:37 j
+debug 2022/09/19 17:32:38 k
+debug 2022/09/19 17:32:39 e
+debug 2022/09/19 17:32:42 Gathering scripts
+debug 2022/09/19 17:32:42 {0xc0000b0148 0x11e2580}
+debug 2022/09/19 17:32:42 {}
+debug 2022/09/19 17:32:42 [{/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/filebrowser.mjs {1 Browse Files command File Browser    false  }} {/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs {1 List Github Repositories command Github    false  }}]
+debug 2022/09/19 17:32:50 down
+debug 2022/09/19 17:32:50 down
+debug 2022/09/19 17:32:51 down
+debug 2022/09/19 17:32:52 up
+debug 2022/09/19 17:32:53 up
+debug 2022/09/19 17:32:54 esc
+debug 2022/09/19 17:32:58 Gathering scripts
+debug 2022/09/19 17:33:00 Pushing 30 items
+debug 2022/09/19 17:33:08 Pushing 166 items
+debug 2022/09/19 17:34:18 Gathering scripts
+debug 2022/09/19 17:34:20 Pushing 30 items
+debug 2022/09/19 17:35:08 Gathering scripts
+debug 2022/09/19 17:35:12 Pushing 30 items
+debug 2022/09/19 17:38:05 Gathering scripts
+debug 2022/09/19 17:38:08 Pushing 166 items
+debug 2022/09/19 17:55:23 Gathering scripts
+debug 2022/09/19 17:55:25 Pushing 30 items
+debug 2022/09/19 17:59:14 Gathering scripts
+debug 2022/09/19 17:59:17 Pushing 30 items
+debug 2022/09/19 17:59:31 Pushing 166 items
+debug 2022/09/19 17:59:33 Pushing 30 items
+debug 2022/09/19 17:59:35 Pushing 166 items
+debug 2022/09/19 18:06:07 Gathering scripts
+debug 2022/09/19 18:24:12 Gathering scripts
+debug 2022/09/19 18:24:14 Pushing 30 items
+debug 2022/09/19 18:58:34 Gathering scripts
+debug 2022/09/19 18:59:17 Gathering scripts
+debug 2022/09/19 18:59:19 stdinPipe &{0xc0002da078 {0 {0 0}} <nil>}
+debug 2022/09/19 18:59:19 Pushing 166 items
+debug 2022/09/19 18:59:22 stdinPipe &{0xc0000c2060 {0 {0 0}} <nil>}
+debug 2022/09/19 18:59:42 Gathering scripts
+debug 2022/09/19 18:59:48 Gathering scripts
+debug 2022/09/19 18:59:50 Pushing 166 items
+debug 2022/09/19 19:11:06 Gathering scripts
+debug 2022/09/19 19:15:13 Gathering scripts
+debug 2022/09/19 19:15:16 Pushing 166 items
+debug 2022/09/19 19:17:25 Gathering scripts
+debug 2022/09/19 19:37:57 Gathering scripts
+debug 2022/09/19 19:37:59 Pushing 30 items
+debug 2022/09/19 19:38:05 Error: exit status 1: Error: expected the "[HOST/]OWNER/REPO" format, got "undefined"
+    at file:///Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs:13:22
+    exit code: 1
+debug 2022/09/19 19:38:46 Gathering scripts
+debug 2022/09/19 19:38:48 Pushing 30 items
+debug 2022/09/19 19:38:59 Gathering scripts
+debug 2022/09/19 19:39:01 Pushing 30 items
+debug 2022/09/19 19:39:06 Pushing 15 items
+debug 2022/09/19 19:41:14 Gathering scripts
+debug 2022/09/19 19:41:18 Pushing 30 items
+debug 2022/09/19 19:44:13 Pushing 30 items
+debug 2022/09/19 20:48:48 Gathering scripts
+debug 2022/09/19 20:50:19 Gathering scripts
+debug 2022/09/19 20:53:16 Gathering scripts
+debug 2022/09/19 21:02:18 Gathering scripts
+debug 2022/09/19 21:02:21 Pushing 30 items
+debug 2022/09/19 21:02:41 Gathering scripts
+debug 2022/09/19 21:02:44 Pushing 30 items
+debug 2022/09/19 21:02:51 Error: Key: 'ScriptResponse.Type' Error:Field validation for 'Type' failed on the 'required' tag
+debug 2022/09/19 21:12:37 Gathering scripts
+debug 2022/09/19 21:12:44 Gathering scripts
+debug 2022/09/19 21:12:46 Error: exit status 1: ReferenceError: res is not defined
+    at listRepos (file:///Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs:25:7)
+    at async file:///Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs:98:10
+debug 2022/09/19 21:13:52 Gathering scripts
+debug 2022/09/19 21:13:54 Pushing 30 items
+debug 2022/09/19 21:14:04 Gathering scripts
+debug 2022/09/19 21:14:12 Pushing 30 items
+debug 2022/09/19 21:14:18 Error: exit status 1: Error: gh: Not Found (HTTP 404)
+    at listPRs (file:///Users/a.lacoin/Developer/pomdtr/sunbeam/scripts/github.mjs:66:22)
+    exit code: 1
+debug 2022/09/19 21:16:21 Gathering scripts
+debug 2022/09/19 21:16:22 Pushing 30 items
+debug 2022/09/19 21:16:33 Pushing 15 items
+debug 2022/09/19 21:17:57 Gathering scripts
+debug 2022/09/19 21:18:07 Gathering scripts
+debug 2022/09/19 21:18:09 Pushing 30 items
+debug 2022/09/19 21:18:28 Gathering scripts
+debug 2022/09/19 21:18:29 Pushing 30 items
+debug 2022/09/19 21:18:35 Pushing 15 items
+debug 2022/09/19 21:32:09 Gathering scripts
+debug 2022/09/19 21:32:12 Pushing 167 items
+debug 2022/09/19 21:32:15 Pushing 30 items
+debug 2022/09/19 21:32:24 Pushing 167 items
+debug 2022/09/19 21:32:26 Pushing 30 items
+debug 2022/09/19 21:32:27 Pushing 167 items
+debug 2022/09/19 21:32:36 Gathering scripts
+debug 2022/09/19 21:32:37 Pushing 30 items
+debug 2022/09/19 21:33:11 Gathering scripts
+debug 2022/09/19 21:33:12 Pushing 30 items
+debug 2022/09/19 21:34:09 Gathering scripts
+debug 2022/09/19 21:34:10 Pushing 30 items
+debug 2022/09/19 21:34:12 Pushing 30 items
+debug 2022/09/19 21:34:13 Pushing 30 items
+debug 2022/09/19 21:34:15 Pushing 30 items
+debug 2022/09/19 21:34:16 Pushing 30 items
+debug 2022/09/19 21:34:17 Pushing 30 items
+debug 2022/09/19 21:34:18 Pushing 30 items
+debug 2022/09/19 21:34:20 Gathering scripts
+debug 2022/09/19 21:34:21 Pushing 30 items
+debug 2022/09/19 21:34:28 Gathering scripts
+debug 2022/09/19 21:34:29 Pushing 30 items
+debug 2022/09/19 21:34:36 Gathering scripts
+debug 2022/09/19 21:34:37 Pushing 30 items
+debug 2022/09/19 21:34:57 Gathering scripts
