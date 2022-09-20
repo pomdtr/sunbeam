@@ -54,11 +54,15 @@ func (container RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		case tea.KeyRunes:
 			switch string(msg.Runes) {
 			case "e":
-				if selectedItem == nil {
+				if selectedItem == nil || container.Model.SettingFilter() {
 					break
 				}
 				selectedItem := selectedItem.(commands.Script)
-				c := exec.Command("vim", selectedItem.Path)
+				editor := os.Getenv("EDITOR")
+				if editor == "" {
+					editor = "vi"
+				}
+				c := exec.Command(editor, selectedItem.Path)
 				cmd := tea.ExecProcess(c, func(err error) tea.Msg {
 					if err != nil {
 						return err

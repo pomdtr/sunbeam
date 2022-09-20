@@ -62,7 +62,7 @@ func (c *ScriptContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			listView.SetSize(c.width, c.height-3)
 			c.embed = listView
 		case "detail":
-			detailView := NewDetailContainer(c.command, msg.Detail.Markdown)
+			detailView := NewDetailContainer(c.command, msg.Detail)
 			detailView.SetSize(c.width, c.height-3)
 			c.embed = detailView
 		}

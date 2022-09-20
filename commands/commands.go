@@ -105,7 +105,8 @@ type ScriptResponse struct {
 }
 
 type DetailResponse struct {
-	Markdown string `json:"markdown"`
+	Markdown string         `json:"markdown"`
+	Actions  []ScriptAction `json:"actions"`
 }
 
 type FormResponse struct {

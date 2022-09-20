@@ -20,21 +20,23 @@ var infoStyle = func() lipgloss.Style {
 
 type DetailContainer struct {
 	command  commands.Command
+	response commands.DetailResponse
 	viewport *viewport.Model
 }
 
-func NewDetailContainer(command commands.Command, markdown string) DetailContainer {
+func NewDetailContainer(command commands.Command, response commands.DetailResponse) DetailContainer {
 	viewport := viewport.New(0, 0)
 	var content string
 	if lipgloss.HasDarkBackground() {
-		content, _ = glamour.Render(markdown, "dark")
+		content, _ = glamour.Render(response.Markdown, "dark")
 	} else {
-		content, _ = glamour.Render(markdown, "light")
+		content, _ = glamour.Render(response.Markdown, "light")
 	}
 	viewport.SetContent(content)
 
 	return DetailContainer{
 		command:  command,
+		response: response,
 		viewport: &viewport,
 	}
 }
@@ -49,9 +51,7 @@ func (c DetailContainer) Init() tea.Cmd {
 }
 
 func (m DetailContainer) headerView() string {
-	title := titleStyle.Render("Mr. Pager")
-	line := strings.Repeat("─", utils.Max(0, m.viewport.Width-lipgloss.Width(title)))
-	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
+	return strings.Repeat("─", m.viewport.Width)
 }
 
 func (m DetailContainer) footerView() string {
@@ -64,6 +64,12 @@ func (c DetailContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
+		case tea.KeyRunes:
+			for _, action := range c.response.Actions {
+				if action.Keybind == string(msg.Runes) {
+					return c, NewRunCmd(c.command, action)
+				}
+			}
 		case tea.KeyEscape:
 			return c, PopCmd
 		}
