@@ -2,8 +2,10 @@
 
 ## Prerequisites
 
-- go >= 1.19
-- [direnv](https://direnv.net/): loads environment variables from .envrc (you can also directly source `.envrc`)
+- Requires [Go](https://golang.org/dl/) 1.19 or later
+- Optional
+  - [direnv](https://direnv.net/): loads environment variables from .envrc
+  - [jo](https://github.com/jpmens/jo): creates JSON objects from the command line (useful for testing scripts)
 
 ## Running the project
 
