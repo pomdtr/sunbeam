@@ -7,30 +7,29 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jinzhu/copier"
 	commands "github.com/pomdtr/sunbeam/commands"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type ListContainer struct {
-	list    *list.Model
-	command commands.Command
+	list   *list.Model
+	runner NewSelectActionCmd
 }
 
 var listContainer = list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 
-func NewListContainer(command commands.Command, scriptItems []commands.ScriptItem) ListContainer {
+func NewListContainer(res commands.ListResponse, runner NewSelectActionCmd) ListContainer {
 	var l list.Model
 	copier.Copy(&l, &listContainer)
 	l.SetShowTitle(false)
 
-	listItems := make([]list.Item, len(scriptItems))
-	for i, item := range scriptItems {
+	listItems := make([]list.Item, len(res.Items))
+	for i, item := range res.Items {
 		listItems[i] = item
 	}
 	l.SetItems(listItems)
 
 	return ListContainer{
-		command: command,
-		list:    &l,
+		list:   &l,
+		runner: runner,
 	}
 }
 
@@ -40,18 +39,6 @@ func (ListContainer) Init() tea.Cmd {
 
 func (c ListContainer) SetSize(width, height int) {
 	c.list.SetSize(width, height)
-}
-
-func NewRunCmd(command commands.Command, action commands.ScriptAction) func() tea.Msg {
-	container, err := RunAction(command, action)
-	if err != nil {
-		return utils.SendMsg(err)
-	}
-	if container != nil {
-		return NewPushCmd(container)
-	} else {
-		return tea.Quit
-	}
 }
 
 func (c ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
@@ -69,7 +56,7 @@ func (c ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			selectedItem := selectedItem.(commands.ScriptItem)
 			for _, action := range selectedItem.Actions {
 				if action.Keybind == string(msg.Runes) {
-					return c, NewRunCmd(c.command, action)
+					return c, c.runner(action)
 				}
 			}
 		case tea.KeyEscape:
@@ -83,7 +70,7 @@ func (c ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			selectedItem := selectedItem.(commands.ScriptItem)
 			if c.list.FilterState() != list.Filtering && len(selectedItem.Actions) > 0 {
 				primaryAction := selectedItem.Actions[0]
-				return c, NewRunCmd(c.command, primaryAction)
+				return c, c.runner(primaryAction)
 			}
 		}
 	case tea.WindowSizeMsg:

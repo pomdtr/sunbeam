@@ -76,7 +76,7 @@ func (container RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			if !ok {
 				return container, tea.Quit
 			}
-			var next = NewScriptContainer(commands.NewCommand(selectedItem))
+			var next = NewCommandContainer(commands.NewCommand(selectedItem))
 			next.SetSize(container.Model.Width(), container.Model.Height())
 			return container, NewPushCmd(next)
 		}

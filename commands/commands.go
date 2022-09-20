@@ -12,7 +12,9 @@ import (
 	"regexp"
 
 	"github.com/adrg/xdg"
+	"github.com/atotto/clipboard"
 	"github.com/go-playground/validator"
+	"github.com/skratchdot/open-golang/open"
 )
 
 var CommandDirs []string
@@ -28,8 +30,6 @@ func init() {
 		CommandDirs = append(CommandDirs, commandDir)
 	}
 }
-
-type any interface{}
 
 type Command struct {
 	Script
@@ -89,12 +89,12 @@ func (c Command) Run() (res ScriptResponse, err error) {
 
 	log.Printf("Command output: %s", outbuf.String())
 	json.Unmarshal(outbuf.Bytes(), &res)
-	err = validate.Struct(res)
+	err = Validator.Struct(res)
 
 	return
 }
 
-var validate = validator.New()
+var Validator = validator.New()
 
 type ScriptResponse struct {
 	Type    string         `json:"type" validate:"required,oneof=list detail form exit"`
@@ -203,7 +203,7 @@ func Parse(script_path string) (Script, error) {
 		Description:          metadatas["description"],
 	}}
 
-	err = validate.Struct(scripCommand)
+	err = Validator.Struct(scripCommand)
 	if err != nil {
 		println(err)
 		return Script{}, err
@@ -233,4 +233,17 @@ func ScanDir(dirPath string) ([]Script, error) {
 	}
 
 	return scripts, nil
+}
+
+func RunAction(action ScriptAction, callback func(any)) {
+	switch action.Type {
+	case "open":
+		open.Run(action.Path)
+	case "open-url":
+		open.Run(action.Url)
+	case "copy":
+		clipboard.WriteAll(action.Content)
+	case "callback":
+		callback(action.Params)
+	}
 }

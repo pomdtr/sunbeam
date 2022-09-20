@@ -1,13 +1,9 @@
 package containers
 
 import (
-	"fmt"
-
-	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	commands "github.com/pomdtr/sunbeam/commands"
-	"github.com/skratchdot/open-golang/open"
 )
 
 type ScriptContainer struct {
@@ -18,7 +14,7 @@ type ScriptContainer struct {
 	embed   Container
 }
 
-func NewScriptContainer(command commands.Command) *ScriptContainer {
+func NewCommandContainer(command commands.Command) *ScriptContainer {
 	return &ScriptContainer{command: command}
 }
 
@@ -58,11 +54,11 @@ func (c *ScriptContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case commands.ScriptResponse:
 		switch msg.Type {
 		case "list":
-			listView := NewListContainer(c.command, msg.List.Items)
+			listView := NewListContainer(msg.List, NewActionRunner(c.command))
 			listView.SetSize(c.width, c.height-3)
 			c.embed = listView
 		case "detail":
-			detailView := NewDetailContainer(c.command, msg.Detail)
+			detailView := NewDetailContainer(msg.Detail, NewActionRunner(c.command))
 			detailView.SetSize(c.width, c.height-3)
 			c.embed = detailView
 		}
@@ -94,24 +90,14 @@ func (container *ScriptContainer) View() string {
 	return lipgloss.JoinVertical(lipgloss.Top, title, content)
 }
 
-func RunAction(command commands.Command, action commands.ScriptAction) (c Container, err error) {
-	switch action.Type {
-	case "open":
-		open.Run(action.Path)
-	case "open-url":
-		open.Run(action.Url)
-	case "copy":
-		clipboard.WriteAll(action.Content)
-	case "callback":
-		c = NewScriptContainer(commands.Command{
-			Script: command.Script,
-			Args:   command.Args,
-			Input: commands.CommandInput{
-				Params: action.Params,
-			},
-		})
-	default:
-		err = fmt.Errorf("unknown action type: %s", action.Type)
+func NewActionRunner(command commands.Command) func(commands.ScriptAction) tea.Cmd {
+	return func(action commands.ScriptAction) tea.Cmd {
+		var cmd tea.Cmd
+		callback := func(params any) {
+			command.Input.Params = params
+			cmd = NewPushCmd(NewCommandContainer(command))
+		}
+		commands.RunAction(action, callback)
+		return cmd
 	}
-	return
 }
