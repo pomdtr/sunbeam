@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -38,7 +39,7 @@ type Command struct {
 
 type CommandInput struct {
 	Query  string `json:"query"`
-	Action any    `json:"action"`
+	Params any    `json:"params"`
 }
 
 func NewCommand(script Script, args ...string) Command {
@@ -72,6 +73,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 
 	var bytes []byte
 	bytes, err = json.Marshal(c.Input)
+	log.Printf("Command input: %s", string(bytes))
 	if err != nil {
 		err = fmt.Errorf("Error while marshalling input: %w", err)
 		return
@@ -85,6 +87,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 		return
 	}
 
+	log.Printf("Command output: %s", outbuf.String())
 	json.Unmarshal(outbuf.Bytes(), &res)
 	err = validate.Struct(res)
 
@@ -102,6 +105,7 @@ type ScriptResponse struct {
 }
 
 type DetailResponse struct {
+	Markdown string `json:"markdown"`
 }
 
 type FormResponse struct {

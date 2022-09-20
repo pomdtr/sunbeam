@@ -7,13 +7,13 @@
 
 $.verbose = false;
 
-async function viewReadme() {
+async function viewReadme(repo) {
   const res = await fetch(
     `https://raw.githubusercontent.com/${repo}/main/README.md`
   );
   const readme = await res.text();
   output({
-    type: detail,
+    type: "detail",
     detail: {
       markdown: readme,
       actions: [{ type: "open-url", url: `https://github.com/${repo}` }],
@@ -100,9 +100,9 @@ if (!params) {
 
 switch (params.type) {
   case "readme":
-    const readme = await viewReadme(action.repo);
+    const readme = await viewReadme(params.repo);
     output(readme);
   case "pr":
-    const prs = await listPRs(action.repo);
+    const prs = await listPRs(params.repo);
     output(prs);
 }

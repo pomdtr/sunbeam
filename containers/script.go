@@ -56,9 +56,16 @@ func (c *ScriptContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			}
 		}
 	case commands.ScriptResponse:
-		listView := NewListContainer(c.command, msg.List.Items)
-		listView.SetSize(c.width, c.height-3)
-		c.embed = listView
+		switch msg.Type {
+		case "list":
+			listView := NewListContainer(c.command, msg.List.Items)
+			listView.SetSize(c.width, c.height-3)
+			c.embed = listView
+		case "detail":
+			detailView := NewDetailContainer(c.command, msg.Detail.Markdown)
+			detailView.SetSize(c.width, c.height-3)
+			c.embed = detailView
+		}
 	}
 
 	if c.embed != nil {
@@ -92,7 +99,7 @@ func RunAction(command commands.Command, action commands.ScriptAction) (c Contai
 	case "open":
 		open.Run(action.Path)
 	case "open-url":
-		open.Start(action.Url)
+		open.Run(action.Url)
 	case "copy":
 		clipboard.WriteAll(action.Content)
 	case "callback":
@@ -100,7 +107,7 @@ func RunAction(command commands.Command, action commands.ScriptAction) (c Contai
 			Script: command.Script,
 			Args:   command.Args,
 			Input: commands.CommandInput{
-				Action: action.Params,
+				Params: action.Params,
 			},
 		})
 	default:
