@@ -14,6 +14,20 @@ import (
 	"github.com/go-playground/validator"
 )
 
+var CommandDirs []string
+
+func init() {
+	if sunbeamCommandDir := os.Getenv("SUNBEAM_COMMAND_DIR"); sunbeamCommandDir != "" {
+		CommandDirs = append(CommandDirs, sunbeamCommandDir)
+	}
+	dataDirs := xdg.DataDirs
+	dataDirs = append(dataDirs, xdg.DataHome)
+	for _, dataDir := range dataDirs {
+		commandDir := path.Join(dataDir, "sunbeam", "commands")
+		CommandDirs = append(CommandDirs, commandDir)
+	}
+}
+
 type any interface{}
 
 type Command struct {

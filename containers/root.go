@@ -2,6 +2,7 @@ package containers
 
 import (
 	"log"
+	"os"
 	"os/exec"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -11,7 +12,7 @@ import (
 
 type RootContainer struct {
 	commandDirs []string
-	list.Model
+	*list.Model
 }
 
 func NewRootContainer(commandDirs []string) RootContainer {
@@ -19,17 +20,21 @@ func NewRootContainer(commandDirs []string) RootContainer {
 	l := list.New([]list.Item{}, d, 0, 0)
 	l.Title = "Commands"
 
-	return RootContainer{Model: l, commandDirs: commandDirs}
+	return RootContainer{Model: &l, commandDirs: commandDirs}
 }
 
-func (container *RootContainer) Init() tea.Cmd {
+func (container RootContainer) Init() tea.Cmd {
 	return container.gatherScripts
 }
 
-func (container *RootContainer) gatherScripts() tea.Msg {
+func (container RootContainer) gatherScripts() tea.Msg {
 	log.Println("Gathering scripts")
 	scripts := make([]commands.Script, 0)
 	for _, commandDir := range container.commandDirs {
+		if _, err := os.Stat(commandDir); os.IsNotExist(err) {
+			log.Printf("Command directory %s does not exist", commandDir)
+			continue
+		}
 		dirScripts, err := commands.ScanDir(commandDir)
 		if err != nil {
 			return err
@@ -40,7 +45,7 @@ func (container *RootContainer) gatherScripts() tea.Msg {
 	return scripts
 }
 
-func (container *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (container RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	var cmd tea.Cmd
 	selectedItem := container.Model.SelectedItem()
 	switch msg := msg.(type) {
@@ -81,7 +86,8 @@ func (container *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		return container, cmd
 	}
 
-	container.Model, cmd = container.Model.Update(msg)
+	model, cmd := container.Model.Update(msg)
+	container.Model = &model
 
 	return container, cmd
 }

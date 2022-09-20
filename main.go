@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/commands"
 	"github.com/pomdtr/sunbeam/containers"
 )
 
@@ -96,18 +97,15 @@ func (m model) View() string {
 }
 
 func main() {
+	// Log to a file
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
 		log.Fatalf("could not open log file: %v", err)
 	}
 	defer f.Close()
 
-	commandDirs := make([]string, 0)
-	commandDirs = append(commandDirs, os.Getenv("SUNBEAM_COMMAND_DIR"))
-
-	root := containers.NewRootContainer(commandDirs)
+	root := containers.NewRootContainer(commands.CommandDirs)
 	m := NewModel(&root)
-
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if err := p.Start(); err != nil {
 		fmt.Println("Error running program:", err)
