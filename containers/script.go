@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	commands "github.com/pomdtr/sunbeam/commands"
@@ -10,24 +11,27 @@ type ScriptContainer struct {
 	width   int
 	height  int
 	command commands.Command
-	Args    []string
+	spinner spinner.Model
 	embed   Container
 }
 
 func NewCommandContainer(command commands.Command) *ScriptContainer {
-	return &ScriptContainer{command: command}
+	s := spinner.New()
+	s.Spinner = spinner.Line
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	return &ScriptContainer{command: command, spinner: s}
 }
 
 func (c *ScriptContainer) SetSize(width, height int) {
 	c.width = width
 	c.height = height
 	if c.embed != nil {
-		c.embed.SetSize(width, height-3)
+		c.embed.SetSize(width, height-1)
 	}
 }
 
 func (c *ScriptContainer) Init() tea.Cmd {
-	return c.fetchItems(c.command)
+	return tea.Batch(c.spinner.Tick, c.fetchItems(c.command))
 }
 
 func (c ScriptContainer) fetchItems(command commands.Command) tea.Cmd {
@@ -55,13 +59,16 @@ func (c *ScriptContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		switch msg.Type {
 		case "list":
 			listView := NewListContainer(msg.List, NewActionRunner(c.command))
-			listView.SetSize(c.width, c.height-3)
 			c.embed = listView
 		case "detail":
 			detailView := NewDetailContainer(msg.Detail, NewActionRunner(c.command))
-			detailView.SetSize(c.width, c.height-3)
 			c.embed = detailView
 		}
+		c.embed.SetSize(c.width, c.height-1)
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		c.spinner, cmd = c.spinner.Update(msg)
+		return c, cmd
 	}
 
 	if c.embed != nil {
@@ -82,7 +89,8 @@ func (container *ScriptContainer) View() string {
 
 	var content string
 	if container.embed == nil {
-		content = lipgloss.NewStyle().Padding(1, 2).Render("Loading...")
+		label := lipgloss.NewStyle().Padding(1, 2).Render("Loading...")
+		content = lipgloss.JoinHorizontal(lipgloss.Center, container.spinner.View(), label)
 	} else {
 		content = container.embed.View()
 	}

@@ -73,8 +73,6 @@ func (c ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 				return c, c.runner(primaryAction)
 			}
 		}
-	case tea.WindowSizeMsg:
-		c.SetSize(msg.Width, msg.Height)
 	case commands.ScriptResponse:
 		log.Printf("Pushing %d items", len(msg.List.Items))
 		items := make([]list.Item, len(msg.List.Items))

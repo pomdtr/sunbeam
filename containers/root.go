@@ -19,6 +19,7 @@ func NewRootContainer(commandDirs []string) RootContainer {
 	d := list.NewDefaultDelegate()
 	l := list.New([]list.Item{}, d, 0, 0)
 	l.Title = "Commands"
+	l.FilterState()
 
 	return RootContainer{Model: &l, commandDirs: commandDirs}
 }
@@ -72,12 +73,14 @@ func (container RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 				return container, cmd
 			}
 		case tea.KeyEnter:
+			if selectedItem == nil || container.Model.SettingFilter() {
+				break
+			}
 			selectedItem, ok := container.Model.SelectedItem().(commands.Script)
 			if !ok {
 				return container, tea.Quit
 			}
 			var next = NewCommandContainer(commands.NewCommand(selectedItem))
-			next.SetSize(container.Model.Width(), container.Model.Height())
 			return container, NewPushCmd(next)
 		}
 	case []commands.Script:

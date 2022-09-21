@@ -45,7 +45,7 @@ func NewDetailContainer(response commands.DetailResponse, selectAction NewSelect
 
 func (c DetailContainer) SetSize(width, height int) {
 	c.viewport.Width = width
-	c.viewport.Height = height - 2
+	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
 }
 
 func (c DetailContainer) Init() tea.Cmd {
