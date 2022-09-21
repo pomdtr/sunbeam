@@ -98,6 +98,9 @@ func NewActionRunner(command commands.Command) func(commands.ScriptAction) tea.C
 			cmd = NewPushCmd(NewCommandContainer(command))
 		}
 		commands.RunAction(action, callback)
-		return cmd
+		if cmd != nil {
+			return cmd
+		}
+		return tea.Quit
 	}
 }
