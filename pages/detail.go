@@ -1,4 +1,4 @@
-package containers
+package pages
 
 import (
 	"fmt"
@@ -30,9 +30,9 @@ func NewDetailContainer(response commands.DetailResponse, selectAction NewSelect
 	viewport := viewport.New(0, 0)
 	var content string
 	if lipgloss.HasDarkBackground() {
-		content, _ = glamour.Render(response.Markdown, "dark")
+		content, _ = glamour.Render(response.Text, "dark")
 	} else {
-		content, _ = glamour.Render(response.Markdown, "light")
+		content, _ = glamour.Render(response.Text, "light")
 	}
 	viewport.SetContent(content)
 
@@ -45,15 +45,11 @@ func NewDetailContainer(response commands.DetailResponse, selectAction NewSelect
 
 func (c DetailContainer) SetSize(width, height int) {
 	c.viewport.Width = width
-	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
+	c.viewport.Height = height - lipgloss.Height(c.footerView())
 }
 
 func (c DetailContainer) Init() tea.Cmd {
 	return nil
-}
-
-func (m DetailContainer) headerView() string {
-	return strings.Repeat("─", m.viewport.Width)
 }
 
 func (m DetailContainer) footerView() string {
@@ -62,7 +58,7 @@ func (m DetailContainer) footerView() string {
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
 
-func (c DetailContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c DetailContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -83,5 +79,5 @@ func (c DetailContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 }
 
 func (c DetailContainer) View() string {
-	return fmt.Sprintf("%s\n%s\n%s", c.headerView(), c.viewport.View(), c.footerView())
+	return fmt.Sprintf("%s\n%s", c.viewport.View(), c.footerView())
 }

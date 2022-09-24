@@ -1,12 +1,12 @@
-package containers
+package pages
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type Container interface {
+type Page interface {
 	Init() tea.Cmd
-	Update(msg tea.Msg) (Container, tea.Cmd)
+	Update(msg tea.Msg) (Page, tea.Cmd)
 	View() string
 	SetSize(width, height int)
 }

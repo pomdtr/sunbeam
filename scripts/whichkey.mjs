@@ -99,7 +99,8 @@ const menuToView = (actions) => {
   return {
     type: "detail",
     detail: {
-      markdown: actions
+      format: "markdown",
+      text: actions
         .map((action) => `**${action.keybind}** => ${action.title}`)
         .join("\n\n"),
       actions,

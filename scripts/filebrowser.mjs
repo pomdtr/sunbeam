@@ -1,7 +1,7 @@
 #!/usr/bin/env zx
 
 // @sunbeam.schemaVersion 1
-// @sunbeam.title Browse Files
+// @sunbeam.title Browse My Computer
 // @sunbeam.mode command
 // @sunbeam.packageName File Browser
 

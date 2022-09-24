@@ -16,6 +16,13 @@ func Max(a, b int) int {
 	return b
 }
 
+func Min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 // Copy-pasted from github.com/muesli/termenv@v0.9.0/termenv_unix.go.
 // TODO: Refactor after, [feature](https://ï.at/stderr) implemented.
 func colorProfile() termenv.Profile {

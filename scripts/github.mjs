@@ -1,7 +1,7 @@
 #!/usr/bin/env zx
 
 // @sunbeam.schemaVersion 1
-// @sunbeam.title Search Repositories
+// @sunbeam.title Search My Repositories
 // @sunbeam.mode command
 // @sunbeam.packageName Github
 
@@ -9,13 +9,13 @@ $.verbose = false;
 
 async function viewReadme(repo) {
   const res = await fetch(
-    `https://raw.githubusercontent.com/${repo}/main/README.md`
+    `https://raw.githubusercontent.com/${repo}/master/README.md`
   );
   const readme = await res.text();
   output({
     type: "detail",
     detail: {
-      markdown: readme,
+      text: readme,
       actions: [{ type: "open-url", url: `https://github.com/${repo}` }],
     },
   });
@@ -41,7 +41,7 @@ async function listRepos() {
           {
             type: "callback",
             title: "View Readme",
-            keybind: "r",
+            keybind: "ctrl+r",
             params: {
               type: "readme",
               repo: repo.full_name,
@@ -50,7 +50,7 @@ async function listRepos() {
           {
             type: "callback",
             title: "List PRs",
-            keybind: "p",
+            keybind: "ctrl+p",
             params: {
               type: "pr",
               repo: repo.full_name,

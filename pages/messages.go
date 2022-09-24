@@ -1,4 +1,4 @@
-package containers
+package pages
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
@@ -6,10 +6,10 @@ import (
 )
 
 type PushMsg struct {
-	Container Container
+	Container Page
 }
 
-func NewPushCmd(container Container) func() tea.Msg {
+func NewPushCmd(container Page) func() tea.Msg {
 	return utils.SendMsg(PushMsg{Container: container})
 }
 

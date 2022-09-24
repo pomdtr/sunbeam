@@ -14,6 +14,8 @@ direnv allow # load the SUNBEAM_COMMAND_DIR environment variable (you can also u
 go run main.go
 ```
 
+The logs are redirected to the `debug.log` file, use `tail -f debug.log` to follow them.
+
 ## Installing the `sunbeam` command
 
 ```console
