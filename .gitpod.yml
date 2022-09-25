@@ -1,0 +1,5 @@
+image:
+  file: Dockerfile
+vscode:
+  extensions:
+    - golang.go
