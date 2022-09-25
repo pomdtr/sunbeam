@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -14,6 +15,7 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/go-playground/validator"
 	"github.com/skratchdot/open-golang/open"
+	"tailscale.com/jsondb"
 )
 
 var CommandDirs []string
@@ -37,8 +39,9 @@ type Command struct {
 }
 
 type CommandInput struct {
-	Query  string `json:"query"`
-	Params any    `json:"params"`
+	Query   string `json:"query"`
+	Params  any    `json:"params"`
+	Storage any    `json:"storage"`
 }
 
 func NewCommand(script Script, args ...string) Command {
@@ -62,8 +65,15 @@ func (c Command) Run() (res ScriptResponse, err error) {
 	copy(cmd.Env, os.Environ())
 
 	// Add support dir to environment
-	supportDir := path.Join(xdg.StateHome, "sunbeam", c.Script.Metadatas.PackageName)
+	supportDir := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "support")
 	cmd.Env = append(cmd.Env, fmt.Sprintf("SUNBEAM_SUPPORT_DIR=%s", supportDir))
+
+	storagePath := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "storage.json")
+	storage, err := jsondb.Open[any](storagePath)
+	if err != nil {
+		log.Printf("Unable to init storage: %s", err)
+	}
+	c.Input.Storage = &storage.Data
 
 	var inbuf, outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf
@@ -87,6 +97,11 @@ func (c Command) Run() (res ScriptResponse, err error) {
 
 	json.Unmarshal(outbuf.Bytes(), &res)
 	err = Validator.Struct(res)
+
+	if res.Storage != nil {
+		storage.Data = &res.Storage
+		storage.Save()
+	}
 
 	return
 }

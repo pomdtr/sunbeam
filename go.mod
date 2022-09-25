@@ -25,8 +25,9 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/yuin/goldmark v1.4.4 // indirect
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	tailscale.com v1.30.2 // indirect
 )
 
 require (

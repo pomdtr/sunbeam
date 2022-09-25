@@ -22,7 +22,7 @@ async function viewReadme(repo) {
 }
 
 async function listRepos() {
-  const res = await $`/usr/local/bin/gh api /users/pomdtr/repos --cache 3600s`;
+  const res = await $`gh api /users/pomdtr/repos --cache 3600s`;
   const repos = JSON.parse(res);
   return {
     type: "list",
@@ -63,7 +63,7 @@ async function listRepos() {
 }
 
 async function listPRs(repo) {
-  const res = await $`/usr/local/bin/gh api /repos/${repo}/pulls`;
+  const res = await $`gh api /repos/${repo}/pulls`;
   const prs = JSON.parse(res);
   return {
     type: "list",
