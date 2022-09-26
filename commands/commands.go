@@ -91,8 +91,13 @@ func (c Command) Run() (res ScriptResponse, err error) {
 	err = cmd.Run()
 
 	if err != nil {
-		err = fmt.Errorf("%s: %s", err, errbuf.String())
-		return
+		return ScriptResponse{
+			Type: "detail",
+			Detail: DetailResponse{
+				Format: "text",
+				Text:   errbuf.String(),
+			},
+		}, nil
 	}
 
 	json.Unmarshal(outbuf.Bytes(), &res)
@@ -218,7 +223,7 @@ func Parse(script_path string) (Script, error) {
 
 	err = Validator.Struct(scripCommand)
 	if err != nil {
-		println(err)
+		log.Printf("Error while parsing script %s: %s", script_path, err)
 		return Script{}, err
 	}
 

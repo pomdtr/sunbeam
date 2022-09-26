@@ -12,7 +12,6 @@ func SunbeamFooter(width int, titleLabel string) string {
 	title := lipgloss.NewStyle().PaddingRight(1).Render(titleLabel)
 	line := strings.Repeat("─", utils.Max(0, width-lipgloss.Width(title)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
-
 }
 
 func SunbeamFooterWithActions(width int, titleLabel string, activateLabel string) string {
