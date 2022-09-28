@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -115,15 +116,18 @@ func (container *CommandContainer) View() string {
 
 func NewActionRunner(command commands.Command) func(commands.ScriptAction) tea.Cmd {
 	return func(action commands.ScriptAction) tea.Cmd {
-		var cmd tea.Cmd
-		callback := func(params any) {
-			command.Input.Params = params
-			cmd = NewPushCmd(NewCommandContainer(command))
+
+		if action.Type != "push" {
+			commands.RunAction(action)
+			return tea.Quit
 		}
-		commands.RunAction(action, callback)
-		if cmd != nil {
-			return cmd
-		}
-		return tea.Quit
+
+		scriptPath := path.Join(commands.CommandDir, command.Script.Path)
+		script, _ := commands.Parse(scriptPath)
+		command.Script = script
+		command.Args = action.Args
+
+		return NewPushCmd(NewCommandContainer(command))
+
 	}
 }

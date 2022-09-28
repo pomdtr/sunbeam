@@ -1,32 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jwalton/go-supportscolor"
-	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/commands"
 	"github.com/pomdtr/sunbeam/pages"
 )
-
-func setup() {
-	term := supportscolor.Stderr()
-	if term.Has16m {
-		lipgloss.SetColorProfile(termenv.TrueColor)
-	} else if term.Has256 {
-		lipgloss.SetColorProfile(termenv.ANSI256)
-	} else {
-		lipgloss.SetColorProfile(termenv.ANSI)
-	}
-
-}
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
@@ -64,7 +48,7 @@ func (m *navigator) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 	for i := range m.pages {
-		m.pages[i].SetSize(width-4, height-2)
+		m.pages[i].SetSize(width, height)
 	}
 }
 
@@ -86,7 +70,7 @@ func (m navigator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case pages.PushMsg:
 		container := msg.Container
-		container.SetSize(m.width-4, m.height-2)
+		container.SetSize(m.width, m.height)
 		m.PushPage(container)
 		return m, msg.Container.Init()
 	case error:
@@ -109,19 +93,19 @@ func (m navigator) View() string {
 	if len(m.pages) == 0 {
 		return "No pages, something went wrong"
 	}
-	return lipgloss.NewStyle().Padding(1, 2).Render(m.pages[len(m.pages)-1].View())
+	return lipgloss.NewStyle().Render(m.pages[len(m.pages)-1].View())
 
 }
 
 type Flags struct {
-	Stdin      bool
 	CommandDir string
+	Serve      bool
 }
 
 func parseArgs() ([]string, Flags) {
 	var f Flags
-	flag.BoolVar(&f.Stdin, "stdin", false, "Read input from stdin")
-	flag.StringVar(&f.CommandDir, "command-dir", "", "Directory to load plugins from")
+	flag.StringVar(&f.CommandDir, "command-dir", "", "Directory to load pages from")
+	flag.BoolVar(&f.Serve, "serve", false, "Build and serve the site")
 	flag.Parse()
 	return flag.Args(), f
 }
@@ -131,65 +115,24 @@ func main() {
 	args, flags := parseArgs()
 
 	var root pages.Page
-	if flags.Stdin {
-		bytes, err := ioutil.ReadAll(os.Stdin)
+	if flags.Serve {
+		err := serve()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Error serving: %v", err)
 		}
-		res := commands.ScriptResponse{}
-		err = json.Unmarshal(bytes, &res)
+		return
+	}
+	if len(args) > 0 {
+		script, err := commands.Parse(args[0])
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Error parsing script: %v", err)
 		}
-
-		err = commands.Validator.Struct(res)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		var actionRunner func(action commands.ScriptAction) tea.Cmd
-
-		if len(args) > 0 {
-			script, err := commands.Parse(args[1])
-			if err != nil {
-				log.Fatalf("Error parsing script: %v", err)
-			}
-			command := commands.NewCommand(script)
-			actionRunner = pages.NewActionRunner(command)
-		} else {
-			actionRunner = func(action commands.ScriptAction) tea.Cmd {
-				callback := func(params any) {
-					bytes, err := json.Marshal(params)
-					if err != nil {
-						log.Fatalf("Error marshalling params: %v", err)
-					}
-					fmt.Println(string(bytes))
-				}
-				commands.RunAction(action, callback)
-
-				return tea.Quit
-			}
-		}
-		switch res.Type {
-		case "list":
-			root = pages.NewListContainer("Sunbeam", res.List, actionRunner)
-		case "detail":
-			root = pages.NewDetailContainer(res.Detail, actionRunner)
-		}
+		root = pages.NewCommandContainer(commands.NewCommand(script))
 	} else {
-		if len(args) > 0 {
-			script, err := commands.Parse(args[0])
-			if err != nil {
-				log.Fatalf("Error parsing script: %v", err)
-			}
-			root = pages.NewCommandContainer(commands.NewCommand(script))
-		} else {
-			commandDirs := commands.CommandDirs
-			if flags.CommandDir != "" {
-				commandDirs = append(commandDirs, flags.CommandDir)
-			}
-			root = pages.NewRootContainer(commandDirs)
+		if flags.CommandDir != "" {
+			commands.CommandDir = flags.CommandDir
 		}
+		root = pages.NewRootContainer(commands.CommandDir)
 	}
 
 	// Log to a file
@@ -200,7 +143,7 @@ func main() {
 	defer f.Close()
 
 	m := NewModel(root)
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	if err := p.Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

@@ -1,9 +1,8 @@
 #!/usr/bin/env zx
 
-// sunbeam.schemaVersion 1
-// sunbeam.title Google Search
-// sunbeam.mode command
-// sunbeam.packageName Google Search
+// @sunbeam.schemaVersion 1
+// @sunbeam.title Google Search
+// @sunbeam.packageName Google Search
 
 const { query } = JSON.parse(await stdin());
 
@@ -24,6 +23,6 @@ const items = payload[1].map((suggestion) => ({
 console.log(
   JSON.stringify({
     type: "list",
-    list: { onQueryChange: { type: "callback" }, items },
+    list: { onQueryChange: { type: "reload" }, items },
   })
 );

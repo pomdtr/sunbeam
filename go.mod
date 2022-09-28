@@ -8,9 +8,10 @@ require (
 	github.com/charmbracelet/glamour v0.5.0
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/gorilla/mux v1.8.0
 	github.com/jinzhu/copier v0.3.5
-	github.com/jwalton/go-supportscolor v1.1.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
+	tailscale.com v1.30.2
 )
 
 require (
@@ -27,7 +28,6 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
-	tailscale.com v1.30.2 // indirect
 )
 
 require (

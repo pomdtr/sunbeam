@@ -15,14 +15,14 @@ import (
 )
 
 type RootContainer struct {
-	commandDirs []string
-	width       int
-	height      int
-	textInput   textinput.Model
+	commandDir string
+	width      int
+	height     int
+	textInput  textinput.Model
 	*list.Model
 }
 
-func NewRootContainer(commandDirs []string) Page {
+func NewRootContainer(commandDir string) Page {
 	d := NewItemDelegate()
 
 	l := list.New([]list.Item{}, d, 0, 0)
@@ -32,25 +32,27 @@ func NewRootContainer(commandDirs []string) Page {
 	textInput.Placeholder = "Search for apps and commands..."
 	textInput.Focus()
 
-	return &RootContainer{Model: &l, textInput: textInput, commandDirs: commandDirs}
+	return &RootContainer{Model: &l, textInput: textInput, commandDir: commandDir}
 }
 
 func (container *RootContainer) Init() tea.Cmd {
 	return container.gatherScripts
 }
 
-func (container RootContainer) gatherScripts() tea.Msg {
+func (c RootContainer) gatherScripts() tea.Msg {
 	scripts := make([]commands.Script, 0)
-	for _, commandDir := range container.commandDirs {
-		if _, err := os.Stat(commandDir); os.IsNotExist(err) {
-			log.Printf("Command directory %s does not exist", commandDir)
-			continue
+	if _, err := os.Stat(c.commandDir); os.IsNotExist(err) {
+		log.Fatalf("Command directory %s does not exist", c.commandDir)
+	}
+	dirScripts, err := commands.ScanDir(c.commandDir)
+	if err != nil {
+		return err
+	}
+	for _, script := range dirScripts {
+		// Scripts with an argument are not supported in the root view yet
+		if script.Metadatas.Argument1 == nil {
+			scripts = append(scripts, script)
 		}
-		dirScripts, err := commands.ScanDir(commandDir)
-		if err != nil {
-			return err
-		}
-		scripts = append(scripts, dirScripts...)
 	}
 
 	return scripts

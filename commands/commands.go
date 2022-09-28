@@ -18,17 +18,13 @@ import (
 	"tailscale.com/jsondb"
 )
 
-var CommandDirs []string
+var CommandDir string
 
 func init() {
-	if sunbeamCommandDir := os.Getenv("SUNBEAM_COMMAND_DIR"); sunbeamCommandDir != "" {
-		CommandDirs = append(CommandDirs, sunbeamCommandDir)
-	}
-	dataDirs := xdg.DataDirs
-	dataDirs = append(dataDirs, xdg.DataHome)
-	for _, dataDir := range dataDirs {
-		commandDir := path.Join(dataDir, "sunbeam", "commands")
-		CommandDirs = append(CommandDirs, commandDir)
+	if commandDir := os.Getenv("SUNBEAM_COMMAND_DIR"); commandDir != "" {
+		CommandDir = commandDir
+	} else {
+		CommandDir = xdg.DataHome
 	}
 }
 
@@ -40,7 +36,6 @@ type Command struct {
 
 type CommandInput struct {
 	Query   string `json:"query"`
-	Params  any    `json:"params"`
 	Storage any    `json:"storage"`
 }
 
@@ -52,11 +47,6 @@ func NewCommand(script Script, args ...string) Command {
 }
 
 func (c Command) Run() (res ScriptResponse, err error) {
-	err = os.Chmod(c.Script.Path, 0755)
-	if err != nil {
-		return
-	}
-
 	cmd := exec.Command(c.Script.Path, c.Args...)
 	cmd.Dir = path.Dir(cmd.Path)
 
@@ -100,12 +90,33 @@ func (c Command) Run() (res ScriptResponse, err error) {
 		}, nil
 	}
 
-	json.Unmarshal(outbuf.Bytes(), &res)
+	err = json.Unmarshal(outbuf.Bytes(), &res)
+	if err != nil {
+		return ScriptResponse{
+			Type: "detail",
+			Detail: DetailResponse{
+				Format: "text",
+				Text:   errbuf.String(),
+			},
+		}, nil
+	}
 	err = Validator.Struct(res)
+	if err != nil {
+		return ScriptResponse{
+			Type: "detail",
+			Detail: DetailResponse{
+				Format: "text",
+				Text:   errbuf.String(),
+			},
+		}, nil
+	}
 
 	if res.Storage != nil {
 		storage.Data = &res.Storage
-		storage.Save()
+		err := storage.Save()
+		if err != nil {
+			return ScriptResponse{}, err
+		}
 	}
 
 	return
@@ -148,13 +159,13 @@ func (i ScriptItem) Title() string       { return i.TitleField }
 func (i ScriptItem) Description() string { return i.Subtitle }
 
 type ScriptAction struct {
-	Title   string `json:"title" validate:"required,oneof=copy open open-url"`
-	Keybind string `json:"keybind"`
-	Type    string `json:"type" validate:"required"`
-	Path    string `json:"path"`
-	Url     string `json:"url"`
-	Content string `json:"content"`
-	Params  any    `json:"params"`
+	Title   string   `json:"title" validate:"required,oneof=copy open open-url"`
+	Keybind string   `json:"keybind"`
+	Type    string   `json:"type" validate:"required"`
+	Path    string   `json:"path"`
+	Url     string   `json:"url"`
+	Content string   `json:"content"`
+	Args    []string `json:"args"`
 }
 
 type Script struct {
@@ -169,9 +180,11 @@ func (s Script) Description() string { return s.Metadatas.PackageName }
 type ScriptMetadatas struct {
 	SchemaVersion        int    `validate:"required,eq=1"`
 	Title                string `validate:"required"`
-	Mode                 string `validate:"required,oneof=command"`
 	PackageName          string
 	Description          string
+	Argument1            *ScriptArgument `validate:"omitempty,dive"`
+	Argument2            *ScriptArgument `validate:"omitempty,dive"`
+	Argument3            *ScriptArgument `validate:"omitempty,dive"`
 	Icon                 string
 	CurrentDirectoryPath string
 	NeedsConfirmation    bool
@@ -179,7 +192,15 @@ type ScriptMetadatas struct {
 	AutorUrl             string
 }
 
-func extractSunbeamMetadatas(content string) map[string]string {
+type ScriptArgument struct {
+	Type           string `json:"type" validate:"required,oneof=text"`
+	Name           string `json:"name" validate:"required"`
+	Optional       bool   `json:"optional"`
+	PercentEncoded bool   `json:"percentEncoded"`
+	Secure         bool   `json:"secure"`
+}
+
+func extractSunbeamMetadatas(content string) ScriptMetadatas {
 	r := regexp.MustCompile("@sunbeam.([A-Za-z0-9]+)\\s([\\S ]+)")
 	groups := r.FindAllStringSubmatch(content, -1)
 
@@ -188,7 +209,22 @@ func extractSunbeamMetadatas(content string) map[string]string {
 		metadataMap[group[1]] = group[2]
 	}
 
-	return metadataMap
+	metadatas := ScriptMetadatas{}
+	json.Unmarshal([]byte(metadataMap["schemaVersion"]), &metadatas.SchemaVersion)
+	json.Unmarshal([]byte(metadataMap["argument1"]), &metadatas.Argument1)
+	json.Unmarshal([]byte(metadataMap["argument2"]), &metadatas.Argument2)
+	json.Unmarshal([]byte(metadataMap["argument3"]), &metadatas.Argument3)
+	json.Unmarshal([]byte(metadataMap["needsConfirmation"]), &metadatas.NeedsConfirmation)
+
+	metadatas.Title = metadataMap["title"]
+	metadatas.PackageName = metadataMap["packageName"]
+	metadatas.Icon = metadataMap["icon"]
+	metadatas.CurrentDirectoryPath = metadataMap["currentDirectoryPath"]
+	metadatas.Author = metadataMap["author"]
+	metadatas.AutorUrl = metadataMap["autorUrl"]
+	metadatas.Description = metadataMap["description"]
+
+	return metadatas
 }
 
 func Parse(script_path string) (Script, error) {
@@ -199,27 +235,7 @@ func Parse(script_path string) (Script, error) {
 
 	metadatas := extractSunbeamMetadatas(string(content))
 
-	var schemaVersion int
-	err = json.Unmarshal([]byte(metadatas["schemaVersion"]), &schemaVersion)
-	if err != nil {
-		return Script{}, err
-	}
-
-	var needsConfirmation bool
-	json.Unmarshal([]byte(metadatas["schemaVersion"]), &needsConfirmation)
-
-	scripCommand := Script{Path: script_path, Metadatas: ScriptMetadatas{
-		SchemaVersion:        schemaVersion,
-		Title:                metadatas["title"],
-		Mode:                 metadatas["mode"],
-		PackageName:          metadatas["packageName"],
-		Icon:                 metadatas["icon"],
-		CurrentDirectoryPath: metadatas["currentDirectoryPath"],
-		NeedsConfirmation:    needsConfirmation,
-		Author:               metadatas["author"],
-		AutorUrl:             metadatas["autorUrl"],
-		Description:          metadatas["description"],
-	}}
+	scripCommand := Script{Path: script_path, Metadatas: metadatas}
 
 	err = Validator.Struct(scripCommand)
 	if err != nil {
@@ -239,7 +255,8 @@ func ScanDir(dirPath string) ([]Script, error) {
 	scripts := []Script{}
 	for _, file := range files {
 		if file.IsDir() {
-			continue
+			dirScripts, _ := ScanDir(path.Join(dirPath, file.Name()))
+			scripts = append(scripts, dirScripts...)
 		}
 
 		script, err := Parse(path.Join(dirPath, file.Name()))
@@ -253,15 +270,17 @@ func ScanDir(dirPath string) ([]Script, error) {
 	return scripts, nil
 }
 
-func RunAction(action ScriptAction, callback func(any)) {
+func RunAction(action ScriptAction) (err error) {
 	switch action.Type {
 	case "open":
-		open.Run(action.Path)
+		err = open.Run(action.Path)
+		return err
 	case "open-url":
-		open.Run(action.Url)
+		err := open.Run(action.Url)
+		return err
 	case "copy":
-		clipboard.WriteAll(action.Content)
-	case "callback":
-		callback(action.Params)
+		err = clipboard.WriteAll(action.Content)
+		return err
 	}
+	return nil
 }

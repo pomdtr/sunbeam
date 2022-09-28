@@ -63,9 +63,12 @@ func (c *ListContainer) headerView() string {
 
 func (c *ListContainer) footerView() string {
 	selectedItem := c.list.SelectedItem()
-	if c.list.SelectedItem() != nil {
-		selectedItem := selectedItem.(commands.ScriptItem)
-		return bubbles.SunbeamFooterWithActions(c.width, c.title, selectedItem.Actions[0].Title)
+	if selectedItem == nil {
+		return bubbles.SunbeamFooter(c.width, c.title)
+	}
+
+	if item, ok := selectedItem.(commands.ScriptItem); ok && len(item.Actions) > 0 {
+		return bubbles.SunbeamFooterWithActions(c.width, c.title, item.Actions[0].Title)
 	} else {
 		return bubbles.SunbeamFooter(c.width, c.title)
 	}
