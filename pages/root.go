@@ -81,7 +81,7 @@ func (container RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if editor == "" {
 				editor = "vi"
 			}
-			c := exec.Command(editor, selectedItem.Path)
+			c := exec.Command(editor, selectedItem.Url.Path)
 			cmd := tea.ExecProcess(c, func(err error) tea.Msg {
 				if err != nil {
 					return err
@@ -97,7 +97,7 @@ func (container RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if !ok {
 				return &container, tea.Quit
 			}
-			var next = NewCommandContainer(commands.NewCommand(selectedItem))
+			var next = NewCommandContainer(commands.Command{Script: selectedItem})
 			return &container, NewPushCmd(next)
 		}
 	case []commands.Script:

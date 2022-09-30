@@ -26,7 +26,7 @@ type DetailContainer struct {
 	viewport     *viewport.Model
 }
 
-func NewDetailContainer(response commands.DetailResponse, selectAction NewSelectActionCmd) DetailContainer {
+func NewDetailContainer(response *commands.DetailResponse, selectAction NewSelectActionCmd) DetailContainer {
 	viewport := viewport.New(0, 0)
 	var content string
 	if lipgloss.HasDarkBackground() {
@@ -37,7 +37,7 @@ func NewDetailContainer(response commands.DetailResponse, selectAction NewSelect
 	viewport.SetContent(content)
 
 	return DetailContainer{
-		response:     response,
+		response:     *response,
 		selectAction: selectAction,
 		viewport:     &viewport,
 	}

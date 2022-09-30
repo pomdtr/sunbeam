@@ -1,0 +1,24 @@
+#!/usr/bin/env zx
+
+// @sunbeam.schemaVersion 1
+// @sunbeam.title View Readme
+// @sunbeam.packageName Github
+
+// @sunbeam.argument1 { "type": "text", "name": "repository", "required": true }
+
+const repo = argv._[0];
+
+const res = await fetch(
+  `https://raw.githubusercontent.com/${repo}/master/README.md`
+);
+const readme = await res.text();
+
+const view = {
+  type: "detail",
+  detail: {
+    text: readme,
+    actions: [{ type: "open-url", url: `https://github.com/${repo}` }],
+  },
+};
+
+console.log(JSON.stringify(view));

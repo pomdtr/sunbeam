@@ -1,15 +1,16 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/alexflint/go-arg"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/commands"
 	"github.com/pomdtr/sunbeam/pages"
+	"github.com/pomdtr/sunbeam/server"
 )
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
@@ -94,43 +95,52 @@ func (m navigator) View() string {
 		return "No pages, something went wrong"
 	}
 	return lipgloss.NewStyle().Render(m.pages[len(m.pages)-1].View())
-
 }
 
-type Flags struct {
-	CommandDir string
-	Serve      bool
+type ServeCmd struct {
+	Host string `arg:"-h,--host" help:"Host to serve on"`
+	Port int    `arg:"-p,--port" help:"Port to serve on"`
 }
 
-func parseArgs() ([]string, Flags) {
-	var f Flags
-	flag.StringVar(&f.CommandDir, "command-dir", "", "Directory to load pages from")
-	flag.BoolVar(&f.Serve, "serve", false, "Build and serve the site")
-	flag.Parse()
-	return flag.Args(), f
+type RunCmd struct {
+	ScriptPath string `arg:"positional" help:"Path to script to run"`
+}
+
+var args struct {
+	Serve      *ServeCmd `arg:"subcommand:serve" help:"Serve all scripts"`
+	Run        *RunCmd   `arg:"subcommand:run" help:"Run a script"`
+	CommandDir string    `arg:"-c,--command-dir" help:"Directory to load commands from"`
 }
 
 func main() {
 	var err error
-	args, flags := parseArgs()
+	arg.MustParse(&args)
 
-	var root pages.Page
-	if flags.Serve {
-		err := serve()
+	if args.Serve != nil {
+		err = server.Serve(args.Serve.Host, args.Serve.Port)
 		if err != nil {
-			log.Fatalf("Error serving: %v", err)
+			log.Fatalln(err)
 		}
 		return
 	}
-	if len(args) > 0 {
-		script, err := commands.Parse(args[0])
+	var root pages.Page
+
+	if args.Run != nil {
+		script, err := commands.Parse(args.Run.ScriptPath)
 		if err != nil {
 			log.Fatalf("Error parsing script: %v", err)
 		}
-		root = pages.NewCommandContainer(commands.NewCommand(script))
+		root = pages.NewCommandContainer(commands.Command{
+			Script: script,
+		})
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		return
 	} else {
-		if flags.CommandDir != "" {
-			commands.CommandDir = flags.CommandDir
+		if args.CommandDir != "" {
+			commands.CommandDir = args.CommandDir
 		}
 		root = pages.NewRootContainer(commands.CommandDir)
 	}

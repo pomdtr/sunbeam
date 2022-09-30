@@ -23,7 +23,7 @@ type ListContainer struct {
 
 var listContainer = list.New([]list.Item{}, NewItemDelegate(), 0, 0)
 
-func NewListContainer(title string, res commands.ListResponse, runner NewSelectActionCmd) Page {
+func NewListContainer(title string, res *commands.ListResponse, runner NewSelectActionCmd) Page {
 	var l list.Model
 	copier.Copy(&l, &listContainer)
 

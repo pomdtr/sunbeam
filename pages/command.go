@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"log"
 	"path"
 	"strings"
 
@@ -48,7 +49,13 @@ func (c CommandContainer) fetchItems(command commands.Command) tea.Cmd {
 	return func() tea.Msg {
 		res, err := command.Run()
 		if err != nil {
-			return err
+			return commands.ScriptResponse{
+				Type: "detail",
+				Detail: &commands.DetailResponse{
+					Format: "text",
+					Text:   err.Error(),
+				},
+			}
 		}
 		return res
 	}
@@ -72,11 +79,15 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		}
 	case commands.ScriptResponse:
+		actionRunner := NewActionRunner(c.command)
 		switch msg.Type {
 		case "list":
-			c.embed = NewListContainer(c.command.Title(), msg.List, NewActionRunner(c.command))
+			c.embed = NewListContainer(c.command.Title(), msg.List, actionRunner)
 		case "detail":
-			c.embed = NewDetailContainer(msg.Detail, NewActionRunner(c.command))
+			c.embed = NewDetailContainer(msg.Detail, actionRunner)
+		case "action":
+			cmd = NewActionRunner(c.command)(*msg.Action)
+			return c, cmd
 		}
 		c.embed.SetSize(c.width, c.height)
 	case spinner.TickMsg:
@@ -122,12 +133,18 @@ func NewActionRunner(command commands.Command) func(commands.ScriptAction) tea.C
 			return tea.Quit
 		}
 
-		scriptPath := path.Join(commands.CommandDir, command.Script.Path)
-		script, _ := commands.Parse(scriptPath)
-		command.Script = script
-		command.Args = action.Args
+		commandDir := path.Dir(command.Url.Path)
+		scriptPath := path.Join(commandDir, action.Path)
+		script, err := commands.Parse(scriptPath)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		return NewPushCmd(NewCommandContainer(command))
+		next := commands.Command{}
+		next.Script = script
+		next.Args = action.Args
+
+		return NewPushCmd(NewCommandContainer(next))
 
 	}
 }

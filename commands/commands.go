@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -39,15 +40,9 @@ type CommandInput struct {
 	Storage any    `json:"storage"`
 }
 
-func NewCommand(script Script, args ...string) Command {
-	return Command{
-		Script: script,
-		Args:   args,
-	}
-}
-
 func (c Command) Run() (res ScriptResponse, err error) {
-	cmd := exec.Command(c.Script.Path, c.Args...)
+	log.Printf("Running command %s with args %s", c.Script.Url.Path, c.Args)
+	cmd := exec.Command(c.Script.Url.Path, c.Args...)
 	cmd.Dir = path.Dir(cmd.Path)
 
 	// Copy process environment
@@ -81,41 +76,23 @@ func (c Command) Run() (res ScriptResponse, err error) {
 	err = cmd.Run()
 
 	if err != nil {
-		return ScriptResponse{
-			Type: "detail",
-			Detail: DetailResponse{
-				Format: "text",
-				Text:   errbuf.String(),
-			},
-		}, nil
+		return
 	}
 
 	err = json.Unmarshal(outbuf.Bytes(), &res)
 	if err != nil {
-		return ScriptResponse{
-			Type: "detail",
-			Detail: DetailResponse{
-				Format: "text",
-				Text:   errbuf.String(),
-			},
-		}, nil
+		return
 	}
 	err = Validator.Struct(res)
 	if err != nil {
-		return ScriptResponse{
-			Type: "detail",
-			Detail: DetailResponse{
-				Format: "text",
-				Text:   errbuf.String(),
-			},
-		}, nil
+		return
 	}
 
 	if res.Storage != nil {
 		storage.Data = &res.Storage
-		err := storage.Save()
+		err = storage.Save()
 		if err != nil {
-			return ScriptResponse{}, err
+			return
 		}
 	}
 
@@ -125,11 +102,12 @@ func (c Command) Run() (res ScriptResponse, err error) {
 var Validator = validator.New()
 
 type ScriptResponse struct {
-	Type    string         `json:"type" validate:"required,oneof=list detail form exit"`
-	List    ListResponse   `json:"list" validate:"dive"`
-	Detail  DetailResponse `json:"detail" validate:"dive"`
-	Form    FormResponse   `json:"form" validate:"dive"`
-	Storage any            `json:"storage"`
+	Type    string          `json:"type" validate:"required,oneof=list detail form action"`
+	List    *ListResponse   `json:"list,omitempty"`
+	Detail  *DetailResponse `json:"detail,omitempty"`
+	Form    *FormResponse   `json:"form,omitempty"`
+	Action  *ScriptAction   `json:"action,omitempty"`
+	Storage any             `json:"storage,omitempty"`
 }
 
 type DetailResponse struct {
@@ -162,14 +140,14 @@ type ScriptAction struct {
 	Title   string   `json:"title" validate:"required,oneof=copy open open-url"`
 	Keybind string   `json:"keybind"`
 	Type    string   `json:"type" validate:"required"`
-	Path    string   `json:"path"`
-	Url     string   `json:"url"`
-	Content string   `json:"content"`
-	Args    []string `json:"args"`
+	Path    string   `json:"path,omitempty"`
+	Url     string   `json:"url,omitempty"`
+	Content string   `json:"content,omitempty"`
+	Args    []string `json:"args,omitempty"`
 }
 
 type Script struct {
-	Path      string
+	Url       url.URL
 	Metadatas ScriptMetadatas
 }
 
@@ -178,18 +156,18 @@ func (s Script) Title() string       { return s.Metadatas.Title }
 func (s Script) Description() string { return s.Metadatas.PackageName }
 
 type ScriptMetadatas struct {
-	SchemaVersion        int    `validate:"required,eq=1"`
-	Title                string `validate:"required"`
-	PackageName          string
-	Description          string
-	Argument1            *ScriptArgument `validate:"omitempty,dive"`
-	Argument2            *ScriptArgument `validate:"omitempty,dive"`
-	Argument3            *ScriptArgument `validate:"omitempty,dive"`
-	Icon                 string
-	CurrentDirectoryPath string
-	NeedsConfirmation    bool
-	Author               string
-	AutorUrl             string
+	SchemaVersion        int             `json:"schemaVersion" validate:"required,eq=1"`
+	Title                string          `json:"title" validate:"required"`
+	PackageName          string          `json:"packageName" validate:"required"`
+	Description          string          `json:"description,omitempty"`
+	Argument1            *ScriptArgument `json:"argument1,omitempty" validate:"omitempty,dive"`
+	Argument2            *ScriptArgument `json:"argument2,omitempty" validate:"omitempty,dive"`
+	Argument3            *ScriptArgument `json:"argument3,omitempty" validate:"omitempty,dive"`
+	Icon                 string          `json:"icon,omitempty"`
+	CurrentDirectoryPath string          `json:"currentDirectoryPath,omitempty"`
+	NeedsConfirmation    bool            `json:"needsConfirmation,omitempty"`
+	Author               string          `json:"author,omitempty"`
+	AuthorUrl            string          `json:"authorUrl,omitempty"`
 }
 
 type ScriptArgument struct {
@@ -221,7 +199,7 @@ func extractSunbeamMetadatas(content string) ScriptMetadatas {
 	metadatas.Icon = metadataMap["icon"]
 	metadatas.CurrentDirectoryPath = metadataMap["currentDirectoryPath"]
 	metadatas.Author = metadataMap["author"]
-	metadatas.AutorUrl = metadataMap["autorUrl"]
+	metadatas.AuthorUrl = metadataMap["autorUrl"]
 	metadatas.Description = metadataMap["description"]
 
 	return metadatas
@@ -235,7 +213,12 @@ func Parse(script_path string) (Script, error) {
 
 	metadatas := extractSunbeamMetadatas(string(content))
 
-	scripCommand := Script{Path: script_path, Metadatas: metadatas}
+	scriptURL := url.URL{
+		Scheme: "file",
+		Path:   script_path,
+	}
+
+	scripCommand := Script{Url: scriptURL, Metadatas: metadatas}
 
 	err = Validator.Struct(scripCommand)
 	if err != nil {
@@ -257,6 +240,11 @@ func ScanDir(dirPath string) ([]Script, error) {
 		if file.IsDir() {
 			dirScripts, _ := ScanDir(path.Join(dirPath, file.Name()))
 			scripts = append(scripts, dirScripts...)
+		}
+
+		// if script is not executable
+		if file.Mode()&0111 == 0 {
+			continue
 		}
 
 		script, err := Parse(path.Join(dirPath, file.Name()))
