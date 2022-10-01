@@ -4,7 +4,7 @@
 // @sunbeam.title List Pull Requests
 // @sunbeam.packageName Github
 
-// @sunbeam.argument1 { "type": "text", "name": "repository" }
+// @sunbeam.argument1 { "type": "text", "placeholder": "repository" }
 
 const repo = argv._[0];
 

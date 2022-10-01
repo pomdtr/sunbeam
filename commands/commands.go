@@ -155,6 +155,19 @@ func (s Script) FilterValue() string { return s.Metadatas.Title }
 func (s Script) Title() string       { return s.Metadatas.Title }
 func (s Script) Description() string { return s.Metadatas.PackageName }
 
+func (s Script) Args() (args []ScriptArgument) {
+	if s.Metadatas.Argument1 != nil {
+		args = append(args, *s.Metadatas.Argument1)
+	}
+	if s.Metadatas.Argument2 != nil {
+		args = append(args, *s.Metadatas.Argument2)
+	}
+	if s.Metadatas.Argument3 != nil {
+		args = append(args, *s.Metadatas.Argument3)
+	}
+	return
+}
+
 type ScriptMetadatas struct {
 	SchemaVersion        int             `json:"schemaVersion" validate:"required,eq=1"`
 	Title                string          `json:"title" validate:"required"`
@@ -172,7 +185,7 @@ type ScriptMetadatas struct {
 
 type ScriptArgument struct {
 	Type           string `json:"type" validate:"required,oneof=text"`
-	Name           string `json:"name" validate:"required"`
+	Placeholder    string `json:"placeholder" validate:"required"`
 	Optional       bool   `json:"optional"`
 	PercentEncoded bool   `json:"percentEncoded"`
 	Secure         bool   `json:"secure"`

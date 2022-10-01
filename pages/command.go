@@ -42,6 +42,15 @@ func (c *CommandContainer) SetSize(width, height int) {
 }
 
 func (c *CommandContainer) Init() tea.Cmd {
+	if len(c.command.Args) < len(c.command.Script.Args()) {
+		submitAction := func(args []string) tea.Cmd {
+			c.command.Args = args
+			return c.fetchItems(c.command)
+		}
+		c.embed = NewFormContainer(c.command.Title(), c.command.Script.Args(), submitAction)
+		c.embed.SetSize(c.width, c.height)
+		return nil
+	}
 	return tea.Batch(c.spinner.Tick, c.fetchItems(c.command))
 }
 

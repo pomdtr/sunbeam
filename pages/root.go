@@ -50,9 +50,7 @@ func (c RootContainer) gatherScripts() tea.Msg {
 	}
 	for _, script := range dirScripts {
 		// Scripts with an argument are not supported in the root view yet
-		if script.Metadatas.Argument1 == nil {
-			scripts = append(scripts, script)
-		}
+		scripts = append(scripts, script)
 	}
 
 	return scripts

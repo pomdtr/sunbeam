@@ -4,7 +4,7 @@
 // @sunbeam.title View Readme
 // @sunbeam.packageName Github
 
-// @sunbeam.argument1 { "type": "text", "name": "repository", "required": true }
+// @sunbeam.argument1 { "type": "text", "placeholder": "repository", "required": true }
 
 const repo = argv._[0];
 
