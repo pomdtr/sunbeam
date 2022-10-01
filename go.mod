@@ -3,6 +3,7 @@ module github.com/pomdtr/sunbeam
 go 1.19
 
 require (
+	github.com/alexflint/go-arg v1.4.3
 	github.com/charmbracelet/bubbles v0.14.0
 	github.com/charmbracelet/bubbletea v0.22.1
 	github.com/charmbracelet/glamour v0.5.0
@@ -16,31 +17,21 @@ require (
 
 require (
 	github.com/alecthomas/chroma v0.10.0 // indirect
-	github.com/alexflint/go-arg v1.4.3 // indirect
 	github.com/alexflint/go-scalar v1.1.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/cosmtrek/air v1.40.4 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/creack/pty v1.1.18 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
-	github.com/fatih/color v1.13.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
-	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.17 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/pelletier/go-toml v1.9.5 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/urfave/cli/v2 v2.17.1 // indirect
-	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/yuin/goldmark v1.4.4 // indirect
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

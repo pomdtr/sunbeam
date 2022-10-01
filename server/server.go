@@ -6,16 +6,13 @@ import (
 	"html"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/pomdtr/sunbeam/commands"
 )
 
 func Serve(address string, port int) error {
 	scripts, err := commands.ScanDir(commands.CommandDir)
-	router := mux.NewRouter().UseEncodedPath().StrictSlash(true)
 	if err != nil {
 		log.Fatalf("Error while scanning commands directory: %s", err)
 	}
@@ -25,10 +22,10 @@ func Serve(address string, port int) error {
 		route := Route(script)
 		routeMap[route] = script.Metadatas
 		log.Printf("Serving %s at %s", script.Url.Path, route)
-		router.HandleFunc(Route(script), serveScript(script))
+		http.HandleFunc(Route(script), serveScript(script))
 	}
 
-	router.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
+	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusOK)
 		encoder := json.NewEncoder(res)
 		encoder.SetIndent("", "  ")
@@ -36,7 +33,7 @@ func Serve(address string, port int) error {
 	})
 
 	log.Println("Starting server on", fmt.Sprintf("%s:%d", address, port))
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), router)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
 func Route(s commands.Script) string {
@@ -46,41 +43,30 @@ func Route(s commands.Script) string {
 		prefix = "/" + prefix
 	}
 	route.WriteString(fmt.Sprintf("%s", prefix))
-	if s.Metadatas.Argument1 != nil {
-		route.WriteString(fmt.Sprintf("/{%s}", s.Metadatas.Argument1.Name))
-	}
-	if s.Metadatas.Argument2 != nil {
-		route.WriteString(fmt.Sprintf("/{%s}", s.Metadatas.Argument2.Name))
-	}
-	if s.Metadatas.Argument3 != nil {
-		route.WriteString(fmt.Sprintf("/{%s}", s.Metadatas.Argument3.Name))
-	}
 
 	return route.String()
 }
 
 func serveScript(s commands.Script) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		args := make([]string, 0)
-		vars := mux.Vars(req)
-		if s.Metadatas.Argument1 != nil {
-			arg, _ := url.QueryUnescape(vars[s.Metadatas.Argument1.Name])
-			args = append(args, arg)
-		}
-		if s.Metadatas.Argument2 != nil {
-			args = append(args, vars[s.Metadatas.Argument1.Name])
-		}
-		if s.Metadatas.Argument3 != nil {
-			args = append(args, vars[s.Metadatas.Argument1.Name])
+		params := make([]string, 0)
+
+		// Add required arguments
+		if args, ok := req.URL.Query()["_"]; ok {
+			args := strings.Split(",", args[0])
+			for arg := range args {
+				params = append(params, html.UnescapeString(args[arg]))
+			}
 		}
 
+		// Add options
 		for key, value := range req.URL.Query() {
-			args = append(args, fmt.Sprintf("--%s=%s", key, html.UnescapeString(value[0])))
+			params = append(params, fmt.Sprintf("--%s=%s", key, html.UnescapeString(value[0])))
 		}
 
 		command := commands.Command{}
 		command.Script = s
-		command.Args = args
+		command.Args = params
 		json.NewDecoder(req.Body).Decode(&command.Input)
 
 		scriptResponse, err := command.Run()
