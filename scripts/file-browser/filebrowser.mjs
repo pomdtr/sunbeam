@@ -3,6 +3,7 @@
 // @sunbeam.schemaVersion 1
 // @sunbeam.title Browse My Computer
 // @sunbeam.packageName File Browser
+// @sunbeam.mode interactive
 
 // @sunbeam.argument1 { "type": "text", "placeholder": "root", "required": false }
 
@@ -27,6 +28,7 @@ const items = await Promise.all(
         lstat.isDirectory()
           ? {
               type: "push",
+              path: "file-browser/filebrowser.mjs",
               options: {
                 root: filepath,
               },

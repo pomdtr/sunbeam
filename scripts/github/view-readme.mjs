@@ -3,6 +3,7 @@
 // @sunbeam.schemaVersion 1
 // @sunbeam.title View Readme
 // @sunbeam.packageName Github
+// @sunbeam.mode interactive
 
 // @sunbeam.argument1 { "type": "text", "placeholder": "repository", "required": true }
 

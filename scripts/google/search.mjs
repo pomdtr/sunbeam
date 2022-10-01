@@ -2,6 +2,7 @@
 
 // @sunbeam.schemaVersion 1
 // @sunbeam.title Google Search
+// @sunbeam.mode interactive
 // @sunbeam.packageName Google Search
 
 const { query } = JSON.parse(await stdin());

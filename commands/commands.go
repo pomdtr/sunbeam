@@ -171,6 +171,7 @@ func (s Script) Args() (args []ScriptArgument) {
 type ScriptMetadatas struct {
 	SchemaVersion        int             `json:"schemaVersion" validate:"required,eq=1"`
 	Title                string          `json:"title" validate:"required"`
+	Mode                 string          `json:"mode" validate:"required,oneof=interactive silent fullOutput"`
 	PackageName          string          `json:"packageName" validate:"required"`
 	Description          string          `json:"description,omitempty"`
 	Argument1            *ScriptArgument `json:"argument1,omitempty" validate:"omitempty,dive"`
@@ -208,6 +209,7 @@ func extractSunbeamMetadatas(content string) ScriptMetadatas {
 	json.Unmarshal([]byte(metadataMap["needsConfirmation"]), &metadatas.NeedsConfirmation)
 
 	metadatas.Title = metadataMap["title"]
+	metadatas.Mode = metadataMap["mode"]
 	metadatas.PackageName = metadataMap["packageName"]
 	metadatas.Icon = metadataMap["icon"]
 	metadatas.CurrentDirectoryPath = metadataMap["currentDirectoryPath"]

@@ -2,6 +2,7 @@
 
 // @sunbeam.schemaVersion 1
 // @sunbeam.title Search My Repositories
+// @sunbeam.mode interactive
 // @sunbeam.packageName Github
 
 $.verbose = false;
@@ -26,14 +27,14 @@ const view = {
           type: "push",
           title: "List Prs",
           keybind: "ctr+p",
-          path: "./list-prs.mjs",
+          path: "github/list-prs.mjs",
           args: [repo.full_name],
         },
         {
           type: "push",
           title: "View README",
           keybind: "ctrl+r",
-          path: "./view-readme.mjs",
+          path: "github/view-readme.mjs",
           args: [repo.full_name],
         },
       ],
