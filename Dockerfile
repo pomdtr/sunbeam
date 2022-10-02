@@ -11,4 +11,5 @@ FROM alpine AS runner
 COPY --from=builder /sunbeam /sunbeam
 COPY scripts /scripts
 ENV SUNBEAM_COMMAND_DIR=/scripts
+ENV TERM=xterm-256color
 ENTRYPOINT ["/sunbeam"]
