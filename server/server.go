@@ -37,14 +37,7 @@ func Serve(address string, port int) error {
 }
 
 func Route(s commands.Script) string {
-	route := strings.Builder{}
-	prefix := strings.TrimPrefix(s.Url.Path, commands.CommandDir)
-	if prefix[0] != '/' {
-		prefix = "/" + prefix
-	}
-	route.WriteString(fmt.Sprintf("%s", prefix))
-
-	return route.String()
+	return strings.TrimPrefix(s.Url.Path, commands.CommandDir)
 }
 
 func serveScript(s commands.Script) http.HandlerFunc {

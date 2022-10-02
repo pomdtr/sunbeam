@@ -107,9 +107,9 @@ type RunCmd struct {
 }
 
 var args struct {
-	Serve      *ServeCmd `arg:"subcommand:serve" help:"Serve all scripts"`
-	Run        *RunCmd   `arg:"subcommand:run" help:"Run a script"`
-	CommandDir string    `arg:"-c,--command-dir" help:"Directory to load commands from"`
+	Serve       *ServeCmd `arg:"subcommand:serve" help:"Serve all scripts"`
+	Run         *RunCmd   `arg:"subcommand:run" help:"Run a script"`
+	CommandRoot string    `arg:"-c,--command-root" help:"Directory to load commands from"`
 }
 
 func main() {
@@ -139,10 +139,10 @@ func main() {
 
 		return
 	} else {
-		if args.CommandDir != "" {
-			commands.CommandDir = args.CommandDir
+		if args.CommandRoot == "" {
+			args.CommandRoot = commands.CommandDir
 		}
-		root = pages.NewRootContainer(commands.CommandDir)
+		root = pages.NewRootContainer(args.CommandRoot)
 	}
 
 	// Log to a file

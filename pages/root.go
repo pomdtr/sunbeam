@@ -1,7 +1,10 @@
 package pages
 
 import (
+	"encoding/json"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -15,10 +18,10 @@ import (
 )
 
 type RootContainer struct {
-	commandDir string
-	width      int
-	height     int
-	textInput  textinput.Model
+	commandRoot url.URL
+	width       int
+	height      int
+	textInput   textinput.Model
 	*list.Model
 }
 
@@ -31,8 +34,15 @@ func NewRootContainer(commandDir string) Page {
 	textInput.Prompt = ""
 	textInput.Placeholder = "Search for apps and commands..."
 	textInput.Focus()
+	rootURL, err := url.Parse(commandDir)
+	if err != nil {
+		rootURL = &url.URL{
+			Scheme: "file",
+			Path:   commandDir,
+		}
+	}
 
-	return &RootContainer{Model: &l, textInput: textInput, commandDir: commandDir}
+	return &RootContainer{Model: &l, textInput: textInput, commandRoot: *rootURL}
 }
 
 func (container *RootContainer) Init() tea.Cmd {
@@ -41,16 +51,38 @@ func (container *RootContainer) Init() tea.Cmd {
 
 func (c RootContainer) gatherScripts() tea.Msg {
 	scripts := make([]commands.Script, 0)
-	if _, err := os.Stat(c.commandDir); os.IsNotExist(err) {
-		log.Fatalf("Command directory %s does not exist", c.commandDir)
-	}
-	dirScripts, err := commands.ScanDir(c.commandDir)
-	if err != nil {
-		return err
-	}
-	for _, script := range dirScripts {
-		// Scripts with an argument are not supported in the root view yet
-		scripts = append(scripts, script)
+	if c.commandRoot.Scheme == "file" {
+		if _, err := os.Stat(c.commandRoot.Path); os.IsNotExist(err) {
+			log.Fatalf("Command directory %s does not exist", c.commandRoot.Path)
+		}
+		dirScripts, err := commands.ScanDir(c.commandRoot.Path)
+		if err != nil {
+			return err
+		}
+		for _, script := range dirScripts {
+			// Scripts with an argument are not supported in the root view yet
+			scripts = append(scripts, script)
+		}
+	} else {
+		res, err := http.Get(c.commandRoot.String())
+		if err != nil {
+			log.Fatalf("Could not fetch commands from %s", c.commandRoot.String())
+		}
+		var index map[string]commands.ScriptMetadatas
+		err = json.NewDecoder(res.Body).Decode(&index)
+		if err != nil {
+			log.Fatalf("Could not parse commands from %s", c.commandRoot.String())
+		}
+		for route, metadatas := range index {
+			scripts = append(scripts, commands.Script{
+				Metadatas: metadatas,
+				Url: url.URL{
+					Scheme: c.commandRoot.Scheme,
+					Host:   c.commandRoot.Host,
+					Path:   route,
+				},
+			})
+		}
 	}
 
 	return scripts
@@ -62,14 +94,6 @@ func (container RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlT:
-			c := exec.Command("bash", "-c", "clear && fish")
-			cmd := tea.ExecProcess(c, nil)
-			return &container, cmd
-		case tea.KeyCtrlH:
-			c := exec.Command("htop")
-			cmd := tea.ExecProcess(c, nil)
-			return &container, cmd
 		case tea.KeyCtrlE:
 			if selectedItem == nil {
 				break

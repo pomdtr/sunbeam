@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -45,6 +46,23 @@ type CommandInput struct {
 func (c Command) Run() (res ScriptResponse) {
 	log.Printf("Running command %s with args %s", c.Script.Url.Path, c.Args)
 	// Check if the number of arguments is correct
+	if c.Url.Scheme != "file" {
+		req, err := http.NewRequest(http.MethodPost, c.Url.String(), nil)
+		if err != nil {
+			log.Fatalf("Error while creating request: %s", err)
+		}
+		httpRes, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Fatalf("Error while running command: %s", err)
+		}
+		var res ScriptResponse
+		err = json.NewDecoder(httpRes.Body).Decode(&res)
+		if err != nil {
+			log.Fatalf("Error while decoding response: %s", err)
+		}
+
+		return res
+	}
 	if len(c.Args) < len(c.Metadatas.Arguments) {
 		formItems := make([]FormItem, 0)
 		for i := len(c.Args); i < len(c.Metadatas.Arguments); i++ {
