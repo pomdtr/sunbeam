@@ -93,8 +93,6 @@ func DefaultFilter(term string, targets []string) []Rank {
 	return result
 }
 
-type statusMessageTimeoutMsg struct{}
-
 // Model contains the state of this component.
 type Model struct {
 	itemNameSingular string
@@ -107,8 +105,6 @@ type Model struct {
 
 	// Filter is used to filter the list.
 	Filter FilterFunc
-
-	disableQuitKeybindings bool
 
 	width       int
 	height      int
@@ -357,14 +353,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	cmds = append(cmds, m.handleBrowsing(msg))
 
 	return m, tea.Batch(cmds...)
-}
-
-func (m *Model) enableLiveFiltering() tea.Cmd {
-	m.Paginator.Page = 0
-	m.cursor = 0
-	m.FilterInput.CursorEnd()
-	m.FilterInput.Focus()
-	return tea.Batch(textinput.Blink, filterItems(*m))
 }
 
 // Updates for when a user is browsing the list.

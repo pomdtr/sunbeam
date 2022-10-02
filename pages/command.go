@@ -133,7 +133,11 @@ func NewActionRunner(command commands.Command) func(commands.ScriptAction) tea.C
 	return func(action commands.ScriptAction) tea.Cmd {
 
 		if action.Type != "push" {
-			commands.RunAction(action)
+			err := commands.RunAction(action)
+			if err != nil {
+				return utils.SendMsg(err)
+			}
+
 			return tea.Quit
 		}
 

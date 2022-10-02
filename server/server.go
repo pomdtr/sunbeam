@@ -29,7 +29,7 @@ func Serve(address string, port int) error {
 		res.WriteHeader(http.StatusOK)
 		encoder := json.NewEncoder(res)
 		encoder.SetIndent("", "  ")
-		encoder.Encode(routeMap)
+		_ = encoder.Encode(routeMap)
 	})
 
 	log.Println("Starting server on", fmt.Sprintf("%s:%d", address, port))
@@ -60,11 +60,11 @@ func serveScript(s commands.Script) http.HandlerFunc {
 		command := commands.Command{}
 		command.Script = s
 		command.Args = params
-		json.NewDecoder(req.Body).Decode(&command.Input)
+		_ = json.NewDecoder(req.Body).Decode(&command.Input)
 
 		scriptResponse := command.Run()
 
 		res.WriteHeader(http.StatusOK)
-		json.NewEncoder(res).Encode(scriptResponse)
+		_ = json.NewEncoder(res).Encode(scriptResponse)
 	}
 }

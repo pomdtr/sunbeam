@@ -18,7 +18,7 @@ func SunbeamFooterWithActions(width int, titleLabel string, activateLabel string
 	title := lipgloss.NewStyle().PaddingRight(1).Render(titleLabel)
 	activateButton := lipgloss.NewStyle().PaddingLeft(1).Render(fmt.Sprintf("%s ↩", activateLabel))
 	separator := lipgloss.NewStyle().Padding(0, 1).Render("|")
-	actionsButton := "Actions ^K"
+	actionsButton := "Actions ⇥"
 	line := strings.Repeat("─", utils.Max(0, width-lipgloss.Width(title)-lipgloss.Width(activateButton)-lipgloss.Width(separator)-lipgloss.Width(actionsButton)))
 	footer := lipgloss.JoinHorizontal(lipgloss.Center, title, line, activateButton, separator, actionsButton)
 

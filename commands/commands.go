@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -112,7 +111,6 @@ func (c Command) Run() (res ScriptResponse) {
 	var bytes []byte
 	bytes, err = json.Marshal(c.Input)
 	if err != nil {
-		err = fmt.Errorf("Error while marshalling input: %w", err)
 		return
 	}
 	inbuf.Write(bytes)
@@ -250,7 +248,7 @@ func (s ScriptEnvironment) Title() string {
 }
 
 func extractSunbeamMetadatas(content string) ScriptMetadatas {
-	r := regexp.MustCompile("@sunbeam.([A-Za-z0-9]+)\\s([\\S ]+)")
+	r := regexp.MustCompile(`@sunbeam.([A-Za-z0-9]+)\s([\S ]+)`)
 	groups := r.FindAllStringSubmatch(content, -1)
 
 	metadataMap := make(map[string]string)
@@ -259,8 +257,8 @@ func extractSunbeamMetadatas(content string) ScriptMetadatas {
 	}
 
 	metadatas := ScriptMetadatas{}
-	json.Unmarshal([]byte(metadataMap["schemaVersion"]), &metadatas.SchemaVersion)
-	json.Unmarshal([]byte(metadataMap["needsConfirmation"]), &metadatas.NeedsConfirmation)
+	_ = json.Unmarshal([]byte(metadataMap["schemaVersion"]), &metadatas.SchemaVersion)
+	_ = json.Unmarshal([]byte(metadataMap["needsConfirmation"]), &metadatas.NeedsConfirmation)
 
 	for _, key := range []string{"argument1", "argument2", "argument3"} {
 		var argument ScriptArgument
@@ -293,7 +291,7 @@ func extractSunbeamMetadatas(content string) ScriptMetadatas {
 }
 
 func Parse(script_path string) (Script, error) {
-	content, err := ioutil.ReadFile(script_path)
+	content, err := os.ReadFile(script_path)
 	if err != nil {
 		return Script{}, err
 	}
@@ -317,7 +315,7 @@ func Parse(script_path string) (Script, error) {
 }
 
 func ScanDir(dirPath string) ([]Script, error) {
-	files, err := ioutil.ReadDir(dirPath)
+	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return []Script{}, err
 	}
@@ -327,11 +325,6 @@ func ScanDir(dirPath string) ([]Script, error) {
 		if file.IsDir() {
 			dirScripts, _ := ScanDir(path.Join(dirPath, file.Name()))
 			scripts = append(scripts, dirScripts...)
-		}
-
-		// if script is not executable
-		if file.Mode()&0111 == 0 {
-			continue
 		}
 
 		script, err := Parse(path.Join(dirPath, file.Name()))

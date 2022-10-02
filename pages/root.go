@@ -36,10 +36,10 @@ func NewRootContainer(commandDir string) Page {
 	textInput.Focus()
 	rootURL, err := url.Parse(commandDir)
 	if err != nil {
-		rootURL = &url.URL{
-			Scheme: "file",
-			Path:   commandDir,
-		}
+		log.Fatal(err)
+	}
+	if rootURL.Scheme == "" {
+		rootURL.Scheme = "file"
 	}
 
 	return &RootContainer{Model: &l, textInput: textInput, commandRoot: *rootURL}
@@ -59,10 +59,7 @@ func (c RootContainer) gatherScripts() tea.Msg {
 		if err != nil {
 			return err
 		}
-		for _, script := range dirScripts {
-			// Scripts with an argument are not supported in the root view yet
-			scripts = append(scripts, script)
-		}
+		scripts = append(scripts, dirScripts...)
 	} else {
 		res, err := http.Get(c.commandRoot.String())
 		if err != nil {

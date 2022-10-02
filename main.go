@@ -13,8 +13,6 @@ import (
 	"github.com/pomdtr/sunbeam/server"
 )
 
-var docStyle = lipgloss.NewStyle().Margin(1, 2)
-
 type navigator struct {
 	width  int
 	height int
@@ -136,8 +134,6 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-
-		return
 	} else {
 		if args.CommandRoot == "" {
 			args.CommandRoot = commands.CommandDir
