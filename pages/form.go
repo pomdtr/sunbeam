@@ -21,26 +21,26 @@ type FormContainer struct {
 	title        string
 	inputs       []textinput.Model
 	focusIndex   int
-	submitAction func([]string) tea.Cmd
+	submitAction func(map[string]string) tea.Cmd
 	width        int
 	height       int
 }
 
-func NewFormContainer(title string, args []commands.ScriptArgument, submitAction func([]string) tea.Cmd) *FormContainer {
+func NewFormContainer(title string, items []commands.FormItem, submitAction func(map[string]string) tea.Cmd) *FormContainer {
 	c := &FormContainer{
 		title:        title,
+		inputs:       make([]textinput.Model, len(items)),
 		submitAction: submitAction,
-		inputs:       make([]textinput.Model, len(args)),
 	}
 
 	var t textinput.Model
-	for i, arg := range args {
+	for i, arg := range items {
 		t = textinput.New()
 		if i == 0 {
 			t.Focus()
 		}
 
-		t.Placeholder = arg.Placeholder
+		t.Placeholder = arg.Name
 		t.CursorStyle = cursorStyle
 		t.CharLimit = 32
 
@@ -80,9 +80,9 @@ func (c *FormContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, tea.Batch(cmds...)
 			}
 
-			values := make([]string, len(c.inputs))
-			for i := range c.inputs {
-				values[i] = c.inputs[i].Value()
+			values := make(map[string]string, len(c.inputs))
+			for _, input := range c.inputs {
+				values[input.Placeholder] = input.Value()
 			}
 			return c, c.submitAction(values)
 		// Set focus to next input

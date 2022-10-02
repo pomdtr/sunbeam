@@ -99,7 +99,7 @@ func (m navigator) View() string {
 
 type ServeCmd struct {
 	Host string `arg:"-h,--host" help:"Host to serve on"`
-	Port int    `arg:"-p,--port" help:"Port to serve on"`
+	Port int    `arg:"-p,--port" help:"Port to serve on" default:"8080"`
 }
 
 type RunCmd struct {

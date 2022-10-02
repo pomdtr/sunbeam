@@ -42,31 +42,12 @@ func (c *CommandContainer) SetSize(width, height int) {
 }
 
 func (c *CommandContainer) Init() tea.Cmd {
-	if len(c.command.Args) < len(c.command.Script.Args()) {
-		submitAction := func(args []string) tea.Cmd {
-			c.command.Args = args
-			return c.fetchItems(c.command)
-		}
-		c.embed = NewFormContainer(c.command.Title(), c.command.Script.Args(), submitAction)
-		c.embed.SetSize(c.width, c.height)
-		return nil
-	}
 	return tea.Batch(c.spinner.Tick, c.fetchItems(c.command))
 }
 
 func (c CommandContainer) fetchItems(command commands.Command) tea.Cmd {
 	return func() tea.Msg {
-		res, err := command.Run()
-		if err != nil {
-			return commands.ScriptResponse{
-				Type: "detail",
-				Detail: &commands.DetailResponse{
-					Format: "text",
-					Text:   err.Error(),
-				},
-			}
-		}
-		return res
+		return command.Run()
 	}
 }
 
@@ -94,6 +75,20 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.embed = NewListContainer(c.command.Title(), msg.List, actionRunner)
 		case "detail":
 			c.embed = NewDetailContainer(msg.Detail, actionRunner)
+		case "form":
+			submitAction := func(values map[string]string) tea.Cmd {
+				if msg.Form.Method == "args" {
+					for _, arg := range c.command.Metadatas.Arguments {
+						c.command.Args = append(c.command.Args, values[arg.Placeholder])
+					}
+					return c.fetchItems(c.command)
+				} else if msg.Form.Method == "stdin" {
+					c.command.Input.Form = values
+					return c.fetchItems(c.command)
+				}
+				return utils.NewErrorCmd("unknown form method: %s", msg.Form.Method)
+			}
+			c.embed = NewFormContainer(c.command.Title(), msg.Form.Items, submitAction)
 		case "action":
 			cmd = NewActionRunner(c.command)(*msg.Action)
 			return c, cmd

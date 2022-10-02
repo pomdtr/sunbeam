@@ -31,23 +31,49 @@ func init() {
 
 type Command struct {
 	Script
+	Env   map[string]string
 	Args  []string
 	Input CommandInput
 }
 
 type CommandInput struct {
 	Query   string `json:"query"`
+	Form    any    `json:"form"`
 	Storage any    `json:"storage"`
 }
 
-func (c Command) Run() (res ScriptResponse, err error) {
+func (c Command) Run() (res ScriptResponse) {
 	log.Printf("Running command %s with args %s", c.Script.Url.Path, c.Args)
+	// Check if the number of arguments is correct
+	if len(c.Args) < len(c.Metadatas.Arguments) {
+		formItems := make([]FormItem, 0)
+		for i := len(c.Args); i < len(c.Metadatas.Arguments); i++ {
+			formItems = append(formItems, FormItem{
+				Type: "text",
+				Id:   c.Metadatas.Arguments[i].Placeholder,
+				Name: c.Metadatas.Arguments[i].Placeholder,
+			})
+		}
+		return ScriptResponse{
+			Type: "form",
+			Form: &FormResponse{
+				Method: "args",
+				Items:  formItems,
+			},
+		}
+	}
+
 	cmd := exec.Command(c.Script.Url.Path, c.Args...)
 	cmd.Dir = path.Dir(cmd.Path)
 
 	// Copy process environment
 	cmd.Env = make([]string, len(os.Environ()))
 	copy(cmd.Env, os.Environ())
+
+	// Add custom environment variables to the process
+	for key, value := range c.Env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
+	}
 
 	// Add support dir to environment
 	supportDir := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "support")
@@ -77,6 +103,12 @@ func (c Command) Run() (res ScriptResponse, err error) {
 
 	if err != nil {
 		return
+	}
+
+	if c.Metadatas.Mode != "interactive" {
+		return ScriptResponse{
+			Type: "detail",
+		}
 	}
 
 	err = json.Unmarshal(outbuf.Bytes(), &res)
@@ -117,6 +149,15 @@ type DetailResponse struct {
 }
 
 type FormResponse struct {
+	Method string     `json:"dest" validate:"oneof=args stdin"`
+	Items  []FormItem `json:"items"`
+}
+
+type FormItem struct {
+	Type    string `json:"type" validate:"required,oneof=text password"`
+	Id      string `json:"id" validate:"required"`
+	Name    string `json:"name" validate:"required"`
+	Default string `json:"value"`
 }
 
 type ListResponse struct {
@@ -155,33 +196,19 @@ func (s Script) FilterValue() string { return s.Metadatas.Title }
 func (s Script) Title() string       { return s.Metadatas.Title }
 func (s Script) Description() string { return s.Metadatas.PackageName }
 
-func (s Script) Args() (args []ScriptArgument) {
-	if s.Metadatas.Argument1 != nil {
-		args = append(args, *s.Metadatas.Argument1)
-	}
-	if s.Metadatas.Argument2 != nil {
-		args = append(args, *s.Metadatas.Argument2)
-	}
-	if s.Metadatas.Argument3 != nil {
-		args = append(args, *s.Metadatas.Argument3)
-	}
-	return
-}
-
 type ScriptMetadatas struct {
-	SchemaVersion        int             `json:"schemaVersion" validate:"required,eq=1"`
-	Title                string          `json:"title" validate:"required"`
-	Mode                 string          `json:"mode" validate:"required,oneof=interactive silent fullOutput"`
-	PackageName          string          `json:"packageName" validate:"required"`
-	Description          string          `json:"description,omitempty"`
-	Argument1            *ScriptArgument `json:"argument1,omitempty" validate:"omitempty,dive"`
-	Argument2            *ScriptArgument `json:"argument2,omitempty" validate:"omitempty,dive"`
-	Argument3            *ScriptArgument `json:"argument3,omitempty" validate:"omitempty,dive"`
-	Icon                 string          `json:"icon,omitempty"`
-	CurrentDirectoryPath string          `json:"currentDirectoryPath,omitempty"`
-	NeedsConfirmation    bool            `json:"needsConfirmation,omitempty"`
-	Author               string          `json:"author,omitempty"`
-	AuthorUrl            string          `json:"authorUrl,omitempty"`
+	SchemaVersion        int                 `json:"schemaVersion" validate:"required,eq=1"`
+	Title                string              `json:"title" validate:"required"`
+	Mode                 string              `json:"mode" validate:"required,oneof=interactive silent fullOutput"`
+	PackageName          string              `json:"packageName" validate:"required"`
+	Description          string              `json:"description,omitempty"`
+	Arguments            []ScriptArgument    `json:"argument1,omitempty" validate:"omitempty,dive"`
+	Environment          []ScriptEnvironment `json:"environment,omitempty" validate:"omitempty,dive"`
+	Icon                 string              `json:"icon,omitempty"`
+	CurrentDirectoryPath string              `json:"currentDirectoryPath,omitempty"`
+	NeedsConfirmation    bool                `json:"needsConfirmation,omitempty"`
+	Author               string              `json:"author,omitempty"`
+	AuthorUrl            string              `json:"authorUrl,omitempty"`
 }
 
 type ScriptArgument struct {
@@ -190,6 +217,18 @@ type ScriptArgument struct {
 	Optional       bool   `json:"optional"`
 	PercentEncoded bool   `json:"percentEncoded"`
 	Secure         bool   `json:"secure"`
+}
+
+func (s ScriptArgument) Title() string {
+	return s.Placeholder
+}
+
+type ScriptEnvironment struct {
+	Name string `json:"name" validate:"required"`
+}
+
+func (s ScriptEnvironment) Title() string {
+	return s.Name
 }
 
 func extractSunbeamMetadatas(content string) ScriptMetadatas {
@@ -203,10 +242,25 @@ func extractSunbeamMetadatas(content string) ScriptMetadatas {
 
 	metadatas := ScriptMetadatas{}
 	json.Unmarshal([]byte(metadataMap["schemaVersion"]), &metadatas.SchemaVersion)
-	json.Unmarshal([]byte(metadataMap["argument1"]), &metadatas.Argument1)
-	json.Unmarshal([]byte(metadataMap["argument2"]), &metadatas.Argument2)
-	json.Unmarshal([]byte(metadataMap["argument3"]), &metadatas.Argument3)
 	json.Unmarshal([]byte(metadataMap["needsConfirmation"]), &metadatas.NeedsConfirmation)
+
+	for _, key := range []string{"argument1", "argument2", "argument3"} {
+		var argument ScriptArgument
+		err := json.Unmarshal([]byte(metadataMap[key]), &argument)
+		if err != nil {
+			break
+		}
+		metadatas.Arguments = append(metadatas.Arguments, argument)
+	}
+
+	for _, key := range []string{"environment1", "environment2", "environment3"} {
+		var environment ScriptEnvironment
+		err := json.Unmarshal([]byte(metadataMap[key]), &environment)
+		if err != nil {
+			break
+		}
+		metadatas.Environment = append(metadatas.Environment, environment)
+	}
 
 	metadatas.Title = metadataMap["title"]
 	metadatas.Mode = metadataMap["mode"]

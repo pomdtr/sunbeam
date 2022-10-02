@@ -69,12 +69,7 @@ func serveScript(s commands.Script) http.HandlerFunc {
 		command.Args = params
 		json.NewDecoder(req.Body).Decode(&command.Input)
 
-		scriptResponse, err := command.Run()
-		if err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			res.Write([]byte(err.Error()))
-			return
-		}
+		scriptResponse := command.Run()
 
 		res.WriteHeader(http.StatusOK)
 		json.NewEncoder(res).Encode(scriptResponse)
