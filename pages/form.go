@@ -61,26 +61,6 @@ func (c *FormContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if c.focusIndex < len(c.inputs)-1 {
-				cmds := make([]tea.Cmd, len(c.inputs))
-				c.focusIndex++
-				for i := 0; i <= len(c.inputs)-1; i++ {
-					if i == c.focusIndex {
-						// Set focused state
-						cmds[i] = c.inputs[i].Focus()
-						c.inputs[i].PromptStyle = focusedStyle
-						c.inputs[i].TextStyle = focusedStyle
-						continue
-					}
-					// Remove focused state
-					c.inputs[i].Blur()
-					c.inputs[i].PromptStyle = noStyle
-					c.inputs[i].TextStyle = noStyle
-				}
-
-				return c, tea.Batch(cmds...)
-			}
-
 			values := make(map[string]string, len(c.inputs))
 			for _, input := range c.inputs {
 				values[input.Placeholder] = input.Value()
