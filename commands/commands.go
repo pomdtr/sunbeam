@@ -91,28 +91,30 @@ func (c Command) Run() (res ScriptResponse, err error) {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
 
-	// Add support dir to environment
-	supportDir := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "support")
-	cmd.Env = append(cmd.Env, fmt.Sprintf("SUNBEAM_SUPPORT_DIR=%s", supportDir))
-
-	storagePath := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "storage.json")
-	storage, err := jsondb.Open[any](storagePath)
-	if err != nil {
-		log.Printf("Unable to init storage: %s", err)
-	}
-	c.Storage = &storage.Data
-
 	var inbuf, outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf
 	cmd.Stdout = &outbuf
 	cmd.Stdin = &inbuf
 
-	var bytes []byte
-	bytes, err = json.Marshal(c.CommandInput)
-	if err != nil {
-		return
+	storagePath := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "storage.json")
+	storage, err := jsondb.Open[any](storagePath)
+	if c.Metadatas.Mode == "interactive" {
+		// Add support dir to environment
+		supportDir := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "support")
+		cmd.Env = append(cmd.Env, fmt.Sprintf("SUNBEAM_SUPPORT_DIR=%s", supportDir))
+
+		var err error
+		if err != nil {
+			return res, fmt.Errorf("Error while opening command storage: %s", err)
+		}
+		c.Storage = &storage.Data
+		var bytes []byte
+		bytes, err = json.Marshal(c.CommandInput)
+		if err != nil {
+			return res, fmt.Errorf("unable to marshal command input: %s", err)
+		}
+		inbuf.Write(bytes)
 	}
-	inbuf.Write(bytes)
 
 	err = cmd.Run()
 
@@ -142,14 +144,23 @@ func (c Command) Run() (res ScriptResponse, err error) {
 	}
 	err = Validator.Struct(res)
 	if err != nil {
-		return
+		return ScriptResponse{
+			Type: "detail",
+			Detail: &DetailResponse{
+				Format: "text",
+				Actions: []ScriptAction{
+					{Type: "copy", Content: outbuf.String()},
+				},
+				Text: err.Error(),
+			},
+		}, nil
 	}
 
 	if res.Storage != nil {
 		storage.Data = &res.Storage
 		err = storage.Save()
 		if err != nil {
-			return
+			return res, fmt.Errorf("Error while saving command storage: %s", err)
 		}
 	}
 
@@ -206,7 +217,7 @@ func (i ScriptItem) Title() string       { return i.TitleField }
 func (i ScriptItem) Description() string { return i.Subtitle }
 
 type ScriptAction struct {
-	Type     string   `json:"type" validate:"required"`
+	Type     string   `json:"type" validate:"required,oneof=copy open url callback push"`
 	RawTitle string   `json:"title"`
 	Keybind  string   `json:"keybind"`
 	Path     string   `json:"path,omitempty"`
