@@ -117,7 +117,13 @@ func (c Command) Run() (res ScriptResponse, err error) {
 	err = cmd.Run()
 
 	if err != nil {
-		return
+		return ScriptResponse{
+			Type: "detail",
+			Detail: &DetailResponse{
+				Format: "text",
+				Text:   errbuf.String(),
+			},
+		}, nil
 	}
 
 	if c.Metadatas.Mode != "interactive" {

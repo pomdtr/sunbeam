@@ -7,13 +7,19 @@
 
 import subprocess
 import json
+import sys
 
-res = subprocess.run(
-    ["docker", "image", "ls", "--format", "{{ json . }}"],
-    text=True,
-    capture_output=True,
-    check=True,
-)
+try:
+    res = subprocess.run(
+        ["docker", "image", "ls", "--format", "{{ json . }}"],
+        text=True,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        check=True,
+    )
+except subprocess.CalledProcessError as e:
+    print(e.stderr, file=sys.stderr)
+    sys.exit(1)
 
 images = [json.loads(line) for line in res.stdout.splitlines()]
 
