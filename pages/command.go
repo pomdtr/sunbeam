@@ -144,7 +144,6 @@ func (container *CommandContainer) View() string {
 	spinner := lipgloss.NewStyle().Padding(0, 2).Render(container.spinner.View())
 	label := lipgloss.NewStyle().Render("Loading...")
 	loadingIndicator = lipgloss.JoinHorizontal(lipgloss.Center, spinner, label)
-	loadingIndicator = lipgloss.NewStyle().Padding(1, 0).Render(loadingIndicator)
 
 	newLines := strings.Repeat("\n", utils.Max(0, container.height-lipgloss.Height(loadingIndicator)-lipgloss.Height(container.footerView())-lipgloss.Height(container.headerView())-1))
 
