@@ -1,0 +1,5 @@
+{
+    "go.testEnvVars": {
+        "SUNBEAM_COMMAND_DIR": "${workspaceFolder}/scripts",
+    }
+}
