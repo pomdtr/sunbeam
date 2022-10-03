@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/bubbles"
 	commands "github.com/pomdtr/sunbeam/commands"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/skratchdot/open-golang/open"
@@ -58,9 +59,7 @@ func (c CommandContainer) fetchItems(command commands.Command) tea.Cmd {
 }
 
 func (c *CommandContainer) footerView() string {
-	title := lipgloss.NewStyle().Render(c.command.Title())
-	line := strings.Repeat("─", utils.Max(0, c.width-lipgloss.Width(c.command.Title())))
-	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
+	return bubbles.SunbeamFooter(c.width, c.command.Title())
 }
 
 func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {

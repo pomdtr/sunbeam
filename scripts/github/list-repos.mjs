@@ -12,7 +12,6 @@ const repos = JSON.parse(res);
 const view = {
   type: "list",
   list: {
-    title: "Repositories",
     items: repos.map((repo) => ({
       title: repo.full_name,
       subtitle: `${repo.stargazers_count} ⭐`,
