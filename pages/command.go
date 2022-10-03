@@ -47,7 +47,11 @@ func (c *CommandContainer) Init() tea.Cmd {
 
 func (c CommandContainer) fetchItems(command commands.Command) tea.Cmd {
 	return func() tea.Msg {
-		return command.Run()
+		res, err := command.Run()
+		if err != nil {
+			return err
+		}
+		return res
 	}
 }
 
@@ -73,27 +77,29 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 		switch msg.Type {
 		case "list":
 			c.embed = NewListContainer(c.command.Title(), msg.List, actionRunner)
+			c.embed.SetSize(c.width, c.height)
 		case "detail":
 			c.embed = NewDetailContainer(msg.Detail, actionRunner)
+			c.embed.SetSize(c.width, c.height)
 		case "form":
 			submitAction := func(values map[string]string) tea.Cmd {
 				if msg.Form.Method == "args" {
 					for _, arg := range c.command.Metadatas.Arguments {
-						c.command.Args = append(c.command.Args, values[arg.Placeholder])
+						c.command.Arguments = append(c.command.Arguments, values[arg.Placeholder])
 					}
 					return c.fetchItems(c.command)
 				} else if msg.Form.Method == "stdin" {
-					c.command.Input.Form = values
+					c.command.Form = values
 					return c.fetchItems(c.command)
 				}
 				return utils.NewErrorCmd("unknown form method: %s", msg.Form.Method)
 			}
 			c.embed = NewFormContainer(c.command.Title(), msg.Form.Items, submitAction)
+			c.embed.SetSize(c.width, c.height)
 		case "action":
 			cmd = NewActionRunner(c.command)(*msg.Action)
 			return c, cmd
 		}
-		c.embed.SetSize(c.width, c.height)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		c.spinner, cmd = c.spinner.Update(msg)
@@ -150,7 +156,7 @@ func NewActionRunner(command commands.Command) func(commands.ScriptAction) tea.C
 
 		next := commands.Command{}
 		next.Script = script
-		next.Args = action.Args
+		next.Arguments = action.Args
 
 		return NewPushCmd(NewCommandContainer(next))
 

@@ -5,15 +5,13 @@
 // @sunbeam.packageName File Browser
 // @sunbeam.mode interactive
 
-// @sunbeam.argument1 { "type": "text", "placeholder": "root", "required": false }
-
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
 
 $.verbose = false;
 
-const root = argv.root || os.homedir();
+const root = os.homedir();
 
 const files = await fs.readdir(root, { withFileTypes: true });
 
@@ -28,12 +26,13 @@ const items = await Promise.all(
         lstat.isDirectory()
           ? {
               type: "push",
-              path: "file-browser/filebrowser.mjs",
+              title: "Browse Directory",
+              path: "./filebrowser.mjs",
               options: {
                 root: filepath,
               },
             }
-          : { type: "open", path: filepath },
+          : { type: "open", title: "Open File", path: filepath },
       ],
     };
   })

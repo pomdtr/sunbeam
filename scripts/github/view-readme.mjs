@@ -18,6 +18,7 @@ const view = {
   type: "detail",
   detail: {
     text: readme,
+    format: "markdown",
     actions: [{ type: "open-url", url: `https://github.com/${repo}` }],
   },
 };

@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"html"
 	"log"
 	"net/http"
 	"strings"
@@ -42,27 +41,16 @@ func Route(s commands.Script) string {
 
 func serveScript(s commands.Script) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		params := make([]string, 0)
-
-		// Add required arguments
-		if args, ok := req.URL.Query()["_"]; ok {
-			args := strings.Split(",", args[0])
-			for arg := range args {
-				params = append(params, html.UnescapeString(args[arg]))
-			}
-		}
-
-		// Add options
-		for key, value := range req.URL.Query() {
-			params = append(params, fmt.Sprintf("--%s=%s", key, html.UnescapeString(value[0])))
-		}
-
 		command := commands.Command{}
 		command.Script = s
-		command.Args = params
-		_ = json.NewDecoder(req.Body).Decode(&command.Input)
+		_ = json.NewDecoder(req.Body).Decode(&command.CommandInput)
 
-		scriptResponse := command.Run()
+		scriptResponse, err := command.Run()
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			_, _ = res.Write([]byte(err.Error()))
+			return
+		}
 
 		res.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(res).Encode(scriptResponse)

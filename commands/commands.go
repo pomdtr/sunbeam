@@ -31,26 +31,27 @@ func init() {
 
 type Command struct {
 	Script
-	Env   map[string]string
-	Args  []string
-	Input CommandInput
+	CommandInput
 }
 
 type CommandInput struct {
-	Query   string `json:"query"`
-	Form    any    `json:"form"`
-	Storage any    `json:"storage"`
+	Environment map[string]string `json:"environment"`
+	Arguments   []string          `json:"arguments"`
+	Query       string            `json:"query"`
+	Form        any               `json:"form"`
+	Storage     any               `json:"storage"`
 }
 
-func (c Command) Run() (res ScriptResponse) {
-	log.Printf("Running command %s with args %s", c.Script.Url.Path, c.Args)
+func (c Command) Run() (res ScriptResponse, err error) {
+	log.Printf("Running command %s with args %s", c.Script.Url.Path, c.Arguments)
 	// Check if the number of arguments is correct
 	if c.Url.Scheme != "file" {
-		req, err := http.NewRequest(http.MethodPost, c.Url.String(), nil)
+		payload, err := json.Marshal(c.CommandInput)
 		if err != nil {
-			log.Fatalf("Error while creating request: %s", err)
+			return res, err
 		}
-		httpRes, err := http.DefaultClient.Do(req)
+
+		httpRes, err := http.Post(http.MethodPost, c.Url.String(), bytes.NewBuffer(payload))
 		if err != nil {
 			log.Fatalf("Error while running command: %s", err)
 		}
@@ -60,11 +61,11 @@ func (c Command) Run() (res ScriptResponse) {
 			log.Fatalf("Error while decoding response: %s", err)
 		}
 
-		return res
+		return res, nil
 	}
-	if len(c.Args) < len(c.Metadatas.Arguments) {
+	if len(c.Arguments) < len(c.Metadatas.Arguments) {
 		formItems := make([]FormItem, 0)
-		for i := len(c.Args); i < len(c.Metadatas.Arguments); i++ {
+		for i := len(c.Arguments); i < len(c.Metadatas.Arguments); i++ {
 			formItems = append(formItems, FormItem{
 				Type: "text",
 				Id:   c.Metadatas.Arguments[i].Placeholder,
@@ -77,10 +78,10 @@ func (c Command) Run() (res ScriptResponse) {
 				Method: "args",
 				Items:  formItems,
 			},
-		}
+		}, nil
 	}
 
-	cmd := exec.Command(c.Script.Url.Path, c.Args...)
+	cmd := exec.Command(c.Script.Url.Path, c.Arguments...)
 	cmd.Dir = path.Dir(cmd.Path)
 
 	// Copy process environment
@@ -88,7 +89,7 @@ func (c Command) Run() (res ScriptResponse) {
 	copy(cmd.Env, os.Environ())
 
 	// Add custom environment variables to the process
-	for key, value := range c.Env {
+	for key, value := range c.Environment {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
 
@@ -101,7 +102,7 @@ func (c Command) Run() (res ScriptResponse) {
 	if err != nil {
 		log.Printf("Unable to init storage: %s", err)
 	}
-	c.Input.Storage = &storage.Data
+	c.Storage = &storage.Data
 
 	var inbuf, outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf
@@ -109,7 +110,7 @@ func (c Command) Run() (res ScriptResponse) {
 	cmd.Stdin = &inbuf
 
 	var bytes []byte
-	bytes, err = json.Marshal(c.Input)
+	bytes, err = json.Marshal(c.CommandInput)
 	if err != nil {
 		return
 	}
@@ -124,7 +125,11 @@ func (c Command) Run() (res ScriptResponse) {
 	if c.Metadatas.Mode != "interactive" {
 		return ScriptResponse{
 			Type: "detail",
-		}
+			Detail: &DetailResponse{
+				Format: "text",
+				Text:   outbuf.String(),
+			},
+		}, nil
 	}
 
 	err = json.Unmarshal(outbuf.Bytes(), &res)
@@ -159,7 +164,7 @@ type ScriptResponse struct {
 }
 
 type DetailResponse struct {
-	Format  string         `json:"format"`
+	Format  string         `json:"format" validate:"required,oneof=text markdown"`
 	Text    string         `json:"text"`
 	Actions []ScriptAction `json:"actions"`
 }
@@ -325,6 +330,11 @@ func ScanDir(dirPath string) ([]Script, error) {
 		if file.IsDir() {
 			dirScripts, _ := ScanDir(path.Join(dirPath, file.Name()))
 			scripts = append(scripts, dirScripts...)
+		}
+
+		if fileinfo, err := file.Info(); err != nil || fileinfo.Mode()&0111 == 0 {
+			log.Printf("%s is not executable", file.Name())
+			continue
 		}
 
 		script, err := Parse(path.Join(dirPath, file.Name()))
