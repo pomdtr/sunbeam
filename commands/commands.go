@@ -183,7 +183,7 @@ type FormItem struct {
 
 type ListResponse struct {
 	Title         string        `json:"title"`
-	OnQueryChange *ScriptAction `json:"omitempty,onQueryChange"`
+	OnQueryChange *ScriptAction `json:"onQueryChange,omitempty"`
 	Items         []ScriptItem  `json:"items"`
 }
 

@@ -129,12 +129,6 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return c, cmd
 }
 
-var titleStyle = lipgloss.NewStyle().
-	Background(lipgloss.Color("62")).
-	Foreground(lipgloss.Color("230")).
-	Margin(0, 2).
-	Padding(0, 1)
-
 func (container *CommandContainer) View() string {
 	if container.embed != nil {
 		return container.embed.View()
@@ -168,13 +162,22 @@ func (c CommandContainer) RunAction(action commands.ScriptAction) tea.Cmd {
 
 		return NewPushCmd(NewCommandContainer(next))
 	case "open":
-		_ = open.Run(action.Path)
+		err := open.Run(action.Path)
+		if err != nil {
+			return utils.NewErrorCmd("failed to open file: %s", err)
+		}
 		return tea.Quit
 	case "open-url":
-		_ = open.Run(action.Url)
+		err := open.Run(action.Url)
+		if err != nil {
+			return utils.NewErrorCmd("failed to open url: %s", err)
+		}
 		return tea.Quit
 	case "copy":
-		_ = clipboard.WriteAll(action.Content)
+		err := clipboard.WriteAll(action.Content)
+		if err != nil {
+			return utils.NewErrorCmd("failed to access clipboard: %s", err)
+		}
 		return tea.Quit
 	default:
 		log.Printf("Unknown action type: %s", action.Type)

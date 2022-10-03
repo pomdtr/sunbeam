@@ -9,19 +9,11 @@ import (
 	commands "github.com/pomdtr/sunbeam/commands"
 )
 
-var infoStyle = func() lipgloss.Style {
-	b := lipgloss.RoundedBorder()
-	b.Left = "┤"
-	return titleStyle.Copy().BorderStyle(b)
-}()
-
 type ActionRunner func(commands.ScriptAction) tea.Cmd
 
 type DetailContainer struct {
 	response  commands.DetailResponse
 	runAction ActionRunner
-	width     int
-	height    int
 	viewport  *viewport.Model
 }
 
