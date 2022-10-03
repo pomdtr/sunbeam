@@ -1,6 +1,8 @@
 package pages
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -37,6 +39,7 @@ func NewFormContainer(response *commands.FormResponse, submitAction func(map[str
 			t.Focus()
 		}
 
+		t.Prompt = fmt.Sprintf("%s: ", arg.Name)
 		t.Placeholder = arg.Name
 		t.CursorStyle = cursorStyle
 		t.CharLimit = 32
@@ -132,15 +135,12 @@ func (c *FormContainer) View() string {
 	var formItems []string
 	var itemView string
 	for i := range c.inputs {
-		itemView = c.inputs[i].View()
-		if i != len(c.inputs)-1 {
-			itemView += "\n"
-		}
+		itemView = "\n" + c.inputs[i].View()
 		formItems = append(formItems, itemView)
 	}
 
 	form := lipgloss.JoinVertical(lipgloss.Left, formItems...)
-	form = lipgloss.Place(c.width, c.height, lipgloss.Left, lipgloss.Center, form)
+	form = lipgloss.Place(c.width, c.height, lipgloss.Left, lipgloss.Top, form)
 
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), form, c.footerView())
 }
