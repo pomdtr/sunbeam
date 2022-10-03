@@ -1,15 +1,12 @@
 package pages
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/bubbles"
 	commands "github.com/pomdtr/sunbeam/commands"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 var infoStyle = func() lipgloss.Style {
@@ -23,6 +20,8 @@ type ActionRunner func(commands.ScriptAction) tea.Cmd
 type DetailContainer struct {
 	response  commands.DetailResponse
 	runAction ActionRunner
+	width     int
+	height    int
 	viewport  *viewport.Model
 }
 
@@ -45,17 +44,19 @@ func NewDetailContainer(response *commands.DetailResponse, runAction ActionRunne
 
 func (c DetailContainer) SetSize(width, height int) {
 	c.viewport.Width = width
-	c.viewport.Height = height - lipgloss.Height(c.footerView())
+	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
 }
 
 func (c DetailContainer) Init() tea.Cmd {
 	return nil
 }
 
-func (m DetailContainer) footerView() string {
-	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100))
-	line := strings.Repeat("─", utils.Max(0, m.viewport.Width-lipgloss.Width(info)))
-	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
+func (c DetailContainer) headerView() string {
+	return bubbles.SunbeamHeader(c.viewport.Width)
+}
+
+func (c DetailContainer) footerView() string {
+	return bubbles.SunbeamFooter(c.viewport.Width, c.response.Title)
 }
 
 func (c DetailContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -79,5 +80,5 @@ func (c DetailContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c DetailContainer) View() string {
-	return fmt.Sprintf("%s\n%s", c.viewport.View(), c.footerView())
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.viewport.View(), c.footerView())
 }

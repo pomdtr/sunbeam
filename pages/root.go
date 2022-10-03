@@ -32,7 +32,7 @@ func NewRootContainer(commandDir string) Page {
 
 	textInput := textinput.NewModel()
 	textInput.Prompt = ""
-	textInput.Placeholder = "Search for apps and commands..."
+	textInput.Placeholder = "Search Commands..."
 	textInput.Focus()
 	rootURL, err := url.Parse(commandDir)
 	if err != nil {

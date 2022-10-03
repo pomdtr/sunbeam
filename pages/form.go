@@ -51,6 +51,10 @@ func (c *FormContainer) Init() tea.Cmd {
 	return nil
 }
 
+func (c *FormContainer) headerView() string {
+	return bubbles.SunbeamHeader(c.width)
+}
+
 func (c *FormContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
@@ -137,7 +141,7 @@ func (c FormContainer) updateInputs(msg tea.Msg) tea.Cmd {
 
 func (c *FormContainer) SetSize(width, height int) {
 	c.width = width
-	c.height = height - lipgloss.Height(c.footerView())
+	c.height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
 }
 
 func (c FormContainer) footerView() string {
@@ -158,5 +162,5 @@ func (c *FormContainer) View() string {
 	form := lipgloss.JoinVertical(lipgloss.Left, formItems...)
 	form = lipgloss.Place(c.width, c.height, lipgloss.Left, lipgloss.Center, form)
 
-	return lipgloss.JoinVertical(lipgloss.Left, form, c.footerView())
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), form, c.footerView())
 }
