@@ -42,7 +42,7 @@ func (i ItemDelegate) Height() int {
 
 // Spacing is the size of the horizontal gap between list items in cells.
 func (i ItemDelegate) Spacing() int {
-	return 1
+	return 0
 }
 
 // Render prints an item.
