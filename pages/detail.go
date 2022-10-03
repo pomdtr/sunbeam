@@ -18,15 +18,15 @@ var infoStyle = func() lipgloss.Style {
 	return titleStyle.Copy().BorderStyle(b)
 }()
 
-type NewSelectActionCmd func(commands.ScriptAction) tea.Cmd
+type ActionRunner func(commands.ScriptAction) tea.Cmd
 
 type DetailContainer struct {
-	response     commands.DetailResponse
-	selectAction NewSelectActionCmd
-	viewport     *viewport.Model
+	response  commands.DetailResponse
+	runAction ActionRunner
+	viewport  *viewport.Model
 }
 
-func NewDetailContainer(response *commands.DetailResponse, selectAction NewSelectActionCmd) DetailContainer {
+func NewDetailContainer(response *commands.DetailResponse, runAction ActionRunner) DetailContainer {
 	viewport := viewport.New(0, 0)
 	var content string
 	if lipgloss.HasDarkBackground() {
@@ -37,9 +37,9 @@ func NewDetailContainer(response *commands.DetailResponse, selectAction NewSelec
 	viewport.SetContent(content)
 
 	return DetailContainer{
-		response:     *response,
-		selectAction: selectAction,
-		viewport:     &viewport,
+		response:  *response,
+		runAction: runAction,
+		viewport:  &viewport,
 	}
 }
 
@@ -65,7 +65,7 @@ func (c DetailContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case tea.KeyRunes:
 			for _, action := range c.response.Actions {
 				if action.Keybind == string(msg.Runes) {
-					return c, c.selectAction(action)
+					return c, c.runAction(action)
 				}
 			}
 		case tea.KeyEscape:

@@ -15,7 +15,7 @@ var (
 )
 
 type FormContainer struct {
-	title        string
+	response     *commands.FormResponse
 	inputs       []textinput.Model
 	focusIndex   int
 	submitAction func(map[string]string) tea.Cmd
@@ -23,15 +23,15 @@ type FormContainer struct {
 	height       int
 }
 
-func NewFormContainer(title string, items []commands.FormItem, submitAction func(map[string]string) tea.Cmd) *FormContainer {
+func NewFormContainer(response *commands.FormResponse, submitAction func(map[string]string) tea.Cmd) *FormContainer {
 	c := &FormContainer{
-		title:        title,
-		inputs:       make([]textinput.Model, len(items)),
+		inputs:       make([]textinput.Model, len(response.Items)),
+		response:     response,
 		submitAction: submitAction,
 	}
 
 	var t textinput.Model
-	for i, arg := range items {
+	for i, arg := range response.Items {
 		t = textinput.New()
 		if i == 0 {
 			t.Focus()
@@ -141,7 +141,7 @@ func (c *FormContainer) SetSize(width, height int) {
 }
 
 func (c FormContainer) footerView() string {
-	return bubbles.SunbeamFooterWithActions(c.width, c.title, "Submit")
+	return bubbles.SunbeamFooterWithActions(c.width, c.response.Title, "Submit")
 }
 
 func (c *FormContainer) View() string {

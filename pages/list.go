@@ -17,13 +17,13 @@ type ListContainer struct {
 	textInput *textinput.Model
 	width     int
 	height    int
-	title     string
-	runner    NewSelectActionCmd
+	response  *commands.ListResponse
+	runAction ActionRunner
 }
 
 var listContainer = list.New([]list.Item{}, NewItemDelegate(), 0, 0)
 
-func NewListContainer(title string, res *commands.ListResponse, runner NewSelectActionCmd) Page {
+func NewListContainer(res *commands.ListResponse, runAction ActionRunner) Page {
 	var l list.Model
 	_ = copier.Copy(&l, &listContainer)
 
@@ -41,8 +41,8 @@ func NewListContainer(title string, res *commands.ListResponse, runner NewSelect
 	return &ListContainer{
 		list:      &l,
 		textInput: &textInput,
-		title:     title,
-		runner:    runner,
+		response:  res,
+		runAction: runAction,
 	}
 }
 
@@ -64,13 +64,13 @@ func (c *ListContainer) headerView() string {
 func (c *ListContainer) footerView() string {
 	selectedItem := c.list.SelectedItem()
 	if selectedItem == nil {
-		return bubbles.SunbeamFooter(c.width, c.title)
+		return bubbles.SunbeamFooter(c.width, c.response.Title)
 	}
 
 	if item, ok := selectedItem.(commands.ScriptItem); ok && len(item.Actions) > 0 {
-		return bubbles.SunbeamFooterWithActions(c.width, c.title, item.Actions[0].Title)
+		return bubbles.SunbeamFooterWithActions(c.width, c.response.Title, item.Actions[0].Title())
 	} else {
-		return bubbles.SunbeamFooter(c.width, c.title)
+		return bubbles.SunbeamFooter(c.width, c.response.Title)
 	}
 }
 
@@ -87,7 +87,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			selectedItem := selectedItem.(commands.ScriptItem)
 			primaryAction := selectedItem.Actions[0]
-			return c, c.runner(primaryAction)
+			return c, c.runAction(primaryAction)
 		default:
 			if selectedItem == nil {
 				break
@@ -95,7 +95,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			selectedItem := selectedItem.(commands.ScriptItem)
 			for _, action := range selectedItem.Actions {
 				if action.Keybind == msg.String() {
-					return c, c.runner(action)
+					return c, c.runAction(action)
 				}
 			}
 		}
@@ -109,6 +109,9 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 
 	t, cmd := c.textInput.Update(msg)
+	if c.response.OnQueryChange != nil && t.Value() != c.textInput.Value() {
+		cmds = append(cmds, c.runAction(*c.response.OnQueryChange))
+	}
 	cmds = append(cmds, cmd)
 	c.textInput = &t
 

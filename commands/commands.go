@@ -13,9 +13,7 @@ import (
 	"regexp"
 
 	"github.com/adrg/xdg"
-	"github.com/atotto/clipboard"
 	"github.com/go-playground/validator"
-	"github.com/skratchdot/open-golang/open"
 	"tailscale.com/jsondb"
 )
 
@@ -164,12 +162,14 @@ type ScriptResponse struct {
 }
 
 type DetailResponse struct {
+	Title   string         `json:"title"`
 	Format  string         `json:"format" validate:"required,oneof=text markdown"`
 	Text    string         `json:"text"`
 	Actions []ScriptAction `json:"actions"`
 }
 
 type FormResponse struct {
+	Title  string     `json:"title"`
 	Method string     `json:"dest" validate:"oneof=args stdin"`
 	Items  []FormItem `json:"items"`
 }
@@ -182,8 +182,9 @@ type FormItem struct {
 }
 
 type ListResponse struct {
-	Title string       `json:"title"`
-	Items []ScriptItem `json:"items"`
+	Title         string        `json:"title"`
+	OnQueryChange *ScriptAction `json:"omitempty,onQueryChange"`
+	Items         []ScriptItem  `json:"items"`
 }
 
 type ScriptItem struct {
@@ -199,13 +200,34 @@ func (i ScriptItem) Title() string       { return i.TitleField }
 func (i ScriptItem) Description() string { return i.Subtitle }
 
 type ScriptAction struct {
-	Title   string   `json:"title" validate:"required,oneof=copy open open-url"`
-	Keybind string   `json:"keybind"`
-	Type    string   `json:"type" validate:"required"`
-	Path    string   `json:"path,omitempty"`
-	Url     string   `json:"url,omitempty"`
-	Content string   `json:"content,omitempty"`
-	Args    []string `json:"args,omitempty"`
+	Type     string   `json:"type" validate:"required"`
+	RawTitle string   `json:"title"`
+	Keybind  string   `json:"keybind"`
+	Path     string   `json:"path,omitempty"`
+	Url      string   `json:"url,omitempty"`
+	Params   any      `json:"params,omitempty"`
+	Content  string   `json:"content,omitempty"`
+	Args     []string `json:"args,omitempty"`
+}
+
+func (a ScriptAction) Title() string {
+	if a.RawTitle != "" {
+		return a.RawTitle
+	}
+	switch a.Type {
+	case "open":
+		return "Open"
+	case "open-url":
+		return "Open in Browser"
+	case "copy":
+		return "Copy to Clibpoard"
+	case "push":
+		return "Switch Page"
+	case "callback":
+		return "Refresh"
+	default:
+		return ""
+	}
 }
 
 type Script struct {
@@ -350,15 +372,6 @@ func ScanDir(dirPath string) ([]Script, error) {
 
 func RunAction(action ScriptAction) (err error) {
 	switch action.Type {
-	case "open":
-		err = open.Run(action.Path)
-		return err
-	case "open-url":
-		err := open.Run(action.Url)
-		return err
-	case "copy":
-		err = clipboard.WriteAll(action.Content)
-		return err
 	}
 	return nil
 }
