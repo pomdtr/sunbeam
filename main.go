@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
+	"github.com/adrg/xdg"
 	"github.com/alexflint/go-arg"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -141,8 +143,15 @@ func main() {
 		root = pages.NewRootContainer(args.CommandRoot)
 	}
 
+	var logFile string
 	// Log to a file
-	f, err := tea.LogToFile("debug.log", "debug")
+	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
+		logFile = env
+	} else {
+		logFile = path.Join(xdg.StateHome, "sunbeam.log")
+	}
+
+	f, err := tea.LogToFile(logFile, "debug")
 	if err != nil {
 		log.Fatalf("could not open log file: %v", err)
 	}
