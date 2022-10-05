@@ -25,7 +25,7 @@ const view = {
         {
           type: "push",
           title: "List Prs",
-          keybind: "ctrl+p",
+          keybind: "ctrl+a",
           path: "./list-prs.mjs",
           args: [repo.full_name],
         },

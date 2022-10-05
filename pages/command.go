@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"log"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -80,7 +81,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if list.Title == "" {
 				list.Title = c.command.Title()
 			}
-			c.embed = NewListContainer(msg.List, c.RunAction)
+			c.embed = NewListContainer(msg.List)
 			c.embed.SetSize(c.width, c.height)
 		case "detail":
 			detail := msg.Detail
@@ -116,6 +117,8 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			cmd = c.RunAction(*msg.Action)
 			return c, cmd
 		}
+	case commands.ScriptAction:
+		return c, c.RunAction(msg)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		c.spinner, cmd = c.spinner.Update(msg)
@@ -147,6 +150,10 @@ func (container *CommandContainer) View() string {
 func (c CommandContainer) RunAction(action commands.ScriptAction) tea.Cmd {
 	switch action.Type {
 	case "callback":
+		c.command.Params = action.Params
+		if action.Push {
+			return NewPushCmd(c.command)
+		}
 		return c.fetchItems(c.command)
 	case "push":
 		commandDir := path.Dir(c.command.Url.Path)
@@ -160,7 +167,27 @@ func (c CommandContainer) RunAction(action commands.ScriptAction) tea.Cmd {
 		next.Script = script
 		next.Arguments = action.Args
 
-		return NewPushCmd(NewCommandContainer(next))
+		return NewPushCmd(next)
+	case "exec":
+		var cmd *exec.Cmd
+		if len(action.Command) == 1 {
+			cmd = exec.Command(action.Command[0])
+		} else {
+			cmd = exec.Command(action.Command[0], action.Command[1:]...)
+		}
+		err := cmd.Run()
+		if err != nil {
+			return utils.SendMsg(
+				commands.ScriptResponse{
+					Type: "detail",
+					Detail: &commands.DetailResponse{
+						Format: "text",
+						Text:   err.Error(),
+					},
+				},
+			)
+		}
+		return tea.Quit
 	case "open":
 		err := open.Run(action.Path)
 		if err != nil {

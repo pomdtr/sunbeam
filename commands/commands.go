@@ -35,6 +35,7 @@ type Command struct {
 type CommandInput struct {
 	Environment map[string]string `json:"environment"`
 	Arguments   []string          `json:"arguments"`
+	Params      any               `json:"params"`
 	Query       string            `json:"query"`
 	Form        any               `json:"form"`
 	Storage     any               `json:"storage"`
@@ -51,7 +52,13 @@ func (c Command) Run() (res ScriptResponse, err error) {
 
 		httpRes, err := http.Post(http.MethodPost, c.Url.String(), bytes.NewBuffer(payload))
 		if err != nil {
-			log.Fatalf("Error while running command: %s", err)
+			return ScriptResponse{
+				Type: "detail",
+				Detail: &DetailResponse{
+					Format: "text",
+					Text:   fmt.Errorf("Error while running command: %s", err).Error(),
+				},
+			}, nil
 		}
 		var res ScriptResponse
 		err = json.NewDecoder(httpRes.Body).Decode(&res)
@@ -61,7 +68,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 
 		return res, nil
 	}
-	if len(c.Arguments) < len(c.Metadatas.Arguments) {
+	if len(c.Arguments) < len(c.RequiredArguments()) {
 		formItems := make([]FormItem, 0)
 		for i := len(c.Arguments); i < len(c.Metadatas.Arguments); i++ {
 			formItems = append(formItems, FormItem{
@@ -199,21 +206,22 @@ type FormItem struct {
 }
 
 type ListResponse struct {
-	Title         string        `json:"title"`
-	OnQueryChange *ScriptAction `json:"onQueryChange,omitempty"`
-	Items         []ScriptItem  `json:"items"`
+	Title                string        `json:"title"`
+	SearchBarPlaceholder string        `json:"searchBarPlaceholder"`
+	OnQueryChange        *ScriptAction `json:"onQueryChange,omitempty"`
+	Items                []ScriptItem  `json:"items"`
 }
 
 type ScriptItem struct {
-	Icon       string         `json:"icon"`
-	TitleField string         `json:"title" validate:"required"`
-	Subtitle   string         `json:"subtitle"`
-	Fill       string         `json:"fill"`
-	Actions    []ScriptAction `json:"actions" validate:"required,gte=1,dive"`
+	Icon     string         `json:"icon"`
+	RawTitle string         `json:"title" validate:"required"`
+	Subtitle string         `json:"subtitle"`
+	Fill     string         `json:"fill"`
+	Actions  []ScriptAction `json:"actions" validate:"required,gte=1,dive"`
 }
 
-func (i ScriptItem) FilterValue() string { return i.TitleField }
-func (i ScriptItem) Title() string       { return i.TitleField }
+func (i ScriptItem) FilterValue() string { return i.RawTitle }
+func (i ScriptItem) Title() string       { return i.RawTitle }
 func (i ScriptItem) Description() string { return i.Subtitle }
 
 type ScriptAction struct {
@@ -221,6 +229,8 @@ type ScriptAction struct {
 	RawTitle string   `json:"title"`
 	Keybind  string   `json:"keybind"`
 	Path     string   `json:"path,omitempty"`
+	Push     bool     `json:"push,omitempty"`
+	Command  []string `json:"command,omitempty"`
 	Url      string   `json:"url,omitempty"`
 	Params   any      `json:"params,omitempty"`
 	Content  string   `json:"content,omitempty"`
@@ -247,6 +257,14 @@ func (a ScriptAction) Title() string {
 	}
 }
 
+func (a ScriptAction) Description() string {
+	return a.Keybind
+}
+
+func (a ScriptAction) FilterValue() string {
+	return a.Title()
+}
+
 type Script struct {
 	Url       url.URL
 	Metadatas ScriptMetadatas
@@ -255,6 +273,16 @@ type Script struct {
 func (s Script) FilterValue() string { return s.Metadatas.Title }
 func (s Script) Title() string       { return s.Metadatas.Title }
 func (s Script) Description() string { return s.Metadatas.PackageName }
+
+func (s Script) RequiredArguments() []ScriptArgument {
+	var res []ScriptArgument
+	for _, arg := range s.Metadatas.Arguments {
+		if !arg.Optional {
+			res = append(res, arg)
+		}
+	}
+	return res
+}
 
 type ScriptMetadatas struct {
 	SchemaVersion        int                 `json:"schemaVersion" validate:"required,eq=1"`

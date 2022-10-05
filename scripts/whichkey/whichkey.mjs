@@ -32,7 +32,6 @@ let root = {
           path: "/Applications/Reminders.app",
         },
         s: {
-          keybind: "s",
           title: "Slack",
           type: "open",
           path: "/Applications/Slack.app",
@@ -56,7 +55,6 @@ let root = {
               url: "https://github.com/notifications",
             },
             s: {
-              keybind: "s",
               title: "StackOverflow",
               type: "open-url",
               url: "https://github.com/pulls",
@@ -100,7 +98,8 @@ const view = {
         return {
           title: item.title,
           type: "push",
-          path: "whichkey/whichkey",
+          keybind,
+          path: "./whichkey.mjs",
           args: [...args, keybind],
         };
       } else {

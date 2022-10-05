@@ -62,15 +62,17 @@ func (c *FormContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
+		switch msg.Type {
+		case tea.KeyEscape:
+			return c, PopCmd
+		case tea.KeyEnter:
 			values := make(map[string]string, len(c.inputs))
 			for _, input := range c.inputs {
 				values[input.Placeholder] = input.Value()
 			}
 			return c, c.submitAction(values)
 		// Set focus to next input
-		case "tab", "shift+tab", "up", "down":
+		case tea.KeyTab, tea.KeyShiftTab, tea.KeyDown, tea.KeyUp:
 			s := msg.String()
 
 			// Cycle indexes

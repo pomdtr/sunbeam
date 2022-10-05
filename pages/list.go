@@ -10,26 +10,32 @@ import (
 	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/bubbles/list"
 	commands "github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type ListContainer struct {
-	list      *list.Model
-	textInput *textinput.Model
-	width     int
-	height    int
-	response  *commands.ListResponse
-	runAction ActionRunner
+	list       *list.Model
+	actionList *ActionList
+	textInput  *textinput.Model
+	width      int
+	height     int
+	response   *commands.ListResponse
 }
 
 var listContainer = list.New([]list.Item{}, NewItemDelegate(), 0, 0)
 
-func NewListContainer(res *commands.ListResponse, runAction ActionRunner) Page {
+func NewListContainer(res *commands.ListResponse) Page {
 	var l list.Model
 	_ = copier.Copy(&l, &listContainer)
 
 	textInput := textinput.NewModel()
 	textInput.Prompt = ""
-	textInput.Placeholder = "Search..."
+	textInput.Placeholder = res.SearchBarPlaceholder
+	if res.SearchBarPlaceholder != "" {
+		textInput.Placeholder = res.SearchBarPlaceholder
+	} else {
+		textInput.Placeholder = "Search..."
+	}
 	textInput.Focus()
 
 	listItems := make([]list.Item, len(res.Items))
@@ -42,7 +48,6 @@ func NewListContainer(res *commands.ListResponse, runAction ActionRunner) Page {
 		list:      &l,
 		textInput: &textInput,
 		response:  res,
-		runAction: runAction,
 	}
 }
 
@@ -86,8 +91,19 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 			selectedItem := selectedItem.(commands.ScriptItem)
-			primaryAction := selectedItem.Actions[0]
-			return c, c.runAction(primaryAction)
+			return c, utils.SendMsg(selectedItem.Actions[0])
+		case tea.KeyEscape:
+			return c, PopCmd
+		case tea.KeyCtrlP:
+			if selectedItem == nil {
+				break
+			}
+			selectedItem := selectedItem.(commands.ScriptItem)
+			c.actionList = NewActionList(selectedItem.Title(), selectedItem.Actions)
+			c.actionList.SetSize(c.width, c.height)
+
+			return c, nil
+
 		default:
 			if selectedItem == nil {
 				break
@@ -95,7 +111,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			selectedItem := selectedItem.(commands.ScriptItem)
 			for _, action := range selectedItem.Actions {
 				if action.Keybind == msg.String() {
-					return c, c.runAction(action)
+					return c, utils.SendMsg(action)
 				}
 			}
 		}
@@ -110,7 +126,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	t, cmd := c.textInput.Update(msg)
 	if c.response.OnQueryChange != nil && t.Value() != c.textInput.Value() {
-		cmds = append(cmds, c.runAction(*c.response.OnQueryChange))
+		cmds = append(cmds, utils.SendMsg(*c.response.OnQueryChange))
 	}
 	cmds = append(cmds, cmd)
 	c.textInput = &t
@@ -123,5 +139,8 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *ListContainer) View() string {
+	if c.actionList != nil {
+		return c.actionList.View()
+	}
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.list.View(), c.footerView())
 }

@@ -57,17 +57,17 @@ func (m navigator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyEscape:
-			if len(m.pages) == 1 {
-				return m, tea.Quit
-			}
-			m.PopPage()
-			return m, nil
 		case tea.KeyCtrlC:
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
+	case pages.PopMsg:
+		if len(m.pages) == 1 {
+			return m, tea.Quit
+		}
+		m.PopPage()
+		return m, nil
 
 	case pages.PushMsg:
 		container := msg.Container

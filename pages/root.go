@@ -32,7 +32,7 @@ func NewRootContainer(commandDir string) Page {
 
 	textInput := textinput.NewModel()
 	textInput.Prompt = ""
-	textInput.Placeholder = "Search Commands..."
+	textInput.Placeholder = "Search for commands..."
 	textInput.Focus()
 	rootURL, err := url.Parse(commandDir)
 	if err != nil {
@@ -91,6 +91,8 @@ func (container RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
+		case tea.KeyEscape:
+			return &container, PopCmd
 		case tea.KeyCtrlE:
 			if selectedItem == nil {
 				break
@@ -116,8 +118,7 @@ func (container RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if !ok {
 				return &container, tea.Quit
 			}
-			var next = NewCommandContainer(commands.Command{Script: selectedItem})
-			return &container, NewPushCmd(next)
+			return &container, NewPushCmd(commands.Command{Script: selectedItem})
 		}
 	case []commands.Script:
 		items := make([]list.Item, len(msg))

@@ -390,6 +390,7 @@ shell:
   program: "/usr/bin/env"
   args:
     - "PATH=/usr/local/bin/:/usr/bin:/bin:/Users/a.lacoin/go/bin"
+    - "EDITOR=/usr/local/bin/kak"
     - "sunbeam"
     - "--command-root=/Users/a.lacoin/Developer/pomdtr/sunbeam/scripts"
   # Startup directory
@@ -827,32 +828,30 @@ shell:
 colors:
   # Default colors
   primary:
-    background: '0x24292e'
-    foreground: '0xd1d5da'
+    # hard contrast: background = '#1d2021'
+    background: '#282828'
+    # soft contrast: background = '#32302f'
+    foreground: '#ebdbb2'
 
   # Normal colors
   normal:
-    black: '0x24292e'
-    red: '0xf14c4c'
-    green: '0x23d18b'
-    yellow: '0xe2e210'
-    blue: '0x3b8eea'
-    magenta: '0xbc3fbc'
-    cyan: '0x29b7da'
-    white: '0xd1d5da'
+    black: '#282828'
+    red: '#cc241d'
+    green: '#98971a'
+    yellow: '#d79921'
+    blue: '#458588'
+    magenta: '#b16286'
+    cyan: '#689d6a'
+    white: '#a89984'
 
   # Bright colors
   bright:
-    black: '0x666666'
-    red: '0xf14c4c'
-    green: '0x23d18b'
-    yellow: '0xf5f543'
-    blue: '0x3b8eea'
-    magenta: '0xd670d6'
-    cyan: '0x29b7da'
-    white: '0xd1d5da'
-
-  indexed_colors:
-    - { index: 16, color: '0xd18616' }
-    - { index: 17, color: '0xf14c4c' }
-theme: github_dark
+    black: '#928374'
+    red: '#fb4934'
+    green: '#b8bb26'
+    yellow: '#fabd2f'
+    blue: '#83a598'
+    magenta: '#d3869b'
+    cyan: '#8ec07c'
+    white: '#ebdbb2'
+theme: Gruvbox-Dark

@@ -1,19 +1,25 @@
 #!/usr/bin/env zx
 
 // @sunbeam.schemaVersion 1
-// @sunbeam.title Browse My Computer
+// @sunbeam.title Browse Directory
 // @sunbeam.packageName File Browser
 // @sunbeam.mode interactive
+// @sunbeam.argument1 { "type": "text", "placeholder": "path" }
 
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
+const { params } = JSON.parse(await stdin());
 
-$.verbose = false;
+let root;
+if (params && params.root) {
+  root = params.root;
+} else {
+  root = argv._[0];
+}
 
-const root = os.homedir();
-
-const files = await fs.readdir(root, { withFileTypes: true });
+let files = await fs.readdir(root, { withFileTypes: true });
+files = files.filter((file) => !file.name.startsWith("."));
 
 const items = await Promise.all(
   files.map(async (file) => {
@@ -25,10 +31,10 @@ const items = await Promise.all(
       actions: [
         lstat.isDirectory()
           ? {
-              type: "push",
+              type: "callback",
               title: "Browse Directory",
-              path: "./filebrowser.mjs",
-              options: {
+              push: true,
+              params: {
                 root: filepath,
               },
             }
@@ -37,6 +43,19 @@ const items = await Promise.all(
     };
   })
 );
+
+items.push({
+  title: "..",
+  subtitle: path.dirname(root),
+  actions: [
+    {
+      type: "callback",
+      title: "Go Up",
+      push: true,
+      params: { root: path.dirname(root) },
+    },
+  ],
+});
 
 console.log(
   JSON.stringify({
