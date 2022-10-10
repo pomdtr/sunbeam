@@ -9,11 +9,13 @@
 ## Running the project
 
 ```console
-direnv allow # load the SUNBEAM_COMMAND_DIR environment variable (you can also use `source .envrc`)
+direnv allow # load the SUNBEAM_SCRIPT_DIR environment variable (you can also use `source .envrc`)
 go run main.go
 ```
 
 The logs are redirected to the `debug.log` file, use `tail -f debug.log` to follow them.
+
+The scripts available in the ex
 
 ## Installing the `sunbeam` command
 

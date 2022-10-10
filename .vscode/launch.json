@@ -10,9 +10,6 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "env": {
-                "SUNBEAM_COMMAND_DIR": "${workspaceFolder}/scripts",
-            },
             "args": [
                 "serve"
             ],

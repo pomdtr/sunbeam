@@ -20,7 +20,7 @@ import (
 var CommandDir string
 
 func init() {
-	if commandDir := os.Getenv("SUNBEAM_COMMAND_DIR"); commandDir != "" {
+	if commandDir := os.Getenv("SUNBEAM_SCRIPT_DIR"); commandDir != "" {
 		CommandDir = commandDir
 	} else {
 		CommandDir = xdg.DataHome
