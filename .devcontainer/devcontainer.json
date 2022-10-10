@@ -16,7 +16,7 @@
 	"remoteUser": "vscode",
 	"remoteEnv": {
 		"SUNBEAM_SCRIPT_DIR": "${containerWorkspaceFolder}/examples",
-		"SUNBEAM": "${containerWorkspaceFolder}/debug.log"
+		"SUNBEAM_LOG_FILE": "${containerWorkspaceFolder}/debug.log"
 	},
 	"features": {
 		"ghcr.io/devcontainers/features/go:1": {
