@@ -14,10 +14,6 @@
 	// "forwardPorts": [],
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
-	"remoteEnv": {
-		"SUNBEAM_SCRIPT_DIR": "${containerWorkspaceFolder}/examples",
-		"SUNBEAM_LOG_FILE": "${containerWorkspaceFolder}/debug.log"
-	},
 	"features": {
 		"ghcr.io/devcontainers/features/go:1": {
 			"version": "1.19"
@@ -35,11 +31,12 @@
 			"version": "latest"
 		}
 	},
-	"postCreateCommand": ".devcontainer/post-create.sh",
+	"onCreateCommand": ".devcontainer/on-create.sh",
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"golang.go"
+				"golang.go",
+				"mkhl.direnv"
 			]
 		}
 	}
