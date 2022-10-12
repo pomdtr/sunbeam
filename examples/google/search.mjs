@@ -24,6 +24,6 @@ const items = payload[1].map((suggestion) => ({
 console.log(
   JSON.stringify({
     type: "list",
-    list: { onQueryChange: { type: "callback" }, items },
+    list: { onQueryChange: { type: "push", path: "search.mjs" }, items },
   })
 );

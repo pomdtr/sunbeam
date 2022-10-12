@@ -149,12 +149,6 @@ func (container *CommandContainer) View() string {
 
 func (c CommandContainer) RunAction(action commands.ScriptAction) tea.Cmd {
 	switch action.Type {
-	case "callback":
-		c.command.Params = action.Params
-		if action.Push {
-			return NewPushCmd(c.command)
-		}
-		return c.fetchItems(c.command)
 	case "push":
 		commandDir := path.Dir(c.command.Url.Path)
 		scriptPath := path.Join(commandDir, action.Path)

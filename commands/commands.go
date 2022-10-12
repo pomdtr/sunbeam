@@ -35,7 +35,6 @@ type Command struct {
 type CommandInput struct {
 	Environment map[string]string `json:"environment"`
 	Arguments   []string          `json:"arguments"`
-	Params      any               `json:"params"`
 	Query       string            `json:"query"`
 	Form        any               `json:"form"`
 	Storage     any               `json:"storage"`
@@ -56,7 +55,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 				Type: "detail",
 				Detail: &DetailResponse{
 					Format: "text",
-					Text:   fmt.Errorf("Error while running command: %s", err).Error(),
+					Text:   fmt.Errorf("error while running command: %s", err).Error(),
 				},
 			}, nil
 		}
@@ -105,6 +104,9 @@ func (c Command) Run() (res ScriptResponse, err error) {
 
 	storagePath := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "storage.json")
 	storage, err := jsondb.Open[any](storagePath)
+	if err != nil {
+		return res, err
+	}
 	if c.Metadatas.Mode == "interactive" {
 		// Add support dir to environment
 		supportDir := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "support")
@@ -112,7 +114,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 
 		var err error
 		if err != nil {
-			return res, fmt.Errorf("Error while opening command storage: %s", err)
+			return res, fmt.Errorf("error while opening command storage: %w", err)
 		}
 		c.Storage = &storage.Data
 		var bytes []byte
@@ -167,7 +169,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 		storage.Data = &res.Storage
 		err = storage.Save()
 		if err != nil {
-			return res, fmt.Errorf("Error while saving command storage: %s", err)
+			return res, fmt.Errorf("error while saving command storage: %s", err)
 		}
 	}
 
@@ -225,14 +227,13 @@ func (i ScriptItem) Title() string       { return i.RawTitle }
 func (i ScriptItem) Description() string { return i.Subtitle }
 
 type ScriptAction struct {
-	Type     string   `json:"type" validate:"required,oneof=copy open url callback push"`
+	Type     string   `json:"type" validate:"required,oneof=copy open url push"`
 	RawTitle string   `json:"title"`
 	Keybind  string   `json:"keybind"`
 	Path     string   `json:"path,omitempty"`
 	Push     bool     `json:"push,omitempty"`
 	Command  []string `json:"command,omitempty"`
 	Url      string   `json:"url,omitempty"`
-	Params   any      `json:"params,omitempty"`
 	Content  string   `json:"content,omitempty"`
 	Args     []string `json:"args,omitempty"`
 }
@@ -250,8 +251,6 @@ func (a ScriptAction) Title() string {
 		return "Copy to Clibpoard"
 	case "push":
 		return "Switch Page"
-	case "callback":
-		return "Refresh"
 	default:
 		return ""
 	}
