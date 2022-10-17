@@ -14,7 +14,6 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/go-playground/validator"
-	"tailscale.com/jsondb"
 )
 
 var CommandDir string
@@ -37,7 +36,6 @@ type CommandInput struct {
 	Arguments   []string          `json:"arguments"`
 	Query       string            `json:"query"`
 	Form        any               `json:"form"`
-	Storage     any               `json:"storage"`
 }
 
 func (c Command) Run() (res ScriptResponse, err error) {
@@ -102,27 +100,12 @@ func (c Command) Run() (res ScriptResponse, err error) {
 	cmd.Stdout = &outbuf
 	cmd.Stdin = &inbuf
 
-	storagePath := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "storage.json")
-	storage, err := jsondb.Open[any](storagePath)
-	if err != nil {
-		return res, err
-	}
 	if c.Metadatas.Mode == "interactive" {
 		// Add support dir to environment
 		supportDir := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "support")
 		cmd.Env = append(cmd.Env, fmt.Sprintf("SUNBEAM_SUPPORT_DIR=%s", supportDir))
 
-		var err error
-		if err != nil {
-			return res, fmt.Errorf("error while opening command storage: %w", err)
-		}
-		c.Storage = &storage.Data
-		var bytes []byte
-		bytes, err = json.Marshal(c.CommandInput)
-		if err != nil {
-			return res, fmt.Errorf("unable to marshal command input: %s", err)
-		}
-		inbuf.Write(bytes)
+		inbuf.Write([]byte(c.Query))
 	}
 
 	err = cmd.Run()
@@ -165,26 +148,17 @@ func (c Command) Run() (res ScriptResponse, err error) {
 		}, nil
 	}
 
-	if res.Storage != nil {
-		storage.Data = &res.Storage
-		err = storage.Save()
-		if err != nil {
-			return res, fmt.Errorf("error while saving command storage: %s", err)
-		}
-	}
-
 	return
 }
 
 var Validator = validator.New()
 
 type ScriptResponse struct {
-	Type    string          `json:"type" validate:"required,oneof=list detail form action"`
-	List    *ListResponse   `json:"list,omitempty"`
-	Detail  *DetailResponse `json:"detail,omitempty"`
-	Form    *FormResponse   `json:"form,omitempty"`
-	Action  *ScriptAction   `json:"action,omitempty"`
-	Storage any             `json:"storage,omitempty"`
+	Type   string          `json:"type" validate:"required,oneof=list detail form action"`
+	List   *ListResponse   `json:"list,omitempty"`
+	Detail *DetailResponse `json:"detail,omitempty"`
+	Form   *FormResponse   `json:"form,omitempty"`
+	Action *ScriptAction   `json:"action,omitempty"`
 }
 
 type DetailResponse struct {

@@ -11,7 +11,6 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/jinzhu/copier v0.3.5
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	tailscale.com v1.30.2
 )
 
 require (
