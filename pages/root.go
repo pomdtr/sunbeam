@@ -14,7 +14,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/bubbles/list"
-	commands "github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/scripts"
 )
 
 type RootContainer struct {
@@ -50,28 +50,28 @@ func (container *RootContainer) Init() tea.Cmd {
 }
 
 func (c RootContainer) gatherScripts() tea.Msg {
-	scripts := make([]commands.Script, 0)
+	scriptList := make([]scripts.Script, 0)
 	if c.commandRoot.Scheme == "file" {
 		if _, err := os.Stat(c.commandRoot.Path); os.IsNotExist(err) {
 			log.Fatalf("Command directory %s does not exist", c.commandRoot.Path)
 		}
-		dirScripts, err := commands.ScanDir(c.commandRoot.Path)
+		dirScripts, err := scripts.ScanDir(c.commandRoot.Path)
 		if err != nil {
 			return err
 		}
-		scripts = append(scripts, dirScripts...)
+		scriptList = append(scriptList, dirScripts...)
 	} else {
 		res, err := http.Get(c.commandRoot.String())
 		if err != nil {
-			log.Fatalf("Could not fetch commands from %s", c.commandRoot.String())
+			log.Fatalf("Could not fetch scripts from %s", c.commandRoot.String())
 		}
-		var index map[string]commands.ScriptMetadatas
+		var index map[string]scripts.ScriptMetadatas
 		err = json.NewDecoder(res.Body).Decode(&index)
 		if err != nil {
-			log.Fatalf("Could not parse commands from %s", c.commandRoot.String())
+			log.Fatalf("Could not parse scripts from %s", c.commandRoot.String())
 		}
 		for route, metadatas := range index {
-			scripts = append(scripts, commands.Script{
+			scriptList = append(scriptList, scripts.Script{
 				Metadatas: metadatas,
 				Url: url.URL{
 					Scheme: c.commandRoot.Scheme,
@@ -82,7 +82,7 @@ func (c RootContainer) gatherScripts() tea.Msg {
 		}
 	}
 
-	return scripts
+	return scriptList
 }
 
 func (container RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -97,7 +97,7 @@ func (container RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if selectedItem == nil {
 				break
 			}
-			selectedItem := selectedItem.(commands.Script)
+			selectedItem := selectedItem.(scripts.Script)
 			editor := os.Getenv("EDITOR")
 			if editor == "" {
 				editor = "vi"
@@ -114,13 +114,13 @@ func (container RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if selectedItem == nil {
 				break
 			}
-			selectedItem, ok := container.Model.SelectedItem().(commands.Script)
+			selectedItem, ok := container.Model.SelectedItem().(scripts.Script)
 			if !ok {
 				return &container, tea.Quit
 			}
-			return &container, NewPushCmd(commands.Command{Script: selectedItem})
+			return &container, NewPushCmd(scripts.Command{Script: selectedItem})
 		}
-	case []commands.Script:
+	case []scripts.Script:
 		items := make([]list.Item, len(msg))
 		for i, script := range msg {
 			items[i] = script

@@ -12,7 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
-	commands "github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/scripts"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/skratchdot/open-golang/open"
 )
@@ -20,12 +20,12 @@ import (
 type CommandContainer struct {
 	width   int
 	height  int
-	command commands.Command
+	command scripts.Command
 	spinner spinner.Model
 	embed   Page
 }
 
-func NewCommandContainer(command commands.Command) *CommandContainer {
+func NewCommandContainer(command scripts.Command) *CommandContainer {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
@@ -49,7 +49,7 @@ func (c *CommandContainer) Init() tea.Cmd {
 	return tea.Batch(c.spinner.Tick, c.fetchItems(c.command))
 }
 
-func (c CommandContainer) fetchItems(command commands.Command) tea.Cmd {
+func (c CommandContainer) fetchItems(command scripts.Command) tea.Cmd {
 	return func() tea.Msg {
 		res, err := command.Run()
 		if err != nil {
@@ -74,7 +74,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, PopCmd
 			}
 		}
-	case commands.ScriptResponse:
+	case scripts.ScriptResponse:
 		switch msg.Type {
 		case "list":
 			list := msg.List
@@ -105,9 +105,6 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 				case "env":
 					c.command.Environment = values
 					return c.fetchItems(c.command)
-				case "stdin":
-					c.command.Form = values
-					return c.fetchItems(c.command)
 				}
 				return utils.NewErrorCmd("unknown form method: %s", msg.Form.Method)
 			}
@@ -117,7 +114,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			cmd = c.RunAction(*msg.Action)
 			return c, cmd
 		}
-	case commands.ScriptAction:
+	case scripts.ScriptAction:
 		return c, c.RunAction(msg)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -147,17 +144,17 @@ func (container *CommandContainer) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, container.headerView(), loadingIndicator, newLines, container.footerView())
 }
 
-func (c CommandContainer) RunAction(action commands.ScriptAction) tea.Cmd {
+func (c CommandContainer) RunAction(action scripts.ScriptAction) tea.Cmd {
 	switch action.Type {
 	case "push":
 		commandDir := path.Dir(c.command.Url.Path)
 		scriptPath := path.Join(commandDir, action.Path)
-		script, err := commands.Parse(scriptPath)
+		script, err := scripts.Parse(scriptPath)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		next := commands.Command{}
+		next := scripts.Command{}
 		next.Script = script
 		next.Arguments = action.Args
 
@@ -172,9 +169,9 @@ func (c CommandContainer) RunAction(action commands.ScriptAction) tea.Cmd {
 		err := cmd.Run()
 		if err != nil {
 			return utils.SendMsg(
-				commands.ScriptResponse{
+				scripts.ScriptResponse{
 					Type: "detail",
-					Detail: &commands.DetailResponse{
+					Detail: &scripts.DetailResponse{
 						Format: "text",
 						Text:   err.Error(),
 					},

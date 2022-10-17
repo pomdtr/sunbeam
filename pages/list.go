@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/bubbles/list"
-	commands "github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/scripts"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -18,10 +18,10 @@ type ListContainer struct {
 	textInput  *textinput.Model
 	width      int
 	height     int
-	response   *commands.ListResponse
+	response   *scripts.ListResponse
 }
 
-func NewListContainer(res *commands.ListResponse) Page {
+func NewListContainer(res *scripts.ListResponse) Page {
 	l := list.New([]list.Item{}, NewItemDelegate(), 0, 0)
 
 	textInput := textinput.NewModel()
@@ -68,7 +68,7 @@ func (c *ListContainer) footerView() string {
 		return bubbles.SunbeamFooter(c.width, c.response.Title)
 	}
 
-	if item, ok := selectedItem.(commands.ScriptItem); ok && len(item.Actions) > 0 {
+	if item, ok := selectedItem.(scripts.ScriptItem); ok && len(item.Actions) > 0 {
 		return bubbles.SunbeamFooterWithActions(c.width, c.response.Title, item.Actions[0].Title())
 	} else {
 		return bubbles.SunbeamFooter(c.width, c.response.Title)
@@ -86,7 +86,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if selectedItem == nil {
 				break
 			}
-			selectedItem := selectedItem.(commands.ScriptItem)
+			selectedItem := selectedItem.(scripts.ScriptItem)
 			return c, utils.SendMsg(selectedItem.Actions[0])
 		case tea.KeyEscape:
 			return c, PopCmd
@@ -94,7 +94,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if selectedItem == nil {
 				break
 			}
-			selectedItem := selectedItem.(commands.ScriptItem)
+			selectedItem := selectedItem.(scripts.ScriptItem)
 			c.actionList = NewActionList(selectedItem.Title(), selectedItem.Actions)
 			c.actionList.SetSize(c.width, c.height)
 
@@ -104,14 +104,14 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if selectedItem == nil {
 				break
 			}
-			selectedItem := selectedItem.(commands.ScriptItem)
+			selectedItem := selectedItem.(scripts.ScriptItem)
 			for _, action := range selectedItem.Actions {
 				if action.Keybind == msg.String() {
 					return c, utils.SendMsg(action)
 				}
 			}
 		}
-	case commands.ScriptResponse:
+	case scripts.ScriptResponse:
 		items := make([]list.Item, len(msg.List.Items))
 		for i, item := range msg.List.Items {
 			items[i] = item

@@ -7,17 +7,17 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/scripts"
 )
 
 func Serve(address string, port int) error {
-	scripts, err := commands.ScanDir(commands.CommandDir)
+	scriptList, err := scripts.ScanDir(scripts.CommandDir)
 	if err != nil {
-		log.Fatalf("Error while scanning commands directory: %s", err)
+		log.Fatalf("Error while scanning scripts directory: %s", err)
 	}
 
-	routeMap := make(map[string]commands.ScriptMetadatas)
-	for _, script := range scripts {
+	routeMap := make(map[string]scripts.ScriptMetadatas)
+	for _, script := range scriptList {
 		route := Route(script)
 		routeMap[route] = script.Metadatas
 		log.Printf("Serving %s at %s", script.Url.Path, route)
@@ -35,13 +35,13 @@ func Serve(address string, port int) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func Route(s commands.Script) string {
-	return strings.TrimPrefix(s.Url.Path, commands.CommandDir)
+func Route(s scripts.Script) string {
+	return strings.TrimPrefix(s.Url.Path, scripts.CommandDir)
 }
 
-func serveScript(s commands.Script) http.HandlerFunc {
+func serveScript(s scripts.Script) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		command := commands.Command{}
+		command := scripts.Command{}
 		command.Script = s
 		_ = json.NewDecoder(req.Body).Decode(&command.CommandInput)
 

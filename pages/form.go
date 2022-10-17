@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
-	"github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/scripts"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 )
 
 type FormContainer struct {
-	response     *commands.FormResponse
+	response     *scripts.FormResponse
 	inputs       []textinput.Model
 	focusIndex   int
 	submitAction func(map[string]string) tea.Cmd
@@ -25,7 +25,7 @@ type FormContainer struct {
 	height       int
 }
 
-func NewFormContainer(response *commands.FormResponse, submitAction func(map[string]string) tea.Cmd) *FormContainer {
+func NewFormContainer(response *scripts.FormResponse, submitAction func(map[string]string) tea.Cmd) *FormContainer {
 	c := &FormContainer{
 		inputs:       make([]textinput.Model, len(response.Items)),
 		response:     response,

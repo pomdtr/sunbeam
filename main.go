@@ -10,8 +10,8 @@ import (
 	"github.com/alexflint/go-arg"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/commands"
 	"github.com/pomdtr/sunbeam/pages"
+	"github.com/pomdtr/sunbeam/scripts"
 	"github.com/pomdtr/sunbeam/server"
 )
 
@@ -126,11 +126,11 @@ func main() {
 	var root pages.Page
 
 	if args.Run != nil {
-		script, err := commands.Parse(args.Run.ScriptPath)
+		script, err := scripts.Parse(args.Run.ScriptPath)
 		if err != nil {
 			log.Fatalf("Error parsing script: %v", err)
 		}
-		root = pages.NewCommandContainer(commands.Command{
+		root = pages.NewCommandContainer(scripts.Command{
 			Script: script,
 		})
 		if err != nil {
@@ -138,7 +138,7 @@ func main() {
 		}
 	} else {
 		if args.CommandRoot == "" {
-			args.CommandRoot = commands.CommandDir
+			args.CommandRoot = scripts.CommandDir
 		}
 		root = pages.NewRootContainer(args.CommandRoot)
 	}

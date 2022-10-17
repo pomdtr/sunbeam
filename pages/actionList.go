@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/bubbles/list"
-	commands "github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/scripts"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -18,7 +18,7 @@ type ActionList struct {
 	height    int
 }
 
-func NewActionList(title string, actions []commands.ScriptAction) *ActionList {
+func NewActionList(title string, actions []scripts.ScriptAction) *ActionList {
 	l := list.New([]list.Item{}, NewItemDelegate(), 0, 0)
 
 	textInput := textinput.NewModel()
@@ -36,7 +36,7 @@ func NewActionList(title string, actions []commands.ScriptAction) *ActionList {
 	return &actionList
 }
 
-func (c *ActionList) setActions(actions []commands.ScriptAction) {
+func (c *ActionList) setActions(actions []scripts.ScriptAction) {
 	listItems := make([]list.Item, len(actions))
 	for i, action := range actions {
 		listItems[i] = action
@@ -79,7 +79,7 @@ func (c *ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
 			if c.list.SelectedItem() == nil {
 				return c, nil
 			}
-			selectedAction := c.list.SelectedItem().(commands.ScriptAction)
+			selectedAction := c.list.SelectedItem().(scripts.ScriptAction)
 			c.Hide()
 			return c, utils.SendMsg(selectedAction)
 		}

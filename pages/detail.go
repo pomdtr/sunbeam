@@ -6,13 +6,13 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
-	commands "github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/scripts"
 )
 
-type ActionRunner func(commands.ScriptAction) tea.Cmd
+type ActionRunner func(scripts.ScriptAction) tea.Cmd
 
 type DetailContainer struct {
-	response   commands.DetailResponse
+	response   scripts.DetailResponse
 	runAction  ActionRunner
 	width      int
 	height     int
@@ -20,7 +20,7 @@ type DetailContainer struct {
 	viewport   *viewport.Model
 }
 
-func NewDetailContainer(response *commands.DetailResponse, runAction ActionRunner) *DetailContainer {
+func NewDetailContainer(response *scripts.DetailResponse, runAction ActionRunner) *DetailContainer {
 	viewport := viewport.New(0, 0)
 	var content string
 	if lipgloss.HasDarkBackground() {
