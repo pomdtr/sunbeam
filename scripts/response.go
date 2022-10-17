@@ -3,7 +3,6 @@ package scripts
 import (
 	"encoding/json"
 	"log"
-	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -98,18 +97,18 @@ func (a ScriptAction) FilterValue() string {
 	return a.Title()
 }
 
-type Script struct {
-	Url       url.URL
-	Metadatas ScriptMetadatas
+type LocalCommand struct {
+	Path            string
+	ScriptMetadatas ScriptMetadatas
 }
 
-func (s Script) FilterValue() string { return s.Metadatas.Title }
-func (s Script) Title() string       { return s.Metadatas.Title }
-func (s Script) Description() string { return s.Metadatas.PackageName }
+func (s LocalCommand) FilterValue() string { return s.ScriptMetadatas.Title }
+func (s LocalCommand) Title() string       { return s.ScriptMetadatas.Title }
+func (s LocalCommand) Description() string { return s.ScriptMetadatas.PackageName }
 
-func (s Script) RequiredArguments() []ScriptArgument {
+func (s LocalCommand) RequiredArguments() []ScriptArgument {
 	var res []ScriptArgument
-	for _, arg := range s.Metadatas.Arguments {
+	for _, arg := range s.ScriptMetadatas.Arguments {
 		if !arg.Optional {
 			res = append(res, arg)
 		}
@@ -195,37 +194,32 @@ func extractSunbeamMetadatas(content string) ScriptMetadatas {
 	return metadatas
 }
 
-func Parse(script_path string) (Script, error) {
+func Parse(script_path string) (LocalCommand, error) {
 	content, err := os.ReadFile(script_path)
 	if err != nil {
-		return Script{}, err
+		return LocalCommand{}, err
 	}
 
 	metadatas := extractSunbeamMetadatas(string(content))
 
-	scriptURL := url.URL{
-		Scheme: "file",
-		Path:   script_path,
-	}
+	command := LocalCommand{Path: script_path, ScriptMetadatas: metadatas}
 
-	scripCommand := Script{Url: scriptURL, Metadatas: metadatas}
-
-	err = Validator.Struct(scripCommand)
+	err = Validator.Struct(command)
 	if err != nil {
 		log.Printf("Error while parsing script %s: %s", script_path, err)
-		return Script{}, err
+		return LocalCommand{}, err
 	}
 
-	return scripCommand, nil
+	return command, nil
 }
 
-func ScanDir(dirPath string) ([]Script, error) {
+func ScanDir(dirPath string) (commands []LocalCommand, err error) {
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
-		return []Script{}, err
+		return
 	}
 
-	scripts := []Script{}
+	scripts := []LocalCommand{}
 	for _, file := range files {
 		if file.IsDir() {
 			dirScripts, _ := ScanDir(path.Join(dirPath, file.Name()))

@@ -12,7 +12,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/pages"
 	"github.com/pomdtr/sunbeam/scripts"
-	"github.com/pomdtr/sunbeam/server"
 )
 
 type navigator struct {
@@ -70,10 +69,10 @@ func (m navigator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case pages.PushMsg:
-		container := msg.Container
+		container := msg.Page
 		container.SetSize(m.width, m.height)
 		m.PushPage(container)
-		return m, msg.Container.Init()
+		return m, msg.Page.Init()
 	case error:
 		log.Printf("Error: %v", msg)
 		return m, tea.Quit
@@ -117,30 +116,29 @@ func main() {
 	arg.MustParse(&args)
 
 	if args.Serve != nil {
-		err = server.Serve(args.Serve.Host, args.Serve.Port)
-		if err != nil {
-			log.Fatalln(err)
-		}
+		// err = server.Serve(args.Serve.Host, args.Serve.Port)
+		// if err != nil {
+		// 	log.Fatalln(err)
+		// }
 		return
 	}
 	var root pages.Page
 
 	if args.Run != nil {
-		script, err := scripts.Parse(args.Run.ScriptPath)
+		command, err := scripts.Parse(args.Run.ScriptPath)
 		if err != nil {
 			log.Fatalf("Error parsing script: %v", err)
 		}
-		root = pages.NewCommandContainer(scripts.Command{
-			Script: script,
-		})
+		root = pages.NewCommandContainer(command, scripts.CommandInput{})
 		if err != nil {
 			log.Fatalln(err)
 		}
 	} else {
-		if args.CommandRoot == "" {
-			args.CommandRoot = scripts.CommandDir
+		commandRoot := args.CommandRoot
+		if commandRoot == "" {
+			commandRoot = scripts.CommandDir
 		}
-		root = pages.NewRootContainer(args.CommandRoot)
+		root = pages.NewCommandContainer(scripts.RootCommand{Root: commandRoot}, scripts.CommandInput{})
 	}
 
 	var logFile string
@@ -164,7 +162,7 @@ func main() {
 	defer f.Close()
 
 	m := NewModel(root)
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	if err := p.Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

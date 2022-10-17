@@ -2,16 +2,15 @@ package pages
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pomdtr/sunbeam/scripts"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
 type PushMsg struct {
-	Container Page
+	Page Page
 }
 
-func NewPushCmd(cmd scripts.Command) func() tea.Msg {
-	return utils.SendMsg(PushMsg{Container: NewCommandContainer(cmd)})
+func NewPushCmd(page Page) func() tea.Msg {
+	return utils.SendMsg(PushMsg{Page: page})
 }
 
 type PopMsg struct{}

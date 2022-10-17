@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -23,9 +24,9 @@ func init() {
 	}
 }
 
-type Command struct {
-	Script
-	CommandInput
+type Command interface {
+	Run(CommandInput) (ScriptResponse, error)
+	Title() string
 }
 
 type CommandInput struct {
@@ -34,40 +35,81 @@ type CommandInput struct {
 	Query       string            `json:"query"`
 }
 
-func (c Command) Run() (res ScriptResponse, err error) {
-	log.Printf("Running command %s with args %s", c.Script.Url.Path, c.Arguments)
-	// Check if the number of arguments is correct
-	if c.Url.Scheme != "file" {
-		payload, err := json.Marshal(c.CommandInput)
-		if err != nil {
-			return res, err
-		}
+type RemoteCommand struct {
+	Url   url.URL
+	Title string
+}
 
-		httpRes, err := http.Post(http.MethodPost, c.Url.String(), bytes.NewBuffer(payload))
-		if err != nil {
-			return ScriptResponse{
-				Type: "detail",
-				Detail: &DetailResponse{
-					Format: "text",
-					Text:   fmt.Errorf("error while running command: %s", err).Error(),
-				},
-			}, nil
-		}
-		var res ScriptResponse
-		err = json.NewDecoder(httpRes.Body).Decode(&res)
-		if err != nil {
-			log.Fatalf("Error while decoding response: %s", err)
-		}
+type RootCommand struct {
+	Root string
+}
 
-		return res, nil
+func (c RootCommand) Title() string {
+	return "Commands"
+}
+
+func (c RootCommand) Run(input CommandInput) (res ScriptResponse, err error) {
+	dirCommands, err := ScanDir(c.Root)
+	if err != nil {
+		return
 	}
-	if len(c.Arguments) < len(c.RequiredArguments()) {
+
+	items := make([]ScriptItem, len(dirCommands))
+	for i, command := range dirCommands {
+		items[i] = ScriptItem{
+			RawTitle: command.Title(),
+			Actions: []ScriptAction{
+				{
+					Type: "push",
+					Path: command.Path,
+				},
+			},
+		}
+	}
+
+	res.Type = "list"
+	res.List = &ListResponse{
+		Items: items,
+	}
+
+	return
+}
+
+func (c RemoteCommand) Run(input CommandInput) (res ScriptResponse, err error) {
+	payload, err := json.Marshal(input)
+	if err != nil {
+		return res, err
+	}
+
+	httpRes, err := http.Post(http.MethodPost, c.Url.String(), bytes.NewBuffer(payload))
+	if err != nil {
+		return ScriptResponse{
+			Type: "detail",
+			Detail: &DetailResponse{
+				Format: "text",
+				Text:   fmt.Errorf("error while running command: %s", err).Error(),
+			},
+		}, nil
+	}
+
+	err = json.NewDecoder(httpRes.Body).Decode(&res)
+	if err != nil {
+		return res, fmt.Errorf("error while decoding response: %s", err)
+	}
+
+	return res, nil
+}
+
+func (c LocalCommand) Run(input CommandInput) (res ScriptResponse, err error) {
+	log.Printf("Running command %s with args %s", c.Path, input.Arguments)
+	// Check if the number of arguments is correct
+	if len(input.Arguments) < len(c.RequiredArguments()) {
 		formItems := make([]FormItem, 0)
-		for i := len(c.Arguments); i < len(c.Metadatas.Arguments); i++ {
+		for i := len(input.Arguments); i < len(c.ScriptMetadatas.Arguments); i++ {
 			formItems = append(formItems, FormItem{
 				Type: "text",
-				Id:   c.Metadatas.Arguments[i].Placeholder,
-				Name: c.Metadatas.Arguments[i].Placeholder,
+				Id:   c.ScriptMetadatas.Arguments[i].Placeholder,
+				Name: c.ScriptMetadatas.Arguments[i].Placeholder,
 			})
 		}
 		return ScriptResponse{
@@ -79,7 +121,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 		}, nil
 	}
 
-	cmd := exec.Command(c.Script.Url.Path, c.Arguments...)
+	cmd := exec.Command(c.Path, input.Arguments...)
 	cmd.Dir = path.Dir(cmd.Path)
 
 	// Copy process environment
@@ -87,7 +129,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 	copy(cmd.Env, os.Environ())
 
 	// Add custom environment variables to the process
-	for key, value := range c.Environment {
+	for key, value := range input.Environment {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
 
@@ -96,12 +138,12 @@ func (c Command) Run() (res ScriptResponse, err error) {
 	cmd.Stdout = &outbuf
 	cmd.Stdin = &inbuf
 
-	if c.Metadatas.Mode == "interactive" {
+	if c.ScriptMetadatas.Mode == "interactive" {
 		// Add support dir to environment
-		supportDir := path.Join(xdg.DataHome, "sunbeam", c.Script.Metadatas.PackageName, "support")
+		supportDir := path.Join(xdg.DataHome, "sunbeam", c.ScriptMetadatas.PackageName, "support")
 		cmd.Env = append(cmd.Env, fmt.Sprintf("SUNBEAM_SUPPORT_DIR=%s", supportDir))
 
-		inbuf.Write([]byte(c.Query))
+		inbuf.Write([]byte(input.Query))
 	}
 
 	err = cmd.Run()
@@ -116,7 +158,7 @@ func (c Command) Run() (res ScriptResponse, err error) {
 		}, nil
 	}
 
-	if c.Metadatas.Mode != "interactive" {
+	if c.ScriptMetadatas.Mode != "interactive" {
 		return ScriptResponse{
 			Type: "detail",
 			Detail: &DetailResponse{

@@ -12,12 +12,11 @@ import (
 type ActionRunner func(scripts.ScriptAction) tea.Cmd
 
 type DetailContainer struct {
-	response   scripts.DetailResponse
-	runAction  ActionRunner
-	width      int
-	height     int
-	actionList *ActionList
-	viewport   *viewport.Model
+	response  scripts.DetailResponse
+	runAction ActionRunner
+	width     int
+	height    int
+	viewport  *viewport.Model
 }
 
 func NewDetailContainer(response *scripts.DetailResponse, runAction ActionRunner) *DetailContainer {
@@ -31,17 +30,15 @@ func NewDetailContainer(response *scripts.DetailResponse, runAction ActionRunner
 	viewport.SetContent(content)
 
 	return &DetailContainer{
-		response:   *response,
-		actionList: NewActionList(response.Title, response.Actions),
-		runAction:  runAction,
-		viewport:   &viewport,
+		response:  *response,
+		runAction: runAction,
+		viewport:  &viewport,
 	}
 }
 
 func (c *DetailContainer) SetSize(width, height int) {
 	c.width = width
 	c.height = height
-	c.actionList.SetSize(width, height)
 	c.viewport.Width = width
 	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
 }
@@ -68,26 +65,9 @@ func (c *DetailContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return c, c.runAction(action)
 				}
 			}
-		case tea.KeyCtrlP:
-			if c.actionList.Visible() {
-				c.actionList.Hide()
-			} else {
-				c.actionList.Show()
-			}
-			return c, nil
 		case tea.KeyEscape:
-			if c.actionList.Visible() {
-				c.actionList.Hide()
-				return c, nil
-			}
 			return c, PopCmd
 		}
-	}
-
-	if c.actionList != nil {
-		actionList, cmd := c.actionList.Update(msg)
-		c.actionList = actionList
-		return c, cmd
 	}
 
 	var cmd tea.Cmd
@@ -97,8 +77,5 @@ func (c *DetailContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *DetailContainer) View() string {
-	if c.actionList.Visible() {
-		return c.actionList.View()
-	}
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.viewport.View(), c.footerView())
 }

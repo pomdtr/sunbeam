@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -12,57 +13,58 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-type ListContainer struct {
-	list       *list.Model
-	actionList *ActionList
-	textInput  *textinput.Model
-	width      int
-	height     int
-	response   *scripts.ListResponse
+type ListPage struct {
+	list      *list.Model
+	textInput *textinput.Model
+	width     int
+	height    int
+	response  *scripts.ListResponse
 }
 
-func NewListContainer(res *scripts.ListResponse) Page {
-	l := list.New([]list.Item{}, NewItemDelegate(), 0, 0)
+var l list.Model
+var t textinput.Model
 
-	textInput := textinput.NewModel()
-	textInput.Prompt = ""
-	textInput.Placeholder = res.SearchBarPlaceholder
+func init() {
+	l = list.New([]list.Item{}, NewItemDelegate(), 0, 0)
+	t = textinput.New()
+}
+
+func NewListPage(res *scripts.ListResponse) Page {
+	t.Prompt = ""
+	t.Placeholder = res.SearchBarPlaceholder
 	if res.SearchBarPlaceholder != "" {
-		textInput.Placeholder = res.SearchBarPlaceholder
+		t.Placeholder = res.SearchBarPlaceholder
 	} else {
-		textInput.Placeholder = "Search..."
+		t.Placeholder = "Search..."
 	}
-	textInput.Focus()
 
-	listItems := make([]list.Item, len(res.Items))
-	for i, item := range res.Items {
-		listItems[i] = item
-	}
-	l.SetItems(listItems)
-
-	return &ListContainer{
+	return &ListPage{
 		list:      &l,
-		textInput: &textInput,
+		textInput: &t,
 		response:  res,
 	}
 }
 
-func (c ListContainer) Init() tea.Cmd {
-	return nil
+func (c ListPage) Init() tea.Cmd {
+	listItems := make([]list.Item, len(c.response.Items))
+	for i, item := range c.response.Items {
+		listItems[i] = item
+	}
+	return tea.Batch(c.list.SetItems(listItems), c.textInput.Focus())
 }
 
-func (c *ListContainer) SetSize(width, height int) {
+func (c *ListPage) SetSize(width, height int) {
 	c.width, c.height = width, height
 	c.list.SetSize(width, height-lipgloss.Height(c.footerView())-lipgloss.Height(c.headerView()))
 }
 
-func (c *ListContainer) headerView() string {
+func (c *ListPage) headerView() string {
 	input := c.textInput.View()
 	line := strings.Repeat("─", c.width)
 	return lipgloss.JoinVertical(lipgloss.Left, input, line)
 }
 
-func (c *ListContainer) footerView() string {
+func (c *ListPage) footerView() string {
 	selectedItem := c.list.SelectedItem()
 	if selectedItem == nil {
 		return bubbles.SunbeamFooter(c.width, c.response.Title)
@@ -75,8 +77,9 @@ func (c *ListContainer) footerView() string {
 	}
 }
 
-func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (c *ListPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmds []tea.Cmd
+	log.Printf("ListPage.Update: %T, %v", msg, msg)
 
 	selectedItem := c.list.SelectedItem()
 	switch msg := msg.(type) {
@@ -90,16 +93,6 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, utils.SendMsg(selectedItem.Actions[0])
 		case tea.KeyEscape:
 			return c, PopCmd
-		case tea.KeyCtrlP:
-			if selectedItem == nil {
-				break
-			}
-			selectedItem := selectedItem.(scripts.ScriptItem)
-			c.actionList = NewActionList(selectedItem.Title(), selectedItem.Actions)
-			c.actionList.SetSize(c.width, c.height)
-
-			return c, nil
-
 		default:
 			if selectedItem == nil {
 				break
@@ -134,9 +127,6 @@ func (c *ListContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-func (c *ListContainer) View() string {
-	if c.actionList != nil {
-		return c.actionList.View()
-	}
+func (c *ListPage) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.list.View(), c.footerView())
 }

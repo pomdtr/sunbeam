@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/atotto/clipboard"
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
@@ -21,15 +20,16 @@ type CommandContainer struct {
 	width   int
 	height  int
 	command scripts.Command
-	spinner spinner.Model
-	embed   Page
+	input   scripts.CommandInput
+	// spinner spinner.Model
+	embed Page
 }
 
-func NewCommandContainer(command scripts.Command) *CommandContainer {
-	s := spinner.New()
-	s.Spinner = spinner.Line
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	return &CommandContainer{command: command, spinner: s}
+func NewCommandContainer(command scripts.Command, input scripts.CommandInput) *CommandContainer {
+	// s := spinner.New()
+	// s.Spinner = spinner.Line
+	// s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	return &CommandContainer{command: command, input: input}
 }
 
 func (c *CommandContainer) headerView() string {
@@ -45,18 +45,18 @@ func (c *CommandContainer) SetSize(width, height int) {
 	}
 }
 
-func (c *CommandContainer) Init() tea.Cmd {
-	return tea.Batch(c.spinner.Tick, c.fetchItems(c.command))
-}
-
-func (c CommandContainer) fetchItems(command scripts.Command) tea.Cmd {
+func RunCmd(command scripts.Command, input scripts.CommandInput) tea.Cmd {
 	return func() tea.Msg {
-		res, err := command.Run()
+		res, err := command.Run(input)
 		if err != nil {
 			return err
 		}
 		return res
 	}
+}
+
+func (c *CommandContainer) Init() tea.Cmd {
+	return tea.Batch(RunCmd(c.command, c.input))
 }
 
 func (c *CommandContainer) footerView() string {
@@ -81,8 +81,9 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if list.Title == "" {
 				list.Title = c.command.Title()
 			}
-			c.embed = NewListContainer(msg.List)
+			c.embed = NewListPage(msg.List)
 			c.embed.SetSize(c.width, c.height)
+			return c, c.embed.Init()
 		case "detail":
 			detail := msg.Detail
 			if detail.Title == "" {
@@ -90,6 +91,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			c.embed = NewDetailContainer(msg.Detail, c.RunAction)
 			c.embed.SetSize(c.width, c.height)
+			return c, c.embed.Init()
 		case "form":
 			form := msg.Form
 			if form.Title == "" {
@@ -98,28 +100,28 @@ func (c *CommandContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 			submitAction := func(values map[string]string) tea.Cmd {
 				switch form.Method {
 				case "args":
-					for _, arg := range c.command.Metadatas.Arguments {
-						c.command.Arguments = append(c.command.Arguments, values[arg.Placeholder])
-					}
-					return c.fetchItems(c.command)
+					return RunCmd(c.command, c.input)
 				case "env":
-					c.command.Environment = values
-					return c.fetchItems(c.command)
+					return RunCmd(c.command, c.input)
 				}
 				return utils.NewErrorCmd("unknown form method: %s", msg.Form.Method)
 			}
 			c.embed = NewFormContainer(msg.Form, submitAction)
 			c.embed.SetSize(c.width, c.height)
+			return c, c.embed.Init()
 		case "action":
 			cmd = c.RunAction(*msg.Action)
 			return c, cmd
 		}
 	case scripts.ScriptAction:
 		return c, c.RunAction(msg)
-	case spinner.TickMsg:
-		var cmd tea.Cmd
-		c.spinner, cmd = c.spinner.Update(msg)
-		return c, cmd
+		// case spinner.TickMsg:
+		// 	if c.embed != nil {
+		// 		return c, nil
+		// 	}
+		// 	var cmd tea.Cmd
+		// 	c.spinner, cmd = c.spinner.Update(msg)
+		// 	return c, cmd
 	}
 
 	if c.embed != nil {
@@ -135,9 +137,9 @@ func (container *CommandContainer) View() string {
 	}
 
 	var loadingIndicator string
-	spinner := lipgloss.NewStyle().Padding(0, 2).Render(container.spinner.View())
+	// spinner := lipgloss.NewStyle().Padding(0, 2).Render(container.spinner.View())
 	label := lipgloss.NewStyle().Render("Loading...")
-	loadingIndicator = lipgloss.JoinHorizontal(lipgloss.Center, spinner, label)
+	loadingIndicator = lipgloss.JoinHorizontal(lipgloss.Center, label)
 
 	newLines := strings.Repeat("\n", utils.Max(0, container.height-lipgloss.Height(loadingIndicator)-lipgloss.Height(container.footerView())-lipgloss.Height(container.headerView())-1))
 
@@ -147,18 +149,15 @@ func (container *CommandContainer) View() string {
 func (c CommandContainer) RunAction(action scripts.ScriptAction) tea.Cmd {
 	switch action.Type {
 	case "push":
-		commandDir := path.Dir(c.command.Url.Path)
-		scriptPath := path.Join(commandDir, action.Path)
-		script, err := scripts.Parse(scriptPath)
+		scriptPath := path.Join(scripts.CommandDir, action.Path)
+		command, err := scripts.Parse(scriptPath)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		next := scripts.Command{}
-		next.Script = script
-		next.Arguments = action.Args
-
-		return NewPushCmd(next)
+		return NewPushCmd(NewCommandContainer(command, scripts.CommandInput{
+			Arguments: action.Args,
+		}))
 	case "exec":
 		var cmd *exec.Cmd
 		if len(action.Command) == 1 {
