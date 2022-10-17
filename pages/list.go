@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jinzhu/copier"
 	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/bubbles/list"
 	commands "github.com/pomdtr/sunbeam/commands"
@@ -22,11 +21,8 @@ type ListContainer struct {
 	response   *commands.ListResponse
 }
 
-var listContainer = list.New([]list.Item{}, NewItemDelegate(), 0, 0)
-
 func NewListContainer(res *commands.ListResponse) Page {
-	var l list.Model
-	_ = copier.Copy(&l, &listContainer)
+	l := list.New([]list.Item{}, NewItemDelegate(), 0, 0)
 
 	textInput := textinput.NewModel()
 	textInput.Prompt = ""
