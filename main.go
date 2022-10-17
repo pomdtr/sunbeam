@@ -148,6 +148,12 @@ func main() {
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
 		logFile = env
 	} else {
+		if _, err := os.Stat(xdg.StateHome); os.IsNotExist(err) {
+			err = os.MkdirAll(xdg.StateHome, 0755)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
 		logFile = path.Join(xdg.StateHome, "sunbeam.log")
 	}
 
