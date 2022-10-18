@@ -57,11 +57,13 @@ func (c RootCommand) Run(input CommandInput) (res ScriptResponse, err error) {
 	items := make([]ScriptItem, len(dirCommands))
 	for i, command := range dirCommands {
 		items[i] = ScriptItem{
-			RawTitle: command.Title(),
+			Title:    command.Title(),
+			Subtitle: command.Path,
 			Actions: []ScriptAction{
 				{
-					Type: "push",
-					Path: command.Path,
+					Type:  "push",
+					Title: "Open Command",
+					Path:  command.Path,
 				},
 			},
 		}
@@ -71,6 +73,7 @@ func (c RootCommand) Run(input CommandInput) (res ScriptResponse, err error) {
 	res.List = &ListResponse{
 		Items: items,
 	}
+	log.Println("res", items)
 
 	return
 }

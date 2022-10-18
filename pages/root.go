@@ -87,6 +87,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.PopPage()
 		return m, nil
 	case scripts.ScriptResponse:
+		log.Printf("Response: %v", msg)
 		switch msg.Type {
 		case "list":
 			list := msg.List

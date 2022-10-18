@@ -49,52 +49,22 @@ type ListResponse struct {
 
 type ScriptItem struct {
 	Icon     string         `json:"icon"`
-	RawTitle string         `json:"title" validate:"required"`
+	Title    string         `json:"title" validate:"required"`
 	Subtitle string         `json:"subtitle"`
 	Fill     string         `json:"fill"`
 	Actions  []ScriptAction `json:"actions" validate:"required,gte=1,dive"`
 }
 
-func (i ScriptItem) FilterValue() string { return i.RawTitle }
-func (i ScriptItem) Title() string       { return i.RawTitle }
-func (i ScriptItem) Description() string { return i.Subtitle }
-
 type ScriptAction struct {
-	Type     string   `json:"type" validate:"required,oneof=copy open url push"`
-	RawTitle string   `json:"title"`
-	Keybind  string   `json:"keybind"`
-	Path     string   `json:"path,omitempty"`
-	Push     bool     `json:"push,omitempty"`
-	Command  []string `json:"command,omitempty"`
-	Url      string   `json:"url,omitempty"`
-	Content  string   `json:"content,omitempty"`
-	Args     []string `json:"args,omitempty"`
-}
-
-func (a ScriptAction) Title() string {
-	if a.RawTitle != "" {
-		return a.RawTitle
-	}
-	switch a.Type {
-	case "open":
-		return "Open"
-	case "open-url":
-		return "Open in Browser"
-	case "copy":
-		return "Copy to Clibpoard"
-	case "push":
-		return "Switch Page"
-	default:
-		return ""
-	}
-}
-
-func (a ScriptAction) Description() string {
-	return a.Keybind
-}
-
-func (a ScriptAction) FilterValue() string {
-	return a.Title()
+	Type    string   `json:"type" validate:"required,oneof=copy open url push"`
+	Title   string   `json:"title"`
+	Keybind string   `json:"keybind"`
+	Path    string   `json:"path,omitempty"`
+	Push    bool     `json:"push,omitempty"`
+	Command []string `json:"command,omitempty"`
+	Url     string   `json:"url,omitempty"`
+	Content string   `json:"content,omitempty"`
+	Args    []string `json:"args,omitempty"`
 }
 
 type LocalCommand struct {
