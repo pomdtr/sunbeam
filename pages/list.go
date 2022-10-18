@@ -13,7 +13,7 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-type ListPage struct {
+type ListContainer struct {
 	list      *list.Model
 	textInput *textinput.Model
 	width     int
@@ -21,15 +21,14 @@ type ListPage struct {
 	response  *scripts.ListResponse
 }
 
-var l list.Model
-var t textinput.Model
+func NewListContainer(res *scripts.ListResponse) Container {
+	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	listItems := make([]list.Item, len(res.Items))
+	for i, item := range res.Items {
+		listItems[i] = item
+	}
 
-func init() {
-	l = list.New([]list.Item{}, NewItemDelegate(), 0, 0)
-	t = textinput.New()
-}
-
-func NewListPage(res *scripts.ListResponse) Page {
+	t := textinput.New()
 	t.Prompt = ""
 	t.Placeholder = res.SearchBarPlaceholder
 	if res.SearchBarPlaceholder != "" {
@@ -38,33 +37,25 @@ func NewListPage(res *scripts.ListResponse) Page {
 		t.Placeholder = "Search..."
 	}
 
-	return &ListPage{
+	return &ListContainer{
 		list:      &l,
 		textInput: &t,
 		response:  res,
 	}
 }
 
-func (c ListPage) Init() tea.Cmd {
-	listItems := make([]list.Item, len(c.response.Items))
-	for i, item := range c.response.Items {
-		listItems[i] = item
-	}
-	return tea.Batch(c.list.SetItems(listItems), c.textInput.Focus())
-}
-
-func (c *ListPage) SetSize(width, height int) {
+func (c *ListContainer) SetSize(width, height int) {
 	c.width, c.height = width, height
 	c.list.SetSize(width, height-lipgloss.Height(c.footerView())-lipgloss.Height(c.headerView()))
 }
 
-func (c *ListPage) headerView() string {
+func (c *ListContainer) headerView() string {
 	input := c.textInput.View()
 	line := strings.Repeat("─", c.width)
 	return lipgloss.JoinVertical(lipgloss.Left, input, line)
 }
 
-func (c *ListPage) footerView() string {
+func (c *ListContainer) footerView() string {
 	selectedItem := c.list.SelectedItem()
 	if selectedItem == nil {
 		return bubbles.SunbeamFooter(c.width, c.response.Title)
@@ -77,7 +68,7 @@ func (c *ListPage) footerView() string {
 	}
 }
 
-func (c *ListPage) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	var cmds []tea.Cmd
 	log.Printf("ListPage.Update: %T, %v", msg, msg)
 
@@ -127,6 +118,6 @@ func (c *ListPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-func (c *ListPage) View() string {
+func (c *ListContainer) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.list.View(), c.footerView())
 }

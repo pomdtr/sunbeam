@@ -19,7 +19,7 @@ type DetailContainer struct {
 	viewport  *viewport.Model
 }
 
-func NewDetailContainer(response *scripts.DetailResponse, runAction ActionRunner) *DetailContainer {
+func NewDetailContainer(response *scripts.DetailResponse) *DetailContainer {
 	viewport := viewport.New(0, 0)
 	var content string
 	if lipgloss.HasDarkBackground() {
@@ -30,9 +30,8 @@ func NewDetailContainer(response *scripts.DetailResponse, runAction ActionRunner
 	viewport.SetContent(content)
 
 	return &DetailContainer{
-		response:  *response,
-		runAction: runAction,
-		viewport:  &viewport,
+		response: *response,
+		viewport: &viewport,
 	}
 }
 
@@ -55,7 +54,7 @@ func (c *DetailContainer) footerView() string {
 	return bubbles.SunbeamFooter(c.viewport.Width, c.response.Title)
 }
 
-func (c *DetailContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (c *DetailContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {

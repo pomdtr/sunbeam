@@ -50,15 +50,11 @@ func NewFormContainer(response *scripts.FormResponse, submitAction func(map[stri
 	return c
 }
 
-func (c *FormContainer) Init() tea.Cmd {
-	return nil
-}
-
 func (c *FormContainer) headerView() string {
 	return bubbles.SunbeamHeader(c.width)
 }
 
-func (c *FormContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

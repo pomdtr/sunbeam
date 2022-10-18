@@ -6,10 +6,10 @@ import (
 )
 
 type PushMsg struct {
-	Page Page
+	Page Container
 }
 
-func NewPushCmd(page Page) func() tea.Msg {
+func NewPushCmd(page Container) func() tea.Msg {
 	return utils.SendMsg(PushMsg{Page: page})
 }
 
