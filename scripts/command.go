@@ -111,7 +111,7 @@ func (c LocalCommand) Run(input CommandInput) (*ScriptResponse, error) {
 
 	err = cmd.Run()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while running command: %s", errbuf.String())
 	}
 
 	if c.ScriptMetadatas.Mode != "interactive" {

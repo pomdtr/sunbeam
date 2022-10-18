@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # @sunbeam.schemaVersion 1
-# @sunbeam.title Browse Home
+# @sunbeam.title Browse Root
 # @sunbeam.packageName File Browser
 # @sunbeam.mode interactive
 

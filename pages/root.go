@@ -149,7 +149,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case error:
 		errorContainer := NewErrorContainer(msg)
-		m.SetSize(m.width, m.height)
+		errorContainer.SetSize(m.width, m.height)
 		m.CurrentPage().container = errorContainer
 		return m, errorContainer.Init()
 	}

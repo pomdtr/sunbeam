@@ -1,17 +1,21 @@
 package pages
 
 import (
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/bubbles"
 )
 
 type ErrorContainer struct {
 	width, height int
-	err           error
+	viewport      viewport.Model
 }
 
 func NewErrorContainer(err error) *ErrorContainer {
-	return &ErrorContainer{err: err}
+	viewport := viewport.New(0, 0)
+	viewport.SetContent(err.Error())
+	return &ErrorContainer{viewport: viewport}
 }
 
 func (c *ErrorContainer) Init() tea.Cmd {
@@ -31,11 +35,20 @@ func (c *ErrorContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return c, nil
 }
 
+func (c *ErrorContainer) headerView() string {
+	return bubbles.SunbeamHeader(c.width)
+}
+
+func (c *ErrorContainer) footerView() string {
+	return bubbles.SunbeamFooterWithActions(c.width, "Error", "Exit")
+}
+
 func (c *ErrorContainer) SetSize(width, height int) {
 	c.width = width
 	c.height = height
+	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
 }
 
 func (c *ErrorContainer) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.err.Error(), "Press enter to exit")
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.viewport.View(), c.footerView())
 }
