@@ -20,19 +20,20 @@ type Page struct {
 
 type model struct {
 	width, height int
+	rootCommand   scripts.Command
 
 	pages []Page
 }
 
 func NewRoot(command scripts.Command) model {
-	m := model{}
-	m.PushPage(command, scripts.CommandInput{})
-
-	return m
+	return model{rootCommand: command}
 }
 
-func (m *model) PushPage(command scripts.Command, input scripts.CommandInput) {
-	m.pages = append(m.pages, Page{Command: command, input: input, container: NewLoadingContainer(command.Title())})
+func (m *model) PushPage(command scripts.Command, input scripts.CommandInput) tea.Cmd {
+	loading := NewLoadingContainer(command.Title())
+	loading.SetSize(m.width, m.height)
+	m.pages = append(m.pages, Page{Command: command, input: input, container: loading})
+	return tea.Batch(loading.Init(), m.Run)
 }
 
 func (m *model) PopPage() {
@@ -57,8 +58,8 @@ func (m model) Run() tea.Msg {
 	return response
 }
 
-func (m model) Init() tea.Cmd {
-	return m.Run
+func (m *model) Init() tea.Cmd {
+	return m.PushPage(m.rootCommand, scripts.CommandInput{})
 }
 
 func (m *model) SetSize(width, height int) {
@@ -71,7 +72,7 @@ func (m *model) SetSize(width, height int) {
 	}
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -81,13 +82,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 	case PopMsg:
+		log.Println(len(m.pages))
 		if len(m.pages) == 1 {
 			return m, tea.Quit
 		}
 		m.PopPage()
 		return m, nil
 	case scripts.ScriptResponse:
-		log.Printf("Response: %v", msg)
 		switch msg.Type {
 		case "list":
 			list := msg.List
@@ -98,7 +99,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			listContainer := NewListContainer(list)
 			listContainer.SetSize(m.width, m.height)
 			m.CurrentPage().container = listContainer
-			return m, nil
+			return m, listContainer.Init()
 		case "detail":
 			detail := msg.Detail
 			if detail.Title == "" {
@@ -107,7 +108,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			detailContainer := NewDetailContainer(detail)
 			m.CurrentPage().container = detailContainer
-			return m, nil
+			return m, detailContainer.Init()
 		case "form":
 			form := msg.Form
 			if form.Title == "" {
@@ -124,7 +125,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// }
 		}
 	case scripts.ScriptAction:
-		return m, m.RunAction(msg)
+		cmd := m.RunAction(msg)
+		return m, cmd
 
 	case error:
 		log.Printf("Error: %v", msg)
@@ -138,21 +140,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) Command() scripts.Command {
+	return m.CurrentPage().Command
+}
+
+func (m *model) View() string {
 	return m.CurrentPage().container.View()
 }
 
-func (m model) RunAction(action scripts.ScriptAction) tea.Cmd {
+func (m *model) RunAction(action scripts.ScriptAction) tea.Cmd {
 	switch action.Type {
 	case "push":
-		scriptPath := path.Join(scripts.CommandDir, action.Path)
-		command, err := scripts.Parse(scriptPath)
+		commandUrl := m.Command().Url()
+		commandDir := path.Dir(commandUrl.Path)
+		command, err := scripts.Parse(path.Join(commandDir, action.Path))
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		m.PushPage(command, scripts.CommandInput{Arguments: action.Args})
-		return m.Run
+		return m.PushPage(command, scripts.CommandInput{Arguments: action.Args})
 	case "exec":
 		var cmd *exec.Cmd
 		if len(action.Command) == 1 {

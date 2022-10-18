@@ -39,13 +39,21 @@ func (c *LoadingContainer) footerView() string {
 	return bubbles.SunbeamFooter(c.width, c.title)
 }
 
+func (c *LoadingContainer) Init() tea.Cmd {
+	return c.spinner.Tick
+}
+
 func (c *LoadingContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEscape:
-			return nil, PopCmd
+			return c, PopCmd
 		}
+	default:
+		var cmd tea.Cmd
+		c.spinner, cmd = c.spinner.Update(msg)
+		return c, cmd
 	}
 
 	return c, nil
@@ -53,9 +61,9 @@ func (c *LoadingContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 func (container *LoadingContainer) View() string {
 	var loadingIndicator string
-	// spinner := lipgloss.NewStyle().Padding(0, 2).Render(container.spinner.View())
+	spinner := lipgloss.NewStyle().Padding(0, 2).Render(container.spinner.View())
 	label := lipgloss.NewStyle().Render("Loading...")
-	loadingIndicator = lipgloss.JoinHorizontal(lipgloss.Center, label)
+	loadingIndicator = lipgloss.JoinHorizontal(lipgloss.Center, spinner, label)
 
 	newLines := strings.Repeat("\n", utils.Max(0, container.height-lipgloss.Height(loadingIndicator)-lipgloss.Height(container.footerView())-lipgloss.Height(container.headerView())-1))
 

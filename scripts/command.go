@@ -27,6 +27,7 @@ func init() {
 type Command interface {
 	Run(CommandInput) (ScriptResponse, error)
 	Title() string
+	Url() url.URL
 }
 
 type CommandInput struct {
@@ -35,72 +36,25 @@ type CommandInput struct {
 	Query       string            `json:"query"`
 }
 
-type RemoteCommand struct {
-	Url   url.URL
-	Title string
+type LocalCommand struct {
+	Path            string
+	ScriptMetadatas ScriptMetadatas
 }
 
-type RootCommand struct {
-	Root string
+func (c LocalCommand) Url() url.URL {
+	return url.URL{Scheme: "fs", Path: c.Path}
 }
 
-func (c RootCommand) Title() string {
-	return "Commands"
-}
+func (s LocalCommand) Title() string { return s.ScriptMetadatas.Title }
 
-func (c RootCommand) Run(input CommandInput) (res ScriptResponse, err error) {
-	dirCommands, err := ScanDir(c.Root)
-	if err != nil {
-		return
-	}
-
-	items := make([]ScriptItem, len(dirCommands))
-	for i, command := range dirCommands {
-		items[i] = ScriptItem{
-			Title:    command.Title(),
-			Subtitle: command.Path,
-			Actions: []ScriptAction{
-				{
-					Type:  "push",
-					Title: "Open Command",
-					Path:  command.Path,
-				},
-			},
+func (s LocalCommand) RequiredArguments() []ScriptArgument {
+	var res []ScriptArgument
+	for _, arg := range s.ScriptMetadatas.Arguments {
+		if !arg.Optional {
+			res = append(res, arg)
 		}
 	}
-
-	res.Type = "list"
-	res.List = &ListResponse{
-		Items: items,
-	}
-	log.Println("res", items)
-
-	return
-}
-
-func (c RemoteCommand) Run(input CommandInput) (res ScriptResponse, err error) {
-	payload, err := json.Marshal(input)
-	if err != nil {
-		return res, err
-	}
-
-	httpRes, err := http.Post(http.MethodPost, c.Url.String(), bytes.NewBuffer(payload))
-	if err != nil {
-		return ScriptResponse{
-			Type: "detail",
-			Detail: &DetailResponse{
-				Format: "text",
-				Text:   fmt.Errorf("error while running command: %s", err).Error(),
-			},
-		}, nil
-	}
-
-	err = json.NewDecoder(httpRes.Body).Decode(&res)
-	if err != nil {
-		return res, fmt.Errorf("error while decoding response: %s", err)
-	}
-
-	return res, nil
+	return res
 }
 
 func (c LocalCommand) Run(input CommandInput) (res ScriptResponse, err error) {
@@ -187,6 +141,81 @@ func (c LocalCommand) Run(input CommandInput) (res ScriptResponse, err error) {
 				Text: err.Error(),
 			},
 		}, nil
+	}
+
+	return
+}
+
+type RemoteCommand struct {
+	url   url.URL
+	Title string
+}
+
+func (c RemoteCommand) Url() url.URL {
+	return c.url
+}
+
+func (c RemoteCommand) Run(input CommandInput) (res ScriptResponse, err error) {
+	payload, err := json.Marshal(input)
+	if err != nil {
+		return res, err
+	}
+
+	httpRes, err := http.Post(http.MethodPost, c.url.String(), bytes.NewBuffer(payload))
+	if err != nil {
+		return ScriptResponse{
+			Type: "detail",
+			Detail: &DetailResponse{
+				Format: "text",
+				Text:   fmt.Errorf("error while running command: %s", err).Error(),
+			},
+		}, nil
+	}
+
+	err = json.NewDecoder(httpRes.Body).Decode(&res)
+	if err != nil {
+		return res, fmt.Errorf("error while decoding response: %s", err)
+	}
+
+	return res, nil
+}
+
+type RootCommand struct {
+	Root string
+}
+
+func (c RootCommand) Title() string {
+	return "Commands"
+}
+
+func (c RootCommand) Url() url.URL {
+	return url.URL{Scheme: "fs", Path: "/"}
+}
+
+func (c RootCommand) Run(input CommandInput) (res ScriptResponse, err error) {
+	dirCommands, err := ScanDir(c.Root)
+	if err != nil {
+		return
+	}
+
+	items := make([]ScriptItem, len(dirCommands))
+	for i, command := range dirCommands {
+		items[i] = ScriptItem{
+			Title:    command.Title(),
+			Subtitle: command.Path,
+			Actions: []ScriptAction{
+				{
+					Type:  "push",
+					Title: "Open Command",
+					Path:  command.Path,
+				},
+			},
+		}
+	}
+
+	res.Type = "list"
+	res.List = &ListResponse{
+		Items: items,
 	}
 
 	return

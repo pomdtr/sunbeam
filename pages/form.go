@@ -54,6 +54,10 @@ func (c *FormContainer) headerView() string {
 	return bubbles.SunbeamHeader(c.width)
 }
 
+func (c FormContainer) Init() tea.Cmd {
+	return nil
+}
+
 func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {

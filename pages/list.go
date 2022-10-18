@@ -25,7 +25,6 @@ type ListContainer struct {
 
 func NewListContainer(res *scripts.ListResponse) Container {
 	t := textinput.New()
-	t.Focus()
 	t.Prompt = ""
 	t.Placeholder = res.SearchBarPlaceholder
 	if res.SearchBarPlaceholder != "" {
@@ -63,6 +62,10 @@ func filterItems(term string, items []scripts.ScriptItem) []scripts.ScriptItem {
 		filteredItems[i] = items[r.Index]
 	}
 	return filteredItems
+}
+
+func (c *ListContainer) Init() tea.Cmd {
+	return c.textInput.Focus()
 }
 
 func (c *ListContainer) SetSize(width, height int) {

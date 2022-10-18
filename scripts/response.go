@@ -67,25 +67,6 @@ type ScriptAction struct {
 	Args    []string `json:"args,omitempty"`
 }
 
-type LocalCommand struct {
-	Path            string
-	ScriptMetadatas ScriptMetadatas
-}
-
-func (s LocalCommand) FilterValue() string { return s.ScriptMetadatas.Title }
-func (s LocalCommand) Title() string       { return s.ScriptMetadatas.Title }
-func (s LocalCommand) Description() string { return s.ScriptMetadatas.PackageName }
-
-func (s LocalCommand) RequiredArguments() []ScriptArgument {
-	var res []ScriptArgument
-	for _, arg := range s.ScriptMetadatas.Arguments {
-		if !arg.Optional {
-			res = append(res, arg)
-		}
-	}
-	return res
-}
-
 type ScriptMetadatas struct {
 	SchemaVersion        int                 `json:"schemaVersion" validate:"required,eq=1"`
 	Title                string              `json:"title" validate:"required"`

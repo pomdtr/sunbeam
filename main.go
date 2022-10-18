@@ -78,7 +78,7 @@ func main() {
 	defer f.Close()
 
 	m := pages.NewRoot(rootCmd)
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	p := tea.NewProgram(&m, tea.WithAltScreen(), tea.WithMouseAllMotion())
 	if err := p.Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
