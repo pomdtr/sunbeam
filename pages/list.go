@@ -25,7 +25,7 @@ type ListContainer struct {
 
 func NewListContainer(res *scripts.ListResponse) Container {
 	t := textinput.New()
-	t.Prompt = ""
+	t.Prompt = "> "
 	t.Placeholder = res.SearchBarPlaceholder
 	if res.SearchBarPlaceholder != "" {
 		t.Placeholder = res.SearchBarPlaceholder
