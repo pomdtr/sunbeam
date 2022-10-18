@@ -12,6 +12,13 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
+type Container interface {
+	Update(msg tea.Msg) (Container, tea.Cmd)
+	Init() tea.Cmd
+	View() string
+	SetSize(width, height int)
+}
+
 type Page struct {
 	scripts.Command
 	input     scripts.CommandInput
@@ -24,6 +31,10 @@ type model struct {
 
 	pages []Page
 }
+
+type PopMsg struct{}
+
+var PopCmd = utils.SendMsg(PopMsg{})
 
 func NewRoot(command scripts.Command) model {
 	return model{rootCommand: command}
@@ -51,7 +62,7 @@ func (m *model) CurrentPage() *Page {
 }
 
 func (m model) Run() tea.Msg {
-	response, err := m.CurrentPage().Run(scripts.CommandInput{})
+	response, err := m.CurrentPage().Run(m.CurrentPage().input)
 	if err != nil {
 		return err
 	}
@@ -82,13 +93,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 	case PopMsg:
-		log.Println(len(m.pages))
 		if len(m.pages) == 1 {
 			return m, tea.Quit
 		}
 		m.PopPage()
-		return m, nil
+		return m, m.CurrentPage().container.Init()
 	case scripts.ScriptResponse:
+		log.Println(msg.Type)
 		switch msg.Type {
 		case "list":
 			list := msg.List
@@ -105,8 +116,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if detail.Title == "" {
 				detail.Title = m.CurrentPage().Title()
 			}
-
 			detailContainer := NewDetailContainer(detail)
+			detailContainer.SetSize(m.width, m.height)
 			m.CurrentPage().container = detailContainer
 			return m, detailContainer.Init()
 		case "form":
@@ -114,15 +125,23 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if form.Title == "" {
 				form.Title = m.CurrentPage().Title()
 			}
-			// submitAction := func(values map[string]string) tea.Cmd {
-			// 	switch form.Method {
-			// 	case "args":
-			// 		return RunCmd(c.command, c.input)
-			// 	case "env":
-			// 		return RunCmd(c.command, c.input)
-			// 	}
-			// 	return utils.NewErrorCmd("unknown form method: %s", msg.Form.Method)
-			// }
+			submitAction := func(values map[string]string) tea.Cmd {
+				switch form.Method {
+				case "args":
+					args := make([]string, 0)
+					for _, arg := range m.CurrentPage().Arguments() {
+						args = append(args, values[arg.Placeholder])
+					}
+					return m.PushPage(m.CurrentPage().Command, scripts.CommandInput{Arguments: args})
+				case "env":
+					return m.PushPage(m.CurrentPage().Command, scripts.CommandInput{Environment: values})
+				}
+				return utils.NewErrorCmd("unknown form method: %s", msg.Form.Method)
+			}
+			formContainer := NewFormContainer(form, submitAction)
+			formContainer.SetSize(m.width, m.height)
+			m.CurrentPage().container = formContainer
+			return m, formContainer.Init()
 		}
 	case scripts.ScriptAction:
 		cmd := m.RunAction(msg)

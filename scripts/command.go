@@ -27,6 +27,7 @@ func init() {
 type Command interface {
 	Run(CommandInput) (ScriptResponse, error)
 	Title() string
+	Arguments() []ScriptArgument
 	Url() url.URL
 }
 
@@ -55,6 +56,10 @@ func (s LocalCommand) RequiredArguments() []ScriptArgument {
 		}
 	}
 	return res
+}
+
+func (s LocalCommand) Arguments() []ScriptArgument {
+	return s.ScriptMetadatas.Arguments
 }
 
 func (c LocalCommand) Run(input CommandInput) (res ScriptResponse, err error) {
@@ -182,6 +187,10 @@ func (c RemoteCommand) Run(input CommandInput) (res ScriptResponse, err error) {
 
 type RootCommand struct {
 	Root string
+}
+
+func (c RootCommand) Arguments() []ScriptArgument {
+	return nil
 }
 
 func (c RootCommand) Title() string {

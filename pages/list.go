@@ -73,10 +73,10 @@ func (c *ListContainer) SetSize(width, height int) {
 }
 
 func (c ListContainer) SelectedItem() (scripts.ScriptItem, bool) {
-	if c.selectedIdx < 0 || c.selectedIdx >= len(c.response.Items) {
+	if c.selectedIdx >= len(c.filteredItems) {
 		return scripts.ScriptItem{}, false
 	}
-	return c.response.Items[c.selectedIdx], true
+	return c.filteredItems[c.selectedIdx], true
 }
 
 func (c *ListContainer) headerView() string {
@@ -153,9 +153,9 @@ func (c *ListContainer) View() string {
 
 	for i := startIndex; i < maxIndex; i++ {
 		if i == c.selectedIdx {
-			rows = append(rows, fmt.Sprintf("> %s %s", items[i].Title, items[i].Subtitle))
+			rows = append(rows, fmt.Sprintf("> %s - %s", items[i].Title, items[i].Subtitle))
 		} else {
-			rows = append(rows, fmt.Sprintf("  %s %s", items[i].Title, items[i].Subtitle))
+			rows = append(rows, fmt.Sprintf("  %s - %s", items[i].Title, items[i].Subtitle))
 		}
 	}
 	for i := 0; i < availableHeight-len(items); i++ {
