@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -10,14 +11,16 @@ import (
 	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/scripts"
 	"github.com/pomdtr/sunbeam/utils"
+	"github.com/sahilm/fuzzy"
 )
 
 type ListContainer struct {
-	textInput   *textinput.Model
-	selectedIdx int
-	width       int
-	height      int
-	response    *scripts.ListResponse
+	textInput     *textinput.Model
+	filteredItems []scripts.ScriptItem
+	selectedIdx   int
+	width         int
+	height        int
+	response      *scripts.ListResponse
 }
 
 func NewListContainer(res *scripts.ListResponse) Container {
@@ -32,9 +35,34 @@ func NewListContainer(res *scripts.ListResponse) Container {
 	}
 
 	return &ListContainer{
-		textInput: &t,
-		response:  res,
+		textInput:     &t,
+		filteredItems: res.Items,
+		response:      res,
 	}
+}
+
+// Rank defines a rank for a given item.
+type Rank struct {
+	// The index of the item in the original input.
+	Index int
+	// Indices of the actual word that were matched against the filter term.
+	MatchedIndexes []int
+}
+
+// filterItems uses the sahilm/fuzzy to filter through the list.
+// This is set by default.
+func filterItems(term string, items []scripts.ScriptItem) []scripts.ScriptItem {
+	targets := make([]string, len(items))
+	for i, item := range items {
+		targets[i] = item.Title
+	}
+	var ranks = fuzzy.Find(term, targets)
+	sort.Stable(ranks)
+	filteredItems := make([]scripts.ScriptItem, len(ranks))
+	for i, r := range ranks {
+		filteredItems[i] = items[r.Index]
+	}
+	return filteredItems
 }
 
 func (c *ListContainer) SetSize(width, height int) {
@@ -101,6 +129,12 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 	t, cmd := c.textInput.Update(msg)
 	cmds = append(cmds, cmd)
+	if t.Value() == "" {
+		c.filteredItems = c.response.Items
+	} else if t.Value() != c.textInput.Value() {
+		c.filteredItems = filterItems(t.Value(), c.response.Items)
+		c.selectedIdx = 0
+	}
 	c.textInput = &t
 
 	return c, tea.Batch(cmds...)
@@ -108,7 +142,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 func (c *ListContainer) View() string {
 	rows := make([]string, 0)
-	items := c.response.Items
+	items := c.filteredItems
 
 	availableHeight := c.height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
 	startIndex := utils.Max(0, c.selectedIdx-availableHeight+1)
