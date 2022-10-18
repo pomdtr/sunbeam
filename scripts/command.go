@@ -25,7 +25,7 @@ func init() {
 }
 
 type Command interface {
-	Run(CommandInput) (ScriptResponse, error)
+	Run(CommandInput) (*ScriptResponse, error)
 	Title() string
 	Arguments() []ScriptArgument
 	Url() url.URL
@@ -62,7 +62,8 @@ func (s LocalCommand) Arguments() []ScriptArgument {
 	return s.ScriptMetadatas.Arguments
 }
 
-func (c LocalCommand) Run(input CommandInput) (res ScriptResponse, err error) {
+func (c LocalCommand) Run(input CommandInput) (*ScriptResponse, error) {
+	var err error
 	log.Printf("Running command %s with args %s", c.Path, input.Arguments)
 	// Check if the number of arguments is correct
 	if len(input.Arguments) < len(c.RequiredArguments()) {
@@ -74,7 +75,7 @@ func (c LocalCommand) Run(input CommandInput) (res ScriptResponse, err error) {
 				Name: c.ScriptMetadatas.Arguments[i].Placeholder,
 			})
 		}
-		return ScriptResponse{
+		return &ScriptResponse{
 			Type: "form",
 			Form: &FormResponse{
 				Method: "args",
@@ -109,19 +110,12 @@ func (c LocalCommand) Run(input CommandInput) (res ScriptResponse, err error) {
 	}
 
 	err = cmd.Run()
-
 	if err != nil {
-		return ScriptResponse{
-			Type: "detail",
-			Detail: &DetailResponse{
-				Format: "text",
-				Text:   errbuf.String(),
-			},
-		}, nil
+		return nil, err
 	}
 
 	if c.ScriptMetadatas.Mode != "interactive" {
-		return ScriptResponse{
+		return &ScriptResponse{
 			Type: "detail",
 			Detail: &DetailResponse{
 				Format: "text",
@@ -130,25 +124,17 @@ func (c LocalCommand) Run(input CommandInput) (res ScriptResponse, err error) {
 		}, nil
 	}
 
+	var res ScriptResponse
 	err = json.Unmarshal(outbuf.Bytes(), &res)
 	if err != nil {
-		return
+		return nil, err
 	}
 	err = Validator.Struct(res)
 	if err != nil {
-		return ScriptResponse{
-			Type: "detail",
-			Detail: &DetailResponse{
-				Format: "text",
-				Actions: []ScriptAction{
-					{Type: "copy", Content: outbuf.String()},
-				},
-				Text: err.Error(),
-			},
-		}, nil
+		return nil, err
 	}
 
-	return
+	return &res, nil
 }
 
 type RemoteCommand struct {
@@ -160,29 +146,24 @@ func (c RemoteCommand) Url() url.URL {
 	return c.url
 }
 
-func (c RemoteCommand) Run(input CommandInput) (res ScriptResponse, err error) {
+func (c RemoteCommand) Run(input CommandInput) (*ScriptResponse, error) {
 	payload, err := json.Marshal(input)
 	if err != nil {
-		return res, err
+		return nil, err
 	}
 
 	httpRes, err := http.Post(http.MethodPost, c.url.String(), bytes.NewBuffer(payload))
 	if err != nil {
-		return ScriptResponse{
-			Type: "detail",
-			Detail: &DetailResponse{
-				Format: "text",
-				Text:   fmt.Errorf("error while running command: %s", err).Error(),
-			},
-		}, nil
+		return nil, err
 	}
 
+	var res ScriptResponse
 	err = json.NewDecoder(httpRes.Body).Decode(&res)
 	if err != nil {
-		return res, fmt.Errorf("error while decoding response: %s", err)
+		return nil, fmt.Errorf("error while decoding response: %s", err)
 	}
 
-	return res, nil
+	return &res, nil
 }
 
 type RootCommand struct {
@@ -201,10 +182,10 @@ func (c RootCommand) Url() url.URL {
 	return url.URL{Scheme: "fs", Path: "/"}
 }
 
-func (c RootCommand) Run(input CommandInput) (res ScriptResponse, err error) {
+func (c RootCommand) Run(input CommandInput) (*ScriptResponse, error) {
 	dirCommands, err := ScanDir(c.Root)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	items := make([]ScriptItem, len(dirCommands))
@@ -222,10 +203,11 @@ func (c RootCommand) Run(input CommandInput) (res ScriptResponse, err error) {
 		}
 	}
 
+	var res ScriptResponse
 	res.Type = "list"
 	res.List = &ListResponse{
 		Items: items,
 	}
 
-	return
+	return &res, nil
 }

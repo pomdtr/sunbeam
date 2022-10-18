@@ -1,4 +1,4 @@
-#!/usr/bin/env npx zx
+#!/usr/bin/env zx
 
 // @sunbeam.schemaVersion 1
 // @sunbeam.title Change Alacritty Theme

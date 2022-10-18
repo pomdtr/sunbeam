@@ -32,9 +32,9 @@ type model struct {
 	pages []Page
 }
 
-type PopMsg struct{}
+type popMsg struct{}
 
-var PopCmd = utils.SendMsg(PopMsg{})
+var PopCmd = utils.SendMsg(popMsg{})
 
 func NewRoot(command scripts.Command) model {
 	return model{rootCommand: command}
@@ -92,13 +92,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
-	case PopMsg:
+	case popMsg:
 		if len(m.pages) == 1 {
 			return m, tea.Quit
 		}
 		m.PopPage()
 		return m, m.CurrentPage().container.Init()
-	case scripts.ScriptResponse:
+	case *scripts.ScriptResponse:
 		log.Println(msg.Type)
 		switch msg.Type {
 		case "list":
@@ -148,8 +148,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case error:
-		log.Printf("Error: %v", msg)
-		return m, tea.Quit
+		errorContainer := NewErrorContainer(msg)
+		m.SetSize(m.width, m.height)
+		m.CurrentPage().container = errorContainer
+		return m, errorContainer.Init()
 	}
 
 	var cmd tea.Cmd
@@ -207,13 +209,13 @@ func (m *model) RunAction(action scripts.ScriptAction) tea.Cmd {
 	case "open-url":
 		err := open.Run(action.Url)
 		if err != nil {
-			return utils.NewErrorCmd("failed to open url: %s", err)
+			return utils.NewErrorCmd("failed to open url: %s", action.Url)
 		}
 		return tea.Quit
 	case "copy":
 		err := clipboard.WriteAll(action.Content)
 		if err != nil {
-			return utils.NewErrorCmd("failed to access clipboard: %s", err)
+			return utils.NewErrorCmd("failed to copy %s to clipboard", err)
 		}
 		return tea.Quit
 	default:
