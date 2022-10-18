@@ -44,7 +44,7 @@ func (m *model) PushPage(command scripts.Command, input scripts.CommandInput) te
 	loading := NewLoadingContainer(command.Title())
 	loading.SetSize(m.width, m.height)
 	m.pages = append(m.pages, Page{Command: command, input: input, container: loading})
-	return tea.Batch(loading.Init(), m.Run)
+	return tea.Batch(loading.Init(), NewRunCmd(command, input))
 }
 
 func (m *model) PopPage() {
@@ -61,12 +61,14 @@ func (m *model) CurrentPage() *Page {
 	return &m.pages[len(m.pages)-1]
 }
 
-func (m model) Run() tea.Msg {
-	response, err := m.CurrentPage().Run(m.CurrentPage().input)
-	if err != nil {
-		return err
+func NewRunCmd(command scripts.Command, input scripts.CommandInput) tea.Cmd {
+	return func() tea.Msg {
+		response, err := command.Run(input)
+		if err != nil {
+			return err
+		}
+		return response
 	}
-	return response
 }
 
 func (m *model) Init() tea.Cmd {
@@ -99,7 +101,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.PopPage()
 		return m, m.CurrentPage().container.Init()
 	case *scripts.ScriptResponse:
-		log.Println(msg.Type)
 		switch msg.Type {
 		case "list":
 			list := msg.List
@@ -132,9 +133,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					for _, arg := range m.CurrentPage().Arguments() {
 						args = append(args, values[arg.Placeholder])
 					}
-					return m.PushPage(m.CurrentPage().Command, scripts.CommandInput{Arguments: args})
+					m.CurrentPage().input = scripts.CommandInput{Arguments: args}
+					return NewRunCmd(m.CurrentPage().Command, m.CurrentPage().input)
 				case "env":
-					return m.PushPage(m.CurrentPage().Command, scripts.CommandInput{Environment: values})
+					m.CurrentPage().input = scripts.CommandInput{Environment: values}
+					return NewRunCmd(m.CurrentPage().Command, m.CurrentPage().input)
 				}
 				return utils.NewErrorCmd("unknown form method: %s", msg.Form.Method)
 			}

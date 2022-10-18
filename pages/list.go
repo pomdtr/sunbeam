@@ -116,7 +116,11 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 				c.selectedIdx--
 			}
 		case tea.KeyEscape:
-			return c, PopCmd
+			if c.textInput.Value() != "" {
+				c.textInput.SetValue("")
+			} else {
+				return c, PopCmd
+			}
 		default:
 			for _, action := range selectedItem.Actions {
 				if action.Keybind == msg.String() {
