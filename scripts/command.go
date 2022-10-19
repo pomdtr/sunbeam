@@ -38,8 +38,8 @@ type CommandInput struct {
 }
 
 type LocalCommand struct {
-	Path            string
-	ScriptMetadatas ScriptMetadatas
+	Path string
+	ScriptMetadatas
 }
 
 func (c LocalCommand) Url() url.URL {
@@ -192,7 +192,7 @@ func (c RootCommand) Run(input CommandInput) (*ScriptResponse, error) {
 	for i, command := range dirCommands {
 		items[i] = ScriptItem{
 			Title:    command.Title(),
-			Subtitle: command.Path,
+			Subtitle: command.PackageName,
 			Actions: []ScriptAction{
 				{
 					Type:  "push",
