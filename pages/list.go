@@ -110,7 +110,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		case tea.KeyEnter:
 			return c, utils.SendMsg(selectedItem.Actions[0])
 		case tea.KeyDown, tea.KeyTab, tea.KeyCtrlJ:
-			if c.selectedIdx < len(c.response.Items)-1 {
+			if c.selectedIdx < len(c.filteredItems)-1 {
 				c.updateIndexes(c.selectedIdx + 1)
 			}
 		case tea.KeyUp, tea.KeyShiftTab, tea.KeyCtrlK:
@@ -138,11 +138,13 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 	t, cmd := c.textInput.Update(msg)
 	cmds = append(cmds, cmd)
-	if t.Value() == "" {
-		c.filteredItems = c.response.Items
-	} else if t.Value() != c.textInput.Value() {
-		c.filteredItems = filterItems(t.Value(), c.response.Items)
-		c.selectedIdx = 0
+	if t.Value() != c.textInput.Value() {
+		if t.Value() == "" {
+			c.filteredItems = c.response.Items
+		} else {
+			c.filteredItems = filterItems(t.Value(), c.response.Items)
+		}
+		c.updateIndexes(0)
 	}
 	c.textInput = &t
 
