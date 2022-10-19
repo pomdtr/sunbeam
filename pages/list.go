@@ -18,6 +18,7 @@ type ListContainer struct {
 	textInput     *textinput.Model
 	filteredItems []scripts.ScriptItem
 	selectedIdx   int
+	startIndex    int
 	width         int
 	height        int
 	response      *scripts.ListResponse
@@ -69,7 +70,8 @@ func (c *ListContainer) Init() tea.Cmd {
 }
 
 func (c *ListContainer) SetSize(width, height int) {
-	c.width, c.height = width, height
+	c.width, c.height = width, height-lipgloss.Height(c.headerView())-lipgloss.Height(c.footerView())-1
+	c.updateIndexes(c.selectedIdx)
 }
 
 func (c ListContainer) SelectedItem() (scripts.ScriptItem, bool) {
@@ -109,11 +111,11 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, utils.SendMsg(selectedItem.Actions[0])
 		case tea.KeyDown, tea.KeyTab, tea.KeyCtrlJ:
 			if c.selectedIdx < len(c.response.Items)-1 {
-				c.selectedIdx++
+				c.updateIndexes(c.selectedIdx + 1)
 			}
 		case tea.KeyUp, tea.KeyShiftTab, tea.KeyCtrlK:
 			if c.selectedIdx > 0 {
-				c.selectedIdx--
+				c.updateIndexes(c.selectedIdx - 1)
 			}
 		case tea.KeyEscape:
 			if c.textInput.Value() != "" {
@@ -147,22 +149,30 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
+func (c *ListContainer) updateIndexes(selectedIndex int) {
+	for selectedIndex < c.startIndex {
+		c.startIndex--
+	}
+	for selectedIndex > c.startIndex+c.height {
+		c.startIndex++
+	}
+	c.selectedIdx = selectedIndex
+}
+
 func (c *ListContainer) View() string {
 	rows := make([]string, 0)
 	items := c.filteredItems
 
-	availableHeight := c.height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
-	startIndex := utils.Max(0, c.selectedIdx-availableHeight+1)
-	maxIndex := utils.Min(len(items), startIndex+availableHeight)
-
-	for i := startIndex; i < maxIndex; i++ {
+	endIndex := utils.Min(c.startIndex+c.height+1, len(items))
+	for i := c.startIndex; i < endIndex; i++ {
 		if i == c.selectedIdx {
 			rows = append(rows, fmt.Sprintf("> %s - %s", items[i].Title, items[i].Subtitle))
 		} else {
 			rows = append(rows, fmt.Sprintf("  %s - %s", items[i].Title, items[i].Subtitle))
 		}
 	}
-	for i := 0; i < availableHeight-len(items); i++ {
+
+	for i := len(rows) - 1; i < c.height; i++ {
 		rows = append(rows, "")
 	}
 
