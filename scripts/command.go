@@ -102,10 +102,6 @@ func (c LocalCommand) Run(input CommandInput) (*ScriptResponse, error) {
 	cmd.Stdin = &inbuf
 
 	if c.ScriptMetadatas.Mode == "interactive" {
-		// Add support dir to environment
-		supportDir := path.Join(xdg.DataHome, "sunbeam", c.ScriptMetadatas.PackageName, "support")
-		cmd.Env = append(cmd.Env, fmt.Sprintf("SUNBEAM_SUPPORT_DIR=%s", supportDir))
-
 		inbuf.Write([]byte(input.Query))
 	}
 
@@ -192,7 +188,7 @@ func (c RootCommand) Run(input CommandInput) (*ScriptResponse, error) {
 	for i, command := range dirCommands {
 		items[i] = ScriptItem{
 			Title:    command.Title(),
-			Subtitle: command.PackageName,
+			Subtitle: command.Subtitle,
 			Actions: []ScriptAction{
 				{
 					Type:  "push",

@@ -2,7 +2,7 @@
 
 // @sunbeam.schemaVersion 1
 // @sunbeam.title Browse Directory
-// @sunbeam.packageName File Browser
+// @sunbeam.subtitle File Browser
 // @sunbeam.mode interactive
 // @sunbeam.argument1 { "type": "text", "placeholder": "path" }
 

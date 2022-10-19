@@ -2,7 +2,7 @@
 
 // @sunbeam.schemaVersion 1
 // @sunbeam.title Change Alacritty Theme
-// @sunbeam.packageName Alacritty
+// @sunbeam.subtitle Alacritty
 // @sunbeam.mode interactive
 
 const { stdout } = await $`alacritty-themes --list`;

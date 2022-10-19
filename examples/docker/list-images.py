@@ -3,7 +3,7 @@
 #  @sunbeam.schemaVersion 1
 #  @sunbeam.title List Images
 #  @sunbeam.mode interactive
-#  @sunbeam.packageName Docker
+#  @sunbeam.subtitle Docker
 
 import subprocess
 import json

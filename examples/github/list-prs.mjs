@@ -2,7 +2,7 @@
 
 // @sunbeam.schemaVersion 1
 // @sunbeam.title List Pull Requests
-// @sunbeam.packageName Github
+// @sunbeam.subtitle Github
 // @sunbeam.mode interactive
 
 // @sunbeam.argument1 { "type": "text", "placeholder": "repository" }

@@ -3,7 +3,7 @@
 // @sunbeam.schemaVersion 1
 // @sunbeam.title Which Key
 // @sunbeam.mode interactive
-// @sunbeam.packageName WhichKey
+// @sunbeam.subtitle WhichKey
 
 let root = {
   title: "Which Key",

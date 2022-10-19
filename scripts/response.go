@@ -71,7 +71,7 @@ type ScriptMetadatas struct {
 	SchemaVersion        int                 `json:"schemaVersion" validate:"required,eq=1"`
 	Title                string              `json:"title" validate:"required"`
 	Mode                 string              `json:"mode" validate:"required,oneof=interactive silent fullOutput"`
-	PackageName          string              `json:"packageName" validate:"required"`
+	Subtitle             string              `json:"subtitle,omitempty"`
 	Description          string              `json:"description,omitempty"`
 	Arguments            []ScriptArgument    `json:"argument1,omitempty" validate:"omitempty,dive"`
 	Environment          []ScriptEnvironment `json:"environment,omitempty" validate:"omitempty,dive"`
@@ -135,7 +135,7 @@ func extractSunbeamMetadatas(content string) ScriptMetadatas {
 
 	metadatas.Title = metadataMap["title"]
 	metadatas.Mode = metadataMap["mode"]
-	metadatas.PackageName = metadataMap["packageName"]
+	metadatas.Subtitle = metadataMap["subtitle"]
 	metadatas.Icon = metadataMap["icon"]
 	metadatas.CurrentDirectoryPath = metadataMap["currentDirectoryPath"]
 	metadatas.Author = metadataMap["author"]

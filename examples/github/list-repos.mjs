@@ -3,7 +3,7 @@
 // @sunbeam.schemaVersion 1
 // @sunbeam.title Search My Repositories
 // @sunbeam.mode interactive
-// @sunbeam.packageName Github
+// @sunbeam.subtitle Github
 
 $.verbose = false;
 
