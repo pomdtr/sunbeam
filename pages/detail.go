@@ -3,7 +3,6 @@ package pages
 import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/scripts"
@@ -21,13 +20,7 @@ type DetailContainer struct {
 
 func NewDetailContainer(response *scripts.DetailResponse) *DetailContainer {
 	viewport := viewport.New(0, 0)
-	var content string
-	if lipgloss.HasDarkBackground() {
-		content, _ = glamour.Render(response.Text, "dark")
-	} else {
-		content, _ = glamour.Render(response.Text, "light")
-	}
-	viewport.SetContent(content)
+	viewport.SetContent(response.Text)
 
 	return &DetailContainer{
 		response: *response,

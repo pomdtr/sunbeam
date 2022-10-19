@@ -1,19 +1,11 @@
 package pages
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/scripts"
-)
-
-var (
-	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	cursorStyle  = focusedStyle.Copy()
-	noStyle      = lipgloss.NewStyle()
 )
 
 type FormContainer struct {
@@ -35,13 +27,9 @@ func NewFormContainer(response *scripts.FormResponse, submitAction func(map[stri
 	var t textinput.Model
 	for i, arg := range response.Items {
 		t = textinput.New()
-		if i == 0 {
-			t.Focus()
-		}
 
-		t.Prompt = fmt.Sprintf("%s: ", arg.Name)
+		t.Prompt = "  "
 		t.Placeholder = arg.Name
-		t.CursorStyle = cursorStyle
 		t.CharLimit = 32
 
 		c.inputs[i] = t
@@ -55,7 +43,11 @@ func (c *FormContainer) headerView() string {
 }
 
 func (c FormContainer) Init() tea.Cmd {
-	return nil
+	if len(c.inputs) == 0 {
+		return nil
+	}
+	c.inputs[0].Prompt = "> "
+	return c.inputs[0].Focus()
 }
 
 func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
@@ -94,14 +86,12 @@ func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 				if i == c.focusIndex {
 					// Set focused state
 					cmds[i] = c.inputs[i].Focus()
-					c.inputs[i].PromptStyle = focusedStyle
-					c.inputs[i].TextStyle = focusedStyle
+					c.inputs[i].Prompt = "> "
 					continue
 				}
 				// Remove focused state
 				c.inputs[i].Blur()
-				c.inputs[i].PromptStyle = noStyle
-				c.inputs[i].TextStyle = noStyle
+				c.inputs[i].Prompt = "  "
 			}
 
 			return c, tea.Batch(cmds...)
