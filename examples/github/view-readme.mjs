@@ -13,14 +13,4 @@ const res = await fetch(
   `https://raw.githubusercontent.com/${repo}/master/README.md`
 );
 const readme = await res.text();
-
-const view = {
-  type: "detail",
-  detail: {
-    text: readme,
-    format: "markdown",
-    actions: [{ type: "open-url", url: `https://github.com/${repo}` }],
-  },
-};
-
-console.log(JSON.stringify(view));
+console.log(readme);

@@ -1,12 +1,6 @@
 #!/usr/bin/env zx
 
-// @sunbeam.schemaVersion 1
-// @sunbeam.title Google Search
-// @sunbeam.mode interactive
-// @sunbeam.subtitle Google Search
-
-const { query } = JSON.parse(await stdin());
-
+const query = argv.query;
 const payload = await fetch(
   `https://www.google.com/complete/search?client=chrome&q=${query}`
 ).then((res) => res.json());
@@ -21,9 +15,6 @@ const items = payload[1].map((suggestion) => ({
   ],
 }));
 
-console.log(
-  JSON.stringify({
-    type: "list",
-    list: { onQueryChange: { type: "push", path: "search.mjs" }, items },
-  })
-);
+for (const item of items) {
+  console.log(JSON.stringify(item));
+}

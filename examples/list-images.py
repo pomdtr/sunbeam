@@ -23,13 +23,13 @@ except subprocess.CalledProcessError as e:
 
 images = [json.loads(line) for line in res.stdout.splitlines()]
 
-view = {
-    "type": "list",
-    "list": {
-        "items": [
-            {"title": image["Repository"], "subtitle": image["Tag"]} for image in images
-        ]
-    },
-}
-
-print(json.dumps(view))
+items = [
+    {
+        "title": image["Repository"],
+        "subtitle": image["Tag"],
+        "actions": [{"type": "copy"}],
+    }
+    for image in images
+]
+for item in items:
+    print(json.dumps(item))

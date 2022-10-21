@@ -35,11 +35,6 @@ const items = await Promise.all(
   })
 );
 
-console.log(
-  JSON.stringify({
-    type: "list",
-    list: {
-      items,
-    },
-  })
-);
+for (const item of items) {
+  console.log(JSON.stringify(item));
+}

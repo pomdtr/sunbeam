@@ -23,12 +23,6 @@ const items = themes.map((theme) => {
   };
 });
 
-console.log(
-  JSON.stringify({
-    type: "list",
-    list: {
-      title: "Alacritty Themes",
-      items: items,
-    },
-  })
-);
+for (const item of items) {
+  console.log(JSON.stringify(item));
+}

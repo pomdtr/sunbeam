@@ -1,0 +1,85 @@
+{
+    "$schema": "../schemas/manifest.json",
+    "commands": [
+        {
+            "id": "switch-alacritty-theme",
+            "title": "Switch Theme",
+            "subtitle": "Alacritty",
+            "mode": "list",
+            "command": "./alacritty.mjs"
+        },
+        {
+            "id": "list-repos",
+            "mode": "list",
+            "subtitle": "Github",
+            "title": "Search My Repositories",
+            "command": "./github/list-repos.mjs"
+        },
+        {
+            "id": "file-browser",
+            "command": "./file-browser.mjs {{ .Params.root }}",
+            "mode": "list",
+            "title": "Browse Files",
+            "subtitle": "System",
+            "params": [
+                {
+                    "id": "root",
+                    "type": "textfield",
+                    "title": "Start Directory",
+                    "placeholder": "/home/pomdtr"
+                }
+            ]
+        },
+        {
+            "id": "list-prs",
+            "mode": "list",
+            "subtitle": "Github",
+            "title": "List Pull Request",
+            "command": "./github/list-prs.mjs {{ .Params.repository }}",
+            "params": [
+                {
+                    "id": "repository",
+                    "type": "textfield",
+                    "title": "Repository",
+                    "placeholder": "pomdtr/sunbeam"
+                }
+            ]
+        },
+        {
+            "id": "view-readme",
+            "mode": "fullOutput",
+            "subtitle": "Github",
+            "title": "View Readme",
+            "command": "./github/view-readme.mjs {{ .Params.repository }}",
+            "params": [
+                {
+                    "id": "repository",
+                    "type": "textfield",
+                    "title": "Repository",
+                    "placeholder": "pomdtr/sunbeam"
+                }
+            ]
+        },
+        {
+            "id": "form",
+            "title": "Form",
+            "subtitle": "Examples",
+            "mode": "fullOutput",
+            "command": "./form.sh {{.Params.name}} {{.Params.address}}",
+            "params": [
+                {
+                    "id": "name",
+                    "type": "textfield",
+                    "title": "Name",
+                    "placeholder": "John Doe"
+                },
+                {
+                    "id": "address",
+                    "type": "textfield",
+                    "title": "Address",
+                    "placeholder": "123 Main St"
+                }
+            ]
+        }
+    ]
+}
