@@ -54,7 +54,6 @@ func (c *RunContainer) RunCmd() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		output = strings.Trim(output, "\n ")
 		return CommandOutput(output)
 	})
 }
@@ -78,14 +77,17 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		}
 
 		rows := strings.Split(output, "\n")
-		items := make([]commands.ListItem, len(rows))
-		for i, row := range rows {
+		items := make([]commands.ListItem, 0)
+		for _, row := range rows {
+			if row == "" {
+				continue
+			}
 			var item commands.ListItem
 			err := json.Unmarshal([]byte(row), &item)
 			if err != nil {
 				return c, NewErrorCmd("Invalid row: %s", row)
 			}
-			items[i] = item
+			items = append(items, item)
 		}
 
 		c.setEmbed(NewListContainer(c.command.Title, items))
