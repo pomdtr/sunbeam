@@ -5,23 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/commands"
 )
 
 func Serve(address string, port int) error {
-	scriptList, err := scripts.ScanDir(scripts.CommandDir)
-	if err != nil {
-		log.Fatalf("Error while scanning scripts directory: %s", err)
-	}
-
 	routeMap := make(map[string]string)
-	for _, script := range scriptList {
-		route := Route(script)
-		routeMap[route] = script.Title()
-		log.Printf("Serving %s at %s", script.Url().Path, route)
-		http.HandleFunc(Route(script), serveScript(script))
+	for commandId, command := range commands.Commands {
+		http.HandleFunc(commandId, serveCommand(command))
 	}
 
 	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
@@ -35,13 +26,9 @@ func Serve(address string, port int) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func Route(s scripts.Command) string {
-	return strings.TrimPrefix(s.Url().Path, scripts.CommandDir)
-}
-
-func serveScript(cmd scripts.Command) http.HandlerFunc {
+func serveCommand(cmd commands.Command) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var input scripts.CommandInput
+		var input commands.CommandInput
 		err := json.NewDecoder(req.Body).Decode(&input)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)

@@ -1,15 +1,13 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
 
 	"github.com/adrg/xdg"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pomdtr/sunbeam/pages"
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -54,11 +52,8 @@ func Sunbeam(cmd *cobra.Command, args []string) {
 	}
 	defer f.Close()
 
-	rootCmd := scripts.RootCommand{Root: scripts.CommandDir}
-	m := pages.NewRoot(rootCmd)
-	p := tea.NewProgram(&m, tea.WithAltScreen(), tea.WithMouseAllMotion())
-	if err := p.Start(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
+	err = cli.Start()
+	if err != nil {
+		log.Fatalln(err)
 	}
 }

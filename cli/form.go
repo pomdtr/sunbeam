@@ -1,38 +1,56 @@
-package pages
+package cli
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/bubbles"
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/commands"
 )
 
-type FormContainer struct {
-	response     *scripts.FormResponse
-	inputs       []textinput.Model
-	focusIndex   int
-	submitAction func(map[string]string) tea.Cmd
-	width        int
-	height       int
+type FormField struct {
+	Id string
+	textinput.Model
 }
 
-func NewFormContainer(response *scripts.FormResponse, submitAction func(map[string]string) tea.Cmd) *FormContainer {
+type FormContainer struct {
+	title      string
+	inputs     []FormField
+	focusIndex int
+	width      int
+	height     int
+}
+
+type SubmitMsg struct {
+	values map[string]any
+}
+
+func NewSubmitCmd(values map[string]any) tea.Cmd {
+	return func() tea.Msg {
+		return SubmitMsg{values: values}
+	}
+}
+
+func NewFormContainer(title string, params []commands.CommandParam) *FormContainer {
 	c := &FormContainer{
-		inputs:       make([]textinput.Model, len(response.Items)),
-		response:     response,
-		submitAction: submitAction,
+		title:  title,
+		inputs: make([]FormField, len(params)),
 	}
 
 	var t textinput.Model
-	for i, arg := range response.Items {
+	for i, param := range params {
 		t = textinput.New()
 
-		t.Prompt = "  "
-		t.Placeholder = arg.Name
+		t.Prompt = fmt.Sprintf("  %s: ", param.Title)
+		t.Placeholder = param.Placeholder
 		t.CharLimit = 32
 
-		c.inputs[i] = t
+		c.inputs[i] = FormField{
+			Id:    param.Id,
+			Model: t,
+		}
 	}
 
 	return c
@@ -46,7 +64,6 @@ func (c FormContainer) Init() tea.Cmd {
 	if len(c.inputs) == 0 {
 		return nil
 	}
-	c.inputs[0].Prompt = "> "
 	return c.inputs[0].Focus()
 }
 
@@ -58,11 +75,11 @@ func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		case tea.KeyEscape:
 			return c, PopCmd
 		case tea.KeyEnter:
-			values := make(map[string]string, len(c.inputs))
+			values := make(map[string]any, len(c.inputs))
 			for _, input := range c.inputs {
-				values[input.Placeholder] = input.Value()
+				values[input.Id] = input.Value()
 			}
-			return c, c.submitAction(values)
+			return c, NewSubmitCmd(values)
 		// Set focus to next input
 		case tea.KeyTab, tea.KeyShiftTab, tea.KeyDown, tea.KeyUp:
 			s := msg.String()
@@ -86,12 +103,10 @@ func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 				if i == c.focusIndex {
 					// Set focused state
 					cmds[i] = c.inputs[i].Focus()
-					c.inputs[i].Prompt = "> "
 					continue
 				}
 				// Remove focused state
 				c.inputs[i].Blur()
-				c.inputs[i].Prompt = "  "
 			}
 
 			return c, tea.Batch(cmds...)
@@ -108,7 +123,7 @@ func (c FormContainer) updateInputs(msg tea.Msg) tea.Cmd {
 	// Only text inputs with Focus() set will respond, so it's safe to simply
 	// update all of them here without any further logic.
 	for i := range c.inputs {
-		c.inputs[i], cmds[i] = c.inputs[i].Update(msg)
+		c.inputs[i].Model, cmds[i] = c.inputs[i].Update(msg)
 	}
 
 	return tea.Batch(cmds...)
@@ -120,7 +135,7 @@ func (c *FormContainer) SetSize(width, height int) {
 }
 
 func (c FormContainer) footerView() string {
-	return bubbles.SunbeamFooterWithActions(c.width, c.response.Title, "Submit")
+	return bubbles.SunbeamFooterWithActions(c.width, c.title, "Submit")
 }
 
 func (c *FormContainer) View() string {
