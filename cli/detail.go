@@ -27,10 +27,13 @@ func (c *DetailContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
+		case tea.KeyRunes:
+			switch msg.String() {
+			case "q", "Q":
+				return nil, tea.Quit
+			}
 		case tea.KeyEscape:
 			return c, PopCmd
-		case tea.KeyEnter:
-			return c, tea.Quit
 		}
 	}
 	var cmd tea.Cmd
