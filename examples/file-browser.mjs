@@ -19,9 +19,11 @@ const items = await Promise.all(
         lstat.isDirectory()
           ? {
               type: "push",
-              path: "./browser.mjs",
-              args: [filepath],
               title: "Browse Directory",
+              target: "file-browser",
+              params: {
+                root: filepath,
+              },
             }
           : { type: "open", title: "Open File", path: filepath },
       ],
