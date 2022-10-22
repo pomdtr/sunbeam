@@ -4,7 +4,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/bubbles"
 )
 
 type DetailContainer struct {
@@ -42,11 +41,11 @@ func (c *DetailContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 }
 
 func (c *DetailContainer) headerView() string {
-	return bubbles.SunbeamHeader(c.width)
+	return SunbeamHeader(c.width)
 }
 
 func (c *DetailContainer) footerView() string {
-	return bubbles.SunbeamFooter(c.width, c.title)
+	return SunbeamFooter(c.width, c.title)
 }
 
 func (c *DetailContainer) SetSize(width, height int) {

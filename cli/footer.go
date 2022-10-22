@@ -1,4 +1,4 @@
-package bubbles
+package cli
 
 import (
 	"fmt"

@@ -12,7 +12,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/commands"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
@@ -92,13 +91,13 @@ func (c *ListContainer) headerView() string {
 func (c *ListContainer) footerView() string {
 	selectedItem, ok := c.SelectedItem()
 	if !ok {
-		return bubbles.SunbeamFooter(c.width, c.title)
+		return SunbeamFooter(c.width, c.title)
 	}
 
 	if len(selectedItem.Actions) > 0 {
-		return bubbles.SunbeamFooterWithActions(c.width, c.title, selectedItem.Actions[0].Title)
+		return SunbeamFooterWithActions(c.width, c.title, selectedItem.Actions[0].Title)
 	} else {
-		return bubbles.SunbeamFooter(c.width, c.title)
+		return SunbeamFooter(c.width, c.title)
 	}
 }
 

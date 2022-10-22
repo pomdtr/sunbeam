@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -36,7 +35,7 @@ func (c *LoadingContainer) SetSize(width, height int) {
 }
 
 func (c *LoadingContainer) footerView() string {
-	return bubbles.SunbeamFooter(c.width, c.title)
+	return SunbeamFooter(c.width, c.title)
 }
 
 func (c *LoadingContainer) Init() tea.Cmd {

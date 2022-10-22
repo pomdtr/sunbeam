@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/bubbles"
 	"github.com/pomdtr/sunbeam/commands"
 )
 
@@ -57,7 +56,7 @@ func NewFormContainer(title string, params []commands.CommandParam) *FormContain
 }
 
 func (c *FormContainer) headerView() string {
-	return bubbles.SunbeamHeader(c.width)
+	return SunbeamHeader(c.width)
 }
 
 func (c FormContainer) Init() tea.Cmd {
@@ -135,7 +134,7 @@ func (c *FormContainer) SetSize(width, height int) {
 }
 
 func (c FormContainer) footerView() string {
-	return bubbles.SunbeamFooterWithActions(c.width, c.title, "Submit")
+	return SunbeamFooterWithActions(c.width, c.title, "Submit")
 }
 
 func (c *FormContainer) View() string {
