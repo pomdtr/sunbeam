@@ -1,10 +1,5 @@
 #!/usr/bin/env zx
 
-// @sunbeam.schemaVersion 1
-// @sunbeam.title Change Alacritty Theme
-// @sunbeam.subtitle Alacritty
-// @sunbeam.mode interactive
-
 const { stdout } = await $`alacritty-themes --list`;
 const themes = stdout
   .split("\n")

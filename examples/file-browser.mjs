@@ -1,11 +1,5 @@
 #!/usr/bin/env zx
 
-// @sunbeam.schemaVersion 1
-// @sunbeam.title Browse Directory
-// @sunbeam.subtitle File Browser
-// @sunbeam.mode interactive
-// @sunbeam.argument1 { "type": "text", "placeholder": "path" }
-
 import * as path from "path";
 import * as fs from "fs/promises";
 

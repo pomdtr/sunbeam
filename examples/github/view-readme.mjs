@@ -1,12 +1,5 @@
 #!/usr/bin/env zx
 
-// @sunbeam.schemaVersion 1
-// @sunbeam.title View Readme
-// @sunbeam.subtitle Github
-// @sunbeam.mode interactive
-
-// @sunbeam.argument1 { "type": "text", "placeholder": "repository", "required": true }
-
 const repo = argv._[0];
 
 const res = await fetch(

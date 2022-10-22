@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 
-#  @sunbeam.schemaVersion 1
-#  @sunbeam.title List Images
-#  @sunbeam.mode interactive
-#  @sunbeam.subtitle Docker
-
 import subprocess
 import json
 import sys
