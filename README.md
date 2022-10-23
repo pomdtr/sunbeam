@@ -12,12 +12,14 @@
 
 ### Running the TUI
 
-- Run the cli: `SUNBEAM_LOG_FILE=$PWD/debug.log go run main.go`
+```bash
+SUNBEAM_LOG_FILE=$PWD/debug.log go run main.go`
+```
 
 The logs will be redirected to the `debug.log` file, use `tail -f debug.log` to follow them.
 
 ## Installing the `sunbeam` command
 
-```console
+```bash
 go install
 ```
