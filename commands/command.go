@@ -65,7 +65,7 @@ func (c Command) Run(input CommandInput) (string, error) {
 	}
 }
 
-func renderCommand(command string, data any) (string, error) {
+func renderCommand(command string, data map[string]any) (string, error) {
 	t, err := template.New("").Parse(command)
 	if err != nil {
 		return "", err
@@ -80,7 +80,7 @@ func renderCommand(command string, data any) (string, error) {
 
 func (c Command) LocalRun(input CommandInput) (string, error) {
 	var err error
-	rendered, err := renderCommand(c.Command, input)
+	rendered, err := renderCommand(c.Command, input.Params)
 	if err != nil {
 		return "", err
 	}

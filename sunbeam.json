@@ -17,7 +17,7 @@
         },
         {
             "id": "file-browser",
-            "command": "./examples/file-browser.mjs {{ .Params.root }}",
+            "command": "./examples/file-browser.mjs {{ .root }}",
             "mode": "list",
             "title": "Browse Files",
             "subtitle": "System",
@@ -35,7 +35,7 @@
             "mode": "list",
             "subtitle": "Github",
             "title": "List Pull Request",
-            "command": "./examples/github/list-prs.mjs {{ if .Params.repository }} --repo {{ .Params.repository }} {{ end }}",
+            "command": "./examples/github/list-prs.mjs {{ if .repository }} --repo {{ .repository }} {{ end }}",
             "params": [
                 {
                     "id": "repository",
@@ -51,7 +51,7 @@
             "mode": "fullOutput",
             "subtitle": "Github",
             "title": "View Readme",
-            "command": "./examples/github/view-readme.mjs {{ .Params.repository }}",
+            "command": "./examples/github/view-readme.mjs {{ .repository }}",
             "params": [
                 {
                     "id": "repository",
@@ -66,7 +66,7 @@
             "title": "Form",
             "subtitle": "Examples",
             "mode": "fullOutput",
-            "command": "./examples/form.sh {{.Params.name}} {{.Params.address}}",
+            "command": "./examples/form.sh {{ .name }} {{ .address }}",
             "params": [
                 {
                     "id": "name",
