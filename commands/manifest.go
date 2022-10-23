@@ -23,7 +23,6 @@ func init() {
 	for _, commandRoot := range commandRoots {
 		dirCommands, err := listCommands(commandRoot)
 		if err != nil {
-			log.Printf("Error while fetching commands: %s", err)
 			continue
 		}
 
