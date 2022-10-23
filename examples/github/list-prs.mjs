@@ -1,6 +1,12 @@
 #!/usr/bin/env zx
 
-const repo = argv._[0];
+let repo = argv.repo;
+
+if (!repo) {
+  const { stdout: remote } = await $`git config --get remote.origin.url`;
+  const match = remote.match(/github.com[:/](.*)\.git/);
+  repo = match[1];
+}
 
 const res = await $`gh api /repos/${repo}/pulls`;
 const prs = JSON.parse(res);

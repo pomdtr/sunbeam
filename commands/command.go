@@ -26,6 +26,7 @@ type CommandParam struct {
 	Type        string `json:"type"`
 	Label       string `json:"label"`
 	Title       string `json:"title"`
+	Optional    bool   `json:"optional"`
 	Placeholder string `json:"placeholder"`
 }
 
@@ -44,6 +45,9 @@ type Command struct {
 func (c Command) CheckMissingParams(inputParams map[string]any) []CommandParam {
 	missing := make([]CommandParam, 0)
 	for _, param := range c.Params {
+		if param.Optional {
+			continue
+		}
 		if _, ok := inputParams[param.Id]; !ok {
 			missing = append(missing, param)
 		}
