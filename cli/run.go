@@ -2,11 +2,16 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
+	"log"
+	"os/exec"
 	"strings"
 
 	"github.com/alessio/shellescape"
+	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/commands"
+	"github.com/skratchdot/open-golang/open"
 )
 
 type RunContainer struct {
@@ -90,7 +95,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			items = append(items, item)
 		}
 
-		c.setEmbed(NewListContainer(c.command.Title, items))
+		c.setEmbed(NewListContainer(c.command.Title, items, c.RunAction))
 		return c, c.embed.Init()
 	case error:
 		e := NewDetailContainer("Error", msg.Error())
@@ -105,9 +110,74 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 }
 
+func (c *RunContainer) RunAction(action commands.ScriptAction) tea.Cmd {
+	if action.Root == "" {
+		action.Root = c.command.Root.String()
+	}
+	return RunAction(action)
+}
+
 func (c *RunContainer) View() string {
 	if c.embed == nil {
 		return ""
 	}
 	return c.embed.View()
+}
+
+func RunAction(action commands.ScriptAction) tea.Cmd {
+	switch action.Type {
+	case "push":
+		commandMap, ok := commands.ExtensionMap[action.Root]
+		if !ok {
+			return NewErrorCmd("extension %s does not exists", action.Root)
+		}
+		command, ok := commandMap[action.Target]
+		if !ok {
+			return NewErrorCmd("command not found: %s", action.Command)
+		}
+
+		input := commands.CommandInput{}
+		if action.Params != nil {
+			input.Params = action.Params
+		} else {
+			input.Params = make(map[string]any)
+		}
+
+		return NewPushCmd(NewRunContainer(command, input))
+	case "exec":
+		var cmd *exec.Cmd
+		log.Printf("executing command: %s", action.Command)
+		if len(action.Command) == 1 {
+			cmd = exec.Command(action.Command[0])
+		} else {
+			cmd = exec.Command(action.Command[0], action.Command[1:]...)
+		}
+		_, err := cmd.Output()
+		var exitError *exec.ExitError
+		if errors.As(err, &exitError) {
+			return NewErrorCmd("Unable to run cmd: %s", exitError.Stderr)
+		}
+		return tea.Quit
+	case "open":
+		err := open.Run(action.Path)
+		if err != nil {
+			return NewErrorCmd("failed to open file: %s", err)
+		}
+		return tea.Quit
+	case "open-url":
+		err := open.Run(action.Url)
+		if err != nil {
+			return NewErrorCmd("failed to open url: %s", action.Url)
+		}
+		return tea.Quit
+	case "copy":
+		err := clipboard.WriteAll(action.Content)
+		if err != nil {
+			return NewErrorCmd("failed to copy %s to clipboard", err)
+		}
+		return tea.Quit
+	default:
+		log.Printf("Unknown action type: %s", action.Type)
+		return tea.Quit
+	}
 }

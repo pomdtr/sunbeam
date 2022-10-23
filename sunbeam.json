@@ -1,23 +1,23 @@
 {
-    "$schema": "../schemas/manifest.json",
+    "$schema": "./schemas/manifest.json",
     "commands": [
         {
             "id": "switch-alacritty-theme",
             "title": "Switch Theme",
             "subtitle": "Alacritty",
             "mode": "list",
-            "command": "./alacritty.mjs"
+            "command": "./examples/alacritty.mjs"
         },
         {
             "id": "list-repos",
             "mode": "list",
             "subtitle": "Github",
             "title": "Search My Repositories",
-            "command": "./github/list-repos.mjs"
+            "command": "./examples/github/list-repos.mjs"
         },
         {
             "id": "file-browser",
-            "command": "./file-browser.mjs {{ .Params.root }}",
+            "command": "./examples/file-browser.mjs {{ .Params.root }}",
             "mode": "list",
             "title": "Browse Files",
             "subtitle": "System",
@@ -35,7 +35,7 @@
             "mode": "list",
             "subtitle": "Github",
             "title": "List Pull Request",
-            "command": "./github/list-prs.mjs {{ .Params.repository }}",
+            "command": "./examples/github/list-prs.mjs {{ .Params.repository }}",
             "params": [
                 {
                     "id": "repository",
@@ -50,7 +50,7 @@
             "mode": "fullOutput",
             "subtitle": "Github",
             "title": "View Readme",
-            "command": "./github/view-readme.mjs {{ .Params.repository }}",
+            "command": "./examples/github/view-readme.mjs {{ .Params.repository }}",
             "params": [
                 {
                     "id": "repository",
@@ -65,7 +65,7 @@
             "title": "Form",
             "subtitle": "Examples",
             "mode": "fullOutput",
-            "command": "./form.sh {{.Params.name}} {{.Params.address}}",
+            "command": "./examples/form.sh {{.Params.name}} {{.Params.address}}",
             "params": [
                 {
                     "id": "name",

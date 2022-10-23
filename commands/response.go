@@ -30,5 +30,6 @@ type ScriptAction struct {
 	Target  string         `json:"target,omitempty"`
 	Command []string       `json:"command,omitempty"`
 	Url     string         `json:"url,omitempty"`
+	Root    string         `json:"root,omitempty"`
 	Content string         `json:"content,omitempty"`
 }

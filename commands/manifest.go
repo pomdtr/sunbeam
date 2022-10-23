@@ -2,6 +2,7 @@ package commands
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -10,57 +11,38 @@ import (
 	"github.com/adrg/xdg"
 )
 
-var Commands map[string]Command = make(map[string]Command)
-var RootItems []ListItem
+type CommandMap map[string]Command
+
+var (
+	ExtensionMap = make(map[string]CommandMap)
+	Commands     = make([]Command, 0)
+)
 
 func init() {
-	var scriptDir = os.Getenv("SUNBEAM_SCRIPT_DIR")
-	if scriptDir == "" {
-		scriptDir = xdg.DataHome
-	}
-
-	manifestJson := path.Join(scriptDir, "sunbeam.json")
-	manifest, err := ParseManifest(manifestJson)
-	if err != nil {
-		log.Fatalf("error while parsing manifest: %s", err)
-	}
-
-	for _, commandData := range manifest.Commands {
-		command := Command{}
-		command.CommandData = commandData
-		command.RootUrl = url.URL{
-			Scheme: "file",
-			Path:   scriptDir,
+	commandRoots := listCommandDirs()
+	for _, commandRoot := range commandRoots {
+		dirCommands, err := listCommands(commandRoot)
+		if err != nil {
+			log.Printf("Error while fetching commands: %s", err)
+			continue
 		}
-		command.Url = url.URL{
-			Scheme: "file",
-			Path:   path.Join(scriptDir, command.Command),
-		}
-		Commands[command.Id] = command
-	}
 
-	RootItems = make([]ListItem, 0)
-	for commandId, command := range Commands {
-		RootItems = append(RootItems, ListItem{
-			Title:    command.Title,
-			Subtitle: command.Subtitle,
-			Actions: []ScriptAction{
-				{
-					Type:   "push",
-					Title:  "Open Command",
-					Target: commandId,
-				},
-			},
-		})
+		commandMap := make(map[string]Command)
+		for _, command := range dirCommands {
+			Commands = append(Commands, command)
+			commandMap[command.Id] = command
+		}
+
+		ExtensionMap[commandRoot.String()] = commandMap
 	}
 }
 
-type Manifest struct {
-	Title    string        `json:"title"`
-	Commands []CommandData `json:"commands"`
-}
+func listCommands(commandRoot url.URL) (commands []Command, err error) {
+	manifestPath := path.Join(commandRoot.Path, "sunbeam.json")
+	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+		return nil, err
+	}
 
-func ParseManifest(manifestPath string) (*Manifest, error) {
 	var manifest Manifest
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
@@ -68,5 +50,60 @@ func ParseManifest(manifestPath string) (*Manifest, error) {
 	}
 	json.Unmarshal(manifestBytes, &manifest)
 
-	return &manifest, nil
+	if err != nil {
+		log.Fatalf("error while parsing manifest: %s", err)
+	}
+
+	for _, commandData := range manifest.Commands {
+		command := Command{}
+		command.CommandData = commandData
+		rootPath := path.Dir(manifestPath)
+		command.Root = url.URL{
+			Scheme: "file",
+			Path:   rootPath,
+		}
+		command.Url = url.URL{
+			Scheme: "file",
+			Path:   path.Join(rootPath, command.Command),
+		}
+		commands = append(commands, command)
+	}
+
+	return commands, nil
+}
+
+func listCommandDirs() (commandDirs []url.URL) {
+	currentDir, err := os.Getwd()
+	if err == nil {
+		commandDirs = append(commandDirs, url.URL{
+			Scheme: "file",
+			Path:   currentDir,
+		})
+	}
+
+	var scriptDir = os.Getenv("SUNBEAM_COMMAND_DIR")
+	if scriptDir == "" {
+		scriptDir = xdg.ConfigHome + "/sunbeam/commands"
+	}
+	commandDirs = append(commandDirs, url.URL{
+		Scheme: "file",
+		Path:   scriptDir,
+	})
+
+	extensionRoot := path.Join(xdg.DataHome, "sunbeam", "extensions")
+	extensionDirs, _ := ioutil.ReadDir(extensionRoot)
+	for _, extensionDir := range extensionDirs {
+		extensionPath := path.Join(extensionRoot, extensionDir.Name())
+		commandDirs = append(commandDirs, url.URL{
+			Scheme: "file",
+			Path:   extensionPath,
+		})
+	}
+
+	return commandDirs
+}
+
+type Manifest struct {
+	Title    string        `json:"title"`
+	Commands []CommandData `json:"commands"`
 }

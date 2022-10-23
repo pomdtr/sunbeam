@@ -6,7 +6,19 @@ import (
 )
 
 func Start() error {
-	rootContainer := NewListContainer("Commands", commands.RootItems)
+	rootItems := make([]commands.ListItem, len(commands.Commands))
+
+	for i, command := range commands.Commands {
+		rootItems[i] = commands.ListItem{
+			Title:    command.Title,
+			Subtitle: command.Subtitle,
+			Actions: []commands.ScriptAction{
+				{Type: "push", Target: command.Id, Root: command.Root.String()},
+			},
+		}
+	}
+
+	rootContainer := NewListContainer("Commands", rootItems, RunAction)
 	m := NewRootModel(rootContainer)
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	err := p.Start()

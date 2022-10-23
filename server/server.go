@@ -11,8 +11,8 @@ import (
 
 func Serve(address string, port int) error {
 	routeMap := make(map[string]string)
-	for commandId, command := range commands.Commands {
-		http.HandleFunc(commandId, serveCommand(command))
+	for _, command := range commands.Commands {
+		http.HandleFunc(command.Id, serveCommand(command))
 	}
 
 	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {

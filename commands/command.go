@@ -37,8 +37,8 @@ type CommandInput struct {
 
 type Command struct {
 	CommandData
-	RootUrl url.URL
-	Url     url.URL
+	Root url.URL
+	Url  url.URL
 }
 
 func (c Command) CheckMissingParams(inputParams map[string]any) []CommandParam {
@@ -58,7 +58,7 @@ func (c Command) Run(input CommandInput) (string, error) {
 	case "http", "https":
 		return c.RemoteRun(input)
 	default:
-		return "", fmt.Errorf("unknown command scheme: %s", c.RootUrl.Scheme)
+		return "", fmt.Errorf("unknown command scheme: %s", c.Root.Scheme)
 	}
 }
 
@@ -85,7 +85,7 @@ func (c Command) LocalRun(input CommandInput) (string, error) {
 	log.Printf("Executing command: %s", rendered)
 	cmd := exec.Command("sh", "-c", rendered)
 
-	cmd.Dir = c.RootUrl.Path
+	cmd.Dir = c.Root.Path
 
 	var outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf
