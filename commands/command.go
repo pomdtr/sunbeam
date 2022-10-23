@@ -31,9 +31,8 @@ type CommandParam struct {
 }
 
 type CommandInput struct {
-	Environment map[string]string `json:"environment"`
-	Params      map[string]any    `json:"params"`
-	Query       string            `json:"query"`
+	Params map[string]any `json:"params"`
+	Query  string         `json:"query"`
 }
 
 type Command struct {
