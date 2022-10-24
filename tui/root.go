@@ -150,7 +150,7 @@ func Run(target string, params map[string]string) error {
 		return fmt.Errorf("command not found: %s", target)
 	}
 
-	container := NewRunContainer(command, api.NewCommandInput(params))
+	container := NewRunnerContainer(command, api.NewCommandInput(params))
 	return Draw(container)
 }
 

@@ -9,18 +9,18 @@ import (
 	"github.com/pomdtr/sunbeam/api"
 )
 
-type RunContainer struct {
+type RunnerContainer struct {
 	width, height int
 	command       api.Command
 	input         api.CommandInput
 	embed         Container
 }
 
-func NewRunContainer(command api.Command, input api.CommandInput) *RunContainer {
-	return &RunContainer{command: command, input: input, embed: NewLoadingContainer(command.Title)}
+func NewRunnerContainer(command api.Command, input api.CommandInput) *RunnerContainer {
+	return &RunnerContainer{command: command, input: input, embed: NewLoadingContainer(command.Title)}
 }
 
-func (c *RunContainer) SetSize(width, height int) {
+func (c *RunnerContainer) SetSize(width, height int) {
 	c.width = width
 	c.height = height
 	c.embed.SetSize(width, height)
@@ -28,43 +28,43 @@ func (c *RunContainer) SetSize(width, height int) {
 
 type initMsg struct{}
 
-func (c *RunContainer) Init() tea.Cmd {
+func (c *RunnerContainer) Init() tea.Cmd {
 	missing := c.command.CheckMissingParams(c.input.Params)
 	if len(missing) > 0 {
 		c.embed = NewFormContainer(c.command.Title, missing)
 		c.embed.SetSize(c.width, c.height)
 		return c.embed.Init()
 	} else {
-		return c.RunCmd()
+		return NewSubmitCmd(c.input.Params)
 	}
 }
 
 type CommandOutput string
 
-func (c *RunContainer) setEmbed(embed Container) {
+func (c *RunnerContainer) SetEmbed(embed Container) tea.Cmd {
 	embed.SetSize(c.width, c.height)
 	c.embed = embed
+	return embed.Init()
 }
 
-func (c *RunContainer) RunCmd() tea.Cmd {
-	c.embed = NewLoadingContainer(c.command.Title)
-	c.embed.SetSize(c.width, c.height)
-	return tea.Batch(c.embed.Init(), func() tea.Msg {
+func (c *RunnerContainer) RunCmd() tea.Cmd {
+	return func() tea.Msg {
 		output, err := c.command.Run(c.input)
 		if err != nil {
 			return err
 		}
 		return CommandOutput(output)
-	})
+	}
 }
 
-func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *RunnerContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SubmitMsg:
 		for key, value := range msg.values {
 			c.input.Params[key] = shellescape.Quote(value)
 		}
-		return c, c.RunCmd()
+		cmd := c.SetEmbed(NewLoadingContainer(c.command.Title))
+		return c, tea.Batch(cmd, c.RunCmd())
 	case ReloadMsg:
 		for key, value := range msg.input.Params {
 			c.input.Params[key] = shellescape.Quote(value)
@@ -74,8 +74,8 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case CommandOutput:
 		output := string(msg)
 		if c.command.Mode != "list" {
-			c.setEmbed(NewDetailContainer(c.command.Title, output))
-			return c, c.embed.Init()
+			cmd := c.SetEmbed(NewDetailContainer(c.command.Title, output))
+			return c, cmd
 		}
 
 		rows := strings.Split(output, "\n")
@@ -92,8 +92,8 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			items = append(items, item)
 		}
 
-		c.setEmbed(NewListContainer(c.command.Title, items, c.input.Query))
-		return c, c.embed.Init()
+		cmd := c.SetEmbed(NewListContainer(c.command.Title, items, c.input.Query))
+		return c, cmd
 	case error:
 		e := NewDetailContainer("Error", msg.Error())
 		e.SetSize(c.width, c.height)
@@ -107,7 +107,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 }
 
-func (c *RunContainer) View() string {
+func (c *RunnerContainer) View() string {
 	if c.embed == nil {
 		return ""
 	}

@@ -221,7 +221,7 @@ func (l *ListContainer) RunAction(action api.ScriptAction) tea.Cmd {
 
 		input := api.NewCommandInput(action.Params)
 
-		return NewPushCmd(NewRunContainer(command, input))
+		return NewPushCmd(NewRunnerContainer(command, input))
 	case "reload":
 		input := api.NewCommandInput(action.Params)
 		input.Query = l.textInput.Value()
