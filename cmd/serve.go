@@ -25,6 +25,8 @@ var (
 func init() {
 	serveCmd.Flags().StringVarP(&serveFlags.Host, "host", "H", "localhost", "Host to serve on")
 	serveCmd.Flags().IntVarP(&serveFlags.Port, "port", "p", 8080, "Port to serve on")
+
+	rootCmd.AddCommand(serveCmd)
 }
 
 func sunbeamServe(cmd *cobra.Command, args []string) {
