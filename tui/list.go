@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/sunbeam"
+	"github.com/pomdtr/sunbeam/api"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
 )
@@ -19,12 +19,12 @@ type ListContainer struct {
 
 	title         string
 	textInput     *textinput.Model
-	filteredItems []sunbeam.ListItem
-	items         []sunbeam.ListItem
-	runAction     func(sunbeam.ScriptAction) tea.Cmd
+	filteredItems []api.ListItem
+	items         []api.ListItem
+	runAction     func(api.ScriptAction) tea.Cmd
 }
 
-func NewListContainer(title string, items []sunbeam.ListItem, runAction func(sunbeam.ScriptAction) tea.Cmd) Container {
+func NewListContainer(title string, items []api.ListItem, runAction func(api.ScriptAction) tea.Cmd) Container {
 	t := textinput.New()
 	t.Prompt = "> "
 	t.Placeholder = "Search..."
@@ -49,14 +49,14 @@ type Rank struct {
 
 // filterItems uses the sahilm/fuzzy to filter through the list.
 // This is set by default.
-func filterItems(term string, items []sunbeam.ListItem) []sunbeam.ListItem {
+func filterItems(term string, items []api.ListItem) []api.ListItem {
 	targets := make([]string, len(items))
 	for i, item := range items {
 		targets[i] = item.Title
 	}
 	var ranks = fuzzy.Find(term, targets)
 	sort.Stable(ranks)
-	filteredItems := make([]sunbeam.ListItem, len(ranks))
+	filteredItems := make([]api.ListItem, len(ranks))
 	for i, r := range ranks {
 		filteredItems[i] = items[r.Index]
 	}
@@ -72,9 +72,9 @@ func (c *ListContainer) SetSize(width, height int) {
 	c.updateIndexes(c.selectedIndex)
 }
 
-func (c ListContainer) SelectedItem() (sunbeam.ListItem, bool) {
+func (c ListContainer) SelectedItem() (api.ListItem, bool) {
 	if c.selectedIndex >= len(c.filteredItems) {
-		return sunbeam.ListItem{}, false
+		return api.ListItem{}, false
 	}
 	return c.filteredItems[c.selectedIndex], true
 }

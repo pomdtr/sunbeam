@@ -4,7 +4,7 @@ import (
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pomdtr/sunbeam/sunbeam"
+	"github.com/pomdtr/sunbeam/api"
 )
 
 type Container interface {
@@ -110,29 +110,29 @@ func PopCmd() tea.Msg {
 }
 
 func Draw() error {
-	rootItems := make([]sunbeam.ListItem, 0)
+	rootItems := make([]api.ListItem, 0)
 
-	for _, command := range sunbeam.Commands {
+	for _, command := range api.Commands {
 		if command.Hidden {
 			continue
 		}
-		var primaryAction sunbeam.ScriptAction
+		var primaryAction api.ScriptAction
 		if command.Mode == "action" {
 			primaryAction = command.Action
 			primaryAction.Root = command.Root.String()
 			log.Println(primaryAction)
 		} else {
-			primaryAction = sunbeam.ScriptAction{
+			primaryAction = api.ScriptAction{
 				Type:   "push",
 				Target: command.Id,
 				Root:   command.Root.String(),
 			}
 		}
 
-		rootItems = append(rootItems, sunbeam.ListItem{
+		rootItems = append(rootItems, api.ListItem{
 			Title:    command.Title,
 			Subtitle: command.Subtitle,
-			Actions: []sunbeam.ScriptAction{
+			Actions: []api.ScriptAction{
 				primaryAction,
 			},
 		})

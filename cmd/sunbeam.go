@@ -45,7 +45,7 @@ func Sunbeam(cmd *cobra.Command, args []string) {
 				log.Fatalln(err)
 			}
 		}
-		logFile = path.Join(xdg.StateHome, "sunbeam.log")
+		logFile = path.Join(xdg.StateHome, "api.log")
 	}
 	f, err := tea.LogToFile(logFile, "debug")
 	if err != nil {
