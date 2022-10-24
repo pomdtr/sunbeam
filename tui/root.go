@@ -140,7 +140,7 @@ func Start() error {
 		})
 	}
 
-	rootContainer := NewListContainer("Commands", rootItems)
+	rootContainer := NewListContainer("Commands", rootItems, "")
 	return Draw(rootContainer)
 }
 

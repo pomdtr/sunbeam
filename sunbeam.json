@@ -12,6 +12,14 @@
             }
         },
         {
+            "id": "random",
+            "title": "Random",
+            "mode": "list",
+            "list": {
+                "command": "./examples/random_list.py"
+            }
+        },
+        {
             "id": "list-repos",
             "mode": "list",
             "subtitle": "Github",

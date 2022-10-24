@@ -65,6 +65,12 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			c.input.Params[key] = shellescape.Quote(value)
 		}
 		return c, c.RunCmd()
+	case ReloadMsg:
+		for key, value := range msg.input.Params {
+			c.input.Params[key] = shellescape.Quote(value)
+		}
+		c.input.Query = msg.input.Query
+		return c, c.RunCmd()
 	case CommandOutput:
 		output := string(msg)
 		if c.command.Mode != "list" {
@@ -86,7 +92,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			items = append(items, item)
 		}
 
-		c.setEmbed(NewListContainer(c.command.Title, items))
+		c.setEmbed(NewListContainer(c.command.Title, items, c.input.Query))
 		return c, c.embed.Init()
 	case error:
 		e := NewDetailContainer("Error", msg.Error())

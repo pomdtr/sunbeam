@@ -7,8 +7,6 @@ import (
 	"os"
 	"path"
 	"strings"
-
-	"github.com/adrg/xdg"
 )
 
 type CommandMap map[string]Command
@@ -23,6 +21,9 @@ func init() {
 	for _, manifest := range manifests {
 		commands := manifest.Commands
 		rootPath := path.Dir(manifest.Url.Path)
+		if _, ok := ExtensionMap[manifest.Id]; ok {
+			continue
+		}
 
 		commandMap := make(map[string]Command)
 		for _, command := range commands {
@@ -72,13 +73,17 @@ func listManifests() []Manifest {
 		}
 	}
 
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return []Manifest{}
+	}
 	var scriptDir = os.Getenv("SUNBEAM_COMMAND_DIR")
 	if scriptDir == "" {
-		scriptDir = xdg.ConfigHome + "/sunbeam/commands"
+		scriptDir = path.Join(homeDir, ".config", "sunbeam", "commands")
 	}
 	commandDirs = append(commandDirs, scriptDir)
 
-	extensionRoot := path.Join(xdg.DataHome, "sunbeam", "extensions")
+	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
 	extensionDirs, _ := ioutil.ReadDir(extensionRoot)
 	for _, extensionDir := range extensionDirs {
 		extensionPath := path.Join(extensionRoot, extensionDir.Name())

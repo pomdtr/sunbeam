@@ -28,17 +28,17 @@ type ListContainer struct {
 	items         []api.ListItem
 }
 
-func NewListContainer(title string, items []api.ListItem) Container {
+func NewListContainer(title string, items []api.ListItem, query string) Container {
 	t := textinput.New()
 	t.Prompt = "> "
 	t.Placeholder = "Search..."
+	t.SetValue(query)
 
 	return &ListContainer{
-		textInput: &t,
-		title:     title,
-
+		textInput:     &t,
+		title:         title,
+		filteredItems: filterItems(query, items),
 		items:         items,
-		filteredItems: items,
 	}
 }
 
@@ -53,6 +53,9 @@ type Rank struct {
 // filterItems uses the sahilm/fuzzy to filter through the list.
 // This is set by default.
 func filterItems(term string, items []api.ListItem) []api.ListItem {
+	if term == "" {
+		return items
+	}
 	targets := make([]string, len(items))
 	for i, item := range items {
 		targets[i] = item.Title
@@ -75,11 +78,11 @@ func (c *ListContainer) SetSize(width, height int) {
 	c.updateIndexes(c.selectedIndex)
 }
 
-func (c ListContainer) SelectedItem() (api.ListItem, bool) {
+func (c ListContainer) SelectedItem() *api.ListItem {
 	if c.selectedIndex >= len(c.filteredItems) {
-		return api.ListItem{}, false
+		return nil
 	}
-	return c.filteredItems[c.selectedIndex], true
+	return &c.filteredItems[c.selectedIndex]
 }
 
 func (c *ListContainer) headerView() string {
@@ -89,8 +92,8 @@ func (c *ListContainer) headerView() string {
 }
 
 func (c *ListContainer) footerView() string {
-	selectedItem, ok := c.SelectedItem()
-	if !ok {
+	selectedItem := c.SelectedItem()
+	if selectedItem == nil {
 		return SunbeamFooter(c.width, c.title)
 	}
 
@@ -104,12 +107,15 @@ func (c *ListContainer) footerView() string {
 func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	var cmds []tea.Cmd
 
-	selectedItem, _ := c.SelectedItem()
+	selectedItem := c.SelectedItem()
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			return c, RunAction(selectedItem.Actions[0])
+			if selectedItem == nil || len(selectedItem.Actions) == 0 {
+				break
+			}
+			return c, c.RunAction(selectedItem.Actions[0])
 		case tea.KeyDown, tea.KeyTab, tea.KeyCtrlJ:
 			if c.selectedIndex < len(c.filteredItems)-1 {
 				c.updateIndexes(c.selectedIndex + 1)
@@ -125,9 +131,12 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 				return c, PopCmd
 			}
 		default:
+			if selectedItem == nil {
+				break
+			}
 			for _, action := range selectedItem.Actions {
 				if action.Keybind == msg.String() {
-					return c, RunAction(action)
+					return c, c.RunAction(action)
 				}
 			}
 		}
@@ -136,12 +145,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	t, cmd := c.textInput.Update(msg)
 	cmds = append(cmds, cmd)
 	if t.Value() != c.textInput.Value() {
-		if t.Value() == "" {
-			c.filteredItems = c.items
-		} else {
-			c.filteredItems = filterItems(t.Value(), c.items)
-		}
-		c.updateIndexes(0)
+		c.filteredItems = filterItems(t.Value(), c.items)
 	}
 	c.textInput = &t
 
@@ -158,17 +162,28 @@ func (c *ListContainer) updateIndexes(selectedIndex int) {
 	c.selectedIndex = selectedIndex
 }
 
+func itemView(item api.ListItem, selected bool) string {
+	var view string
+
+	if item.Subtitle != "" {
+		view = fmt.Sprintf("%s - %s", item.Title, item.Subtitle)
+	} else {
+		view = item.Title
+	}
+	if selected {
+		return fmt.Sprintf("> %s", view)
+	} else {
+		return fmt.Sprintf("  %s", view)
+	}
+}
+
 func (c *ListContainer) View() string {
 	rows := make([]string, 0)
 	items := c.filteredItems
 
 	endIndex := utils.Min(c.startIndex+c.height+1, len(items))
 	for i := c.startIndex; i < endIndex; i++ {
-		if i == c.selectedIndex {
-			rows = append(rows, fmt.Sprintf("> %s - %s", items[i].Title, items[i].Subtitle))
-		} else {
-			rows = append(rows, fmt.Sprintf("  %s - %s", items[i].Title, items[i].Subtitle))
-		}
+		rows = append(rows, itemView(items[i], i == c.selectedIndex))
 	}
 
 	for i := len(rows) - 1; i < c.height; i++ {
@@ -178,13 +193,25 @@ func (c *ListContainer) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), strings.Join(rows, "\n"), c.footerView())
 }
 
-var NewErrorCmd = func(format string, values ...any) func() tea.Msg {
+func NewErrorCmd(format string, values ...any) func() tea.Msg {
 	return func() tea.Msg {
 		return fmt.Errorf(format, values...)
 	}
 }
 
-func RunAction(action api.ScriptAction) tea.Cmd {
+type ReloadMsg struct {
+	input api.CommandInput
+}
+
+func NewReloadCmd(input api.CommandInput) func() tea.Msg {
+	return func() tea.Msg {
+		return ReloadMsg{
+			input: input,
+		}
+	}
+}
+
+func (l *ListContainer) RunAction(action api.ScriptAction) tea.Cmd {
 	switch action.Type {
 	case "push":
 		command, ok := api.GetCommand(action.Target)
@@ -195,6 +222,10 @@ func RunAction(action api.ScriptAction) tea.Cmd {
 		input := api.NewCommandInput(action.Params)
 
 		return NewPushCmd(NewRunContainer(command, input))
+	case "reload":
+		input := api.NewCommandInput(action.Params)
+		input.Query = l.textInput.Value()
+		return NewReloadCmd(input)
 	case "exec":
 		var cmd *exec.Cmd
 		log.Printf("executing command: %s", action.Command)
@@ -210,15 +241,18 @@ func RunAction(action api.ScriptAction) tea.Cmd {
 		}
 		return tea.Quit
 	case "open":
-		err := open.Run(action.Path)
-		if err != nil {
-			return NewErrorCmd("failed to open file: %s", err)
+		var err error
+		target := action.Path
+		if target == "" {
+			target = action.Url
 		}
-		return tea.Quit
-	case "open-url":
-		err := open.Run(action.Url)
+		if action.Application != "" {
+			err = open.RunWith(target, action.Application)
+		} else {
+			err = open.Run(target)
+		}
 		if err != nil {
-			return NewErrorCmd("failed to open url: %s", action.Url)
+			return NewErrorCmd("failed to open: %s", target)
 		}
 		return tea.Quit
 	case "copy":
