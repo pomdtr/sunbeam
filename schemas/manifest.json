@@ -30,6 +30,9 @@
                             "command"
                         ],
                         "properties": {
+                            "callback": {
+                                "type": "boolean"
+                            },
                             "command": {
                                 "type": "string"
                             }

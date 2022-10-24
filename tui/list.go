@@ -22,13 +22,14 @@ type ListContainer struct {
 	width, height             int
 	startIndex, selectedIndex int
 
-	title         string
-	textInput     *textinput.Model
-	filteredItems []api.ListItem
-	items         []api.ListItem
+	title            string
+	textInput        *textinput.Model
+	filteringEnabled bool
+	filteredItems    []api.ListItem
+	items            []api.ListItem
 }
 
-func NewListContainer(title string, items []api.ListItem, query string) Container {
+func NewListContainer(title string, items []api.ListItem, query string) *ListContainer {
 	t := textinput.New()
 	t.Prompt = "> "
 	t.Placeholder = "Search..."
@@ -36,10 +37,15 @@ func NewListContainer(title string, items []api.ListItem, query string) Containe
 
 	return &ListContainer{
 		textInput:     &t,
+		filteredItems: items,
 		title:         title,
-		filteredItems: filterItems(query, items),
 		items:         items,
 	}
+}
+
+func (c *ListContainer) enableFiltering() {
+	c.filteringEnabled = true
+	c.filteredItems = filterItems(c.textInput.Value(), c.items)
 }
 
 // Rank defines a rank for a given item.
@@ -145,7 +151,13 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	t, cmd := c.textInput.Update(msg)
 	cmds = append(cmds, cmd)
 	if t.Value() != c.textInput.Value() {
-		c.filteredItems = filterItems(t.Value(), c.items)
+		if c.filteringEnabled {
+			c.filteredItems = filterItems(t.Value(), c.items)
+		} else {
+			input := api.NewCommandInput(nil)
+			input.Query = t.Value()
+			cmds = append(cmds, NewReloadCmd(input))
+		}
 	}
 	c.textInput = &t
 

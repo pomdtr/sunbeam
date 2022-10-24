@@ -1,6 +1,6 @@
 #!/usr/bin/env zx
 
-const res = await $`gh api /users/pomdtr/repos --cache 3600s`;
+const res = await $`gh api /users/pomdtr/repos --paginate --cache 3600s`;
 const repos = JSON.parse(res);
 
 const items = repos.map((repo) => ({
@@ -8,7 +8,7 @@ const items = repos.map((repo) => ({
   subtitle: `${repo.stargazers_count} ⭐`,
   actions: [
     {
-      type: "open-url",
+      type: "open",
       title: "Open in Browser",
       url: repo.html_url,
     },

@@ -12,6 +12,15 @@
             }
         },
         {
+            "id": "google",
+            "title": "Google",
+            "mode": "list",
+            "list": {
+                "callback": true,
+                "command": "./examples/google.mjs --query {{ .query }}"
+            }
+        },
+        {
             "id": "random",
             "title": "Random",
             "mode": "list",

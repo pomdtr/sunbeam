@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"os/exec"
 	"text/template"
+
+	"github.com/alessio/shellescape"
 )
 
 type Command struct {
@@ -40,7 +42,8 @@ func (c Command) Command() string {
 }
 
 type ListCommand struct {
-	Command string `json:"command"`
+	Command  string `json:"command"`
+	Callback bool   `json:"callback"`
 }
 
 type DetailCommand struct {
@@ -111,9 +114,14 @@ func renderCommand(command string, data map[string]any) (string, error) {
 
 func (c Command) LocalRun(input CommandInput) (string, error) {
 	var err error
+	params := make(map[string]any)
+	for key, value := range input.Params {
+		params[key] = shellescape.Quote(value)
+	}
+
 	rendered, err := renderCommand(c.Command(), map[string]any{
-		"params": input.Params,
-		"query":  input.Query,
+		"params": params,
+		"query":  shellescape.Quote(input.Query),
 	})
 	if err != nil {
 		return "", err

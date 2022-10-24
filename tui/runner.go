@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/alessio/shellescape"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/api"
 )
@@ -61,13 +60,13 @@ func (c *RunnerContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SubmitMsg:
 		for key, value := range msg.values {
-			c.input.Params[key] = shellescape.Quote(value)
+			c.input.Params[key] = value
 		}
 		cmd := c.SetEmbed(NewLoadingContainer(c.command.Title))
 		return c, tea.Batch(cmd, c.RunCmd())
 	case ReloadMsg:
 		for key, value := range msg.input.Params {
-			c.input.Params[key] = shellescape.Quote(value)
+			c.input.Params[key] = value
 		}
 		c.input.Query = msg.input.Query
 		return c, c.RunCmd()
@@ -91,8 +90,11 @@ func (c *RunnerContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			}
 			items = append(items, item)
 		}
-
-		cmd := c.SetEmbed(NewListContainer(c.command.Title, items, c.input.Query))
+		l := NewListContainer(c.command.Title, items, c.input.Query)
+		if !c.command.List.Callback {
+			l.enableFiltering()
+		}
+		cmd := c.SetEmbed(l)
 		return c, cmd
 	case error:
 		e := NewDetailContainer("Error", msg.Error())
