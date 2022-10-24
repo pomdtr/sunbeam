@@ -17,10 +17,11 @@
         },
         {
             "id": "file-browser",
-            "command": "./examples/file-browser.mjs {{ .params.root }}",
-            "mode": "list",
             "title": "Browse Files",
             "subtitle": "System",
+            "command": "./examples/file-browser.mjs {{ .params.root }}",
+            "mode": "list",
+            "hidden": true,
             "params": [
                 {
                     "id": "root",
@@ -47,6 +48,7 @@
             "id": "list-prs",
             "mode": "list",
             "subtitle": "Github",
+            "hidden": true,
             "title": "List Pull Request",
             "command": "./examples/github/list-prs.mjs --repo {{ .params.repository }}",
             "params": [
@@ -63,6 +65,7 @@
             "mode": "fullOutput",
             "subtitle": "Github",
             "title": "View Readme",
+            "hidden": true,
             "command": "./examples/github/view-readme.mjs {{ .params.repository }}",
             "params": [
                 {

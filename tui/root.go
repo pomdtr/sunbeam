@@ -110,9 +110,12 @@ func PopCmd() tea.Msg {
 }
 
 func Draw() error {
-	rootItems := make([]sunbeam.ListItem, len(sunbeam.Commands))
+	rootItems := make([]sunbeam.ListItem, 0)
 
-	for i, command := range sunbeam.Commands {
+	for _, command := range sunbeam.Commands {
+		if command.Hidden {
+			continue
+		}
 		var primaryAction sunbeam.ScriptAction
 		if command.Mode == "action" {
 			primaryAction = command.Action
@@ -126,13 +129,13 @@ func Draw() error {
 			}
 		}
 
-		rootItems[i] = sunbeam.ListItem{
+		rootItems = append(rootItems, sunbeam.ListItem{
 			Title:    command.Title,
 			Subtitle: command.Subtitle,
 			Actions: []sunbeam.ScriptAction{
 				primaryAction,
 			},
-		}
+		})
 	}
 
 	rootContainer := NewListContainer("Commands", rootItems, RunAction)

@@ -17,6 +17,7 @@ type Command struct {
 	Title    string         `json:"title"`
 	Command  string         `json:"command"`
 	Subtitle string         `json:"subtitle"`
+	Hidden   bool           `json:"hidden"`
 	Mode     string         `json:"mode"`
 	Params   []CommandParam `json:"params"`
 	Action   ScriptAction   `json:"action"`

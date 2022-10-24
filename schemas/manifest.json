@@ -17,6 +17,9 @@
                 ],
                 "additionalProperties": false,
                 "properties": {
+                    "hidden": {
+                        "type": "boolean"
+                    },
                     "id": {
                         "type": "string"
                     },
