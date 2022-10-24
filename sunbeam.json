@@ -7,22 +7,27 @@
             "title": "Switch Theme",
             "subtitle": "Alacritty",
             "mode": "list",
-            "command": "./examples/alacritty.mjs"
+            "list": {
+                "command": "./examples/alacritty.mjs"
+            }
         },
         {
             "id": "list-repos",
             "mode": "list",
             "subtitle": "Github",
             "title": "Search My Repositories",
-            "command": "./examples/github/list-repos.mjs"
+            "list": {
+                "command": "./examples/github/list-repos.mjs"
+            }
         },
         {
             "id": "file-browser",
             "title": "Browse Files",
             "subtitle": "System",
-            "command": "./examples/file-browser.mjs {{ .params.root }}",
             "mode": "list",
-            "hidden": true,
+            "list": {
+                "command": "./examples/file-browser.mjs {{ .params.root }}"
+            },
             "params": [
                 {
                     "id": "root",
@@ -30,7 +35,8 @@
                     "title": "Start Directory",
                     "placeholder": "/home/pomdtr"
                 }
-            ]
+            ],
+            "hidden": true
         },
         {
             "id": "browse-home",
@@ -51,7 +57,9 @@
             "subtitle": "Github",
             "hidden": true,
             "title": "List Pull Request",
-            "command": "./examples/github/list-prs.mjs --repo {{ .params.repository }}",
+            "list": {
+                "command": "./examples/github/list-prs.mjs --repo {{ .params.repository }}"
+            },
             "params": [
                 {
                     "id": "repository",
@@ -63,11 +71,13 @@
         },
         {
             "id": "view-readme",
-            "mode": "fullOutput",
+            "mode": "detail",
             "subtitle": "Github",
             "title": "View Readme",
             "hidden": true,
-            "command": "./examples/github/view-readme.mjs {{ .params.repository }}",
+            "detail": {
+                "command": "./examples/github/view-readme.mjs {{ .params.repository }}"
+            },
             "params": [
                 {
                     "id": "repository",
@@ -81,8 +91,10 @@
             "id": "form",
             "title": "Form",
             "subtitle": "Examples",
-            "mode": "fullOutput",
-            "command": "./examples/form.sh {{ .params.name }} {{ .params.address }}",
+            "mode": "detail",
+            "detail": {
+                "command": "./examples/form.sh {{ .params.name }} {{ .params.address }}"
+            },
             "params": [
                 {
                     "id": "name",

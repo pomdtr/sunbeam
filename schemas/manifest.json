@@ -24,6 +24,28 @@
                     "hidden": {
                         "type": "boolean"
                     },
+                    "list": {
+                        "type": "object",
+                        "required": [
+                            "command"
+                        ],
+                        "properties": {
+                            "command": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "detail": {
+                        "type": "object",
+                        "required": [
+                            "command"
+                        ],
+                        "properties": {
+                            "command": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "id": {
                         "type": "string"
                     },
@@ -36,17 +58,13 @@
                     "mode": {
                         "type": "string",
                         "enum": [
-                            "silent",
-                            "fullOutput",
+                            "detail",
                             "list",
                             "action"
                         ]
                     },
                     "action": {
                         "type": "object"
-                    },
-                    "command": {
-                        "type": "string"
                     },
                     "params": {
                         "type": "array",

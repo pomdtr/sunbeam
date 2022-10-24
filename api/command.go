@@ -13,17 +13,38 @@ import (
 )
 
 type Command struct {
-	Id          string         `json:"id"`
-	ExtensionId string         `json:"extensionId"`
-	Title       string         `json:"title"`
-	Command     string         `json:"command"`
-	Subtitle    string         `json:"subtitle"`
-	Hidden      bool           `json:"hidden"`
-	Mode        string         `json:"mode"`
-	Params      []CommandParam `json:"params"`
-	Action      ScriptAction   `json:"action"`
+	Id       string         `json:"id"`
+	Mode     string         `json:"mode"`
+	Title    string         `json:"title"`
+	Subtitle string         `json:"subtitle"`
+	Hidden   bool           `json:"hidden"`
+	Params   []CommandParam `json:"params"`
+
+	Detail DetailCommand `json:"detail"`
+	List   ListCommand   `json:"list"`
+	Action ScriptAction  `json:"action"`
+
+	ExtensionId string
 	Url         url.URL
 	Root        url.URL
+}
+
+func (c Command) Command() string {
+	if c.Mode == "list" {
+		return c.List.Command
+	} else if c.Mode == "detail" {
+		return c.Detail.Command
+	} else {
+		return ""
+	}
+}
+
+type ListCommand struct {
+	Command string `json:"command"`
+}
+
+type DetailCommand struct {
+	Command string `json:"command"`
 }
 
 type CommandParam struct {
@@ -90,7 +111,7 @@ func renderCommand(command string, data map[string]any) (string, error) {
 
 func (c Command) LocalRun(input CommandInput) (string, error) {
 	var err error
-	rendered, err := renderCommand(c.Command, map[string]any{
+	rendered, err := renderCommand(c.Command(), map[string]any{
 		"params": input.Params,
 		"query":  input.Query,
 	})
