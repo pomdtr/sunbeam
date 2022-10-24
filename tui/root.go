@@ -123,7 +123,6 @@ func Start() error {
 		var primaryAction api.ScriptAction
 		if command.Mode == "action" {
 			primaryAction = command.Action
-			log.Println(primaryAction)
 		} else {
 			primaryAction = api.ScriptAction{
 				Type:   "push",
