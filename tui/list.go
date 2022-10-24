@@ -98,7 +98,7 @@ func (c *ListContainer) footerView() string {
 	}
 
 	if len(selectedItem.Actions) > 0 {
-		return SunbeamFooterWithActions(c.width, c.title, selectedItem.Actions[0].Title)
+		return SunbeamFooterWithActions(c.width, c.title, selectedItem.Actions[0].Title())
 	} else {
 		return SunbeamFooter(c.width, c.title)
 	}

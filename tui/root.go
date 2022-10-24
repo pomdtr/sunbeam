@@ -125,8 +125,9 @@ func Start() error {
 			primaryAction = command.Action
 		} else {
 			primaryAction = api.ScriptAction{
-				Type:   "push",
-				Target: command.Target(),
+				Type:     "push",
+				RawTitle: "Open Command",
+				Target:   command.Target(),
 			}
 		}
 

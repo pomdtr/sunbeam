@@ -1,5 +1,9 @@
 package api
 
+import (
+	"strings"
+)
+
 type ListItem struct {
 	Icon     string         `json:"icon"`
 	Title    string         `json:"title"`
@@ -10,7 +14,7 @@ type ListItem struct {
 
 type ScriptAction struct {
 	Type        string            `json:"type"`
-	Title       string            `json:"title"`
+	RawTitle    string            `json:"title"`
 	Path        string            `json:"path"`
 	Keybind     string            `json:"keybind"`
 	Params      map[string]string `json:"params"`
@@ -19,4 +23,12 @@ type ScriptAction struct {
 	Application string            `json:"application,omitempty"`
 	Url         string            `json:"url,omitempty"`
 	Content     string            `json:"content,omitempty"`
+}
+
+func (a ScriptAction) Title() string {
+	if a.RawTitle != "" {
+		return a.RawTitle
+	}
+
+	return strings.Title(a.Type)
 }

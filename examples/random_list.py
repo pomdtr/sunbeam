@@ -11,7 +11,6 @@ for _ in range(5):
                 "actions": [
                     {
                         "type": "reload",
-                        "title": "Reload",
                     }
                 ],
             }
