@@ -47,7 +47,7 @@
             "hidden": true
         },
         {
-            "id": "browse-home",
+            "id": "browse-root",
             "mode": "action",
             "title": "Browse Home",
             "subtitle": "System",
@@ -55,7 +55,7 @@
                 "type": "push",
                 "target": "sunbeam/file-browser",
                 "params": {
-                    "root": "$HOME"
+                    "root": "/"
                 }
             }
         },
