@@ -1,4 +1,4 @@
-package cli
+package tui
 
 import (
 	"encoding/json"
@@ -10,18 +10,18 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/sunbeam"
 	"github.com/skratchdot/open-golang/open"
 )
 
 type RunContainer struct {
 	width, height int
-	command       commands.Command
-	input         commands.CommandInput
+	command       sunbeam.Command
+	input         sunbeam.CommandInput
 	embed         Container
 }
 
-func NewRunContainer(command commands.Command, input commands.CommandInput) *RunContainer {
+func NewRunContainer(command sunbeam.Command, input sunbeam.CommandInput) *RunContainer {
 	return &RunContainer{command: command, input: input, embed: NewLoadingContainer(command.Title)}
 }
 
@@ -82,12 +82,12 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		}
 
 		rows := strings.Split(output, "\n")
-		items := make([]commands.ListItem, 0)
+		items := make([]sunbeam.ListItem, 0)
 		for _, row := range rows {
 			if row == "" {
 				continue
 			}
-			var item commands.ListItem
+			var item sunbeam.ListItem
 			err := json.Unmarshal([]byte(row), &item)
 			if err != nil {
 				return c, NewErrorCmd("Invalid row: %s", row)
@@ -110,7 +110,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 }
 
-func (c *RunContainer) RunAction(action commands.ScriptAction) tea.Cmd {
+func (c *RunContainer) RunAction(action sunbeam.ScriptAction) tea.Cmd {
 	if action.Root == "" {
 		action.Root = c.command.Root.String()
 	}
@@ -124,10 +124,10 @@ func (c *RunContainer) View() string {
 	return c.embed.View()
 }
 
-func RunAction(action commands.ScriptAction) tea.Cmd {
+func RunAction(action sunbeam.ScriptAction) tea.Cmd {
 	switch action.Type {
 	case "push":
-		commandMap, ok := commands.ExtensionMap[action.Root]
+		commandMap, ok := sunbeam.ExtensionMap[action.Root]
 		if !ok {
 			return NewErrorCmd("extension %s does not exists", action.Root)
 		}
@@ -136,7 +136,7 @@ func RunAction(action commands.ScriptAction) tea.Cmd {
 			return NewErrorCmd("command not found: %s", action.Command)
 		}
 
-		input := commands.CommandInput{}
+		input := sunbeam.CommandInput{}
 		if action.Params != nil {
 			input.Params = action.Params
 		} else {

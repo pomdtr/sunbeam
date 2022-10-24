@@ -7,8 +7,9 @@ import (
 
 	"github.com/adrg/xdg"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pomdtr/sunbeam/cli"
 	"github.com/spf13/cobra"
+
+	"github.com/pomdtr/sunbeam/tui"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -52,7 +53,7 @@ func Sunbeam(cmd *cobra.Command, args []string) {
 	}
 	defer f.Close()
 
-	err = cli.Start()
+	err = tui.Draw()
 	if err != nil {
 		log.Fatalln(err)
 	}

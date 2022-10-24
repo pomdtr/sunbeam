@@ -1,4 +1,4 @@
-package commands
+package sunbeam
 
 type FormResponse struct {
 	Title  string     `json:"title"`

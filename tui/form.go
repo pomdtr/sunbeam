@@ -1,4 +1,4 @@
-package cli
+package tui
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/sunbeam"
 )
 
 type FormField struct {
@@ -32,7 +32,7 @@ func NewSubmitCmd(values map[string]any) tea.Cmd {
 	}
 }
 
-func NewFormContainer(title string, params []commands.CommandParam) *FormContainer {
+func NewFormContainer(title string, params []sunbeam.CommandParam) *FormContainer {
 	c := &FormContainer{
 		title:  title,
 		inputs: make([]FormField, len(params)),

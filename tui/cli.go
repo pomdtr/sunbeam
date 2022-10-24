@@ -1,18 +1,18 @@
-package cli
+package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/sunbeam"
 )
 
-func Start() error {
-	rootItems := make([]commands.ListItem, len(commands.Commands))
+func Draw() error {
+	rootItems := make([]sunbeam.ListItem, len(sunbeam.Commands))
 
-	for i, command := range commands.Commands {
-		rootItems[i] = commands.ListItem{
+	for i, command := range sunbeam.Commands {
+		rootItems[i] = sunbeam.ListItem{
 			Title:    command.Title,
 			Subtitle: command.Subtitle,
-			Actions: []commands.ScriptAction{
+			Actions: []sunbeam.ScriptAction{
 				{Type: "push", Target: command.Id, Root: command.Root.String()},
 			},
 		}

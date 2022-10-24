@@ -1,4 +1,4 @@
-package commands
+package sunbeam
 
 import (
 	"encoding/json"

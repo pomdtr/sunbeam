@@ -1,4 +1,4 @@
-package cli
+package tui
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/sunbeam"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
 )
@@ -19,12 +19,12 @@ type ListContainer struct {
 
 	title         string
 	textInput     *textinput.Model
-	filteredItems []commands.ListItem
-	items         []commands.ListItem
-	runAction     func(commands.ScriptAction) tea.Cmd
+	filteredItems []sunbeam.ListItem
+	items         []sunbeam.ListItem
+	runAction     func(sunbeam.ScriptAction) tea.Cmd
 }
 
-func NewListContainer(title string, items []commands.ListItem, runAction func(commands.ScriptAction) tea.Cmd) Container {
+func NewListContainer(title string, items []sunbeam.ListItem, runAction func(sunbeam.ScriptAction) tea.Cmd) Container {
 	t := textinput.New()
 	t.Prompt = "> "
 	t.Placeholder = "Search..."
@@ -49,14 +49,14 @@ type Rank struct {
 
 // filterItems uses the sahilm/fuzzy to filter through the list.
 // This is set by default.
-func filterItems(term string, items []commands.ListItem) []commands.ListItem {
+func filterItems(term string, items []sunbeam.ListItem) []sunbeam.ListItem {
 	targets := make([]string, len(items))
 	for i, item := range items {
 		targets[i] = item.Title
 	}
 	var ranks = fuzzy.Find(term, targets)
 	sort.Stable(ranks)
-	filteredItems := make([]commands.ListItem, len(ranks))
+	filteredItems := make([]sunbeam.ListItem, len(ranks))
 	for i, r := range ranks {
 		filteredItems[i] = items[r.Index]
 	}
@@ -72,9 +72,9 @@ func (c *ListContainer) SetSize(width, height int) {
 	c.updateIndexes(c.selectedIndex)
 }
 
-func (c ListContainer) SelectedItem() (commands.ListItem, bool) {
+func (c ListContainer) SelectedItem() (sunbeam.ListItem, bool) {
 	if c.selectedIndex >= len(c.filteredItems) {
-		return commands.ListItem{}, false
+		return sunbeam.ListItem{}, false
 	}
 	return c.filteredItems[c.selectedIndex], true
 }

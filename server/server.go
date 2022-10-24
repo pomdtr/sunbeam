@@ -6,12 +6,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/pomdtr/sunbeam/commands"
+	"github.com/pomdtr/sunbeam/sunbeam"
 )
 
 func Serve(address string, port int) error {
 	routeMap := make(map[string]string)
-	for _, command := range commands.Commands {
+	for _, command := range sunbeam.Commands {
 		http.HandleFunc(command.Id, serveCommand(command))
 	}
 
@@ -26,9 +26,9 @@ func Serve(address string, port int) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func serveCommand(cmd commands.Command) http.HandlerFunc {
+func serveCommand(cmd sunbeam.Command) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var input commands.CommandInput
+		var input sunbeam.CommandInput
 		err := json.NewDecoder(req.Body).Decode(&input)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
