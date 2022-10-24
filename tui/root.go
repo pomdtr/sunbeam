@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"log"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/pomdtr/sunbeam/sunbeam"
 )
 
 type Container interface {
@@ -104,4 +107,41 @@ type popMsg struct{}
 
 func PopCmd() tea.Msg {
 	return popMsg{}
+}
+
+func Draw() error {
+	rootItems := make([]sunbeam.ListItem, len(sunbeam.Commands))
+
+	for i, command := range sunbeam.Commands {
+		var primaryAction sunbeam.ScriptAction
+		if command.Mode == "action" {
+			primaryAction = command.Action
+			primaryAction.Root = command.Root.String()
+			log.Println(primaryAction)
+		} else {
+			primaryAction = sunbeam.ScriptAction{
+				Type:   "push",
+				Target: command.Id,
+				Root:   command.Root.String(),
+			}
+		}
+
+		rootItems[i] = sunbeam.ListItem{
+			Title:    command.Title,
+			Subtitle: command.Subtitle,
+			Actions: []sunbeam.ScriptAction{
+				primaryAction,
+			},
+		}
+	}
+
+	rootContainer := NewListContainer("Commands", rootItems, RunAction)
+	m := NewRootModel(rootContainer)
+	p := tea.NewProgram(m, tea.WithAltScreen())
+	err := p.Start()
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

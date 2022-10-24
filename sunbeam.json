@@ -31,6 +31,19 @@
             ]
         },
         {
+            "id": "browse-home",
+            "mode": "action",
+            "title": "Browse Home",
+            "subtitle": "System",
+            "action": {
+                "type": "push",
+                "target": "file-browser",
+                "params": {
+                    "root": "$HOME"
+                }
+            }
+        },
+        {
             "id": "list-prs",
             "mode": "list",
             "subtitle": "Github",

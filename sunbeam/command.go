@@ -19,6 +19,7 @@ type Command struct {
 	Subtitle string         `json:"subtitle"`
 	Mode     string         `json:"mode"`
 	Params   []CommandParam `json:"params"`
+	Action   ScriptAction   `json:"action"`
 	Url      url.URL
 	Root     url.URL
 }

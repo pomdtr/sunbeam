@@ -13,9 +13,9 @@
                 "required": [
                     "id",
                     "title",
-                    "mode",
-                    "command"
+                    "mode"
                 ],
+                "additionalProperties": false,
                 "properties": {
                     "id": {
                         "type": "string"
@@ -31,8 +31,12 @@
                         "enum": [
                             "silent",
                             "fullOutput",
-                            "list"
+                            "list",
+                            "action"
                         ]
+                    },
+                    "action": {
+                        "type": "object"
                     },
                     "command": {
                         "type": "string"
