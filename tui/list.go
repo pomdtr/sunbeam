@@ -192,12 +192,7 @@ func RunAction(action api.ScriptAction) tea.Cmd {
 			return NewErrorCmd("unknown command %s", action.Target)
 		}
 
-		input := api.CommandInput{}
-		if action.Params != nil {
-			input.Params = action.Params
-		} else {
-			input.Params = make(map[string]any)
-		}
+		input := api.NewCommandInput(action.Params)
 
 		return NewPushCmd(NewRunContainer(command, input))
 	case "exec":

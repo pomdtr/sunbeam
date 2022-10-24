@@ -23,10 +23,10 @@ type FormContainer struct {
 }
 
 type SubmitMsg struct {
-	values map[string]any
+	values map[string]string
 }
 
-func NewSubmitCmd(values map[string]any) tea.Cmd {
+func NewSubmitCmd(values map[string]string) tea.Cmd {
 	return func() tea.Msg {
 		return SubmitMsg{values: values}
 	}
@@ -74,7 +74,7 @@ func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		case tea.KeyEscape:
 			return c, PopCmd
 		case tea.KeyEnter:
-			values := make(map[string]any, len(c.inputs))
+			values := make(map[string]string, len(c.inputs))
 			for _, input := range c.inputs {
 				values[input.Id] = input.Value()
 			}

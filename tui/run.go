@@ -62,11 +62,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SubmitMsg:
 		for key, value := range msg.values {
-			if value, ok := value.(string); ok {
-				c.input.Params[key] = shellescape.Quote(value)
-			} else {
-				c.input.Params[key] = value
-			}
+			c.input.Params[key] = shellescape.Quote(value)
 		}
 		return c, c.RunCmd()
 	case CommandOutput:

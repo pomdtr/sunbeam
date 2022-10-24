@@ -144,13 +144,13 @@ func Start() error {
 	return Draw(rootContainer)
 }
 
-func Run(target string) error {
+func Run(target string, params map[string]string) error {
 	command, ok := api.GetCommand(target)
 	if !ok {
 		return fmt.Errorf("command not found: %s", target)
 	}
 
-	container := NewRunContainer(command, api.NewCommandInput())
+	container := NewRunContainer(command, api.NewCommandInput(params))
 	return Draw(container)
 }
 
