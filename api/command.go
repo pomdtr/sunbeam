@@ -40,6 +40,12 @@ type CommandInput struct {
 	Query  string         `json:"query"`
 }
 
+func NewCommandInput() CommandInput {
+	return CommandInput{
+		Params: make(map[string]any),
+	}
+}
+
 func (c Command) CheckMissingParams(inputParams map[string]any) []CommandParam {
 	missing := make([]CommandParam, 0)
 	for _, param := range c.Params {

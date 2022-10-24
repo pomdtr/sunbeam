@@ -3,7 +3,10 @@ package tui
 import (
 	"fmt"
 	"log"
+	"os"
+	"path"
 
+	"github.com/adrg/xdg"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/api"
 )
@@ -147,14 +150,33 @@ func Run(target string) error {
 		return fmt.Errorf("command not found: %s", target)
 	}
 
-	container := NewRunContainer(command, api.CommandInput{})
+	container := NewRunContainer(command, api.NewCommandInput())
 	return Draw(container)
 }
 
-func Draw(container Container) error {
+func Draw(container Container) (err error) {
+	var logFile string
+	// Log to a file
+	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
+		logFile = env
+	} else {
+		if _, err := os.Stat(xdg.StateHome); os.IsNotExist(err) {
+			err = os.MkdirAll(xdg.StateHome, 0755)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+		logFile = path.Join(xdg.StateHome, "api.log")
+	}
+	f, err := tea.LogToFile(logFile, "debug")
+	if err != nil {
+		log.Fatalf("could not open log file: %v", err)
+	}
+	defer f.Close()
+
 	m := NewRootModel(container)
 	p := tea.NewProgram(m, tea.WithAltScreen())
-	err := p.Start()
+	err = p.Start()
 
 	if err != nil {
 		return err
