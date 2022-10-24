@@ -35,14 +35,13 @@
             "mode": "list",
             "subtitle": "Github",
             "title": "List Pull Request",
-            "command": "./examples/github/list-prs.mjs {{ if .params.repository }} --repo {{ .params.repository }} {{ end }}",
+            "command": "./examples/github/list-prs.mjs --repo {{ .params.repository }}",
             "params": [
                 {
                     "id": "repository",
                     "type": "textfield",
                     "title": "Repository",
-                    "placeholder": "pomdtr/sunbeam",
-                    "optional": true
+                    "placeholder": "pomdtr/sunbeam"
                 }
             ]
         },
