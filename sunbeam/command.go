@@ -76,7 +76,10 @@ func renderCommand(command string, data map[string]any) (string, error) {
 
 func (c Command) LocalRun(input CommandInput) (string, error) {
 	var err error
-	rendered, err := renderCommand(c.Command, input.Params)
+	rendered, err := renderCommand(c.Command, map[string]any{
+		"params": input.Params,
+		"query":  input.Query,
+	})
 	if err != nil {
 		return "", err
 	}
