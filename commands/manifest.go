@@ -3,7 +3,6 @@ package commands
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"path"
@@ -19,90 +18,81 @@ var (
 )
 
 func init() {
-	commandRoots := listCommandDirs()
-	for _, commandRoot := range commandRoots {
-		dirCommands, err := listCommands(commandRoot)
-		if err != nil {
-			continue
+	manifests := listManifests()
+	for _, manifest := range manifests {
+		commands := manifest.Commands
+		rootPath := path.Dir(manifest.Url.Path)
+		rootUrl := url.URL{
+			Scheme: "file",
+			Path:   rootPath,
 		}
 
 		commandMap := make(map[string]Command)
-		for _, command := range dirCommands {
+		for _, command := range commands {
+			command.Root = url.URL{
+				Scheme: "file",
+				Path:   rootPath,
+			}
+			command.Url = url.URL{
+				Scheme: "file",
+				Path:   path.Join(rootPath, command.Id),
+			}
 			Commands = append(Commands, command)
 			commandMap[command.Id] = command
 		}
 
-		ExtensionMap[commandRoot.String()] = commandMap
+		ExtensionMap[rootUrl.String()] = commandMap
 	}
 }
 
-func listCommands(commandRoot url.URL) (commands []Command, err error) {
-	manifestPath := path.Join(commandRoot.Path, "sunbeam.json")
-	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
-		return nil, err
-	}
-
-	var manifest Manifest
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		return nil, err
-	}
-	json.Unmarshal(manifestBytes, &manifest)
-
-	if err != nil {
-		log.Fatalf("error while parsing manifest: %s", err)
-	}
-
-	for _, commandData := range manifest.Commands {
-		command := Command{}
-		command.CommandData = commandData
-		rootPath := path.Dir(manifestPath)
-		command.Root = url.URL{
-			Scheme: "file",
-			Path:   rootPath,
-		}
-		command.Url = url.URL{
-			Scheme: "file",
-			Path:   path.Join(rootPath, command.Command),
-		}
-		commands = append(commands, command)
-	}
-
-	return commands, nil
-}
-
-func listCommandDirs() (commandDirs []url.URL) {
+func listManifests() []Manifest {
+	commandDirs := make([]string, 0)
 	currentDir, err := os.Getwd()
 	if err == nil {
-		commandDirs = append(commandDirs, url.URL{
-			Scheme: "file",
-			Path:   currentDir,
-		})
+		for currentDir != "/" {
+			commandDirs = append(commandDirs, currentDir)
+			currentDir = path.Dir(currentDir)
+		}
 	}
 
 	var scriptDir = os.Getenv("SUNBEAM_COMMAND_DIR")
 	if scriptDir == "" {
 		scriptDir = xdg.ConfigHome + "/sunbeam/commands"
 	}
-	commandDirs = append(commandDirs, url.URL{
-		Scheme: "file",
-		Path:   scriptDir,
-	})
+	commandDirs = append(commandDirs, scriptDir)
 
 	extensionRoot := path.Join(xdg.DataHome, "sunbeam", "extensions")
 	extensionDirs, _ := ioutil.ReadDir(extensionRoot)
 	for _, extensionDir := range extensionDirs {
 		extensionPath := path.Join(extensionRoot, extensionDir.Name())
-		commandDirs = append(commandDirs, url.URL{
-			Scheme: "file",
-			Path:   extensionPath,
-		})
+		commandDirs = append(commandDirs, extensionPath)
 	}
 
-	return commandDirs
+	manifests := make([]Manifest, 0)
+	for _, commandDir := range commandDirs {
+		manifestPath := path.Join(commandDir, "sunbeam.json")
+		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+			continue
+		}
+
+		var manifest Manifest
+		manifestBytes, err := os.ReadFile(manifestPath)
+		if err != nil {
+			continue
+		}
+		json.Unmarshal(manifestBytes, &manifest)
+		manifest.Url = url.URL{
+			Scheme: "file",
+			Path:   manifestPath,
+		}
+		manifests = append(manifests, manifest)
+	}
+
+	return manifests
 }
 
 type Manifest struct {
-	Title    string        `json:"title"`
-	Commands []CommandData `json:"commands"`
+	Title    string    `json:"title"`
+	Commands []Command `json:"commands"`
+	Url      url.URL
 }

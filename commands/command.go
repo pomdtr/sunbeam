@@ -12,13 +12,15 @@ import (
 	"text/template"
 )
 
-type CommandData struct {
+type Command struct {
 	Id       string         `json:"id"`
 	Title    string         `json:"title"`
 	Command  string         `json:"command"`
 	Subtitle string         `json:"subtitle"`
 	Mode     string         `json:"mode"`
 	Params   []CommandParam `json:"params"`
+	Url      url.URL
+	Root     url.URL
 }
 
 type CommandParam struct {
@@ -33,12 +35,6 @@ type CommandParam struct {
 type CommandInput struct {
 	Params map[string]any `json:"params"`
 	Query  string         `json:"query"`
-}
-
-type Command struct {
-	CommandData
-	Root url.URL
-	Url  url.URL
 }
 
 func (c Command) CheckMissingParams(inputParams map[string]any) []CommandParam {
