@@ -14,7 +14,7 @@ const items = repos.map((repo) => ({
     },
     {
       type: "push",
-      target: "list-prs",
+      target: "sunbeam/list-prs",
       keybind: "ctrl+p",
       params: {
         repository: repo.full_name,

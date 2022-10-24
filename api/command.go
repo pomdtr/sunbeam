@@ -13,16 +13,17 @@ import (
 )
 
 type Command struct {
-	Id       string         `json:"id"`
-	Title    string         `json:"title"`
-	Command  string         `json:"command"`
-	Subtitle string         `json:"subtitle"`
-	Hidden   bool           `json:"hidden"`
-	Mode     string         `json:"mode"`
-	Params   []CommandParam `json:"params"`
-	Action   ScriptAction   `json:"action"`
-	Url      url.URL
-	Root     url.URL
+	Id          string         `json:"id"`
+	ExtensionId string         `json:"extensionId"`
+	Title       string         `json:"title"`
+	Command     string         `json:"command"`
+	Subtitle    string         `json:"subtitle"`
+	Hidden      bool           `json:"hidden"`
+	Mode        string         `json:"mode"`
+	Params      []CommandParam `json:"params"`
+	Action      ScriptAction   `json:"action"`
+	Url         url.URL
+	Root        url.URL
 }
 
 type CommandParam struct {
@@ -61,6 +62,10 @@ func (c Command) Run(input CommandInput) (string, error) {
 	default:
 		return "", fmt.Errorf("unknown command scheme: %s", c.Root.Scheme)
 	}
+}
+
+func (c Command) Target() string {
+	return fmt.Sprintf("%s/%s", c.ExtensionId, c.Id)
 }
 
 func renderCommand(command string, data map[string]any) (string, error) {

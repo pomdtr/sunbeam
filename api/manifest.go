@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/adrg/xdg"
 )
@@ -22,10 +23,6 @@ func init() {
 	for _, manifest := range manifests {
 		commands := manifest.Commands
 		rootPath := path.Dir(manifest.Url.Path)
-		rootUrl := url.URL{
-			Scheme: "file",
-			Path:   rootPath,
-		}
 
 		commandMap := make(map[string]Command)
 		for _, command := range commands {
@@ -33,6 +30,7 @@ func init() {
 				Scheme: "file",
 				Path:   rootPath,
 			}
+			command.ExtensionId = manifest.Id
 			command.Url = url.URL{
 				Scheme: "file",
 				Path:   path.Join(rootPath, command.Id),
@@ -41,8 +39,27 @@ func init() {
 			commandMap[command.Id] = command
 		}
 
-		ExtensionMap[rootUrl.String()] = commandMap
+		ExtensionMap[manifest.Id] = commandMap
 	}
+}
+
+func GetCommand(target string) (Command, bool) {
+	tokens := strings.Split(target, "/")
+	if len(tokens) < 2 {
+		return Command{}, false
+	}
+
+	extension, ok := ExtensionMap[tokens[0]]
+	if !ok {
+		return Command{}, false
+	}
+
+	command, ok := extension[tokens[1]]
+	if !ok {
+		return Command{}, false
+	}
+
+	return command, true
 }
 
 func listManifests() []Manifest {
@@ -70,7 +87,7 @@ func listManifests() []Manifest {
 
 	manifests := make([]Manifest, 0)
 	for _, commandDir := range commandDirs {
-		manifestPath := path.Join(commandDir, "api.json")
+		manifestPath := path.Join(commandDir, "sunbeam.json")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 			continue
 		}
@@ -93,6 +110,7 @@ func listManifests() []Manifest {
 
 type Manifest struct {
 	Title    string    `json:"title"`
+	Id       string    `json:"id"`
 	Commands []Command `json:"commands"`
 	Url      url.URL
 }

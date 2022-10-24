@@ -20,7 +20,7 @@ const items = await Promise.all(
           ? {
               type: "push",
               title: "Browse Directory",
-              target: "file-browser",
+              target: "sunbeam/file-browser",
               params: {
                 root: filepath,
               },

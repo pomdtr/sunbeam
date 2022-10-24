@@ -1,4 +1,5 @@
 {
+    "id": "sunbeam",
     "$schema": "./schemas/manifest.json",
     "commands": [
         {
@@ -38,7 +39,7 @@
             "subtitle": "System",
             "action": {
                 "type": "push",
-                "target": "file-browser",
+                "target": "sunbeam/file-browser",
                 "params": {
                     "root": "$HOME"
                 }

@@ -1,16 +1,21 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"os/exec"
 	"sort"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/api"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
+	"github.com/skratchdot/open-golang/open"
 )
 
 type ListContainer struct {
@@ -21,10 +26,9 @@ type ListContainer struct {
 	textInput     *textinput.Model
 	filteredItems []api.ListItem
 	items         []api.ListItem
-	runAction     func(api.ScriptAction) tea.Cmd
 }
 
-func NewListContainer(title string, items []api.ListItem, runAction func(api.ScriptAction) tea.Cmd) Container {
+func NewListContainer(title string, items []api.ListItem) Container {
 	t := textinput.New()
 	t.Prompt = "> "
 	t.Placeholder = "Search..."
@@ -34,7 +38,6 @@ func NewListContainer(title string, items []api.ListItem, runAction func(api.Scr
 		title:     title,
 
 		items:         items,
-		runAction:     runAction,
 		filteredItems: items,
 	}
 }
@@ -106,7 +109,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			return c, c.runAction(selectedItem.Actions[0])
+			return c, RunAction(selectedItem.Actions[0])
 		case tea.KeyDown, tea.KeyTab, tea.KeyCtrlJ:
 			if c.selectedIndex < len(c.filteredItems)-1 {
 				c.updateIndexes(c.selectedIndex + 1)
@@ -124,7 +127,7 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		default:
 			for _, action := range selectedItem.Actions {
 				if action.Keybind == msg.String() {
-					return c, c.runAction(action)
+					return c, RunAction(action)
 				}
 			}
 		}
@@ -178,5 +181,59 @@ func (c *ListContainer) View() string {
 var NewErrorCmd = func(format string, values ...any) func() tea.Msg {
 	return func() tea.Msg {
 		return fmt.Errorf(format, values...)
+	}
+}
+
+func RunAction(action api.ScriptAction) tea.Cmd {
+	switch action.Type {
+	case "push":
+		command, ok := api.GetCommand(action.Target)
+		if !ok {
+			return NewErrorCmd("unknown command %s", action.Target)
+		}
+
+		input := api.CommandInput{}
+		if action.Params != nil {
+			input.Params = action.Params
+		} else {
+			input.Params = make(map[string]any)
+		}
+
+		return NewPushCmd(NewRunContainer(command, input))
+	case "exec":
+		var cmd *exec.Cmd
+		log.Printf("executing command: %s", action.Command)
+		if len(action.Command) == 1 {
+			cmd = exec.Command(action.Command[0])
+		} else {
+			cmd = exec.Command(action.Command[0], action.Command[1:]...)
+		}
+		_, err := cmd.Output()
+		var exitError *exec.ExitError
+		if errors.As(err, &exitError) {
+			return NewErrorCmd("Unable to run cmd: %s", exitError.Stderr)
+		}
+		return tea.Quit
+	case "open":
+		err := open.Run(action.Path)
+		if err != nil {
+			return NewErrorCmd("failed to open file: %s", err)
+		}
+		return tea.Quit
+	case "open-url":
+		err := open.Run(action.Url)
+		if err != nil {
+			return NewErrorCmd("failed to open url: %s", action.Url)
+		}
+		return tea.Quit
+	case "copy":
+		err := clipboard.WriteAll(action.Content)
+		if err != nil {
+			return NewErrorCmd("failed to copy %s to clipboard", err)
+		}
+		return tea.Quit
+	default:
+		log.Printf("Unknown action type: %s", action.Type)
+		return tea.Quit
 	}
 }

@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -109,7 +110,7 @@ func PopCmd() tea.Msg {
 	return popMsg{}
 }
 
-func Draw() error {
+func Start() error {
 	rootItems := make([]api.ListItem, 0)
 
 	for _, command := range api.Commands {
@@ -119,13 +120,11 @@ func Draw() error {
 		var primaryAction api.ScriptAction
 		if command.Mode == "action" {
 			primaryAction = command.Action
-			primaryAction.Root = command.Root.String()
 			log.Println(primaryAction)
 		} else {
 			primaryAction = api.ScriptAction{
 				Type:   "push",
-				Target: command.Id,
-				Root:   command.Root.String(),
+				Target: command.Target(),
 			}
 		}
 
@@ -138,8 +137,22 @@ func Draw() error {
 		})
 	}
 
-	rootContainer := NewListContainer("Commands", rootItems, RunAction)
-	m := NewRootModel(rootContainer)
+	rootContainer := NewListContainer("Commands", rootItems)
+	return Draw(rootContainer)
+}
+
+func Run(target string) error {
+	command, ok := api.GetCommand(target)
+	if !ok {
+		return fmt.Errorf("command not found: %s", target)
+	}
+
+	container := NewRunContainer(command, api.CommandInput{})
+	return Draw(container)
+}
+
+func Draw(container Container) error {
+	m := NewRootModel(container)
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	err := p.Start()
 

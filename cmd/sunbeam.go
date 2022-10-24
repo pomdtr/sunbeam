@@ -53,8 +53,8 @@ func Sunbeam(cmd *cobra.Command, args []string) {
 	}
 	defer f.Close()
 
-	err = tui.Draw()
+	err = tui.Start()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("could not start tui: %v", err)
 	}
 }

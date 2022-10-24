@@ -3,9 +3,13 @@
     "$id": "http://github.com/pomdtr/sunbeam/manifest",
     "type": "object",
     "required": [
+        "id",
         "commands"
     ],
     "properties": {
+        "id": {
+            "type": "string"
+        },
         "commands": {
             "type": "array",
             "items": {
