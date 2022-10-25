@@ -41,6 +41,10 @@ func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 	return c, cmd
 }
 
+func (c *Detail) SetContent(content string) {
+	c.viewport.SetContent(content)
+}
+
 func (c *Detail) headerView() string {
 	return SunbeamHeader(c.width)
 }

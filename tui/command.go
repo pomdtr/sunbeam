@@ -78,15 +78,34 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		runCmd := c.Run(api.NewCommandInput(msg.values))
 		return c, tea.Batch(c.loading.Init(), runCmd)
 	case ListOutput:
-		c.currentView = "list"
-		c.list = NewList(c.command.Title, msg)
-		c.list.SetSize(c.width, c.height)
-		return c, c.list.Init()
+		if c.list == nil {
+			c.currentView = "list"
+			c.list = NewList(c.command.Title, msg)
+			if c.command.List.Callback {
+				c.list.DisableFiltering()
+			}
+			c.list.SetSize(c.width, c.height)
+			return c, c.list.Init()
+		}
+		c.list.SetItems(msg)
 	case DetailOutput:
-		c.currentView = "detail"
-		c.detail = NewDetail(c.command.Title, string(msg))
-		c.detail.SetSize(c.width, c.height)
-		return c, c.detail.Init()
+		if c.detail == nil {
+			c.currentView = "detail"
+			c.detail = NewDetail(c.command.Title, string(msg))
+			c.detail.SetSize(c.width, c.height)
+			return c, c.detail.Init()
+		}
+		c.detail.SetContent(string(msg))
+	case ReloadMsg:
+		return c, c.Run(msg.input)
+	case QueryUpdateMsg:
+		if c.command.List.Callback {
+			input := api.CommandInput{
+				Query:  msg.query,
+				Params: c.params,
+			}
+			return c, c.Run(input)
+		}
 	case error:
 		c.currentView = "error"
 		c.err = NewDetail("Error", msg.Error())

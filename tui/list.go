@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -42,6 +43,10 @@ func NewList(title string, items []api.ListItem) *List {
 		items:            items,
 		filteredItems:    items,
 	}
+}
+
+func (c *List) DisableFiltering() {
+	c.filteringEnabled = false
 }
 
 // Rank defines a rank for a given item.
@@ -112,6 +117,10 @@ func (c *List) footerView() string {
 	}
 }
 
+type DebounceMsg struct {
+	Query string
+}
+
 func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 	var cmds []tea.Cmd
 
@@ -138,6 +147,7 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 			} else {
 				return c, PopCmd
 			}
+
 		default:
 			if selectedItem == nil {
 				break
@@ -148,6 +158,10 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 				}
 			}
 		}
+	case DebounceMsg:
+		if c.Query() == msg.Query {
+			return c, NewQueryUpdateCmd(msg.Query)
+		}
 	}
 
 	t, cmd := c.textInput.Update(msg)
@@ -157,7 +171,9 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 			c.filteredItems = filterItems(t.Value(), c.items)
 			c.updateIndexes(0)
 		}
-		cmds = append(cmds, NewQueryUpdateCmd(t.Value()))
+		cmds = append(cmds, tea.Tick(200*time.Millisecond, func(time.Time) tea.Msg {
+			return DebounceMsg{Query: t.Value()}
+		}))
 	}
 	c.textInput = &t
 
