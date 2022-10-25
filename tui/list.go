@@ -18,34 +18,30 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-type ListContainer struct {
-	width, height             int
-	startIndex, selectedIndex int
+type List struct {
+	width, height int
+	textInput     *textinput.Model
 
-	title            string
-	textInput        *textinput.Model
-	filteringEnabled bool
-	filteredItems    []api.ListItem
-	items            []api.ListItem
+	title string
+
+	startIndex, selectedIndex int
+	filteringEnabled          bool
+	items                     []api.ListItem
+	filteredItems             []api.ListItem
 }
 
-func NewListContainer(title string, items []api.ListItem, query string) *ListContainer {
+func NewList(title string, items []api.ListItem) *List {
 	t := textinput.New()
 	t.Prompt = "> "
 	t.Placeholder = "Search..."
-	t.SetValue(query)
 
-	return &ListContainer{
-		textInput:     &t,
-		filteredItems: items,
-		title:         title,
-		items:         items,
+	return &List{
+		title:            title,
+		filteringEnabled: true,
+		textInput:        &t,
+		items:            items,
+		filteredItems:    items,
 	}
-}
-
-func (c *ListContainer) enableFiltering() {
-	c.filteringEnabled = true
-	c.filteredItems = filterItems(c.textInput.Value(), c.items)
 }
 
 // Rank defines a rank for a given item.
@@ -75,29 +71,35 @@ func filterItems(term string, items []api.ListItem) []api.ListItem {
 	return filteredItems
 }
 
-func (c *ListContainer) Init() tea.Cmd {
+func (c *List) Init() tea.Cmd {
 	return c.textInput.Focus()
 }
 
-func (c *ListContainer) SetSize(width, height int) {
+func (c *List) SetItems(items []api.ListItem) {
+	c.items = items
+	c.filteredItems = filterItems(c.textInput.Value(), items)
+	c.updateIndexes(0)
+}
+
+func (c *List) SetSize(width, height int) {
 	c.width, c.height = width, height-lipgloss.Height(c.headerView())-lipgloss.Height(c.footerView())-1
 	c.updateIndexes(c.selectedIndex)
 }
 
-func (c ListContainer) SelectedItem() *api.ListItem {
+func (c List) SelectedItem() *api.ListItem {
 	if c.selectedIndex >= len(c.filteredItems) {
 		return nil
 	}
 	return &c.filteredItems[c.selectedIndex]
 }
 
-func (c *ListContainer) headerView() string {
+func (c *List) headerView() string {
 	input := c.textInput.View()
 	line := strings.Repeat("─", c.width)
 	return lipgloss.JoinVertical(lipgloss.Left, input, line)
 }
 
-func (c *ListContainer) footerView() string {
+func (c *List) footerView() string {
 	selectedItem := c.SelectedItem()
 	if selectedItem == nil {
 		return SunbeamFooter(c.width, c.title)
@@ -110,7 +112,7 @@ func (c *ListContainer) footerView() string {
 	}
 }
 
-func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	selectedItem := c.SelectedItem()
@@ -153,18 +155,16 @@ func (c *ListContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	if t.Value() != c.textInput.Value() {
 		if c.filteringEnabled {
 			c.filteredItems = filterItems(t.Value(), c.items)
-		} else {
-			input := api.NewCommandInput(nil)
-			input.Query = t.Value()
-			cmds = append(cmds, NewReloadCmd(input))
+			c.updateIndexes(0)
 		}
+		cmds = append(cmds, NewQueryUpdateCmd(t.Value()))
 	}
 	c.textInput = &t
 
 	return c, tea.Batch(cmds...)
 }
 
-func (c *ListContainer) updateIndexes(selectedIndex int) {
+func (c *List) updateIndexes(selectedIndex int) {
 	for selectedIndex < c.startIndex {
 		c.startIndex--
 	}
@@ -189,7 +189,7 @@ func itemView(item api.ListItem, selected bool) string {
 	}
 }
 
-func (c *ListContainer) View() string {
+func (c *List) View() string {
 	rows := make([]string, 0)
 	items := c.filteredItems
 
@@ -211,6 +211,22 @@ func NewErrorCmd(format string, values ...any) func() tea.Msg {
 	}
 }
 
+func (c *List) Query() string {
+	return c.textInput.Value()
+}
+
+type QueryUpdateMsg struct {
+	query string
+}
+
+func NewQueryUpdateCmd(query string) func() tea.Msg {
+	return func() tea.Msg {
+		return QueryUpdateMsg{
+			query: query,
+		}
+	}
+}
+
 type ReloadMsg struct {
 	input api.CommandInput
 }
@@ -223,7 +239,7 @@ func NewReloadCmd(input api.CommandInput) func() tea.Msg {
 	}
 }
 
-func (l *ListContainer) RunAction(action api.ScriptAction) tea.Cmd {
+func (l *List) RunAction(action api.ScriptAction) tea.Cmd {
 	switch action.Type {
 	case "push":
 		command, ok := api.GetCommand(action.Target)
@@ -231,9 +247,7 @@ func (l *ListContainer) RunAction(action api.ScriptAction) tea.Cmd {
 			return NewErrorCmd("unknown command %s", action.Target)
 		}
 
-		input := api.NewCommandInput(action.Params)
-
-		return NewPushCmd(NewRunnerContainer(command, input))
+		return NewPushCmd(NewCommandContainer(command, action.Params))
 	case "reload":
 		input := api.NewCommandInput(action.Params)
 		input.Query = l.textInput.Value()

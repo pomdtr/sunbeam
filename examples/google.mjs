@@ -1,6 +1,15 @@
 #!/usr/bin/env zx
 
 const query = argv.query;
+if (!query) {
+  console.log(
+    JSON.stringify({
+      title: "Please enter a query",
+    })
+  );
+  process.exit();
+}
+
 const res = await fetch(
   `https://www.google.com/complete/search?client=chrome&q=${encodeURIComponent(
     query

@@ -6,23 +6,24 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type DetailContainer struct {
-	width, height int
+type Detail struct {
 	title         string
-	viewport      viewport.Model
+	width, height int
+
+	viewport viewport.Model
 }
 
-func NewDetailContainer(title string, content string) *DetailContainer {
+func NewDetail(title string, content string) *Detail {
 	viewport := viewport.New(0, 0)
 	viewport.SetContent(content)
-	return &DetailContainer{viewport: viewport, title: title}
+	return &Detail{title: title, viewport: viewport}
 }
 
-func (c *DetailContainer) Init() tea.Cmd {
-	return nil
+func (c *Detail) Init() tea.Cmd {
+	return c.viewport.Init()
 }
 
-func (c *DetailContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -40,20 +41,20 @@ func (c *DetailContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return c, cmd
 }
 
-func (c *DetailContainer) headerView() string {
+func (c *Detail) headerView() string {
 	return SunbeamHeader(c.width)
 }
 
-func (c *DetailContainer) footerView() string {
+func (c *Detail) footerView() string {
 	return SunbeamFooter(c.width, c.title)
 }
 
-func (c *DetailContainer) SetSize(width, height int) {
+func (c *Detail) SetSize(width, height int) {
 	c.width = width
 	c.height = height
 	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
 }
 
-func (c *DetailContainer) View() string {
+func (c *Detail) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.viewport.View(), c.footerView())
 }

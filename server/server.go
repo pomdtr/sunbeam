@@ -36,7 +36,7 @@ func serveCommand(cmd api.Command) http.HandlerFunc {
 			return
 		}
 
-		scriptResponse, err := cmd.Run(input)
+		// scriptResponse, err := cmd.Run(input)
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			_, _ = res.Write([]byte(err.Error()))
@@ -44,6 +44,6 @@ func serveCommand(cmd api.Command) http.HandlerFunc {
 		}
 
 		res.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(res).Encode(scriptResponse)
+		// _ = json.NewEncoder(res).Encode(scriptResponse)
 	}
 }

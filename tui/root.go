@@ -12,10 +12,10 @@ import (
 )
 
 type Container interface {
-	SetSize(width, height int)
 	Init() tea.Cmd
 	Update(tea.Msg) (Container, tea.Cmd)
 	View() string
+	SetSize(width, height int)
 }
 
 type RootModel struct {
@@ -68,17 +68,6 @@ func (m *RootModel) View() string {
 	return m.pages[len(m.pages)-1].View()
 }
 
-func (m *RootModel) Push(page Container) {
-	page.SetSize(m.width, m.height)
-	m.pages = append(m.pages, page)
-}
-
-func (m *RootModel) Pop() {
-	if len(m.pages) > 0 {
-		m.pages = m.pages[:len(m.pages)-1]
-	}
-}
-
 func (m *RootModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
@@ -97,20 +86,37 @@ func NewPushCmd(page Container) tea.Cmd {
 	}
 }
 
-type ReplaceMsg struct {
-	Page Container
-}
-
-func NewReplaceCmd(page Container) tea.Cmd {
-	return func() tea.Msg {
-		return ReplaceMsg{Page: page}
-	}
-}
-
 type popMsg struct{}
 
 func PopCmd() tea.Msg {
 	return popMsg{}
+}
+
+func (m *RootModel) Push(page Container) {
+	page.SetSize(m.width, m.height)
+	m.pages = append(m.pages, page)
+}
+
+func (m *RootModel) Pop() {
+	if len(m.pages) > 0 {
+		m.pages = m.pages[:len(m.pages)-1]
+	}
+}
+
+type RootContainer struct {
+	*List
+}
+
+func NewRootContainer(items []api.ListItem) *RootContainer {
+	return &RootContainer{
+		List: NewList("Command", items),
+	}
+}
+
+func (c *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+	var cmd tea.Cmd
+	c.List, cmd = c.List.Update(msg)
+	return c, cmd
 }
 
 func Start() error {
@@ -140,7 +146,7 @@ func Start() error {
 		})
 	}
 
-	rootContainer := NewListContainer("Commands", rootItems, "")
+	rootContainer := NewRootContainer(rootItems)
 	return Draw(rootContainer)
 }
 
@@ -150,7 +156,7 @@ func Run(target string, params map[string]string) error {
 		return fmt.Errorf("command not found: %s", target)
 	}
 
-	container := NewRunnerContainer(command, api.NewCommandInput(params))
+	container := NewCommandContainer(command, params)
 	return Draw(container)
 }
 

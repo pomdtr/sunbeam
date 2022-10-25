@@ -8,6 +8,7 @@ type ListItem struct {
 	Icon     string         `json:"icon"`
 	Title    string         `json:"title"`
 	Subtitle string         `json:"subtitle"`
+	Detail   DetailCommand  `json:"detail"`
 	Fill     string         `json:"fill"`
 	Actions  []ScriptAction `json:"actions"`
 }

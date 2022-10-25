@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
+	"strings"
 	"text/template"
 
 	"github.com/alessio/shellescape"
@@ -47,6 +48,8 @@ type ListCommand struct {
 }
 
 type DetailCommand struct {
+	Format  string `json:"format"`
+	Text    string `json:"text"`
 	Command string `json:"command"`
 }
 
@@ -60,8 +63,9 @@ type CommandParam struct {
 }
 
 type CommandInput struct {
-	Params map[string]string `json:"params"`
-	Query  string            `json:"query"`
+	Cwd    string
+	Params map[string]string
+	Query  string
 }
 
 func NewCommandInput(params map[string]string) CommandInput {
@@ -84,15 +88,30 @@ func (c Command) CheckMissingParams(inputParams map[string]string) []CommandPara
 	return missing
 }
 
-func (c Command) Run(input CommandInput) (string, error) {
-	switch c.Url.Scheme {
-	case "file":
-		return c.LocalRun(input)
-	case "http", "https":
-		return c.RemoteRun(input)
-	default:
-		return "", fmt.Errorf("unknown command scheme: %s", c.Root.Scheme)
+func (d DetailCommand) Run(input CommandInput) (string, error) {
+	return Run(d.Command, input)
+}
+
+func (l ListCommand) Run(input CommandInput) ([]ListItem, error) {
+	output, err := Run(l.Command, input)
+	if err != nil {
+		return nil, err
 	}
+	rows := strings.Split(output, "\n")
+	items := make([]ListItem, 0)
+	for _, row := range rows {
+		if row == "" {
+			continue
+		}
+		var item ListItem
+		err := json.Unmarshal([]byte(row), &item)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
 }
 
 func (c Command) Target() string {
@@ -112,14 +131,14 @@ func renderCommand(command string, data map[string]any) (string, error) {
 	return out.String(), nil
 }
 
-func (c Command) LocalRun(input CommandInput) (string, error) {
+func Run(command string, input CommandInput) (string, error) {
 	var err error
 	params := make(map[string]any)
 	for key, value := range input.Params {
 		params[key] = shellescape.Quote(value)
 	}
 
-	rendered, err := renderCommand(c.Command(), map[string]any{
+	rendered, err := renderCommand(command, map[string]any{
 		"params": params,
 		"query":  shellescape.Quote(input.Query),
 	})
@@ -129,8 +148,7 @@ func (c Command) LocalRun(input CommandInput) (string, error) {
 
 	log.Printf("Executing command: %s", rendered)
 	cmd := exec.Command("sh", "-c", rendered)
-
-	cmd.Dir = c.Root.Path
+	cmd.Dir = input.Cwd
 
 	var outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf

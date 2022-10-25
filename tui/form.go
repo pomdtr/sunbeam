@@ -14,7 +14,7 @@ type FormField struct {
 	textinput.Model
 }
 
-type FormContainer struct {
+type Form struct {
 	title      string
 	inputs     []FormField
 	focusIndex int
@@ -32,8 +32,8 @@ func NewSubmitCmd(values map[string]string) tea.Cmd {
 	}
 }
 
-func NewFormContainer(title string, params []api.CommandParam) *FormContainer {
-	c := &FormContainer{
+func NewFormContainer(title string, params []api.CommandParam) *Form {
+	c := &Form{
 		title:  title,
 		inputs: make([]FormField, len(params)),
 	}
@@ -55,18 +55,18 @@ func NewFormContainer(title string, params []api.CommandParam) *FormContainer {
 	return c
 }
 
-func (c *FormContainer) headerView() string {
+func (c *Form) headerView() string {
 	return SunbeamHeader(c.width)
 }
 
-func (c FormContainer) Init() tea.Cmd {
+func (c Form) Init() tea.Cmd {
 	if len(c.inputs) == 0 {
 		return nil
 	}
 	return c.inputs[0].Focus()
 }
 
-func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -116,7 +116,7 @@ func (c *FormContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return c, cmd
 }
 
-func (c FormContainer) updateInputs(msg tea.Msg) tea.Cmd {
+func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(c.inputs))
 
 	// Only text inputs with Focus() set will respond, so it's safe to simply
@@ -128,16 +128,16 @@ func (c FormContainer) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (c *FormContainer) SetSize(width, height int) {
+func (c *Form) SetSize(width, height int) {
 	c.width = width
 	c.height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
 }
 
-func (c FormContainer) footerView() string {
+func (c Form) footerView() string {
 	return SunbeamFooterWithActions(c.width, c.title, "Submit")
 }
 
-func (c *FormContainer) View() string {
+func (c *Form) View() string {
 	var formItems []string
 	var itemView string
 	for i := range c.inputs {

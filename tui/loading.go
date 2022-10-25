@@ -10,39 +10,38 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-type LoadingContainer struct {
+type Loading struct {
 	width, height int
 	spinner       spinner.Model
-	title         string
 }
 
-func NewLoadingContainer(title string) *LoadingContainer {
+func NewLoading() *Loading {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
-	return &LoadingContainer{title: title, spinner: s}
+	return &Loading{spinner: s}
 }
 
-func (c *LoadingContainer) headerView() string {
+func (c *Loading) headerView() string {
 	line := strings.Repeat("─", c.width)
 	return fmt.Sprintf("\n%s", line)
 }
 
-func (c *LoadingContainer) SetSize(width, height int) {
+func (c *Loading) SetSize(width, height int) {
 	c.width = width
 	c.height = height
 }
 
-func (c *LoadingContainer) footerView() string {
-	return SunbeamFooter(c.width, c.title)
+func (c *Loading) footerView() string {
+	return SunbeamFooter(c.width, "")
 }
 
-func (c *LoadingContainer) Init() tea.Cmd {
+func (c *Loading) Init() tea.Cmd {
 	return c.spinner.Tick
 }
 
-func (c *LoadingContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *Loading) Update(msg tea.Msg) (*Loading, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -58,7 +57,7 @@ func (c *LoadingContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return c, nil
 }
 
-func (container *LoadingContainer) View() string {
+func (container *Loading) View() string {
 	var loadingIndicator string
 	spinner := lipgloss.NewStyle().Padding(0, 2).Render(container.spinner.View())
 	label := lipgloss.NewStyle().Render("Loading...")
