@@ -39,7 +39,8 @@ type CommandData struct {
 
 type ListData struct {
 	CommandData
-	Callback bool `json:"callback"`
+	ShowDetail bool `json:"showDetail"`
+	Callback   bool `json:"callback"`
 }
 
 type DetailData struct {

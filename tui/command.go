@@ -82,6 +82,9 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		if c.list == nil {
 			c.currentView = "list"
 			c.list = NewList(c.command.Title, msg)
+			if c.command.List.ShowDetail {
+				c.list.showDetail = true
+			}
 			if c.command.List.Callback {
 				c.list.DisableFiltering()
 			}

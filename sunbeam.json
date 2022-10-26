@@ -105,6 +105,16 @@
             ]
         },
         {
+            "id": "list-images",
+            "mode": "list",
+            "subtitle": "Docker",
+            "title": "List Images",
+            "list": {
+                "showDetail": true,
+                "command": "./examples/list-images.py"
+            }
+        },
+        {
             "id": "form",
             "title": "Form",
             "subtitle": "Examples",

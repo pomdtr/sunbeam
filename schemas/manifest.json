@@ -30,6 +30,9 @@
                             "command"
                         ],
                         "properties": {
+                            "showDetail": {
+                                "type": "boolean"
+                            },
                             "callback": {
                                 "type": "boolean"
                             },

@@ -31,5 +31,5 @@ func (a ScriptAction) Title() string {
 		return a.RawTitle
 	}
 
-	return strings.ToTitle(a.Type)
+	return strings.Title(a.Type)
 }
