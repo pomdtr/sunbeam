@@ -10,6 +10,9 @@
 			"VARIANT": "bullseye"
 		}
 	},
+	"remoteEnv": {
+		"SUNBEAM_LOG_FILE": "${containerWorkspaceFolder}/sunbeam.log"
+	},
 	"customizations": {
 		"vscode": {
 			"settings": {

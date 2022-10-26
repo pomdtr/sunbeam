@@ -15,6 +15,19 @@
                     "SUNBEAM_LOG_FILE": "${workspaceFolder}/debug.log"
                 }
             }
+        },
+        {
+            "label": "Add Dependency to Devbox",
+            "command": "devbox --config /devbox/devbox.json add ${input:package} && cp /devbox/devbox.json .devcontainer/devbox.json",
+            "type": "shell",
+            "group": "build"
+        },
+    ],
+    "inputs": [
+        {
+            "id": "package",
+            "type": "promptString",
+            "description": "Package name",
         }
     ]
 }
