@@ -1,0 +1,8 @@
+{
+    "packages": [
+        "python310",
+        "go_1_19",
+        "gh",
+        "nodePackages.zx"
+    ]
+}
