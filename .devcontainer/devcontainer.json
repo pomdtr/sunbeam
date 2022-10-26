@@ -11,7 +11,8 @@
 		}
 	},
 	"remoteEnv": {
-		"SUNBEAM_LOG_FILE": "${containerWorkspaceFolder}/sunbeam.log"
+		"SUNBEAM_LOG_FILE": "${containerWorkspaceFolder}/sunbeam.log",
+		"PATH": "${containerEnv:HOME}/go/bin:${PATH}"
 	},
 	"customizations": {
 		"vscode": {
