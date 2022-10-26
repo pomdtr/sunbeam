@@ -273,7 +273,7 @@ func (c *List) listView(availableWidth int) string {
 
 func (c *List) View() string {
 	var embed string
-	if c.showDetail {
+	if c.showDetail && len(c.filteredItems) > 0 {
 		availableWidth := c.width - c.viewport.Width - 3
 		separator := make([]string, c.height+1)
 		for i := 0; i <= c.height; i++ {

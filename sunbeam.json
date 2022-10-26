@@ -115,6 +115,16 @@
             }
         },
         {
+            "id": "tldr-list",
+            "mode": "list",
+            "subtitle": "TLDR",
+            "title": "List Commands",
+            "list": {
+                "showDetail": true,
+                "command": "zx ./examples/tldr.mjs"
+            }
+        },
+        {
             "id": "form",
             "title": "Form",
             "subtitle": "Examples",
