@@ -2,18 +2,17 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"strings"
 )
 
-type CommandMap map[string]Command
+type CommandMap map[string]SunbeamCommand
 
 var (
 	ExtensionMap = make(map[string]CommandMap)
-	Commands     = make([]Command, 0)
+	Commands     = make([]SunbeamCommand, 0)
 )
 
 func init() {
@@ -25,13 +24,15 @@ func init() {
 			continue
 		}
 
-		commandMap := make(map[string]Command)
+		commandMap := make(map[string]SunbeamCommand)
 		for _, command := range commands {
 			command.Root = url.URL{
 				Scheme: "file",
 				Path:   rootPath,
 			}
 			command.ExtensionId = manifest.Id
+			command.List.Workdir = rootPath
+			command.Detail.Workdir = rootPath
 			command.Url = url.URL{
 				Scheme: "file",
 				Path:   path.Join(rootPath, command.Id),
@@ -44,20 +45,20 @@ func init() {
 	}
 }
 
-func GetCommand(target string) (Command, bool) {
+func GetCommand(target string) (SunbeamCommand, bool) {
 	tokens := strings.Split(target, "/")
 	if len(tokens) < 2 {
-		return Command{}, false
+		return SunbeamCommand{}, false
 	}
 
 	extension, ok := ExtensionMap[tokens[0]]
 	if !ok {
-		return Command{}, false
+		return SunbeamCommand{}, false
 	}
 
 	command, ok := extension[tokens[1]]
 	if !ok {
-		return Command{}, false
+		return SunbeamCommand{}, false
 	}
 
 	return command, true
@@ -84,7 +85,7 @@ func listManifests() []Manifest {
 	commandDirs = append(commandDirs, scriptDir)
 
 	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
-	extensionDirs, _ := ioutil.ReadDir(extensionRoot)
+	extensionDirs, _ := os.ReadDir(extensionRoot)
 	for _, extensionDir := range extensionDirs {
 		extensionPath := path.Join(extensionRoot, extensionDir.Name())
 		commandDirs = append(commandDirs, extensionPath)
@@ -114,8 +115,8 @@ func listManifests() []Manifest {
 }
 
 type Manifest struct {
-	Title    string    `json:"title"`
-	Id       string    `json:"id"`
-	Commands []Command `json:"commands"`
+	Title    string           `json:"title"`
+	Id       string           `json:"id"`
+	Commands []SunbeamCommand `json:"commands"`
 	Url      url.URL
 }

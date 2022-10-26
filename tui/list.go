@@ -269,13 +269,8 @@ func (l *List) RunAction(action api.ScriptAction) tea.Cmd {
 		input.Query = l.textInput.Value()
 		return NewReloadCmd(input)
 	case "exec":
-		var cmd *exec.Cmd
 		log.Printf("executing command: %s", action.Command)
-		if len(action.Command) == 1 {
-			cmd = exec.Command(action.Command[0])
-		} else {
-			cmd = exec.Command(action.Command[0], action.Command[1:]...)
-		}
+		cmd := exec.Command("sh", "-c", action.Command)
 		_, err := cmd.Output()
 		var exitError *exec.ExitError
 		if errors.As(err, &exitError) {

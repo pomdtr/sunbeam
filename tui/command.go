@@ -18,11 +18,11 @@ type CommandContainer struct {
 	detail  *Detail
 	err     *Detail
 
-	command api.Command
+	command api.SunbeamCommand
 	params  map[string]string
 }
 
-func NewCommandContainer(command api.Command, params map[string]string) *CommandContainer {
+func NewCommandContainer(command api.SunbeamCommand, params map[string]string) *CommandContainer {
 	return &CommandContainer{
 		command: command,
 		params:  params,
