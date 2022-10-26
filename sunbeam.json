@@ -110,6 +110,7 @@
             "subtitle": "Examples",
             "mode": "detail",
             "detail": {
+                "format": "markdown",
                 "command": "./examples/form.sh {{ .params.name }} {{ .params.address }}"
             },
             "params": [

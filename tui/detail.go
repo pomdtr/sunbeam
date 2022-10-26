@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"log"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -41,6 +43,18 @@ func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 	return c, cmd
 }
 
+func (c *Detail) SetSize(width, height int) {
+	c.height = height
+	c.width = width
+	c.viewport.Width = width
+	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
+}
+
+func (c *Detail) View() string {
+	log.Println(c.viewport.View())
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.viewport.View(), c.footerView())
+}
+
 func (c *Detail) SetContent(content string) {
 	c.viewport.SetContent(content)
 }
@@ -51,14 +65,4 @@ func (c *Detail) headerView() string {
 
 func (c *Detail) footerView() string {
 	return SunbeamFooter(c.width, c.title)
-}
-
-func (c *Detail) SetSize(width, height int) {
-	c.width = width
-	c.height = height
-	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
-}
-
-func (c *Detail) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.viewport.View(), c.footerView())
 }

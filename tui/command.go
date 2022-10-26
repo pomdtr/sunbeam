@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/pomdtr/sunbeam/api"
 )
 
@@ -91,7 +92,21 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case DetailOutput:
 		if c.detail == nil {
 			c.currentView = "detail"
-			c.detail = NewDetail(c.command.Title, string(msg))
+			var content string
+			switch c.command.Detail.Format {
+			case "markdown":
+				renderer, err := glamour.NewTermRenderer(glamour.WithAutoStyle(), glamour.WithEmoji())
+				if err != nil {
+					return c, NewErrorCmd("failed to init markdown renderer: %s", err)
+				}
+				content, err = renderer.Render(string(msg))
+				if err != nil {
+					return c, NewErrorCmd("failed to render markdown: %s", err)
+				}
+			default:
+				content = string(msg)
+			}
+			c.detail = NewDetail(c.command.Title, content)
 			c.detail.SetSize(c.width, c.height)
 			return c, c.detail.Init()
 		}

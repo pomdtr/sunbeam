@@ -43,9 +43,16 @@
                         "required": [
                             "command"
                         ],
+                        "additionalProperties": false,
                         "properties": {
                             "command": {
                                 "type": "string"
+                            },
+                            "format": {
+                                "type": "string",
+                                "enum": [
+                                    "markdown"
+                                ]
                             }
                         }
                     },
