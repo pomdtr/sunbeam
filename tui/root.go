@@ -151,9 +151,14 @@ func Start() error {
 }
 
 func Run(target string, params map[string]string) error {
-	command, ok := api.GetCommand(target)
+	command, ok := api.GetSunbeamCommand(target)
 	if !ok {
 		return fmt.Errorf("command not found: %s", target)
+	}
+
+	if command.Mode == "action" {
+		RunAction(command.Action)
+		return nil
 	}
 
 	container := NewCommandContainer(command, params)

@@ -68,6 +68,21 @@ func (c *CommandContainer) Run(input api.CommandInput) tea.Cmd {
 
 func (c *CommandContainer) SetSize(width, height int) {
 	c.width, c.height = width, height
+	if c.loading != nil {
+		c.loading.SetSize(width, height)
+	}
+	if c.form != nil {
+		c.form.SetSize(width, height)
+	}
+	if c.list != nil {
+		c.list.SetSize(width, height)
+	}
+	if c.detail != nil {
+		c.detail.SetSize(width, height)
+	}
+	if c.err != nil {
+		c.err.SetSize(width, height)
+	}
 }
 
 func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
@@ -109,7 +124,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			default:
 				content = string(msg)
 			}
-			c.detail = NewDetail(c.command.Title, content)
+			c.detail = NewDetail(c.command.Title, content, c.command.Detail.Actions)
 			c.detail.SetSize(c.width, c.height)
 			return c, c.detail.Init()
 		}
@@ -124,9 +139,12 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			}
 			return c, c.Run(input)
 		}
+	case tea.WindowSizeMsg:
+		c.SetSize(msg.Width, msg.Height)
+		return c, nil
 	case error:
 		c.currentView = "error"
-		c.err = NewDetail("Error", msg.Error())
+		c.err = NewDetail("Error", msg.Error(), nil)
 		c.err.SetSize(c.width, c.height)
 		return c, c.err.Init()
 	}

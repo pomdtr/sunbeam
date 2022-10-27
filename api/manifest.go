@@ -45,7 +45,7 @@ func init() {
 	}
 }
 
-func GetCommand(target string) (SunbeamCommand, bool) {
+func GetSunbeamCommand(target string) (SunbeamCommand, bool) {
 	tokens := strings.Split(target, "/")
 	if len(tokens) < 2 {
 		return SunbeamCommand{}, false

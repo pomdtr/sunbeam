@@ -45,8 +45,9 @@ type ListData struct {
 
 type DetailData struct {
 	CommandData
-	Format string `json:"format"`
-	Text   string `json:"text"`
+	Format  string         `json:"format"`
+	Text    string         `json:"text"`
+	Actions []ScriptAction `json:"actions"`
 }
 
 type SunbeamParam struct {

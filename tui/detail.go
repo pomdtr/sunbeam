@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/api"
 )
 
 type Detail struct {
@@ -13,12 +14,13 @@ type Detail struct {
 	width, height int
 
 	viewport viewport.Model
+	actions  []api.ScriptAction
 }
 
-func NewDetail(title string, content string) *Detail {
+func NewDetail(title string, content string, actions []api.ScriptAction) *Detail {
 	viewport := viewport.New(0, 0)
 	viewport.SetContent(content)
-	return &Detail{title: title, viewport: viewport}
+	return &Detail{title: title, viewport: viewport, actions: actions}
 }
 
 func (c *Detail) Init() tea.Cmd {
@@ -36,7 +38,15 @@ func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 			}
 		case tea.KeyEscape:
 			return c, PopCmd
+		default:
+			for _, action := range c.actions {
+				if action.Keybind == msg.String() {
+					return c, RunAction(action)
+				}
+			}
+
 		}
+
 	}
 	var cmd tea.Cmd
 	c.viewport, cmd = c.viewport.Update(msg)

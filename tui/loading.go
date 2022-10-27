@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -57,13 +58,14 @@ func (c *Loading) Update(msg tea.Msg) (*Loading, tea.Cmd) {
 	return c, nil
 }
 
-func (container *Loading) View() string {
+func (c *Loading) View() string {
+	log.Println(c.width, c.height)
 	var loadingIndicator string
-	spinner := lipgloss.NewStyle().Padding(0, 2).Render(container.spinner.View())
+	spinner := lipgloss.NewStyle().Padding(0, 2).Render(c.spinner.View())
 	label := lipgloss.NewStyle().Render("Loading...")
 	loadingIndicator = lipgloss.JoinHorizontal(lipgloss.Center, spinner, label)
 
-	newLines := strings.Repeat("\n", utils.Max(0, container.height-lipgloss.Height(loadingIndicator)-lipgloss.Height(container.footerView())-lipgloss.Height(container.headerView())-1))
+	newLines := strings.Repeat("\n", utils.Max(0, c.height-lipgloss.Height(loadingIndicator)-lipgloss.Height(c.footerView())-lipgloss.Height(c.headerView())-1))
 
-	return lipgloss.JoinVertical(lipgloss.Left, container.headerView(), loadingIndicator, newLines, container.footerView())
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), loadingIndicator, newLines, c.footerView())
 }

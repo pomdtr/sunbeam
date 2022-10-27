@@ -71,7 +71,7 @@ func filterItems(term string, items []api.ListItem) []api.ListItem {
 	}
 	targets := make([]string, len(items))
 	for i, item := range items {
-		targets[i] = item.Title
+		targets[i] = strings.Join([]string{item.Title, item.Subtitle}, " ")
 	}
 	var ranks = fuzzy.Find(term, targets)
 	sort.Stable(ranks)
@@ -145,7 +145,7 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 			if selectedItem == nil || len(selectedItem.Actions) == 0 {
 				break
 			}
-			return c, c.RunAction(selectedItem.Actions[0])
+			return c, RunAction(selectedItem.Actions[0])
 		case tea.KeyDown, tea.KeyTab, tea.KeyCtrlJ:
 			if c.selectedIndex < len(c.filteredItems)-1 {
 				cmd := c.updateIndexes(c.selectedIndex + 1)
@@ -170,7 +170,7 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 			}
 			for _, action := range selectedItem.Actions {
 				if action.Keybind == msg.String() {
-					return c, c.RunAction(action)
+					return c, RunAction(action)
 				}
 			}
 		}
@@ -320,10 +320,10 @@ func NewReloadCmd(input api.CommandInput) func() tea.Msg {
 	}
 }
 
-func (l *List) RunAction(action api.ScriptAction) tea.Cmd {
+func RunAction(action api.ScriptAction) tea.Cmd {
 	switch action.Type {
 	case "push":
-		command, ok := api.GetCommand(action.Target)
+		command, ok := api.GetSunbeamCommand(action.Target)
 		if !ok {
 			return NewErrorCmd("unknown command %s", action.Target)
 		}
@@ -331,7 +331,6 @@ func (l *List) RunAction(action api.ScriptAction) tea.Cmd {
 		return NewPushCmd(NewCommandContainer(command, action.Params))
 	case "reload":
 		input := api.NewCommandInput(action.Params)
-		input.Query = l.textInput.Value()
 		return NewReloadCmd(input)
 	case "exec":
 		log.Printf("executing command: %s", action.Command)
