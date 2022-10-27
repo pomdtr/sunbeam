@@ -1,29 +1,53 @@
 package tui
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
-func SunbeamFooter(width int, titleLabel string) string {
-	separator := strings.Repeat("─", width)
-	title := lipgloss.NewStyle().PaddingRight(1).Render(titleLabel)
-	footer := strings.Repeat(" ", utils.Max(0, width-lipgloss.Width(title)))
-	footer = lipgloss.JoinHorizontal(lipgloss.Center, title, footer)
-	return lipgloss.JoinVertical(lipgloss.Left, separator, footer)
+type Footer struct {
+	help.Model
+	KeyMap KeyMap
 }
 
-func SunbeamFooterWithActions(width int, titleLabel string, activateLabel string) string {
-	title := lipgloss.NewStyle().PaddingRight(1).Render(titleLabel)
-	activateButton := lipgloss.NewStyle().PaddingLeft(1).Render(fmt.Sprintf("%s ↩", activateLabel))
-	separator := lipgloss.NewStyle().Padding(0, 1).Render("|")
-	actionsButton := "Help ^H"
-	line := strings.Repeat(" ", utils.Max(0, width-lipgloss.Width(title)-lipgloss.Width(activateButton)-lipgloss.Width(separator)-lipgloss.Width(actionsButton)))
-	footer := lipgloss.JoinHorizontal(lipgloss.Center, title, line, activateButton, separator, actionsButton)
-	horizontal := strings.Repeat("─", width)
+func NewFooter(actions ...Action) *Footer {
+	keymap := KeyMap{actions: actions}
+	return &Footer{
+		Model:  help.New(),
+		KeyMap: keymap,
+	}
+}
 
-	return lipgloss.JoinVertical(lipgloss.Left, horizontal, footer)
+type KeyMap struct {
+	actions []Action
+}
+
+func (k KeyMap) ShortHelp() []key.Binding {
+	bindings := make([]key.Binding, len(k.actions))
+	for i, action := range k.actions {
+		if i == 0 {
+			bindings[i] = key.NewBinding(key.WithKeys("↩"), key.WithHelp("↩", action.Title()))
+			continue
+		}
+		bindings[i] = key.NewBinding(key.WithKeys(action.Keybind()), key.WithHelp(action.Keybind(), action.Title()))
+	}
+	return bindings
+}
+
+func (k KeyMap) FullHelp() [][]key.Binding {
+	return nil
+}
+
+func (f *Footer) SetActions(actions []Action) {
+	log.Println("set actions", actions)
+	f.KeyMap = KeyMap{actions: actions}
+}
+
+func (f Footer) View() string {
+	horizontal := strings.Repeat("─", f.Width)
+	return lipgloss.JoinVertical(lipgloss.Left, horizontal, f.Model.View(f.KeyMap))
 }

@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -14,6 +13,7 @@ import (
 type Loading struct {
 	width, height int
 	spinner       spinner.Model
+	footer        *Footer
 }
 
 func NewLoading() *Loading {
@@ -21,7 +21,9 @@ func NewLoading() *Loading {
 	s.Spinner = spinner.Line
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
-	return &Loading{spinner: s}
+	footer := NewFooter()
+
+	return &Loading{spinner: s, footer: footer}
 }
 
 func (c *Loading) headerView() string {
@@ -32,10 +34,6 @@ func (c *Loading) headerView() string {
 func (c *Loading) SetSize(width, height int) {
 	c.width = width
 	c.height = height
-}
-
-func (c *Loading) footerView() string {
-	return SunbeamFooter(c.width, "")
 }
 
 func (c *Loading) Init() tea.Cmd {
@@ -59,13 +57,12 @@ func (c *Loading) Update(msg tea.Msg) (*Loading, tea.Cmd) {
 }
 
 func (c *Loading) View() string {
-	log.Println(c.width, c.height)
 	var loadingIndicator string
 	spinner := lipgloss.NewStyle().Padding(0, 2).Render(c.spinner.View())
 	label := lipgloss.NewStyle().Render("Loading...")
 	loadingIndicator = lipgloss.JoinHorizontal(lipgloss.Center, spinner, label)
 
-	newLines := strings.Repeat("\n", utils.Max(0, c.height-lipgloss.Height(loadingIndicator)-lipgloss.Height(c.footerView())-lipgloss.Height(c.headerView())-1))
+	newLines := strings.Repeat("\n", utils.Max(0, c.height-lipgloss.Height(loadingIndicator)-lipgloss.Height(c.footer.View())-lipgloss.Height(c.headerView())-1))
 
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), loadingIndicator, newLines, c.footerView())
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), loadingIndicator, newLines, c.footer.View())
 }

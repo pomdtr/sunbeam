@@ -3,20 +3,11 @@
     "$schema": "./schemas/manifest.json",
     "commands": [
         {
-            "id": "switch-alacritty-theme",
-            "title": "Switch Theme",
-            "subtitle": "Alacritty",
-            "mode": "list",
-            "list": {
-                "command": "./examples/alacritty.mjs"
-            }
-        },
-        {
             "id": "google",
             "title": "Google",
             "mode": "list",
             "list": {
-                "callback": true,
+                "dynamic": true,
                 "command": "./examples/google.mjs --query {{ .query }}"
             }
         },
@@ -49,8 +40,7 @@
                 {
                     "id": "root",
                     "type": "textfield",
-                    "title": "Start Directory",
-                    "placeholder": "/home/pomdtr"
+                    "title": "Start Directory"
                 }
             ],
             "hidden": true
@@ -131,6 +121,15 @@
             "subtitle": "Bitwarden",
             "list": {
                 "command": "./examples/bitwarden.mjs"
+            }
+        },
+        {
+            "id": "list-namespaces",
+            "mode": "list",
+            "title": "List Namespaces",
+            "subtitle": "Kubernetes",
+            "list": {
+                "command": "./examples/kubens.mjs"
             }
         },
         {

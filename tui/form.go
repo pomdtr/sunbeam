@@ -16,6 +16,7 @@ type FormField struct {
 
 type Form struct {
 	title      string
+	footer     *Footer
 	inputs     []FormField
 	focusIndex int
 	width      int
@@ -33,7 +34,9 @@ func NewSubmitCmd(values map[string]string) tea.Cmd {
 }
 
 func NewFormContainer(title string, params []api.SunbeamParam) *Form {
+	footer := NewFooter()
 	c := &Form{
+		footer: footer,
 		title:  title,
 		inputs: make([]FormField, len(params)),
 	}
@@ -130,11 +133,7 @@ func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 
 func (c *Form) SetSize(width, height int) {
 	c.width = width
-	c.height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView())
-}
-
-func (c Form) footerView() string {
-	return SunbeamFooterWithActions(c.width, c.title, "Submit")
+	c.height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
 }
 
 func (c *Form) View() string {
@@ -148,5 +147,5 @@ func (c *Form) View() string {
 	form := lipgloss.JoinVertical(lipgloss.Left, formItems...)
 	form = lipgloss.Place(c.width, c.height, lipgloss.Left, lipgloss.Top, form)
 
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), form, c.footerView())
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), form, c.footer.View())
 }

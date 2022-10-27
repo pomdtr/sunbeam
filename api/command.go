@@ -32,6 +32,19 @@ type SunbeamCommand struct {
 	Root        url.URL
 }
 
+type ScriptAction struct {
+	Type    string            `json:"type"`
+	Title   string            `json:"title"`
+	Path    string            `json:"path"`
+	Keybind string            `json:"keybind"`
+	Params  map[string]string `json:"params"`
+	Target  string            `json:"target,omitempty"`
+	CommandData
+	Application string `json:"application,omitempty"`
+	Url         string `json:"url,omitempty"`
+	Content     string `json:"content,omitempty"`
+}
+
 type CommandData struct {
 	Workdir string `json:"workdir"`
 	Command string `json:"command"`
@@ -40,7 +53,7 @@ type CommandData struct {
 type ListData struct {
 	CommandData
 	ShowDetail bool `json:"showDetail"`
-	Callback   bool `json:"callback"`
+	Dynamic    bool `json:"dynamic"`
 }
 
 type DetailData struct {
@@ -84,18 +97,18 @@ func (c SunbeamCommand) CheckMissingParams(inputParams map[string]string) []Sunb
 	return missing
 }
 
-func (l ListData) Run(input CommandInput) ([]ListItem, error) {
+func (l ListData) Run(input CommandInput) ([]ScriptItem, error) {
 	output, err := l.CommandData.Run(input)
 	if err != nil {
 		return nil, err
 	}
 	rows := strings.Split(output, "\n")
-	items := make([]ListItem, 0)
+	items := make([]ScriptItem, 0)
 	for _, row := range rows {
 		if row == "" {
 			continue
 		}
-		var item ListItem
+		var item ScriptItem
 		err := json.Unmarshal([]byte(row), &item)
 		if err != nil {
 			return nil, err
@@ -167,4 +180,13 @@ func (c SunbeamCommand) RemoteRun(input CommandInput) (string, error) {
 	bytes, _ := io.ReadAll(res.Body)
 
 	return string(bytes), nil
+}
+
+type ScriptItem struct {
+	Icon     string         `json:"icon"`
+	Title    string         `json:"title"`
+	Subtitle string         `json:"subtitle"`
+	Detail   DetailData     `json:"detail"`
+	Fill     string         `json:"fill"`
+	Actions  []ScriptAction `json:"actions"`
 }

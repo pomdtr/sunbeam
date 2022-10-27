@@ -43,6 +43,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
+		for i, page := range m.pages {
+			m.pages[i], _ = page.Update(msg)
+		}
 		return m, nil
 	case PushMsg:
 		m.Push(msg.Page)
@@ -54,10 +57,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// Update the current page
 	var cmd tea.Cmd
 	currentPageIdx := len(m.pages) - 1
 	m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
-
 	return m, cmd
 }
 
@@ -107,9 +110,9 @@ type RootContainer struct {
 	*List
 }
 
-func NewRootContainer(items []api.ListItem) *RootContainer {
+func NewRootContainer(items []ListItem) *RootContainer {
 	return &RootContainer{
-		List: NewList("Command", items),
+		List: NewStaticList(items),
 	}
 }
 
@@ -120,29 +123,23 @@ func (c *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 }
 
 func Start() error {
-	rootItems := make([]api.ListItem, 0)
+	rootItems := make([]ListItem, 0)
 
 	for _, command := range api.Commands {
 		if command.Hidden {
 			continue
 		}
-		var primaryAction api.ScriptAction
+		var primaryAction Action
 		if command.Mode == "action" {
-			primaryAction = command.Action
+			primaryAction = NewAction(command.Action)
 		} else {
-			primaryAction = api.ScriptAction{
-				Type:     "push",
-				RawTitle: "Open Command",
-				Target:   command.Target(),
-			}
+			primaryAction = NewPushAction("Open Command", "enter", command.Target(), make(map[string]string))
 		}
 
-		rootItems = append(rootItems, api.ListItem{
+		rootItems = append(rootItems, ListItem{
 			Title:    command.Title,
 			Subtitle: command.Subtitle,
-			Actions: []api.ScriptAction{
-				primaryAction,
-			},
+			Actions:  []Action{primaryAction},
 		})
 	}
 
@@ -157,7 +154,8 @@ func Run(target string, params map[string]string) error {
 	}
 
 	if command.Mode == "action" {
-		RunAction(command.Action)
+		action := NewAction(command.Action)
+		action.Exec()
 		return nil
 	}
 

@@ -1,15 +1,11 @@
 package tui
 
 import (
-	"errors"
 	"fmt"
-	"log"
-	"os/exec"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,93 +13,97 @@ import (
 	"github.com/pomdtr/sunbeam/api"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
-	"github.com/skratchdot/open-golang/open"
 )
+
+type ListItem struct {
+	Actions  []Action
+	Title    string
+	Subtitle string
+	Detail   api.DetailData
+}
+
+func NewListItem(item api.ScriptItem) ListItem {
+	actions := make([]Action, len(item.Actions))
+	for i, action := range item.Actions {
+		actions[i] = NewAction(action)
+	}
+
+	return ListItem{
+		Title:    item.Title,
+		Subtitle: item.Subtitle,
+		Actions:  actions,
+	}
+}
+
+func (i ListItem) View() string {
+	if i.Subtitle != "" {
+		return fmt.Sprintf("%s - %s", i.Title, i.Subtitle)
+	} else {
+		return i.Title
+	}
+}
 
 type List struct {
 	width, height int
-	textInput     *textinput.Model
 
-	title    string
-	viewport *viewport.Model
+	textInput *textinput.Model
+	footer    *Footer
+	viewport  *viewport.Model
+
+	dynamic    bool
+	showDetail bool
 
 	startIndex, selectedIndex int
-	filteringEnabled          bool
-	showDetail                bool
-	items                     []api.ListItem
-	filteredItems             []api.ListItem
+	items                     []ListItem
+	filteredItems             []ListItem
 }
 
-func NewList(title string, items []api.ListItem) *List {
+func NewDynamicList(items []ListItem) *List {
+	l := NewStaticList(items)
+	l.dynamic = true
+	return l
+}
+
+func NewStaticList(items []ListItem) *List {
 	t := textinput.New()
 	t.Prompt = "> "
 	t.Placeholder = "Search..."
 
 	v := viewport.New(0, 0)
+	f := NewFooter()
 
 	return &List{
-		title:            title,
-		filteringEnabled: true,
-		textInput:        &t,
-		viewport:         &v,
-		items:            items,
-		filteredItems:    items,
+		textInput:     &t,
+		viewport:      &v,
+		footer:        f,
+		items:         items,
+		filteredItems: items,
 	}
-}
-
-func (c *List) DisableFiltering() {
-	c.filteringEnabled = false
-}
-
-// Rank defines a rank for a given item.
-type Rank struct {
-	// The index of the item in the original input.
-	Index int
-	// Indices of the actual word that were matched against the filter term.
-	MatchedIndexes []int
-}
-
-// filterItems uses the sahilm/fuzzy to filter through the list.
-// This is set by default.
-func filterItems(term string, items []api.ListItem) []api.ListItem {
-	if term == "" {
-		return items
-	}
-	targets := make([]string, len(items))
-	for i, item := range items {
-		targets[i] = strings.Join([]string{item.Title, item.Subtitle}, " ")
-	}
-	var ranks = fuzzy.Find(term, targets)
-	sort.Stable(ranks)
-	filteredItems := make([]api.ListItem, len(ranks))
-	for i, r := range ranks {
-		filteredItems[i] = items[r.Index]
-	}
-	return filteredItems
 }
 
 func (c *List) Init() tea.Cmd {
 	return tea.Batch(c.textInput.Focus(), c.updateIndexes(0))
 }
 
-func (c *List) SetItems(items []api.ListItem) {
+func (c *List) SetItems(items []ListItem) {
 	c.items = items
 	c.filteredItems = filterItems(c.textInput.Value(), items)
 	c.updateIndexes(0)
 }
 
 func (c *List) SetSize(width, height int) {
-	availableHeight := height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footerView()) - 1
+	availableHeight := height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View()) - 1
 
 	splitSize := width / 2
 	c.viewport.Width = splitSize
 	c.viewport.Height = availableHeight
 
 	c.width, c.height = width, availableHeight
+	c.footer.Width = width
 	c.updateIndexes(c.selectedIndex)
 }
 
-func (c List) SelectedItem() *api.ListItem {
+func (c List) SelectedItem() *ListItem {
 	if c.selectedIndex >= len(c.filteredItems) {
 		return nil
 	}
@@ -114,19 +114,6 @@ func (c *List) headerView() string {
 	input := c.textInput.View()
 	line := strings.Repeat("─", c.width)
 	return lipgloss.JoinVertical(lipgloss.Left, input, line)
-}
-
-func (c *List) footerView() string {
-	selectedItem := c.SelectedItem()
-	if selectedItem == nil {
-		return SunbeamFooter(c.width, c.title)
-	}
-
-	if len(selectedItem.Actions) > 0 {
-		return SunbeamFooterWithActions(c.width, c.title, selectedItem.Actions[0].Title())
-	} else {
-		return SunbeamFooter(c.width, c.title)
-	}
 }
 
 type DebounceMsg struct {
@@ -145,7 +132,7 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 			if selectedItem == nil || len(selectedItem.Actions) == 0 {
 				break
 			}
-			return c, RunAction(selectedItem.Actions[0])
+			return c, selectedItem.Actions[0].Exec()
 		case tea.KeyDown, tea.KeyTab, tea.KeyCtrlJ:
 			if c.selectedIndex < len(c.filteredItems)-1 {
 				cmd := c.updateIndexes(c.selectedIndex + 1)
@@ -169,8 +156,8 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 				break
 			}
 			for _, action := range selectedItem.Actions {
-				if action.Keybind == msg.String() {
-					return c, RunAction(action)
+				if action.Keybind() == msg.String() {
+					return c, action.Exec()
 				}
 			}
 		}
@@ -187,20 +174,21 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 	t, cmd := c.textInput.Update(msg)
 	cmds = append(cmds, cmd)
 	if t.Value() != c.textInput.Value() {
-		if c.filteringEnabled {
+		if c.dynamic {
+			cmds = append(cmds, tea.Tick(200*time.Millisecond, func(time.Time) tea.Msg {
+				query := t.Value()
+				return DebounceMsg{
+					check: func() bool {
+						return query == c.Query()
+					},
+					cmd: NewQueryUpdateCmd(t.Value()),
+				}
+			}))
+		} else {
 			c.filteredItems = filterItems(t.Value(), c.items)
 			cmd := c.updateIndexes(0)
 			cmds = append(cmds, cmd)
 		}
-		cmds = append(cmds, tea.Tick(200*time.Millisecond, func(time.Time) tea.Msg {
-			query := t.Value()
-			return DebounceMsg{
-				check: func() bool {
-					return query == c.Query()
-				},
-				cmd: NewQueryUpdateCmd(t.Value()),
-			}
-		}))
 	}
 	c.textInput = &t
 
@@ -219,7 +207,13 @@ func (c *List) updateIndexes(selectedIndex int) tea.Cmd {
 	c.selectedIndex = selectedIndex
 	selectedItem := c.SelectedItem()
 
-	if !c.showDetail || selectedItem == nil || selectedItem.Detail.Command == "" {
+	if selectedItem == nil {
+		return nil
+	}
+
+	c.footer.SetActions(selectedItem.Actions)
+
+	if selectedItem.Detail.Command == "" {
 		return nil
 	}
 
@@ -239,41 +233,31 @@ func (c *List) updateIndexes(selectedIndex int) tea.Cmd {
 	})
 }
 
-func itemView(item api.ListItem, selected bool) string {
-	var view string
-
-	if item.Subtitle != "" {
-		view = fmt.Sprintf("%s - %s", item.Title, item.Subtitle)
-	} else {
-		view = item.Title
-	}
-	if selected {
-		return fmt.Sprintf("> %s", view)
-	} else {
-		return fmt.Sprintf("  %s", view)
-	}
-}
-
 func (c *List) listView(availableWidth int) string {
 	rows := make([]string, 0)
 	items := c.filteredItems
 
 	endIndex := utils.Min(c.startIndex+c.height+1, len(items))
 	for i := c.startIndex; i < endIndex; i++ {
-		itemView := itemView(items[i], i == c.selectedIndex)
+		var itemView string
+		if i == c.selectedIndex {
+			itemView = fmt.Sprintf("> %s", items[i].View())
+		} else {
+			itemView = fmt.Sprintf("  %s", items[i].View())
+		}
 		itemView = lipgloss.NewStyle().PaddingRight(availableWidth - lipgloss.Width(itemView)).Render(itemView)
 		rows = append(rows, itemView)
 	}
 
 	for i := len(rows) - 1; i < c.height; i++ {
-		rows = append(rows, "")
+		rows = append(rows, strings.Repeat(" ", availableWidth))
 	}
 	return strings.Join(rows, "\n")
 }
 
 func (c *List) View() string {
 	var embed string
-	if c.showDetail && len(c.filteredItems) > 0 {
+	if c.showDetail {
 		availableWidth := c.width - c.viewport.Width - 3
 		separator := make([]string, c.height+1)
 		for i := 0; i <= c.height; i++ {
@@ -283,13 +267,7 @@ func (c *List) View() string {
 	} else {
 		embed = c.listView(c.width)
 	}
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), embed, c.footerView())
-}
-
-func NewErrorCmd(format string, values ...any) func() tea.Msg {
-	return func() tea.Msg {
-		return fmt.Errorf(format, values...)
-	}
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), embed, c.footer.View())
 }
 
 func (c *List) Query() string {
@@ -320,50 +298,35 @@ func NewReloadCmd(input api.CommandInput) func() tea.Msg {
 	}
 }
 
-func RunAction(action api.ScriptAction) tea.Cmd {
-	switch action.Type {
-	case "push":
-		command, ok := api.GetSunbeamCommand(action.Target)
-		if !ok {
-			return NewErrorCmd("unknown command %s", action.Target)
-		}
+// Rank defines a rank for a given item.
+type Rank struct {
+	// The index of the item in the original input.
+	Index int
+	// Indices of the actual word that were matched against the filter term.
+	MatchedIndexes []int
+}
 
-		return NewPushCmd(NewCommandContainer(command, action.Params))
-	case "reload":
-		input := api.NewCommandInput(action.Params)
-		return NewReloadCmd(input)
-	case "exec":
-		log.Printf("executing command: %s", action.Command)
-		cmd := exec.Command("sh", "-c", action.Command)
-		_, err := cmd.Output()
-		var exitError *exec.ExitError
-		if errors.As(err, &exitError) {
-			return NewErrorCmd("Unable to run cmd: %s", exitError.Stderr)
-		}
-		return tea.Quit
-	case "open":
-		var err error
-		target := action.Path
-		if target == "" {
-			target = action.Url
-		}
-		if action.Application != "" {
-			err = open.RunWith(target, action.Application)
-		} else {
-			err = open.Run(target)
-		}
-		if err != nil {
-			return NewErrorCmd("failed to open: %s", target)
-		}
-		return tea.Quit
-	case "copy":
-		err := clipboard.WriteAll(action.Content)
-		if err != nil {
-			return NewErrorCmd("failed to copy %s to clipboard", err)
-		}
-		return tea.Quit
-	default:
-		log.Printf("Unknown action type: %s", action.Type)
-		return tea.Quit
+// filterItems uses the sahilm/fuzzy to filter through the list.
+// This is set by default.
+func filterItems(term string, items []ListItem) []ListItem {
+	if term == "" {
+		return items
+	}
+	targets := make([]string, len(items))
+	for i, item := range items {
+		targets[i] = strings.Join([]string{item.Title, item.Subtitle}, " ")
+	}
+	var ranks = fuzzy.Find(term, targets)
+	sort.Stable(ranks)
+	filteredItems := make([]ListItem, len(ranks))
+	for i, r := range ranks {
+		filteredItems[i] = items[r.Index]
+	}
+	return filteredItems
+}
+
+func NewErrorCmd(format string, values ...any) func() tea.Msg {
+	return func() tea.Msg {
+		return fmt.Errorf(format, values...)
 	}
 }

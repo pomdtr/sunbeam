@@ -42,18 +42,23 @@ func (c *CommandContainer) Init() tea.Cmd {
 	return NewSubmitCmd(c.params)
 }
 
-type ListOutput []api.ListItem
+type ListOutput []ListItem
 type DetailOutput string
 
 func (c *CommandContainer) Run(input api.CommandInput) tea.Cmd {
 	return func() tea.Msg {
 		switch c.command.Mode {
 		case "list":
-			items, err := c.command.List.Run(input)
+			scriptItems, err := c.command.List.Run(input)
 			if err != nil {
 				return err
 			}
-			return ListOutput(items)
+			listItems := make([]ListItem, len(scriptItems))
+			for i, scriptItem := range scriptItems {
+				listItems[i] = NewListItem(scriptItem)
+			}
+
+			return ListOutput(listItems)
 		case "detail":
 			detail, err := c.command.Detail.Run(input)
 			if err != nil {
@@ -96,12 +101,13 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case ListOutput:
 		if c.list == nil {
 			c.currentView = "list"
-			c.list = NewList(c.command.Title, msg)
+			if c.command.List.Dynamic {
+				c.list = NewDynamicList(msg)
+			} else {
+				c.list = NewStaticList(msg)
+			}
 			if c.command.List.ShowDetail {
 				c.list.showDetail = true
-			}
-			if c.command.List.Callback {
-				c.list.DisableFiltering()
 			}
 			c.list.SetSize(c.width, c.height)
 			return c, c.list.Init()
@@ -124,7 +130,12 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			default:
 				content = string(msg)
 			}
-			c.detail = NewDetail(c.command.Title, content, c.command.Detail.Actions)
+
+			actions := make([]Action, len(c.command.Detail.Actions))
+			for i, action := range c.command.Detail.Actions {
+				actions[i] = NewAction(action)
+			}
+			c.detail = NewDetail(content, actions)
 			c.detail.SetSize(c.width, c.height)
 			return c, c.detail.Init()
 		}
@@ -132,7 +143,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case ReloadMsg:
 		return c, c.Run(msg.input)
 	case QueryUpdateMsg:
-		if c.command.List.Callback {
+		if c.command.List.Dynamic {
 			input := api.CommandInput{
 				Query:  msg.query,
 				Params: c.params,
@@ -144,7 +155,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		return c, nil
 	case error:
 		c.currentView = "error"
-		c.err = NewDetail("Error", msg.Error(), nil)
+		c.err = NewDetail(msg.Error(), nil)
 		c.err.SetSize(c.width, c.height)
 		return c, c.err.Init()
 	}

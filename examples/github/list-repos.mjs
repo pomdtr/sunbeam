@@ -8,12 +8,13 @@ const items = repos.map((repo) => ({
   subtitle: `${repo.stargazers_count} ⭐`,
   actions: [
     {
-      type: "open",
+      type: "open-url",
       title: "Open in Browser",
       url: repo.html_url,
     },
     {
       type: "push",
+      title: "Pull Requests",
       target: "sunbeam/list-prs",
       keybind: "ctrl+p",
       params: {

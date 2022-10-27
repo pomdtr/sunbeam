@@ -25,7 +25,7 @@ const items = await Promise.all(
                 root: filepath,
               },
             }
-          : { type: "open", title: "Open File", path: filepath },
+          : { type: "open-file", title: "Open File", path: filepath },
       ],
     };
   })

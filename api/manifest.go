@@ -10,6 +10,13 @@ import (
 
 type CommandMap map[string]SunbeamCommand
 
+type Manifest struct {
+	Title    string           `json:"title"`
+	Id       string           `json:"id"`
+	Commands []SunbeamCommand `json:"commands"`
+	Url      url.URL
+}
+
 var (
 	ExtensionMap = make(map[string]CommandMap)
 	Commands     = make([]SunbeamCommand, 0)
@@ -112,11 +119,4 @@ func listManifests() []Manifest {
 	}
 
 	return manifests
-}
-
-type Manifest struct {
-	Title    string           `json:"title"`
-	Id       string           `json:"id"`
-	Commands []SunbeamCommand `json:"commands"`
-	Url      url.URL
 }
