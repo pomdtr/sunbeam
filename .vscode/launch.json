@@ -10,7 +10,6 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "envFile": "${workspaceFolder}/.env",
             "showLog": true
         }
     ]

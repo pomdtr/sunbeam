@@ -3,7 +3,8 @@
     "python310",
     "go_1_19",
     "gh",
-    "nodePackages.zx"
+    "nodePackages.zx",
+    "direnv"
   ],
   "shell": {
     "init_hook": null

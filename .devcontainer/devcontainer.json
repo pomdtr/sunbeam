@@ -11,8 +11,7 @@
 		}
 	},
 	"remoteEnv": {
-		"SUNBEAM_LOG_FILE": "${containerWorkspaceFolder}/sunbeam.log",
-		"PATH": "${containerEnv:HOME}/go/bin:${PATH}"
+		"PATH": "${containerEnv:HOME}/go/bin:${containerEnv:PATH}"
 	},
 	"customizations": {
 		"vscode": {
@@ -21,7 +20,8 @@
 			},
 			"extensions": [
 				"ms-python.python",
-				"golang.go"
+				"golang.go",
+				"mkhl.direnv"
 			]
 		}
 	},
