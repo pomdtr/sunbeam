@@ -125,6 +125,15 @@
             }
         },
         {
+            "id": "bitwarden",
+            "mode": "list",
+            "title": "Search Vault",
+            "subtitle": "Bitwarden",
+            "list": {
+                "command": "./examples/bitwarden.mjs"
+            }
+        },
+        {
             "id": "form",
             "title": "Form",
             "subtitle": "Examples",
