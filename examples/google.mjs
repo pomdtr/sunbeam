@@ -20,7 +20,7 @@ const items = res[1].map((suggestion) => ({
   title: suggestion,
   actions: [
     {
-      type: "open",
+      type: "open-url",
       url: `https://www.google.com/search?q=${encodeURIComponent(suggestion)}`,
     },
   ],
