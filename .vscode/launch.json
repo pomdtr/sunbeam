@@ -10,9 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "env": {
-                "SUNBEAM_LOG_FILE": "${workspaceFolder}/debug.log"
-            },
+            "envFile": "${workspaceFolder}/.env",
             "showLog": true
         }
     ]
