@@ -2,68 +2,45 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/url"
 	"os"
 	"path"
-	"strings"
 )
 
-type CommandMap map[string]SunbeamCommand
-
-type Manifest struct {
-	Title    string           `json:"title"`
-	Id       string           `json:"id"`
-	Commands []SunbeamCommand `json:"commands"`
-	Url      url.URL
+type Api struct {
+	Extensions map[string]Manifest
+	RootItems  []RootItem
 }
 
-var (
-	ExtensionMap = make(map[string]CommandMap)
-	Commands     = make([]SunbeamCommand, 0)
-)
+var Sunbeam Api
 
 func init() {
-	manifests := listManifests()
-	for _, manifest := range manifests {
-		commands := manifest.Commands
-		rootPath := path.Dir(manifest.Url.Path)
-		if _, ok := ExtensionMap[manifest.Id]; ok {
-			continue
-		}
+	extensions, err := fetchExtensions()
+	if err != nil {
+		log.Fatalf("Failed to fetch manifests: %v", err)
+	}
 
-		commandMap := make(map[string]SunbeamCommand)
-		for _, command := range commands {
-			command.Root = url.URL{
-				Scheme: "file",
-				Path:   rootPath,
-			}
-			command.ExtensionId = manifest.Id
-			command.List.Workdir = rootPath
-			command.Detail.Workdir = rootPath
-			command.Url = url.URL{
-				Scheme: "file",
-				Path:   path.Join(rootPath, command.Id),
-			}
-			Commands = append(Commands, command)
-			commandMap[command.Id] = command
+	rootItems := make([]RootItem, 0)
+	for _, manifest := range extensions {
+		for _, rootItem := range manifest.RootItems {
+			rootItem.Extension = manifest.Name
+			rootItems = append(rootItems, rootItem)
 		}
+	}
 
-		ExtensionMap[manifest.Id] = commandMap
+	Sunbeam = Api{
+		Extensions: extensions,
+		RootItems:  rootItems,
 	}
 }
 
-func GetSunbeamCommand(target string) (SunbeamCommand, bool) {
-	tokens := strings.Split(target, "/")
-	if len(tokens) < 2 {
-		return SunbeamCommand{}, false
-	}
-
-	extension, ok := ExtensionMap[tokens[0]]
+func (api Api) GetCommand(extensionName string, commandName string) (SunbeamCommand, bool) {
+	manifest, ok := api.Extensions[extensionName]
 	if !ok {
 		return SunbeamCommand{}, false
 	}
-
-	command, ok := extension[tokens[1]]
+	command, ok := manifest.Commands[commandName]
 	if !ok {
 		return SunbeamCommand{}, false
 	}
@@ -71,7 +48,35 @@ func GetSunbeamCommand(target string) (SunbeamCommand, bool) {
 	return command, true
 }
 
-func listManifests() []Manifest {
+var Extensions map[string]Manifest
+
+func init() {
+	var err error
+	Extensions, err = fetchExtensions()
+	if err != nil {
+		log.Fatalf("Failed to fetch manifests: %v", err)
+	}
+}
+
+type Manifest struct {
+	Title string `json:"title"`
+	Name  string `json:"name"`
+
+	RootItems []RootItem                `json:"rootItems"`
+	Commands  map[string]SunbeamCommand `json:"commands"`
+
+	Url url.URL
+}
+
+type RootItem struct {
+	Title     string            `json:"title"`
+	Subtitle  string            `json:"subtitle"`
+	Target    string            `json:"target"`
+	Params    map[string]string `json:"params"`
+	Extension string
+}
+
+func fetchExtensions() (map[string]Manifest, error) {
 	commandDirs := make([]string, 0)
 	currentDir, err := os.Getwd()
 	if err == nil {
@@ -83,7 +88,7 @@ func listManifests() []Manifest {
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return []Manifest{}
+		return nil, err
 	}
 	var scriptDir = os.Getenv("SUNBEAM_COMMAND_DIR")
 	if scriptDir == "" {
@@ -98,7 +103,7 @@ func listManifests() []Manifest {
 		commandDirs = append(commandDirs, extensionPath)
 	}
 
-	manifests := make([]Manifest, 0)
+	manifests := make(map[string]Manifest)
 	for _, commandDir := range commandDirs {
 		manifestPath := path.Join(commandDir, "sunbeam.json")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
@@ -110,13 +115,16 @@ func listManifests() []Manifest {
 		if err != nil {
 			continue
 		}
-		json.Unmarshal(manifestBytes, &manifest)
+		err = json.Unmarshal(manifestBytes, &manifest)
+		if err != nil {
+			continue
+		}
 		manifest.Url = url.URL{
 			Scheme: "file",
 			Path:   manifestPath,
 		}
-		manifests = append(manifests, manifest)
+		manifests[manifest.Name] = manifest
 	}
 
-	return manifests
+	return manifests, nil
 }

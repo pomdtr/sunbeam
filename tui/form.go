@@ -33,11 +33,10 @@ func NewSubmitCmd(values map[string]string) tea.Cmd {
 	}
 }
 
-func NewFormContainer(title string, params []api.SunbeamParam) *Form {
+func NewFormContainer(params []api.FormItem) *Form {
 	footer := NewFooter()
 	c := &Form{
 		footer: footer,
-		title:  title,
 		inputs: make([]FormField, len(params)),
 	}
 
@@ -50,7 +49,7 @@ func NewFormContainer(title string, params []api.SunbeamParam) *Form {
 		t.CharLimit = 32
 
 		c.inputs[i] = FormField{
-			Id:    param.Id,
+			Id:    param.Name,
 			Model: t,
 		}
 	}

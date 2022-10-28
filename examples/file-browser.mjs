@@ -12,21 +12,26 @@ const items = await Promise.all(
   files.map(async (file) => {
     const filepath = path.join(currentDir, file.name);
     const lstat = await fs.lstat(filepath);
+    const primaryAction = lstat.isDirectory()
+      ? {
+          type: "launch",
+          title: "Browse Directory",
+          shortcut: "enter",
+          target: "file-browser",
+          params: {
+            root: filepath,
+          },
+        }
+      : {
+          type: "open-file",
+          title: "Open File",
+          shortcut: "enter",
+          path: filepath,
+        };
     return {
       title: file.name,
       subtitle: filepath,
-      actions: [
-        lstat.isDirectory()
-          ? {
-              type: "push",
-              title: "Browse Directory",
-              target: "sunbeam/file-browser",
-              params: {
-                root: filepath,
-              },
-            }
-          : { type: "open-file", title: "Open File", path: filepath },
-      ],
+      actions: [primaryAction],
     };
   })
 );

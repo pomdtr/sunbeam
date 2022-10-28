@@ -10,20 +10,128 @@
             "type": "string"
         },
         "actions": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "anyOf": [
-                    {
-                        "type": "object",
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/action"
+            }
+        }
+    },
+    "definitions": {
+        "action": {
+            "type": "object",
+            "required": [
+                "type",
+                "title"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "open-file",
+                        "open-url",
+                        "copy",
+                        "exec",
+                        "launch",
+                        "reload"
+                    ]
+                },
+                "title": {
+                    "type": "string"
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "open-file"
+                            }
+                        }
+                    },
+                    "then": {
                         "required": [
-                            "type",
+                            "path"
+                        ],
+                        "properties": {
+                            "path": {
+                                "type": "string"
+                            },
+                            "application": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "open-url"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "url"
+                        ],
+                        "properties": {
+                            "url": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "copy"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "content"
+                        ],
+                        "properties": {
+                            "content": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "exec"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
                             "command"
                         ],
                         "properties": {
+                            "command": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
                             "type": {
-                                "const": "push"
-                            },
+                                "const": "launch"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "target"
+                        ],
+                        "properties": {
                             "target": {
                                 "type": "string"
                             },
@@ -35,8 +143,28 @@
                             }
                         }
                     }
-                ]
-            }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "reload"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "params"
+                        ],
+                        "params": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            ]
         }
     }
 }

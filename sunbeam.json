@@ -1,160 +1,78 @@
 {
-    "id": "sunbeam",
     "$schema": "./schemas/manifest.json",
-    "commands": [
+    "name": "sunbeam",
+    "rootItems": [
         {
-            "id": "google",
-            "title": "Google",
-            "mode": "list",
-            "list": {
-                "dynamic": true,
-                "command": "./examples/google.mjs --query {{ .query }}"
-            }
+            "title": "Show Suggestions",
+            "target": "git-commit"
         },
         {
-            "id": "random",
-            "title": "Random",
-            "mode": "list",
-            "list": {
-                "command": "./examples/random_list.py"
-            }
+            "title": "Show Random List",
+            "target": "random"
         },
         {
-            "id": "list-repos",
-            "mode": "list",
-            "subtitle": "Github",
-            "title": "Search My Repositories",
-            "list": {
-                "command": "./examples/github/list-repos.mjs"
-            }
+            "title": "List Repositories",
+            "target": "list-repos"
         },
         {
-            "id": "file-browser",
-            "title": "Browse Files",
-            "subtitle": "System",
-            "mode": "list",
-            "list": {
-                "command": "./examples/file-browser.mjs {{ .params.root }}"
-            },
-            "params": [
-                {
-                    "id": "root",
-                    "type": "textfield",
-                    "title": "Start Directory"
-                }
-            ],
-            "hidden": true
-        },
-        {
-            "id": "browse-root",
-            "mode": "action",
             "title": "Browse Home",
-            "subtitle": "System",
-            "action": {
-                "type": "push",
-                "target": "sunbeam/file-browser",
-                "params": {
-                    "root": "/"
-                }
+            "target": "browse-files",
+            "params": {
+                "root": "/Users/a.lacoin"
             }
         },
         {
-            "id": "list-prs",
-            "mode": "list",
-            "subtitle": "Github",
-            "hidden": true,
-            "title": "List Pull Request",
-            "list": {
-                "command": "./examples/github/list-prs.mjs --repo {{ .params.repository }}"
-            },
+            "title": "Browse Root",
+            "target": "browse-files",
+            "params": {
+                "root": "/"
+            }
+        },
+        {
+            "title": "List dwh-dags Requests",
+            "target": "list-prs",
+            "params": {
+                "repository": "dailymotion/dwh-dags"
+            }
+        }
+    ],
+    "commands": {
+        "google-search": {
+            "type": "list",
+            "command": "./examples/google.mjs --query {{ .query }}",
+            "dynamic": true
+        },
+        "random": {
+            "type": "list",
+            "command": "./examples/random_list.py"
+        },
+        "list-repos": {
+            "type": "list",
+            "command": "./examples/github/list-repos.mjs"
+        },
+        "list-prs": {
+            "type": "list",
+            "command": "./examples/github/list-prs.mjs --repo {{ .params.repository }}",
             "params": [
                 {
-                    "id": "repository",
-                    "type": "textfield",
                     "title": "Repository",
-                    "placeholder": "pomdtr/sunbeam"
+                    "name": "repository",
+                    "required": true,
+                    "type": "textfield"
                 }
             ]
         },
-        {
-            "id": "view-readme",
-            "mode": "detail",
-            "subtitle": "Github",
-            "title": "View Readme",
-            "hidden": true,
-            "detail": {
-                "command": "./examples/github/view-readme.mjs {{ .params.repository }}"
-            },
+        "browse-files": {
+            "type": "list",
+            "command": "./examples/file-browser.mjs {{ .params.root }}",
             "params": [
                 {
-                    "id": "repository",
                     "type": "textfield",
-                    "title": "Repository",
-                    "placeholder": "pomdtr/sunbeam"
-                }
-            ]
-        },
-        {
-            "id": "list-images",
-            "mode": "list",
-            "subtitle": "Docker",
-            "title": "List Images",
-            "list": {
-                "showDetail": true,
-                "command": "./examples/list-images.py"
-            }
-        },
-        {
-            "id": "tldr-list",
-            "mode": "list",
-            "subtitle": "TLDR",
-            "title": "List Commands",
-            "list": {
-                "showDetail": true,
-                "command": "zx ./examples/tldr.mjs"
-            }
-        },
-        {
-            "id": "bitwarden",
-            "mode": "list",
-            "title": "Search Vault",
-            "subtitle": "Bitwarden",
-            "list": {
-                "command": "./examples/bitwarden.mjs"
-            }
-        },
-        {
-            "id": "list-namespaces",
-            "mode": "list",
-            "title": "List Namespaces",
-            "subtitle": "Kubernetes",
-            "list": {
-                "command": "./examples/kubens.mjs"
-            }
-        },
-        {
-            "id": "form",
-            "title": "Form",
-            "subtitle": "Examples",
-            "mode": "detail",
-            "detail": {
-                "format": "markdown",
-                "command": "./examples/form.sh {{ .params.name }} {{ .params.address }}"
-            },
-            "params": [
-                {
-                    "id": "name",
-                    "type": "textfield",
-                    "title": "Name",
-                    "placeholder": "John Doe"
-                },
-                {
-                    "id": "address",
-                    "type": "textfield",
-                    "title": "Address",
-                    "placeholder": "123 Main St"
+                    "name": "root",
+                    "required": true,
+                    "title": "Start directory"
                 }
             ]
         }
-    ]
+    }
 }

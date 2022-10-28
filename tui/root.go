@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -106,14 +105,9 @@ func (m *RootModel) Pop() {
 	}
 }
 
+// Just a wrapper to convert the list to a container
 type RootContainer struct {
 	*List
-}
-
-func NewRootContainer(items []ListItem) *RootContainer {
-	return &RootContainer{
-		List: NewStaticList(items),
-	}
 }
 
 func (c *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
@@ -123,42 +117,24 @@ func (c *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 }
 
 func Start() error {
-	rootItems := make([]ListItem, 0)
-
-	for _, command := range api.Commands {
-		if command.Hidden {
-			continue
+	rootItems := make([]ListItem, len(api.Sunbeam.RootItems))
+	for i, rootItem := range api.Sunbeam.RootItems {
+		rootItems[i] = ListItem{
+			Title:    rootItem.Title,
+			Subtitle: rootItem.Subtitle,
+			Actions: []Action{
+				NewLaunchAction("Open Command", "enter", rootItem.Extension, rootItem.Target, rootItem.Params),
+			},
 		}
-		var primaryAction Action
-		if command.Mode == "action" {
-			primaryAction = NewAction(command.Action)
-		} else {
-			primaryAction = NewPushAction("Open Command", "enter", command.Target(), make(map[string]string))
-		}
-
-		rootItems = append(rootItems, ListItem{
-			Title:    command.Title,
-			Subtitle: command.Subtitle,
-			Actions:  []Action{primaryAction},
-		})
 	}
 
-	rootContainer := NewRootContainer(rootItems)
-	return Draw(rootContainer)
+	list := NewList(false, false)
+	list.SetItems(rootItems)
+	rootContainer := RootContainer{List: list}
+	return Draw(&rootContainer)
 }
 
-func Run(target string, params map[string]string) error {
-	command, ok := api.GetSunbeamCommand(target)
-	if !ok {
-		return fmt.Errorf("command not found: %s", target)
-	}
-
-	if command.Mode == "action" {
-		action := NewAction(command.Action)
-		action.Exec()
-		return nil
-	}
-
+func Run(command api.SunbeamCommand, params map[string]string) error {
 	container := NewCommandContainer(command, params)
 	return Draw(container)
 }

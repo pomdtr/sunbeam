@@ -10,13 +10,14 @@ const items = repos.map((repo) => ({
     {
       type: "open-url",
       title: "Open in Browser",
+      shortcut: "enter",
       url: repo.html_url,
     },
     {
-      type: "push",
-      title: "Pull Requests",
-      target: "sunbeam/list-prs",
-      keybind: "ctrl+p",
+      type: "launch",
+      title: "List Pull Requests",
+      target: "list-prs",
+      shortcut: "ctrl+p",
       params: {
         repository: repo.full_name,
       },

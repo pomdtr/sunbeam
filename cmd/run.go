@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -16,15 +17,16 @@ type RunFlags struct {
 var runFlags = RunFlags{}
 
 func init() {
-	commands := api.Commands
-	validArgs := make([]string, len(commands))
-	for i, command := range commands {
-		validArgs[i] = command.Target()
+
+	validargs := make([]string, 0)
+	for _, manifest := range api.Sunbeam.Extensions {
+		for commandName := range manifest.Commands {
+			validargs = append(validargs, fmt.Sprintf("%s.%s", manifest.Name, commandName))
+		}
 	}
 
-	runCmd.ValidArgs = validArgs
+	runCmd.ValidArgs = validargs
 	runCmd.Flags().StringArrayVarP(&runFlags.Params, "param", "p", []string{}, "Parameters to pass to the script")
-
 	rootCmd.AddCommand(runCmd)
 }
 
@@ -42,7 +44,14 @@ func sunbeamRun(cmd *cobra.Command, args []string) {
 		params[tokens[0]] = tokens[1]
 	}
 
-	err := tui.Run(args[0], params)
+	tokens := strings.SplitN(args[0], ".", 2)
+	extensionName, commandName := tokens[0], tokens[1]
+	command, ok := api.Sunbeam.GetCommand(extensionName, extensionName)
+	if !ok {
+		log.Fatalf("Command %s.%s not found", extensionName, commandName)
+	}
+
+	err := tui.Run(command, params)
 	if err != nil {
 		log.Fatalf("could not run script: %v", err)
 	}

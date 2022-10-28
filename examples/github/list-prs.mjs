@@ -9,9 +9,16 @@ const items = prs.map((pr) => ({
   subtitle: pr.user.login,
   actions: [
     {
+      shortcut: "enter",
       type: "open-url",
       title: "Open in Browser",
       url: pr.html_url,
+    },
+    {
+      shortcut: "ctrl+y",
+      type: "copy",
+      title: "Copy URL",
+      content: pr.html_url,
     },
   ],
 }));

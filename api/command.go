@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os/exec"
@@ -16,60 +15,37 @@ import (
 )
 
 type SunbeamCommand struct {
-	Id       string         `json:"id"`
-	Mode     string         `json:"mode"`
-	Title    string         `json:"title"`
-	Subtitle string         `json:"subtitle"`
-	Hidden   bool           `json:"hidden"`
-	Params   []SunbeamParam `json:"params"`
+	Type    string     `json:"type"`
+	Params  []FormItem `json:"params"`
+	Command string     `json:"command"`
+	DetailParam
+	ListParam
 
-	Detail DetailData   `json:"detail"`
-	List   ListData     `json:"list"`
-	Action ScriptAction `json:"action"`
-
-	ExtensionId string
-	Url         url.URL
-	Root        url.URL
+	Extension string
+	Url       url.URL
+	Root      url.URL
 }
 
-type ScriptAction struct {
-	Type    string            `json:"type"`
-	Title   string            `json:"title"`
-	Path    string            `json:"path"`
-	Keybind string            `json:"keybind"`
-	Params  map[string]string `json:"params"`
-	Target  string            `json:"target,omitempty"`
-	CommandData
-	Application string `json:"application,omitempty"`
-	Url         string `json:"url,omitempty"`
-	Content     string `json:"content,omitempty"`
-}
-
-type CommandData struct {
-	Workdir string `json:"workdir"`
-	Command string `json:"command"`
-}
-
-type ListData struct {
-	CommandData
+type ListParam struct {
 	ShowDetail bool `json:"showDetail"`
 	Dynamic    bool `json:"dynamic"`
 }
 
-type DetailData struct {
-	CommandData
-	Format  string         `json:"format"`
-	Text    string         `json:"text"`
-	Actions []ScriptAction `json:"actions"`
+type DetailParam struct {
+	Format string `json:"format"`
 }
 
-type SunbeamParam struct {
-	Id          string `json:"id"`
+type DetailData struct {
+	DetailParam
+	Command string `json:"command"`
+}
+
+type FormItem struct {
 	Type        string `json:"type"`
-	Label       string `json:"label"`
+	Name        string `json:"name"`
 	Title       string `json:"title"`
-	Optional    bool   `json:"optional"`
 	Placeholder string `json:"placeholder"`
+	Label       string `json:"label"`
 }
 
 type CommandInput struct {
@@ -84,43 +60,14 @@ func NewCommandInput(params map[string]string) CommandInput {
 	return CommandInput{Params: params}
 }
 
-func (c SunbeamCommand) CheckMissingParams(inputParams map[string]string) []SunbeamParam {
-	missing := make([]SunbeamParam, 0)
+func (c SunbeamCommand) CheckMissingParams(inputParams map[string]string) []FormItem {
+	missing := make([]FormItem, 0)
 	for _, param := range c.Params {
-		if param.Optional {
-			continue
-		}
-		if _, ok := inputParams[param.Id]; !ok {
+		if _, ok := inputParams[param.Name]; !ok {
 			missing = append(missing, param)
 		}
 	}
 	return missing
-}
-
-func (l ListData) Run(input CommandInput) ([]ScriptItem, error) {
-	output, err := l.CommandData.Run(input)
-	if err != nil {
-		return nil, err
-	}
-	rows := strings.Split(output, "\n")
-	items := make([]ScriptItem, 0)
-	for _, row := range rows {
-		if row == "" {
-			continue
-		}
-		var item ScriptItem
-		err := json.Unmarshal([]byte(row), &item)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, item)
-	}
-
-	return items, nil
-}
-
-func (c SunbeamCommand) Target() string {
-	return fmt.Sprintf("%s/%s", c.ExtensionId, c.Id)
 }
 
 func renderCommand(command string, data map[string]any) (string, error) {
@@ -136,7 +83,7 @@ func renderCommand(command string, data map[string]any) (string, error) {
 	return out.String(), nil
 }
 
-func (c CommandData) Run(input CommandInput) (string, error) {
+func (c SunbeamCommand) Run(input CommandInput) (string, error) {
 	var err error
 	params := make(map[string]any)
 	for key, value := range input.Params {
@@ -151,9 +98,8 @@ func (c CommandData) Run(input CommandInput) (string, error) {
 		return "", err
 	}
 
-	log.Printf("Executing command: %s", rendered)
 	cmd := exec.Command("sh", "-c", rendered)
-	cmd.Dir = c.Workdir
+	// cmd.Dir = c.Workdir
 
 	var outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf
@@ -187,6 +133,35 @@ type ScriptItem struct {
 	Title    string         `json:"title"`
 	Subtitle string         `json:"subtitle"`
 	Detail   DetailData     `json:"detail"`
-	Fill     string         `json:"fill"`
 	Actions  []ScriptAction `json:"actions"`
+}
+
+type ScriptAction struct {
+	Type        string            `json:"type"`
+	Shortcut    string            `json:"shortcut"`
+	Title       string            `json:"title"`
+	Path        string            `json:"path"`
+	Params      map[string]string `json:"params"`
+	Extension   string            `json:"extension"`
+	Target      string            `json:"target,omitempty"`
+	Command     string            `json:"command,omitempty"`
+	Application string            `json:"application,omitempty"`
+	Url         string            `json:"url,omitempty"`
+	Content     string            `json:"content,omitempty"`
+}
+
+func ParseScriptItems(output string) (items []ScriptItem, err error) {
+	rows := strings.Split(output, "\n")
+	for _, row := range rows {
+		if row == "" {
+			continue
+		}
+		var item ScriptItem
+		err = json.Unmarshal([]byte(row), &item)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, nil
 }

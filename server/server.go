@@ -10,17 +10,11 @@ import (
 )
 
 func Serve(address string, port int) error {
-	routeMap := make(map[string]string)
-	for _, command := range api.Commands {
-		http.HandleFunc(command.Id, serveCommand(command))
+	for _, manifest := range api.Extensions {
+		for route, command := range manifest.Commands {
+			http.HandleFunc(route, serveCommand(command))
+		}
 	}
-
-	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
-		res.WriteHeader(http.StatusOK)
-		encoder := json.NewEncoder(res)
-		encoder.SetIndent("", "  ")
-		_ = encoder.Encode(routeMap)
-	})
 
 	log.Println("Starting server on", fmt.Sprintf("%s:%d", address, port))
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)

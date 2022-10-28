@@ -32,9 +32,9 @@ func NewCommandContainer(command api.SunbeamCommand, params map[string]string) *
 func (c *CommandContainer) Init() tea.Cmd {
 	missing := c.command.CheckMissingParams(c.params)
 
-	if len(missing) > 1 {
+	if len(missing) > 0 {
 		c.currentView = "form"
-		c.form = NewFormContainer(c.command.Title, missing)
+		c.form = NewFormContainer(missing)
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
@@ -47,26 +47,31 @@ type DetailOutput string
 
 func (c *CommandContainer) Run(input api.CommandInput) tea.Cmd {
 	return func() tea.Msg {
-		switch c.command.Mode {
+		switch c.command.Type {
 		case "list":
-			scriptItems, err := c.command.List.Run(input)
+			output, err := c.command.Run(input)
 			if err != nil {
 				return err
 			}
-			listItems := make([]ListItem, len(scriptItems))
-			for i, scriptItem := range scriptItems {
-				listItems[i] = NewListItem(scriptItem)
+
+			scriptItems, err := api.ParseScriptItems(output)
+			if err != nil {
+				return err
 			}
 
+			listItems := make([]ListItem, len(scriptItems))
+			for i, item := range scriptItems {
+				listItems[i] = NewListItem(c.command.Extension, item)
+			}
 			return ListOutput(listItems)
 		case "detail":
-			detail, err := c.command.Detail.Run(input)
+			detail, err := c.command.Run(input)
 			if err != nil {
 				return err
 			}
 			return DetailOutput(detail)
 		default:
-			return fmt.Errorf("unknown command mode: %s", c.command.Mode)
+			return fmt.Errorf("unknown command mode: %s", c.command.Type)
 		}
 	}
 }
@@ -101,14 +106,8 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case ListOutput:
 		if c.list == nil {
 			c.currentView = "list"
-			if c.command.List.Dynamic {
-				c.list = NewDynamicList(msg)
-			} else {
-				c.list = NewStaticList(msg)
-			}
-			if c.command.List.ShowDetail {
-				c.list.showDetail = true
-			}
+			c.list = NewList(c.command.Dynamic, c.command.ShowDetail)
+			c.list.SetItems(msg)
 			c.list.SetSize(c.width, c.height)
 			return c, c.list.Init()
 		}
@@ -117,7 +116,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		if c.detail == nil {
 			c.currentView = "detail"
 			var content string
-			switch c.command.Detail.Format {
+			switch c.command.Format {
 			case "markdown":
 				renderer, err := glamour.NewTermRenderer(glamour.WithAutoStyle(), glamour.WithEmoji())
 				if err != nil {
@@ -131,11 +130,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 				content = string(msg)
 			}
 
-			actions := make([]Action, len(c.command.Detail.Actions))
-			for i, action := range c.command.Detail.Actions {
-				actions[i] = NewAction(action)
-			}
-			c.detail = NewDetail(content, actions)
+			c.detail = NewDetail(content, []Action{})
 			c.detail.SetSize(c.width, c.height)
 			return c, c.detail.Init()
 		}
@@ -143,7 +138,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case ReloadMsg:
 		return c, c.Run(msg.input)
 	case QueryUpdateMsg:
-		if c.command.List.Dynamic {
+		if c.list.dynamic {
 			input := api.CommandInput{
 				Query:  msg.query,
 				Params: c.params,

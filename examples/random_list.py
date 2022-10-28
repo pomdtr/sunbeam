@@ -10,6 +10,8 @@ for _ in range(5):
                 "title": "Random number {}".format(random.randint(0, 100)),
                 "actions": [
                     {
+                        "title": "Reload List",
+                        "shortcut": "enter",
                         "type": "reload",
                     }
                 ],

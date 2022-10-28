@@ -3,161 +3,272 @@
     "$id": "http://github.com/pomdtr/sunbeam/manifest",
     "type": "object",
     "required": [
-        "id",
-        "commands"
+        "name",
+        "commands",
+        "rootItems"
     ],
+    "additionalProperties": false,
     "properties": {
-        "id": {
+        "$schema": {
             "type": "string"
         },
-        "commands": {
+        "name": {
+            "type": "string"
+        },
+        "title": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "author": {
+            "type": "string"
+        },
+        "preferences": {
+            "type": "array"
+        },
+        "rootItems": {
             "type": "array",
             "items": {
                 "type": "object",
                 "required": [
-                    "id",
                     "title",
-                    "mode"
+                    "target"
                 ],
                 "additionalProperties": false,
                 "properties": {
-                    "hidden": {
-                        "type": "boolean"
-                    },
-                    "list": {
-                        "type": "object",
-                        "required": [
-                            "command"
-                        ],
-                        "properties": {
-                            "showDetail": {
-                                "type": "boolean"
-                            },
-                            "dynamic": {
-                                "type": "boolean"
-                            },
-                            "command": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "detail": {
-                        "type": "object",
-                        "required": [
-                            "command"
-                        ],
-                        "additionalProperties": false,
-                        "properties": {
-                            "command": {
-                                "type": "string"
-                            },
-                            "format": {
-                                "type": "string",
-                                "enum": [
-                                    "markdown"
-                                ]
-                            }
-                        }
-                    },
-                    "id": {
-                        "type": "string"
-                    },
                     "title": {
                         "type": "string"
                     },
                     "subtitle": {
                         "type": "string"
                     },
-                    "mode": {
-                        "type": "string",
-                        "enum": [
-                            "detail",
-                            "list",
-                            "action"
-                        ]
-                    },
-                    "action": {
-                        "type": "object"
+                    "target": {
+                        "type": "string"
                     },
                     "params": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "oneOf": [
-                                {
-                                    "type": "object",
-                                    "required": [
-                                        "type",
-                                        "id",
-                                        "title"
-                                    ],
-                                    "properties": {
-                                        "type": {
-                                            "const": "textarea"
-                                        },
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "title": {
-                                            "type": "string"
-                                        },
-                                        "placeholder": {
-                                            "type": "string"
-                                        },
-                                        "default": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "object",
-                                    "required": [
-                                        "type",
-                                        "title",
-                                        "id"
-                                    ],
-                                    "properties": {
-                                        "type": {
-                                            "const": "textfield"
-                                        },
-                                        "title": {
-                                            "type": "string"
-                                        },
-                                        "placeholder": {
-                                            "type": "string"
-                                        },
-                                        "default": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "object",
-                                    "required": [
-                                        "type",
-                                        "title",
-                                        "label"
-                                    ],
-                                    "properties": {
-                                        "type": {
-                                            "const": "checkbox"
-                                        },
-                                        "title": {
-                                            "type": "string"
-                                        },
-                                        "label": {
-                                            "type": "string"
-                                        },
-                                        "default": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            ]
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
                         }
                     }
                 }
             }
+        },
+        "commands": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "required": [
+                    "command",
+                    "type"
+                ],
+                "properties": {
+                    "cwd": {
+                        "type": "boolean"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "list",
+                            "fullOutput",
+                            "silent"
+                        ]
+                    },
+                    "command": {
+                        "type": "string"
+                    },
+                    "params": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/formitem"
+                        }
+                    }
+                },
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": {
+                                "type": {
+                                    "const": "fullOutput"
+                                }
+                            }
+                        },
+                        "then": {
+                            "properties": {
+                                "format": {
+                                    "type": "string",
+                                    "enum": [
+                                        "markdown",
+                                        "code"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "if": {
+                            "properties": {
+                                "type": {
+                                    "const": "list"
+                                }
+                            }
+                        },
+                        "then": {
+                            "properties": {
+                                "dynamic": {
+                                    "type": "boolean"
+                                },
+                                "showDetail": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "definitions": {
+        "formitem": {
+            "type": "object",
+            "required": [
+                "type",
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "textfield",
+                        "password",
+                        "textarea",
+                        "checkbox",
+                        "dropdown"
+                    ]
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "properties": {
+                                    "type": {
+                                        "const": "textfield"
+                                    }
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "type": {
+                                        "const": "textarea"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "title"
+                        ],
+                        "properties": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "placeholder": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "password"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "title"
+                        ],
+                        "properties": {
+                            "title": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "checkbox"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "label"
+                        ],
+                        "properties": {
+                            "label": {
+                                "type": "string"
+                            },
+                            "true_substitution": {
+                                "type": "string"
+                            },
+                            "false_substitution": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "dropdown"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "data",
+                            "title"
+                        ],
+                        "properties": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "title",
+                                        "label"
+                                    ],
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
         }
     }
 }

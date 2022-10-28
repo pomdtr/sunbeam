@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os/exec"
 	"sort"
 	"strings"
 	"time"
@@ -22,10 +23,13 @@ type ListItem struct {
 	Detail   api.DetailData
 }
 
-func NewListItem(item api.ScriptItem) ListItem {
+func NewListItem(extensionName string, item api.ScriptItem) ListItem {
 	actions := make([]Action, len(item.Actions))
-	for i, action := range item.Actions {
-		actions[i] = NewAction(action)
+	for i, scriptAction := range item.Actions {
+		if scriptAction.Extension == "" {
+			scriptAction.Extension = extensionName
+		}
+		actions[i] = NewAction(scriptAction)
 	}
 
 	return ListItem{
@@ -58,13 +62,7 @@ type List struct {
 	filteredItems             []ListItem
 }
 
-func NewDynamicList(items []ListItem) *List {
-	l := NewStaticList(items)
-	l.dynamic = true
-	return l
-}
-
-func NewStaticList(items []ListItem) *List {
+func NewList(dynamic bool, showDetail bool) *List {
 	t := textinput.New()
 	t.Prompt = "> "
 	t.Placeholder = "Search..."
@@ -73,11 +71,11 @@ func NewStaticList(items []ListItem) *List {
 	f := NewFooter()
 
 	return &List{
-		textInput:     &t,
-		viewport:      &v,
-		footer:        f,
-		items:         items,
-		filteredItems: items,
+		textInput:  &t,
+		viewport:   &v,
+		dynamic:    dynamic,
+		showDetail: showDetail,
+		footer:     f,
 	}
 }
 
@@ -128,11 +126,6 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyEnter:
-			if selectedItem == nil || len(selectedItem.Actions) == 0 {
-				break
-			}
-			return c, selectedItem.Actions[0].Exec()
 		case tea.KeyDown, tea.KeyTab, tea.KeyCtrlJ:
 			if c.selectedIndex < len(c.filteredItems)-1 {
 				cmd := c.updateIndexes(c.selectedIndex + 1)
@@ -156,7 +149,7 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 				break
 			}
 			for _, action := range selectedItem.Actions {
-				if action.Keybind() == msg.String() {
+				if action.Shortcut() == msg.String() {
 					return c, action.Exec()
 				}
 			}
@@ -223,7 +216,7 @@ func (c *List) updateIndexes(selectedIndex int) tea.Cmd {
 				return c.SelectedItem() == selectedItem
 			},
 			cmd: func() tea.Msg {
-				res, err := selectedItem.Detail.Run(api.NewCommandInput(nil))
+				res, err := exec.Command("sh", "-c", selectedItem.Detail.Command).Output()
 				if err != nil {
 					return NewErrorCmd("Error running command: %s", err)
 				}

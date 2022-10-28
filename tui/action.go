@@ -2,6 +2,7 @@ package tui
 
 import (
 	"errors"
+	"log"
 	"os/exec"
 
 	"github.com/atotto/clipboard"
@@ -13,58 +14,39 @@ import (
 type Action interface {
 	Title() string
 	Exec() tea.Cmd
-	Keybind() string
+	Shortcut() string
 }
 
 func NewAction(scriptAction api.ScriptAction) Action {
-	title := scriptAction.Title
 	switch scriptAction.Type {
 	case "open-url":
-		if title == "" {
-			title = "Open URL"
-		}
-		return NewOpenUrlAction(title, scriptAction.Keybind, scriptAction.Url, scriptAction.Application)
+		return NewOpenUrlAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
 	case "open-file":
-		if title == "" {
-			title = "Open File"
-		}
-		return NewOpenFileAction(title, scriptAction.Keybind, scriptAction.Url, scriptAction.Application)
+		return NewOpenFileAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
 	case "copy":
-		if title == "" {
-			title = "Copy to Clibpoard"
-		}
-		return NewCopyAction(title, scriptAction.Keybind, scriptAction.Content)
-	case "push":
-		if title == "" {
-			title = "Push"
-		}
-		return NewPushAction(title, scriptAction.Keybind, scriptAction.Target, scriptAction.Params)
+		return NewCopyAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Content)
+	case "launch":
+		return NewLaunchAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Extension, scriptAction.Target, scriptAction.Params)
 	case "reload":
-		if title == "" {
-			title = "Reload"
-		}
-		return NewReloadAction(title, scriptAction.Keybind, scriptAction.Params)
+		return NewReloadAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Params)
 	case "exec":
-		if title == "" {
-			title = "Run"
-		}
-		return NewExecAction(title, scriptAction.Keybind, scriptAction.Command)
+		return NewExecAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Command)
 	default:
 		return NewUnknownAction(scriptAction.Type)
 	}
 }
 
 type BaseAction struct {
-	title   string
-	keybind string
+	title string
+	key   string
 }
 
 func (b BaseAction) Title() string {
 	return b.title
 }
 
-func (b BaseAction) Keybind() string {
-	return b.keybind
+func (b BaseAction) Shortcut() string {
+	return b.key
 }
 
 type CopyAction struct {
@@ -72,8 +54,8 @@ type CopyAction struct {
 	Content string
 }
 
-func NewCopyAction(title string, keybind string, content string) Action {
-	return CopyAction{BaseAction: BaseAction{title: title, keybind: keybind}, Content: content}
+func NewCopyAction(title string, key string, content string) Action {
+	return CopyAction{BaseAction: BaseAction{title: title, key: key}, Content: content}
 }
 
 func (c CopyAction) Exec() tea.Cmd {
@@ -84,21 +66,27 @@ func (c CopyAction) Exec() tea.Cmd {
 	return tea.Quit
 }
 
-type PushAction struct {
+type LaunchAction struct {
 	BaseAction
-	target string
-	params map[string]string
+	extension string
+	target    string
+	params    map[string]string
 }
 
-func NewPushAction(title string, keybind string, target string, params map[string]string) Action {
-	return PushAction{BaseAction: BaseAction{title: title, keybind: keybind}, target: target, params: params}
+func NewLaunchAction(title string, key string, extensionName string, target string, params map[string]string) Action {
+	return LaunchAction{BaseAction: BaseAction{title: title, key: key}, extension: extensionName, target: target, params: params}
 }
 
-func (p PushAction) Exec() tea.Cmd {
-	command, ok := api.GetSunbeamCommand(p.target)
+func (p LaunchAction) Exec() tea.Cmd {
+	extension, ok := api.Extensions[p.extension]
+	if !ok {
+		return NewErrorCmd("unknown extension %s", p.target)
+	}
+	command, ok := extension.Commands[p.target]
 	if !ok {
 		return NewErrorCmd("unknown command %s", p.target)
 	}
+	log.Println("launching", p.extension, p.target, p.params)
 
 	return NewPushCmd(NewCommandContainer(command, p.params))
 }
@@ -108,8 +96,8 @@ type ReloadAction struct {
 	params map[string]string
 }
 
-func NewReloadAction(title string, keybind string, params map[string]string) Action {
-	return ReloadAction{BaseAction: BaseAction{title: title, keybind: keybind}, params: params}
+func NewReloadAction(title string, key string, params map[string]string) Action {
+	return ReloadAction{BaseAction: BaseAction{title: title, key: key}, params: params}
 }
 
 func (r ReloadAction) Exec() tea.Cmd {
@@ -122,8 +110,8 @@ type ExecAction struct {
 	command string
 }
 
-func NewExecAction(title string, keybind string, command string) Action {
-	return ExecAction{BaseAction: BaseAction{title: title, keybind: keybind}, command: command}
+func NewExecAction(title string, key string, command string) Action {
+	return ExecAction{BaseAction: BaseAction{title: title, key: key}, command: command}
 }
 
 func (e ExecAction) Exec() tea.Cmd {
@@ -142,8 +130,8 @@ type OpenUrlAction struct {
 	url         string
 }
 
-func NewOpenUrlAction(title string, keybind string, url string, application string) Action {
-	return OpenUrlAction{BaseAction: BaseAction{title: title, keybind: keybind}, application: application, url: url}
+func NewOpenUrlAction(title string, key string, url string, application string) Action {
+	return OpenUrlAction{BaseAction: BaseAction{title: title, key: key}, application: application, url: url}
 }
 
 func (o OpenUrlAction) Exec() tea.Cmd {
@@ -166,8 +154,8 @@ type OpenFileAction struct {
 	path        string
 }
 
-func NewOpenFileAction(title string, keybind string, path string, application string) Action {
-	return OpenFileAction{BaseAction: BaseAction{title: title, keybind: keybind}, application: application, path: path}
+func NewOpenFileAction(title string, key string, path string, application string) Action {
+	return OpenFileAction{BaseAction: BaseAction{title: title, key: key}, application: application, path: path}
 }
 
 func (o OpenFileAction) Exec() tea.Cmd {
