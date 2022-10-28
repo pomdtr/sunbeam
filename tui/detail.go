@@ -54,6 +54,7 @@ func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 func (c *Detail) SetSize(width, height int) {
 	c.height = height
 	c.width = width
+	c.footer.Width = width
 	c.viewport.Width = width
 	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
 }

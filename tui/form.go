@@ -133,6 +133,7 @@ func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 func (c *Form) SetSize(width, height int) {
 	c.width = width
 	c.height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
+	c.footer.Width = width
 }
 
 func (c *Form) View() string {

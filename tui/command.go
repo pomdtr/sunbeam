@@ -64,7 +64,7 @@ func (c *CommandContainer) Run(input api.CommandInput) tea.Cmd {
 				listItems[i] = NewListItem(c.command.Extension, item)
 			}
 			return ListOutput(listItems)
-		case "detail":
+		case "fullOutput":
 			detail, err := c.command.Run(input)
 			if err != nil {
 				return err
