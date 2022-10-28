@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"os/exec"
+	"strings"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -18,19 +19,23 @@ type Action interface {
 }
 
 func NewAction(scriptAction api.ScriptAction) Action {
+	title := scriptAction.Title
+	if title == "" {
+		title = strings.Title(scriptAction.Type)
+	}
 	switch scriptAction.Type {
 	case "open-url":
-		return NewOpenUrlAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
+		return NewOpenUrlAction(title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
 	case "open-file":
-		return NewOpenFileAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
+		return NewOpenFileAction(title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
 	case "copy":
-		return NewCopyAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Content)
+		return NewCopyAction(title, scriptAction.Shortcut, scriptAction.Content)
 	case "launch":
-		return NewLaunchAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Extension, scriptAction.Target, scriptAction.Params)
+		return NewLaunchAction(title, scriptAction.Shortcut, scriptAction.Extension, scriptAction.Target, scriptAction.Params)
 	case "reload":
-		return NewReloadAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Params)
+		return NewReloadAction(title, scriptAction.Shortcut, scriptAction.Params)
 	case "exec":
-		return NewExecAction(scriptAction.Title, scriptAction.Shortcut, scriptAction.Command)
+		return NewExecAction(title, scriptAction.Shortcut, scriptAction.Command)
 	default:
 		return NewUnknownAction(scriptAction.Type)
 	}

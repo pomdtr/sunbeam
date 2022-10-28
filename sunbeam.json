@@ -11,6 +11,10 @@
             "target": "random"
         },
         {
+            "title": "Copy Password",
+            "target": "copy-password"
+        },
+        {
             "title": "List Repositories",
             "target": "list-repos"
         },
@@ -29,7 +33,7 @@
             }
         },
         {
-            "title": "List dwh-dags Requests",
+            "title": "List Airflow PRs",
             "target": "list-prs",
             "params": {
                 "repository": "dailymotion/dwh-dags"
@@ -49,6 +53,10 @@
         "list-repos": {
             "type": "list",
             "command": "./examples/github/list-repos.mjs"
+        },
+        "copy-password": {
+            "type": "list",
+            "command": "./examples/bitwarden.sh"
         },
         "list-prs": {
             "type": "list",

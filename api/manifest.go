@@ -123,6 +123,19 @@ func fetchExtensions() (map[string]Manifest, error) {
 			Scheme: "file",
 			Path:   manifestPath,
 		}
+
+		for key, command := range manifest.Commands {
+			command.Root = url.URL{
+				Scheme: "file",
+				Path:   commandDir,
+			}
+			command.Url = url.URL{
+				Scheme: "file",
+				Path:   path.Join(commandDir, key),
+			}
+			command.Extension = manifest.Name
+			manifest.Commands[key] = command
+		}
 		manifests[manifest.Name] = manifest
 	}
 

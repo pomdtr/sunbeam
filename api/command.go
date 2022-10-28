@@ -99,7 +99,7 @@ func (c SunbeamCommand) Run(input CommandInput) (string, error) {
 	}
 
 	cmd := exec.Command("sh", "-c", rendered)
-	// cmd.Dir = c.Workdir
+	cmd.Dir = c.Root.Path
 
 	var outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf

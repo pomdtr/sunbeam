@@ -64,7 +64,7 @@ type List struct {
 
 func NewList(dynamic bool, showDetail bool) *List {
 	t := textinput.New()
-	t.Prompt = "> "
+	t.Prompt = "  "
 	t.Placeholder = "Search..."
 
 	v := viewport.New(0, 0)
@@ -234,7 +234,7 @@ func (c *List) listView(availableWidth int) string {
 	for i := c.startIndex; i < endIndex; i++ {
 		var itemView string
 		if i == c.selectedIndex {
-			itemView = fmt.Sprintf("> %s", items[i].View())
+			itemView = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("> %s", items[i].View()))
 		} else {
 			itemView = fmt.Sprintf("  %s", items[i].View())
 		}
