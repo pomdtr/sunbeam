@@ -1,10 +1,17 @@
-# Running the project
 
-## Prerequisites
+# Sunbeam
 
-- Requires [Go](https://golang.org/dl/) 1.19 or later
+![Demo](./demo/demo.gif)
 
-## Setup Guide
+> **Warning**: This is a work in progress. The API is not stable and may change at any time.
+
+## Installation
+
+```bash
+go install github.com/pomdtr/sunbeam@latest
+```
+
+## Development
 
 ### Dependencies
 
@@ -17,9 +24,3 @@ SUNBEAM_LOG_FILE=$PWD/debug.log go run main.go`
 ```
 
 The logs will be redirected to the `debug.log` file, use `tail -f debug.log` to follow them.
-
-## Installing the `sunbeam` command
-
-```bash
-go install
-```
