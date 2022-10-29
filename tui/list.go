@@ -52,28 +52,31 @@ func (i ListItem) View(width int) string {
 		return ""
 	}
 	accessories := strings.Join(i.Accessories, " • ")
+	titleWidth := lipgloss.Width(i.Title)
+	subtitleWidth := lipgloss.Width(i.Subtitle)
+	accessoriesWidth := lipgloss.Width(accessories)
 
 	// No place to display the accessories, just return the title
-	if len(accessories) > width {
-		title := i.Title[:utils.Min(len(i.Title), width)]
+	if accessoriesWidth > width {
+		title := i.Title[:utils.Min(titleWidth, width)]
 		return DefaultStyles.Primary.Render(title)
 	}
 
-	if len(i.Title)+1+len(accessories) > width {
-		availableWidth := width - len(accessories) - 1
-		title := i.Title[:utils.Min(len(i.Title), availableWidth)]
+	if titleWidth+1+accessoriesWidth > width {
+		availableWidth := width - accessoriesWidth - 1
+		title := i.Title[:utils.Min(titleWidth, availableWidth)]
 
 		return lipgloss.JoinHorizontal(lipgloss.Top, DefaultStyles.Primary.Render(title), " ", DefaultStyles.Secondary.Render(accessories))
 	}
 
-	if len(i.Title)+1+len(i.Subtitle)+1+len(accessories) > width {
-		availableWidth := width - len(i.Title) - len(accessories) - 2
+	if titleWidth+1+subtitleWidth+1+accessoriesWidth > width {
+		availableWidth := width - titleWidth - accessoriesWidth - 2
 		subtitle := i.Subtitle[:availableWidth]
 
 		return lipgloss.JoinHorizontal(lipgloss.Top, DefaultStyles.Primary.Render(i.Title), " ", DefaultStyles.Secondary.Render(subtitle), " ", DefaultStyles.Secondary.Render(accessories))
 	}
 
-	blankWidth := width - len(i.Title) - 1 - len(i.Subtitle) - len(accessories)
+	blankWidth := width - titleWidth - 1 - subtitleWidth - accessoriesWidth
 	blanks := strings.Repeat(" ", blankWidth)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, DefaultStyles.Primary.Render(i.Title), " ", DefaultStyles.Secondary.Render(i.Subtitle), blanks, DefaultStyles.Secondary.Render(accessories))
@@ -274,7 +277,7 @@ func (c *List) listView(width int) string {
 		} else {
 			prompt = "  "
 		}
-		itemWidth := utils.Max(width-4, 0)
+		itemWidth := utils.Max(width-1, 0)
 		itemView := lipgloss.JoinHorizontal(lipgloss.Top, prompt, items[i].View(itemWidth))
 		rows = append(rows, itemView)
 	}

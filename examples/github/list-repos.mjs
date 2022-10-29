@@ -13,7 +13,7 @@ const repos = JSON.parse(res);
 const items = repos.map((repo) => ({
   title: repo.name,
   subtitle: repo.owner.login,
-  accessories: [`${repo.language}`, `${repo.stargazers_count} ⭐`],
+  accessories: [`${repo.language}`, `${repo.stargazers_count} ⭐️`],
   actions: [
     {
       type: "open-url",

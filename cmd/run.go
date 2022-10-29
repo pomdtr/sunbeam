@@ -46,7 +46,7 @@ func sunbeamRun(cmd *cobra.Command, args []string) {
 
 	tokens := strings.SplitN(args[0], ".", 2)
 	extensionName, commandName := tokens[0], tokens[1]
-	command, ok := api.Sunbeam.GetCommand(extensionName, extensionName)
+	command, ok := api.Sunbeam.GetCommand(extensionName, commandName)
 	if !ok {
 		log.Fatalf("Command %s.%s not found", extensionName, commandName)
 	}

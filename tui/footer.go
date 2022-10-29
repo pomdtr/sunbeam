@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Footer struct {
@@ -50,5 +51,10 @@ func (f *Footer) SetActions(actions []Action) {
 
 func (f Footer) View() string {
 	horizontal := strings.Repeat("─", f.Width)
-	return lipgloss.JoinVertical(lipgloss.Left, horizontal, f.Model.View(f.KeyMap))
+	helpView := f.Model.View(f.KeyMap)
+	helpWidth := lipgloss.Width(helpView)
+	blanks := strings.Repeat(" ", utils.Max(f.Width-helpWidth, 0))
+
+	helpView = lipgloss.JoinHorizontal(lipgloss.Left, blanks, helpView)
+	return lipgloss.JoinVertical(lipgloss.Left, horizontal, helpView)
 }
