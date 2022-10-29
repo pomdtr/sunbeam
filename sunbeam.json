@@ -17,9 +17,20 @@
             "target": "copy-password"
         },
         {
-            "title": "List Repositories",
+            "title": "List My Repositories",
             "subtitle": "GitHub",
-            "target": "list-repos"
+            "target": "list-repos",
+            "params": {
+                "owner": "pomdtr"
+            }
+        },
+        {
+            "title": "List Dailymotion Repositories",
+            "subtitle": "GitHub",
+            "target": "list-repos",
+            "params": {
+                "owner": "dailymotion"
+            }
         },
         {
             "title": "Browse Home",
@@ -58,7 +69,14 @@
         },
         "list-repos": {
             "type": "list",
-            "command": "./examples/github/list-repos.mjs"
+            "command": "./examples/github/list-repos.mjs --owner {{ .params.owner }}",
+            "params": [
+                {
+                    "name": "owner",
+                    "title": "Owner",
+                    "type": "textfield"
+                }
+            ]
         },
         "copy-password": {
             "type": "list",

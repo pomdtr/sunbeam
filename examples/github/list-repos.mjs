@@ -1,12 +1,19 @@
 #!/usr/bin/env zx
 
-const res = await $`gh api /users/pomdtr/repos --paginate --cache 3600s`;
+const owner = argv.owner;
+
+if (!owner) {
+  console.error("Please specify the owner");
+  process.exit(1);
+}
+
+const res = await $`gh api /users/${owner}/repos --cache 3600s`;
 const repos = JSON.parse(res);
 
 const items = repos.map((repo) => ({
   title: repo.name,
   subtitle: repo.owner.login,
-  accessories: [`${repo.stargazers_count} ⭐`],
+  accessories: [`${repo.language}`, `${repo.stargazers_count} ⭐`],
   actions: [
     {
       type: "open-url",
