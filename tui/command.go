@@ -106,7 +106,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case ListOutput:
 		if c.list == nil {
 			c.currentView = "list"
-			c.list = NewList(c.command.Dynamic, c.command.ShowDetail)
+			c.list = NewList(c.command.Dynamic)
 			c.list.SetItems(msg)
 			c.list.SetSize(c.width, c.height)
 			return c, c.list.Init()

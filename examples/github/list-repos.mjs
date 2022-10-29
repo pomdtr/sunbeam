@@ -4,8 +4,9 @@ const res = await $`gh api /users/pomdtr/repos --paginate --cache 3600s`;
 const repos = JSON.parse(res);
 
 const items = repos.map((repo) => ({
-  title: repo.full_name,
-  subtitle: `${repo.stargazers_count} ⭐`,
+  title: repo.name,
+  subtitle: repo.owner.login,
+  accessories: [`${repo.stargazers_count} ⭐`],
   actions: [
     {
       type: "open-url",

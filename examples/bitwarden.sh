@@ -6,6 +6,7 @@ bw list items | jq -cM '.[] | {
     actions: [
         {
             type: "copy",
+            title: "Copy Password",
             shortcut: "enter",
             content: .login.password
         }

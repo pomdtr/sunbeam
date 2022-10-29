@@ -17,7 +17,7 @@ func NewFooter(actions ...Action) *Footer {
 	keymap := KeyMap{actions: actions}
 	m := help.New()
 	m.Styles.ShortKey = DefaultStyles.Primary
-	m.Styles.ShortDesc = DefaultStyles.Secondary
+	m.Styles.ShortDesc = DefaultStyles.Primary
 	m.Styles.ShortSeparator = DefaultStyles.Primary
 
 	return &Footer{

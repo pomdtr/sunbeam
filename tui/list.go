@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"log"
 	"os/exec"
 	"sort"
 	"strings"
@@ -21,7 +22,7 @@ type ListItem struct {
 	Title       string
 	Subtitle    string
 	Accessories []string
-	Detail      api.DetailData
+	Detail      string
 }
 
 func NewListItem(extensionName string, item api.ScriptItem) ListItem {
@@ -33,13 +34,13 @@ func NewListItem(extensionName string, item api.ScriptItem) ListItem {
 	return ListItem{
 		Title:       item.Title,
 		Subtitle:    item.Subtitle,
+		Detail:      item.Detail.Command,
 		Actions:     actions,
 		Accessories: item.Accessories,
 	}
 }
 
 func (i ListItem) String() string {
-
 	if i.Subtitle == "" {
 		return i.Title
 	}
@@ -47,11 +48,35 @@ func (i ListItem) String() string {
 }
 
 func (i ListItem) View(width int) string {
-	title := DefaultStyles.Primary.Render(i.Title)
-	subtitle := DefaultStyles.Secondary.Render(i.Subtitle)
-	accessories := DefaultStyles.Secondary.Render(strings.Join(i.Accessories, " • "))
+	if width == 0 {
+		return ""
+	}
+	accessories := strings.Join(i.Accessories, " • ")
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, title, " ", subtitle, " ", accessories)
+	// No place to display the accessories, just return the title
+	if len(accessories) > width {
+		title := i.Title[:utils.Min(len(i.Title), width)]
+		return DefaultStyles.Primary.Render(title)
+	}
+
+	if len(i.Title)+1+len(accessories) > width {
+		availableWidth := width - len(accessories) - 1
+		title := i.Title[:utils.Min(len(i.Title), availableWidth)]
+
+		return lipgloss.JoinHorizontal(lipgloss.Top, DefaultStyles.Primary.Render(title), " ", DefaultStyles.Secondary.Render(accessories))
+	}
+
+	if len(i.Title)+1+len(i.Subtitle)+1+len(accessories) > width {
+		availableWidth := width - len(i.Title) - len(accessories) - 2
+		subtitle := i.Subtitle[:availableWidth]
+
+		return lipgloss.JoinHorizontal(lipgloss.Top, DefaultStyles.Primary.Render(i.Title), " ", DefaultStyles.Secondary.Render(subtitle), " ", DefaultStyles.Secondary.Render(accessories))
+	}
+
+	blankWidth := width - len(i.Title) - 1 - len(i.Subtitle) - len(accessories)
+	blanks := strings.Repeat(" ", blankWidth)
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, DefaultStyles.Primary.Render(i.Title), " ", DefaultStyles.Secondary.Render(i.Subtitle), blanks, DefaultStyles.Secondary.Render(accessories))
 }
 
 type List struct {
@@ -61,15 +86,14 @@ type List struct {
 	footer    *Footer
 	viewport  *viewport.Model
 
-	dynamic    bool
-	showDetail bool
+	dynamic bool
 
 	startIndex, selectedIndex int
 	items                     []ListItem
 	filteredItems             []ListItem
 }
 
-func NewList(dynamic bool, showDetail bool) *List {
+func NewList(dynamic bool) *List {
 	t := textinput.New()
 	t.Prompt = "  "
 	t.Placeholder = "Search..."
@@ -78,11 +102,10 @@ func NewList(dynamic bool, showDetail bool) *List {
 	f := NewFooter()
 
 	return &List{
-		textInput:  &t,
-		viewport:   &v,
-		dynamic:    dynamic,
-		showDetail: showDetail,
-		footer:     f,
+		textInput: &t,
+		viewport:  &v,
+		dynamic:   dynamic,
+		footer:    f,
 	}
 }
 
@@ -126,6 +149,11 @@ type DebounceMsg struct {
 	cmd   tea.Cmd
 }
 
+func (c *List) filterItems(term string) tea.Cmd {
+	c.filteredItems = filterItems(term, c.items)
+	return c.updateIndexes(0)
+}
+
 func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 	var cmds []tea.Cmd
 
@@ -147,6 +175,8 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 		case tea.KeyEscape:
 			if c.textInput.Value() != "" {
 				c.textInput.SetValue("")
+				cmd := c.filterItems("")
+				return c, cmd
 			} else {
 				return c, PopCmd
 			}
@@ -185,8 +215,7 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 				}
 			}))
 		} else {
-			c.filteredItems = filterItems(t.Value(), c.items)
-			cmd := c.updateIndexes(0)
+			cmd := c.filterItems(t.Value())
 			cmds = append(cmds, cmd)
 		}
 	}
@@ -213,7 +242,7 @@ func (c *List) updateIndexes(selectedIndex int) tea.Cmd {
 
 	c.footer.SetActions(selectedItem.Actions)
 
-	if selectedItem.Detail.Command == "" {
+	if selectedItem.Detail == "" {
 		return nil
 	}
 
@@ -223,7 +252,7 @@ func (c *List) updateIndexes(selectedIndex int) tea.Cmd {
 				return c.SelectedItem() == selectedItem
 			},
 			cmd: func() tea.Msg {
-				res, err := exec.Command("sh", "-c", selectedItem.Detail.Command).Output()
+				res, err := exec.Command("sh", "-c", selectedItem.Detail).Output()
 				if err != nil {
 					return NewErrorCmd("Error running command: %s", err)
 				}
@@ -258,7 +287,7 @@ func (c *List) listView(width int) string {
 
 func (c *List) View() string {
 	var embed string
-	if c.showDetail {
+	if c.SelectedItem() != nil && c.SelectedItem().Detail != "" {
 		availableWidth := c.width - c.viewport.Width - 3
 		separator := make([]string, c.height+1)
 		for i := 0; i <= c.height; i++ {
@@ -268,6 +297,7 @@ func (c *List) View() string {
 	} else {
 		embed = c.listView(c.width)
 	}
+	log.Println(c.width)
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), embed, c.footer.View())
 }
 

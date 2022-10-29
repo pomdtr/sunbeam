@@ -18,26 +18,15 @@ type SunbeamCommand struct {
 	Type    string     `json:"type"`
 	Params  []FormItem `json:"params"`
 	Command string     `json:"command"`
-	DetailParam
-	ListParam
+
+	// Detail Properties
+	Format string `json:"format"`
+	// Remote Properties
+	Dynamic bool `json:"dynamic"`
 
 	Extension string
 	Url       url.URL
 	Root      url.URL
-}
-
-type ListParam struct {
-	ShowDetail bool `json:"showDetail"`
-	Dynamic    bool `json:"dynamic"`
-}
-
-type DetailParam struct {
-	Format string `json:"format"`
-}
-
-type DetailData struct {
-	DetailParam
-	Command string `json:"command"`
 }
 
 type FormItem struct {
@@ -129,9 +118,12 @@ func (c SunbeamCommand) RemoteRun(input CommandInput) (string, error) {
 }
 
 type ScriptItem struct {
-	Title       string         `json:"title"`
-	Subtitle    string         `json:"subtitle"`
-	Detail      DetailData     `json:"detail"`
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+	Detail   struct {
+		Command string `json:"command"`
+		Format  string `json:"format"`
+	} `json:"detail"`
 	Actions     []ScriptAction `json:"actions"`
 	Accessories []string       `json:"accessories"`
 }

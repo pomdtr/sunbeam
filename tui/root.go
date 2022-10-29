@@ -128,7 +128,7 @@ func Start() error {
 		}
 	}
 
-	list := NewList(false, false)
+	list := NewList(false)
 	list.SetItems(rootItems)
 	rootContainer := RootContainer{List: list}
 	return Draw(&rootContainer)
