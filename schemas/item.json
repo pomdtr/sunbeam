@@ -2,6 +2,10 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://github.com/pomdtr/sunbeam/item",
     "type": "object",
+    "required": [
+        "title",
+        "actions"
+    ],
     "properties": {
         "title": {
             "type": "string"
@@ -10,9 +14,16 @@
             "type": "string"
         },
         "actions": {
-            "type": "object",
-            "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
                 "$ref": "#/definitions/action"
+            }
+        },
+        "accessories": {
+            "type": "array",
+            "items": {
+                "type": "string"
             }
         }
     },
@@ -21,7 +32,7 @@
             "type": "object",
             "required": [
                 "type",
-                "title"
+                "shortcut"
             ],
             "properties": {
                 "type": {
@@ -36,6 +47,9 @@
                     ]
                 },
                 "title": {
+                    "type": "string"
+                },
+                "shortcut": {
                     "type": "string"
                 }
             },
@@ -110,6 +124,7 @@
                     },
                     "then": {
                         "required": [
+                            "title",
                             "command"
                         ],
                         "properties": {
@@ -129,6 +144,7 @@
                     },
                     "then": {
                         "required": [
+                            "title",
                             "target"
                         ],
                         "properties": {
@@ -153,13 +169,12 @@
                         }
                     },
                     "then": {
-                        "required": [
-                            "params"
-                        ],
-                        "params": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
+                        "properties": {
+                            "params": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
                             }
                         }
                     }

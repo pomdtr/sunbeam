@@ -4,7 +4,8 @@
     "rootItems": [
         {
             "title": "Show Suggestions",
-            "target": "git-commit"
+            "subtitle": "Google",
+            "target": "google-search"
         },
         {
             "title": "Show Random List",
@@ -12,14 +13,17 @@
         },
         {
             "title": "Copy Password",
+            "subtitle": "Bitwarden",
             "target": "copy-password"
         },
         {
             "title": "List Repositories",
+            "subtitle": "GitHub",
             "target": "list-repos"
         },
         {
             "title": "Browse Home",
+            "subtitle": "System",
             "target": "browse-files",
             "params": {
                 "root": "/Users/a.lacoin"
@@ -28,12 +32,14 @@
         {
             "title": "Browse Root",
             "target": "browse-files",
+            "subtitle": "System",
             "params": {
                 "root": "/"
             }
         },
         {
             "title": "List Airflow PRs",
+            "subtitle": "Dailymotion",
             "target": "list-prs",
             "params": {
                 "repository": "dailymotion/dwh-dags"

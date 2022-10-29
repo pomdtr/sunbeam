@@ -18,7 +18,7 @@ type Action interface {
 	Shortcut() string
 }
 
-func NewAction(scriptAction api.ScriptAction) Action {
+func NewAction(extension string, scriptAction api.ScriptAction) Action {
 	title := scriptAction.Title
 	if title == "" {
 		title = strings.Title(scriptAction.Type)
@@ -31,7 +31,7 @@ func NewAction(scriptAction api.ScriptAction) Action {
 	case "copy":
 		return NewCopyAction(title, scriptAction.Shortcut, scriptAction.Content)
 	case "launch":
-		return NewLaunchAction(title, scriptAction.Shortcut, scriptAction.Extension, scriptAction.Target, scriptAction.Params)
+		return NewLaunchAction(title, scriptAction.Shortcut, extension, scriptAction.Target, scriptAction.Params)
 	case "reload":
 		return NewReloadAction(title, scriptAction.Shortcut, scriptAction.Params)
 	case "exec":

@@ -129,11 +129,11 @@ func (c SunbeamCommand) RemoteRun(input CommandInput) (string, error) {
 }
 
 type ScriptItem struct {
-	Icon     string         `json:"icon"`
-	Title    string         `json:"title"`
-	Subtitle string         `json:"subtitle"`
-	Detail   DetailData     `json:"detail"`
-	Actions  []ScriptAction `json:"actions"`
+	Title       string         `json:"title"`
+	Subtitle    string         `json:"subtitle"`
+	Detail      DetailData     `json:"detail"`
+	Actions     []ScriptAction `json:"actions"`
+	Accessories []string       `json:"accessories"`
 }
 
 type ScriptAction struct {
@@ -142,7 +142,6 @@ type ScriptAction struct {
 	Title       string            `json:"title"`
 	Path        string            `json:"path"`
 	Params      map[string]string `json:"params"`
-	Extension   string            `json:"extension"`
 	Target      string            `json:"target,omitempty"`
 	Command     string            `json:"command,omitempty"`
 	Application string            `json:"application,omitempty"`

@@ -33,6 +33,7 @@ func (c *Loading) headerView() string {
 
 func (c *Loading) SetSize(width, height int) {
 	c.width = width
+	c.footer.Width = width
 	c.height = height
 }
 

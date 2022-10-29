@@ -17,34 +17,41 @@ import (
 )
 
 type ListItem struct {
-	Actions  []Action
-	Title    string
-	Subtitle string
-	Detail   api.DetailData
+	Actions     []Action
+	Title       string
+	Subtitle    string
+	Accessories []string
+	Detail      api.DetailData
 }
 
 func NewListItem(extensionName string, item api.ScriptItem) ListItem {
 	actions := make([]Action, len(item.Actions))
 	for i, scriptAction := range item.Actions {
-		if scriptAction.Extension == "" {
-			scriptAction.Extension = extensionName
-		}
-		actions[i] = NewAction(scriptAction)
+		actions[i] = NewAction(extensionName, scriptAction)
 	}
 
 	return ListItem{
-		Title:    item.Title,
-		Subtitle: item.Subtitle,
-		Actions:  actions,
+		Title:       item.Title,
+		Subtitle:    item.Subtitle,
+		Actions:     actions,
+		Accessories: item.Accessories,
 	}
 }
 
-func (i ListItem) View() string {
-	if i.Subtitle != "" {
-		return fmt.Sprintf("%s - %s", i.Title, i.Subtitle)
-	} else {
+func (i ListItem) String() string {
+
+	if i.Subtitle == "" {
 		return i.Title
 	}
+	return fmt.Sprintf("%s %s", i.Title, i.Subtitle)
+}
+
+func (i ListItem) View(width int) string {
+	title := DefaultStyles.Primary.Render(i.Title)
+	subtitle := DefaultStyles.Secondary.Render(i.Subtitle)
+	accessories := DefaultStyles.Secondary.Render(strings.Join(i.Accessories, " • "))
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, title, " ", subtitle, " ", accessories)
 }
 
 type List struct {
@@ -226,24 +233,25 @@ func (c *List) updateIndexes(selectedIndex int) tea.Cmd {
 	})
 }
 
-func (c *List) listView(availableWidth int) string {
+func (c *List) listView(width int) string {
 	rows := make([]string, 0)
 	items := c.filteredItems
 
 	endIndex := utils.Min(c.startIndex+c.height+1, len(items))
 	for i := c.startIndex; i < endIndex; i++ {
-		var itemView string
+		var prompt string
 		if i == c.selectedIndex {
-			itemView = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("> %s", items[i].View()))
+			prompt = "> "
 		} else {
-			itemView = fmt.Sprintf("  %s", items[i].View())
+			prompt = "  "
 		}
-		itemView = lipgloss.NewStyle().PaddingRight(availableWidth - lipgloss.Width(itemView)).Render(itemView)
+		itemWidth := utils.Max(width-4, 0)
+		itemView := lipgloss.JoinHorizontal(lipgloss.Top, prompt, items[i].View(itemWidth))
 		rows = append(rows, itemView)
 	}
 
 	for i := len(rows) - 1; i < c.height; i++ {
-		rows = append(rows, strings.Repeat(" ", availableWidth))
+		rows = append(rows, strings.Repeat(" ", width))
 	}
 	return strings.Join(rows, "\n")
 }
@@ -291,14 +299,6 @@ func NewReloadCmd(input api.CommandInput) func() tea.Msg {
 	}
 }
 
-// Rank defines a rank for a given item.
-type Rank struct {
-	// The index of the item in the original input.
-	Index int
-	// Indices of the actual word that were matched against the filter term.
-	MatchedIndexes []int
-}
-
 // filterItems uses the sahilm/fuzzy to filter through the list.
 // This is set by default.
 func filterItems(term string, items []ListItem) []ListItem {
@@ -307,13 +307,14 @@ func filterItems(term string, items []ListItem) []ListItem {
 	}
 	targets := make([]string, len(items))
 	for i, item := range items {
-		targets[i] = strings.Join([]string{item.Title, item.Subtitle}, " ")
+		targets[i] = item.String()
 	}
 	var ranks = fuzzy.Find(term, targets)
 	sort.Stable(ranks)
 	filteredItems := make([]ListItem, len(ranks))
 	for i, r := range ranks {
-		filteredItems[i] = items[r.Index]
+		item := items[r.Index]
+		filteredItems[i] = item
 	}
 	return filteredItems
 }

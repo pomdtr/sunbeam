@@ -15,9 +15,13 @@ type Footer struct {
 
 func NewFooter(actions ...Action) *Footer {
 	keymap := KeyMap{actions: actions}
-	help.NewModel()
+	m := help.New()
+	m.Styles.ShortKey = DefaultStyles.Primary
+	m.Styles.ShortDesc = DefaultStyles.Secondary
+	m.Styles.ShortSeparator = DefaultStyles.Primary
+
 	return &Footer{
-		Model:  help.New(),
+		Model:  m,
 		KeyMap: keymap,
 	}
 }
