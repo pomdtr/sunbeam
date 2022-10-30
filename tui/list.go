@@ -171,13 +171,13 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyDown, tea.KeyTab, tea.KeyCtrlJ:
+		case tea.KeyDown, tea.KeyCtrlN, tea.KeyCtrlJ:
 			if c.selectedIndex < len(c.filteredItems)-1 {
 				cmd := c.updateIndexes(c.selectedIndex + 1)
 
 				return c, cmd
 			}
-		case tea.KeyUp, tea.KeyShiftTab, tea.KeyCtrlK:
+		case tea.KeyUp, tea.KeyCtrlP, tea.KeyCtrlK:
 			if c.selectedIndex > 0 {
 				cmd := c.updateIndexes(c.selectedIndex - 1)
 				return c, cmd
@@ -288,7 +288,7 @@ func (c *List) listView(width int) string {
 		} else {
 			prompt = "  "
 		}
-		itemWidth := utils.Max(width-1, 0)
+		itemWidth := utils.Max(width-2, 0)
 		itemView := lipgloss.JoinHorizontal(lipgloss.Top, prompt, items[i].View(itemWidth))
 		rows = append(rows, itemView)
 	}
