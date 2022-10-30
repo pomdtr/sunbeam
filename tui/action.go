@@ -9,10 +9,14 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-type Action interface {
-	Title() string
+type Action struct {
+	Title string
+	ActionRunner
+	Shortcut string
+}
+
+type ActionRunner interface {
 	Exec() tea.Cmd
-	Shortcut() string
 }
 
 func NewAction(extension string, scriptAction api.ScriptAction) Action {
@@ -20,46 +24,48 @@ func NewAction(extension string, scriptAction api.ScriptAction) Action {
 	if title == "" {
 		title = strings.Title(scriptAction.Type)
 	}
+	var runner ActionRunner
 	switch scriptAction.Type {
 	case "open-url":
-		return NewOpenUrlAction(title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
+		runner = OpenUrlRunner{
+			url:         scriptAction.Url,
+			application: scriptAction.Application,
+		}
 	case "open-file":
-		return NewOpenFileAction(title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
+		runner = OpenFileAction{
+			path:        scriptAction.Path,
+			application: scriptAction.Application,
+		}
 	case "copy":
-		return NewCopyAction(title, scriptAction.Shortcut, scriptAction.Content)
+		runner = CopyAction{
+			content: scriptAction.Content,
+		}
 	case "run":
-		return NewRunAction(title, scriptAction.Shortcut, extension, scriptAction.Target, scriptAction.Params)
+		runner = RunAction{
+			extension: extension,
+			target:    scriptAction.Target,
+			params:    scriptAction.Params,
+		}
 	case "reload":
-		return NewReloadAction(title, scriptAction.Shortcut, scriptAction.Params)
+		runner = ReloadAction{
+			params: scriptAction.Params,
+		}
 	default:
-		return NewUnknownAction(scriptAction.Type)
+		runner = UnknownAction{}
+	}
+
+	return Action{
+		Shortcut:     scriptAction.Shortcut,
+		ActionRunner: runner,
 	}
 }
 
-type baseAction struct {
-	title string
-	key   string
-}
-
-func (b baseAction) Title() string {
-	return b.title
-}
-
-func (b baseAction) Shortcut() string {
-	return b.key
-}
-
 type CopyAction struct {
-	baseAction
-	Content string
-}
-
-func NewCopyAction(title string, key string, content string) Action {
-	return CopyAction{baseAction: baseAction{title: title, key: key}, Content: content}
+	content string
 }
 
 func (c CopyAction) Exec() tea.Cmd {
-	err := clipboard.WriteAll(c.Content)
+	err := clipboard.WriteAll(c.content)
 	if err != nil {
 		return NewErrorCmd("failed to copy %s to clipboard", err)
 	}
@@ -67,14 +73,9 @@ func (c CopyAction) Exec() tea.Cmd {
 }
 
 type RunAction struct {
-	baseAction
 	extension string
 	target    string
 	params    map[string]string
-}
-
-func NewRunAction(title string, key string, extensionName string, target string, params map[string]string) Action {
-	return RunAction{baseAction: baseAction{title: title, key: key}, extension: extensionName, target: target, params: params}
 }
 
 func (p RunAction) Exec() tea.Cmd {
@@ -87,12 +88,7 @@ func (p RunAction) Exec() tea.Cmd {
 }
 
 type ReloadAction struct {
-	baseAction
 	params map[string]string
-}
-
-func NewReloadAction(title string, key string, params map[string]string) Action {
-	return ReloadAction{baseAction: baseAction{title: title, key: key}, params: params}
 }
 
 func (r ReloadAction) Exec() tea.Cmd {
@@ -100,17 +96,12 @@ func (r ReloadAction) Exec() tea.Cmd {
 	return NewReloadCmd(input)
 }
 
-type OpenUrlAction struct {
-	baseAction
+type OpenUrlRunner struct {
 	application string
 	url         string
 }
 
-func NewOpenUrlAction(title string, key string, url string, application string) Action {
-	return OpenUrlAction{baseAction: baseAction{title: title, key: key}, application: application, url: url}
-}
-
-func (o OpenUrlAction) Exec() tea.Cmd {
+func (o OpenUrlRunner) Exec() tea.Cmd {
 	var err error
 	if o.application != "" {
 		err = open.RunWith(o.url, o.application)
@@ -125,13 +116,8 @@ func (o OpenUrlAction) Exec() tea.Cmd {
 }
 
 type OpenFileAction struct {
-	baseAction
 	application string
 	path        string
-}
-
-func NewOpenFileAction(title string, key string, path string, application string) Action {
-	return OpenFileAction{baseAction: baseAction{title: title, key: key}, application: application, path: path}
 }
 
 func (o OpenFileAction) Exec() tea.Cmd {
@@ -149,13 +135,9 @@ func (o OpenFileAction) Exec() tea.Cmd {
 }
 
 type UnknownAction struct {
-	baseAction
-}
-
-func NewUnknownAction(actionType string) Action {
-	return UnknownAction{baseAction: baseAction{title: "Unknown"}}
+	actionType string
 }
 
 func (u UnknownAction) Exec() tea.Cmd {
-	return nil
+	return NewErrorCmd("Unknown action type: %s", u.actionType)
 }

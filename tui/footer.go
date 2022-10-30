@@ -34,9 +34,9 @@ type KeyMap struct {
 func (k KeyMap) ShortHelp() []key.Binding {
 	bindings := make([]key.Binding, len(k.actions))
 	for i, action := range k.actions {
-		prettyKey := strings.ReplaceAll(action.Shortcut(), "enter", "↵")
+		prettyKey := strings.ReplaceAll(action.Shortcut, "enter", "↵")
 		prettyKey = strings.ReplaceAll(prettyKey, "ctrl", "⌃")
-		bindings[i] = key.NewBinding(key.WithKeys(prettyKey), key.WithHelp(prettyKey, action.Title()))
+		bindings[i] = key.NewBinding(key.WithKeys(prettyKey), key.WithHelp(prettyKey, action.Title))
 	}
 	return bindings
 }

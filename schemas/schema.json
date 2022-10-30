@@ -267,10 +267,14 @@
             "type": "object",
             "required": [
                 "type",
-                "id"
+                "id",
+                "title"
             ],
             "properties": {
                 "id": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 },
                 "type": {
@@ -293,13 +297,7 @@
                         }
                     },
                     "then": {
-                        "required": [
-                            "title"
-                        ],
                         "properties": {
-                            "title": {
-                                "type": "string"
-                            },
                             "placeholder": {
                                 "type": "string"
                             }
@@ -319,33 +317,11 @@
                             "title"
                         ],
                         "properties": {
-                            "title": {
-                                "type": "string"
-                            },
                             "placeholder": {
                                 "type": "string"
                             },
                             "secure": {
                                 "type": "boolean"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "password"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "title"
-                        ],
-                        "properties": {
-                            "title": {
-                                "type": "string"
                             }
                         }
                     }
@@ -385,18 +361,15 @@
                     },
                     "then": {
                         "required": [
-                            "data",
-                            "title"
+                            "data"
                         ],
                         "properties": {
-                            "title": {
-                                "type": "string"
-                            },
                             "placeholder": {
                                 "type": "string"
                             },
                             "data": {
                                 "type": "array",
+                                "minItems": 1,
                                 "items": {
                                     "type": "object",
                                     "required": [

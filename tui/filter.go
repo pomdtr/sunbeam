@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -27,6 +28,7 @@ type Filter struct {
 
 func (f *Filter) Filter(term string) {
 	f.matches = fuzzy.Find(term, f.choices)
+	log.Println(f.matches)
 
 	// If the search field is empty, let's not display the matches
 	// (none), but rather display all possible choices.

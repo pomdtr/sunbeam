@@ -135,14 +135,51 @@
             ]
         },
         "git-commit": {
-            "command": "git commit -m {{ .params.message }}",
+            "command": "git commit -m {{ .params.message }} {{ .params.allowEmpty }}",
             "output": "silent",
             "params": [
                 {
-                    "id": "message",
-                    "title": "message",
+                    "id": "textfield",
+                    "title": "textfield",
+                    "type": "textfield",
+                    "placeholder": "textfield"
+                },
+                {
+                    "id": "password",
+                    "title": "password",
                     "secure": true,
-                    "type": "textfield"
+                    "type": "textfield",
+                    "placeholder": "password"
+                },
+                {
+                    "id": "textarea",
+                    "title": "textarea",
+                    "type": "textarea",
+                    "placeholder": "textarea"
+                },
+                {
+                    "id": "checkbox",
+                    "title": "checkbox",
+                    "type": "checkbox",
+                    "label": "Allow Empty",
+                    "true_substitution": "--allow-empty",
+                    "false_substitution": ""
+                },
+                {
+                    "id": "dropdown",
+                    "title": "dropdown",
+                    "type": "dropdown",
+                    "placeholder": "dropdown",
+                    "data": [
+                        {
+                            "title": "value1",
+                            "value": "value1"
+                        },
+                        {
+                            "title": "value2",
+                            "value": "value1"
+                        }
+                    ]
                 }
             ]
         },

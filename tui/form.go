@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
@@ -9,39 +10,60 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Form struct {
 	title      string
 	footer     *Footer
-	inputs     []FormInput
+	viewport   viewport.Model
+	items      []FormItem
 	focusIndex int
 	width      int
 	height     int
 }
 
+type FormItem struct {
+	Required bool
+	Title    string
+	Id       string
+	FormInput
+}
+
 type FormInput interface {
 	Focus() tea.Cmd
-	Id() string
 	Blur()
+
 	Value() string
+
 	View() string
 	Update(tea.Msg) (FormInput, tea.Cmd)
 }
 
-func NewFormInput(formItem api.FormItem) FormInput {
+func NewFormItem(formItem api.FormItem) FormItem {
+	var input FormInput
 	switch formItem.Type {
 	case "textfield":
 		ti := NewTextInput(formItem)
-		return &ti
+		input = &ti
 	case "textarea":
 		ta := NewTextArea(formItem)
-		return &ta
+		input = &ta
 	case "dropdown":
 		dd := NewDropDown(formItem)
-		return &dd
+		input = &dd
+	case "checkbox":
+		cb := NewCheckbox(formItem)
+		input = &cb
 	default:
-		return nil
+		input = nil
+	}
+
+	return FormItem{
+		Required:  formItem.Required,
+		Title:     formItem.Title,
+		Id:        formItem.Id,
+		FormInput: input,
 	}
 }
 
@@ -54,17 +76,14 @@ type TextArea struct {
 func NewTextArea(formItem api.FormItem) TextArea {
 	ta := textarea.New()
 	ta.Placeholder = formItem.Placeholder
-	ta.Prompt = "┃ "
+	ta.Prompt = ""
+	ta.SetWidth(40)
+	ta.SetHeight(5)
 
 	return TextArea{
-		id:     formItem.Id,
 		Model:  ta,
 		secure: formItem.Secure,
 	}
-}
-
-func (ta TextArea) Id() string {
-	return ta.id
 }
 
 func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
@@ -76,33 +95,21 @@ func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 type TextInput struct {
 	id string
 	textinput.Model
-	secure bool
 }
 
 func NewTextInput(formItem api.FormItem) TextInput {
 	ti := textinput.New()
-	ti.Prompt = "> "
 	ti.Placeholder = formItem.Placeholder
 	ti.PlaceholderStyle = DefaultStyles.Secondary
-	ti.CharLimit = 32
+	ti.Width = 38
+	ti.Prompt = " "
+	if formItem.Secure {
+		ti.EchoMode = textinput.EchoPassword
+	}
 
 	return TextInput{
-		id:     formItem.Id,
-		Model:  ti,
-		secure: formItem.Secure,
+		Model: ti,
 	}
-}
-
-func (ti TextInput) Id() string {
-	return ti.id
-}
-
-func (ti TextInput) View() string {
-	if ti.secure {
-		password := strings.Repeat("*", len(ti.Value()))
-		ti.SetValue(password)
-	}
-	return ti.Model.View()
 }
 
 func (ta *TextInput) Update(msg tea.Msg) (FormInput, tea.Cmd) {
@@ -111,12 +118,87 @@ func (ta *TextInput) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	return ta, cmd
 }
 
+func (ti TextInput) View() string {
+	modelView := ti.Model.View()
+	paddingRight := 0
+	if ti.Model.Value() == "" {
+		paddingRight = ti.Width - lipgloss.Width(modelView) + 2
+	}
+	return fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
+}
+
+type Checkbox struct {
+	id                 string
+	focused            bool
+	checked            bool
+	title              string
+	width              int
+	label              string
+	true_substitution  string
+	false_substitution string
+}
+
+func NewCheckbox(formItem api.FormItem) Checkbox {
+	return Checkbox{
+		label:              formItem.Label,
+		title:              formItem.Title,
+		width:              40,
+		true_substitution:  formItem.TrueSubstitution,
+		false_substitution: formItem.FalseSubstitution,
+	}
+}
+
+func (c *Checkbox) Focus() tea.Cmd {
+	c.focused = true
+	return nil
+}
+
+func (c *Checkbox) Blur() {
+	c.focused = false
+}
+
+func (c Checkbox) Update(msg tea.Msg) (FormInput, tea.Cmd) {
+	if !c.focused {
+		return &c, nil
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			c.checked = !c.checked
+		}
+	}
+
+	return &c, nil
+}
+
+func (c Checkbox) View() string {
+	var checkbox string
+	if c.checked {
+		checkbox = fmt.Sprintf(" [ ] %s", c.label)
+	} else {
+		checkbox = fmt.Sprintf(" [x] %s", c.label)
+	}
+
+	paddingRight := utils.Max(c.width-len(checkbox), 0)
+	return fmt.Sprintf("%s%s", checkbox, strings.Repeat(" ", paddingRight))
+}
+
+func (c Checkbox) Value() string {
+	if c.checked {
+		return c.true_substitution
+	}
+
+	return c.false_substitution
+}
+
 type DropDown struct {
 	id        string
 	data      map[string]string
 	textInput textinput.Model
+	selection string
 	filter    Filter
-	focused   bool
 }
 
 func NewDropDown(formItem api.FormItem) DropDown {
@@ -128,10 +210,10 @@ func NewDropDown(formItem api.FormItem) DropDown {
 	}
 
 	ti := textinput.New()
-	ti.Focus()
+	ti.Prompt = " "
 	ti.Placeholder = formItem.Placeholder
 	ti.PlaceholderStyle = DefaultStyles.Secondary
-	ti.Width = 20
+	ti.Width = 38
 
 	viewport := viewport.New(20, 3)
 	filter := Filter{
@@ -144,33 +226,37 @@ func NewDropDown(formItem api.FormItem) DropDown {
 	}
 
 	return DropDown{
-		id:        formItem.Id,
 		textInput: ti,
 		filter:    filter,
 	}
 }
 
 func (d DropDown) View() string {
-	if !d.focused || d.Value() != "" {
-		return d.textInput.View()
-	} else {
-		return lipgloss.JoinVertical(lipgloss.Left, d.textInput.View(), d.filter.View())
+	modelView := d.textInput.View()
+	paddingRight := 0
+	if d.textInput.Value() == "" {
+		paddingRight = d.textInput.Width - lipgloss.Width(modelView) + 2
 	}
-}
-
-func (d DropDown) Id() string {
-	return d.id
+	textInputView := fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
+	if !d.textInput.Focused() {
+		return textInputView
+	} else if d.selection != "" && d.selection == d.textInput.Value() {
+		return textInputView
+	} else if len(d.filter.matches) == 0 {
+		return textInputView
+	} else {
+		separator := strings.Repeat("─", d.textInput.Width+2)
+		d.filter.viewport.Height = len(d.filter.matches)
+		return lipgloss.JoinVertical(lipgloss.Left, textInputView, separator, d.filter.View())
+	}
 }
 
 func (d DropDown) Value() string {
-	if len(d.filter.matches) > 0 && d.filter.matches[0].Str == d.textInput.Value() {
-		return d.textInput.Value()
-	}
-	return ""
+	return d.selection
 }
 
 func (d DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
-	if !d.focused {
+	if !d.textInput.Focused() {
 		return &d, nil
 	}
 
@@ -181,10 +267,11 @@ func (d DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 			if len(d.filter.matches) == 0 {
 				return &d, nil
 			}
-			selection := d.filter.matches[d.filter.cursor]
-			d.textInput.SetValue(selection.Str)
+			selection := d.filter.matches[d.filter.cursor].Str
+			d.selection = selection
+			d.textInput.SetValue(selection)
 			d.textInput.CursorEnd()
-			d.filter.Filter(selection.Str)
+			return &d, nil
 		}
 	}
 
@@ -194,6 +281,7 @@ func (d DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	if ti.Value() != d.textInput.Value() {
+		d.selection = ""
 		d.filter.Filter(ti.Value())
 	} else {
 		d.filter, cmd = d.filter.Update(msg)
@@ -205,11 +293,10 @@ func (d DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 }
 
 func (d *DropDown) Focus() tea.Cmd {
-	d.focused = true
-	return nil
+	return d.textInput.Focus()
 }
 
-func (d DropDown) Blur() {
+func (d *DropDown) Blur() {
 	d.textInput.Blur()
 }
 
@@ -223,12 +310,14 @@ func NewSubmitCmd(values map[string]string) tea.Cmd {
 	}
 }
 
-func NewFormContainer(inputs []FormInput) *Form {
+func NewForm(items []FormItem) *Form {
 	footer := NewFooter()
+	viewport := viewport.New(0, 0)
 
 	return &Form{
-		footer: footer,
-		inputs: inputs,
+		footer:   footer,
+		viewport: viewport,
+		items:    items,
 	}
 }
 
@@ -237,10 +326,10 @@ func (c *Form) headerView() string {
 }
 
 func (c Form) Init() tea.Cmd {
-	if len(c.inputs) == 0 {
+	if len(c.items) == 0 {
 		return nil
 	}
-	return c.inputs[0].Focus()
+	return c.items[0].Focus()
 }
 
 func (c *Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
@@ -251,9 +340,9 @@ func (c *Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
 		case tea.KeyEscape:
 			return c, PopCmd
 		case tea.KeyCtrlS:
-			values := make(map[string]string, len(c.inputs))
-			for _, input := range c.inputs {
-				values[input.Id()] = input.Value()
+			values := make(map[string]string, len(c.items))
+			for _, input := range c.items {
+				values[input.Id] = input.Value()
 			}
 			return c, NewSubmitCmd(values)
 		// Set focus to next input
@@ -268,21 +357,21 @@ func (c *Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
 			}
 
 			// Cycle focus
-			if c.focusIndex == len(c.inputs) {
+			if c.focusIndex == len(c.items) {
 				c.focusIndex = 0
 			} else if c.focusIndex < 0 {
-				c.focusIndex = len(c.inputs) - 1
+				c.focusIndex = len(c.items) - 1
 			}
 
-			cmds := make([]tea.Cmd, len(c.inputs))
-			for i := 0; i <= len(c.inputs)-1; i++ {
+			cmds := make([]tea.Cmd, len(c.items))
+			for i := 0; i <= len(c.items)-1; i++ {
 				if i == c.focusIndex {
 					// Set focused state
-					cmds[i] = c.inputs[i].Focus()
+					cmds[i] = c.items[i].Focus()
 					continue
 				}
 				// Remove focused state
-				c.inputs[i].Blur()
+				c.items[i].Blur()
 			}
 
 			return c, tea.Batch(cmds...)
@@ -294,12 +383,12 @@ func (c *Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
 }
 
 func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
-	cmds := make([]tea.Cmd, len(c.inputs))
+	cmds := make([]tea.Cmd, len(c.items))
 
 	// Only text inputs with Focus() set will respond, so it's safe to simply
 	// update all of them here without any further logic.
-	for i := range c.inputs {
-		c.inputs[i], cmds[i] = c.inputs[i].Update(msg)
+	for i := range c.items {
+		c.items[i].FormInput, cmds[i] = c.items[i].Update(msg)
 	}
 
 	return tea.Batch(cmds...)
@@ -307,20 +396,38 @@ func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 
 func (c *Form) SetSize(width, height int) {
 	c.width = width
-	c.height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
 	c.footer.Width = width
+	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
+	c.viewport.Width = width
 }
 
 func (c *Form) View() string {
-	var formItems []string
-	var itemView string
-	for i := range c.inputs {
-		itemView = "\n" + c.inputs[i].View()
-		formItems = append(formItems, itemView)
+
+	maxTitleWidth := 0
+	for _, item := range c.items {
+		if lipgloss.Width(item.Title) > maxTitleWidth {
+			maxTitleWidth = lipgloss.Width(item.Title)
+		}
 	}
 
-	form := lipgloss.JoinVertical(lipgloss.Left, formItems...)
-	form = lipgloss.Place(c.width, c.height, lipgloss.Left, lipgloss.Top, form)
+	selectedBorder := lipgloss.NewStyle().Border(lipgloss.NormalBorder(), true).BorderForeground(lipgloss.Color("205"))
+	normalBorder := lipgloss.NewStyle().Border(lipgloss.NormalBorder(), true)
+	itemViews := make([]string, len(c.items))
+	for i, item := range c.items {
+		paddingLeft := maxTitleWidth - lipgloss.Width(item.Title)
+		var inputView = item.FormInput.View()
+		if i == c.focusIndex {
+			inputView = selectedBorder.Render(inputView)
+		} else {
+			inputView = normalBorder.Render(inputView)
+		}
 
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), form, c.footer.View())
+		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Top, strings.Repeat(" ", paddingLeft), "\n"+item.Title, "  ", inputView)
+	}
+
+	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
+	paddingLeft := (c.width - lipgloss.Width(formView)) / 2
+	c.viewport.SetContent(lipgloss.NewStyle().PaddingLeft(paddingLeft - maxTitleWidth).PaddingTop(1).Render(formView))
+
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.viewport.View(), c.footer.View())
 }

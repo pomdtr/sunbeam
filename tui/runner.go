@@ -33,11 +33,11 @@ func (c *RunContainer) Init() tea.Cmd {
 
 	if len(missing) > 0 {
 		c.currentView = "form"
-		inputs := make([]FormInput, len(missing))
+		items := make([]FormItem, len(missing))
 		for i, param := range missing {
-			inputs[i] = NewFormInput(param)
+			items[i] = NewFormItem(param)
 		}
-		c.form = NewFormContainer(inputs)
+		c.form = NewForm(items)
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}

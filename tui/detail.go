@@ -61,7 +61,7 @@ func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 			return c, PopCmd
 		default:
 			for _, action := range c.actions {
-				if action.Shortcut() == msg.String() {
+				if action.Shortcut == msg.String() {
 					return c, action.Exec()
 				}
 			}

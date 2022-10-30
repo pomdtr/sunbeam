@@ -200,7 +200,7 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 				break
 			}
 			for _, action := range selectedItem.Actions {
-				if action.Shortcut() == msg.String() {
+				if action.Shortcut == msg.String() {
 					return c, action.Exec()
 				}
 			}

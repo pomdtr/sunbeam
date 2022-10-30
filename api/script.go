@@ -30,13 +30,29 @@ type SunbeamScript struct {
 }
 
 type FormItem struct {
-	Type        string         `json:"type"`
-	Id          string         `json:"id"`
-	Secure      bool           `json:"secure"`
-	Title       string         `json:"title"`
-	Placeholder string         `json:"placeholder"`
-	Label       string         `json:"label"`
-	Data        []DropDownItem `json:"data"`
+	Type     string `json:"type"`
+	Id       string `json:"id"`
+	Title    string `json:"title"`
+	Required bool   `json:"required"`
+
+	TextField
+	DropDown
+	Checkbox
+}
+
+type TextField struct {
+	Secure      bool   `json:"secure"`
+	Placeholder string `json:"placeholder"`
+}
+
+type DropDown struct {
+	Data []DropDownItem `json:"data"`
+}
+
+type Checkbox struct {
+	Label             string `json:"label"`
+	TrueSubstitution  string `json:"trueSubstitution"`
+	FalseSubstitution string `json:"falseSubstitution"`
 }
 
 type DropDownItem struct {
@@ -142,17 +158,25 @@ type ScriptAction struct {
 	Type     string `json:"type"`
 	Shortcut string `json:"shortcut"`
 
-	Command string `json:"command,omitempty"`
+	CopyAction
+	RunAction
+	OpenAction
+}
 
-	Target    string            `json:"target,omitempty"`
-	Extension string            `json:"extension,omitempty"`
-	Params    map[string]string `json:"params"`
+type CopyAction struct {
+	Content string `json:"content,omitempty"`
+}
 
+type OpenAction struct {
 	Url         string `json:"url,omitempty"`
 	Path        string `json:"path"`
 	Application string `json:"application,omitempty"`
+}
 
-	Content string `json:"content,omitempty"`
+type RunAction struct {
+	Target    string            `json:"target,omitempty"`
+	Extension string            `json:"extension,omitempty"`
+	Params    map[string]string `json:"params"`
 }
 
 func ParseListItems(output string) (items []ListItem, err error) {
