@@ -9,11 +9,21 @@ import (
 	"github.com/pomdtr/sunbeam/tui"
 )
 
+var SunbeamFlags struct {
+	Height int
+	Width  int
+}
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "sunbeam",
 	Short: "Command Line Launcher",
 	Run:   Sunbeam,
+}
+
+func init() {
+	rootCmd.Flags().IntVarP(&SunbeamFlags.Height, "height", "H", 0, "height of the window")
+	rootCmd.Flags().IntVarP(&SunbeamFlags.Width, "width", "W", 0, "width of the window")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -26,7 +36,7 @@ func Execute() {
 }
 
 func Sunbeam(cmd *cobra.Command, args []string) {
-	err := tui.Start()
+	err := tui.Start(SunbeamFlags.Width, SunbeamFlags.Height)
 	if err != nil {
 		log.Fatalf("could not start tui: %v", err)
 	}

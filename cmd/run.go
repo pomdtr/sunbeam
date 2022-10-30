@@ -2,11 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"strings"
 
 	"github.com/pomdtr/sunbeam/api"
-	"github.com/pomdtr/sunbeam/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -33,25 +30,25 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run a sunbeam script",
 	Args:  cobra.ExactArgs(1),
-	Run:   sunbeamRun,
+	// Run:   sunbeamRun,
 }
 
-func sunbeamRun(cmd *cobra.Command, args []string) {
-	params := make(map[string]string)
-	for _, param := range runFlags.Params {
-		tokens := strings.SplitN(param, "=", 2)
-		params[tokens[0]] = tokens[1]
-	}
+// func sunbeamRun(cmd *cobra.Command, args []string) {
+// 	params := make(map[string]string)
+// 	for _, param := range runFlags.Params {
+// 		tokens := strings.SplitN(param, "=", 2)
+// 		params[tokens[0]] = tokens[1]
+// 	}
 
-	tokens := strings.SplitN(args[0], ".", 2)
-	extensionName, scriptName := tokens[0], tokens[1]
-	command, ok := api.Sunbeam.GetScript(extensionName, scriptName)
-	if !ok {
-		log.Fatalf("Command %s.%s not found", extensionName, scriptName)
-	}
+// 	tokens := strings.SplitN(args[0], ".", 2)
+// 	extensionName, scriptName := tokens[0], tokens[1]
+// 	command, ok := api.Sunbeam.GetScript(extensionName, scriptName)
+// 	if !ok {
+// 		log.Fatalf("Command %s.%s not found", extensionName, scriptName)
+// 	}
 
-	err := tui.Run(command, params)
-	if err != nil {
-		log.Fatalf("could not run script: %v", err)
-	}
-}
+// 	err := tui.Run(command, params)
+// 	if err != nil {
+// 		log.Fatalf("could not run script: %v", err)
+// 	}
+// }

@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Container interface {
@@ -19,12 +20,14 @@ type Container interface {
 }
 
 type RootModel struct {
-	width, height int
-	pages         []Container
+	pageWidth, pageHeight int
+	width, height         int
+
+	pages []Container
 }
 
-func NewRootModel(rootPage Container) *RootModel {
-	return &RootModel{pages: []Container{rootPage}}
+func NewRootModel(width, height int, rootPage Container) *RootModel {
+	return &RootModel{pages: []Container{rootPage}, pageWidth: width, pageHeight: height}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -43,9 +46,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
-		for i, page := range m.pages {
-			m.pages[i], _ = page.Update(msg)
-		}
 		return m, nil
 	case PushMsg:
 		m.Push(msg.Page)
@@ -68,14 +68,17 @@ func (m *RootModel) View() string {
 	if len(m.pages) == 0 {
 		return ""
 	}
-	return m.pages[len(m.pages)-1].View()
+
+	page := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).Render(m.pages[len(m.pages)-1].View())
+
+	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), page)
 }
 
 func (m *RootModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 	for _, page := range m.pages {
-		page.SetSize(width, height)
+		page.SetSize(utils.Min(m.pageWidth, width), utils.Min(m.pageHeight, height))
 	}
 }
 
@@ -96,7 +99,7 @@ func PopCmd() tea.Msg {
 }
 
 func (m *RootModel) Push(page Container) {
-	page.SetSize(m.width, m.height)
+	page.SetSize(m.pageWidth, m.pageHeight)
 	m.pages = append(m.pages, page)
 }
 
@@ -117,7 +120,7 @@ func (c *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return c, cmd
 }
 
-func Start() error {
+func Start(width, height int) error {
 	rootItems := make([]ListItem, 0)
 	for _, manifest := range api.Sunbeam.Extensions {
 		for _, item := range manifest.RootItems {
@@ -131,15 +134,17 @@ func Start() error {
 	list := NewList(false)
 	list.SetItems(rootItems)
 	rootContainer := RootContainer{List: list}
-	return Draw(&rootContainer)
+
+	m := NewRootModel(width, height, &rootContainer)
+	return Draw(m)
 }
 
-func Run(command api.SunbeamScript, params map[string]string) error {
-	container := NewRunContainer(command, params)
-	return Draw(container)
-}
+// func Run(command api.SunbeamScript, params map[string]string) error {
+// 	container := NewRunContainer(command, params)
+// 	return Draw(container)
+// }
 
-func Draw(container Container) (err error) {
+func Draw(model tea.Model) (err error) {
 	var logFile string
 	// Log to a file
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
@@ -162,8 +167,7 @@ func Draw(container Container) (err error) {
 	// Necessary to cache the style
 	lipgloss.HasDarkBackground()
 
-	m := NewRootModel(container)
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	p := tea.NewProgram(model, tea.WithAltScreen())
 	err = p.Start()
 
 	if err != nil {
