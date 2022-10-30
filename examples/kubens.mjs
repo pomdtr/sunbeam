@@ -11,9 +11,13 @@ const items = namespaces.map((namespace) => ({
   title: namespace,
   actions: [
     {
-      title: "Switch to",
-      type: "exec",
-      command: `kubectl config set-context --current --namespace=${namespace}`,
+      title: "Switch to Namespace",
+      shortcut: "enter",
+      type: "run",
+      target: "set-k8s-namespace",
+      params: {
+        namespace: namespace,
+      },
     },
   ],
 }));

@@ -4,8 +4,8 @@
     "type": "object",
     "required": [
         "name",
-        "commands",
-        "rootItems"
+        "rootItems",
+        "scripts"
     ],
     "additionalProperties": false,
     "properties": {
@@ -30,48 +30,26 @@
         "rootItems": {
             "type": "array",
             "items": {
-                "type": "object",
-                "required": [
-                    "title",
-                    "target"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                    "title": {
-                        "type": "string"
-                    },
-                    "subtitle": {
-                        "type": "string"
-                    },
-                    "target": {
-                        "type": "string"
-                    },
-                    "params": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        }
-                    }
-                }
+                "$ref": "#/definitions/listitem"
             }
         },
-        "commands": {
+        "scripts": {
             "type": "object",
             "additionalProperties": {
                 "type": "object",
                 "required": [
                     "command",
-                    "type"
+                    "output"
                 ],
                 "properties": {
                     "cwd": {
                         "type": "boolean"
                     },
-                    "type": {
+                    "output": {
                         "type": "string",
                         "enum": [
                             "list",
-                            "fullOutput",
+                            "full",
                             "silent"
                         ]
                     },
@@ -89,8 +67,8 @@
                     {
                         "if": {
                             "properties": {
-                                "type": {
-                                    "const": "fullOutput"
+                                "output": {
+                                    "const": "full"
                                 }
                             }
                         },
@@ -109,7 +87,7 @@
                     {
                         "if": {
                             "properties": {
-                                "type": {
+                                "output": {
                                     "const": "list"
                                 }
                             }
@@ -127,14 +105,172 @@
         }
     },
     "definitions": {
+        "listitem": {
+            "type": "object",
+            "required": [
+                "title",
+                "actions"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "actions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/action"
+                    }
+                },
+                "accessories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "action": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "open-file",
+                        "open-url",
+                        "copy",
+                        "run",
+                        "reload"
+                    ]
+                },
+                "title": {
+                    "type": "string"
+                },
+                "shortcut": {
+                    "type": "string"
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "open-file"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "path"
+                        ],
+                        "properties": {
+                            "path": {
+                                "type": "string"
+                            },
+                            "application": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "open-url"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "url"
+                        ],
+                        "properties": {
+                            "url": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "copy"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "content"
+                        ],
+                        "properties": {
+                            "content": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "run"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "target"
+                        ],
+                        "properties": {
+                            "target": {
+                                "type": "string"
+                            },
+                            "params": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "reload"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "params": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
         "formitem": {
             "type": "object",
             "required": [
                 "type",
-                "name"
+                "id"
             ],
             "properties": {
-                "name": {
+                "id": {
                     "type": "string"
                 },
                 "type": {
@@ -243,13 +379,16 @@
                             "title": {
                                 "type": "string"
                             },
+                            "placeholder": {
+                                "type": "string"
+                            },
                             "data": {
                                 "type": "array",
                                 "items": {
                                     "type": "object",
                                     "required": [
                                         "title",
-                                        "label"
+                                        "value"
                                     ],
                                     "additionalProperties": false,
                                     "properties": {

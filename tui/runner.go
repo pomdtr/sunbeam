@@ -4,11 +4,10 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
 	"github.com/pomdtr/sunbeam/api"
 )
 
-type CommandContainer struct {
+type RunContainer struct {
 	width, height int
 	currentView   string
 
@@ -18,23 +17,27 @@ type CommandContainer struct {
 	detail  *Detail
 	err     *Detail
 
-	command api.SunbeamCommand
-	params  map[string]string
+	script api.SunbeamScript
+	params map[string]string
 }
 
-func NewCommandContainer(command api.SunbeamCommand, params map[string]string) *CommandContainer {
-	return &CommandContainer{
-		command: command,
-		params:  params,
+func NewRunContainer(command api.SunbeamScript, params map[string]string) *RunContainer {
+	return &RunContainer{
+		script: command,
+		params: params,
 	}
 }
 
-func (c *CommandContainer) Init() tea.Cmd {
-	missing := c.command.CheckMissingParams(c.params)
+func (c *RunContainer) Init() tea.Cmd {
+	missing := c.script.CheckMissingParams(c.params)
 
 	if len(missing) > 0 {
 		c.currentView = "form"
-		c.form = NewFormContainer(missing)
+		inputs := make([]FormInput, len(missing))
+		for i, param := range missing {
+			inputs[i] = NewFormInput(param)
+		}
+		c.form = NewFormContainer(inputs)
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
@@ -45,38 +48,44 @@ func (c *CommandContainer) Init() tea.Cmd {
 type ListOutput []ListItem
 type DetailOutput string
 
-func (c *CommandContainer) Run(input api.CommandInput) tea.Cmd {
+func (c *RunContainer) Run(input api.ScriptInput) tea.Cmd {
 	return func() tea.Msg {
-		switch c.command.Type {
+		switch c.script.Output {
 		case "list":
-			output, err := c.command.Run(input)
+			output, err := c.script.Run(input)
 			if err != nil {
 				return err
 			}
 
-			scriptItems, err := api.ParseScriptItems(output)
+			scriptItems, err := api.ParseListItems(output)
 			if err != nil {
 				return err
 			}
 
 			listItems := make([]ListItem, len(scriptItems))
 			for i, item := range scriptItems {
-				listItems[i] = NewListItem(c.command.Extension, item)
+				listItems[i] = NewListItem(c.script.Extension, item)
 			}
 			return ListOutput(listItems)
-		case "fullOutput":
-			detail, err := c.command.Run(input)
+		case "full":
+			detail, err := c.script.Run(input)
 			if err != nil {
 				return err
 			}
 			return DetailOutput(detail)
+		case "silent":
+			_, err := c.script.Run(input)
+			if err != nil {
+				return err
+			}
+			return tea.Quit()
 		default:
-			return fmt.Errorf("unknown command mode: %s", c.command.Type)
+			return fmt.Errorf("Unknown output type %s", c.script.Output)
 		}
 	}
 }
 
-func (c *CommandContainer) SetSize(width, height int) {
+func (c *RunContainer) SetSize(width, height int) {
 	c.width, c.height = width, height
 	if c.loading != nil {
 		c.loading.SetSize(width, height)
@@ -95,18 +104,18 @@ func (c *CommandContainer) SetSize(width, height int) {
 	}
 }
 
-func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SubmitMsg:
 		c.currentView = "loading"
 		c.loading = NewLoading()
 		c.loading.SetSize(c.width, c.height)
-		runCmd := c.Run(api.NewCommandInput(msg.values))
+		runCmd := c.Run(api.NewScriptInput(msg.values))
 		return c, tea.Batch(c.loading.Init(), runCmd)
 	case ListOutput:
 		if c.list == nil {
 			c.currentView = "list"
-			c.list = NewList(c.command.Dynamic)
+			c.list = NewList(c.script.Dynamic)
 			c.list.SetItems(msg)
 			c.list.SetSize(c.width, c.height)
 			return c, c.list.Init()
@@ -115,31 +124,24 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case DetailOutput:
 		if c.detail == nil {
 			c.currentView = "detail"
-			var content string
-			switch c.command.Format {
-			case "markdown":
-				renderer, err := glamour.NewTermRenderer(glamour.WithAutoStyle(), glamour.WithEmoji())
-				if err != nil {
-					return c, NewErrorCmd("failed to init markdown renderer: %s", err)
-				}
-				content, err = renderer.Render(string(msg))
-				if err != nil {
-					return c, NewErrorCmd("failed to render markdown: %s", err)
-				}
-			default:
-				content = string(msg)
+			c.detail = NewDetail(c.script.Format, []Action{})
+			err := c.detail.SetContent(string(msg))
+			if err != nil {
+				return c, NewErrorCmd("Failed to parse script output %s", err)
 			}
-
-			c.detail = NewDetail(content, []Action{})
 			c.detail.SetSize(c.width, c.height)
 			return c, c.detail.Init()
 		}
-		c.detail.SetContent(string(msg))
+		err := c.detail.SetContent(string(msg))
+		if err != nil {
+			return c, NewErrorCmd("Failed to parse script output %s", err)
+		}
+		return c, nil
 	case ReloadMsg:
 		return c, c.Run(msg.input)
 	case QueryUpdateMsg:
 		if c.list.dynamic {
-			input := api.CommandInput{
+			input := api.ScriptInput{
 				Query:  msg.query,
 				Params: c.params,
 			}
@@ -150,7 +152,8 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		return c, nil
 	case error:
 		c.currentView = "error"
-		c.err = NewDetail(msg.Error(), nil)
+		c.err = NewDetail("raw", nil)
+		c.err.SetContent(msg.Error())
 		c.err.SetSize(c.width, c.height)
 		return c, c.err.Init()
 	}
@@ -171,7 +174,7 @@ func (c *CommandContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return c, cmd
 }
 
-func (c *CommandContainer) View() string {
+func (c *RunContainer) View() string {
 	switch c.currentView {
 	case "form":
 		return c.form.View()

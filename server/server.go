@@ -10,8 +10,8 @@ import (
 )
 
 func Serve(address string, port int) error {
-	for _, manifest := range api.Extensions {
-		for route, command := range manifest.Commands {
+	for _, manifest := range api.Sunbeam.Extensions {
+		for route, command := range manifest.Scripts {
 			http.HandleFunc(route, serveCommand(command))
 		}
 	}
@@ -20,9 +20,9 @@ func Serve(address string, port int) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func serveCommand(cmd api.SunbeamCommand) http.HandlerFunc {
+func serveCommand(cmd api.SunbeamScript) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var input api.CommandInput
+		var input api.ScriptInput
 		err := json.NewDecoder(req.Body).Decode(&input)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)

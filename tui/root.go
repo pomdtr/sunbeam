@@ -7,6 +7,7 @@ import (
 
 	"github.com/adrg/xdg"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/api"
 )
 
@@ -117,14 +118,13 @@ func (c *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 }
 
 func Start() error {
-	rootItems := make([]ListItem, len(api.Sunbeam.RootItems))
-	for i, rootItem := range api.Sunbeam.RootItems {
-		rootItems[i] = ListItem{
-			Title:    rootItem.Title,
-			Subtitle: rootItem.Subtitle,
-			Actions: []Action{
-				NewLaunchAction("Open Command", "enter", rootItem.Extension, rootItem.Target, rootItem.Params),
-			},
+	rootItems := make([]ListItem, 0)
+	for _, manifest := range api.Sunbeam.Extensions {
+		for _, item := range manifest.RootItems {
+			if item.Subtitle == "" {
+				item.Subtitle = manifest.Name
+			}
+			rootItems = append(rootItems, NewListItem(manifest.Name, item))
 		}
 	}
 
@@ -134,8 +134,8 @@ func Start() error {
 	return Draw(&rootContainer)
 }
 
-func Run(command api.SunbeamCommand, params map[string]string) error {
-	container := NewCommandContainer(command, params)
+func Run(command api.SunbeamScript, params map[string]string) error {
+	container := NewRunContainer(command, params)
 	return Draw(container)
 }
 
@@ -158,6 +158,9 @@ func Draw(container Container) (err error) {
 		log.Fatalf("could not open log file: %v", err)
 	}
 	defer f.Close()
+
+	// Necessary to cache the style
+	lipgloss.HasDarkBackground()
 
 	m := NewRootModel(container)
 	p := tea.NewProgram(m, tea.WithAltScreen())

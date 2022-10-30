@@ -1,6 +1,7 @@
 #!/usr/bin/env zx
 
 import * as path from "path";
+import * as os from "os";
 import * as fs from "fs/promises";
 
 const currentDir = argv._[0];
@@ -11,13 +12,14 @@ files = files.filter((file) => !file.name.startsWith("."));
 const items = await Promise.all(
   files.map(async (file) => {
     const filepath = path.join(currentDir, file.name);
+    const prettyPath = filepath.replace(os.homedir(), "~");
     const lstat = await fs.lstat(filepath);
     const primaryAction = lstat.isDirectory()
       ? {
-          type: "launch",
+          type: "run",
           title: "Browse Directory",
           shortcut: "enter",
-          target: "file-browser",
+          target: "browse-files",
           params: {
             root: filepath,
           },
@@ -30,7 +32,7 @@ const items = await Promise.all(
         };
     return {
       title: file.name,
-      subtitle: filepath,
+      subtitle: prettyPath,
       actions: [primaryAction],
     };
   })

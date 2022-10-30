@@ -1,108 +1,214 @@
 {
-    "$schema": "./schemas/manifest.json",
+    "$schema": "./schemas/schema.json",
     "name": "sunbeam",
     "rootItems": [
         {
+            "title": "Form Selector",
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "selector"
+                }
+            ]
+        },
+        {
             "title": "Show Suggestions",
-            "subtitle": "Google",
-            "target": "google-search"
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "google-search"
+                }
+            ]
         },
         {
             "title": "Show Random List",
-            "target": "random"
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "random"
+                }
+            ]
         },
         {
             "title": "Copy Password",
-            "subtitle": "Bitwarden",
-            "target": "copy-password"
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "copy-password"
+                }
+            ]
         },
         {
             "title": "List My Repositories",
-            "subtitle": "GitHub",
-            "target": "list-repos",
-            "params": {
-                "owner": "pomdtr"
-            }
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "list-repos",
+                    "params": {
+                        "owner": "pomdtr"
+                    }
+                }
+            ]
         },
         {
             "title": "List Dailymotion Repositories",
-            "subtitle": "GitHub",
-            "target": "list-repos",
-            "params": {
-                "owner": "dailymotion"
-            }
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "list-repos",
+                    "params": {
+                        "owner": "dailymotion"
+                    }
+                }
+            ]
+        },
+        {
+            "title": "Browse Directory",
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "browse-files"
+                }
+            ]
         },
         {
             "title": "Browse Home",
-            "subtitle": "System",
-            "target": "browse-files",
-            "params": {
-                "root": "/Users/a.lacoin"
-            }
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "browse-files",
+                    "params": {
+                        "root": "/Users/a.lacoin"
+                    }
+                }
+            ]
         },
         {
             "title": "Browse Root",
-            "target": "browse-files",
-            "subtitle": "System",
-            "params": {
-                "root": "/"
-            }
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "browse-files",
+                    "params": {
+                        "root": "/"
+                    }
+                }
+            ]
         },
         {
             "title": "List Airflow PRs",
-            "subtitle": "Dailymotion",
-            "target": "list-prs",
-            "params": {
-                "repository": "dailymotion/dwh-dags"
-            }
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "list-prs",
+                    "params": {
+                        "repository": "dailymotion/dwh-dags"
+                    }
+                }
+            ]
         }
     ],
-    "commands": {
+    "scripts": {
+        "list-k8s-namespaces": {
+            "output": "list",
+            "command": "./examples/kubens.mjs"
+        },
+        "set-k8s-namespace": {
+            "command": "kubectl config set-context --current --namespace={{ .params.namespace }}",
+            "output": "silent",
+            "params": [
+                {
+                    "id": "namespace",
+                    "type": "textfield",
+                    "placeholder": "Namespace",
+                    "title": "Namespace"
+                }
+            ]
+        },
+        "git-commit": {
+            "command": "git commit -m {{ .params.message }}",
+            "output": "silent",
+            "params": [
+                {
+                    "id": "message",
+                    "title": "message",
+                    "type": "textarea"
+                }
+            ]
+        },
         "google-search": {
-            "type": "list",
+            "output": "list",
             "command": "./examples/google.mjs --query {{ .query }}",
             "dynamic": true
         },
         "random": {
-            "type": "list",
+            "output": "list",
             "command": "./examples/random_list.py"
         },
         "list-repos": {
-            "type": "list",
+            "output": "list",
             "command": "./examples/github/list-repos.mjs --owner {{ .params.owner }}",
             "params": [
                 {
-                    "name": "owner",
+                    "id": "owner",
                     "title": "Owner",
                     "type": "textfield"
                 }
             ]
         },
         "copy-password": {
-            "type": "list",
+            "output": "list",
             "command": "./examples/bitwarden.sh"
         },
         "list-prs": {
-            "type": "list",
+            "output": "list",
             "command": "./examples/github/list-prs.mjs --repo {{ .params.repository }}",
             "params": [
                 {
+                    "id": "repository",
                     "title": "Repository",
-                    "name": "repository",
                     "required": true,
                     "type": "textfield"
                 }
             ]
         },
         "browse-files": {
-            "type": "list",
+            "output": "list",
             "command": "./examples/file-browser.mjs {{ .params.root }}",
             "params": [
                 {
+                    "id": "root",
+                    "title": "Start directory",
+                    "placeholder": "Start Directory",
                     "type": "textfield",
-                    "name": "root",
-                    "required": true,
-                    "title": "Start directory"
+                    "required": true
+                }
+            ]
+        },
+        "selector": {
+            "output": "list",
+            "command": "echo {{ .params.selection }}",
+            "placeholder": "Select an item",
+            "params": [
+                {
+                    "id": "selection",
+                    "title": "Start directory",
+                    "type": "dropdown",
+                    "data": [
+                        {
+                            "title": "foo",
+                            "value": "foo"
+                        },
+                        {
+                            "title": "bar",
+                            "value": "bar"
+                        },
+                        {
+                            "title": "baz",
+                            "value": "baz"
+                        }
+                    ],
+                    "required": true
                 }
             ]
         }

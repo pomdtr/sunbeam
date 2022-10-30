@@ -10,102 +10,41 @@ import (
 
 type Api struct {
 	Extensions map[string]Manifest
-	RootItems  []RootItem
 }
 
 var Sunbeam Api
 
 func init() {
-	extensions, err := fetchExtensions()
-	if err != nil {
-		log.Fatalf("Failed to fetch manifests: %v", err)
-	}
+	scriptDirs := make([]string, 0)
 
-	rootItems := make([]RootItem, 0)
-	for _, manifest := range extensions {
-		for _, rootItem := range manifest.RootItems {
-			rootItem.Extension = manifest.Name
-			rootItems = append(rootItems, rootItem)
-		}
-	}
-
-	Sunbeam = Api{
-		Extensions: extensions,
-		RootItems:  rootItems,
-	}
-}
-
-func (api Api) GetCommand(extensionName string, commandName string) (SunbeamCommand, bool) {
-	manifest, ok := api.Extensions[extensionName]
-	if !ok {
-		return SunbeamCommand{}, false
-	}
-	command, ok := manifest.Commands[commandName]
-	if !ok {
-		return SunbeamCommand{}, false
-	}
-
-	return command, true
-}
-
-var Extensions map[string]Manifest
-
-func init() {
-	var err error
-	Extensions, err = fetchExtensions()
-	if err != nil {
-		log.Fatalf("Failed to fetch manifests: %v", err)
-	}
-}
-
-type Manifest struct {
-	Title string `json:"title"`
-	Name  string `json:"name"`
-
-	RootItems []RootItem                `json:"rootItems"`
-	Commands  map[string]SunbeamCommand `json:"commands"`
-
-	Url url.URL
-}
-
-type RootItem struct {
-	Title     string            `json:"title"`
-	Subtitle  string            `json:"subtitle"`
-	Target    string            `json:"target"`
-	Params    map[string]string `json:"params"`
-	Extension string
-}
-
-func fetchExtensions() (map[string]Manifest, error) {
-	commandDirs := make([]string, 0)
 	currentDir, err := os.Getwd()
 	if err == nil {
 		for currentDir != "/" {
-			commandDirs = append(commandDirs, currentDir)
+			scriptDirs = append(scriptDirs, currentDir)
 			currentDir = path.Dir(currentDir)
 		}
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		log.Fatalf("could not get home directory: %v", err)
 	}
-	var scriptDir = os.Getenv("SUNBEAM_COMMAND_DIR")
+	var scriptDir = os.Getenv("SUNBEAM_SCRIPT_DIR")
 	if scriptDir == "" {
-		scriptDir = path.Join(homeDir, ".config", "sunbeam", "commands")
+		scriptDir = path.Join(homeDir, ".config", "sunbeam", "scripts")
 	}
-	commandDirs = append(commandDirs, scriptDir)
+	scriptDirs = append(scriptDirs, scriptDir)
 
 	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
 	extensionDirs, _ := os.ReadDir(extensionRoot)
 	for _, extensionDir := range extensionDirs {
 		extensionPath := path.Join(extensionRoot, extensionDir.Name())
-		commandDirs = append(commandDirs, extensionPath)
+		scriptDirs = append(scriptDirs, extensionPath)
 	}
 
 	manifests := make(map[string]Manifest)
-	for _, commandDir := range commandDirs {
-		manifestPath := path.Join(commandDir, "sunbeam.json")
+	for _, scriptDir := range scriptDirs {
+		manifestPath := path.Join(scriptDir, "sunbeam.json")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 			continue
 		}
@@ -124,20 +63,45 @@ func fetchExtensions() (map[string]Manifest, error) {
 			Path:   manifestPath,
 		}
 
-		for key, command := range manifest.Commands {
-			command.Root = url.URL{
+		for key, script := range manifest.Scripts {
+			script.Root = url.URL{
 				Scheme: "file",
-				Path:   commandDir,
+				Path:   scriptDir,
 			}
-			command.Url = url.URL{
+			script.Url = url.URL{
 				Scheme: "file",
-				Path:   path.Join(commandDir, key),
+				Path:   path.Join(scriptDir, key),
 			}
-			command.Extension = manifest.Name
-			manifest.Commands[key] = command
+			script.Extension = manifest.Name
+			manifest.Scripts[key] = script
 		}
 		manifests[manifest.Name] = manifest
 	}
 
-	return manifests, nil
+	Sunbeam = Api{
+		Extensions: manifests,
+	}
+}
+
+func (api Api) GetScript(extensionName string, scriptName string) (SunbeamScript, bool) {
+	manifest, ok := api.Extensions[extensionName]
+	if !ok {
+		return SunbeamScript{}, false
+	}
+	script, ok := manifest.Scripts[scriptName]
+	if !ok {
+		return SunbeamScript{}, false
+	}
+
+	return script, true
+}
+
+type Manifest struct {
+	Title string `json:"title"`
+	Name  string `json:"name"`
+
+	RootItems []ListItem               `json:"rootItems"`
+	Scripts   map[string]SunbeamScript `json:"scripts"`
+
+	Url url.URL
 }

@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 	"sort"
 	"strings"
@@ -25,9 +24,17 @@ type ListItem struct {
 	Detail      string
 }
 
-func NewListItem(extensionName string, item api.ScriptItem) ListItem {
+func NewListItem(extensionName string, item api.ListItem) ListItem {
 	actions := make([]Action, len(item.Actions))
+
 	for i, scriptAction := range item.Actions {
+		if scriptAction.Shortcut == "" {
+			if i == 0 {
+				scriptAction.Shortcut = "enter"
+			} else if i < 10 {
+				scriptAction.Shortcut = fmt.Sprintf("ctrl+%d", i)
+			}
+		}
 		actions[i] = NewAction(extensionName, scriptAction)
 	}
 
@@ -183,7 +190,11 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 			} else {
 				return c, PopCmd
 			}
-
+		case tea.KeyEnter:
+			if selectedItem == nil || len(selectedItem.Actions) == 0 {
+				break
+			}
+			return c, selectedItem.Actions[0].Exec()
 		default:
 			if selectedItem == nil {
 				break
@@ -300,7 +311,6 @@ func (c *List) View() string {
 	} else {
 		embed = c.listView(c.width)
 	}
-	log.Println(c.width)
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), embed, c.footer.View())
 }
 
@@ -321,10 +331,10 @@ func NewQueryUpdateCmd(query string) func() tea.Msg {
 }
 
 type ReloadMsg struct {
-	input api.CommandInput
+	input api.ScriptInput
 }
 
-func NewReloadCmd(input api.CommandInput) func() tea.Msg {
+func NewReloadCmd(input api.ScriptInput) func() tea.Msg {
 	return func() tea.Msg {
 		return ReloadMsg{
 			input: input,

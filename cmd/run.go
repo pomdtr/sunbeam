@@ -17,11 +17,10 @@ type RunFlags struct {
 var runFlags = RunFlags{}
 
 func init() {
-
 	validargs := make([]string, 0)
 	for _, manifest := range api.Sunbeam.Extensions {
-		for commandName := range manifest.Commands {
-			validargs = append(validargs, fmt.Sprintf("%s.%s", manifest.Name, commandName))
+		for scriptName := range manifest.Scripts {
+			validargs = append(validargs, fmt.Sprintf("%s.%s", manifest.Name, scriptName))
 		}
 	}
 
@@ -45,10 +44,10 @@ func sunbeamRun(cmd *cobra.Command, args []string) {
 	}
 
 	tokens := strings.SplitN(args[0], ".", 2)
-	extensionName, commandName := tokens[0], tokens[1]
-	command, ok := api.Sunbeam.GetCommand(extensionName, commandName)
+	extensionName, scriptName := tokens[0], tokens[1]
+	command, ok := api.Sunbeam.GetScript(extensionName, scriptName)
 	if !ok {
-		log.Fatalf("Command %s.%s not found", extensionName, commandName)
+		log.Fatalf("Command %s.%s not found", extensionName, scriptName)
 	}
 
 	err := tui.Run(command, params)

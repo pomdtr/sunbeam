@@ -1,9 +1,6 @@
 package tui
 
 import (
-	"errors"
-	"log"
-	"os/exec"
 	"strings"
 
 	"github.com/atotto/clipboard"
@@ -30,37 +27,35 @@ func NewAction(extension string, scriptAction api.ScriptAction) Action {
 		return NewOpenFileAction(title, scriptAction.Shortcut, scriptAction.Url, scriptAction.Application)
 	case "copy":
 		return NewCopyAction(title, scriptAction.Shortcut, scriptAction.Content)
-	case "launch":
-		return NewLaunchAction(title, scriptAction.Shortcut, extension, scriptAction.Target, scriptAction.Params)
+	case "run":
+		return NewRunAction(title, scriptAction.Shortcut, extension, scriptAction.Target, scriptAction.Params)
 	case "reload":
 		return NewReloadAction(title, scriptAction.Shortcut, scriptAction.Params)
-	case "exec":
-		return NewExecAction(title, scriptAction.Shortcut, scriptAction.Command)
 	default:
 		return NewUnknownAction(scriptAction.Type)
 	}
 }
 
-type BaseAction struct {
+type baseAction struct {
 	title string
 	key   string
 }
 
-func (b BaseAction) Title() string {
+func (b baseAction) Title() string {
 	return b.title
 }
 
-func (b BaseAction) Shortcut() string {
+func (b baseAction) Shortcut() string {
 	return b.key
 }
 
 type CopyAction struct {
-	BaseAction
+	baseAction
 	Content string
 }
 
 func NewCopyAction(title string, key string, content string) Action {
-	return CopyAction{BaseAction: BaseAction{title: title, key: key}, Content: content}
+	return CopyAction{baseAction: baseAction{title: title, key: key}, Content: content}
 }
 
 func (c CopyAction) Exec() tea.Cmd {
@@ -71,72 +66,48 @@ func (c CopyAction) Exec() tea.Cmd {
 	return tea.Quit
 }
 
-type LaunchAction struct {
-	BaseAction
+type RunAction struct {
+	baseAction
 	extension string
 	target    string
 	params    map[string]string
 }
 
-func NewLaunchAction(title string, key string, extensionName string, target string, params map[string]string) Action {
-	return LaunchAction{BaseAction: BaseAction{title: title, key: key}, extension: extensionName, target: target, params: params}
+func NewRunAction(title string, key string, extensionName string, target string, params map[string]string) Action {
+	return RunAction{baseAction: baseAction{title: title, key: key}, extension: extensionName, target: target, params: params}
 }
 
-func (p LaunchAction) Exec() tea.Cmd {
-	extension, ok := api.Extensions[p.extension]
+func (p RunAction) Exec() tea.Cmd {
+	command, ok := api.Sunbeam.GetScript(p.extension, p.target)
 	if !ok {
-		return NewErrorCmd("unknown extension %s", p.target)
+		return NewErrorCmd("Unable to find command %s.%s", p.extension, p.target)
 	}
-	command, ok := extension.Commands[p.target]
-	if !ok {
-		return NewErrorCmd("unknown command %s", p.target)
-	}
-	log.Println("launching", p.extension, p.target, p.params)
 
-	return NewPushCmd(NewCommandContainer(command, p.params))
+	return NewPushCmd(NewRunContainer(command, p.params))
 }
 
 type ReloadAction struct {
-	BaseAction
+	baseAction
 	params map[string]string
 }
 
 func NewReloadAction(title string, key string, params map[string]string) Action {
-	return ReloadAction{BaseAction: BaseAction{title: title, key: key}, params: params}
+	return ReloadAction{baseAction: baseAction{title: title, key: key}, params: params}
 }
 
 func (r ReloadAction) Exec() tea.Cmd {
-	input := api.NewCommandInput(r.params)
+	input := api.NewScriptInput(r.params)
 	return NewReloadCmd(input)
 }
 
-type ExecAction struct {
-	BaseAction
-	command string
-}
-
-func NewExecAction(title string, key string, command string) Action {
-	return ExecAction{BaseAction: BaseAction{title: title, key: key}, command: command}
-}
-
-func (e ExecAction) Exec() tea.Cmd {
-	cmd := exec.Command("sh", "-c", e.command)
-	_, err := cmd.Output()
-	var exitError *exec.ExitError
-	if errors.As(err, &exitError) {
-		return NewErrorCmd("Unable to run cmd: %s", exitError.Stderr)
-	}
-	return tea.Quit
-}
-
 type OpenUrlAction struct {
-	BaseAction
+	baseAction
 	application string
 	url         string
 }
 
 func NewOpenUrlAction(title string, key string, url string, application string) Action {
-	return OpenUrlAction{BaseAction: BaseAction{title: title, key: key}, application: application, url: url}
+	return OpenUrlAction{baseAction: baseAction{title: title, key: key}, application: application, url: url}
 }
 
 func (o OpenUrlAction) Exec() tea.Cmd {
@@ -154,13 +125,13 @@ func (o OpenUrlAction) Exec() tea.Cmd {
 }
 
 type OpenFileAction struct {
-	BaseAction
+	baseAction
 	application string
 	path        string
 }
 
 func NewOpenFileAction(title string, key string, path string, application string) Action {
-	return OpenFileAction{BaseAction: BaseAction{title: title, key: key}, application: application, path: path}
+	return OpenFileAction{baseAction: baseAction{title: title, key: key}, application: application, path: path}
 }
 
 func (o OpenFileAction) Exec() tea.Cmd {
@@ -178,11 +149,11 @@ func (o OpenFileAction) Exec() tea.Cmd {
 }
 
 type UnknownAction struct {
-	BaseAction
+	baseAction
 }
 
 func NewUnknownAction(actionType string) Action {
-	return UnknownAction{BaseAction: BaseAction{title: "Unknown"}}
+	return UnknownAction{baseAction: baseAction{title: "Unknown"}}
 }
 
 func (u UnknownAction) Exec() tea.Cmd {

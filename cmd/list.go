@@ -20,7 +20,7 @@ func init() {
 
 func sunbeamList(cmd *cobra.Command, args []string) {
 	for _, manifest := range api.Sunbeam.Extensions {
-		for commandName := range manifest.Commands {
+		for commandName := range manifest.Scripts {
 			fmt.Printf("%s.%s\n", manifest.Name, commandName)
 		}
 	}

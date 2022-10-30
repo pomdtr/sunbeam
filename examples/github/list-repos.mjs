@@ -22,7 +22,7 @@ const items = repos.map((repo) => ({
       url: repo.html_url,
     },
     {
-      type: "launch",
+      type: "run",
       title: "List Pull Requests",
       target: "list-prs",
       shortcut: "ctrl+p",

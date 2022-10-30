@@ -14,8 +14,8 @@ import (
 	"github.com/alessio/shellescape"
 )
 
-type SunbeamCommand struct {
-	Type    string     `json:"type"`
+type SunbeamScript struct {
+	Output  string     `json:"output"`
 	Params  []FormItem `json:"params"`
 	Command string     `json:"command"`
 
@@ -30,29 +30,35 @@ type SunbeamCommand struct {
 }
 
 type FormItem struct {
-	Type        string `json:"type"`
-	Name        string `json:"name"`
-	Title       string `json:"title"`
-	Placeholder string `json:"placeholder"`
-	Label       string `json:"label"`
+	Type        string         `json:"type"`
+	Id          string         `json:"id"`
+	Title       string         `json:"title"`
+	Placeholder string         `json:"placeholder"`
+	Label       string         `json:"label"`
+	Data        []DropDownItem `json:"data"`
 }
 
-type CommandInput struct {
+type DropDownItem struct {
+	Title string `json:"title"`
+	Value string `json:"value"`
+}
+
+type ScriptInput struct {
 	Params map[string]string
 	Query  string
 }
 
-func NewCommandInput(params map[string]string) CommandInput {
+func NewScriptInput(params map[string]string) ScriptInput {
 	if params == nil {
 		params = make(map[string]string)
 	}
-	return CommandInput{Params: params}
+	return ScriptInput{Params: params}
 }
 
-func (c SunbeamCommand) CheckMissingParams(inputParams map[string]string) []FormItem {
+func (s SunbeamScript) CheckMissingParams(inputParams map[string]string) []FormItem {
 	missing := make([]FormItem, 0)
-	for _, param := range c.Params {
-		if _, ok := inputParams[param.Name]; !ok {
+	for _, param := range s.Params {
+		if _, ok := inputParams[param.Id]; !ok {
 			missing = append(missing, param)
 		}
 	}
@@ -72,14 +78,14 @@ func renderCommand(command string, data map[string]any) (string, error) {
 	return out.String(), nil
 }
 
-func (c SunbeamCommand) Run(input CommandInput) (string, error) {
+func (s SunbeamScript) Run(input ScriptInput) (string, error) {
 	var err error
 	params := make(map[string]any)
 	for key, value := range input.Params {
 		params[key] = shellescape.Quote(value)
 	}
 
-	rendered, err := renderCommand(c.Command, map[string]any{
+	rendered, err := renderCommand(s.Command, map[string]any{
 		"params": params,
 		"query":  shellescape.Quote(input.Query),
 	})
@@ -88,7 +94,7 @@ func (c SunbeamCommand) Run(input CommandInput) (string, error) {
 	}
 
 	cmd := exec.Command("sh", "-c", rendered)
-	cmd.Dir = c.Root.Path
+	cmd.Dir = s.Root.Path
 
 	var outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf
@@ -101,13 +107,13 @@ func (c SunbeamCommand) Run(input CommandInput) (string, error) {
 	return outbuf.String(), nil
 }
 
-func (c SunbeamCommand) RemoteRun(input CommandInput) (string, error) {
+func (s SunbeamScript) RemoteRun(input ScriptInput) (string, error) {
 	payload, err := json.Marshal(input)
 	if err != nil {
 		return "", err
 	}
 
-	res, err := http.Post(http.MethodPost, c.Url.String(), bytes.NewBuffer(payload))
+	res, err := http.Post(http.MethodPost, s.Url.String(), bytes.NewBuffer(payload))
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +123,7 @@ func (c SunbeamCommand) RemoteRun(input CommandInput) (string, error) {
 	return string(bytes), nil
 }
 
-type ScriptItem struct {
+type ListItem struct {
 	Title    string `json:"title"`
 	Subtitle string `json:"subtitle"`
 	Detail   struct {
@@ -126,28 +132,35 @@ type ScriptItem struct {
 	} `json:"detail"`
 	Actions     []ScriptAction `json:"actions"`
 	Accessories []string       `json:"accessories"`
+
+	Extension string
 }
 
 type ScriptAction struct {
-	Type        string            `json:"type"`
-	Shortcut    string            `json:"shortcut"`
-	Title       string            `json:"title"`
-	Path        string            `json:"path"`
-	Params      map[string]string `json:"params"`
-	Target      string            `json:"target,omitempty"`
-	Command     string            `json:"command,omitempty"`
-	Application string            `json:"application,omitempty"`
-	Url         string            `json:"url,omitempty"`
-	Content     string            `json:"content,omitempty"`
+	Title    string `json:"title"`
+	Type     string `json:"type"`
+	Shortcut string `json:"shortcut"`
+
+	Command string `json:"command,omitempty"`
+
+	Target    string            `json:"target,omitempty"`
+	Extension string            `json:"extension,omitempty"`
+	Params    map[string]string `json:"params"`
+
+	Url         string `json:"url,omitempty"`
+	Path        string `json:"path"`
+	Application string `json:"application,omitempty"`
+
+	Content string `json:"content,omitempty"`
 }
 
-func ParseScriptItems(output string) (items []ScriptItem, err error) {
+func ParseListItems(output string) (items []ListItem, err error) {
 	rows := strings.Split(output, "\n")
 	for _, row := range rows {
 		if row == "" {
 			continue
 		}
-		var item ScriptItem
+		var item ListItem
 		err = json.Unmarshal([]byte(row), &item)
 		if err != nil {
 			return nil, err
