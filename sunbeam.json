@@ -12,6 +12,15 @@
             ]
         },
         {
+            "title": "Git Commit",
+            "actions": [
+                {
+                    "type": "run",
+                    "target": "git-commit"
+                }
+            ]
+        },
+        {
             "title": "Show Suggestions",
             "actions": [
                 {
@@ -132,7 +141,8 @@
                 {
                     "id": "message",
                     "title": "message",
-                    "type": "textarea"
+                    "secure": true,
+                    "type": "textfield"
                 }
             ]
         },

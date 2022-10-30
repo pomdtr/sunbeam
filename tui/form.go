@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -44,7 +46,8 @@ func NewFormInput(formItem api.FormItem) FormInput {
 }
 
 type TextArea struct {
-	id string
+	id     string
+	secure bool
 	textarea.Model
 }
 
@@ -54,7 +57,9 @@ func NewTextArea(formItem api.FormItem) TextArea {
 	ta.Prompt = "┃ "
 
 	return TextArea{
-		Model: ta,
+		id:     formItem.Id,
+		Model:  ta,
+		secure: formItem.Secure,
 	}
 }
 
@@ -71,6 +76,7 @@ func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 type TextInput struct {
 	id string
 	textinput.Model
+	secure bool
 }
 
 func NewTextInput(formItem api.FormItem) TextInput {
@@ -81,12 +87,22 @@ func NewTextInput(formItem api.FormItem) TextInput {
 	ti.CharLimit = 32
 
 	return TextInput{
-		Model: ti,
+		id:     formItem.Id,
+		Model:  ti,
+		secure: formItem.Secure,
 	}
 }
 
 func (ti TextInput) Id() string {
-	return ""
+	return ti.id
+}
+
+func (ti TextInput) View() string {
+	if ti.secure {
+		password := strings.Repeat("*", len(ti.Value()))
+		ti.SetValue(password)
+	}
+	return ti.Model.View()
 }
 
 func (ta *TextInput) Update(msg tea.Msg) (FormInput, tea.Cmd) {

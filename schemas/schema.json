@@ -277,7 +277,6 @@
                     "type": "string",
                     "enum": [
                         "textfield",
-                        "password",
                         "textarea",
                         "checkbox",
                         "dropdown"
@@ -287,22 +286,11 @@
             "allOf": [
                 {
                     "if": {
-                        "anyOf": [
-                            {
-                                "properties": {
-                                    "type": {
-                                        "const": "textfield"
-                                    }
-                                }
-                            },
-                            {
-                                "properties": {
-                                    "type": {
-                                        "const": "textarea"
-                                    }
-                                }
+                        "properties": {
+                            "type": {
+                                "const": "textarea"
                             }
-                        ]
+                        }
                     },
                     "then": {
                         "required": [
@@ -314,6 +302,31 @@
                             },
                             "placeholder": {
                                 "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "textfield"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "title"
+                        ],
+                        "properties": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "secure": {
+                                "type": "boolean"
                             }
                         }
                     }

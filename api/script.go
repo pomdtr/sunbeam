@@ -32,6 +32,7 @@ type SunbeamScript struct {
 type FormItem struct {
 	Type        string         `json:"type"`
 	Id          string         `json:"id"`
+	Secure      bool           `json:"secure"`
 	Title       string         `json:"title"`
 	Placeholder string         `json:"placeholder"`
 	Label       string         `json:"label"`
