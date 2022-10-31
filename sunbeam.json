@@ -1,11 +1,17 @@
 {
     "$schema": "./schemas/schema.json",
-    "name": "sunbeam",
+    "name": "user",
+    "title": "User",
     "rootActions": [
         {
             "title": "Form Selector",
             "type": "run",
             "target": "selector"
+        },
+        {
+            "title": "Open Google",
+            "type": "open-url",
+            "url": "https://www.google.com"
         },
         {
             "title": "Git Commit",

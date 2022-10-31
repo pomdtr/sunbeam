@@ -161,13 +161,30 @@ func Start(width, height int) error {
 	rootItems := make([]ListItem, 0)
 	for _, manifest := range api.Sunbeam.Extensions {
 		for _, scriptAction := range manifest.RootActions {
+			var accessoryTitle string
 			action := NewAction(scriptAction)
-			action.Title = "Open Command"
+
 			action.Shortcut = "enter"
+			switch scriptAction.Type {
+			case "run":
+				action.Title = "Open Command"
+				accessoryTitle = "Command"
+			case "open-url":
+				accessoryTitle = "Quicklink"
+				action.Title = "Open Link"
+			case "open-file":
+				accessoryTitle = "Quicklink"
+				action.Title = "Open File"
+			case "copy":
+				accessoryTitle = "Snippet"
+				action.Title = "Copy Snippet"
+			}
+
 			rootItems = append(rootItems, ListItem{
 				Title:       scriptAction.Title,
+				Subtitle:    manifest.Title,
 				Extension:   manifest.Name,
-				Accessories: []string{"Command"},
+				Accessories: []string{accessoryTitle},
 				Actions: []Action{
 					action,
 				},
