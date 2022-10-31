@@ -44,7 +44,8 @@ Output demo.gif
 
 Set FontSize 32
 Set Width 1600
-Set Height 600
+Set Height 1200
+Set PlaybackSpeed 1.0
 
 Type "Sunbeam generates TUIs from simple scripts written in any language!"
 Sleep 2s
