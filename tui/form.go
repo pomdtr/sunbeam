@@ -239,13 +239,9 @@ func NewDropDown(formItem api.FormItem) DropDown {
 	ti.PlaceholderStyle = DefaultStyles.Secondary
 	ti.Width = 38
 
-	viewport := viewport.New(0, 3)
-
-	filter := Filter{
-		choices:    choices,
-		itemHeight: 1,
-		viewport:   &viewport,
-	}
+	filter := NewFilter()
+	filter.SetItems(choices)
+	filter.FilterItems("")
 
 	return DropDown{
 		textInput: ti,
@@ -269,7 +265,7 @@ func (d DropDown) View() string {
 
 	if !d.textInput.Focused() {
 		return textInputView
-	} else if len(d.filter.filtered) == 0 {
+	} else if d.value != "" && d.value == d.textInput.Value() {
 		return textInputView
 	} else {
 		d.filter.viewport.Height = len(d.filter.filtered)
@@ -313,7 +309,7 @@ func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	if ti.Value() != d.textInput.Value() {
-		d.filter.Filter(ti.Value())
+		d.filter.FilterItems(ti.Value())
 	} else {
 		d.filter, cmd = d.filter.Update(msg)
 		cmds = append(cmds, cmd)
@@ -341,10 +337,17 @@ func NewSubmitCmd(values map[string]string) tea.Cmd {
 	}
 }
 
+type ConfirmMsg struct{}
+
 func NewForm(items []FormItem) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter()
+	footer.SetActions(Action{
+		Title:    "Submit",
+		Msg:      ConfirmMsg{},
+		Shortcut: "ctrl+s",
+	})
 
 	return &Form{
 		header:   header,
@@ -368,12 +371,6 @@ func (c *Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyEscape:
 			return c, PopCmd
-		case tea.KeyCtrlS:
-			values := make(map[string]string, len(c.items))
-			for _, input := range c.items {
-				values[input.Id] = input.Value()
-			}
-			return c, NewSubmitCmd(values)
 		// Set focus to next input
 		case tea.KeyTab, tea.KeyShiftTab:
 			s := msg.String()
@@ -405,10 +402,24 @@ func (c *Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
 
 			return c, tea.Batch(cmds...)
 		}
+	case ConfirmMsg:
+		values := make(map[string]string, len(c.items))
+		for _, input := range c.items {
+			values[input.Id] = input.Value()
+		}
+		return c, NewSubmitCmd(values)
 	}
 
-	cmd := c.updateInputs(msg)
-	return c, cmd
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	c.footer, cmd = c.footer.Update(msg)
+	cmds = append(cmds, cmd)
+
+	cmd = c.updateInputs(msg)
+	cmds = append(cmds, cmd)
+
+	return c, tea.Batch(cmds...)
 }
 
 func (c Form) updateInputs(msg tea.Msg) tea.Cmd {

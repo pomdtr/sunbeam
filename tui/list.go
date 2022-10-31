@@ -14,6 +14,7 @@ import (
 
 type ListItem struct {
 	Actions     []Action
+	Extension   string
 	Title       string
 	Subtitle    string
 	Accessories []string
@@ -31,7 +32,7 @@ func NewListItem(extensionName string, item api.ListItem) ListItem {
 				scriptAction.Shortcut = fmt.Sprintf("ctrl+%d", i)
 			}
 		}
-		actions[i] = NewAction(extensionName, scriptAction)
+		actions[i] = NewAction(scriptAction)
 	}
 
 	return ListItem{
@@ -39,6 +40,7 @@ func NewListItem(extensionName string, item api.ListItem) ListItem {
 		Subtitle:    item.Subtitle,
 		Detail:      item.Detail.Command,
 		Actions:     actions,
+		Extension:   extensionName,
 		Accessories: item.Accessories,
 	}
 }
@@ -55,32 +57,33 @@ func (i ListItem) Render(width int, selected bool) string {
 		return ""
 	}
 
-	prompt := "  "
+	var title string
 	if selected {
-		prompt = "> "
+		title = DefaultStyles.Selection.Render(fmt.Sprintf("> %s", i.Title))
+	} else {
+		title = DefaultStyles.Primary.Render(fmt.Sprintf("  %s", i.Title))
 	}
 	accessories := strings.Join(i.Accessories, " • ")
+	accessories = DefaultStyles.Secondary.Render(accessories)
 	blank := " "
-	title := DefaultStyles.Primary.Render(i.Title)
 	subtitle := DefaultStyles.Secondary.Render(i.Subtitle)
 
 	var itemView string
 	// No place to display the accessories, just return the title
 	if lipgloss.Width(accessories) > width {
-		view := fmt.Sprintf("%s%s", prompt, title)
-		itemView = view[:utils.Min(lipgloss.Width(view), width)]
-	} else if lipgloss.Width(prompt+title+blank+accessories) > width {
-		availableWidth := width - lipgloss.Width(prompt+blank+accessories)
+		itemView = title[:utils.Min(lipgloss.Width(title), width)]
+	} else if lipgloss.Width(title+blank+accessories) > width {
+		availableWidth := width - lipgloss.Width(blank+accessories)
 		title := title[:utils.Max(0, availableWidth)]
-		itemView = fmt.Sprintf("%s%s%s%s", prompt, title, blank, accessories)
-	} else if lipgloss.Width(prompt+title+blank+subtitle+blank+accessories) > width {
-		availableWidth := width - lipgloss.Width(prompt+blank+title+blank+accessories)
+		itemView = fmt.Sprintf("%s%s%s", title, blank, accessories)
+	} else if lipgloss.Width(title+blank+subtitle+blank+accessories) > width {
+		availableWidth := width - lipgloss.Width(title+blank+accessories)
 		subtitle := subtitle[:utils.Max(0, availableWidth)]
-		itemView = fmt.Sprintf("%s%s%s%s%s%s", prompt, title, blank, subtitle, blank, accessories)
+		itemView = fmt.Sprintf("%s%s%s%s%s", title, blank, subtitle, blank, accessories)
 	} else {
-		blankWidth := width - lipgloss.Width(prompt+title+blank+subtitle+accessories)
+		blankWidth := width - lipgloss.Width(title+blank+subtitle+accessories)
 		blanks := strings.Repeat(" ", blankWidth)
-		itemView = fmt.Sprintf("%s%s%s%s%s%s", prompt, title, blank, subtitle, blanks, accessories)
+		itemView = fmt.Sprintf("%s%s%s%s%s", title, blank, subtitle, blanks, accessories)
 	}
 
 	separator := lipgloss.NewStyle().Foreground(lipgloss.Color("#9a9a9c")).Render(strings.Repeat("─", width))
@@ -99,7 +102,7 @@ type List struct {
 
 func NewList(dynamic bool) *List {
 	t := textinput.New()
-	t.Prompt = "  "
+	t.Prompt = "   "
 	t.Placeholder = "Search..."
 	t.PlaceholderStyle = DefaultStyles.Secondary
 	t.TextStyle = DefaultStyles.Primary
@@ -110,7 +113,7 @@ func NewList(dynamic bool) *List {
 
 	filter := Filter{
 		viewport:   &viewport,
-		itemHeight: 2,
+		ItemHeight: 2,
 	}
 
 	return &List{
@@ -141,7 +144,7 @@ func (c *List) SetItems(items []ListItem) {
 	if c.dynamic {
 		return
 	}
-	c.filter.Filter(c.textInput.Value())
+	c.filter.FilterItems(c.textInput.Value())
 }
 
 func (c *List) headerView() string {
@@ -156,45 +159,45 @@ type DebounceMsg struct {
 }
 
 func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
-	selectedItem := c.filter.Selection()
+	filterSelection := c.filter.Selection()
+	selectedItem, hasItemSelected := filterSelection.(ListItem)
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEscape:
 			if c.textInput.Value() != "" {
 				c.textInput.SetValue("")
-				c.filter.Filter("")
+				c.filter.FilterItems("")
 			} else {
 				return c, PopCmd
 			}
 		case tea.KeyEnter:
-			if selectedItem == nil {
+			if !hasItemSelected || len(selectedItem.Actions) == 0 {
 				break
 			}
-			selectedItem, _ := selectedItem.(ListItem)
-			if len(selectedItem.Actions) == 0 {
-				break
-			}
-			return c, selectedItem.Actions[0].Exec()
-		default:
-			if selectedItem == nil {
-				break
-			}
-			selectedItem, _ := selectedItem.(ListItem)
-			for _, action := range selectedItem.Actions {
-				if action.Shortcut == msg.String() {
-					return c, action.Exec()
-				}
-			}
+			return c, selectedItem.Actions[0].SendMsg
 		}
+	case RunMsg:
+		if !hasItemSelected {
+			break
+		}
+		script, ok := api.Sunbeam.GetScript(selectedItem.Extension, msg.Target)
+		if !ok {
+			return c, NewErrorCmd(fmt.Errorf("No script found for %s", msg.Target))
+		}
+		return c, NewPushCmd(NewRunContainer(script, msg.Params))
 	}
 
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+	c.footer, cmd = c.footer.Update(msg)
+	cmds = append(cmds, cmd)
+
 	t, cmd := c.textInput.Update(msg)
 	cmds = append(cmds, cmd)
 	if t.Value() != c.textInput.Value() {
-		c.filter.Filter(t.Value())
+		c.filter.FilterItems(t.Value())
 	}
 	c.textInput = &t
 
@@ -207,6 +210,14 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 type ListDetailOutputMsg string
 
 func (c *List) View() string {
+	filterSelection := c.filter.Selection()
+	selectedItem, ok := filterSelection.(ListItem)
+	if ok {
+		c.footer.SetActions(selectedItem.Actions...)
+	} else {
+		c.footer.SetActions()
+	}
+
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.filter.View(), c.footer.View())
 }
 
@@ -222,18 +233,6 @@ func NewQueryUpdateCmd(query string) func() tea.Msg {
 	return func() tea.Msg {
 		return QueryUpdateMsg{
 			query: query,
-		}
-	}
-}
-
-type ReloadMsg struct {
-	input api.ScriptInput
-}
-
-func NewReloadCmd(input api.ScriptInput) func() tea.Msg {
-	return func() tea.Msg {
-		return ReloadMsg{
-			input: input,
 		}
 	}
 }

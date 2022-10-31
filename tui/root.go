@@ -6,10 +6,12 @@ import (
 	"path"
 
 	"github.com/adrg/xdg"
+	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/api"
 	"github.com/pomdtr/sunbeam/utils"
+	"github.com/skratchdot/open-golang/open"
 )
 
 type Page interface {
@@ -47,6 +49,23 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
+	case CopyMsg:
+		err := clipboard.WriteAll(msg.Content)
+		if err != nil {
+			return m, NewErrorCmd(err)
+		}
+		return m, tea.Quit
+	case OpenMsg:
+		var err error
+		if msg.Application != "" {
+			err = open.RunWith(msg.Url, msg.Application)
+		} else {
+			err = open.Run(msg.Url)
+		}
+		if err != nil {
+			return m, NewErrorCmd(err)
+		}
+		return m, tea.Quit
 	case PushMsg:
 		m.Push(msg.Page)
 		return m, msg.Page.Init()
@@ -86,7 +105,6 @@ func (m *RootModel) SetSize(width, height int) {
 }
 
 func (m *RootModel) setPageSize(page Page, width, height int) {
-	log.Println("Setting page size", width, height)
 	page.SetSize(utils.Min(m.maxWidth, width-2), utils.Min(m.maxHeight, height-2))
 }
 
@@ -124,6 +142,17 @@ type RootContainer struct {
 
 func (c *RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyBackspace:
+			// Don't quit the app when the user press backspace
+			if c.textInput.Value() == "" {
+				return c, nil
+			}
+		}
+	}
+
 	c.List, cmd = c.List.Update(msg)
 	return c, cmd
 }
@@ -135,6 +164,7 @@ func Start(width, height int) error {
 			if item.Subtitle == "" {
 				item.Subtitle = manifest.Name
 			}
+			item.Extension = manifest.Name
 			rootItems = append(rootItems, NewListItem(manifest.Name, item))
 		}
 	}

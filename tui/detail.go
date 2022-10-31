@@ -31,7 +31,8 @@ type Detail struct {
 
 func NewDetail(format string, actions []Action) *Detail {
 	viewport := viewport.New(0, 0)
-	footer := NewFooter(actions...)
+	footer := NewFooter()
+	footer.SetActions(actions...)
 	header := NewHeader()
 	return &Detail{Model: viewport, format: format, footer: footer, header: header}
 }
@@ -45,6 +46,7 @@ func (d *Detail) SetContent(content string) error {
 		}
 		d.Model.SetContent(rendered)
 	default:
+		content = lipgloss.NewStyle().Width(d.width).Padding(1, 2).Render(content)
 		d.Model.SetContent(content)
 	}
 	return nil
@@ -61,19 +63,17 @@ func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 			}
 		case tea.KeyEscape:
 			return c, PopCmd
-		default:
-			for _, action := range c.actions {
-				if action.Shortcut == msg.String() {
-					return c, action.Exec()
-				}
-			}
-
 		}
-
 	}
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	c.footer, cmd = c.footer.Update(msg)
+	cmds = append(cmds, cmd)
+
 	c.Model, cmd = c.Model.Update(msg)
-	return c, cmd
+	cmds = append(cmds, cmd)
+	return c, tea.Batch(cmds...)
 }
 
 func (c *Detail) SetSize(width, height int) {

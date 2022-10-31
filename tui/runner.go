@@ -138,7 +138,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 		return c, nil
 	case ReloadMsg:
-		return c, c.Run(msg.input)
+		return c, c.Run(api.NewScriptInput(msg.Params))
 	case QueryUpdateMsg:
 		if c.list.dynamic {
 			input := api.ScriptInput{
@@ -152,8 +152,12 @@ func (c *RunContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, nil
 	case error:
 		c.currentView = "error"
-		c.err = NewDetail("raw", nil)
-		c.err.SetContent(msg.Error())
+		errMsg := msg.Error()
+		actions := []Action{
+			{Title: "Copy Error", Shortcut: "enter", Msg: CopyMsg{Content: errMsg}},
+		}
+		c.err = NewDetail("raw", actions)
+		c.err.SetContent(errMsg)
 		c.err.SetSize(c.width, c.height)
 		return c, c.err.Init()
 	}

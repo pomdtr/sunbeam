@@ -16,10 +16,15 @@ type Filter struct {
 	viewport   *viewport.Model
 	choices    []FilterItem
 	filtered   []FilterItem
-	itemHeight int
+	ItemHeight int
 
 	cursor int
 	height int
+}
+
+func NewFilter() Filter {
+	viewport := viewport.New(0, 0)
+	return Filter{viewport: &viewport}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -38,7 +43,7 @@ func (f *Filter) SetItems(items []FilterItem) {
 	f.choices = items
 }
 
-func (f *Filter) Filter(query string) {
+func (f *Filter) FilterItems(query string) {
 	values := make([]string, len(f.choices))
 	for i, choice := range f.choices {
 		values[i] = choice.FilterValue()
@@ -89,15 +94,15 @@ func (m Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 
 func (m *Filter) CursorUp() {
 	m.cursor = clamp(0, len(m.filtered)-1, m.cursor-1)
-	if m.cursor*m.itemHeight < m.viewport.YOffset {
-		m.viewport.SetYOffset(m.cursor * m.itemHeight)
+	if m.cursor*m.ItemHeight < m.viewport.YOffset {
+		m.viewport.SetYOffset(m.cursor * m.ItemHeight)
 	}
 }
 
 func (m *Filter) CursorDown() {
 	m.cursor = clamp(0, len(m.filtered)-1, m.cursor+1)
-	if m.cursor*m.itemHeight >= m.viewport.YOffset+m.viewport.Height {
-		m.viewport.LineDown(m.itemHeight)
+	if m.cursor*m.ItemHeight >= m.viewport.YOffset+m.viewport.Height {
+		m.viewport.LineDown(m.ItemHeight)
 	}
 }
 
