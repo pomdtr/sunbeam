@@ -100,8 +100,8 @@ type Manifest struct {
 	Title string `json:"title"`
 	Name  string `json:"name"`
 
-	RootItems []ListItem               `json:"rootItems"`
-	Scripts   map[string]SunbeamScript `json:"scripts"`
+	RootActions []ScriptAction           `json:"rootActions"`
+	Scripts     map[string]SunbeamScript `json:"scripts"`
 
 	Url url.URL
 }

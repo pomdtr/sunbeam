@@ -25,13 +25,6 @@ func NewListItem(extensionName string, item api.ListItem) ListItem {
 	actions := make([]Action, len(item.Actions))
 
 	for i, scriptAction := range item.Actions {
-		if scriptAction.Shortcut == "" {
-			if i == 0 {
-				scriptAction.Shortcut = "enter"
-			} else if i < 10 {
-				scriptAction.Shortcut = fmt.Sprintf("ctrl+%d", i)
-			}
-		}
 		actions[i] = NewAction(scriptAction)
 	}
 

@@ -160,12 +160,18 @@ func (c *RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 func Start(width, height int) error {
 	rootItems := make([]ListItem, 0)
 	for _, manifest := range api.Sunbeam.Extensions {
-		for _, item := range manifest.RootItems {
-			if item.Subtitle == "" {
-				item.Subtitle = manifest.Name
-			}
-			item.Extension = manifest.Name
-			rootItems = append(rootItems, NewListItem(manifest.Name, item))
+		for _, scriptAction := range manifest.RootActions {
+			action := NewAction(scriptAction)
+			action.Title = "Open Command"
+			action.Shortcut = "enter"
+			rootItems = append(rootItems, ListItem{
+				Title:       scriptAction.Title,
+				Extension:   manifest.Name,
+				Accessories: []string{"Command"},
+				Actions: []Action{
+					action,
+				},
+			})
 		}
 	}
 

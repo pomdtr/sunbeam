@@ -4,7 +4,7 @@
     "type": "object",
     "required": [
         "name",
-        "rootItems",
+        "rootActions",
         "scripts"
     ],
     "additionalProperties": false,
@@ -27,10 +27,10 @@
         "preferences": {
             "type": "array"
         },
-        "rootItems": {
+        "rootActions": {
             "type": "array",
             "items": {
-                "$ref": "#/definitions/listitem"
+                "$ref": "#/definitions/action"
             }
         },
         "scripts": {

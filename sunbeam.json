@@ -1,120 +1,76 @@
 {
     "$schema": "./schemas/schema.json",
     "name": "sunbeam",
-    "rootItems": [
+    "rootActions": [
         {
             "title": "Form Selector",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "selector"
-                }
-            ]
+            "type": "run",
+            "target": "selector"
         },
         {
             "title": "Git Commit",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "git-commit"
-                }
-            ]
+            "type": "run",
+            "target": "git-commit"
         },
         {
             "title": "Show Suggestions",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "google-search"
-                }
-            ]
+            "type": "run",
+            "target": "google-search"
         },
         {
             "title": "Show Random List",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "random"
-                }
-            ]
+            "type": "run",
+            "target": "random"
         },
         {
             "title": "Copy Password",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "copy-password"
-                }
-            ]
+            "type": "run",
+            "target": "copy-password"
         },
         {
             "title": "List My Repositories",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "list-repos",
-                    "params": {
-                        "owner": "pomdtr"
-                    }
-                }
-            ]
+            "type": "run",
+            "target": "list-repos",
+            "params": {
+                "owner": "pomdtr"
+            }
         },
         {
             "title": "List Dailymotion Repositories",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "list-repos",
-                    "params": {
-                        "owner": "dailymotion"
-                    }
-                }
-            ]
+            "type": "run",
+            "target": "list-repos",
+            "params": {
+                "owner": "dailymotion"
+            }
         },
         {
             "title": "Browse Directory",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "browse-files"
-                }
-            ]
+            "type": "run",
+            "target": "browse-files"
         },
         {
             "title": "Browse Home",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "browse-files",
-                    "params": {
-                        "root": "/Users/a.lacoin"
-                    }
-                }
-            ]
+            "type": "run",
+            "target": "browse-files",
+            "params": {
+                "root": "/Users/a.lacoin"
+            }
         },
         {
             "title": "Browse Root",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "browse-files",
-                    "params": {
-                        "root": "/"
-                    }
-                }
-            ]
+            "type": "run",
+            "target": "browse-files",
+            "params": {
+                "root": "/"
+            }
         },
         {
             "title": "List Airflow PRs",
-            "actions": [
-                {
-                    "type": "run",
-                    "target": "list-prs",
-                    "params": {
-                        "repository": "dailymotion/dwh-dags"
-                    }
-                }
-            ]
+            "type": "run",
+            "target": "list-prs",
+            "params": {
+                "repository": "dailymotion/dwh-dags"
+            }
         }
     ],
     "scripts": {

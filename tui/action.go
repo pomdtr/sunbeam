@@ -28,8 +28,9 @@ type ReloadMsg struct {
 }
 
 type RunMsg struct {
-	Target string
-	Params map[string]string
+	Extension string
+	Target    string
+	Params    map[string]string
 }
 
 func (a Action) SendMsg() tea.Msg {
