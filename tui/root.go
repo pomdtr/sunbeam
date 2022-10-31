@@ -12,22 +12,22 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-type Container interface {
+type Page interface {
 	Init() tea.Cmd
-	Update(tea.Msg) (Container, tea.Cmd)
+	Update(tea.Msg) (Page, tea.Cmd)
 	View() string
 	SetSize(width, height int)
 }
 
 type RootModel struct {
-	pageWidth, pageHeight int
-	width, height         int
+	maxWidth, maxHeight int
+	width, height       int
 
-	pages []Container
+	pages []Page
 }
 
-func NewRootModel(width, height int, rootPage Container) *RootModel {
-	return &RootModel{pages: []Container{rootPage}, pageWidth: width, pageHeight: height}
+func NewRootModel(width, height int, rootPage Page) *RootModel {
+	return &RootModel{pages: []Page{rootPage}, maxWidth: width, maxHeight: height}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -51,9 +51,11 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Push(msg.Page)
 		return m, msg.Page.Init()
 	case popMsg:
-		m.Pop()
-		if len(m.pages) == 0 {
+		if len(m.pages) == 1 {
 			return m, tea.Quit
+		} else {
+			m.Pop()
+			return m, nil
 		}
 	}
 
@@ -66,27 +68,33 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *RootModel) View() string {
 	if len(m.pages) == 0 {
-		return ""
+		return "This should not happen, please report this bug"
 	}
 
-	page := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).Render(m.pages[len(m.pages)-1].View())
-
-	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), page)
+	var pageStyle lipgloss.Style
+	pageStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
+	currentPage := m.pages[len(m.pages)-1]
+	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(currentPage.View()))
 }
 
 func (m *RootModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 	for _, page := range m.pages {
-		page.SetSize(utils.Min(m.pageWidth, width), utils.Min(m.pageHeight, height))
+		m.setPageSize(page, width, height)
 	}
 }
 
-type PushMsg struct {
-	Page Container
+func (m *RootModel) setPageSize(page Page, width, height int) {
+	log.Println("Setting page size", width, height)
+	page.SetSize(utils.Min(m.maxWidth, width-2), utils.Min(m.maxHeight, height-2))
 }
 
-func NewPushCmd(page Container) tea.Cmd {
+type PushMsg struct {
+	Page Page
+}
+
+func NewPushCmd(page Page) tea.Cmd {
 	return func() tea.Msg {
 		return PushMsg{Page: page}
 	}
@@ -98,8 +106,8 @@ func PopCmd() tea.Msg {
 	return popMsg{}
 }
 
-func (m *RootModel) Push(page Container) {
-	page.SetSize(m.pageWidth, m.pageHeight)
+func (m *RootModel) Push(page Page) {
+	m.setPageSize(page, m.width, m.height)
 	m.pages = append(m.pages, page)
 }
 
@@ -114,7 +122,7 @@ type RootContainer struct {
 	*List
 }
 
-func (c *RootContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmd tea.Cmd
 	c.List, cmd = c.List.Update(msg)
 	return c, cmd

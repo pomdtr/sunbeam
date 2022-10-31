@@ -25,13 +25,15 @@ type Detail struct {
 	viewport.Model
 	format  string
 	actions []Action
-	footer  *Footer
+	header  Header
+	footer  Footer
 }
 
 func NewDetail(format string, actions []Action) *Detail {
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(actions...)
-	return &Detail{Model: viewport, format: format, footer: footer}
+	header := NewHeader()
+	return &Detail{Model: viewport, format: format, footer: footer, header: header}
 }
 
 func (d *Detail) SetContent(content string) error {
@@ -75,17 +77,12 @@ func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 }
 
 func (c *Detail) SetSize(width, height int) {
-	c.height = height
-	c.width = width
+	c.header.Width = width
 	c.footer.Width = width
 	c.Model.Width = width
-	c.Model.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
+	c.Model.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 }
 
 func (c *Detail) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.Model.View(), c.footer.View())
-}
-
-func (c *Detail) headerView() string {
-	return SunbeamHeader(c.width)
+	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.Model.View(), c.footer.View())
 }

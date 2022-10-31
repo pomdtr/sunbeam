@@ -3,18 +3,19 @@ package tui
 import (
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 )
 
-func SunBeamHeaderWithInput(width int, t *textinput.Model) string {
-	header := t.View()
-	separator := strings.Repeat("─", width)
-	return lipgloss.JoinVertical(lipgloss.Left, header, separator)
+type Header struct {
+	Width int
 }
 
-func SunbeamHeader(width int) string {
-	header := strings.Repeat(" ", width)
-	separator := strings.Repeat("─", width)
+func NewHeader() Header {
+	return Header{}
+}
+
+func (s Header) View() string {
+	header := strings.Repeat(" ", s.Width)
+	separator := strings.Repeat("─", s.Width)
 	return lipgloss.JoinVertical(lipgloss.Left, header, separator)
 }

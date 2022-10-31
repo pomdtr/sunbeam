@@ -14,13 +14,11 @@ import (
 )
 
 type Form struct {
-	title      string
-	footer     *Footer
+	header     Header
+	footer     Footer
 	viewport   viewport.Model
 	items      []FormItem
 	focusIndex int
-	width      int
-	height     int
 }
 
 type FormItem struct {
@@ -33,6 +31,7 @@ type FormItem struct {
 type FormInput interface {
 	Focus() tea.Cmd
 	Blur()
+	SetWidth(int)
 
 	Value() string
 
@@ -112,10 +111,14 @@ func NewTextInput(formItem api.FormItem) TextInput {
 	}
 }
 
-func (ta *TextInput) Update(msg tea.Msg) (FormInput, tea.Cmd) {
+func (ti *TextInput) SetWidth(width int) {
+	ti.Model.Width = utils.Max(width-2, 0)
+}
+
+func (ti *TextInput) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	var cmd tea.Cmd
-	ta.Model, cmd = ta.Model.Update(msg)
-	return ta, cmd
+	ti.Model, cmd = ti.Model.Update(msg)
+	return ti, cmd
 }
 
 func (ti TextInput) View() string {
@@ -148,65 +151,86 @@ func NewCheckbox(formItem api.FormItem) Checkbox {
 	}
 }
 
-func (c *Checkbox) Focus() tea.Cmd {
-	c.focused = true
+func (cb *Checkbox) Focus() tea.Cmd {
+	cb.focused = true
 	return nil
 }
 
-func (c *Checkbox) Blur() {
-	c.focused = false
+func (cb *Checkbox) Blur() {
+	cb.focused = false
 }
 
-func (c Checkbox) Update(msg tea.Msg) (FormInput, tea.Cmd) {
-	if !c.focused {
-		return &c, nil
+func (cb *Checkbox) SetWidth(width int) {
+	cb.width = width
+}
+
+func (cb Checkbox) Update(msg tea.Msg) (FormInput, tea.Cmd) {
+	if !cb.focused {
+		return &cb, nil
 	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "enter":
-			c.checked = !c.checked
+		case "enter", " ":
+			cb.checked = !cb.checked
 		}
 	}
 
-	return &c, nil
+	return &cb, nil
 }
 
-func (c Checkbox) View() string {
+func (cb Checkbox) View() string {
 	var checkbox string
-	if c.checked {
-		checkbox = fmt.Sprintf(" [ ] %s", c.label)
+	if cb.checked {
+		checkbox = fmt.Sprintf(" [ ] %s", cb.label)
 	} else {
-		checkbox = fmt.Sprintf(" [x] %s", c.label)
+		checkbox = fmt.Sprintf(" [x] %s", cb.label)
 	}
 
-	paddingRight := utils.Max(c.width-len(checkbox), 0)
+	paddingRight := utils.Max(cb.width-len(checkbox), 0)
 	return fmt.Sprintf("%s%s", checkbox, strings.Repeat(" ", paddingRight))
 }
 
-func (c Checkbox) Value() string {
-	if c.checked {
-		return c.true_substitution
+func (cb Checkbox) Value() string {
+	if cb.checked {
+		return cb.true_substitution
 	}
 
-	return c.false_substitution
+	return cb.false_substitution
+}
+
+type DropDownItem struct {
+	title string
+	value string
+}
+
+func (d DropDownItem) Render(width int, selected bool) string {
+	if selected {
+		return fmt.Sprintf("* %s", d.title)
+	}
+	return fmt.Sprintf("  %s", d.title)
+}
+
+func (d DropDownItem) FilterValue() string {
+	return d.title
 }
 
 type DropDown struct {
 	id        string
 	data      map[string]string
 	textInput textinput.Model
-	selection string
 	filter    Filter
+	value     string
 }
 
 func NewDropDown(formItem api.FormItem) DropDown {
-	choices := make([]string, len(formItem.Data))
-	valueMap := make(map[string]string)
-	for i, item := range formItem.Data {
-		choices[i] = item.Title
-		valueMap[item.Title] = item.Value
+	choices := make([]FilterItem, len(formItem.Data))
+	for i, formItem := range formItem.Data {
+		choices[i] = DropDownItem{
+			title: formItem.Title,
+			value: formItem.Value,
+		}
 	}
 
 	ti := textinput.New()
@@ -215,20 +239,24 @@ func NewDropDown(formItem api.FormItem) DropDown {
 	ti.PlaceholderStyle = DefaultStyles.Secondary
 	ti.Width = 38
 
-	viewport := viewport.New(20, 3)
+	viewport := viewport.New(0, 3)
+
 	filter := Filter{
 		choices:    choices,
-		indicator:  "* ",
-		matches:    matchAll(choices),
-		matchStyle: DefaultStyles.Selection,
+		itemHeight: 1,
 		viewport:   &viewport,
-		height:     3,
 	}
 
 	return DropDown{
 		textInput: ti,
 		filter:    filter,
+		value:     "",
 	}
+}
+
+func (dd *DropDown) SetWidth(width int) {
+	dd.textInput.Width = width - 2
+	dd.filter.viewport.Width = width
 }
 
 func (d DropDown) View() string {
@@ -238,40 +266,44 @@ func (d DropDown) View() string {
 		paddingRight = d.textInput.Width - lipgloss.Width(modelView) + 2
 	}
 	textInputView := fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
+
 	if !d.textInput.Focused() {
 		return textInputView
-	} else if d.selection != "" && d.selection == d.textInput.Value() {
-		return textInputView
-	} else if len(d.filter.matches) == 0 {
+	} else if len(d.filter.filtered) == 0 {
 		return textInputView
 	} else {
-		separator := strings.Repeat("─", d.textInput.Width+2)
-		d.filter.viewport.Height = len(d.filter.matches)
-		return lipgloss.JoinVertical(lipgloss.Left, textInputView, separator, d.filter.View())
+		d.filter.viewport.Height = len(d.filter.filtered)
+		return lipgloss.JoinVertical(lipgloss.Left, textInputView, d.filter.View())
 	}
 }
 
 func (d DropDown) Value() string {
-	return d.selection
+	return d.value
 }
 
-func (d DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
+func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	if !d.textInput.Focused() {
-		return &d, nil
+		return d, nil
 	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if len(d.filter.matches) == 0 {
-				return &d, nil
+			if len(d.filter.filtered) == 0 {
+				return d, nil
 			}
-			selection := d.filter.matches[d.filter.cursor].Str
-			d.selection = selection
-			d.textInput.SetValue(selection)
+			selection := d.filter.Selection()
+			dropDownItem, ok := selection.(DropDownItem)
+			if !ok {
+				return d, NewErrorCmd(fmt.Errorf("invalid selection type: %T", selection))
+			}
+
+			d.value = dropDownItem.value
+			d.textInput.SetValue(dropDownItem.title)
 			d.textInput.CursorEnd()
-			return &d, nil
+
+			return d, nil
 		}
 	}
 
@@ -281,7 +313,6 @@ func (d DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	if ti.Value() != d.textInput.Value() {
-		d.selection = ""
 		d.filter.Filter(ti.Value())
 	} else {
 		d.filter, cmd = d.filter.Update(msg)
@@ -289,7 +320,7 @@ func (d DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	}
 
 	d.textInput = ti
-	return &d, tea.Batch(cmds...)
+	return d, tea.Batch(cmds...)
 }
 
 func (d *DropDown) Focus() tea.Cmd {
@@ -311,18 +342,16 @@ func NewSubmitCmd(values map[string]string) tea.Cmd {
 }
 
 func NewForm(items []FormItem) *Form {
-	footer := NewFooter()
+	header := NewHeader()
 	viewport := viewport.New(0, 0)
+	footer := NewFooter()
 
 	return &Form{
+		header:   header,
 		footer:   footer,
 		viewport: viewport,
 		items:    items,
 	}
-}
-
-func (c *Form) headerView() string {
-	return SunbeamHeader(c.width)
 }
 
 func (c Form) Init() tea.Cmd {
@@ -395,10 +424,13 @@ func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 }
 
 func (c *Form) SetSize(width, height int) {
-	c.width = width
 	c.footer.Width = width
-	c.viewport.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
 	c.viewport.Width = width
+	c.header.Width = width
+	for _, input := range c.items {
+		input.SetWidth(width / 2)
+	}
+	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 }
 
 func (c *Form) View() string {
@@ -410,8 +442,8 @@ func (c *Form) View() string {
 		}
 	}
 
-	selectedBorder := lipgloss.NewStyle().Border(lipgloss.NormalBorder(), true).BorderForeground(lipgloss.Color("205"))
-	normalBorder := lipgloss.NewStyle().Border(lipgloss.NormalBorder(), true)
+	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(lipgloss.Color("205"))
+	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
 	itemViews := make([]string, len(c.items))
 	for i, item := range c.items {
 		paddingLeft := maxTitleWidth - lipgloss.Width(item.Title)
@@ -426,8 +458,9 @@ func (c *Form) View() string {
 	}
 
 	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	paddingLeft := (c.width - lipgloss.Width(formView)) / 2
-	c.viewport.SetContent(lipgloss.NewStyle().PaddingLeft(paddingLeft - maxTitleWidth).PaddingTop(1).Render(formView))
+	paddingLeft := (c.viewport.Width - maxTitleWidth - lipgloss.Width(formView)) / 2
+	formView = lipgloss.NewStyle().Padding(1, paddingLeft).Render(formView)
+	c.viewport.SetContent(formView)
 
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.viewport.View(), c.footer.View())
+	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
 }

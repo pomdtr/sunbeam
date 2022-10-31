@@ -14,14 +14,14 @@ type Footer struct {
 	KeyMap KeyMap
 }
 
-func NewFooter(actions ...Action) *Footer {
+func NewFooter(actions ...Action) Footer {
 	keymap := KeyMap{actions: actions}
 	m := help.New()
 	m.Styles.ShortKey = DefaultStyles.Primary
 	m.Styles.ShortDesc = DefaultStyles.Primary
 	m.Styles.ShortSeparator = DefaultStyles.Primary
 
-	return &Footer{
+	return Footer{
 		Model:  m,
 		KeyMap: keymap,
 	}

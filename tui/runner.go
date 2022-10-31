@@ -104,7 +104,7 @@ func (c *RunContainer) SetSize(width, height int) {
 	}
 }
 
-func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *RunContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SubmitMsg:
 		c.currentView = "loading"
@@ -127,14 +127,14 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			c.detail = NewDetail(c.script.Format, []Action{})
 			err := c.detail.SetContent(string(msg))
 			if err != nil {
-				return c, NewErrorCmd("Failed to parse script output %s", err)
+				return c, NewErrorCmd(fmt.Errorf("Failed to parse script output %s", err))
 			}
 			c.detail.SetSize(c.width, c.height)
 			return c, c.detail.Init()
 		}
 		err := c.detail.SetContent(string(msg))
 		if err != nil {
-			return c, NewErrorCmd("Failed to parse script output %s", err)
+			return c, NewErrorCmd(fmt.Errorf("Failed to parse script output %s", err))
 		}
 		return c, nil
 	case ReloadMsg:

@@ -22,8 +22,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().IntVarP(&SunbeamFlags.Height, "height", "H", 33, "height of the window")
-	rootCmd.Flags().IntVarP(&SunbeamFlags.Width, "width", "W", 105, "width of the window")
+	rootCmd.Flags().IntVarP(&SunbeamFlags.Width, "max-width", "W", 105, "width of the window")
+	rootCmd.Flags().IntVarP(&SunbeamFlags.Height, "max-height", "H", 33, "height of the window")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

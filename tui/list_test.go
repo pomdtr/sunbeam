@@ -47,7 +47,7 @@ func TestItemView(t *testing.T) {
 			if c.width != len(c.want) {
 				t.Errorf("test case width (%d) does not match expected length (%d)", c.width, len(c.want))
 			}
-			got := c.item.View(c.width)
+			got := c.item.Render(c.width, false)
 			if got != c.want {
 				t.Errorf("got %q, want %q", got, c.want)
 			}

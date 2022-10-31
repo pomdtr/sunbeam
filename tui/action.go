@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/atotto/clipboard"
@@ -67,7 +68,7 @@ type CopyAction struct {
 func (c CopyAction) Exec() tea.Cmd {
 	err := clipboard.WriteAll(c.content)
 	if err != nil {
-		return NewErrorCmd("failed to copy %s to clipboard", err)
+		return NewErrorCmd(fmt.Errorf("failed to copy %s to clipboard", err))
 	}
 	return tea.Quit
 }
@@ -81,7 +82,7 @@ type RunAction struct {
 func (p RunAction) Exec() tea.Cmd {
 	command, ok := api.Sunbeam.GetScript(p.extension, p.target)
 	if !ok {
-		return NewErrorCmd("Unable to find command %s.%s", p.extension, p.target)
+		return NewErrorCmd(fmt.Errorf("Unable to find command %s.%s", p.extension, p.target))
 	}
 
 	return NewPushCmd(NewRunContainer(command, p.params))
@@ -110,7 +111,7 @@ func (o OpenUrlRunner) Exec() tea.Cmd {
 	}
 
 	if err != nil {
-		return NewErrorCmd("Unable to open url: %s", err)
+		return NewErrorCmd(fmt.Errorf("Unable to open url: %s", err))
 	}
 	return tea.Quit
 }
@@ -129,7 +130,7 @@ func (o OpenFileAction) Exec() tea.Cmd {
 	}
 
 	if err != nil {
-		return NewErrorCmd("Unable to open url: %s", err)
+		return NewErrorCmd(fmt.Errorf("Unable to open url: %s", err))
 	}
 	return tea.Quit
 }
@@ -139,5 +140,5 @@ type UnknownAction struct {
 }
 
 func (u UnknownAction) Exec() tea.Cmd {
-	return NewErrorCmd("Unknown action type: %s", u.actionType)
+	return NewErrorCmd(fmt.Errorf("Unknown action type: %s", u.actionType))
 }
