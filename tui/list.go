@@ -160,7 +160,12 @@ type DebounceMsg struct {
 
 func (c List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	filterSelection := c.filter.Selection()
-	selectedItem, hasItemSelected := filterSelection.(ListItem)
+	selectedItem, ok := filterSelection.(ListItem)
+	if ok {
+		c.footer.SetActions(selectedItem.Actions...)
+	} else {
+		c.footer.SetActions()
+	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -172,11 +177,6 @@ func (c List) Update(msg tea.Msg) (Container, tea.Cmd) {
 			} else {
 				return &c, PopCmd
 			}
-		case tea.KeyEnter:
-			if !hasItemSelected || len(selectedItem.Actions) == 0 {
-				break
-			}
-			return &c, selectedItem.Actions[0].SendMsg
 		}
 	case ReloadMsg:
 		c.isLoading = true
@@ -212,14 +212,6 @@ func (c List) Update(msg tea.Msg) (Container, tea.Cmd) {
 type ListDetailOutputMsg string
 
 func (c List) View() string {
-	filterSelection := c.filter.Selection()
-	selectedItem, ok := filterSelection.(ListItem)
-	if ok {
-		c.footer.SetActions(selectedItem.Actions...)
-	} else {
-		c.footer.SetActions()
-	}
-
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.filter.View(), c.footer.View())
 }
 
