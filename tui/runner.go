@@ -2,9 +2,12 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/api"
+	"github.com/skratchdot/open-golang/open"
 )
 
 type RunContainer struct {
@@ -88,6 +91,29 @@ func (c *RunContainer) Run(input api.ScriptInput) tea.Cmd {
 			return RawOutput(detail)
 		case "silent":
 			_, err := c.script.Run(input)
+			if err != nil {
+				return err
+			}
+			return tea.Quit()
+		case "clipboard":
+			output, err := c.script.Run(input)
+			if err != nil {
+				return err
+			}
+
+			err = clipboard.WriteAll(output)
+			if err != nil {
+				return err
+			}
+			return tea.Quit()
+		case "browser":
+			output, err := c.script.Run(input)
+			if err != nil {
+				return err
+			}
+
+			url := strings.Trim(output, " \n")
+			err = open.Run(url)
 			if err != nil {
 				return err
 			}

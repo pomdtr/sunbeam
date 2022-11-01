@@ -11,6 +11,20 @@
             }
         },
         {
+            "title": "Copy to clipboard",
+            "action": {
+                "type": "run",
+                "target": "copy-to-clipboard"
+            }
+        },
+        {
+            "title": "Open in browser",
+            "action": {
+                "type": "run",
+                "target": "open-in-browser"
+            }
+        },
+        {
             "title": "Open Google",
             "action": {
                 "type": "open-url",
@@ -110,6 +124,14 @@
             "output": "list",
             "mode": "static",
             "command": "./examples/kubens.mjs"
+        },
+        "copy-to-clipboard": {
+            "command": "echo 'test'",
+            "output": "clipboard"
+        },
+        "open-in-browser": {
+            "command": "printf 'https://www.google.com'",
+            "output": "browser"
         },
         "git-commit": {
             "command": "git commit -m {{ .params.message }} {{ .params.allowEmpty }}",
