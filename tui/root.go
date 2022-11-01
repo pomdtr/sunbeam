@@ -137,7 +137,7 @@ func (m *RootModel) Pop() {
 
 // Just a wrapper to convert the list to a container
 type RootContainer struct {
-	*List
+	List
 }
 
 func (c *RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -192,7 +192,7 @@ func Start(width, height int) error {
 		}
 	}
 
-	list := NewList(false)
+	list := NewList()
 	list.SetItems(rootItems)
 	rootContainer := RootContainer{List: list}
 

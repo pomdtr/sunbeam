@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -13,13 +15,13 @@ type FilterItem interface {
 }
 
 type Filter struct {
-	viewport   *viewport.Model
-	choices    []FilterItem
-	filtered   []FilterItem
-	ItemHeight int
+	viewport *viewport.Model
 
-	cursor int
-	height int
+	choices  []FilterItem
+	filtered []FilterItem
+
+	drawLines bool
+	cursor    int
 }
 
 func NewFilter() Filter {
@@ -67,11 +69,17 @@ func (f *Filter) FilterItems(query string) {
 func (m Filter) Init() tea.Cmd { return nil }
 
 func (m Filter) View() string {
-	itemsView := make([]string, len(m.filtered))
+	itemViews := make([]string, len(m.filtered))
 	for i, item := range m.filtered {
-		itemsView[i] = item.Render(m.viewport.Width, i == m.cursor)
+		itemView := item.Render(m.viewport.Width, i == m.cursor)
+		if m.drawLines {
+			separator := strings.Repeat("─", m.viewport.Width)
+			separator = DefaultStyles.Secondary.Render(separator)
+			itemView = lipgloss.JoinVertical(lipgloss.Left, itemView, separator)
+		}
+		itemViews[i] = itemView
 	}
-	filteredView := lipgloss.JoinVertical(lipgloss.Left, itemsView...)
+	filteredView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
 
 	m.viewport.SetContent(filteredView)
 	return lipgloss.NewStyle().Padding(0, 1).Render(m.viewport.View())
@@ -92,17 +100,25 @@ func (m Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 	return m, cmd
 }
 
+func (m Filter) itemHeight() int {
+	if m.drawLines {
+		return 2
+	}
+	return 1
+}
+
 func (m *Filter) CursorUp() {
 	m.cursor = clamp(0, len(m.filtered)-1, m.cursor-1)
-	if m.cursor*m.ItemHeight < m.viewport.YOffset {
-		m.viewport.SetYOffset(m.cursor * m.ItemHeight)
+
+	if m.cursor*m.itemHeight() < m.viewport.YOffset {
+		m.viewport.SetYOffset(m.cursor * m.itemHeight())
 	}
 }
 
 func (m *Filter) CursorDown() {
 	m.cursor = clamp(0, len(m.filtered)-1, m.cursor+1)
-	if m.cursor*m.ItemHeight >= m.viewport.YOffset+m.viewport.Height {
-		m.viewport.LineDown(m.ItemHeight)
+	if m.cursor*m.itemHeight() >= m.viewport.YOffset+m.viewport.Height {
+		m.viewport.LineDown(m.itemHeight())
 	}
 }
 

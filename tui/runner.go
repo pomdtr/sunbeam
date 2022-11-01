@@ -11,17 +11,19 @@ type RunContainer struct {
 	width, height int
 	currentView   string
 
-	form    *Form
-	loading *Loading
-	list    *List
-	detail  *Detail
-	err     *Detail
+	form   Form
+	list   List
+	detail Detail
+	err    Detail
 
 	script api.SunbeamScript
 	params map[string]string
 }
 
 func NewRunContainer(command api.SunbeamScript, params map[string]string) *RunContainer {
+	if params == nil {
+		params = make(map[string]string)
+	}
 	return &RunContainer{
 		script: command,
 		params: params,
@@ -67,7 +69,7 @@ func (c *RunContainer) Run(input api.ScriptInput) tea.Cmd {
 				listItems[i] = NewListItem(c.script.Extension, item)
 			}
 			return ListOutput(listItems)
-		case "full":
+		case "raw":
 			detail, err := c.script.Run(input)
 			if err != nil {
 				return err
@@ -87,19 +89,14 @@ func (c *RunContainer) Run(input api.ScriptInput) tea.Cmd {
 
 func (c *RunContainer) SetSize(width, height int) {
 	c.width, c.height = width, height
-	if c.loading != nil {
-		c.loading.SetSize(width, height)
-	}
-	if c.form != nil {
+	switch c.currentView {
+	case "form":
 		c.form.SetSize(width, height)
-	}
-	if c.list != nil {
+	case "list":
 		c.list.SetSize(width, height)
-	}
-	if c.detail != nil {
+	case "detail":
 		c.detail.SetSize(width, height)
-	}
-	if c.err != nil {
+	case "error":
 		c.err.SetSize(width, height)
 	}
 }
@@ -107,56 +104,44 @@ func (c *RunContainer) SetSize(width, height int) {
 func (c *RunContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SubmitMsg:
-		c.currentView = "loading"
-		c.loading = NewLoading()
-		c.loading.SetSize(c.width, c.height)
-		runCmd := c.Run(api.NewScriptInput(msg.values))
-		return c, tea.Batch(c.loading.Init(), runCmd)
-	case ListOutput:
-		if c.list == nil {
-			c.currentView = "list"
-			c.list = NewList(c.script.Dynamic)
-			c.list.SetItems(msg)
-			c.list.SetSize(c.width, c.height)
-			return c, c.list.Init()
+		for k, v := range msg.values {
+			c.params[k] = v
 		}
+		runCmd := c.Run(api.NewScriptInput(msg.values))
+		if c.script.Output == "list" {
+			c.currentView = "list"
+			c.list = NewList()
+			c.list.SetSize(c.width, c.height)
+			return c, tea.Batch(runCmd, c.list.Init())
+		} else {
+			c.currentView = "detail"
+			c.detail = NewDetail()
+			c.detail.SetSize(c.width, c.height)
+			return c, tea.Batch(runCmd, c.detail.Init())
+		}
+	case ListOutput:
 		c.list.SetItems(msg)
 	case DetailOutput:
-		if c.detail == nil {
-			c.currentView = "detail"
-			c.detail = NewDetail(c.script.Format, []Action{})
-			err := c.detail.SetContent(string(msg))
-			if err != nil {
-				return c, NewErrorCmd(fmt.Errorf("Failed to parse script output %s", err))
-			}
-			c.detail.SetSize(c.width, c.height)
-			return c, c.detail.Init()
-		}
 		err := c.detail.SetContent(string(msg))
 		if err != nil {
 			return c, NewErrorCmd(fmt.Errorf("Failed to parse script output %s", err))
 		}
 		return c, nil
 	case ReloadMsg:
-		return c, c.Run(api.NewScriptInput(msg.Params))
-	case QueryUpdateMsg:
-		if c.list.dynamic {
-			input := api.ScriptInput{
-				Query:  msg.query,
-				Params: c.params,
-			}
-			return c, c.Run(input)
+		for k, v := range msg.Params {
+			c.params[k] = v
 		}
+		return c, c.Run(api.NewScriptInput(c.params))
 	case tea.WindowSizeMsg:
 		c.SetSize(msg.Width, msg.Height)
 		return c, nil
 	case error:
 		c.currentView = "error"
 		errMsg := msg.Error()
-		actions := []Action{
-			{Title: "Copy Error", Shortcut: "enter", Msg: CopyMsg{Content: errMsg}},
-		}
-		c.err = NewDetail("raw", actions)
+		c.err = NewDetail()
+		c.err.SetActions(
+			Action{Title: "Copy Error", Shortcut: "enter", Msg: CopyMsg{Content: errMsg}},
+		)
 		c.err.SetContent(errMsg)
 		c.err.SetSize(c.width, c.height)
 		return c, c.err.Init()
@@ -166,8 +151,6 @@ func (c *RunContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch c.currentView {
 	case "form":
 		c.form, cmd = c.form.Update(msg)
-	case "loading":
-		c.loading, cmd = c.loading.Update(msg)
 	case "list":
 		c.list, cmd = c.list.Update(msg)
 	case "detail":
@@ -182,8 +165,6 @@ func (c *RunContainer) View() string {
 	switch c.currentView {
 	case "form":
 		return c.form.View()
-	case "loading":
-		return c.loading.View()
 	case "list":
 		return c.list.View()
 	case "detail":

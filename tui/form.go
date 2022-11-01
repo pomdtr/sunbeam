@@ -339,7 +339,7 @@ func NewSubmitCmd(values map[string]string) tea.Cmd {
 
 type ConfirmMsg struct{}
 
-func NewForm(items []FormItem) *Form {
+func NewForm(items []FormItem) Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter()
@@ -349,7 +349,7 @@ func NewForm(items []FormItem) *Form {
 		Shortcut: "ctrl+s",
 	})
 
-	return &Form{
+	return Form{
 		header:   header,
 		footer:   footer,
 		viewport: viewport,
@@ -364,7 +364,7 @@ func (c Form) Init() tea.Cmd {
 	return c.items[0].Focus()
 }
 
-func (c *Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
+func (c Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

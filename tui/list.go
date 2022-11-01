@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -61,26 +62,22 @@ func (i ListItem) Render(width int, selected bool) string {
 	blank := " "
 	subtitle := DefaultStyles.Secondary.Render(i.Subtitle)
 
-	var itemView string
-	// No place to display the accessories, just return the title
 	if lipgloss.Width(accessories) > width {
-		itemView = title[:utils.Min(lipgloss.Width(title), width)]
+		return title[:utils.Min(lipgloss.Width(title), width)]
 	} else if lipgloss.Width(title+blank+accessories) > width {
 		availableWidth := width - lipgloss.Width(blank+accessories)
 		title := title[:utils.Max(0, availableWidth)]
-		itemView = fmt.Sprintf("%s%s%s", title, blank, accessories)
+		return fmt.Sprintf("%s%s%s", title, blank, accessories)
 	} else if lipgloss.Width(title+blank+subtitle+blank+accessories) > width {
 		availableWidth := width - lipgloss.Width(title+blank+accessories)
 		subtitle := subtitle[:utils.Max(0, availableWidth)]
-		itemView = fmt.Sprintf("%s%s%s%s%s", title, blank, subtitle, blank, accessories)
+		return fmt.Sprintf("%s%s%s%s%s", title, blank, subtitle, blank, accessories)
 	} else {
 		blankWidth := width - lipgloss.Width(title+blank+subtitle+accessories)
 		blanks := strings.Repeat(" ", blankWidth)
-		itemView = fmt.Sprintf("%s%s%s%s%s", title, blank, subtitle, blanks, accessories)
+		return fmt.Sprintf("%s%s%s%s%s", title, blank, subtitle, blanks, accessories)
 	}
 
-	separator := lipgloss.NewStyle().Foreground(lipgloss.Color("#9a9a9c")).Render(strings.Repeat("─", width))
-	return lipgloss.JoinVertical(lipgloss.Left, itemView, separator)
 }
 
 type List struct {
@@ -88,12 +85,13 @@ type List struct {
 
 	textInput *textinput.Model
 	footer    Footer
+	spinner   spinner.Model
+	isLoading bool
 
-	dynamic bool
-	filter  Filter
+	filter Filter
 }
 
-func NewList(dynamic bool) *List {
+func NewList() List {
 	t := textinput.New()
 	t.Prompt = "   "
 	t.Placeholder = "Search..."
@@ -104,21 +102,24 @@ func NewList(dynamic bool) *List {
 	viewport := viewport.New(0, 0)
 	viewport.MouseWheelEnabled = true
 
+	spinner := spinner.NewModel()
+
 	filter := Filter{
-		viewport:   &viewport,
-		ItemHeight: 2,
+		viewport:  &viewport,
+		drawLines: true,
 	}
 
-	return &List{
+	return List{
 		textInput: &t,
-		dynamic:   dynamic,
+		isLoading: true,
+		spinner:   spinner,
 		filter:    filter,
 		footer:    footer,
 	}
 }
 
 func (c *List) Init() tea.Cmd {
-	return tea.Batch(c.textInput.Focus())
+	return tea.Batch(c.textInput.Focus(), c.spinner.Tick)
 }
 
 func (c *List) SetSize(width, height int) {
@@ -129,21 +130,27 @@ func (c *List) SetSize(width, height int) {
 }
 
 func (c *List) SetItems(items []ListItem) {
+	c.isLoading = false
+
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
 		filterItems[i] = item
 	}
+
 	c.filter.SetItems(filterItems)
-	if c.dynamic {
-		return
-	}
 	c.filter.FilterItems(c.textInput.Value())
 }
 
-func (c *List) headerView() string {
-	input := c.textInput.View()
+func (c List) headerView() string {
+	var headerRow string
+	if c.isLoading {
+		headerRow = fmt.Sprintf(" %s %s", c.spinner.View(), "Loading...")
+	} else {
+		headerRow = c.textInput.View()
+	}
+
 	line := strings.Repeat("─", c.width)
-	return lipgloss.JoinVertical(lipgloss.Left, input, line)
+	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
 }
 
 type DebounceMsg struct {
@@ -151,7 +158,7 @@ type DebounceMsg struct {
 	cmd   tea.Cmd
 }
 
-func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
+func (c List) Update(msg tea.Msg) (List, tea.Cmd) {
 	filterSelection := c.filter.Selection()
 	selectedItem, hasItemSelected := filterSelection.(ListItem)
 
@@ -184,6 +191,10 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+
+	c.spinner, cmd = c.spinner.Update(msg)
+	cmds = append(cmds, cmd)
+
 	c.footer, cmd = c.footer.Update(msg)
 	cmds = append(cmds, cmd)
 
@@ -202,7 +213,7 @@ func (c *List) Update(msg tea.Msg) (*List, tea.Cmd) {
 
 type ListDetailOutputMsg string
 
-func (c *List) View() string {
+func (c List) View() string {
 	filterSelection := c.filter.Selection()
 	selectedItem, ok := filterSelection.(ListItem)
 	if ok {
@@ -214,20 +225,8 @@ func (c *List) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.filter.View(), c.footer.View())
 }
 
-func (c *List) Query() string {
+func (c List) Query() string {
 	return c.textInput.Value()
-}
-
-type QueryUpdateMsg struct {
-	query string
-}
-
-func NewQueryUpdateCmd(query string) func() tea.Msg {
-	return func() tea.Msg {
-		return QueryUpdateMsg{
-			query: query,
-		}
-	}
 }
 
 func NewErrorCmd(err error) func() tea.Msg {

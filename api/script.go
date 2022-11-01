@@ -19,11 +19,6 @@ type SunbeamScript struct {
 	Params  []FormItem `json:"params"`
 	Command string     `json:"command"`
 
-	// Detail Properties
-	Format string `json:"format"`
-	// Remote Properties
-	Dynamic bool `json:"dynamic"`
-
 	Extension string
 	Url       url.URL
 	Root      url.URL

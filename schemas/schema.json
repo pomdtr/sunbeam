@@ -49,7 +49,8 @@
                         "type": "string",
                         "enum": [
                             "list",
-                            "full",
+                            "raw",
+                            "detail",
                             "silent"
                         ]
                     },
@@ -62,45 +63,7 @@
                             "$ref": "#/definitions/formitem"
                         }
                     }
-                },
-                "allOf": [
-                    {
-                        "if": {
-                            "properties": {
-                                "output": {
-                                    "const": "full"
-                                }
-                            }
-                        },
-                        "then": {
-                            "properties": {
-                                "format": {
-                                    "type": "string",
-                                    "enum": [
-                                        "markdown",
-                                        "code"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "if": {
-                            "properties": {
-                                "output": {
-                                    "const": "list"
-                                }
-                            }
-                        },
-                        "then": {
-                            "properties": {
-                                "dynamic": {
-                                    "type": "boolean"
-                                }
-                            }
-                        }
-                    }
-                ]
+                }
             }
         }
     },

@@ -1,8 +1,11 @@
 package tui
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
@@ -23,18 +26,38 @@ type Detail struct {
 	width, height int
 
 	viewport.Model
-	format  string
-	actions []Action
-	header  Header
-	footer  Footer
+	format    string
+	spinner   spinner.Model
+	isLoading bool
+	actions   []Action
+	footer    Footer
 }
 
-func NewDetail(format string, actions []Action) *Detail {
+func NewDetail() Detail {
+	spinner := spinner.New()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter()
-	footer.SetActions(actions...)
-	header := NewHeader()
-	return &Detail{Model: viewport, format: format, footer: footer, header: header}
+
+	return Detail{Model: viewport, spinner: spinner, format: "raw", footer: footer}
+}
+
+func (d *Detail) SetActions(actions ...Action) {
+	d.footer.SetActions(actions...)
+}
+
+func (d Detail) headerView() string {
+	var headerRow string
+	if d.isLoading {
+		headerRow = fmt.Sprintf(" %s %s", d.spinner.View(), "Loading...")
+	} else {
+		headerRow = strings.Repeat(" ", d.width)
+	}
+	separator := strings.Repeat("─", d.Width)
+	return lipgloss.JoinVertical(lipgloss.Left, headerRow, separator)
+}
+
+func (d *Detail) Init() tea.Cmd {
+	return d.spinner.Tick
 }
 
 func (d *Detail) SetContent(content string) error {
@@ -52,14 +75,14 @@ func (d *Detail) SetContent(content string) error {
 	return nil
 }
 
-func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
+func (c Detail) Update(msg tea.Msg) (Detail, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyRunes:
 			switch msg.String() {
 			case "q", "Q":
-				return nil, tea.Quit
+				return c, tea.Quit
 			}
 		case tea.KeyEscape:
 			return c, PopCmd
@@ -68,21 +91,25 @@ func (c *Detail) Update(msg tea.Msg) (*Detail, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
+	c.spinner, cmd = c.spinner.Update(msg)
+	cmds = append(cmds, cmd)
+
 	c.footer, cmd = c.footer.Update(msg)
 	cmds = append(cmds, cmd)
 
 	c.Model, cmd = c.Model.Update(msg)
 	cmds = append(cmds, cmd)
+
 	return c, tea.Batch(cmds...)
 }
 
 func (c *Detail) SetSize(width, height int) {
-	c.header.Width = width
+	c.width = width
 	c.footer.Width = width
 	c.Model.Width = width
-	c.Model.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+	c.Model.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
 }
 
 func (c *Detail) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.Model.View(), c.footer.View())
+	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.Model.View(), c.footer.View())
 }

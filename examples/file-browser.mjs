@@ -31,7 +31,7 @@ const items = await Promise.all(
           path: filepath,
         };
     return {
-      title: file.name,
+      title: `${file.name}`,
       subtitle: prettyPath,
       actions: [primaryAction],
     };

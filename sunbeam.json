@@ -98,7 +98,7 @@
         },
         "git-commit": {
             "command": "git commit -m {{ .params.message }} {{ .params.allowEmpty }}",
-            "output": "silent",
+            "output": "raw",
             "params": [
                 {
                     "id": "textfield",
