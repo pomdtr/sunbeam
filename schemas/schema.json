@@ -65,8 +65,10 @@
                         "enum": [
                             "list",
                             "detail",
-                            "raw",
-                            "silent"
+                            "full",
+                            "clipboard",
+                            "browser",
+                            "stdout"
                         ]
                     },
                     "command": {

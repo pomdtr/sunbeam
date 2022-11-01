@@ -89,7 +89,7 @@ func (c *RunContainer) Run(input api.ScriptInput) tea.Cmd {
 				return err
 			}
 			return RawOutput(detail)
-		case "silent":
+		case "full":
 			_, err := c.script.Run(input)
 			if err != nil {
 				return err
