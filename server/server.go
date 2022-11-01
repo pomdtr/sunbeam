@@ -20,7 +20,7 @@ func Serve(address string, port int) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func serveCommand(cmd api.SunbeamScript) http.HandlerFunc {
+func serveCommand(cmd api.Script) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		var input api.ScriptInput
 		err := json.NewDecoder(req.Body).Decode(&input)

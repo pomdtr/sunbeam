@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os/exec"
@@ -14,8 +15,10 @@ import (
 	"github.com/alessio/shellescape"
 )
 
-type SunbeamScript struct {
+type Script struct {
 	Output  string     `json:"output"`
+	Mode    string     `json:"mode"`
+	Format  string     `json:"format"`
 	Params  []FormItem `json:"params"`
 	Command string     `json:"command"`
 
@@ -56,18 +59,18 @@ type DropDownItem struct {
 }
 
 type ScriptInput struct {
-	Params map[string]string
+	Params map[string]any
 	Query  string
 }
 
-func NewScriptInput(params map[string]string) ScriptInput {
+func NewScriptInput(params map[string]any) ScriptInput {
 	if params == nil {
-		params = make(map[string]string)
+		params = make(map[string]any)
 	}
 	return ScriptInput{Params: params}
 }
 
-func (s SunbeamScript) CheckMissingParams(inputParams map[string]string) []FormItem {
+func (s Script) CheckMissingParams(inputParams map[string]any) []FormItem {
 	missing := make([]FormItem, 0)
 	for _, param := range s.Params {
 		if _, ok := inputParams[param.Id]; !ok {
@@ -90,17 +93,40 @@ func renderCommand(command string, data map[string]any) (string, error) {
 	return out.String(), nil
 }
 
-func (s SunbeamScript) Run(input ScriptInput) (string, error) {
+func (s Script) Run(input ScriptInput) (string, error) {
 	var err error
-	params := make(map[string]any)
-	for key, value := range input.Params {
-		params[key] = shellescape.Quote(value)
+	params := make(map[string]string)
+	for _, formInput := range s.Params {
+		value, ok := input.Params[formInput.Id]
+		if !ok {
+			return "", fmt.Errorf("missing param %s", formInput.Id)
+		}
+		if formInput.Type == "checkbox" {
+			value, ok := value.(bool)
+			if !ok {
+				return "", fmt.Errorf("invalid type for param %s", formInput.Id)
+			}
+			if value {
+				params[formInput.Id] = shellescape.Quote(formInput.TrueSubstitution)
+			} else if formInput.FalseSubstitution != "" {
+				params[formInput.Id] = shellescape.Quote(formInput.FalseSubstitution)
+			} else {
+				params[formInput.Id] = ""
+			}
+		} else {
+			value, ok := value.(string)
+			if !ok {
+				return "", fmt.Errorf("param %s is not a string", formInput.Id)
+			}
+			params[formInput.Id] = shellescape.Quote(value)
+		}
 	}
 
 	rendered, err := renderCommand(s.Command, map[string]any{
 		"params": params,
 		"query":  shellescape.Quote(input.Query),
 	})
+	log.Println("Rendered command:", rendered)
 	if err != nil {
 		return "", err
 	}
@@ -119,7 +145,7 @@ func (s SunbeamScript) Run(input ScriptInput) (string, error) {
 	return outbuf.String(), nil
 }
 
-func (s SunbeamScript) RemoteRun(input ScriptInput) (string, error) {
+func (s Script) RemoteRun(input ScriptInput) (string, error) {
 	payload, err := json.Marshal(input)
 	if err != nil {
 		return "", err
@@ -169,9 +195,9 @@ type OpenAction struct {
 }
 
 type RunAction struct {
-	Target    string            `json:"target,omitempty"`
-	Extension string            `json:"extension,omitempty"`
-	Params    map[string]string `json:"params"`
+	Target    string         `json:"target,omitempty"`
+	Extension string         `json:"extension,omitempty"`
+	Params    map[string]any `json:"params"`
 }
 
 func ParseListItems(output string) (items []ListItem, err error) {

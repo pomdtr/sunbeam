@@ -2,103 +2,119 @@
     "$schema": "./schemas/schema.json",
     "name": "user",
     "title": "User",
-    "rootActions": [
+    "rootItems": [
         {
             "title": "Form Selector",
-            "type": "run",
-            "target": "selector"
+            "action": {
+                "type": "run",
+                "target": "selector"
+            }
         },
         {
             "title": "Open Google",
-            "type": "open-url",
-            "url": "https://www.google.com"
+            "action": {
+                "type": "open-url",
+                "url": "https://www.google.com"
+            }
         },
         {
             "title": "Git Commit",
-            "type": "run",
-            "target": "git-commit"
+            "action": {
+                "type": "run",
+                "target": "git-commit"
+            }
         },
         {
             "title": "Show Suggestions",
-            "type": "run",
-            "target": "google-search"
+            "action": {
+                "type": "run",
+                "target": "google-search"
+            }
         },
         {
             "title": "Show Random List",
-            "type": "run",
-            "target": "random"
+            "action": {
+                "type": "run",
+                "target": "random"
+            }
         },
         {
             "title": "Copy Password",
-            "type": "run",
-            "target": "copy-password"
+            "subtitle": "Bitwarden",
+            "action": {
+                "type": "run",
+                "target": "copy-password"
+            }
         },
         {
             "title": "List My Repositories",
-            "type": "run",
-            "target": "list-repos",
-            "params": {
-                "owner": "pomdtr"
+            "action": {
+                "type": "run",
+                "target": "list-repos",
+                "params": {
+                    "owner": "pomdtr"
+                }
             }
         },
         {
             "title": "List Dailymotion Repositories",
-            "type": "run",
-            "target": "list-repos",
-            "params": {
-                "owner": "dailymotion"
+            "action": {
+                "type": "run",
+                "target": "list-repos",
+                "params": {
+                    "owner": "dailymotion"
+                }
             }
         },
         {
             "title": "Browse Directory",
-            "type": "run",
-            "target": "browse-files"
+            "action": {
+                "type": "run",
+                "target": "browse-files"
+            }
         },
         {
             "title": "Browse Home",
-            "type": "run",
-            "target": "browse-files",
-            "params": {
-                "root": "/Users/a.lacoin"
+            "action": {
+                "type": "run",
+                "target": "browse-files",
+                "params": {
+                    "root": "/Users/a.lacoin",
+                    "all": true
+                }
             }
         },
         {
             "title": "Browse Root",
-            "type": "run",
-            "target": "browse-files",
-            "params": {
-                "root": "/"
+            "action": {
+                "type": "run",
+                "target": "browse-files",
+                "params": {
+                    "root": "/"
+                }
             }
         },
         {
             "title": "List Airflow PRs",
-            "type": "run",
-            "target": "list-prs",
-            "params": {
-                "repository": "dailymotion/dwh-dags"
+            "action": {
+                "type": "run",
+                "target": "list-prs",
+                "params": {
+                    "repository": "dailymotion/dwh-dags"
+                }
             }
         }
     ],
     "scripts": {
         "list-k8s-namespaces": {
             "output": "list",
+            "mode": "static",
             "command": "./examples/kubens.mjs"
-        },
-        "set-k8s-namespace": {
-            "command": "kubectl config set-context --current --namespace={{ .params.namespace }}",
-            "output": "silent",
-            "params": [
-                {
-                    "id": "namespace",
-                    "type": "textfield",
-                    "placeholder": "Namespace",
-                    "title": "Namespace"
-                }
-            ]
         },
         "git-commit": {
             "command": "git commit -m {{ .params.message }} {{ .params.allowEmpty }}",
-            "output": "raw",
+            "output": "detail",
+            "format": "json",
             "params": [
                 {
                     "id": "textfield",
@@ -147,15 +163,18 @@
         },
         "google-search": {
             "output": "list",
+            "mode": "dynamic",
             "command": "./examples/google.mjs --query {{ .query }}",
             "dynamic": true
         },
         "random": {
             "output": "list",
+            "mode": "static",
             "command": "./examples/random_list.py"
         },
         "list-repos": {
             "output": "list",
+            "mode": "static",
             "command": "./examples/github/list-repos.mjs --owner {{ .params.owner }}",
             "params": [
                 {
@@ -167,10 +186,12 @@
         },
         "copy-password": {
             "output": "list",
+            "mode": "static",
             "command": "./examples/bitwarden.sh"
         },
         "list-prs": {
             "output": "list",
+            "mode": "static",
             "command": "./examples/github/list-prs.mjs --repo {{ .params.repository }}",
             "params": [
                 {
@@ -183,7 +204,8 @@
         },
         "browse-files": {
             "output": "list",
-            "command": "./examples/file-browser.mjs {{ .params.root }}",
+            "mode": "static",
+            "command": "./examples/file-browser.mjs {{ .params.root }} {{ .params.all }}",
             "params": [
                 {
                     "id": "root",
@@ -191,11 +213,21 @@
                     "placeholder": "Start Directory",
                     "type": "textfield",
                     "required": true
+                },
+                {
+                    "id": "all",
+                    "title": "Show Hidden Files",
+                    "required": true,
+                    "type": "checkbox",
+                    "label": "Show Hidden Files",
+                    "trueSubstitution": "--all",
+                    "falseSubstitution": ""
                 }
             ]
         },
         "selector": {
             "output": "list",
+            "mode": "static",
             "command": "echo {{ .params.selection }}",
             "placeholder": "Select an item",
             "params": [

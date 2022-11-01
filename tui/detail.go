@@ -33,12 +33,12 @@ type Detail struct {
 	footer    Footer
 }
 
-func NewDetail() Detail {
+func NewDetail() *Detail {
 	spinner := spinner.New()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter()
 
-	return Detail{Model: viewport, spinner: spinner, format: "raw", footer: footer}
+	return &Detail{Model: viewport, spinner: spinner, format: "raw", footer: footer}
 }
 
 func (d *Detail) SetActions(actions ...Action) {
@@ -76,17 +76,17 @@ func (d *Detail) SetContent(content string) error {
 	return nil
 }
 
-func (c Detail) Update(msg tea.Msg) (Detail, tea.Cmd) {
+func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyRunes:
 			switch msg.String() {
 			case "q", "Q":
-				return c, tea.Quit
+				return &c, tea.Quit
 			}
 		case tea.KeyEscape:
-			return c, PopCmd
+			return &c, PopCmd
 		}
 	}
 	var cmd tea.Cmd
@@ -101,7 +101,7 @@ func (c Detail) Update(msg tea.Msg) (Detail, tea.Cmd) {
 	c.Model, cmd = c.Model.Update(msg)
 	cmds = append(cmds, cmd)
 
-	return c, tea.Batch(cmds...)
+	return &c, tea.Batch(cmds...)
 }
 
 func (c *Detail) SetSize(width, height int) {

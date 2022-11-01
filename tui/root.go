@@ -14,9 +14,9 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-type Page interface {
+type Container interface {
 	Init() tea.Cmd
-	Update(tea.Msg) (Page, tea.Cmd)
+	Update(tea.Msg) (Container, tea.Cmd)
 	View() string
 	SetSize(width, height int)
 }
@@ -25,11 +25,11 @@ type RootModel struct {
 	maxWidth, maxHeight int
 	width, height       int
 
-	pages []Page
+	pages []Container
 }
 
-func NewRootModel(width, height int, rootPage Page) *RootModel {
-	return &RootModel{pages: []Page{rootPage}, maxWidth: width, maxHeight: height}
+func NewRootModel(width, height int, rootPage Container) *RootModel {
+	return &RootModel{pages: []Container{rootPage}, maxWidth: width, maxHeight: height}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -76,6 +76,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Pop()
 			return m, nil
 		}
+	case error:
+		detail := NewDetail()
+		detail.SetContent(msg.Error())
+		detail.SetSize(m.pageWidth(), m.pageHeight())
+
+		currentIndex := len(m.pages) - 1
+		m.pages[currentIndex] = detail
 	}
 
 	// Update the current page
@@ -90,29 +97,35 @@ func (m *RootModel) View() string {
 		return "This should not happen, please report this bug"
 	}
 
+	currentPage := m.pages[len(m.pages)-1]
+	view := currentPage.View()
+
 	var pageStyle lipgloss.Style
 	pageStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
-	currentPage := m.pages[len(m.pages)-1]
-	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(currentPage.View()))
+	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(view))
 }
 
 func (m *RootModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 	for _, page := range m.pages {
-		m.setPageSize(page, width, height)
+		page.SetSize(m.pageWidth(), m.pageHeight())
 	}
 }
 
-func (m *RootModel) setPageSize(page Page, width, height int) {
-	page.SetSize(utils.Min(m.maxWidth, width-2), utils.Min(m.maxHeight, height-2))
+func (m *RootModel) pageWidth() int {
+	return utils.Min(m.maxWidth, m.width-2)
+}
+
+func (m *RootModel) pageHeight() int {
+	return utils.Min(m.maxHeight, m.height-2)
 }
 
 type PushMsg struct {
-	Page Page
+	Page Container
 }
 
-func NewPushCmd(page Page) tea.Cmd {
+func NewPushCmd(page Container) tea.Cmd {
 	return func() tea.Msg {
 		return PushMsg{Page: page}
 	}
@@ -124,8 +137,8 @@ func PopCmd() tea.Msg {
 	return popMsg{}
 }
 
-func (m *RootModel) Push(page Page) {
-	m.setPageSize(page, m.width, m.height)
+func (m *RootModel) Push(page Container) {
+	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
 }
 
@@ -135,58 +148,20 @@ func (m *RootModel) Pop() {
 	}
 }
 
-// Just a wrapper to convert the list to a container
-type RootContainer struct {
-	List
-}
-
-func (c *RootContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyBackspace:
-			// Don't quit the app when the user press backspace
-			if c.textInput.Value() == "" {
-				return c, nil
-			}
-		}
-	}
-
-	c.List, cmd = c.List.Update(msg)
-	return c, cmd
-}
-
 func Start(width, height int) error {
 	rootItems := make([]ListItem, 0)
 	for _, manifest := range api.Sunbeam.Extensions {
-		for _, scriptAction := range manifest.RootActions {
-			var accessoryTitle string
-			action := NewAction(scriptAction)
-
-			action.Shortcut = "enter"
-			switch scriptAction.Type {
-			case "run":
-				action.Title = "Open Command"
-				accessoryTitle = "Command"
-			case "open-url":
-				accessoryTitle = "Quicklink"
-				action.Title = "Open Link"
-			case "open-file":
-				accessoryTitle = "Quicklink"
-				action.Title = "Open File"
-			case "copy":
-				accessoryTitle = "Snippet"
-				action.Title = "Copy Snippet"
+		for _, rootItem := range manifest.RootItems {
+			if rootItem.Subtitle == "" {
+				rootItem.Subtitle = manifest.Name
 			}
 
 			rootItems = append(rootItems, ListItem{
-				Title:       scriptAction.Title,
-				Subtitle:    manifest.Title,
-				Extension:   manifest.Name,
-				Accessories: []string{accessoryTitle},
+				Title:     rootItem.Title,
+				Subtitle:  rootItem.Subtitle,
+				Extension: manifest.Name,
 				Actions: []Action{
-					action,
+					NewAction(rootItem.Action),
 				},
 			})
 		}
@@ -194,9 +169,8 @@ func Start(width, height int) error {
 
 	list := NewList()
 	list.SetItems(rootItems)
-	rootContainer := RootContainer{List: list}
 
-	m := NewRootModel(width, height, &rootContainer)
+	m := NewRootModel(width, height, list)
 	return Draw(m)
 }
 

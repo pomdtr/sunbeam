@@ -4,7 +4,7 @@
     "type": "object",
     "required": [
         "name",
-        "rootActions",
+        "rootItems",
         "scripts"
     ],
     "additionalProperties": false,
@@ -27,10 +27,25 @@
         "preferences": {
             "type": "array"
         },
-        "rootActions": {
+        "rootItems": {
             "type": "array",
             "items": {
-                "$ref": "#/definitions/action"
+                "type": "object",
+                "required": [
+                    "title",
+                    "action"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "subtitle": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "$ref": "#/definitions/action"
+                    }
+                }
             }
         },
         "scripts": {
@@ -49,8 +64,8 @@
                         "type": "string",
                         "enum": [
                             "list",
-                            "raw",
                             "detail",
+                            "raw",
                             "silent"
                         ]
                     },
@@ -63,7 +78,32 @@
                             "$ref": "#/definitions/formitem"
                         }
                     }
-                }
+                },
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": {
+                                "output": {
+                                    "const": "list"
+                                }
+                            }
+                        },
+                        "then": {
+                            "required": [
+                                "mode"
+                            ],
+                            "properties": {
+                                "mode": {
+                                    "type": "string",
+                                    "enum": [
+                                        "static",
+                                        "dynamic"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]
             }
         }
     },
@@ -107,6 +147,7 @@
                     "enum": [
                         "open-file",
                         "open-url",
+                        "exec",
                         "copy",
                         "run",
                         "reload"
@@ -165,6 +206,25 @@
                     "if": {
                         "properties": {
                             "type": {
+                                "const": "exec"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "command"
+                        ],
+                        "properties": {
+                            "command": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
                                 "const": "copy"
                             }
                         }
@@ -199,7 +259,14 @@
                             "params": {
                                 "type": "object",
                                 "additionalProperties": {
-                                    "type": "string"
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
                                 }
                             }
                         }

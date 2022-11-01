@@ -24,13 +24,13 @@ type OpenMsg struct {
 }
 
 type ReloadMsg struct {
-	Params map[string]string
+	Params map[string]any
 }
 
 type RunMsg struct {
 	Extension string
 	Target    string
-	Params    map[string]string
+	Params    map[string]any
 }
 
 func (a Action) SendMsg() tea.Msg {

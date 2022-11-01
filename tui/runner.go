@@ -11,26 +11,37 @@ type RunContainer struct {
 	width, height int
 	currentView   string
 
-	form   Form
-	list   List
-	detail Detail
-	err    Detail
+	extensionName string
+	scriptName    string
+	params        map[string]any
 
-	script api.SunbeamScript
-	params map[string]string
+	form   *Form
+	list   *List
+	detail *Detail
+
+	script api.Script
 }
 
-func NewRunContainer(command api.SunbeamScript, params map[string]string) *RunContainer {
-	if params == nil {
-		params = make(map[string]string)
+func NewRunContainer(extensionName string, scriptName string, scriptParams map[string]any) *RunContainer {
+	params := make(map[string]any)
+	for k, v := range scriptParams {
+		params[k] = v
 	}
+
 	return &RunContainer{
-		script: command,
-		params: params,
+		extensionName: extensionName,
+		scriptName:    scriptName,
+		params:        params,
 	}
 }
 
 func (c *RunContainer) Init() tea.Cmd {
+	var ok bool
+	c.script, ok = api.Sunbeam.GetScript(c.extensionName, c.scriptName)
+	if !ok {
+		return NewErrorCmd(fmt.Errorf("Script %s not found", c.scriptName))
+	}
+
 	missing := c.script.CheckMissingParams(c.params)
 
 	if len(missing) > 0 {
@@ -48,7 +59,7 @@ func (c *RunContainer) Init() tea.Cmd {
 }
 
 type ListOutput []ListItem
-type DetailOutput string
+type RawOutput string
 
 func (c *RunContainer) Run(input api.ScriptInput) tea.Cmd {
 	return func() tea.Msg {
@@ -74,7 +85,7 @@ func (c *RunContainer) Run(input api.ScriptInput) tea.Cmd {
 			if err != nil {
 				return err
 			}
-			return DetailOutput(detail)
+			return RawOutput(detail)
 		case "silent":
 			_, err := c.script.Run(input)
 			if err != nil {
@@ -96,18 +107,16 @@ func (c *RunContainer) SetSize(width, height int) {
 		c.list.SetSize(width, height)
 	case "detail":
 		c.detail.SetSize(width, height)
-	case "error":
-		c.err.SetSize(width, height)
 	}
 }
 
-func (c *RunContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SubmitMsg:
 		for k, v := range msg.values {
 			c.params[k] = v
 		}
-		runCmd := c.Run(api.NewScriptInput(msg.values))
+		runCmd := c.Run(api.NewScriptInput(c.params))
 		if c.script.Output == "list" {
 			c.currentView = "list"
 			c.list = NewList()
@@ -121,42 +130,31 @@ func (c *RunContainer) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case ListOutput:
 		c.list.SetItems(msg)
-	case DetailOutput:
+		return c, nil
+	case RawOutput:
 		err := c.detail.SetContent(string(msg))
 		if err != nil {
 			return c, NewErrorCmd(fmt.Errorf("Failed to parse script output %s", err))
 		}
 		return c, nil
-	case ReloadMsg:
-		for k, v := range msg.Params {
-			c.params[k] = v
-		}
-		return c, c.Run(api.NewScriptInput(c.params))
 	case tea.WindowSizeMsg:
 		c.SetSize(msg.Width, msg.Height)
 		return c, nil
-	case error:
-		c.currentView = "error"
-		errMsg := msg.Error()
-		c.err = NewDetail()
-		c.err.SetActions(
-			Action{Title: "Copy Error", Shortcut: "enter", Msg: CopyMsg{Content: errMsg}},
-		)
-		c.err.SetContent(errMsg)
-		c.err.SetSize(c.width, c.height)
-		return c, c.err.Init()
 	}
 
 	var cmd tea.Cmd
+	var container Container
+
 	switch c.currentView {
 	case "form":
-		c.form, cmd = c.form.Update(msg)
+		container, cmd = c.form.Update(msg)
+		c.form, _ = container.(*Form)
 	case "list":
-		c.list, cmd = c.list.Update(msg)
+		container, cmd = c.list.Update(msg)
+		c.list, _ = container.(*List)
 	case "detail":
-		c.detail, cmd = c.detail.Update(msg)
-	case "error":
-		c.err, cmd = c.err.Update(msg)
+		container, cmd = c.detail.Update(msg)
+		c.detail, _ = container.(*Detail)
 	}
 	return c, cmd
 }
@@ -169,8 +167,6 @@ func (c *RunContainer) View() string {
 		return c.list.View()
 	case "detail":
 		return c.detail.View()
-	case "error":
-		return c.err.View()
 	default:
 		return "Unknown view"
 	}

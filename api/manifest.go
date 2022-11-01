@@ -12,6 +12,22 @@ type Api struct {
 	Extensions map[string]Manifest
 }
 
+type Manifest struct {
+	Title string `json:"title"`
+	Name  string `json:"name"`
+
+	RootItems []RootItem        `json:"rootItems"`
+	Scripts   map[string]Script `json:"scripts"`
+
+	Url url.URL
+}
+
+type RootItem struct {
+	Title    string       `json:"title"`
+	Subtitle string       `json:"subtitle"`
+	Action   ScriptAction `json:"action"`
+}
+
 var Sunbeam Api
 
 func init() {
@@ -83,25 +99,15 @@ func init() {
 	}
 }
 
-func (api Api) GetScript(extensionName string, scriptName string) (SunbeamScript, bool) {
+func (api Api) GetScript(extensionName string, scriptName string) (Script, bool) {
 	manifest, ok := api.Extensions[extensionName]
 	if !ok {
-		return SunbeamScript{}, false
+		return Script{}, false
 	}
 	script, ok := manifest.Scripts[scriptName]
 	if !ok {
-		return SunbeamScript{}, false
+		return Script{}, false
 	}
 
 	return script, true
-}
-
-type Manifest struct {
-	Title string `json:"title"`
-	Name  string `json:"name"`
-
-	RootActions []ScriptAction           `json:"rootActions"`
-	Scripts     map[string]SunbeamScript `json:"scripts"`
-
-	Url url.URL
 }

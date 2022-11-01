@@ -5,9 +5,12 @@ import * as os from "os";
 import * as fs from "fs/promises";
 
 const currentDir = argv._[0];
+const showHidden = argv.all;
 
 let files = await fs.readdir(currentDir, { withFileTypes: true });
-files = files.filter((file) => !file.name.startsWith("."));
+if (!showHidden) {
+  files = files.filter((file) => !file.name.startsWith("."));
+}
 
 const items = await Promise.all(
   files.map(async (file) => {
@@ -22,6 +25,7 @@ const items = await Promise.all(
           target: "browse-files",
           params: {
             root: filepath,
+            all: !!showHidden,
           },
         }
       : {
@@ -33,7 +37,17 @@ const items = await Promise.all(
     return {
       title: `${file.name}`,
       subtitle: prettyPath,
-      actions: [primaryAction],
+      actions: [
+        primaryAction,
+        {
+          type: "reload",
+          title: "Toggle Hidden Files",
+          shortcut: "ctrl+h",
+          params: {
+            all: !showHidden,
+          },
+        },
+      ],
     };
   })
 );

@@ -91,7 +91,7 @@ type List struct {
 	filter Filter
 }
 
-func NewList() List {
+func NewList() *List {
 	t := textinput.New()
 	t.Placeholder = "Search..."
 	t.PlaceholderStyle = DefaultStyles.Secondary
@@ -109,7 +109,7 @@ func NewList() List {
 		drawLines: true,
 	}
 
-	return List{
+	return &List{
 		textInput: &t,
 		isLoading: true,
 		spinner:   spinner,
@@ -158,7 +158,7 @@ type DebounceMsg struct {
 	cmd   tea.Cmd
 }
 
-func (c List) Update(msg tea.Msg) (List, tea.Cmd) {
+func (c List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	filterSelection := c.filter.Selection()
 	selectedItem, hasItemSelected := filterSelection.(ListItem)
 
@@ -170,23 +170,21 @@ func (c List) Update(msg tea.Msg) (List, tea.Cmd) {
 				c.textInput.SetValue("")
 				c.filter.FilterItems("")
 			} else {
-				return c, PopCmd
+				return &c, PopCmd
 			}
 		case tea.KeyEnter:
 			if !hasItemSelected || len(selectedItem.Actions) == 0 {
 				break
 			}
-			return c, selectedItem.Actions[0].SendMsg
+			return &c, selectedItem.Actions[0].SendMsg
 		}
+	case ReloadMsg:
+		c.isLoading = true
 	case RunMsg:
-		if !hasItemSelected {
-			break
+		if msg.Extension == "" {
+			msg.Extension = selectedItem.Extension
 		}
-		script, ok := api.Sunbeam.GetScript(selectedItem.Extension, msg.Target)
-		if !ok {
-			return c, NewErrorCmd(fmt.Errorf("No script found for %s", msg.Target))
-		}
-		return c, NewPushCmd(NewRunContainer(script, msg.Params))
+		return &c, NewPushCmd(NewRunContainer(msg.Extension, msg.Target, msg.Params))
 	}
 
 	var cmd tea.Cmd
@@ -208,7 +206,7 @@ func (c List) Update(msg tea.Msg) (List, tea.Cmd) {
 	c.filter, cmd = c.filter.Update(msg)
 	cmds = append(cmds, cmd)
 
-	return c, tea.Batch(cmds...)
+	return &c, tea.Batch(cmds...)
 }
 
 type ListDetailOutputMsg string

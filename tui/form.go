@@ -33,7 +33,7 @@ type FormInput interface {
 	Blur()
 	SetWidth(int)
 
-	Value() string
+	Value() any
 
 	View() string
 	Update(tea.Msg) (FormInput, tea.Cmd)
@@ -85,6 +85,10 @@ func NewTextArea(formItem api.FormItem) TextArea {
 	}
 }
 
+func (ta *TextArea) Value() any {
+	return ta.Model.Value()
+}
+
 func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	var cmd tea.Cmd
 	ta.Model, cmd = ta.Model.Update(msg)
@@ -115,6 +119,10 @@ func (ti *TextInput) SetWidth(width int) {
 	ti.Model.Width = utils.Max(width-2, 0)
 }
 
+func (ti *TextInput) Value() any {
+	return ti.Model.Value()
+}
+
 func (ti *TextInput) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	var cmd tea.Cmd
 	ti.Model, cmd = ti.Model.Update(msg)
@@ -131,23 +139,19 @@ func (ti TextInput) View() string {
 }
 
 type Checkbox struct {
-	id                 string
-	focused            bool
-	checked            bool
-	title              string
-	width              int
-	label              string
-	true_substitution  string
-	false_substitution string
+	title string
+	width int
+	label string
+
+	focused bool
+	checked bool
 }
 
 func NewCheckbox(formItem api.FormItem) Checkbox {
 	return Checkbox{
-		label:              formItem.Label,
-		title:              formItem.Title,
-		width:              40,
-		true_substitution:  formItem.TrueSubstitution,
-		false_substitution: formItem.FalseSubstitution,
+		label: formItem.Label,
+		title: formItem.Title,
+		width: 40,
 	}
 }
 
@@ -173,7 +177,7 @@ func (cb Checkbox) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter", " ":
-			cb.checked = !cb.checked
+			cb.Toggle()
 		}
 	}
 
@@ -183,21 +187,21 @@ func (cb Checkbox) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 func (cb Checkbox) View() string {
 	var checkbox string
 	if cb.checked {
-		checkbox = fmt.Sprintf(" [ ] %s", cb.label)
-	} else {
 		checkbox = fmt.Sprintf(" [x] %s", cb.label)
+	} else {
+		checkbox = fmt.Sprintf(" [ ] %s", cb.label)
 	}
 
 	paddingRight := utils.Max(cb.width-len(checkbox), 0)
 	return fmt.Sprintf("%s%s", checkbox, strings.Repeat(" ", paddingRight))
 }
 
-func (cb Checkbox) Value() string {
-	if cb.checked {
-		return cb.true_substitution
-	}
+func (cb Checkbox) Value() any {
+	return cb.checked
+}
 
-	return cb.false_substitution
+func (cb *Checkbox) Toggle() {
+	cb.checked = !cb.checked
 }
 
 type DropDownItem struct {
@@ -259,7 +263,7 @@ func (d DropDown) View() string {
 	modelView := d.textInput.View()
 	paddingRight := 0
 	if d.textInput.Value() == "" {
-		paddingRight = d.textInput.Width - lipgloss.Width(modelView) + 2
+		paddingRight = utils.Max(0, d.textInput.Width-lipgloss.Width(modelView)+2)
 	}
 	textInputView := fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
 
@@ -273,7 +277,7 @@ func (d DropDown) View() string {
 	}
 }
 
-func (d DropDown) Value() string {
+func (d DropDown) Value() any {
 	return d.value
 }
 
@@ -328,10 +332,10 @@ func (d *DropDown) Blur() {
 }
 
 type SubmitMsg struct {
-	values map[string]string
+	values map[string]any
 }
 
-func NewSubmitCmd(values map[string]string) tea.Cmd {
+func NewSubmitCmd(values map[string]any) tea.Cmd {
 	return func() tea.Msg {
 		return SubmitMsg{values: values}
 	}
@@ -339,7 +343,7 @@ func NewSubmitCmd(values map[string]string) tea.Cmd {
 
 type ConfirmMsg struct{}
 
-func NewForm(items []FormItem) Form {
+func NewForm(items []FormItem) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter()
@@ -349,7 +353,7 @@ func NewForm(items []FormItem) Form {
 		Shortcut: "ctrl+s",
 	})
 
-	return Form{
+	return &Form{
 		header:   header,
 		footer:   footer,
 		viewport: viewport,
@@ -364,13 +368,13 @@ func (c Form) Init() tea.Cmd {
 	return c.items[0].Focus()
 }
 
-func (c Form) Update(msg tea.Msg) (Form, tea.Cmd) {
+func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEscape:
-			return c, PopCmd
+			return &c, PopCmd
 		// Set focus to next input
 		case tea.KeyTab, tea.KeyShiftTab:
 			s := msg.String()
@@ -400,14 +404,14 @@ func (c Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 				c.items[i].Blur()
 			}
 
-			return c, tea.Batch(cmds...)
+			return &c, tea.Batch(cmds...)
 		}
 	case ConfirmMsg:
-		values := make(map[string]string, len(c.items))
+		values := make(map[string]any)
 		for _, input := range c.items {
 			values[input.Id] = input.Value()
 		}
-		return c, NewSubmitCmd(values)
+		return &c, NewSubmitCmd(values)
 	}
 
 	var cmd tea.Cmd
@@ -419,7 +423,7 @@ func (c Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 	cmd = c.updateInputs(msg)
 	cmds = append(cmds, cmd)
 
-	return c, tea.Batch(cmds...)
+	return &c, tea.Batch(cmds...)
 }
 
 func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
