@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/api"
@@ -39,11 +38,11 @@ func (a Action) SendMsg() tea.Msg {
 
 func NewAction(scriptAction api.ScriptAction) Action {
 	title := scriptAction.Title
-	if title == "" {
-		title = strings.Title(scriptAction.Type)
-	}
 	switch scriptAction.Type {
 	case "open-url":
+		if title == "" {
+			title = "Open URL"
+		}
 		return Action{
 			Title:    title,
 			Shortcut: scriptAction.Shortcut,
@@ -53,6 +52,9 @@ func NewAction(scriptAction api.ScriptAction) Action {
 			},
 		}
 	case "open-file":
+		if title == "" {
+			title = "Open File"
+		}
 		return Action{
 			Title:    title,
 			Shortcut: scriptAction.Shortcut,
@@ -62,6 +64,9 @@ func NewAction(scriptAction api.ScriptAction) Action {
 			},
 		}
 	case "copy":
+		if title == "" {
+			title = "Copy to Clipboard"
+		}
 		return Action{
 			Title:    title,
 			Shortcut: scriptAction.Shortcut,
@@ -70,6 +75,9 @@ func NewAction(scriptAction api.ScriptAction) Action {
 			},
 		}
 	case "reload":
+		if title == "" {
+			title = "Reload Script"
+		}
 		return Action{
 			Title:    title,
 			Shortcut: scriptAction.Shortcut,
@@ -78,6 +86,9 @@ func NewAction(scriptAction api.ScriptAction) Action {
 			},
 		}
 	case "run":
+		if title == "" {
+			title = "Run Script"
+		}
 		return Action{
 			Title:    title,
 			Shortcut: scriptAction.Shortcut,
@@ -86,7 +97,6 @@ func NewAction(scriptAction api.ScriptAction) Action {
 				Params: scriptAction.Params,
 			},
 		}
-
 	default:
 		return Action{
 			Title:    "Unknown",

@@ -10,8 +10,8 @@ import (
 )
 
 var SunbeamFlags struct {
-	Height int
-	Width  int
+	MaxWidth  int
+	MaxHeight int
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -22,8 +22,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().IntVarP(&SunbeamFlags.Width, "max-width", "W", 105, "width of the window")
-	rootCmd.Flags().IntVarP(&SunbeamFlags.Height, "max-height", "H", 33, "height of the window")
+	rootCmd.Flags().IntVarP(&SunbeamFlags.MaxWidth, "max-width", "W", 106, "width of the window")
+	rootCmd.Flags().IntVarP(&SunbeamFlags.MaxHeight, "max-height", "H", 33, "height of the window")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -36,7 +36,7 @@ func Execute() {
 }
 
 func Sunbeam(cmd *cobra.Command, args []string) {
-	err := tui.Start(SunbeamFlags.Width, SunbeamFlags.Height)
+	err := tui.Start(SunbeamFlags.MaxWidth, SunbeamFlags.MaxHeight)
 	if err != nil {
 		log.Fatalf("could not start tui: %v", err)
 	}

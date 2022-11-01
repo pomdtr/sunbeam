@@ -61,12 +61,13 @@ func (f Footer) Update(msg tea.Msg) (Footer, tea.Cmd) {
 
 func (f *Footer) SetActions(actions ...Action) {
 	for i := range actions {
-		if i == 0 {
-			actions[i].Shortcut = "enter"
+		if actions[i].Shortcut != "" {
 			continue
 		}
 
-		if actions[i].Shortcut == "" && i < 10 {
+		if i == 0 {
+			actions[i].Shortcut = "enter"
+		} else if i < 10 {
 			actions[i].Shortcut = fmt.Sprintf("ctrl+%d", i)
 		}
 	}
