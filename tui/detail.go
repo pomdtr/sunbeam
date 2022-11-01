@@ -48,7 +48,8 @@ func (d *Detail) SetActions(actions ...Action) {
 func (d Detail) headerView() string {
 	var headerRow string
 	if d.isLoading {
-		headerRow = fmt.Sprintf(" %s %s", d.spinner.View(), "Loading...")
+		label := DefaultStyles.Secondary.Render("Loading...")
+		headerRow = fmt.Sprintf(" %s %s", d.spinner.View(), label)
 	} else {
 		headerRow = strings.Repeat(" ", d.width)
 	}

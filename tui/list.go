@@ -93,9 +93,9 @@ type List struct {
 
 func NewList() List {
 	t := textinput.New()
-	t.Prompt = "   "
 	t.Placeholder = "Search..."
 	t.PlaceholderStyle = DefaultStyles.Secondary
+	t.Prompt = ""
 	t.TextStyle = DefaultStyles.Primary
 
 	footer := NewFooter()
@@ -144,9 +144,9 @@ func (c *List) SetItems(items []ListItem) {
 func (c List) headerView() string {
 	var headerRow string
 	if c.isLoading {
-		headerRow = fmt.Sprintf(" %s %s", c.spinner.View(), "Loading...")
+		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, " ", c.spinner.View(), " ", c.textInput.View())
 	} else {
-		headerRow = c.textInput.View()
+		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, "   ", c.textInput.View())
 	}
 
 	line := strings.Repeat("─", c.width)
