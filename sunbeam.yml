@@ -4,83 +4,92 @@ name: github
 title: GitHub
 rootItems:
   - title: List My Repositories
-    run: list-repositories
+    type: push
+    page: list-repositories
     with:
       owner: me
-  - title: Open Raycast GitHub
-    run: open-url
+  - title: List Dailymotion Repositories
+    type: push
+    page: list-repositories
     with:
-      url: "https: //github.com/raycast"
-  - title: List Raycast Pull Requests
-    run: list-pull-requests
+      owner: me
+  - title: List Airflow Pull Requests
+    type: push
+    page: list-repositories
     with:
-      repository: raycast/extensions
-scripts:
+      repository: dailymotion/dwh-dags
+pages:
   list-repositories:
-    mode: list
+    type: list
     title: List Repositories
-    command: "./list-repositories.sh {{ .inputs.owner }}"
-    inputs:
-      - name: owner
-        title: Owner
-        type: textfield
-        description: The owner of the repositories to list
+    script:
+      command: "./list-repositories.sh {{ .inputs.owner }}"
+      inputs:
+        - name: owner
+          title: Owner
+          type: textfield
+          description: The owner of the repositories to list
     actions:
-      - run: open-in-browser
-        with:
-          url: "{{ .output.full_url }}"
-      - shortcut: ctlr+p
+      - type: open
+        url: "{{ .output.full_url }}"
+      - shortcut: ctrl+p
         title: List Pull Requests
-        run: list-pull-requests
+        type: push
+        page: list-pull-requests
         with:
           owner: "{{ .output.full_name }}"
   list-pull-requests:
     title: List Pull Requests
-    mode: list
-    command: "./list-pull-requests.sh {{ .inputs.repository }}"
-    inputs:
-      - name: repository
-        title: Repository
-        type: textfield
-        description: The repository to list pull requests for
+    type: list
+    script:
+      command: "./list-pull-requests.sh {{ .inputs.repository }}"
+      inputs:
+        - name: repository
+          title: Repository
+          type: textfield
+          description: The repository to list pull requests for
     actions:
       - shortcut: enter
-        run: open-in-browser
-        with:
-          url: "{{ .output.html_url }}"
+        type: open
+        url: "{{ .output.html_url }}"
 ---
 # yaml-language-server: $schema=./schemas/schema_v2.json
 name: file-browser
 title: File Browser
 rootItems:
   - title: Browse Directory
-    run: browse-directory
+    type: push
+    page: browse-directory
   - title: Browse Home Directory
-    run: browse-directory
+    type: push
+    push: browse-directory
     with:
       directory: "{{ .env.HOME }}"
   - title: Browse Root Directory
-    run: browse-directory
+    type: push
+    push: browse-directory
     with:
       directory: "/"
   - title: Browse Current Directory
-    run: browse-directory
+    type: push
+    push: browse-directory
     with:
       directory: "{{ .env.PWD }}"
-scripts:
+pages:
   file-browser:
     title: File Browser
-    mode: list
-    command: "./file-browser.mjs {{ inputs.directory }}"
-    inputs:
-      - name: directory
-        title: Directory
-        type: textfield
-        placeholder: Select a directory
+    type: list
+    script:
+      command: "./file-browser.mjs {{ inputs.directory }}"
+      inputs:
+        - name: directory
+          title: Directory
+          type: textfield
+          placeholder: Select a directory
     actions:
       - shortcut: enter
         if: "{{ output.isDirectory }}"
-        run: file-browser
+        push: file-browser
         with:
           directory: "{{ output.path }}"
       - shortcut: enter
