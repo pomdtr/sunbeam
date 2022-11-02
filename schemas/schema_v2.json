@@ -1,0 +1,266 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://github.com/pomdtr/sunbeam/manifest",
+    "type": "object",
+    "required": [
+        "name",
+        "rootItems",
+        "scripts"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "title": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "author": {
+            "type": "string"
+        },
+        "preferences": {
+            "type": "array"
+        },
+        "rootItems": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/action"
+            }
+        },
+        "scripts": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "required": [
+                    "title",
+                    "command",
+                    "mode"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "cwd": {
+                        "type": "boolean"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "list",
+                            "detail",
+                            "raw"
+                        ]
+                    },
+                    "command": {
+                        "type": "string"
+                    },
+                    "inputs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/formitem"
+                        }
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/action"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "listitem": {
+            "type": "object",
+            "required": [
+                "title",
+                "actions"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "actions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/action"
+                    }
+                },
+                "accessories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "action": {
+            "type": "object",
+            "required": [
+                "run"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "shortcut": {
+                    "type": "string"
+                },
+                "run": {
+                    "type": "string"
+                },
+                "with": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "boolean"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "formitem": {
+            "type": "object",
+            "required": [
+                "type",
+                "name",
+                "title"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "textfield",
+                        "textarea",
+                        "checkbox",
+                        "dropdown"
+                    ]
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "textarea"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "placeholder": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "textfield"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "title"
+                        ],
+                        "properties": {
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "secure": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "checkbox"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "label"
+                        ],
+                        "properties": {
+                            "label": {
+                                "type": "string"
+                            },
+                            "true_substitution": {
+                                "type": "string"
+                            },
+                            "false_substitution": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "dropdown"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "data"
+                        ],
+                        "properties": {
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "data": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "title",
+                                        "value"
+                                    ],
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
