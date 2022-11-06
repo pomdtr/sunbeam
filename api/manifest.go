@@ -1,11 +1,14 @@
 package api
 
 import (
-	"encoding/json"
+	"bytes"
+	"io"
 	"log"
 	"net/url"
 	"os"
 	"path"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Api struct {
@@ -13,19 +16,30 @@ type Api struct {
 }
 
 type Manifest struct {
-	Title string `json:"title"`
-	Name  string `json:"name"`
+	Title string `json:"title" yaml:"title"`
+	Name  string `json:"name" yaml:"name"`
 
-	RootItems []RootItem        `json:"rootItems"`
-	Scripts   map[string]Script `json:"scripts"`
+	RootItems []Action          `json:"entrypoints" yaml:"entrypoints"`
+	Pages     map[string]Page   `json:"pages" yaml:"pages"`
+	Scripts   map[string]Script `json:"scripts" yaml:"scripts"`
 
 	Url url.URL
 }
 
+func (m Manifest) Dir() string {
+	return path.Dir(m.Url.Path)
+}
+
+type Page struct {
+	Script `json:"script" yaml:"script"`
+	Title  string `json:"title" yaml:"title"`
+	Type   string `json:"type" yaml:"type"`
+}
+
 type RootItem struct {
-	Title    string       `json:"title"`
-	Subtitle string       `json:"subtitle"`
-	Action   ScriptAction `json:"action"`
+	Title    string `json:"title" yaml:"title"`
+	Subtitle string `json:"subtitle" yaml:"subtitle"`
+	Action   Action `json:"action" yaml:"action"`
 }
 
 var Sunbeam Api
@@ -60,38 +74,35 @@ func init() {
 
 	manifests := make(map[string]Manifest)
 	for _, scriptDir := range scriptDirs {
-		manifestPath := path.Join(scriptDir, "sunbeam.json")
+		manifestPath := path.Join(scriptDir, "sunbeam.yml")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 			continue
 		}
 
-		var manifest Manifest
 		manifestBytes, err := os.ReadFile(manifestPath)
 		if err != nil {
 			continue
 		}
-		err = json.Unmarshal(manifestBytes, &manifest)
-		if err != nil {
-			continue
-		}
-		manifest.Url = url.URL{
-			Scheme: "file",
-			Path:   manifestPath,
-		}
+		decoder := yaml.NewDecoder(bytes.NewReader(manifestBytes))
+		var manifest Manifest
 
-		for key, script := range manifest.Scripts {
-			script.Root = url.URL{
-				Scheme: "file",
-				Path:   scriptDir,
+		for {
+			err := decoder.Decode(&manifest)
+			if err == io.EOF {
+				break
 			}
-			script.Url = url.URL{
-				Scheme: "file",
-				Path:   path.Join(scriptDir, key),
+			if err != nil {
+				log.Printf("error decoding manifest at %s: %v", manifestPath, err)
+				continue
 			}
-			script.Extension = manifest.Name
-			manifest.Scripts[key] = script
+
+			manifest.Url = url.URL{
+				Scheme: "file",
+				Path:   manifestPath,
+			}
+
+			manifests[manifest.Name] = manifest
 		}
-		manifests[manifest.Name] = manifest
 	}
 
 	Sunbeam = Api{

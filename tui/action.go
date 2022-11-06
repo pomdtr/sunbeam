@@ -2,15 +2,27 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/api"
 )
 
 type Action struct {
-	Title    string
 	Msg      tea.Msg
 	Shortcut string
+	Title    string
+}
+
+func (a Action) Binding() key.Binding {
+	prettyKey := strings.ReplaceAll(a.Shortcut, "ctrl", "⌃")
+	prettyKey = strings.ReplaceAll(prettyKey, "alt", "⌥")
+	prettyKey = strings.ReplaceAll(prettyKey, "shift", "⇧")
+	prettyKey = strings.ReplaceAll(prettyKey, "cmd", "⌘")
+	prettyKey = strings.ReplaceAll(prettyKey, "enter", "↩")
+	return key.NewBinding(key.WithKeys(a.Shortcut), key.WithHelp(prettyKey, a.Title))
 }
 
 type CopyMsg struct {
@@ -26,82 +38,175 @@ type ReloadMsg struct {
 	Params map[string]any
 }
 
-type RunMsg struct {
+type PushMsg struct {
 	Extension string
-	Target    string
+	Page      string
 	Params    map[string]any
 }
 
-func (a Action) SendMsg() tea.Msg {
+type RunMsg struct {
+	Extension string
+	Script    string
+	Params    map[string]any
+}
+
+func (a Action) Cmd() tea.Msg {
 	return a.Msg
 }
 
-func NewAction(scriptAction api.ScriptAction) Action {
-	title := scriptAction.Title
+func NewAction(scriptAction api.Action) Action {
+	var msg tea.Msg
 	switch scriptAction.Type {
 	case "open-url":
-		if title == "" {
-			title = "Open URL"
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Open URL"
 		}
-		return Action{
-			Title:    title,
-			Shortcut: scriptAction.Shortcut,
-			Msg: OpenMsg{
-				Url:         scriptAction.Url,
-				Application: scriptAction.Application,
-			},
+		msg = OpenMsg{
+			Url: scriptAction.Url,
 		}
 	case "open-file":
-		if title == "" {
-			title = "Open File"
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Open File"
 		}
-		return Action{
-			Title:    title,
-			Shortcut: scriptAction.Shortcut,
-			Msg: OpenMsg{
-				Url:         scriptAction.Path,
-				Application: scriptAction.Application,
-			},
+		msg = OpenMsg{
+			Url:         scriptAction.Path,
+			Application: scriptAction.Application,
 		}
 	case "copy":
-		if title == "" {
-			title = "Copy to Clipboard"
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Copy to Clipboard"
 		}
-		return Action{
-			Title:    title,
-			Shortcut: scriptAction.Shortcut,
-			Msg: CopyMsg{
-				Content: scriptAction.Content,
-			},
+		msg = CopyMsg{
+			Content: scriptAction.Content,
 		}
 	case "reload":
-		if title == "" {
-			title = "Reload Script"
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Reload Script"
 		}
-		return Action{
-			Title:    title,
-			Shortcut: scriptAction.Shortcut,
-			Msg: ReloadMsg{
-				Params: scriptAction.Params,
-			},
+		msg = ReloadMsg{
+			Params: scriptAction.With,
+		}
+	case "push":
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Open Page"
+		}
+		msg = PushMsg{
+			Extension: scriptAction.Extension,
+			Page:      scriptAction.Page,
+			Params:    scriptAction.With,
 		}
 	case "run":
-		if title == "" {
-			title = "Run Script"
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Run Script"
 		}
-		return Action{
-			Title:    title,
-			Shortcut: scriptAction.Shortcut,
-			Msg: RunMsg{
-				Target: scriptAction.Target,
-				Params: scriptAction.Params,
-			},
+		msg = RunMsg{
+			Extension: scriptAction.Extension,
+			Script:    scriptAction.Script,
+			Params:    scriptAction.With,
 		}
 	default:
-		return Action{
-			Title:    "Unknown",
-			Msg:      fmt.Errorf("Unknown action type: %s", scriptAction.Type),
-			Shortcut: scriptAction.Shortcut,
+		scriptAction.Title = "Unknown"
+		msg = fmt.Errorf("Unknown action type: %s", scriptAction.Type)
+	}
+
+	return Action{
+		Msg:      msg,
+		Title:    scriptAction.Title,
+		Shortcut: scriptAction.Shortcut,
+	}
+}
+
+type ActionList struct {
+	filter Filter
+	footer Footer
+
+	actions []Action
+	Shown   bool
+}
+
+func NewActionList() ActionList {
+	filter := NewFilter()
+	filter.DrawLines = true
+	footer := NewFooter("Actions")
+
+	return ActionList{
+		filter: filter,
+		footer: footer,
+	}
+}
+
+func (al ActionList) headerView() string {
+	headerRow := lipgloss.JoinHorizontal(lipgloss.Top, "   ", al.filter.Model.View())
+
+	line := strings.Repeat("─", al.footer.Width)
+	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
+}
+
+func (al *ActionList) SetSize(w, h int) {
+	availableHeight := h - lipgloss.Height(al.headerView()) - lipgloss.Height(al.footer.View())
+
+	al.filter.SetSize(w, availableHeight)
+	al.footer.Width = w
+}
+
+func (al *ActionList) Hide() {
+	al.Shown = false
+}
+
+func (al *ActionList) Show() {
+	al.Shown = true
+}
+
+func (al *ActionList) SetActions(title string, actions ...Action) {
+	al.actions = actions
+	al.footer.title = title
+	filterItems := make([]FilterItem, len(actions))
+	for i, action := range actions {
+		filterItems[i] = ListItem{
+			Title:    action.Title,
+			Subtitle: action.Shortcut,
+			Actions:  []Action{action},
 		}
 	}
+	al.filter.SetItems(filterItems)
+}
+
+func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == "tab" {
+			al.Shown = !al.Shown
+		}
+
+		if msg.String() == "enter" && al.Shown {
+			selectedItem := al.filter.Selection()
+			if selectedItem == nil {
+				break
+			}
+			listItem, _ := selectedItem.(ListItem)
+			al.Hide()
+			return al, listItem.Actions[0].Cmd
+		}
+		for _, action := range al.actions {
+			if key.Matches(msg, action.Binding()) {
+				al.Hide()
+				return al, action.Cmd
+			}
+		}
+	}
+
+	var cmd tea.Cmd
+	if al.Shown {
+		al.filter, cmd = al.filter.Update(msg)
+	}
+	return al, cmd
+}
+
+func (al ActionList) View() string {
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		al.headerView(),
+		al.filter.View(),
+		al.footer.View(),
+	)
 }

@@ -2,50 +2,46 @@ package tui
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/api"
-	"github.com/skratchdot/open-golang/open"
 )
 
 type RunContainer struct {
 	width, height int
 	currentView   string
 
-	extensionName string
-	scriptName    string
-	params        map[string]any
+	manifest api.Manifest
+	pageName string
+	params   map[string]any
 
 	form   *Form
 	list   *List
 	detail *Detail
 
-	script api.Script
+	Page api.Page
 }
 
-func NewRunContainer(extensionName string, scriptName string, scriptParams map[string]any) *RunContainer {
+func NewRunContainer(manifest api.Manifest, pageName string, scriptParams map[string]any) *RunContainer {
 	params := make(map[string]any)
 	for k, v := range scriptParams {
 		params[k] = v
 	}
 
 	return &RunContainer{
-		extensionName: extensionName,
-		scriptName:    scriptName,
-		params:        params,
+		manifest: manifest,
+		pageName: pageName,
+		params:   params,
 	}
 }
 
 func (c *RunContainer) Init() tea.Cmd {
-	var ok bool
-	c.script, ok = api.Sunbeam.GetScript(c.extensionName, c.scriptName)
+	page, ok := c.manifest.Pages[c.pageName]
 	if !ok {
-		return NewErrorCmd(fmt.Errorf("Script %s not found", c.scriptName))
+		return NewErrorCmd(fmt.Errorf("Page %s not found", c.pageName))
 	}
-
-	missing := c.script.CheckMissingParams(c.params)
+	c.Page = page
+	missing := c.Page.CheckMissingParams(c.params)
 
 	if len(missing) > 0 {
 		c.currentView = "form"
@@ -53,7 +49,7 @@ func (c *RunContainer) Init() tea.Cmd {
 		for i, param := range missing {
 			items[i] = NewFormItem(param)
 		}
-		c.form = NewForm(items)
+		c.form = NewForm(c.Page.Title, items)
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
@@ -64,62 +60,48 @@ func (c *RunContainer) Init() tea.Cmd {
 type ListOutput []ListItem
 type RawOutput string
 
-func (c *RunContainer) Run(input api.ScriptInput) tea.Cmd {
+func (c *RunContainer) Run(params map[string]any) tea.Cmd {
 	return func() tea.Msg {
-		switch c.script.Output {
-		case "list":
-			output, err := c.script.Run(input)
-			if err != nil {
-				return err
-			}
+		output, err := c.Page.Run(c.manifest.Dir(), params)
+		if err != nil {
+			return err
+		}
 
+		switch c.Page.Type {
+		case "list":
 			scriptItems, err := api.ParseListItems(output)
 			if err != nil {
 				return err
 			}
 
 			listItems := make([]ListItem, len(scriptItems))
-			for i, item := range scriptItems {
-				listItems[i] = NewListItem(c.script.Extension, item)
+			for i, scriptItem := range scriptItems {
+				actions := make([]Action, len(scriptItem.Actions))
+				for i, scriptAction := range scriptItem.Actions {
+					if i == 0 {
+						scriptAction.Shortcut = "enter"
+					} else if scriptAction.Shortcut == "" && i < 10 {
+						scriptAction.Shortcut = fmt.Sprintf("ctrl+%d", i)
+					}
+					if scriptAction.Extension == "" {
+						scriptAction.Extension = c.manifest.Name
+						actions[i] = NewAction(scriptAction)
+					}
+				}
+				listItems[i] = ListItem{
+					Title:       scriptItem.Title,
+					Subtitle:    scriptItem.Subtitle,
+					Accessories: scriptItem.Accessories,
+					Actions:     actions,
+				}
 			}
 			return ListOutput(listItems)
 		case "raw":
-			detail, err := c.script.Run(input)
-			if err != nil {
-				return err
-			}
-			return RawOutput(detail)
+			return RawOutput(output)
 		case "full":
-			_, err := c.script.Run(input)
-			if err != nil {
-				return err
-			}
-			return tea.Quit()
-		case "clipboard":
-			output, err := c.script.Run(input)
-			if err != nil {
-				return err
-			}
-
-			err = clipboard.WriteAll(output)
-			if err != nil {
-				return err
-			}
-			return tea.Quit()
-		case "browser":
-			output, err := c.script.Run(input)
-			if err != nil {
-				return err
-			}
-
-			url := strings.Trim(output, " \n")
-			err = open.Run(url)
-			if err != nil {
-				return err
-			}
 			return tea.Quit()
 		default:
-			return fmt.Errorf("Unknown output type %s", c.script.Output)
+			return fmt.Errorf("Unknown page type %s", c.Page.Type)
 		}
 	}
 }
@@ -142,15 +124,15 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		for k, v := range msg.values {
 			c.params[k] = v
 		}
-		runCmd := c.Run(api.NewScriptInput(c.params))
-		if c.script.Output == "list" {
+		runCmd := c.Run(c.params)
+		if c.Page.Type == "list" {
 			c.currentView = "list"
-			c.list = NewList()
+			c.list = NewList(c.Page.Title)
 			c.list.SetSize(c.width, c.height)
 			return c, tea.Batch(runCmd, c.list.Init())
 		} else {
 			c.currentView = "detail"
-			c.detail = NewDetail()
+			c.detail = NewDetail(c.Page.Title)
 			c.detail.SetSize(c.width, c.height)
 			return c, tea.Batch(runCmd, c.detail.Init())
 		}
@@ -162,9 +144,6 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		if err != nil {
 			return c, NewErrorCmd(fmt.Errorf("Failed to parse script output %s", err))
 		}
-		return c, nil
-	case tea.WindowSizeMsg:
-		c.SetSize(msg.Width, msg.Height)
 		return c, nil
 	}
 

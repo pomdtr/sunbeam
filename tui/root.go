@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -67,8 +68,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Quit
 	case PushMsg:
-		m.Push(msg.Page)
-		return m, msg.Page.Init()
+		manifest, ok := api.Sunbeam.Extensions[msg.Extension]
+		if !ok {
+			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
+		}
+		page := NewRunContainer(manifest, msg.Page, msg.Params)
+		m.Push(page)
+		return m, page.Init()
 	case popMsg:
 		if len(m.pages) == 1 {
 			return m, tea.Quit
@@ -77,7 +83,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case error:
-		detail := NewDetail()
+		detail := NewDetail("Error")
 		detail.SetContent(msg.Error())
 		detail.SetSize(m.pageWidth(), m.pageHeight())
 
@@ -121,16 +127,6 @@ func (m *RootModel) pageHeight() int {
 	return utils.Min(m.maxHeight, m.height-2)
 }
 
-type PushMsg struct {
-	Page Container
-}
-
-func NewPushCmd(page Container) tea.Cmd {
-	return func() tea.Msg {
-		return PushMsg{Page: page}
-	}
-}
-
 type popMsg struct{}
 
 func PopCmd() tea.Msg {
@@ -149,26 +145,25 @@ func (m *RootModel) Pop() {
 }
 
 func Start(width, height int) error {
-	rootItems := make([]ListItem, 0)
+	entrypoints := make([]ListItem, 0)
 	for _, manifest := range api.Sunbeam.Extensions {
 		for _, rootItem := range manifest.RootItems {
-			if rootItem.Subtitle == "" {
-				rootItem.Subtitle = manifest.Name
-			}
-
-			rootItems = append(rootItems, ListItem{
-				Title:     rootItem.Title,
-				Subtitle:  rootItem.Subtitle,
-				Extension: manifest.Name,
+			title := rootItem.Title
+			rootItem.Title = "Open Command"
+			rootItem.Extension = manifest.Name
+			rootItem.Shortcut = "enter"
+			entrypoints = append(entrypoints, ListItem{
+				Title:    title,
+				Subtitle: manifest.Title,
 				Actions: []Action{
-					NewAction(rootItem.Action),
+					NewAction(rootItem),
 				},
 			})
 		}
 	}
 
-	list := NewList()
-	list.SetItems(rootItems)
+	list := NewList("Sunbeam")
+	list.SetItems(entrypoints)
 
 	m := NewRootModel(width, height, list)
 	return Draw(m)

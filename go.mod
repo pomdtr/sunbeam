@@ -9,6 +9,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.6.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

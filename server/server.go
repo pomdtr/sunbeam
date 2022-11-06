@@ -22,7 +22,7 @@ func Serve(address string, port int) error {
 
 func serveCommand(cmd api.Script) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var input api.ScriptInput
+		var input api.ScriptInputs
 		err := json.NewDecoder(req.Body).Decode(&input)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)

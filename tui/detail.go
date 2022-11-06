@@ -24,6 +24,7 @@ func init() {
 
 type Detail struct {
 	width, height int
+	title         string
 
 	viewport.Model
 	format    string
@@ -33,16 +34,12 @@ type Detail struct {
 	footer    Footer
 }
 
-func NewDetail() *Detail {
+func NewDetail(title string) *Detail {
 	spinner := spinner.New()
 	viewport := viewport.New(0, 0)
-	footer := NewFooter()
+	footer := NewFooter(title)
 
 	return &Detail{Model: viewport, spinner: spinner, format: "raw", footer: footer}
-}
-
-func (d *Detail) SetActions(actions ...Action) {
-	d.footer.SetActions(actions...)
 }
 
 func (d Detail) headerView() string {
@@ -93,9 +90,6 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	c.spinner, cmd = c.spinner.Update(msg)
-	cmds = append(cmds, cmd)
-
-	c.footer, cmd = c.footer.Update(msg)
 	cmds = append(cmds, cmd)
 
 	c.Model, cmd = c.Model.Update(msg)

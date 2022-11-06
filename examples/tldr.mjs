@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 const { stdout } = await $`tldr --list`;
 
 const commands = stdout.split("\n").slice(0, -1);

@@ -22,11 +22,11 @@ const items = repos.map((repo) => ({
       url: repo.html_url,
     },
     {
-      type: "run",
       title: "List Pull Requests",
-      target: "list-prs",
+      type: "push",
+      page: "list-pull-requests",
       shortcut: "ctrl+p",
-      params: {
+      with: {
         repository: repo.full_name,
       },
     },

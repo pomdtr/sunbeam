@@ -61,7 +61,7 @@ func NewFormItem(formItem api.FormItem) FormItem {
 	return FormItem{
 		Required:  formItem.Required,
 		Title:     formItem.Title,
-		Id:        formItem.Id,
+		Id:        formItem.Name,
 		FormInput: input,
 	}
 }
@@ -221,11 +221,10 @@ func (d DropDownItem) FilterValue() string {
 }
 
 type DropDown struct {
-	id        string
-	data      map[string]string
-	textInput textinput.Model
-	filter    Filter
-	value     string
+	id     string
+	data   map[string]string
+	filter Filter
+	value  string
 }
 
 func NewDropDown(formItem api.FormItem) DropDown {
@@ -245,31 +244,29 @@ func NewDropDown(formItem api.FormItem) DropDown {
 
 	filter := NewFilter()
 	filter.SetItems(choices)
-	filter.FilterItems("")
 
 	return DropDown{
-		textInput: ti,
-		filter:    filter,
-		value:     "",
+		filter: filter,
+		value:  "",
 	}
 }
 
 func (dd *DropDown) SetWidth(width int) {
-	dd.textInput.Width = width - 2
+	dd.filter.Width = width - 2
 	dd.filter.viewport.Width = width
 }
 
 func (d DropDown) View() string {
-	modelView := d.textInput.View()
+	modelView := d.filter.Model.View()
 	paddingRight := 0
-	if d.textInput.Value() == "" {
-		paddingRight = utils.Max(0, d.textInput.Width-lipgloss.Width(modelView)+2)
+	if d.Value() == "" {
+		paddingRight = utils.Max(0, d.filter.Width-lipgloss.Width(modelView)+2)
 	}
 	textInputView := fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
 
-	if !d.textInput.Focused() {
+	if !d.filter.Focused() {
 		return textInputView
-	} else if d.value != "" && d.value == d.textInput.Value() {
+	} else if d.value != "" && d.value == d.filter.Value() {
 		return textInputView
 	} else {
 		d.filter.viewport.Height = len(d.filter.filtered)
@@ -282,7 +279,7 @@ func (d DropDown) Value() any {
 }
 
 func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
-	if !d.textInput.Focused() {
+	if !d.filter.Focused() {
 		return d, nil
 	}
 
@@ -300,35 +297,25 @@ func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 			}
 
 			d.value = dropDownItem.value
-			d.textInput.SetValue(dropDownItem.title)
-			d.textInput.CursorEnd()
+			d.filter.SetValue(dropDownItem.title)
+			d.filter.CursorEnd()
 
 			return d, nil
 		}
 	}
 
 	var cmd tea.Cmd
-	var cmds []tea.Cmd
-	ti, cmd := d.textInput.Update(msg)
-	cmds = append(cmds, cmd)
+	d.filter, cmd = d.filter.Update(msg)
 
-	if ti.Value() != d.textInput.Value() {
-		d.filter.FilterItems(ti.Value())
-	} else {
-		d.filter, cmd = d.filter.Update(msg)
-		cmds = append(cmds, cmd)
-	}
-
-	d.textInput = ti
-	return d, tea.Batch(cmds...)
+	return d, cmd
 }
 
 func (d *DropDown) Focus() tea.Cmd {
-	return d.textInput.Focus()
+	return d.filter.Focus()
 }
 
 func (d *DropDown) Blur() {
-	d.textInput.Blur()
+	d.filter.Blur()
 }
 
 type SubmitMsg struct {
@@ -343,15 +330,10 @@ func NewSubmitCmd(values map[string]any) tea.Cmd {
 
 type ConfirmMsg struct{}
 
-func NewForm(items []FormItem) *Form {
+func NewForm(title string, items []FormItem) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
-	footer := NewFooter()
-	footer.SetActions(Action{
-		Title:    "Submit",
-		Msg:      ConfirmMsg{},
-		Shortcut: "ctrl+s",
-	})
+	footer := NewFooter(title)
 
 	return &Form{
 		header:   header,
@@ -414,16 +396,7 @@ func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
 		return &c, NewSubmitCmd(values)
 	}
 
-	var cmd tea.Cmd
-	var cmds []tea.Cmd
-
-	c.footer, cmd = c.footer.Update(msg)
-	cmds = append(cmds, cmd)
-
-	cmd = c.updateInputs(msg)
-	cmds = append(cmds, cmd)
-
-	return &c, tea.Batch(cmds...)
+	return &c, nil
 }
 
 func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
@@ -449,7 +422,6 @@ func (c *Form) SetSize(width, height int) {
 }
 
 func (c *Form) View() string {
-
 	maxTitleWidth := 0
 	for _, item := range c.items {
 		if lipgloss.Width(item.Title) > maxTitleWidth {

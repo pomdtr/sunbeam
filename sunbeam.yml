@@ -1,21 +1,22 @@
 ---
-# yaml-language-server: $schema=./schemas/schema_v2.json
+# yaml-language-server: $schema=./schemas/schema.json
 name: github
+version: "1.0"
 title: GitHub
-rootItems:
+entrypoints:
   - title: List My Repositories
     type: push
     page: list-repositories
     with:
-      owner: me
+      owner: pomdtr
   - title: List Dailymotion Repositories
     type: push
     page: list-repositories
     with:
-      owner: me
+      owner: dailymotion
   - title: List Airflow Pull Requests
     type: push
-    page: list-repositories
+    page: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
 pages:
@@ -23,56 +24,44 @@ pages:
     type: list
     title: List Repositories
     script:
-      command: "./list-repositories.sh {{ .inputs.owner }}"
+      command: ./examples/github/list-repos.mjs --owner {{ .inputs.owner }}
       inputs:
         - name: owner
           title: Owner
           type: textfield
           description: The owner of the repositories to list
-    actions:
-      - type: open
-        url: "{{ .output.full_url }}"
-      - shortcut: ctrl+p
-        title: List Pull Requests
-        type: push
-        page: list-pull-requests
-        with:
-          owner: "{{ .output.full_name }}"
   list-pull-requests:
     title: List Pull Requests
     type: list
     script:
-      command: "./list-pull-requests.sh {{ .inputs.repository }}"
+      command: "examples/github/list-prs.mjs --repo {{ .inputs.repository }}"
       inputs:
         - name: repository
           title: Repository
           type: textfield
           description: The repository to list pull requests for
-    actions:
-      - shortcut: enter
-        type: open
-        url: "{{ .output.html_url }}"
 ---
-# yaml-language-server: $schema=./schemas/schema_v2.json
+# yaml-language-server: $schema=./schemas/schema.json
 name: file-browser
+version: "1.0"
 title: File Browser
-rootItems:
+entrypoints:
   - title: Browse Directory
     type: push
-    page: browse-directory
+    page: file-browser
   - title: Browse Home Directory
     type: push
-    push: browse-directory
+    page: file-browser
     with:
       directory: "{{ .env.HOME }}"
   - title: Browse Root Directory
     type: push
-    push: browse-directory
+    page: file-browser
     with:
       directory: "/"
   - title: Browse Current Directory
     type: push
-    push: browse-directory
+    page: file-browser
     with:
       directory: "{{ .env.PWD }}"
 pages:
@@ -80,20 +69,37 @@ pages:
     title: File Browser
     type: list
     script:
-      command: "./file-browser.mjs {{ inputs.directory }}"
+      command: "./examples/file-browser.mjs {{ .inputs.directory }}"
       inputs:
         - name: directory
           title: Directory
           type: textfield
           placeholder: Select a directory
-    actions:
-      - shortcut: enter
-        if: "{{ output.isDirectory }}"
-        push: file-browser
-        with:
-          directory: "{{ output.path }}"
-      - shortcut: enter
-        if: "{{ !output.isDirectory }}"
-        run: open-file
-        with:
-          file: "{{ output.path }}"
+---
+# yaml-language-server: $schema=./schemas/schema.json
+name: bitwarden
+version: "1.0"
+title: Bitwarden
+entrypoints:
+  - title: Search Passwords
+    type: push
+    page: list-passwords
+pages:
+  list-passwords:
+    title: Search Passwords
+    type: list
+    script:
+      # Please do not do this, you are better of moving the logic to an external file
+      command: |
+        bw list items | jq -cM '.[] | {
+            title: .name,
+            subtitle: .login.username,
+            actions: [
+                {
+                    type: "copy",
+                    title: "Copy Password",
+                    shortcut: "enter",
+                    content: .login.password
+                }
+            ]
+        }'

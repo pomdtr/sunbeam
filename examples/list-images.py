@@ -22,10 +22,15 @@ items = [
     {
         "title": image["Repository"],
         "subtitle": image["Tag"],
-        "detail": {
-            "command": f"docker image inspect {image['Repository']}:{image['Tag']}",
-        },
-        "actions": [{"type": "copy"}],
+        "actions": [
+            {"type": "copy-to-clipboard", "content": image["Repository"]},
+            {"type": "copy-to-clipboard", "content": image["Repository"]},
+            {
+                "type": "run",
+                "script": "delete-image",
+                "with": {"image": image["Repository"]},
+            },
+        ],
     }
     for image in images
 ]

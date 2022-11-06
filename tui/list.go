@@ -4,39 +4,19 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/api"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
 type ListItem struct {
-	Actions     []Action
-	Extension   string
 	Title       string
 	Subtitle    string
 	Accessories []string
-	Detail      string
-}
-
-func NewListItem(extensionName string, item api.ListItem) ListItem {
-	actions := make([]Action, len(item.Actions))
-
-	for i, scriptAction := range item.Actions {
-		actions[i] = NewAction(scriptAction)
-	}
-
-	return ListItem{
-		Title:       item.Title,
-		Subtitle:    item.Subtitle,
-		Detail:      item.Detail.Command,
-		Actions:     actions,
-		Extension:   extensionName,
-		Accessories: item.Accessories,
-	}
+	Actions     []Action
 }
 
 func (i ListItem) FilterValue() string {
@@ -83,35 +63,34 @@ func (i ListItem) Render(width int, selected bool) string {
 type List struct {
 	width, height int
 
-	textInput *textinput.Model
 	footer    Footer
 	spinner   spinner.Model
+	actions   ActionList
 	isLoading bool
 
 	filter Filter
 }
 
-func NewList() *List {
-	t := textinput.New()
-	t.Placeholder = "Search..."
-	t.PlaceholderStyle = DefaultStyles.Secondary
-	t.Prompt = ""
-	t.TextStyle = DefaultStyles.Primary
-
-	footer := NewFooter()
+func NewList(title string) *List {
 	viewport := viewport.New(0, 0)
 	viewport.MouseWheelEnabled = true
 
+	actions := NewActionList()
+
 	spinner := spinner.NewModel()
 
-	filter := Filter{
-		viewport:  &viewport,
-		drawLines: true,
-	}
+	filter := NewFilter()
+	filter.DrawLines = true
+
+	footer := NewFooter(title)
+	footer.SetBindings(
+		key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", "Select")),
+		key.NewBinding(key.WithKeys("ctrl+h"), key.WithHelp("⇥", "Actions")),
+	)
 
 	return &List{
-		textInput: &t,
 		isLoading: true,
+		actions:   actions,
 		spinner:   spinner,
 		filter:    filter,
 		footer:    footer,
@@ -119,7 +98,7 @@ func NewList() *List {
 }
 
 func (c *List) Init() tea.Cmd {
-	return tea.Batch(c.textInput.Focus(), c.spinner.Tick)
+	return tea.Batch(c.spinner.Tick)
 }
 
 func (c *List) SetSize(width, height int) {
@@ -127,6 +106,7 @@ func (c *List) SetSize(width, height int) {
 	c.width, c.height = width, availableHeight
 	c.footer.Width = width
 	c.filter.SetSize(width, availableHeight)
+	c.actions.SetSize(width, height)
 }
 
 func (c *List) SetItems(items []ListItem) {
@@ -138,15 +118,19 @@ func (c *List) SetItems(items []ListItem) {
 	}
 
 	c.filter.SetItems(filterItems)
-	c.filter.FilterItems(c.textInput.Value())
+
+	if c.filter.Selection() != nil {
+		item, _ := c.filter.Selection().(ListItem)
+		c.actions.SetActions(item.Title, item.Actions...)
+	}
 }
 
 func (c List) headerView() string {
 	var headerRow string
 	if c.isLoading {
-		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, " ", c.spinner.View(), " ", c.textInput.View())
+		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, " ", c.spinner.View(), " ", c.filter.Model.View())
 	} else {
-		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, "   ", c.textInput.View())
+		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, "   ", c.filter.Model.View())
 	}
 
 	line := strings.Repeat("─", c.width)
@@ -158,33 +142,33 @@ type DebounceMsg struct {
 	cmd   tea.Cmd
 }
 
-func (c List) Update(msg tea.Msg) (Container, tea.Cmd) {
-	filterSelection := c.filter.Selection()
-	selectedItem, ok := filterSelection.(ListItem)
-	if ok {
-		c.footer.SetActions(selectedItem.Actions...)
-	} else {
-		c.footer.SetActions()
-	}
-
+func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
+	case FilterItemChange:
+		if c.actions.Shown {
+			return c, nil
+		}
+		if msg.FilterItem == nil {
+			c.actions.SetActions("")
+			return c, nil
+		}
+		listItem, _ := msg.FilterItem.(ListItem)
+		c.actions.SetActions(listItem.Title, listItem.Actions...)
+		return c, nil
+
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEscape:
-			if c.textInput.Value() != "" {
-				c.textInput.SetValue("")
-				c.filter.FilterItems("")
+			if c.actions.Shown {
+				c.actions.Hide()
+			} else if c.filter.Value() != "" {
+				c.filter.SetValue("")
 			} else {
-				return &c, PopCmd
+				return c, PopCmd
 			}
 		}
 	case ReloadMsg:
 		c.isLoading = true
-	case RunMsg:
-		if msg.Extension == "" {
-			msg.Extension = selectedItem.Extension
-		}
-		return &c, NewPushCmd(NewRunContainer(msg.Extension, msg.Target, msg.Params))
 	}
 
 	var cmd tea.Cmd
@@ -193,30 +177,27 @@ func (c List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	c.spinner, cmd = c.spinner.Update(msg)
 	cmds = append(cmds, cmd)
 
-	c.footer, cmd = c.footer.Update(msg)
+	c.actions, cmd = c.actions.Update(msg)
 	cmds = append(cmds, cmd)
-
-	t, cmd := c.textInput.Update(msg)
-	cmds = append(cmds, cmd)
-	if t.Value() != c.textInput.Value() {
-		c.filter.FilterItems(t.Value())
+	if !c.actions.Shown {
+		c.filter, cmd = c.filter.Update(msg)
+		cmds = append(cmds, cmd)
 	}
-	c.textInput = &t
 
-	c.filter, cmd = c.filter.Update(msg)
-	cmds = append(cmds, cmd)
-
-	return &c, tea.Batch(cmds...)
+	return c, tea.Batch(cmds...)
 }
 
 type ListDetailOutputMsg string
 
 func (c List) View() string {
+	if c.actions.Shown {
+		return c.actions.View()
+	}
 	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.filter.View(), c.footer.View())
 }
 
 func (c List) Query() string {
-	return c.textInput.Value()
+	return c.filter.Value()
 }
 
 func NewErrorCmd(err error) func() tea.Msg {

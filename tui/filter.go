@@ -3,6 +3,7 @@ package tui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,17 +17,22 @@ type FilterItem interface {
 
 type Filter struct {
 	viewport *viewport.Model
+	textinput.Model
 
 	choices  []FilterItem
 	filtered []FilterItem
 
-	drawLines bool
+	DrawLines bool
 	cursor    int
 }
 
 func NewFilter() Filter {
 	viewport := viewport.New(0, 0)
-	return Filter{viewport: &viewport}
+	ti := textinput.New()
+	ti.Focus()
+	ti.Prompt = ""
+	ti.Placeholder = "Search..."
+	return Filter{viewport: &viewport, Model: ti}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -43,19 +49,20 @@ func (f Filter) Selection() FilterItem {
 
 func (f *Filter) SetItems(items []FilterItem) {
 	f.choices = items
+	f.FilterItems()
 }
 
-func (f *Filter) FilterItems(query string) {
+func (f *Filter) FilterItems() tea.Cmd {
 	values := make([]string, len(f.choices))
 	for i, choice := range f.choices {
 		values[i] = choice.FilterValue()
 	}
 	// If the search field is empty, let's not display the matches
 	// (none), but rather display all possible choices.
-	if query == "" {
+	if f.Value() == "" {
 		f.filtered = f.choices
 	} else {
-		matches := fuzzy.Find(query, values)
+		matches := fuzzy.Find(f.Value(), values)
 		f.filtered = make([]FilterItem, len(matches))
 		for i, match := range matches {
 			f.filtered[i] = f.choices[match.Index]
@@ -64,6 +71,8 @@ func (f *Filter) FilterItems(query string) {
 
 	// Reset the cursor
 	f.cursor = 0
+
+	return NewFilterItemChangeCmd(f.Selection())
 }
 
 func (m Filter) Init() tea.Cmd { return nil }
@@ -72,7 +81,7 @@ func (m Filter) View() string {
 	itemViews := make([]string, len(m.filtered))
 	for i, item := range m.filtered {
 		itemView := item.Render(m.viewport.Width, i == m.cursor)
-		if m.drawLines {
+		if m.DrawLines {
 			separator := strings.Repeat("─", m.viewport.Width)
 			separator = DefaultStyles.Secondary.Render(separator)
 			itemView = lipgloss.JoinVertical(lipgloss.Left, itemView, separator)
@@ -85,23 +94,31 @@ func (m Filter) View() string {
 	return lipgloss.NewStyle().Padding(0, 1).Render(m.viewport.View())
 }
 
-func (m Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
+func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+n", "ctrl+j", "down":
-			m.CursorDown()
+			f.CursorDown()
+			return f, NewFilterItemChangeCmd(f.Selection())
 		case "ctrl+p", "ctrl+k", "up":
-			m.CursorUp()
+			f.CursorUp()
+			return f, NewFilterItemChangeCmd(f.Selection())
 		}
 	}
 
-	return m, cmd
+	t, cmd := f.Model.Update(msg)
+	if t.Value() != f.Value() {
+		f.FilterItems()
+	}
+	f.Model = t
+
+	return f, cmd
 }
 
 func (m Filter) itemHeight() int {
-	if m.drawLines {
+	if m.DrawLines {
 		return 2
 	}
 	return 1
@@ -138,4 +155,14 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+type FilterItemChange struct {
+	FilterItem FilterItem
+}
+
+func NewFilterItemChangeCmd(filterItem FilterItem) tea.Cmd {
+	return func() tea.Msg {
+		return FilterItemChange{FilterItem: filterItem}
+	}
 }
