@@ -80,13 +80,11 @@ func (c *RunContainer) Run(params map[string]any) tea.Cmd {
 				for i, scriptAction := range scriptItem.Actions {
 					if i == 0 {
 						scriptAction.Shortcut = "enter"
-					} else if scriptAction.Shortcut == "" && i < 10 {
-						scriptAction.Shortcut = fmt.Sprintf("ctrl+%d", i)
 					}
 					if scriptAction.Extension == "" {
 						scriptAction.Extension = c.manifest.Name
-						actions[i] = NewAction(scriptAction)
 					}
+					actions[i] = NewAction(scriptAction)
 				}
 				listItems[i] = ListItem{
 					Title:       scriptItem.Title,

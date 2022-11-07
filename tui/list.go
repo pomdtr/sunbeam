@@ -83,10 +83,6 @@ func NewList(title string) *List {
 	filter.DrawLines = true
 
 	footer := NewFooter(title)
-	footer.SetBindings(
-		key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", "Select")),
-		key.NewBinding(key.WithKeys("ctrl+h"), key.WithHelp("⇥", "Actions")),
-	)
 
 	return &List{
 		isLoading: true,
@@ -118,10 +114,23 @@ func (c *List) SetItems(items []ListItem) {
 	}
 
 	c.filter.SetItems(filterItems)
+	c.updateActions()
+}
 
-	if c.filter.Selection() != nil {
-		item, _ := c.filter.Selection().(ListItem)
-		c.actions.SetActions(item.Title, item.Actions...)
+func (l *List) updateActions() {
+	if l.filter.Selection() == nil {
+		l.actions.SetActions("")
+		l.footer.SetBindings()
+	}
+	item, _ := l.filter.Selection().(ListItem)
+	l.actions.SetActions(item.Title, item.Actions...)
+	if len(item.Actions) > 0 {
+		l.footer.SetBindings(
+			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+		)
+	} else {
+		l.footer.SetBindings()
 	}
 }
 
@@ -148,13 +157,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 		if c.actions.Shown {
 			return c, nil
 		}
-		if msg.FilterItem == nil {
-			c.actions.SetActions("")
-			return c, nil
-		}
-		listItem, _ := msg.FilterItem.(ListItem)
-		c.actions.SetActions(listItem.Title, listItem.Actions...)
-		return c, nil
+		c.updateActions()
 
 	case tea.KeyMsg:
 		switch msg.Type {

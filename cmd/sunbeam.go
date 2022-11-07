@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -22,8 +22,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().IntVarP(&SunbeamFlags.MaxWidth, "max-width", "W", 106, "width of the window")
-	rootCmd.Flags().IntVarP(&SunbeamFlags.MaxHeight, "max-height", "H", 33, "height of the window")
+	rootCmd.Flags().IntVarP(&SunbeamFlags.MaxWidth, "max-width", "W", 100, "width of the window")
+	rootCmd.Flags().IntVarP(&SunbeamFlags.MaxHeight, "max-height", "H", 25, "height of the window")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -38,6 +38,7 @@ func Execute() {
 func Sunbeam(cmd *cobra.Command, args []string) {
 	err := tui.Start(SunbeamFlags.MaxWidth, SunbeamFlags.MaxHeight)
 	if err != nil {
-		log.Fatalf("could not start tui: %v", err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

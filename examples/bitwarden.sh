@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bw list items | jq -cM '.[] | {
+bw list items | sunbeam jq '.[] | {
     title: .name,
     subtitle: .login.username,
     actions: [

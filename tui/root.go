@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"sort"
 
 	"github.com/adrg/xdg"
 	"github.com/atotto/clipboard"
@@ -152,6 +153,20 @@ func Start(width, height int) error {
 			rootItem.Title = "Open Command"
 			rootItem.Extension = manifest.Name
 			rootItem.Shortcut = "enter"
+			for key, param := range rootItem.With {
+				param, ok := param.(string)
+				if !ok {
+					continue
+				}
+
+				param, err := utils.RenderString(param, nil)
+				if err != nil {
+					log.Printf("failed to render param %s: %v", param, err)
+					continue
+				}
+
+				rootItem.With[key] = param
+			}
 			entrypoints = append(entrypoints, ListItem{
 				Title:    title,
 				Subtitle: manifest.Title,
@@ -161,6 +176,11 @@ func Start(width, height int) error {
 			})
 		}
 	}
+
+	// Sort entrypoints by title
+	sort.SliceStable(entrypoints, func(i, j int) bool {
+		return entrypoints[i].Title < entrypoints[j].Title
+	})
 
 	list := NewList("Sunbeam")
 	list.SetItems(entrypoints)

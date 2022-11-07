@@ -128,6 +128,10 @@ func NewActionList() ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
 	footer := NewFooter("Actions")
+	footer.SetBindings(
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("↩", "Select Action")),
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide Actions")),
+	)
 
 	return ActionList{
 		filter: filter,

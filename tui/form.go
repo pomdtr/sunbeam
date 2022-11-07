@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -328,12 +329,11 @@ func NewSubmitCmd(values map[string]any) tea.Cmd {
 	}
 }
 
-type ConfirmMsg struct{}
-
 func NewForm(title string, items []FormItem) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
+	footer.SetBindings(key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")))
 
 	return &Form{
 		header:   header,
@@ -387,16 +387,18 @@ func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
 			}
 
 			return &c, tea.Batch(cmds...)
+		case tea.KeyCtrlS:
+			values := make(map[string]any)
+			for _, input := range c.items {
+				values[input.Id] = input.Value()
+			}
+			return &c, NewSubmitCmd(values)
 		}
-	case ConfirmMsg:
-		values := make(map[string]any)
-		for _, input := range c.items {
-			values[input.Id] = input.Value()
-		}
-		return &c, NewSubmitCmd(values)
 	}
 
-	return &c, nil
+	cmd := c.updateInputs(msg)
+
+	return &c, cmd
 }
 
 func (c Form) updateInputs(msg tea.Msg) tea.Cmd {

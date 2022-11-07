@@ -49,20 +49,20 @@ func (f Filter) Selection() FilterItem {
 
 func (f *Filter) SetItems(items []FilterItem) {
 	f.choices = items
-	f.FilterItems()
+	f.FilterItems(f.Value())
 }
 
-func (f *Filter) FilterItems() tea.Cmd {
+func (f *Filter) FilterItems(term string) tea.Cmd {
 	values := make([]string, len(f.choices))
 	for i, choice := range f.choices {
 		values[i] = choice.FilterValue()
 	}
 	// If the search field is empty, let's not display the matches
 	// (none), but rather display all possible choices.
-	if f.Value() == "" {
+	if term == "" {
 		f.filtered = f.choices
 	} else {
-		matches := fuzzy.Find(f.Value(), values)
+		matches := fuzzy.Find(term, values)
 		f.filtered = make([]FilterItem, len(matches))
 		for i, match := range matches {
 			f.filtered[i] = f.choices[match.Index]
@@ -108,13 +108,16 @@ func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 		}
 	}
 
+	var cmds []tea.Cmd
 	t, cmd := f.Model.Update(msg)
+	cmds = append(cmds, cmd)
 	if t.Value() != f.Value() {
-		f.FilterItems()
+		cmd := f.FilterItems(t.Value())
+		cmds = append(cmds, cmd)
 	}
 	f.Model = t
 
-	return f, cmd
+	return f, tea.Batch(cmds...)
 }
 
 func (m Filter) itemHeight() int {

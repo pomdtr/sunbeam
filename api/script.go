@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -87,16 +86,7 @@ func (s Script) Run(dir string, params map[string]any) (string, error) {
 		}
 	}
 
-	envMap := make(map[string]string)
-	for _, env := range os.Environ() {
-		parts := strings.SplitN(env, "=", 2)
-		envMap[parts[0]] = parts[1]
-	}
-
-	rendered, err := utils.RenderString(s.Command, map[string]any{
-		"inputs": inputs,
-		"env":    envMap,
-	})
+	rendered, err := utils.RenderString(s.Command, inputs)
 	if err != nil {
 		return "", err
 	}
