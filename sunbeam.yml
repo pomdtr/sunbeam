@@ -91,16 +91,4 @@ pages:
     type: list
     script:
       # Please do not do this, you are better of moving the logic to an external file
-      command: |
-        bw list items | jq -cM '.[] | {
-            title: .name,
-            subtitle: .login.username,
-            actions: [
-                {
-                    type: "copy",
-                    title: "Copy Password",
-                    shortcut: "enter",
-                    content: .login.password
-                }
-            ]
-        }'
+      command: ./examples/bitwarden.sh
