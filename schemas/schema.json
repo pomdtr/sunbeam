@@ -138,13 +138,13 @@
                 "type": {
                     "type": "string",
                     "enum": [
-                        "copy",
-                        "reload",
+                        "copy-to-clipboard",
+                        "reload-page",
                         "open-url",
                         "open-file",
-                        "run",
+                        "run-script",
                         "exec",
-                        "push"
+                        "push-page"
                     ]
                 },
                 "with": {
@@ -166,7 +166,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "copy"
+                                "const": "copy-to-clipboard"
                             }
                         }
                     },
@@ -223,7 +223,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "run"
+                                "const": "run-script"
                             }
                         }
                     },
@@ -238,8 +238,8 @@
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
-                                    "reload",
-                                    "copy",
+                                    "reload-page",
+                                    "copy-to-clipboard",
                                     "open-url"
                                 ]
                             }

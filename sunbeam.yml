@@ -5,17 +5,17 @@ version: "1.0"
 title: GitHub
 entrypoints:
   - title: List My Repositories
-    type: push
+    type: push-page
     page: list-repositories
     with:
       owner: pomdtr
   - title: List Dailymotion Repositories
-    type: push
+    type: push-page
     page: list-repositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
-    type: push
+    type: push-page
     page: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
@@ -48,20 +48,20 @@ version: "1.0"
 title: File Browser
 entrypoints:
   - title: Browse Directory
-    type: push
+    type: push-page
     page: file-browser
   - title: Browse Home Directory
-    type: push
+    type: push-page
     page: file-browser
     with:
       root: ${ env "HOME" }
   - title: Browse Root Directory
-    type: push
+    type: push-page
     page: file-browser
     with:
       root: "/"
   - title: Browse Current Directory
-    type: push
+    type: push-page
     page: file-browser
     with:
       root: ${ env "PWD" }
@@ -83,7 +83,7 @@ version: "1.0"
 title: Bitwarden
 entrypoints:
   - title: Search Passwords
-    type: push
+    type: push-page
     page: list-passwords
 pages:
   list-passwords:
@@ -92,3 +92,44 @@ pages:
     script:
       # Please do not do this, you are better of moving the logic to an external file
       command: ./examples/bitwarden.sh
+---
+# yaml-language-server: $schema=./schemas/schema.json
+name: change-case
+version: "1.0"
+title: Change Case
+entrypoints:
+  - type: run-script
+    title: To Uppercase
+    script: to-uppercase
+scripts:
+  to-uppercase:
+    command: echo ${ input sentence } | tr [:lower:] [:upper:]
+    inputs:
+      - name: sentence
+        title: Sentence
+        type: textfield
+---
+# yaml-language-server: $schema=./schemas/schema.json
+name: jira
+version: "1.0"
+title: Jira
+entrypoints:
+  - type: push-page
+    title: List Issues
+    page: list-issues
+    with:
+      token: ${ env "JIRA_TOKEN" }
+      jql: assignee=currentUser() and status!=Closed
+pages:
+  list-issues:
+    title: List Issues
+    type: list
+    script:
+      command: ./examples/jira.sh ${ input "token" } ${ input "jql" | urlquery }
+      inputs:
+        - name: token
+          title: Jira Token
+          type: textfield
+        - name: jql
+          title: JQL
+          type: textfield

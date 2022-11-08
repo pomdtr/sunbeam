@@ -27,7 +27,7 @@ func init() {
 }
 
 var runCmd = &cobra.Command{
-	Use:   "run",
+	Use:   "run-script",
 	Short: "Run a sunbeam script",
 	Args:  cobra.ExactArgs(1),
 	// Run:   sunbeamRun,

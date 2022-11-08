@@ -26,7 +26,7 @@ items = [
             {"type": "copy-to-clipboard", "content": image["Repository"]},
             {"type": "copy-to-clipboard", "content": image["Repository"]},
             {
-                "type": "run",
+                "type": "run-script",
                 "script": "delete-image",
                 "with": {"image": image["Repository"]},
             },

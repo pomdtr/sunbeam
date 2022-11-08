@@ -12,7 +12,7 @@ for _ in range(5):
                     {
                         "title": "Reload List",
                         "shortcut": "enter",
-                        "type": "reload",
+                        "type": "reload-page",
                     }
                 ],
             }

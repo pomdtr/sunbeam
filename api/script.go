@@ -8,13 +8,13 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Script struct {
-	Inputs  []FormItem `json:"params"`
-	Command string     `json:"command"`
+	Inputs    []FormItem `json:"params"`
+	Command   string     `json:"command"`
+	OnSuccess string     `json:"onSuccess"`
 }
 
 type FormItem struct {
@@ -71,9 +71,9 @@ func (s Script) Run(dir string, params map[string]any) (string, error) {
 				return "", fmt.Errorf("invalid type for param %s", formInput.Name)
 			}
 			if value {
-				inputs[formInput.Name] = shellescape.Quote(formInput.TrueSubstitution)
+				inputs[formInput.Name] = formInput.TrueSubstitution
 			} else if formInput.FalseSubstitution != "" {
-				inputs[formInput.Name] = shellescape.Quote(formInput.FalseSubstitution)
+				inputs[formInput.Name] = formInput.FalseSubstitution
 			} else {
 				inputs[formInput.Name] = ""
 			}
@@ -82,7 +82,7 @@ func (s Script) Run(dir string, params map[string]any) (string, error) {
 			if !ok {
 				return "", fmt.Errorf("param %s is not a string", formInput.Name)
 			}
-			inputs[formInput.Name] = shellescape.Quote(value)
+			inputs[formInput.Name] = value
 		}
 	}
 
@@ -93,7 +93,7 @@ func (s Script) Run(dir string, params map[string]any) (string, error) {
 
 	cmd := exec.Command("sh", "-c", rendered)
 	cmd.Dir = dir
-	log.Printf("Running '%s' in %s", rendered, cmd.Dir)
+	log.Printf("Running: %s", rendered)
 
 	var outbuf, errbuf bytes.Buffer
 	cmd.Stderr = &errbuf

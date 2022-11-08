@@ -14,7 +14,7 @@ gh repo list "$OWNER" --json nameWithOwner,url,stargazerCount,owner | sunbeam jq
         actions: [
             {type: "open-url", url: .url},
             {
-                type: "push",
+                type: "push-page",
                 title: "List Pull Requests",
                 shortcut: "ctlr+p",
                 page: "list-pull-requests",

@@ -15,7 +15,7 @@ for path in root.iterdir():
         {"type": "open-file", "path": str(path.absolute())}
         if path.is_file()
         else {
-            "type": "push",
+            "type": "push-page",
             "page": "file-browser",
             "title": "Browse Directory",
             "with": {"root": str(path.absolute())},
@@ -30,7 +30,7 @@ for path in root.iterdir():
                 "actions": [
                     primaryAction,
                     {
-                        "type": "copy",
+                        "type": "copy-to-clipboard",
                         "title": "Copy Path",
                         "content": str(path.absolute()),
                     },

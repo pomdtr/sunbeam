@@ -29,8 +29,13 @@ type CopyMsg struct {
 	Content string
 }
 
-type OpenMsg struct {
+type OpenUrlMsg struct {
 	Url         string
+	Application string
+}
+
+type OpenFileMessage struct {
+	Path        string
 	Application string
 }
 
@@ -61,32 +66,32 @@ func NewAction(scriptAction api.Action) Action {
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open URL"
 		}
-		msg = OpenMsg{
+		msg = OpenUrlMsg{
 			Url: scriptAction.Url,
 		}
 	case "open-file":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open File"
 		}
-		msg = OpenMsg{
-			Url:         scriptAction.Path,
+		msg = OpenFileMessage{
+			Path:        scriptAction.Path,
 			Application: scriptAction.Application,
 		}
-	case "copy":
+	case "copy-to-clipboard":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
 		msg = CopyMsg{
 			Content: scriptAction.Content,
 		}
-	case "reload":
+	case "reload-page":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Reload Script"
 		}
 		msg = ReloadMsg{
 			Params: scriptAction.With,
 		}
-	case "push":
+	case "push-page":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open Page"
 		}
@@ -95,7 +100,7 @@ func NewAction(scriptAction api.Action) Action {
 			Page:      scriptAction.Page,
 			Params:    scriptAction.With,
 		}
-	case "run":
+	case "run-script":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Run Script"
 		}

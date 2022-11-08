@@ -2,9 +2,11 @@ package utils
 
 import (
 	"bytes"
-	"html/template"
 	"os"
 	"strings"
+	"text/template"
+
+	"github.com/alessio/shellescape"
 )
 
 var envMap map[string]string
@@ -25,6 +27,9 @@ func RenderString(templateString string, inputs map[string]string) (string, erro
 				return ""
 			}
 			return env
+		},
+		"shellescape": func(s string) string {
+			return shellescape.Quote(s)
 		},
 		"input": func(key string) string {
 			input, ok := inputs[key]

@@ -14,14 +14,6 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-type Form struct {
-	header     Header
-	footer     Footer
-	viewport   viewport.Model
-	items      []FormItem
-	focusIndex int
-}
-
 type FormItem struct {
 	Required bool
 	Title    string
@@ -319,27 +311,27 @@ func (d *DropDown) Blur() {
 	d.filter.Blur()
 }
 
-type SubmitMsg struct {
-	values map[string]any
+type Form struct {
+	header     Header
+	submitCmd  func(values map[string]any) tea.Cmd
+	footer     Footer
+	viewport   viewport.Model
+	items      []FormItem
+	focusIndex int
 }
 
-func NewSubmitCmd(values map[string]any) tea.Cmd {
-	return func() tea.Msg {
-		return SubmitMsg{values: values}
-	}
-}
-
-func NewForm(title string, items []FormItem) *Form {
+func NewForm(title string, items []FormItem, submitCmd func(values map[string]any) tea.Cmd) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
 	footer.SetBindings(key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")))
 
 	return &Form{
-		header:   header,
-		footer:   footer,
-		viewport: viewport,
-		items:    items,
+		header:    header,
+		footer:    footer,
+		submitCmd: submitCmd,
+		viewport:  viewport,
+		items:     items,
 	}
 }
 
@@ -392,7 +384,7 @@ func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
 			for _, input := range c.items {
 				values[input.Id] = input.Value()
 			}
-			return &c, NewSubmitCmd(values)
+			return &c, c.submitCmd(values)
 		}
 	}
 

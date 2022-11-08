@@ -27,6 +27,8 @@ type RootModel struct {
 	maxWidth, maxHeight int
 	width, height       int
 
+	currentView string
+
 	pages []Container
 }
 
@@ -57,7 +59,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
-	case OpenMsg:
+	case OpenUrlMsg:
 		var err error
 		if msg.Application != "" {
 			err = open.RunWith(msg.Url, msg.Application)
@@ -73,9 +75,98 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		page := NewRunContainer(manifest, msg.Page, msg.Params)
-		m.Push(page)
-		return m, page.Init()
+		page, ok := manifest.Pages[msg.Page]
+		if !ok {
+			return m, NewErrorCmd(fmt.Errorf("Page %s not found", msg.Page))
+		}
+
+		missing := page.CheckMissingParams(msg.Params)
+		if len(missing) > 0 {
+			items := make([]FormItem, len(missing))
+			for i, param := range missing {
+				items[i] = NewFormItem(param)
+			}
+			form := NewForm(page.Title, items, func(values map[string]any) tea.Cmd {
+				params := make(map[string]any)
+				for k, v := range msg.Params {
+					params[k] = v
+				}
+				for k, v := range values {
+					params[k] = v
+				}
+				return func() tea.Msg {
+					return PushMsg{
+						Extension: msg.Extension,
+						Page:      msg.Page,
+						Params:    params,
+					}
+				}
+			})
+			m.Push(form)
+			return m, form.Init()
+		}
+
+		runner := NewRunContainer(manifest, page, msg.Params)
+		m.Push(runner)
+		return m, runner.Init()
+	case RunMsg:
+		manifest, ok := api.Sunbeam.Extensions[msg.Extension]
+		if !ok {
+			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
+		}
+		script := manifest.Scripts[msg.Script]
+		if !ok {
+			return m, NewErrorCmd(fmt.Errorf("script %s does exists in extension %s", msg.Script, msg.Extension))
+		}
+		missing := script.CheckMissingParams(msg.Params)
+		if len(missing) > 0 {
+			items := make([]FormItem, len(missing))
+			for i, param := range missing {
+				items[i] = NewFormItem(param)
+			}
+			form := NewForm("Script", items, func(values map[string]any) tea.Cmd {
+				params := make(map[string]any)
+				for k, v := range msg.Params {
+					params[k] = v
+				}
+				for k, v := range values {
+					params[k] = v
+				}
+				return func() tea.Msg {
+					return RunMsg{
+						Extension: msg.Extension,
+						Script:    msg.Script,
+						Params:    params,
+					}
+				}
+			})
+			m.Push(form)
+			return m, form.Init()
+		}
+
+		output, err := script.Run(manifest.Dir(), msg.Params)
+		if err != nil {
+			return m, NewErrorCmd(err)
+		}
+
+		return m, func() tea.Msg {
+			switch script.OnSuccess {
+			case "copy-to-clipboard":
+				return CopyMsg{
+					Content: output,
+				}
+			case "open-url":
+				return OpenUrlMsg{
+					Url: output,
+				}
+			case "open-file":
+				return OpenFileMessage{
+					Path: output,
+				}
+			default:
+				return tea.Quit()
+			}
+		}
 	case popMsg:
 		if len(m.pages) == 1 {
 			return m, tea.Quit
@@ -100,12 +191,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *RootModel) View() string {
+	var view string
 	if len(m.pages) == 0 {
 		return "This should not happen, please report this bug"
 	}
 
 	currentPage := m.pages[len(m.pages)-1]
-	view := currentPage.View()
+	view = currentPage.View()
 
 	var pageStyle lipgloss.Style
 	pageStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
@@ -115,6 +207,7 @@ func (m *RootModel) View() string {
 func (m *RootModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
+
 	for _, page := range m.pages {
 		page.SetSize(m.pageWidth(), m.pageHeight())
 	}
