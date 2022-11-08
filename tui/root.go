@@ -310,7 +310,7 @@ func Draw(model tea.Model) (err error) {
 	// Necessary to cache the style
 	lipgloss.HasDarkBackground()
 
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	p := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	err = p.Start()
 
 	if err != nil {
