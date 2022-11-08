@@ -106,6 +106,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, form.Init()
 		}
 
+		if page.Title == "" {
+			page.Title = msg.Page
+		}
 		runner := NewRunContainer(manifest, page, msg.Params)
 		m.Push(runner)
 		return m, runner.Init()
@@ -118,13 +121,17 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("script %s does exists in extension %s", msg.Script, msg.Extension))
 		}
+
 		missing := script.CheckMissingParams(msg.Params)
 		if len(missing) > 0 {
 			items := make([]FormItem, len(missing))
 			for i, param := range missing {
 				items[i] = NewFormItem(param)
 			}
-			form := NewForm("Script", items, func(values map[string]any) tea.Cmd {
+			if script.Title == "" {
+				script.Title = msg.Script
+			}
+			form := NewForm(script.Title, items, func(values map[string]any) tea.Cmd {
 				params := make(map[string]any)
 				for k, v := range msg.Params {
 					params[k] = v
@@ -144,6 +151,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, form.Init()
 		}
 
+		// Run the script
 		output, err := script.Run(manifest.Dir(), msg.Params)
 		if err != nil {
 			return m, NewErrorCmd(err)
@@ -151,7 +159,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, func() tea.Msg {
 			switch script.OnSuccess {
-			case "copy-to-clipboard":
+			case "copy":
 				return CopyMsg{
 					Content: output,
 				}
@@ -191,17 +199,17 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *RootModel) View() string {
-	var view string
+	var embedView string
 	if len(m.pages) == 0 {
 		return "This should not happen, please report this bug"
 	}
 
 	currentPage := m.pages[len(m.pages)-1]
-	view = currentPage.View()
+	embedView = currentPage.View()
 
 	var pageStyle lipgloss.Style
-	pageStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
-	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(view))
+	pageStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderBackground(colors.Background).BorderForeground(colors.Primary)
+	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(embedView), lipgloss.WithWhitespaceBackground(colors.Background))
 }
 
 func (m *RootModel) SetSize(width, height int) {
@@ -310,7 +318,7 @@ func Draw(model tea.Model) (err error) {
 	// Necessary to cache the style
 	lipgloss.HasDarkBackground()
 
-	p := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(model, tea.WithAltScreen())
 	err = p.Start()
 
 	if err != nil {

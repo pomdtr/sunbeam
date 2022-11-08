@@ -77,7 +77,7 @@ func NewAction(scriptAction api.Action) Action {
 			Path:        scriptAction.Path,
 			Application: scriptAction.Application,
 		}
-	case "copy-to-clipboard":
+	case "copy":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}

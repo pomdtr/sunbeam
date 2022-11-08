@@ -13,6 +13,7 @@ import (
 
 type Script struct {
 	Inputs    []FormItem `json:"params"`
+	Title     string     `json:"title"`
 	Command   string     `json:"command"`
 	OnSuccess string     `json:"onSuccess"`
 }

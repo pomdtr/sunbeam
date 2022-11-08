@@ -96,7 +96,7 @@ type TextInput struct {
 func NewTextInput(formItem api.FormItem) TextInput {
 	ti := textinput.New()
 	ti.Placeholder = formItem.Placeholder
-	ti.PlaceholderStyle = DefaultStyles.Secondary
+	ti.PlaceholderStyle = styles.Secondary.Copy()
 	ti.Width = 38
 	ti.Prompt = " "
 	if formItem.Secure {
@@ -232,7 +232,7 @@ func NewDropDown(formItem api.FormItem) DropDown {
 	ti := textinput.New()
 	ti.Prompt = " "
 	ti.Placeholder = formItem.Placeholder
-	ti.PlaceholderStyle = DefaultStyles.Secondary
+	ti.PlaceholderStyle = styles.Secondary
 	ti.Width = 38
 
 	filter := NewFilter()
@@ -323,6 +323,7 @@ type Form struct {
 func NewForm(title string, items []FormItem, submitCmd func(values map[string]any) tea.Cmd) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
+	viewport.Style = styles.Secondary
 	footer := NewFooter(title)
 	footer.SetBindings(key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")))
 

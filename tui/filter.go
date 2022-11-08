@@ -28,15 +28,20 @@ type Filter struct {
 
 func NewFilter() Filter {
 	viewport := viewport.New(0, 0)
+	viewport.Style = styles.Secondary.Copy().Padding(0, 1)
+
 	ti := textinput.New()
 	ti.Focus()
+	ti.TextStyle = styles.Primary
+	ti.PlaceholderStyle = styles.Secondary
 	ti.Prompt = ""
 	ti.Placeholder = "Search..."
+
 	return Filter{viewport: &viewport, Model: ti}
 }
 
 func (f *Filter) SetSize(width, height int) {
-	f.viewport.Width = width - 2
+	f.viewport.Width = width
 	f.viewport.Height = height
 }
 
@@ -83,15 +88,24 @@ func (m Filter) View() string {
 		itemView := item.Render(m.viewport.Width, i == m.cursor)
 		if m.DrawLines {
 			separator := strings.Repeat("─", m.viewport.Width)
-			separator = DefaultStyles.Secondary.Render(separator)
+			separator = styles.Secondary.Render(separator)
 			itemView = lipgloss.JoinVertical(lipgloss.Left, itemView, separator)
 		}
 		itemViews[i] = itemView
 	}
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
+	if filteredView == "" {
+		var emptyMessage string
+		if len(m.choices) == 0 {
+			emptyMessage = ""
+		} else {
+			emptyMessage = "No matches"
+		}
+		filteredView = styles.Primary.Copy().Padding(0, 2).Width(m.viewport.Width).Render(emptyMessage)
+	}
 
 	m.viewport.SetContent(filteredView)
-	return lipgloss.NewStyle().Padding(0, 1).Render(m.viewport.View())
+	return m.viewport.View()
 }
 
 func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {

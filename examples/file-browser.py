@@ -30,7 +30,7 @@ for path in root.iterdir():
                 "actions": [
                     primaryAction,
                     {
-                        "type": "copy-to-clipboard",
+                        "type": "copy",
                         "title": "Copy Path",
                         "content": str(path.absolute()),
                     },

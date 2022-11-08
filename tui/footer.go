@@ -1,13 +1,11 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Footer struct {
@@ -18,9 +16,9 @@ type Footer struct {
 
 func NewFooter(title string) Footer {
 	m := help.New()
-	m.Styles.ShortKey = DefaultStyles.Primary
-	m.Styles.ShortDesc = DefaultStyles.Primary
-	m.Styles.ShortSeparator = DefaultStyles.Primary
+	m.Styles.ShortKey = styles.Primary
+	m.Styles.ShortDesc = styles.Primary
+	m.Styles.ShortSeparator = styles.Secondary
 
 	return Footer{
 		Model: m,
@@ -34,15 +32,20 @@ func (f *Footer) SetBindings(bindings ...key.Binding) {
 
 func (f Footer) View() string {
 	horizontal := strings.Repeat("─", f.Width)
+	horizontal = styles.Primary.Render(horizontal)
 
 	if len(f.bindings) == 0 {
-		return lipgloss.JoinVertical(lipgloss.Left, horizontal, fmt.Sprintf(" %s ", f.title))
+		title := styles.Primary.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
+		return lipgloss.JoinVertical(lipgloss.Left, horizontal, title)
 	}
 
+	title := styles.Primary.Copy().Padding(0, 1).Render(f.title)
 	shortHelp := f.Model.ShortHelpView(f.bindings)
-	blanks := strings.Repeat(" ", utils.Max(f.Width-lipgloss.Width(shortHelp)-len(f.title)-3, 0))
 
-	shortHelp = lipgloss.JoinHorizontal(lipgloss.Left, " ", f.title, " ", blanks, shortHelp, " ")
+	availableWidth := f.Width - lipgloss.Width(title)
+	shortHelp = styles.Background.Copy().Padding(0, 1).Width(availableWidth).Align(lipgloss.Right).Render(shortHelp)
+
+	shortHelp = lipgloss.JoinHorizontal(lipgloss.Left, title, shortHelp)
 
 	return lipgloss.JoinVertical(lipgloss.Left, horizontal, shortHelp)
 }

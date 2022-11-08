@@ -2,18 +2,43 @@ package tui
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	tint "github.com/lrstanley/bubbletint"
 )
 
-type Styles struct {
-	Selection lipgloss.Style
-	Primary   lipgloss.Style
-	Secondary lipgloss.Style
-	Focused   lipgloss.Style
+type Colors struct {
+	Accent     lipgloss.TerminalColor
+	Primary    lipgloss.TerminalColor
+	Secondary  lipgloss.TerminalColor
+	Background lipgloss.TerminalColor
 }
 
-var DefaultStyles Styles = Styles{
-	Selection: lipgloss.NewStyle().Foreground(lipgloss.Color("205")),
-	Primary:   lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#1a1a1a", Dark: "#dddddd"}),
-	Secondary: lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#9a9a9c", Dark: "#777777"}),
-	Focused:   lipgloss.NewStyle().Background(lipgloss.AdaptiveColor{Light: "255", Dark: "0"}),
+type Styles struct {
+	Accent     lipgloss.Style
+	Primary    lipgloss.Style
+	Secondary  lipgloss.Style
+	Background lipgloss.Style
+}
+
+var (
+	theme  *tint.Registry
+	colors Colors
+	styles Styles
+	blank  string
+)
+
+func init() {
+	theme = tint.NewRegistry(tint.TintBuiltinSolarizedDark)
+	colors = Colors{
+		Accent:     theme.Purple(),
+		Primary:    theme.Fg(),
+		Secondary:  theme.Fg(),
+		Background: theme.Bg(),
+	}
+	styles = Styles{
+		Accent:     lipgloss.NewStyle().Background(colors.Background).Foreground(colors.Accent),
+		Primary:    lipgloss.NewStyle().Background(colors.Background).Foreground(colors.Primary).Bold(true),
+		Secondary:  lipgloss.NewStyle().Background(colors.Background).Foreground(colors.Secondary),
+		Background: lipgloss.NewStyle().Background(colors.Background),
+	}
+	blank = styles.Background.Render(" ")
 }

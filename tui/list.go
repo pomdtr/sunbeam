@@ -33,29 +33,32 @@ func (i ListItem) Render(width int, selected bool) string {
 
 	var title string
 	if selected {
-		title = DefaultStyles.Selection.Render(fmt.Sprintf("> %s", i.Title))
+		title = styles.Accent.Copy().PaddingRight(1).Render(fmt.Sprintf("> %s", i.Title))
 	} else {
-		title = DefaultStyles.Primary.Render(fmt.Sprintf("  %s", i.Title))
+		title = styles.Primary.Copy().PaddingRight(1).Render(fmt.Sprintf("  %s", i.Title))
 	}
+
+	blank := styles.Background.Render(" ")
 	accessories := strings.Join(i.Accessories, " • ")
-	accessories = DefaultStyles.Secondary.Render(accessories)
-	blank := " "
-	subtitle := DefaultStyles.Secondary.Render(i.Subtitle)
+	accessories = styles.Secondary.Render(accessories)
+	subtitle := styles.Secondary.Render(i.Subtitle)
 
 	if lipgloss.Width(accessories) > width {
-		return title[:utils.Min(lipgloss.Width(title), width)]
-	} else if lipgloss.Width(title+blank+accessories) > width {
-		availableWidth := width - lipgloss.Width(blank+accessories)
+		return title
+	} else if lipgloss.Width(title)+lipgloss.Width(accessories) > width {
+		availableWidth := width - lipgloss.Width(accessories)
+
 		title := title[:utils.Max(0, availableWidth)]
-		return fmt.Sprintf("%s%s%s", title, blank, accessories)
-	} else if lipgloss.Width(title+blank+subtitle+blank+accessories) > width {
-		availableWidth := width - lipgloss.Width(title+blank+accessories)
+
+		return fmt.Sprintf("%s%s", title, accessories)
+	} else if lipgloss.Width(title+subtitle+accessories) > width {
+		availableWidth := width - lipgloss.Width(title+accessories)
 		subtitle := subtitle[:utils.Max(0, availableWidth)]
-		return fmt.Sprintf("%s%s%s%s%s", title, blank, subtitle, blank, accessories)
+		return fmt.Sprintf("%s%s%s", title, subtitle, accessories)
 	} else {
-		blankWidth := width - lipgloss.Width(title+blank+subtitle+accessories)
-		blanks := strings.Repeat(" ", blankWidth)
-		return fmt.Sprintf("%s%s%s%s%s", title, blank, subtitle, blanks, accessories)
+		blankWidth := width - lipgloss.Width(title) - lipgloss.Width(subtitle) - lipgloss.Width(accessories)
+		blanks := strings.Repeat(blank, blankWidth)
+		return fmt.Sprintf("%s%s%s%s", title, subtitle, blanks, accessories)
 	}
 
 }
@@ -78,6 +81,7 @@ func NewList(title string) *List {
 	actions := NewActionList()
 
 	spinner := spinner.NewModel()
+	spinner.Style = styles.Accent.Copy().Padding(0, 1)
 
 	filter := NewFilter()
 	filter.DrawLines = true
@@ -137,12 +141,13 @@ func (l *List) updateActions() {
 func (c List) headerView() string {
 	var headerRow string
 	if c.isLoading {
-		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, " ", c.spinner.View(), " ", c.filter.Model.View())
+		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), c.filter.Model.View())
 	} else {
-		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, "   ", c.filter.Model.View())
+		headerRow = styles.Secondary.Copy().PaddingLeft(3).Width(c.width).Render(c.filter.Model.View())
 	}
 
 	line := strings.Repeat("─", c.width)
+	line = styles.Primary.Render(line)
 	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
 }
 
@@ -166,6 +171,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 				c.actions.Hide()
 			} else if c.filter.Value() != "" {
 				c.filter.SetValue("")
+				c.filter.FilterItems("")
 			} else {
 				return c, PopCmd
 			}

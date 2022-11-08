@@ -45,7 +45,7 @@ func NewDetail(title string) *Detail {
 func (d Detail) headerView() string {
 	var headerRow string
 	if d.isLoading {
-		label := DefaultStyles.Secondary.Render("Loading...")
+		label := styles.Secondary.Render("Loading...")
 		headerRow = fmt.Sprintf(" %s %s", d.spinner.View(), label)
 	} else {
 		headerRow = strings.Repeat(" ", d.width)

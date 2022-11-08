@@ -38,15 +38,11 @@
             "additionalProperties": {
                 "type": "object",
                 "required": [
-                    "title",
                     "script",
                     "type"
                 ],
                 "additionalProperties": false,
                 "properties": {
-                    "title": {
-                        "type": "string"
-                    },
                     "type": {
                         "type": "string",
                         "enum": [
@@ -77,6 +73,9 @@
             "additionalProperties": false,
             "properties": {
                 "command": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 },
                 "cwd": {
@@ -138,7 +137,7 @@
                 "type": {
                     "type": "string",
                     "enum": [
-                        "copy-to-clipboard",
+                        "copy",
                         "reload-page",
                         "open-url",
                         "open-file",
@@ -166,7 +165,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "copy-to-clipboard"
+                                "const": "copy"
                             }
                         }
                     },
@@ -239,7 +238,7 @@
                                 "type": "string",
                                 "enum": [
                                     "reload-page",
-                                    "copy-to-clipboard",
+                                    "copy",
                                     "open-url"
                                 ]
                             }

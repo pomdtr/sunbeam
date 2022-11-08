@@ -22,8 +22,8 @@ entrypoints:
 pages:
   list-repositories:
     type: list
-    title: List Repositories
     script:
+      title: List Repositories
       command: ./examples/github/list-repos.sh ${ input "owner" }
       inputs:
         - name: owner
@@ -32,9 +32,9 @@ pages:
           required: false
           description: The owner of the repositories to list
   list-pull-requests:
-    title: List Pull Requests
     type: list
     script:
+      title: List Pull Requests
       command: examples/github/list-prs.sh ${ input "repository" }
       inputs:
         - name: repository
@@ -47,7 +47,7 @@ name: file-browser
 version: "1.0"
 title: File Browser
 entrypoints:
-  - title: Browse Directory
+  - title: Browse Custom Directory
     type: push-page
     page: file-browser
   - title: Browse Home Directory
@@ -67,9 +67,9 @@ entrypoints:
       root: ${ env "PWD" }
 pages:
   file-browser:
-    title: File Browser
     type: list
     script:
+      title: File Browser
       command: ./examples/file-browser.py --root ${ input "root" }
       inputs:
         - name: root
@@ -87,9 +87,9 @@ entrypoints:
     page: list-passwords
 pages:
   list-passwords:
-    title: Search Passwords
     type: list
     script:
+      title: Search Passwords
       # Please do not do this, you are better of moving the logic to an external file
       command: ./examples/bitwarden.sh
 ---
@@ -122,9 +122,9 @@ entrypoints:
       jql: assignee=currentUser() and status!=Closed
 pages:
   list-issues:
-    title: List Issues
     type: list
     script:
+      title: List Issues
       command: ./examples/jira.sh ${ input "token" } ${ input "jql" | urlquery }
       inputs:
         - name: token

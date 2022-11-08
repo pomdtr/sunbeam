@@ -32,7 +32,6 @@ func (m Manifest) Dir() string {
 
 type Page struct {
 	Script `json:"script" yaml:"script"`
-	Title  string `json:"title" yaml:"title"`
 	Type   string `json:"type" yaml:"type"`
 }
 
