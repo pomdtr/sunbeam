@@ -27,8 +27,6 @@ type RootModel struct {
 	maxWidth, maxHeight int
 	width, height       int
 
-	currentView string
-
 	pages []Container
 }
 
@@ -77,7 +75,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		page, ok := manifest.Pages[msg.Page]
 		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("Page %s not found", msg.Page))
+			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Page))
 		}
 
 		missing := page.CheckMissingParams(msg.Params)
@@ -207,9 +205,8 @@ func (m *RootModel) View() string {
 	currentPage := m.pages[len(m.pages)-1]
 	embedView = currentPage.View()
 
-	var pageStyle lipgloss.Style
-	pageStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderBackground(colors.Background).BorderForeground(colors.Primary)
-	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(embedView), lipgloss.WithWhitespaceBackground(colors.Background))
+	pageStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderBackground(theme.Bg()).BorderForeground(theme.Fg())
+	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(embedView), lipgloss.WithWhitespaceBackground(theme.Bg()))
 }
 
 func (m *RootModel) SetSize(width, height int) {
@@ -314,9 +311,6 @@ func Draw(model tea.Model) (err error) {
 		log.Fatalf("could not open log file: %v", err)
 	}
 	defer f.Close()
-
-	// Necessary to cache the style
-	lipgloss.HasDarkBackground()
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	err = p.Start()

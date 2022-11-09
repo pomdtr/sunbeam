@@ -5,13 +5,6 @@ import (
 	tint "github.com/lrstanley/bubbletint"
 )
 
-type Colors struct {
-	Accent     lipgloss.TerminalColor
-	Primary    lipgloss.TerminalColor
-	Secondary  lipgloss.TerminalColor
-	Background lipgloss.TerminalColor
-}
-
 type Styles struct {
 	Accent     lipgloss.Style
 	Primary    lipgloss.Style
@@ -20,25 +13,23 @@ type Styles struct {
 }
 
 var (
-	theme  *tint.Registry
-	colors Colors
-	styles Styles
-	blank  string
+	theme       *tint.Registry
+	accentColor lipgloss.TerminalColor
+	styles      Styles
 )
 
 func init() {
-	theme = tint.NewRegistry(tint.TintBuiltinSolarizedDark)
-	colors = Colors{
-		Accent:     theme.Purple(),
-		Primary:    theme.Fg(),
-		Secondary:  theme.Fg(),
-		Background: theme.Bg(),
+	if lipgloss.HasDarkBackground() {
+		theme = tint.NewRegistry(tint.TintBuiltinSolarizedDark)
+	} else {
+		theme = tint.NewRegistry(tint.TintBuiltinSolarizedLight)
 	}
+	accentColor = theme.BrightPurple()
+
 	styles = Styles{
-		Accent:     lipgloss.NewStyle().Background(colors.Background).Foreground(colors.Accent),
-		Primary:    lipgloss.NewStyle().Background(colors.Background).Foreground(colors.Primary).Bold(true),
-		Secondary:  lipgloss.NewStyle().Background(colors.Background).Foreground(colors.Secondary),
-		Background: lipgloss.NewStyle().Background(colors.Background),
+		Accent:     lipgloss.NewStyle().Background(theme.Bg()).Foreground(accentColor),
+		Primary:    lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Bold(true),
+		Secondary:  lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()),
+		Background: lipgloss.NewStyle().Background(theme.Bg()),
 	}
-	blank = styles.Background.Render(" ")
 }

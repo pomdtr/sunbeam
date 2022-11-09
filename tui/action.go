@@ -111,7 +111,7 @@ func NewAction(scriptAction api.Action) Action {
 		}
 	default:
 		scriptAction.Title = "Unknown"
-		msg = fmt.Errorf("Unknown action type: %s", scriptAction.Type)
+		msg = fmt.Errorf("unknown action type: %s", scriptAction.Type)
 	}
 
 	return Action{
@@ -122,14 +122,14 @@ func NewAction(scriptAction api.Action) Action {
 }
 
 type ActionList struct {
-	filter Filter
-	footer Footer
+	filter *Filter
+	footer *Footer
 
 	actions []Action
 	Shown   bool
 }
 
-func NewActionList() ActionList {
+func NewActionList() *ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
 	footer := NewFooter("Actions")
@@ -138,7 +138,7 @@ func NewActionList() ActionList {
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide Actions")),
 	)
 
-	return ActionList{
+	return &ActionList{
 		filter: filter,
 		footer: footer,
 	}
@@ -166,9 +166,12 @@ func (al *ActionList) Show() {
 	al.Shown = true
 }
 
-func (al *ActionList) SetActions(title string, actions ...Action) {
-	al.actions = actions
+func (al *ActionList) SetTitle(title string) {
 	al.footer.title = title
+}
+
+func (al *ActionList) SetActions(actions ...Action) {
+	al.actions = actions
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
 		filterItems[i] = ListItem{
@@ -180,7 +183,7 @@ func (al *ActionList) SetActions(title string, actions ...Action) {
 	al.filter.SetItems(filterItems)
 }
 
-func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
+func (al ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "tab" {
@@ -194,12 +197,12 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			}
 			listItem, _ := selectedItem.(ListItem)
 			al.Hide()
-			return al, listItem.Actions[0].Cmd
+			return &al, listItem.Actions[0].Cmd
 		}
 		for _, action := range al.actions {
 			if key.Matches(msg, action.Binding()) {
 				al.Hide()
-				return al, action.Cmd
+				return &al, action.Cmd
 			}
 		}
 	}
@@ -208,7 +211,7 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 	if al.Shown {
 		al.filter, cmd = al.filter.Update(msg)
 	}
-	return al, cmd
+	return &al, cmd
 }
 
 func (al ActionList) View() string {

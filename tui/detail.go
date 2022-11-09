@@ -1,10 +1,9 @@
 package tui
 
 import (
-	"fmt"
 	"log"
-	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,35 +22,32 @@ func init() {
 }
 
 type Detail struct {
-	width, height int
-	title         string
+	format  string
+	spinner spinner.Model
 
+	header Header
 	viewport.Model
-	format    string
-	spinner   spinner.Model
-	isLoading bool
-	actions   []Action
-	footer    Footer
+	actionList *ActionList
+	footer     *Footer
 }
 
-func NewDetail(title string) *Detail {
+func NewDetail(title string, actions ...Action) *Detail {
 	spinner := spinner.New()
 	viewport := viewport.New(0, 0)
+
 	footer := NewFooter(title)
+	footer.SetBindings(
+		actions[0].Binding(),
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+	)
 
-	return &Detail{Model: viewport, spinner: spinner, format: "raw", footer: footer}
-}
+	actionList := NewActionList()
+	actionList.SetTitle(title)
+	actionList.SetActions(actions...)
 
-func (d Detail) headerView() string {
-	var headerRow string
-	if d.isLoading {
-		label := styles.Secondary.Render("Loading...")
-		headerRow = fmt.Sprintf(" %s %s", d.spinner.View(), label)
-	} else {
-		headerRow = strings.Repeat(" ", d.width)
-	}
-	separator := strings.Repeat("─", d.Width)
-	return lipgloss.JoinVertical(lipgloss.Left, headerRow, separator)
+	header := NewHeader()
+
+	return &Detail{Model: viewport, header: header, spinner: spinner, actionList: actionList, format: "raw", footer: footer}
 }
 
 func (d *Detail) Init() tea.Cmd {
@@ -67,7 +63,6 @@ func (d *Detail) SetContent(content string) error {
 		}
 		d.Model.SetContent(rendered)
 	default:
-		content = lipgloss.NewStyle().Width(d.width).Padding(1, 2).Render(content)
 		d.Model.SetContent(content)
 	}
 	return nil
@@ -99,12 +94,12 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 }
 
 func (c *Detail) SetSize(width, height int) {
-	c.width = width
 	c.footer.Width = width
+	c.header.Width = width
 	c.Model.Width = width
-	c.Model.Height = height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
+	c.Model.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 }
 
 func (c *Detail) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.Model.View(), c.footer.View())
+	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.Model.View(), c.footer.View())
 }

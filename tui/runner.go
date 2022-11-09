@@ -91,7 +91,7 @@ func (c *RunContainer) Run(params map[string]any) tea.Cmd {
 		case "raw":
 			return RawOutput(output)
 		default:
-			return fmt.Errorf("Unknown page type %s", c.Page.Type)
+			return fmt.Errorf("unknown page type %s", c.Page.Type)
 		}
 	}
 }
@@ -114,7 +114,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case RawOutput:
 		err := c.detail.SetContent(string(msg))
 		if err != nil {
-			return c, NewErrorCmd(fmt.Errorf("Failed to parse script output %s", err))
+			return c, NewErrorCmd(fmt.Errorf("failed to parse script output %s", err))
 		}
 		return c, nil
 	}

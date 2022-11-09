@@ -26,18 +26,18 @@ type Filter struct {
 	cursor    int
 }
 
-func NewFilter() Filter {
+func NewFilter() *Filter {
 	viewport := viewport.New(0, 0)
 	viewport.Style = styles.Secondary.Copy().Padding(0, 1)
 
 	ti := textinput.New()
 	ti.Focus()
-	ti.TextStyle = styles.Primary
-	ti.PlaceholderStyle = styles.Secondary
+	ti.TextStyle = styles.Secondary
+	ti.PlaceholderStyle = styles.Secondary.Copy().Italic(true)
 	ti.Prompt = ""
 	ti.Placeholder = "Search..."
 
-	return Filter{viewport: &viewport, Model: ti}
+	return &Filter{viewport: &viewport, Model: ti}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -101,24 +101,24 @@ func (m Filter) View() string {
 		} else {
 			emptyMessage = "No matches"
 		}
-		filteredView = styles.Primary.Copy().Padding(0, 2).Width(m.viewport.Width).Render(emptyMessage)
+		filteredView = styles.Secondary.Copy().Padding(0, 2).Width(m.viewport.Width).Render(emptyMessage)
 	}
 
 	m.viewport.SetContent(filteredView)
 	return m.viewport.View()
 }
 
-func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
+func (f Filter) Update(msg tea.Msg) (*Filter, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+n", "ctrl+j", "down":
 			f.CursorDown()
-			return f, NewFilterItemChangeCmd(f.Selection())
+			return &f, NewFilterItemChangeCmd(f.Selection())
 		case "ctrl+p", "ctrl+k", "up":
 			f.CursorUp()
-			return f, NewFilterItemChangeCmd(f.Selection())
+			return &f, NewFilterItemChangeCmd(f.Selection())
 		}
 	}
 
@@ -131,7 +131,7 @@ func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 	}
 	f.Model = t
 
-	return f, tea.Batch(cmds...)
+	return &f, tea.Batch(cmds...)
 }
 
 func (m Filter) itemHeight() int {
@@ -165,13 +165,6 @@ func clamp(min, max, val int) int {
 		return max
 	}
 	return val
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 type FilterItemChange struct {

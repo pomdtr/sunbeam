@@ -66,12 +66,12 @@ func (i ListItem) Render(width int, selected bool) string {
 type List struct {
 	width, height int
 
-	footer    Footer
+	footer    *Footer
 	spinner   spinner.Model
-	actions   ActionList
+	actions   *ActionList
 	isLoading bool
 
-	filter Filter
+	filter *Filter
 }
 
 func NewList(title string) *List {
@@ -123,11 +123,13 @@ func (c *List) SetItems(items []ListItem) {
 
 func (l *List) updateActions() {
 	if l.filter.Selection() == nil {
-		l.actions.SetActions("")
+		l.actions.SetTitle("")
+		l.actions.SetActions()
 		l.footer.SetBindings()
 	}
 	item, _ := l.filter.Selection().(ListItem)
-	l.actions.SetActions(item.Title, item.Actions...)
+	l.actions.SetTitle(item.Title)
+	l.actions.SetActions(item.Actions...)
 	if len(item.Actions) > 0 {
 		l.footer.SetBindings(
 			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
@@ -141,7 +143,9 @@ func (l *List) updateActions() {
 func (c List) headerView() string {
 	var headerRow string
 	if c.isLoading {
-		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), c.filter.Model.View())
+		spinner := c.spinner.View()
+		textInput := styles.Secondary.Copy().Width(c.width - lipgloss.Width(spinner)).Render("Loading...")
+		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), textInput)
 	} else {
 		headerRow = styles.Secondary.Copy().PaddingLeft(3).Width(c.width).Render(c.filter.Model.View())
 	}
@@ -149,11 +153,6 @@ func (c List) headerView() string {
 	line := strings.Repeat("─", c.width)
 	line = styles.Primary.Render(line)
 	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
-}
-
-type DebounceMsg struct {
-	check func() bool
-	cmd   tea.Cmd
 }
 
 func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {

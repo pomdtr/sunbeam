@@ -60,7 +60,6 @@ func NewFormItem(formItem api.FormItem) FormItem {
 }
 
 type TextArea struct {
-	id     string
 	secure bool
 	textarea.Model
 }
@@ -69,7 +68,6 @@ func NewTextArea(formItem api.FormItem) TextArea {
 	ta := textarea.New()
 	ta.Placeholder = formItem.Placeholder
 	ta.Prompt = ""
-	ta.SetWidth(40)
 	ta.SetHeight(5)
 
 	return TextArea{
@@ -89,16 +87,15 @@ func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 }
 
 type TextInput struct {
-	id string
 	textinput.Model
 }
 
 func NewTextInput(formItem api.FormItem) TextInput {
 	ti := textinput.New()
 	ti.Placeholder = formItem.Placeholder
+	ti.Prompt = ""
+	ti.TextStyle = styles.Primary.Copy()
 	ti.PlaceholderStyle = styles.Secondary.Copy()
-	ti.Width = 38
-	ti.Prompt = " "
 	if formItem.Secure {
 		ti.EchoMode = textinput.EchoPassword
 	}
@@ -109,7 +106,7 @@ func NewTextInput(formItem api.FormItem) TextInput {
 }
 
 func (ti *TextInput) SetWidth(width int) {
-	ti.Model.Width = utils.Max(width-2, 0)
+	ti.Model.Width = utils.Max(width, 0)
 }
 
 func (ti *TextInput) Value() any {
@@ -128,7 +125,7 @@ func (ti TextInput) View() string {
 	if ti.Model.Value() == "" {
 		paddingRight = ti.Width - lipgloss.Width(modelView) + 2
 	}
-	return fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
+	return styles.Primary.PaddingLeft(1).PaddingRight(paddingRight).Render(modelView)
 }
 
 type Checkbox struct {
@@ -144,7 +141,6 @@ func NewCheckbox(formItem api.FormItem) Checkbox {
 	return Checkbox{
 		label: formItem.Label,
 		title: formItem.Title,
-		width: 40,
 	}
 }
 
@@ -185,8 +181,7 @@ func (cb Checkbox) View() string {
 		checkbox = fmt.Sprintf(" [ ] %s", cb.label)
 	}
 
-	paddingRight := utils.Max(cb.width-len(checkbox), 0)
-	return fmt.Sprintf("%s%s", checkbox, strings.Repeat(" ", paddingRight))
+	return checkbox
 }
 
 func (cb Checkbox) Value() any {
@@ -214,9 +209,7 @@ func (d DropDownItem) FilterValue() string {
 }
 
 type DropDown struct {
-	id     string
-	data   map[string]string
-	filter Filter
+	filter *Filter
 	value  string
 }
 
@@ -314,7 +307,7 @@ func (d *DropDown) Blur() {
 type Form struct {
 	header     Header
 	submitCmd  func(values map[string]any) tea.Cmd
-	footer     Footer
+	footer     *Footer
 	viewport   viewport.Model
 	items      []FormItem
 	focusIndex int
@@ -323,9 +316,12 @@ type Form struct {
 func NewForm(title string, items []FormItem, submitCmd func(values map[string]any) tea.Cmd) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
-	viewport.Style = styles.Secondary
+	viewport.Style = styles.Primary
 	footer := NewFooter(title)
-	footer.SetBindings(key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")))
+	footer.SetBindings(
+		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Focus Next")),
+	)
 
 	return &Form{
 		header:    header,
@@ -424,11 +420,10 @@ func (c *Form) View() string {
 		}
 	}
 
-	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(lipgloss.Color("205"))
-	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
+	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(accentColor).BorderBackground(theme.Bg())
+	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(theme.Fg()).BorderBackground(theme.Bg())
 	itemViews := make([]string, len(c.items))
 	for i, item := range c.items {
-		paddingLeft := maxTitleWidth - lipgloss.Width(item.Title)
 		var inputView = item.FormInput.View()
 		if i == c.focusIndex {
 			inputView = selectedBorder.Render(inputView)
@@ -436,12 +431,11 @@ func (c *Form) View() string {
 			inputView = normalBorder.Render(inputView)
 		}
 
-		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Top, strings.Repeat(" ", paddingLeft), "\n"+item.Title, "  ", inputView)
+		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Top, "\n"+item.Title, "  ", inputView)
 	}
 
 	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	paddingLeft := (c.viewport.Width - maxTitleWidth - lipgloss.Width(formView)) / 2
-	formView = lipgloss.NewStyle().Padding(1, paddingLeft).Render(formView)
+	formView = lipgloss.NewStyle().Padding(1, 0).Render(formView)
 	c.viewport.SetContent(formView)
 
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
