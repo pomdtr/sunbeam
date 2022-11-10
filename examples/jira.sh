@@ -1,7 +1,6 @@
 #!/bin/bash
 
-JIRA_TOKEN=$1
-JQL=$2
+JQL=$1
 
 curl -X GET \
     -u "achille.lacoin@dailymotion.com:$JIRA_TOKEN" \

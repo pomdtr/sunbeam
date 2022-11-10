@@ -145,7 +145,7 @@ func NewActionList() *ActionList {
 }
 
 func (al ActionList) headerView() string {
-	headerRow := lipgloss.JoinHorizontal(lipgloss.Top, "   ", al.filter.Model.View())
+	headerRow := lipgloss.JoinHorizontal(lipgloss.Top, "   ", al.filter.TextInput.View())
 
 	line := strings.Repeat("─", al.footer.Width)
 	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)

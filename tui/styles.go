@@ -6,9 +6,8 @@ import (
 )
 
 type Styles struct {
-	Accent     lipgloss.Style
-	Primary    lipgloss.Style
-	Secondary  lipgloss.Style
+	Title      lipgloss.Style
+	Text       lipgloss.Style
 	Background lipgloss.Style
 }
 
@@ -27,9 +26,8 @@ func init() {
 	accentColor = theme.BrightPurple()
 
 	styles = Styles{
-		Accent:     lipgloss.NewStyle().Background(theme.Bg()).Foreground(accentColor),
-		Primary:    lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Bold(true),
-		Secondary:  lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()),
+		Title:      lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Bold(true),
+		Text:       lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()),
 		Background: lipgloss.NewStyle().Background(theme.Bg()),
 	}
 }

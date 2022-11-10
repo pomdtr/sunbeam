@@ -75,6 +75,9 @@
                 "command": {
                     "type": "string"
                 },
+                "input": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 },
@@ -90,7 +93,7 @@
                     "type": "string",
                     "default": "/bin/sh"
                 },
-                "inputs": {
+                "params": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/formitem"

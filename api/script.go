@@ -12,7 +12,7 @@ import (
 )
 
 type Script struct {
-	Inputs    []FormItem `json:"params"`
+	Params    []FormItem `json:"params"`
 	Title     string     `json:"title"`
 	Command   string     `json:"command"`
 	OnSuccess string     `json:"onSuccess"`
@@ -42,16 +42,10 @@ type DropDownItem struct {
 	Value string `json:"value"`
 }
 
-type ScriptInputs struct {
-	Inputs map[string]any
-	Query  string
-}
-
 func (s Script) CheckMissingParams(inputParams map[string]any) []FormItem {
 	missing := make([]FormItem, 0)
-	for _, input := range s.Inputs {
+	for _, input := range s.Params {
 		if _, ok := inputParams[input.Name]; !ok {
-			log.Println(input.Name, "is missing")
 			missing = append(missing, input)
 		}
 	}
@@ -61,7 +55,7 @@ func (s Script) CheckMissingParams(inputParams map[string]any) []FormItem {
 func (s Script) Run(dir string, params map[string]any) (string, error) {
 	var err error
 	inputs := make(map[string]string)
-	for _, formInput := range s.Inputs {
+	for _, formInput := range s.Params {
 		value, ok := params[formInput.Name]
 		if !ok {
 			return "", fmt.Errorf("missing param %s", formInput.Name)

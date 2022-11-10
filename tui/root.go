@@ -27,7 +27,8 @@ type RootModel struct {
 	maxWidth, maxHeight int
 	width, height       int
 
-	pages []Container
+	pages   []Container
+	exitMsg string
 }
 
 func NewRootModel(width, height int, rootPage Container) *RootModel {
@@ -54,17 +55,31 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case CopyMsg:
 		err := clipboard.WriteAll(msg.Content)
 		if err != nil {
+			m.exitMsg = fmt.Sprintf("Failed to copy to clipboard: %v", err)
 			return m, NewErrorCmd(err)
 		}
+		m.exitMsg = "Copied to clipboard"
 		return m, tea.Quit
-	case OpenUrlMsg:
+	case OpenUrlMsg, OpenFileMessage:
 		var err error
-		if msg.Application != "" {
-			err = open.RunWith(msg.Url, msg.Application)
+		var target, application string
+		switch msg := msg.(type) {
+		case OpenUrlMsg:
+			target = msg.Url
+			application = msg.Application
+		case OpenFileMessage:
+			target = msg.Path
+			application = msg.Application
+		}
+		if application != "" {
+			err = open.RunWith(target, application)
+			m.exitMsg = fmt.Sprintf("Opened %s with %s", target, application)
 		} else {
-			err = open.Run(msg.Url)
+			err = open.Run(target)
+			m.exitMsg = fmt.Sprintf("Opened %s", target)
 		}
 		if err != nil {
+			m.exitMsg = fmt.Sprintf("Failed to open %s: %v", target, err)
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
@@ -80,9 +95,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		missing := page.CheckMissingParams(msg.Params)
 		if len(missing) > 0 {
+			var err error
 			items := make([]FormItem, len(missing))
 			for i, param := range missing {
-				items[i] = NewFormItem(param)
+				items[i], err = NewFormItem(param)
+				if err != nil {
+					return m, NewErrorCmd(err)
+				}
 			}
 			form := NewForm(page.Title, items, func(values map[string]any) tea.Cmd {
 				params := make(map[string]any)
@@ -123,8 +142,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		missing := script.CheckMissingParams(msg.Params)
 		if len(missing) > 0 {
 			items := make([]FormItem, len(missing))
+			var err error
 			for i, param := range missing {
-				items[i] = NewFormItem(param)
+
+				items[i], err = NewFormItem(param)
+				if err != nil {
+					return m, NewErrorCmd(err)
+				}
 			}
 			if script.Title == "" {
 				script.Title = msg.Script
@@ -170,6 +194,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					Path: output,
 				}
 			default:
+				m.exitMsg = output
 				return tea.Quit()
 			}
 		}
@@ -233,6 +258,7 @@ func PopCmd() tea.Msg {
 }
 
 func (m *RootModel) Push(page Container) {
+	log.Println(m.pageWidth(), m.pageHeight())
 	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
 }
@@ -313,10 +339,16 @@ func Draw(model tea.Model) (err error) {
 	defer f.Close()
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
-	err = p.Start()
-
+	m, err := p.Run()
 	if err != nil {
 		return err
 	}
+
+	root, _ := m.(*RootModel)
+
+	if root.exitMsg != "" {
+		fmt.Println(root.exitMsg)
+	}
+
 	return nil
 }

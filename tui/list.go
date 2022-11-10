@@ -33,15 +33,15 @@ func (i ListItem) Render(width int, selected bool) string {
 
 	var title string
 	if selected {
-		title = styles.Accent.Copy().PaddingRight(1).Render(fmt.Sprintf("> %s", i.Title))
+		title = styles.Title.Copy().Foreground(accentColor).Render(fmt.Sprintf("> %s", i.Title))
 	} else {
-		title = styles.Primary.Copy().PaddingRight(1).Render(fmt.Sprintf("  %s", i.Title))
+		title = styles.Title.Copy().PaddingRight(1).Render(fmt.Sprintf("  %s", i.Title))
 	}
 
 	blank := styles.Background.Render(" ")
 	accessories := strings.Join(i.Accessories, " • ")
-	accessories = styles.Secondary.Render(accessories)
-	subtitle := styles.Secondary.Render(i.Subtitle)
+	accessories = styles.Text.Render(accessories)
+	subtitle := styles.Text.Render(i.Subtitle)
 
 	if lipgloss.Width(accessories) > width {
 		return title
@@ -81,10 +81,11 @@ func NewList(title string) *List {
 	actions := NewActionList()
 
 	spinner := spinner.NewModel()
-	spinner.Style = styles.Accent.Copy().Padding(0, 1)
+	spinner.Style = styles.Background.Copy().Foreground(accentColor).Padding(0, 1)
 
 	filter := NewFilter()
 	filter.DrawLines = true
+	filter.TextInput.Focus()
 
 	footer := NewFooter(title)
 
@@ -144,14 +145,14 @@ func (c List) headerView() string {
 	var headerRow string
 	if c.isLoading {
 		spinner := c.spinner.View()
-		textInput := styles.Secondary.Copy().Width(c.width - lipgloss.Width(spinner)).Render("Loading...")
+		textInput := styles.Text.Copy().Width(c.width - lipgloss.Width(spinner)).Render("Loading...")
 		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), textInput)
 	} else {
-		headerRow = styles.Secondary.Copy().PaddingLeft(3).Width(c.width).Render(c.filter.Model.View())
+		headerRow = styles.Text.Copy().PaddingLeft(3).Width(c.width).Render(c.filter.TextInput.View())
 	}
 
 	line := strings.Repeat("─", c.width)
-	line = styles.Primary.Render(line)
+	line = styles.Title.Render(line)
 	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
 }
 
@@ -168,8 +169,8 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 		case tea.KeyEscape:
 			if c.actions.Shown {
 				c.actions.Hide()
-			} else if c.filter.Value() != "" {
-				c.filter.SetValue("")
+			} else if c.filter.TextInput.Value() != "" {
+				c.filter.TextInput.SetValue("")
 				c.filter.FilterItems("")
 			} else {
 				return c, PopCmd
@@ -205,7 +206,7 @@ func (c List) View() string {
 }
 
 func (c List) Query() string {
-	return c.filter.Value()
+	return c.filter.TextInput.Value()
 }
 
 func NewErrorCmd(err error) func() tea.Msg {

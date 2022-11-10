@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,22 +21,22 @@ func Serve(address string, port int) error {
 
 func serveCommand(cmd api.Script) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var input api.ScriptInputs
-		err := json.NewDecoder(req.Body).Decode(&input)
-		if err != nil {
-			res.WriteHeader(http.StatusBadRequest)
-			_, _ = res.Write([]byte(err.Error()))
-			return
-		}
+		// var input api.ScriptInputs
+		// err := json.NewDecoder(req.Body).Decode(&input)
+		// if err != nil {
+		// 	res.WriteHeader(http.StatusBadRequest)
+		// 	_, _ = res.Write([]byte(err.Error()))
+		// 	return
+		// }
 
-		// scriptResponse, err := cmd.Run(input)
-		if err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			_, _ = res.Write([]byte(err.Error()))
-			return
-		}
+		// // scriptResponse, err := cmd.Run(input)
+		// if err != nil {
+		// 	res.WriteHeader(http.StatusInternalServerError)
+		// 	_, _ = res.Write([]byte(err.Error()))
+		// 	return
+		// }
 
-		res.WriteHeader(http.StatusOK)
+		// res.WriteHeader(http.StatusOK)
 		// _ = json.NewEncoder(res).Encode(scriptResponse)
 	}
 }

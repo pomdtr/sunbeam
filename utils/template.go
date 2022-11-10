@@ -2,43 +2,20 @@ package utils
 
 import (
 	"bytes"
-	"os"
-	"strings"
 	"text/template"
 
 	"github.com/alessio/shellescape"
 )
 
-var envMap map[string]string
-
-func init() {
-	envMap = make(map[string]string)
-	for _, env := range os.Environ() {
-		parts := strings.SplitN(env, "=", 2)
-		envMap[parts[0]] = parts[1]
-	}
-}
-
 func RenderString(templateString string, inputs map[string]string) (string, error) {
-	t, err := template.New("").Delims("${", "}").Funcs(template.FuncMap{
-		"env": func(key string) string {
-			env, ok := envMap[key]
-			if !ok {
-				return ""
-			}
-			return env
-		},
-		"shellescape": func(s string) string {
-			return shellescape.Quote(s)
-		},
-		"input": func(key string) string {
-			input, ok := inputs[key]
-			if !ok {
-				return ""
-			}
-			return input
-		},
-	}).Parse(templateString)
+	funcMap := make(template.FuncMap)
+	for k, v := range inputs {
+		funcMap[k] = func() string {
+			return v
+		}
+	}
+	funcMap["shellescape"] = shellescape.Quote
+	t, err := template.New("").Funcs(funcMap).Parse(templateString)
 
 	if err != nil {
 		return "", err

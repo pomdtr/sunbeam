@@ -1,12 +1,13 @@
 package tui
 
 import (
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
 )
 
@@ -16,8 +17,9 @@ type FilterItem interface {
 }
 
 type Filter struct {
-	viewport *viewport.Model
-	textinput.Model
+	TextInput     textinput.Model
+	minIndex      int
+	Width, Height int
 
 	choices  []FilterItem
 	filtered []FilterItem
@@ -27,22 +29,18 @@ type Filter struct {
 }
 
 func NewFilter() *Filter {
-	viewport := viewport.New(0, 0)
-	viewport.Style = styles.Secondary.Copy().Padding(0, 1)
-
 	ti := textinput.New()
-	ti.Focus()
-	ti.TextStyle = styles.Secondary
-	ti.PlaceholderStyle = styles.Secondary.Copy().Italic(true)
+	ti.TextStyle = styles.Text
+	ti.PlaceholderStyle = styles.Text.Copy().Italic(true)
 	ti.Prompt = ""
 	ti.Placeholder = "Search..."
 
-	return &Filter{viewport: &viewport, Model: ti}
+	return &Filter{TextInput: ti}
 }
 
 func (f *Filter) SetSize(width, height int) {
-	f.viewport.Width = width
-	f.viewport.Height = height
+	f.Width = width
+	f.Height = height
 }
 
 func (f Filter) Selection() FilterItem {
@@ -54,7 +52,7 @@ func (f Filter) Selection() FilterItem {
 
 func (f *Filter) SetItems(items []FilterItem) {
 	f.choices = items
-	f.FilterItems(f.Value())
+	f.FilterItems(f.TextInput.Value())
 }
 
 func (f *Filter) FilterItems(term string) tea.Cmd {
@@ -76,6 +74,7 @@ func (f *Filter) FilterItems(term string) tea.Cmd {
 
 	// Reset the cursor
 	f.cursor = 0
+	f.minIndex = 0
 
 	return NewFilterItemChangeCmd(f.Selection())
 }
@@ -83,17 +82,22 @@ func (f *Filter) FilterItems(term string) tea.Cmd {
 func (m Filter) Init() tea.Cmd { return nil }
 
 func (m Filter) View() string {
-	itemViews := make([]string, len(m.filtered))
-	for i, item := range m.filtered {
-		itemView := item.Render(m.viewport.Width, i == m.cursor)
+	maxIndex := utils.Min(m.minIndex+m.nbVisibleItems(), len(m.filtered))
+	log.Println(m.minIndex, maxIndex, maxIndex-m.minIndex)
+	itemViews := make([]string, maxIndex-m.minIndex)
+	for i := m.minIndex; i < maxIndex; i++ {
+		log.Println(i)
+		item := m.filtered[i]
+		itemView := item.Render(m.Width, i == m.cursor)
 		if m.DrawLines {
-			separator := strings.Repeat("─", m.viewport.Width)
-			separator = styles.Secondary.Render(separator)
+			separator := strings.Repeat("─", m.Width)
+			separator = styles.Text.Render(separator)
 			itemView = lipgloss.JoinVertical(lipgloss.Left, itemView, separator)
 		}
-		itemViews[i] = itemView
+		itemViews[i-m.minIndex] = itemView
 	}
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
+
 	if filteredView == "" {
 		var emptyMessage string
 		if len(m.choices) == 0 {
@@ -101,11 +105,10 @@ func (m Filter) View() string {
 		} else {
 			emptyMessage = "No matches"
 		}
-		filteredView = styles.Secondary.Copy().Padding(0, 2).Width(m.viewport.Width).Render(emptyMessage)
+		filteredView = styles.Text.Copy().Padding(0, 2).Width(m.Width).Render(emptyMessage)
 	}
 
-	m.viewport.SetContent(filteredView)
-	return m.viewport.View()
+	return lipgloss.Place(m.Width, m.Height, lipgloss.Top, lipgloss.Left, filteredView, lipgloss.WithWhitespaceBackground(theme.Bg()))
 }
 
 func (f Filter) Update(msg tea.Msg) (*Filter, tea.Cmd) {
@@ -123,13 +126,13 @@ func (f Filter) Update(msg tea.Msg) (*Filter, tea.Cmd) {
 	}
 
 	var cmds []tea.Cmd
-	t, cmd := f.Model.Update(msg)
+	t, cmd := f.TextInput.Update(msg)
 	cmds = append(cmds, cmd)
-	if t.Value() != f.Value() {
+	if t.Value() != f.TextInput.Value() {
 		cmd := f.FilterItems(t.Value())
 		cmds = append(cmds, cmd)
 	}
-	f.Model = t
+	f.TextInput = t
 
 	return &f, tea.Batch(cmds...)
 }
@@ -144,15 +147,19 @@ func (m Filter) itemHeight() int {
 func (m *Filter) CursorUp() {
 	m.cursor = clamp(0, len(m.filtered)-1, m.cursor-1)
 
-	if m.cursor*m.itemHeight() < m.viewport.YOffset {
-		m.viewport.SetYOffset(m.cursor * m.itemHeight())
+	if m.cursor < m.minIndex {
+		m.minIndex = m.cursor
 	}
+}
+
+func (m Filter) nbVisibleItems() int {
+	return m.Height / m.itemHeight()
 }
 
 func (m *Filter) CursorDown() {
 	m.cursor = clamp(0, len(m.filtered)-1, m.cursor+1)
-	if m.cursor*m.itemHeight() >= m.viewport.YOffset+m.viewport.Height {
-		m.viewport.LineDown(m.itemHeight())
+	if m.cursor >= m.minIndex+m.nbVisibleItems() {
+		m.minIndex += 1
 	}
 }
 

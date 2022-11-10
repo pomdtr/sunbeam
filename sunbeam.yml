@@ -24,8 +24,8 @@ pages:
     type: list
     script:
       title: List Repositories
-      command: ./examples/github/list-repos.sh ${ input "owner" }
-      inputs:
+      command: ./examples/github/list-repos.sh {{ owner }}
+      params:
         - name: owner
           title: Owner
           type: textfield
@@ -35,8 +35,8 @@ pages:
     type: list
     script:
       title: List Pull Requests
-      command: examples/github/list-prs.sh ${ input "repository" }
-      inputs:
+      command: examples/github/list-prs.sh {{ repository }}
+      params:
         - name: repository
           title: Repository
           type: textfield
@@ -54,7 +54,7 @@ entrypoints:
     type: push-page
     page: file-browser
     with:
-      root: ${ env "HOME" }
+      root: "~"
   - title: Browse Root Directory
     type: push-page
     page: file-browser
@@ -64,14 +64,14 @@ entrypoints:
     type: push-page
     page: file-browser
     with:
-      root: ${ env "PWD" }
+      root: "."
 pages:
   file-browser:
     type: list
     script:
       title: File Browser
-      command: ./examples/file-browser.py --root ${ input "root" }
-      inputs:
+      command: ./examples/file-browser.py --root {{ root }}
+      params:
         - name: root
           title: Root
           type: textfield
@@ -104,7 +104,7 @@ entrypoints:
 scripts:
   to-uppercase:
     command: echo ${ input sentence } | tr [:lower:] [:upper:]
-    inputs:
+    params:
       - name: sentence
         title: Sentence
         type: textfield
@@ -118,18 +118,46 @@ entrypoints:
     title: List Issues
     page: list-issues
     with:
-      token: ${ env "JIRA_TOKEN" }
       jql: assignee=currentUser() and status!=Closed
 pages:
   list-issues:
     type: list
     script:
       title: List Issues
-      command: ./examples/jira.sh ${ input "token" } ${ input "jql" | urlquery }
-      inputs:
-        - name: token
-          title: Jira Token
-          type: textfield
+      command: ./examples/jira.sh {{ jql }}
+      params:
         - name: jql
           title: JQL
           type: textfield
+---
+# yaml-language-server: $schema=./schemas/schema.json
+name: examples
+version: "1.0"
+title: Examples
+entrypoints:
+  - type: run-script
+    title: Form
+    script: form
+scripts:
+  form:
+    title: Example Form
+    command: |
+      echo "Hello {{ name }}"
+      echo "You are {{ age }} years old"
+    params:
+      - name: textfield
+        placeholder: textfield
+        title: Name
+        type: textfield
+      - name: checkbox
+        title: checkbox
+        label: checkbox
+        type: checkbox
+      - name: dropdown
+        title: dropdown
+        type: dropdown
+        data:
+          - title: Option 1
+            value: option1
+          - title: Option 2
+            value: option2

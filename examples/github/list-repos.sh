@@ -2,23 +2,27 @@
 
 set -eo pipefail
 
-OWNER=$1
+if [ -n "$1" ]; then
+    ENDPOINT=/users/$1/repos
+else
+    ENDPOINT=/user/repos
+fi
 
-gh repo list "$OWNER" --json nameWithOwner,url,stargazerCount,owner | sunbeam jq '.[] |
+gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
     {
-        title: .nameWithOwner,
+        title: .full_name,
         subtitle: .owner.login,
         accessories: [
-            "\(.stargazerCount) *"
+            "\(.stargazers_count) *"
         ],
         actions: [
-            {type: "open-url", url: .url},
+            {type: "open-url", url: .html_url},
             {
                 type: "push-page",
                 title: "List Pull Requests",
                 shortcut: "ctlr+p",
                 page: "list-pull-requests",
-                with: {repository: .nameWithOwner}
+                with: {repository: .full_name}
             }
         ]
     }

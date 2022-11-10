@@ -16,8 +16,8 @@ func NewHeader() Header {
 
 func (s Header) View() string {
 	header := strings.Repeat(" ", s.Width)
-	header = styles.Secondary.Render(header)
+	header = styles.Text.Render(header)
 	separator := strings.Repeat("─", s.Width)
-	separator = styles.Secondary.Render(separator)
+	separator = styles.Text.Render(separator)
 	return lipgloss.JoinVertical(lipgloss.Left, header, separator)
 }
