@@ -34,7 +34,7 @@ func NewRunContainer(manifest api.Manifest, page api.Page, scriptParams map[stri
 }
 
 func (c *RunContainer) Init() tea.Cmd {
-	runCmd := c.Run(c.params)
+	runCmd := c.Run()
 
 	if c.Page.Type == "list" {
 		c.currentView = "list"
@@ -52,9 +52,9 @@ func (c *RunContainer) Init() tea.Cmd {
 type ListOutput []ListItem
 type RawOutput string
 
-func (c *RunContainer) Run(params map[string]any) tea.Cmd {
+func (c *RunContainer) Run() tea.Cmd {
 	return func() tea.Msg {
-		output, err := c.Page.Run(c.manifest.Dir(), params)
+		output, err := c.Page.Run(c.manifest.Dir(), c.params)
 		if err != nil {
 			return err
 		}
@@ -112,11 +112,13 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		c.list.SetItems(msg)
 		return c, nil
 	case RawOutput:
-		err := c.detail.SetContent(string(msg))
-		if err != nil {
-			return c, NewErrorCmd(fmt.Errorf("failed to parse script output %s", err))
-		}
+		c.detail.SetContent(string(msg))
 		return c, nil
+	case ReloadMsg:
+		for k, v := range msg.Params {
+			c.params[k] = v
+		}
+		return c, c.Run()
 	}
 
 	var cmd tea.Cmd

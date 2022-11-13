@@ -19,9 +19,9 @@ type Manifest struct {
 	Title string `json:"title" yaml:"title"`
 	Name  string `json:"name" yaml:"name"`
 
-	RootItems []Action          `json:"entrypoints" yaml:"entrypoints"`
-	Pages     map[string]Page   `json:"pages" yaml:"pages"`
-	Scripts   map[string]Script `json:"scripts" yaml:"scripts"`
+	Entrypoints []Action          `json:"entrypoints" yaml:"entrypoints"`
+	Pages       map[string]Page   `json:"pages" yaml:"pages"`
+	Scripts     map[string]Script `json:"scripts" yaml:"scripts"`
 
 	Url url.URL
 }
@@ -31,7 +31,7 @@ func (m Manifest) Dir() string {
 }
 
 type Page struct {
-	Script `json:"script" yaml:"script"`
+	Script `yaml:",inline"`
 	Type   string `json:"type" yaml:"type"`
 }
 

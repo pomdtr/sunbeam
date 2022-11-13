@@ -1,71 +1,54 @@
 package tui
 
 import (
-	"log"
-
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 )
 
-var markdownRenderer *glamour.TermRenderer
-
-func init() {
-	var err error
-	markdownRenderer, err = glamour.NewTermRenderer(glamour.WithAutoStyle())
-	if err != nil {
-		log.Fatalf("failed to create markdown renderer: %v", err)
-	}
-}
-
 type Detail struct {
-	format  string
-	spinner spinner.Model
-
-	header Header
-	viewport.Model
+	header     Header
+	viewport   viewport.Model
 	actionList *ActionList
-	footer     *Footer
+	footer     Footer
 }
 
 func NewDetail(title string, actions ...Action) *Detail {
-	spinner := spinner.New()
 	viewport := viewport.New(0, 0)
+	viewport.Style = styles.Text.Copy().Padding(1, 2)
 
 	footer := NewFooter(title)
-	footer.SetBindings(
-		actions[0].Binding(),
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
-	)
 
 	actionList := NewActionList()
 	actionList.SetTitle(title)
 	actionList.SetActions(actions...)
 
+	if len(actions) > 0 {
+		footer.SetBindings(
+			actions[0].Binding(),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+		)
+	}
+
 	header := NewHeader()
 
-	return &Detail{Model: viewport, header: header, spinner: spinner, actionList: actionList, format: "raw", footer: footer}
+	return &Detail{
+		viewport:   viewport,
+		header:     header,
+		actionList: actionList,
+		footer:     footer,
+	}
 }
 
 func (d *Detail) Init() tea.Cmd {
-	return d.spinner.Tick
+	return d.header.SetIsLoading(true)
 }
 
-func (d *Detail) SetContent(content string) error {
-	switch d.format {
-	case "markdown":
-		rendered, err := markdownRenderer.Render(content)
-		if err != nil {
-			return err
-		}
-		d.Model.SetContent(rendered)
-	default:
-		d.Model.SetContent(content)
-	}
-	return nil
+func (d *Detail) SetContent(content string) {
+	content = wordwrap.String(content, d.viewport.Width-4)
+	d.viewport.SetContent(content)
 }
 
 func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
@@ -82,24 +65,19 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 		}
 	}
 	var cmd tea.Cmd
-	var cmds []tea.Cmd
 
-	c.spinner, cmd = c.spinner.Update(msg)
-	cmds = append(cmds, cmd)
+	c.viewport, cmd = c.viewport.Update(msg)
 
-	c.Model, cmd = c.Model.Update(msg)
-	cmds = append(cmds, cmd)
-
-	return &c, tea.Batch(cmds...)
+	return &c, cmd
 }
 
 func (c *Detail) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
-	c.Model.Width = width
-	c.Model.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+	c.viewport.Width = width
+	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 }
 
 func (c *Detail) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.Model.View(), c.footer.View())
+	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
 }

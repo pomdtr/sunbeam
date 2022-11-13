@@ -34,5 +34,4 @@ func sunbeamServe(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	return
 }

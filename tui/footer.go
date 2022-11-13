@@ -14,13 +14,13 @@ type Footer struct {
 	bindings []key.Binding
 }
 
-func NewFooter(title string) *Footer {
+func NewFooter(title string) Footer {
 	m := help.New()
 	m.Styles.ShortKey = styles.Title
 	m.Styles.ShortDesc = styles.Title
 	m.Styles.ShortSeparator = styles.Text
 
-	return &Footer{
+	return Footer{
 		Model: m,
 		title: title,
 	}

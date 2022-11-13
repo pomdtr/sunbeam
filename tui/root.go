@@ -139,7 +139,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("script %s does exists in extension %s", msg.Script, msg.Extension))
 		}
 
-		missing := script.CheckMissingParams(msg.Params)
+		missing := script.CheckMissingParams(msg.With)
 		if len(missing) > 0 {
 			items := make([]FormItem, len(missing))
 			var err error
@@ -155,7 +155,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			form := NewForm(script.Title, items, func(values map[string]any) tea.Cmd {
 				params := make(map[string]any)
-				for k, v := range msg.Params {
+				for k, v := range msg.With {
 					params[k] = v
 				}
 				for k, v := range values {
@@ -165,7 +165,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return RunMsg{
 						Extension: msg.Extension,
 						Script:    msg.Script,
-						Params:    params,
+						With:      params,
 					}
 				}
 			})
@@ -174,14 +174,14 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Run the script
-		output, err := script.Run(manifest.Dir(), msg.Params)
+		output, err := script.Run(manifest.Dir(), msg.With)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
 
 		return m, func() tea.Msg {
-			switch script.OnSuccess {
-			case "copy":
+			switch msg.OnSuccess {
+			case "copy-content":
 				return CopyMsg{
 					Content: output,
 				}
@@ -193,6 +193,8 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return OpenFileMessage{
 					Path: output,
 				}
+			case "reload-page":
+				return ReloadMsg{}
 			default:
 				m.exitMsg = output
 				return tea.Quit()
@@ -207,8 +209,8 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case error:
 		detail := NewDetail("Error")
-		detail.SetContent(msg.Error())
 		detail.SetSize(m.pageWidth(), m.pageHeight())
+		detail.SetContent(msg.Error())
 
 		currentIndex := len(m.pages) - 1
 		m.pages[currentIndex] = detail
@@ -258,7 +260,6 @@ func PopCmd() tea.Msg {
 }
 
 func (m *RootModel) Push(page Container) {
-	log.Println(m.pageWidth(), m.pageHeight())
 	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
 }
@@ -272,7 +273,7 @@ func (m *RootModel) Pop() {
 func Start(width, height int) error {
 	entrypoints := make([]ListItem, 0)
 	for _, manifest := range api.Sunbeam.Extensions {
-		for _, rootItem := range manifest.RootItems {
+		for _, rootItem := range manifest.Entrypoints {
 			title := rootItem.Title
 			rootItem.Title = "Open Command"
 			rootItem.Extension = manifest.Name

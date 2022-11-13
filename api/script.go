@@ -12,10 +12,9 @@ import (
 )
 
 type Script struct {
-	Params    []FormItem `json:"params"`
-	Title     string     `json:"title"`
-	Command   string     `json:"command"`
-	OnSuccess string     `json:"onSuccess"`
+	Params  []FormItem `json:"params" yaml:"params"`
+	Title   string     `json:"title" yaml:"title"`
+	Command string     `json:"command" yaml:"command"`
 }
 
 type FormItem struct {
@@ -123,7 +122,8 @@ type Action struct {
 	Page      string `json:"page,omitempty" yaml:"page"`
 	Script    string `json:"script,omitempty" yaml:"script"`
 
-	With map[string]any `json:"with,omitempty" yaml:"with"`
+	OnSuccess string         `json:"onSuccess" yaml:"onSuccess"`
+	With      map[string]any `json:"with,omitempty" yaml:"with"`
 }
 
 func ParseListItems(output string) (items []ListItem, err error) {

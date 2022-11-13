@@ -1,13 +1,10 @@
 package tui
 
 import (
-	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
 )
 
@@ -17,9 +14,9 @@ type FilterItem interface {
 }
 
 type Filter struct {
-	TextInput     textinput.Model
 	minIndex      int
 	Width, Height int
+	Query         string
 
 	choices  []FilterItem
 	filtered []FilterItem
@@ -29,13 +26,7 @@ type Filter struct {
 }
 
 func NewFilter() *Filter {
-	ti := textinput.New()
-	ti.TextStyle = styles.Text
-	ti.PlaceholderStyle = styles.Text.Copy().Italic(true)
-	ti.Prompt = ""
-	ti.Placeholder = "Search..."
-
-	return &Filter{TextInput: ti}
+	return &Filter{}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -52,26 +43,27 @@ func (f Filter) Selection() FilterItem {
 
 func (f *Filter) SetItems(items []FilterItem) {
 	f.choices = items
-	f.FilterItems(f.TextInput.Value())
+	f.FilterItems(f.Query)
 }
 
-func (f *Filter) FilterItems(term string) tea.Cmd {
+func (f *Filter) FilterItems(query string) tea.Cmd {
 	values := make([]string, len(f.choices))
 	for i, choice := range f.choices {
 		values[i] = choice.FilterValue()
 	}
 	// If the search field is empty, let's not display the matches
 	// (none), but rather display all possible choices.
-	if term == "" {
+	if query == "" {
 		f.filtered = f.choices
 	} else {
-		matches := fuzzy.Find(term, values)
+		matches := fuzzy.Find(query, values)
 		f.filtered = make([]FilterItem, len(matches))
 		for i, match := range matches {
 			f.filtered[i] = f.choices[match.Index]
 		}
 	}
 
+	f.Query = query
 	// Reset the cursor
 	f.cursor = 0
 	f.minIndex = 0
@@ -82,21 +74,25 @@ func (f *Filter) FilterItems(term string) tea.Cmd {
 func (m Filter) Init() tea.Cmd { return nil }
 
 func (m Filter) View() string {
-	maxIndex := utils.Min(m.minIndex+m.nbVisibleItems(), len(m.filtered))
-	log.Println(m.minIndex, maxIndex, maxIndex-m.minIndex)
-	itemViews := make([]string, maxIndex-m.minIndex)
-	for i := m.minIndex; i < maxIndex; i++ {
-		log.Println(i)
-		item := m.filtered[i]
-		itemView := item.Render(m.Width, i == m.cursor)
-		if m.DrawLines {
+	rows := make([]string, 0)
+	index := m.minIndex
+	availableHeight := m.Height
+	for availableHeight > 0 && index < len(m.filtered) {
+		item := m.filtered[index]
+		itemView := item.Render(m.Width, index == m.cursor)
+		rows = append(rows, itemView)
+
+		index++
+		availableHeight--
+
+		if availableHeight > 0 {
 			separator := strings.Repeat("─", m.Width)
 			separator = styles.Text.Render(separator)
-			itemView = lipgloss.JoinVertical(lipgloss.Left, itemView, separator)
+			rows = append(rows, separator)
+			availableHeight--
 		}
-		itemViews[i-m.minIndex] = itemView
 	}
-	filteredView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
+	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)
 
 	if filteredView == "" {
 		var emptyMessage string
@@ -112,7 +108,6 @@ func (m Filter) View() string {
 }
 
 func (f Filter) Update(msg tea.Msg) (*Filter, tea.Cmd) {
-	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -125,16 +120,7 @@ func (f Filter) Update(msg tea.Msg) (*Filter, tea.Cmd) {
 		}
 	}
 
-	var cmds []tea.Cmd
-	t, cmd := f.TextInput.Update(msg)
-	cmds = append(cmds, cmd)
-	if t.Value() != f.TextInput.Value() {
-		cmd := f.FilterItems(t.Value())
-		cmds = append(cmds, cmd)
-	}
-	f.TextInput = t
-
-	return &f, tea.Batch(cmds...)
+	return &f, nil
 }
 
 func (m Filter) itemHeight() int {

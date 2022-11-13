@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/utils"
@@ -33,7 +31,7 @@ func (i ListItem) Render(width int, selected bool) string {
 
 	var title string
 	if selected {
-		title = styles.Title.Copy().Foreground(accentColor).Render(fmt.Sprintf("> %s", i.Title))
+		title = styles.Title.Copy().Foreground(accentColor).PaddingRight(1).Render(fmt.Sprintf("> %s", i.Title))
 	} else {
 		title = styles.Title.Copy().PaddingRight(1).Render(fmt.Sprintf("  %s", i.Title))
 	}
@@ -50,69 +48,60 @@ func (i ListItem) Render(width int, selected bool) string {
 
 		title := title[:utils.Max(0, availableWidth)]
 
-		return fmt.Sprintf("%s%s", title, accessories)
+		return lipgloss.JoinHorizontal(lipgloss.Top, title, accessories)
 	} else if lipgloss.Width(title+subtitle+accessories) > width {
 		availableWidth := width - lipgloss.Width(title+accessories)
 		subtitle := subtitle[:utils.Max(0, availableWidth)]
-		return fmt.Sprintf("%s%s%s", title, subtitle, accessories)
+		return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, accessories)
 	} else {
 		blankWidth := width - lipgloss.Width(title) - lipgloss.Width(subtitle) - lipgloss.Width(accessories)
 		blanks := strings.Repeat(blank, blankWidth)
-		return fmt.Sprintf("%s%s%s%s", title, subtitle, blanks, accessories)
+		return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
 	}
-
 }
 
 type List struct {
-	width, height int
-
-	footer    *Footer
-	spinner   spinner.Model
-	actions   *ActionList
-	isLoading bool
+	header  Header
+	footer  Footer
+	actions *ActionList
 
 	filter *Filter
 }
 
 func NewList(title string) *List {
-	viewport := viewport.New(0, 0)
-	viewport.MouseWheelEnabled = true
-
 	actions := NewActionList()
 
-	spinner := spinner.NewModel()
-	spinner.Style = styles.Background.Copy().Foreground(accentColor).Padding(0, 1)
+	header := NewHeader()
+	header.SetIsLoading(true)
 
 	filter := NewFilter()
 	filter.DrawLines = true
-	filter.TextInput.Focus()
 
 	footer := NewFooter(title)
 
 	return &List{
-		isLoading: true,
-		actions:   actions,
-		spinner:   spinner,
-		filter:    filter,
-		footer:    footer,
+		actions: actions,
+		header:  header,
+		filter:  filter,
+		footer:  footer,
 	}
 }
 
 func (c *List) Init() tea.Cmd {
-	return tea.Batch(c.spinner.Tick)
+	return c.header.Init()
+
 }
 
 func (c *List) SetSize(width, height int) {
-	availableHeight := height - lipgloss.Height(c.headerView()) - lipgloss.Height(c.footer.View())
-	c.width, c.height = width, availableHeight
+	availableHeight := height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 	c.footer.Width = width
+	c.header.Width = width
 	c.filter.SetSize(width, availableHeight)
 	c.actions.SetSize(width, height)
 }
 
 func (c *List) SetItems(items []ListItem) {
-	c.isLoading = false
-
+	c.header.SetIsLoading(false)
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
 		filterItems[i] = item
@@ -141,21 +130,6 @@ func (l *List) updateActions() {
 	}
 }
 
-func (c List) headerView() string {
-	var headerRow string
-	if c.isLoading {
-		spinner := c.spinner.View()
-		textInput := styles.Text.Copy().Width(c.width - lipgloss.Width(spinner)).Render("Loading...")
-		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), textInput)
-	} else {
-		headerRow = styles.Text.Copy().PaddingLeft(3).Width(c.width).Render(c.filter.TextInput.View())
-	}
-
-	line := strings.Repeat("─", c.width)
-	line = styles.Title.Render(line)
-	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
-}
-
 func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case FilterItemChange:
@@ -169,22 +143,25 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 		case tea.KeyEscape:
 			if c.actions.Shown {
 				c.actions.Hide()
-			} else if c.filter.TextInput.Value() != "" {
-				c.filter.TextInput.SetValue("")
+			} else if c.header.input.Value() != "" {
+				c.header.input.SetValue("")
 				c.filter.FilterItems("")
 			} else {
 				return c, PopCmd
 			}
 		}
-	case ReloadMsg:
-		c.isLoading = true
 	}
 
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	c.spinner, cmd = c.spinner.Update(msg)
+	header, cmd := c.header.Update(msg)
 	cmds = append(cmds, cmd)
+	if header.Value() != c.header.Value() {
+		cmd = c.filter.FilterItems(header.Value())
+		cmds = append(cmds, cmd)
+	}
+	c.header = header
 
 	c.actions, cmd = c.actions.Update(msg)
 	cmds = append(cmds, cmd)
@@ -202,11 +179,11 @@ func (c List) View() string {
 	if c.actions.Shown {
 		return c.actions.View()
 	}
-	return lipgloss.JoinVertical(lipgloss.Left, c.headerView(), c.filter.View(), c.footer.View())
+	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.filter.View(), c.footer.View())
 }
 
 func (c List) Query() string {
-	return c.filter.TextInput.Value()
+	return c.header.input.Value()
 }
 
 func NewErrorCmd(err error) func() tea.Msg {

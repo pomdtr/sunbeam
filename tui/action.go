@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -52,7 +53,8 @@ type PushMsg struct {
 type RunMsg struct {
 	Extension string
 	Script    string
-	Params    map[string]any
+	With      map[string]any
+	OnSuccess string
 }
 
 func (a Action) Cmd() tea.Msg {
@@ -77,7 +79,7 @@ func NewAction(scriptAction api.Action) Action {
 			Path:        scriptAction.Path,
 			Application: scriptAction.Application,
 		}
-	case "copy":
+	case "copy-content":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
@@ -107,7 +109,8 @@ func NewAction(scriptAction api.Action) Action {
 		msg = RunMsg{
 			Extension: scriptAction.Extension,
 			Script:    scriptAction.Script,
-			Params:    scriptAction.With,
+			With:      scriptAction.With,
+			OnSuccess: scriptAction.OnSuccess,
 		}
 	default:
 		scriptAction.Title = "Unknown"
@@ -122,8 +125,9 @@ func NewAction(scriptAction api.Action) Action {
 }
 
 type ActionList struct {
+	header Header
 	filter *Filter
-	footer *Footer
+	footer Footer
 
 	actions []Action
 	Shown   bool
@@ -132,6 +136,9 @@ type ActionList struct {
 func NewActionList() *ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
+
+	header := NewHeader()
+	header.input.Focus()
 	footer := NewFooter("Actions")
 	footer.SetBindings(
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("↩", "Select Action")),
@@ -139,23 +146,18 @@ func NewActionList() *ActionList {
 	)
 
 	return &ActionList{
+		header: header,
 		filter: filter,
 		footer: footer,
 	}
 }
 
-func (al ActionList) headerView() string {
-	headerRow := lipgloss.JoinHorizontal(lipgloss.Top, "   ", al.filter.TextInput.View())
-
-	line := strings.Repeat("─", al.footer.Width)
-	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
-}
-
 func (al *ActionList) SetSize(w, h int) {
-	availableHeight := h - lipgloss.Height(al.headerView()) - lipgloss.Height(al.footer.View())
+	availableHeight := h - lipgloss.Height(al.header.View()) - lipgloss.Height(al.footer.View())
 
 	al.filter.SetSize(w, availableHeight)
 	al.footer.Width = w
+	al.header.Width = w
 }
 
 func (al *ActionList) Hide() {
@@ -207,17 +209,28 @@ func (al ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
 		}
 	}
 
+	var cmds []tea.Cmd
 	var cmd tea.Cmd
+	header, cmd := al.header.Update(msg)
+	cmds = append(cmds, cmd)
+	log.Println(header.Value(), al.header.Value())
+	if header.Value() != al.header.Value() {
+		cmd = al.filter.FilterItems(header.Value())
+		cmds = append(cmds, cmd)
+	}
+	al.header = header
+
 	if al.Shown {
 		al.filter, cmd = al.filter.Update(msg)
+		cmds = append(cmds, cmd)
 	}
-	return &al, cmd
+	return &al, tea.Batch(cmds...)
 }
 
 func (al ActionList) View() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		al.headerView(),
+		al.header.View(),
 		al.filter.View(),
 		al.footer.View(),
 	)

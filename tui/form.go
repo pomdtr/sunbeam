@@ -11,7 +11,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/api"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type FormItem struct {
@@ -41,9 +40,9 @@ func NewFormItem(formItem api.FormItem) (FormItem, error) {
 	case "textarea":
 		ta := NewTextArea(formItem)
 		input = &ta
-	case "dropdown":
-		dd := NewDropDown(formItem)
-		input = &dd
+	// case "dropdown":
+	// 	dd := NewDropDown(formItem)
+	// 	input = &dd
 	case "checkbox":
 		cb := NewCheckbox(formItem)
 		input = &cb
@@ -212,104 +211,104 @@ func (d DropDownItem) FilterValue() string {
 	return d.title
 }
 
-type DropDown struct {
-	filter *Filter
-	value  string
-}
+// type DropDown struct {
+// 	filter *Filter
+// 	value  string
+// }
 
-func NewDropDown(formItem api.FormItem) DropDown {
-	choices := make([]FilterItem, len(formItem.Data))
-	for i, formItem := range formItem.Data {
-		choices[i] = DropDownItem{
-			title: formItem.Title,
-			value: formItem.Value,
-		}
-	}
+// func NewDropDown(formItem api.FormItem) DropDown {
+// 	choices := make([]FilterItem, len(formItem.Data))
+// 	for i, formItem := range formItem.Data {
+// 		choices[i] = DropDownItem{
+// 			title: formItem.Title,
+// 			value: formItem.Value,
+// 		}
+// 	}
 
-	ti := textinput.New()
-	ti.Prompt = " "
-	ti.Placeholder = formItem.Placeholder
-	ti.PlaceholderStyle = styles.Text
+// 	ti := textinput.New()
+// 	ti.Prompt = " "
+// 	ti.Placeholder = formItem.Placeholder
+// 	ti.PlaceholderStyle = styles.Text
 
-	filter := NewFilter()
-	filter.SetItems(choices)
+// 	filter := NewFilter()
+// 	filter.SetItems(choices)
 
-	return DropDown{
-		filter: filter,
-		value:  "",
-	}
-}
+// 	return DropDown{
+// 		filter: filter,
+// 		value:  "",
+// 	}
+// }
 
-func (dd *DropDown) SetWidth(width int) {
-	dd.filter.Width = width - 2
-}
+// func (dd *DropDown) SetWidth(width int) {
+// 	dd.filter.Width = width - 2
+// }
 
-func (d DropDown) View() string {
-	modelView := d.filter.TextInput.View()
-	paddingRight := 0
-	if d.Value() == "" {
-		paddingRight = utils.Max(0, d.filter.Width-lipgloss.Width(modelView)+2)
-	}
-	textInputView := fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
+// func (d DropDown) View() string {
+// 	modelView := d.filter.TextInput.View()
+// 	paddingRight := 0
+// 	if d.Value() == "" {
+// 		paddingRight = utils.Max(0, d.filter.Width-lipgloss.Width(modelView)+2)
+// 	}
+// 	textInputView := fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
 
-	if !d.filter.TextInput.Focused() {
-		return textInputView
-	} else if d.value != "" && d.value == d.filter.TextInput.Value() {
-		return textInputView
-	} else {
-		d.filter.Height = len(d.filter.filtered)
-		return lipgloss.JoinVertical(lipgloss.Left, textInputView, d.filter.View())
-	}
-}
+// 	if !d.filter.TextInput.Focused() {
+// 		return textInputView
+// 	} else if d.value != "" && d.value == d.filter.TextInput.Value() {
+// 		return textInputView
+// 	} else {
+// 		d.filter.Height = len(d.filter.filtered)
+// 		return lipgloss.JoinVertical(lipgloss.Left, textInputView, d.filter.View())
+// 	}
+// }
 
-func (d DropDown) Value() any {
-	return d.value
-}
+// func (d DropDown) Value() any {
+// 	return d.value
+// }
 
-func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
-	if !d.filter.TextInput.Focused() {
-		return d, nil
-	}
+// func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
+// 	if !d.filter.TextInput.Focused() {
+// 		return d, nil
+// 	}
 
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
-			if len(d.filter.filtered) == 0 {
-				return d, nil
-			}
-			selection := d.filter.Selection()
-			dropDownItem, ok := selection.(DropDownItem)
-			if !ok {
-				return d, NewErrorCmd(fmt.Errorf("invalid selection type: %T", selection))
-			}
+// 	switch msg := msg.(type) {
+// 	case tea.KeyMsg:
+// 		switch msg.String() {
+// 		case "enter":
+// 			if len(d.filter.filtered) == 0 {
+// 				return d, nil
+// 			}
+// 			selection := d.filter.Selection()
+// 			dropDownItem, ok := selection.(DropDownItem)
+// 			if !ok {
+// 				return d, NewErrorCmd(fmt.Errorf("invalid selection type: %T", selection))
+// 			}
 
-			d.value = dropDownItem.value
-			d.filter.TextInput.SetValue(dropDownItem.title)
-			d.filter.TextInput.CursorEnd()
+// 			d.value = dropDownItem.value
+// 			d.filter.TextInput.SetValue(dropDownItem.title)
+// 			d.filter.TextInput.CursorEnd()
 
-			return d, nil
-		}
-	}
+// 			return d, nil
+// 		}
+// 	}
 
-	var cmd tea.Cmd
-	d.filter, cmd = d.filter.Update(msg)
+// 	var cmd tea.Cmd
+// 	d.filter, cmd = d.filter.Update(msg)
 
-	return d, cmd
-}
+// 	return d, cmd
+// }
 
-func (d *DropDown) Focus() tea.Cmd {
-	return d.filter.TextInput.Focus()
-}
+// func (d *DropDown) Focus() tea.Cmd {
+// 	return d.filter.TextInput.Focus()
+// }
 
-func (d *DropDown) Blur() {
-	d.filter.TextInput.Blur()
-}
+// func (d *DropDown) Blur() {
+// 	d.filter.TextInput.Blur()
+// }
 
 type Form struct {
 	header     Header
 	submitCmd  func(values map[string]any) tea.Cmd
-	footer     *Footer
+	footer     Footer
 	viewport   viewport.Model
 	items      []FormItem
 	focusIndex int

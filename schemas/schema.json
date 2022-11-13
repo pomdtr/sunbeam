@@ -37,11 +37,14 @@
             "type": "object",
             "additionalProperties": {
                 "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/script"
+                    }
+                ],
                 "required": [
-                    "script",
                     "type"
                 ],
-                "additionalProperties": false,
                 "properties": {
                     "type": {
                         "type": "string",
@@ -50,9 +53,6 @@
                             "detail",
                             "raw"
                         ]
-                    },
-                    "script": {
-                        "$ref": "#/definitions/script"
                     }
                 }
             }
@@ -70,7 +70,6 @@
             "required": [
                 "command"
             ],
-            "additionalProperties": false,
             "properties": {
                 "command": {
                     "type": "string"
@@ -140,7 +139,7 @@
                 "type": {
                     "type": "string",
                     "enum": [
-                        "copy",
+                        "copy-content",
                         "reload-page",
                         "open-url",
                         "open-file",
@@ -168,7 +167,27 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "copy"
+                                "const": "push-page"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "title",
+                            "page"
+                        ],
+                        "properties": {
+                            "page": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "copy-content"
                             }
                         }
                     },
@@ -241,7 +260,7 @@
                                 "type": "string",
                                 "enum": [
                                     "reload-page",
-                                    "copy",
+                                    "copy-content",
                                     "open-url"
                                 ]
                             }

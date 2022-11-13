@@ -5,7 +5,7 @@ bw list items | sunbeam jq '.[] | {
     subtitle: .login.username,
     actions: [
         {
-            type: "copy",
+            type: "copy-content",
             title: "Copy Password",
             shortcut: "enter",
             content: .login.password

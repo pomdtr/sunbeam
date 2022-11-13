@@ -16,7 +16,7 @@ var jqCmd = &cobra.Command{
 	Use:   "jq",
 	Short: "Run a jq query",
 	Run:   sunbeamJQ,
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(2),
 }
 
 var JQFlags struct {

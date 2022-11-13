@@ -22,25 +22,23 @@ entrypoints:
 pages:
   list-repositories:
     type: list
-    script:
-      title: List Repositories
-      command: ./examples/github/list-repos.sh {{ owner }}
-      params:
-        - name: owner
-          title: Owner
-          type: textfield
-          required: false
-          description: The owner of the repositories to list
+    title: List Repositories
+    command: ./examples/github/list-repos.sh {{ owner }}
+    params:
+      - name: owner
+        title: Owner
+        type: textfield
+        required: false
+        description: The owner of the repositories to list
   list-pull-requests:
     type: list
-    script:
-      title: List Pull Requests
-      command: examples/github/list-prs.sh {{ repository }}
-      params:
-        - name: repository
-          title: Repository
-          type: textfield
-          description: The repository to list pull requests for
+    title: List Pull Requests
+    command: examples/github/list-prs.sh {{ repository }}
+    params:
+      - name: repository
+        title: Repository
+        type: textfield
+        description: The repository to list pull requests for
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: file-browser
@@ -68,14 +66,13 @@ entrypoints:
 pages:
   file-browser:
     type: list
-    script:
-      title: File Browser
-      command: ./examples/file-browser.py --root {{ root }}
-      params:
-        - name: root
-          title: Root
-          type: textfield
-          placeholder: Select a directory
+    title: File Browser
+    command: ./examples/file-browser.py --root {{ root }}
+    params:
+      - name: root
+        title: Root
+        type: textfield
+        placeholder: Select a directory
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: bitwarden
@@ -88,10 +85,9 @@ entrypoints:
 pages:
   list-passwords:
     type: list
-    script:
-      title: Search Passwords
-      # Please do not do this, you are better of moving the logic to an external file
-      command: ./examples/bitwarden.sh
+    title: Search Passwords
+    # Please do not do this, you are better of moving the logic to an external file
+    command: ./examples/bitwarden.sh
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: change-case
@@ -122,13 +118,12 @@ entrypoints:
 pages:
   list-issues:
     type: list
-    script:
-      title: List Issues
-      command: ./examples/jira.sh {{ jql }}
-      params:
-        - name: jql
-          title: JQL
-          type: textfield
+    title: List Issues
+    command: ./examples/jira.sh {{ jql | urlquery }}
+    params:
+      - name: jql
+        title: JQL
+        type: textfield
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: examples
@@ -161,3 +156,16 @@ scripts:
             value: option1
           - title: Option 2
             value: option2
+---
+# yaml-language-server: $schema=./schemas/schema.json
+name: random
+title: Random
+version: "1.0"
+entrypoints:
+  - type: push-page
+    title: "Generate 5 random numbers"
+    page: "random-list"
+pages:
+  random-list:
+    type: list
+    command: ./examples/random_list.py

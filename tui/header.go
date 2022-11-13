@@ -3,21 +3,78 @@ package tui
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type Header struct {
-	Width int
+	Width     int
+	input     textinput.Model
+	isLoading bool
+	spinner   spinner.Model
 }
 
 func NewHeader() Header {
-	return Header{}
+	ti := textinput.NewModel()
+	ti.Focus()
+	ti.Prompt = ""
+	ti.Placeholder = "Search..."
+	ti.PlaceholderStyle = styles.Text.Copy().Italic(true)
+	spinner := spinner.New()
+	spinner.Style = styles.Text.Copy().Padding(0, 1)
+	return Header{
+		input:   ti,
+		spinner: spinner,
+	}
 }
 
-func (s Header) View() string {
-	header := strings.Repeat(" ", s.Width)
-	header = styles.Text.Render(header)
-	separator := strings.Repeat("─", s.Width)
-	separator = styles.Text.Render(separator)
-	return lipgloss.JoinVertical(lipgloss.Left, header, separator)
+func (h Header) Init() tea.Cmd {
+	if h.isLoading {
+		return h.spinner.Tick
+	}
+	return nil
+}
+
+func (h Header) Value() string {
+	return h.input.Value()
+}
+
+func (h Header) Update(msg tea.Msg) (Header, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
+	h.input, cmd = h.input.Update(msg)
+	cmds = append(cmds, cmd)
+
+	if h.isLoading {
+		h.spinner, cmd = h.spinner.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	return h, tea.Batch(cmds...)
+}
+
+func (h *Header) SetIsLoading(isLoading bool) tea.Cmd {
+	h.isLoading = isLoading
+	if isLoading {
+		return h.spinner.Tick
+	}
+	return nil
+}
+
+func (c Header) View() string {
+	var headerRow string
+	if c.isLoading {
+		spinner := c.spinner.View()
+		textInput := styles.Text.Copy().Width(c.Width - lipgloss.Width(spinner)).Render("Loading...")
+		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), textInput)
+	} else {
+		headerRow = styles.Text.Copy().PaddingLeft(3).Width(c.Width).Render(c.input.View())
+	}
+
+	line := strings.Repeat("─", c.Width)
+	line = styles.Title.Render(line)
+	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
 }
