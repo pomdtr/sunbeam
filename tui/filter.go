@@ -17,6 +17,7 @@ type Filter struct {
 	minIndex      int
 	Width, Height int
 	Query         string
+	Background    lipgloss.TerminalColor
 
 	choices  []FilterItem
 	filtered []FilterItem
@@ -74,19 +75,20 @@ func (f *Filter) FilterItems(query string) tea.Cmd {
 func (m Filter) Init() tea.Cmd { return nil }
 
 func (m Filter) View() string {
+	itemWidth := m.Width - 2
 	rows := make([]string, 0)
 	index := m.minIndex
 	availableHeight := m.Height
 	for availableHeight > 0 && index < len(m.filtered) {
 		item := m.filtered[index]
-		itemView := item.Render(m.Width, index == m.cursor)
+		itemView := item.Render(itemWidth, index == m.cursor)
 		rows = append(rows, itemView)
 
 		index++
 		availableHeight--
 
 		if availableHeight > 0 {
-			separator := strings.Repeat("─", m.Width)
+			separator := strings.Repeat("─", itemWidth)
 			separator = styles.Text.Render(separator)
 			rows = append(rows, separator)
 			availableHeight--
@@ -101,9 +103,11 @@ func (m Filter) View() string {
 		} else {
 			emptyMessage = "No matches"
 		}
-		filteredView = styles.Text.Copy().Padding(0, 2).Width(m.Width).Render(emptyMessage)
+
+		return styles.Text.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(emptyMessage)
 	}
 
+	filteredView = lipgloss.NewStyle().Padding(0, 1).Background(theme.Bg()).Render(filteredView)
 	return lipgloss.Place(m.Width, m.Height, lipgloss.Top, lipgloss.Left, filteredView, lipgloss.WithWhitespaceBackground(theme.Bg()))
 }
 

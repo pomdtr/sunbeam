@@ -1,27 +1,24 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Footer struct {
-	title string
-	help.Model
+	title    string
+	style    lipgloss.Style
+	Width    int
 	bindings []key.Binding
 }
 
 func NewFooter(title string) Footer {
-	m := help.New()
-	m.Styles.ShortKey = styles.Title
-	m.Styles.ShortDesc = styles.Title
-	m.Styles.ShortSeparator = styles.Text
-
 	return Footer{
-		Model: m,
+		style: styles.Text.Copy(),
 		title: title,
 	}
 }
@@ -32,20 +29,25 @@ func (f *Footer) SetBindings(bindings ...key.Binding) {
 
 func (f Footer) View() string {
 	horizontal := strings.Repeat("─", f.Width)
-	horizontal = styles.Title.Render(horizontal)
+	horizontal = f.style.Render(horizontal)
 
 	if len(f.bindings) == 0 {
-		title := styles.Title.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
+		title := styles.Text.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
 		return lipgloss.JoinVertical(lipgloss.Left, horizontal, title)
 	}
 
-	title := styles.Title.Copy().Padding(0, 1).Render(f.title)
-	shortHelp := f.Model.ShortHelpView(f.bindings)
+	// availableWidth := f.Width - lipgloss.Width(title)
+	keys := make([]string, len(f.bindings))
+	for i, binding := range f.bindings {
+		keys[i] = fmt.Sprintf("%s %s", binding.Help().Desc, binding.Help().Key)
+	}
+	help := strings.Join(keys, " • ")
 
-	availableWidth := f.Width - lipgloss.Width(title)
-	shortHelp = styles.Background.Copy().Padding(0, 1).Width(availableWidth).Align(lipgloss.Right).Render(shortHelp)
+	titleView := f.style.Copy().Padding(0, 1).Render(f.title)
+	availableWidth := utils.Max(0, f.Width-lipgloss.Width(titleView))
+	helpView := f.style.Copy().Width(availableWidth).Align(lipgloss.Right).Padding(0, 1).Render(help)
 
-	shortHelp = lipgloss.JoinHorizontal(lipgloss.Left, title, shortHelp)
+	footerRow := lipgloss.JoinHorizontal(lipgloss.Top, titleView, helpView)
 
-	return lipgloss.JoinVertical(lipgloss.Left, horizontal, shortHelp)
+	return lipgloss.JoinVertical(lipgloss.Left, horizontal, footerRow)
 }
