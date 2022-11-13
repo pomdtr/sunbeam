@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -209,21 +208,24 @@ func (al ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
 		}
 	}
 
+	if !al.Shown {
+		return &al, nil
+	}
+
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
 	header, cmd := al.header.Update(msg)
 	cmds = append(cmds, cmd)
-	log.Println(header.Value(), al.header.Value())
 	if header.Value() != al.header.Value() {
 		cmd = al.filter.FilterItems(header.Value())
 		cmds = append(cmds, cmd)
 	}
 	al.header = header
 
-	if al.Shown {
-		al.filter, cmd = al.filter.Update(msg)
-		cmds = append(cmds, cmd)
-	}
+	al.filter, cmd = al.filter.Update(msg)
+	cmds = append(cmds, cmd)
+
 	return &al, tea.Batch(cmds...)
 }
 
