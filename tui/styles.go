@@ -19,9 +19,9 @@ var (
 
 func init() {
 	if lipgloss.HasDarkBackground() {
-		theme = tint.NewRegistry(tint.TintDracula)
+		theme = tint.NewRegistry(tint.TintTomorrowNight)
 	} else {
-		theme = tint.NewRegistry(tint.TintBuiltinSolarizedLight)
+		theme = tint.NewRegistry(tint.TintTomorrow)
 	}
 	accentColor = theme.BrightPurple()
 

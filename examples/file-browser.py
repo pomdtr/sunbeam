@@ -10,7 +10,7 @@ args = parser.parse_args()
 
 root: pathlib.Path = args.root
 
-for path in root.iterdir():
+for path in sorted(root.iterdir(), key=lambda p: p.name):
     primaryAction = (
         {"type": "open-file", "path": str(path.absolute())}
         if path.is_file()

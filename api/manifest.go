@@ -29,12 +29,6 @@ func (m Manifest) Dir() string {
 	return path.Dir(m.Url.Path)
 }
 
-type RootItem struct {
-	Title    string `json:"title" yaml:"title"`
-	Subtitle string `json:"subtitle" yaml:"subtitle"`
-	Action   Action `json:"action" yaml:"action"`
-}
-
 var Sunbeam Api
 
 func init() {

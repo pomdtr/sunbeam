@@ -12,6 +12,7 @@ import (
 
 type ListItem struct {
 	Title       string
+	PreviewCmd  string
 	Subtitle    string
 	Accessories []string
 	Actions     []Action
@@ -43,14 +44,14 @@ func (i ListItem) Render(width int, selected bool) string {
 	var blanks string
 	accessories := fmt.Sprintf(" %s", strings.Join(i.Accessories, " • "))
 
-	if width >= len(title+subtitle+accessories) {
-		availableWidth := width - len(title+subtitle+accessories)
+	if width >= lipgloss.Width(title+subtitle+accessories) {
+		availableWidth := width - lipgloss.Width(title+subtitle+accessories)
 		blanks = strings.Repeat(" ", availableWidth)
-	} else if width >= len(title+accessories) {
-		subtitle = subtitle[:width-len(title+accessories)]
-	} else if width >= len(accessories) {
+	} else if width >= lipgloss.Width(title+accessories) {
+		subtitle = subtitle[:width-lipgloss.Width(title+accessories)]
+	} else if width >= lipgloss.Width(accessories) {
 		subtitle = ""
-		title = title[:width-len(accessories)]
+		title = title[:width-lipgloss.Width(accessories)]
 	} else {
 		accessories = ""
 		title = title[:width]
@@ -70,7 +71,6 @@ type List struct {
 	actions *ActionList
 
 	dynamic bool
-	tag     int
 
 	filter *Filter
 }
@@ -158,7 +158,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 			}
 		}
 	case updateQueryMsg:
-		if msg.tag != c.tag {
+		if msg.query != c.Query() {
 			return c, nil
 		}
 
@@ -182,10 +182,8 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	cmds = append(cmds, cmd)
 	if header.Value() != c.header.Value() {
 		if c.dynamic {
-			c.tag++
-			tag := c.tag
 			cmd = tea.Tick(500*time.Millisecond, func(_ time.Time) tea.Msg {
-				return updateQueryMsg{query: header.Value(), tag: tag}
+				return updateQueryMsg{query: header.Value()}
 			})
 		} else {
 			cmd = c.filter.FilterItems(header.Value())
@@ -202,7 +200,6 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 type updateQueryMsg struct {
 	query string
-	tag   int
 }
 
 func (c List) View() string {

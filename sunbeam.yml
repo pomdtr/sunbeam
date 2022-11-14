@@ -51,11 +51,6 @@ entrypoints:
   - title: Browse Custom Directory
     type: run-script
     script: file-browser
-  - title: Browse Home Directory
-    type: run-script
-    script: file-browser
-    with:
-      root: "~"
   - title: Browse Root Directory
     type: run-script
     script: file-browser
