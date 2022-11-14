@@ -11,9 +11,7 @@ if (!query) {
 }
 
 const res = await fetch(
-  `https://www.google.com/complete/search?client=chrome&q=${encodeURIComponent(
-    query
-  )}`
+  `https://www.google.com/complete/search?client=chrome&q=${query}}`
 ).then((res) => res.json());
 
 const items = res[1].map((suggestion) => ({
@@ -23,6 +21,12 @@ const items = res[1].map((suggestion) => ({
       type: "open-url",
       shortcut: "enter",
       url: `https://www.google.com/search?q=${encodeURIComponent(suggestion)}`,
+    },
+    {
+      type: "copy-content",
+      title: "Copy Suggestion",
+      shortcut: "ctrl+y",
+      content: suggestion,
     },
   ],
 }));

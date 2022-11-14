@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -50,7 +51,7 @@ type RunMsg struct {
 }
 
 type ExecMsg struct {
-	Command   string
+	Command   *exec.Cmd
 	OnSuccess string
 }
 
@@ -94,7 +95,7 @@ func NewAction(scriptAction api.Action) Action {
 		}
 	case "exec-command":
 		msg = ExecMsg{
-			Command:   scriptAction.Command,
+			Command:   exec.Command("sh", "-c", scriptAction.Command),
 			OnSuccess: scriptAction.OnSuccess,
 		}
 	default:
@@ -117,7 +118,6 @@ type ActionList struct {
 	footer Footer
 
 	actions []Action
-	Shown   bool
 }
 
 func NewActionList() *ActionList {
@@ -125,10 +125,9 @@ func NewActionList() *ActionList {
 	filter.DrawLines = true
 
 	header := NewHeader()
-	header.input.Focus()
 	footer := NewFooter("Actions")
 	footer.SetBindings(
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("↩", "Select Action")),
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("↩", "Confirm")),
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide Actions")),
 	)
 
@@ -145,14 +144,6 @@ func (al *ActionList) SetSize(w, h int) {
 	al.filter.SetSize(w, availableHeight)
 	al.footer.Width = w
 	al.header.Width = w
-}
-
-func (al *ActionList) Hide() {
-	al.Shown = false
-}
-
-func (al *ActionList) Show() {
-	al.Shown = true
 }
 
 func (al *ActionList) SetTitle(title string) {
@@ -175,33 +166,54 @@ func (al *ActionList) SetActions(actions ...Action) {
 func (al ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "tab" {
-			al.Shown = !al.Shown
-		}
+		switch msg.String() {
+		case "tab":
+			if !al.Focused() && len(al.actions) > 0 {
+				return &al, al.Focus()
+			} else if al.Focused() {
+				al.header.input.SetValue("")
+				al.filter.FilterItems("")
+				al.Blur()
+				return &al, nil
+			}
+		case "esc":
+			if !al.Focused() {
+				return &al, nil
+			}
 
-		if msg.String() == "enter" && al.Shown {
+			if al.header.input.Value() != "" {
+				al.header.input.SetValue("")
+				al.filter.FilterItems("")
+				return &al, nil
+			}
+
+			al.Blur()
+			return &al, nil
+
+		case "enter":
 			selectedItem := al.filter.Selection()
 			if selectedItem == nil {
-				break
+				return &al, nil
 			}
 			listItem, _ := selectedItem.(ListItem)
-			al.Hide()
+			al.Blur()
 			return &al, listItem.Actions[0].Cmd
 		}
+
 		for _, action := range al.actions {
 			if key.Matches(msg, action.Binding()) {
-				al.Hide()
+				al.Blur()
 				return &al, action.Cmd
 			}
 		}
 	}
 
-	if !al.Shown {
-		return &al, nil
-	}
-
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
+	if !al.Focused() {
+		return &al, nil
+	}
 
 	header, cmd := al.header.Update(msg)
 	cmds = append(cmds, cmd)
@@ -215,6 +227,19 @@ func (al ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return &al, tea.Batch(cmds...)
+}
+
+func (al ActionList) Focused() bool {
+	return al.header.input.Focused()
+
+}
+
+func (al *ActionList) Focus() tea.Cmd {
+	return al.header.input.Focus()
+}
+
+func (al *ActionList) Blur() {
+	al.header.input.Blur()
 }
 
 func (al ActionList) View() string {

@@ -110,6 +110,19 @@ scripts:
         type: textfield
 ---
 # yaml-language-server: $schema=./schemas/schema.json
+name: google
+title: Google
+version: "1.0"
+entrypoints:
+  - type: run-script
+    title: Google Suggestions
+    script: google-suggestions
+scripts:
+  google-suggestions:
+    mode: generator
+    command: ./examples/google.mjs --query {{ query | urlquery | shellescape }}
+---
+# yaml-language-server: $schema=./schemas/schema.json
 name: random
 title: Random
 version: "1.0"

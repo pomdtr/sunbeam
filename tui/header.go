@@ -18,7 +18,6 @@ type Header struct {
 
 func NewHeader() Header {
 	ti := textinput.NewModel()
-	ti.Focus()
 	ti.Prompt = ""
 	ti.Placeholder = "Search..."
 	ti.PlaceholderStyle = styles.Text.Copy().Italic(true)
@@ -59,8 +58,10 @@ func (h Header) Update(msg tea.Msg) (Header, tea.Cmd) {
 func (h *Header) SetIsLoading(isLoading bool) tea.Cmd {
 	h.isLoading = isLoading
 	if isLoading {
+		h.input.Placeholder = "Loading..."
 		return h.spinner.Tick
 	}
+	h.input.Placeholder = "Search..."
 	return nil
 }
 
@@ -68,7 +69,7 @@ func (c Header) View() string {
 	var headerRow string
 	if c.isLoading {
 		spinner := c.spinner.View()
-		textInput := styles.Text.Copy().Width(c.Width - lipgloss.Width(spinner)).Render("Loading...")
+		textInput := styles.Text.Copy().Width(c.Width - lipgloss.Width(spinner)).Render(c.input.View())
 		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), textInput)
 	} else {
 		headerRow = styles.Text.Copy().PaddingLeft(3).Width(c.Width).Render(c.input.View())

@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/api"
@@ -67,10 +70,31 @@ type RawOutput string
 
 func (c *RunContainer) Run() tea.Cmd {
 	runCmd := func() tea.Msg {
-		output, err := c.Script.Run(c.manifest.Dir(), c.params)
+		if c.Script.Mode == "generator" {
+			c.params["query"] = c.list.Query()
+		}
+		command, err := c.Script.Cmd(c.params)
+		log.Println("Running command", command)
 		if err != nil {
+			return NewErrorCmd(err)
+		}
+		command.Dir = c.manifest.Dir()
+
+		if c.Script.Mode == "silent" {
+			return ExecMsg{
+				Command: command,
+			}
+		}
+
+		res, err := command.Output()
+		if err != nil {
+			var exitErr *exec.ExitError
+			if ok := errors.As(err, &exitErr); ok {
+				return fmt.Errorf("%s", exitErr.Stderr)
+			}
 			return err
 		}
+		output := string(res)
 
 		switch c.Script.Mode {
 		case "filter", "generator":
@@ -115,6 +139,9 @@ func (c *RunContainer) Run() tea.Cmd {
 			return runCmd
 		}
 		c.list = NewList(c.Script.Title)
+		if c.Script.Mode == "generator" {
+			c.list.dynamic = true
+		}
 		c.list.SetSize(c.width, c.height)
 		return tea.Batch(runCmd, c.list.Init())
 	case "detail":

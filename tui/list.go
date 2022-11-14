@@ -64,6 +64,7 @@ type List struct {
 	header  Header
 	footer  Footer
 	actions *ActionList
+	dynamic bool
 
 	filter *Filter
 }
@@ -88,7 +89,7 @@ func NewList(title string) *List {
 }
 
 func (c *List) Init() tea.Cmd {
-	return c.header.Init()
+	return tea.Batch(c.header.Init(), c.header.input.Focus())
 
 }
 
@@ -133,7 +134,7 @@ func (l *List) updateActions() {
 func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case FilterItemChange:
-		if c.actions.Shown {
+		if c.actions.Focused() {
 			return c, nil
 		}
 		c.updateActions()
@@ -141,8 +142,8 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEscape:
-			if c.actions.Shown {
-				c.actions.Hide()
+			if c.actions.Focused() {
+				break
 			} else if c.header.input.Value() != "" {
 				c.header.input.SetValue("")
 				c.filter.FilterItems("")
@@ -155,20 +156,33 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
+	c.actions, cmd = c.actions.Update(msg)
+	cmds = append(cmds, cmd)
+
+	if c.actions.Focused() {
+		return c, tea.Batch(cmds...)
+	}
+
 	header, cmd := c.header.Update(msg)
 	cmds = append(cmds, cmd)
 	if header.Value() != c.header.Value() {
-		cmd = c.filter.FilterItems(header.Value())
+		if c.dynamic {
+			cmd = func() tea.Msg {
+				return ReloadMsg{
+					Params: map[string]any{
+						"query": header.Value(),
+					},
+				}
+			}
+		} else {
+			cmd = c.filter.FilterItems(header.Value())
+		}
 		cmds = append(cmds, cmd)
 	}
 	c.header = header
 
-	c.actions, cmd = c.actions.Update(msg)
+	c.filter, cmd = c.filter.Update(msg)
 	cmds = append(cmds, cmd)
-	if !c.actions.Shown {
-		c.filter, cmd = c.filter.Update(msg)
-		cmds = append(cmds, cmd)
-	}
 
 	return c, tea.Batch(cmds...)
 }
@@ -176,7 +190,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 type ListDetailOutputMsg string
 
 func (c List) View() string {
-	if c.actions.Shown {
+	if c.actions.Focused() {
 		return c.actions.View()
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.filter.View(), c.footer.View())

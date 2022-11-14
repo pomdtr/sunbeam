@@ -1,10 +1,8 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os/exec"
 	"strings"
 
@@ -53,18 +51,18 @@ func (s Script) CheckMissingParams(inputParams map[string]any) []FormItem {
 	return missing
 }
 
-func (s Script) Run(dir string, params map[string]any) (string, error) {
+func (s Script) Cmd(params map[string]any) (*exec.Cmd, error) {
 	var err error
 	inputs := make(map[string]string)
 	for _, formInput := range s.Params {
 		value, ok := params[formInput.Name]
 		if !ok {
-			return "", fmt.Errorf("missing param %s", formInput.Name)
+			return nil, fmt.Errorf("missing param %s", formInput.Name)
 		}
 		if formInput.Type == "checkbox" {
 			value, ok := value.(bool)
 			if !ok {
-				return "", fmt.Errorf("invalid type for param %s", formInput.Name)
+				return nil, fmt.Errorf("invalid type for param %s", formInput.Name)
 			}
 			if value {
 				inputs[formInput.Name] = formInput.TrueSubstitution
@@ -76,30 +74,25 @@ func (s Script) Run(dir string, params map[string]any) (string, error) {
 		} else {
 			value, ok := value.(string)
 			if !ok {
-				return "", fmt.Errorf("param %s is not a string", formInput.Name)
+				return nil, fmt.Errorf("param %s is not a string", formInput.Name)
 			}
 			inputs[formInput.Name] = value
 		}
 	}
 
+	if s.Mode == "generator" {
+		query, ok := params["query"]
+		if !ok {
+			return nil, fmt.Errorf("missing param query")
+		}
+		inputs["query"] = query.(string)
+	}
+
 	rendered, err := utils.RenderString(s.Command, inputs)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	cmd := exec.Command("sh", "-c", rendered)
-	cmd.Dir = dir
-	log.Printf("Running: %s", rendered)
-
-	var outbuf, errbuf bytes.Buffer
-	cmd.Stderr = &errbuf
-	cmd.Stdout = &outbuf
-
-	err = cmd.Run()
-	if err != nil {
-		return "", fmt.Errorf("error while running command: %s", errbuf.String())
-	}
-	return outbuf.String(), nil
+	return exec.Command("sh", "-c", rendered), nil
 }
 
 type ListItem struct {

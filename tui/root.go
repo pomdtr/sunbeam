@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 	"sort"
 	"strings"
@@ -100,7 +99,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		script, ok := manifest.Scripts[msg.Script]
 		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Script))
+			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
 		if script.Title == "" {
@@ -111,7 +110,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, runner.Init()
 	case ExecMsg:
 		// Run the script
-		bytes, err := exec.Command("sh", "-c", msg.Command).Output()
+		bytes, err := msg.Command.Output()
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
