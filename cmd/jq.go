@@ -16,12 +16,13 @@ var jqCmd = &cobra.Command{
 	Use:   "jq",
 	Short: "Run a jq query",
 	Run:   sunbeamJQ,
-	Args:  cobra.MaximumNArgs(2),
+	Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 }
 
 var JQFlags struct {
 	NullInput bool
 	RawInput  bool
+	Slurp     bool
 	Arg       []string
 	ArgJSON   []string
 }
@@ -30,6 +31,7 @@ func init() {
 	rootCmd.AddCommand(jqCmd)
 	jqCmd.Flags().BoolVarP(&JQFlags.NullInput, "null-input", "n", false, "use null as input value")
 	jqCmd.Flags().BoolVarP(&JQFlags.RawInput, "raw-input", "R", false, "read input as raw strings")
+	jqCmd.Flags().BoolVarP(&JQFlags.Slurp, "slurp", "s", false, "read all inputs into an array")
 	jqCmd.Flags().StringArrayVar(&JQFlags.Arg, "arg", []string{}, "add string variable in the form of name=value")
 	jqCmd.Flags().StringArrayVar(&JQFlags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
 }
@@ -72,11 +74,20 @@ func sunbeamJQ(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	var inputFile *os.File
+	if len(args) == 2 {
+		inputFile, err = os.Open(args[1])
+		if err != nil {
+			log.Fatalln("could not open file:", err)
+		}
+	} else {
+		inputFile = os.Stdin
+	}
 	var inputs []interface{}
 	if JQFlags.NullInput {
 		inputs = append(inputs, nil)
 	} else if JQFlags.RawInput {
-		reader := bufio.NewReader(os.Stdin)
+		reader := bufio.NewReader(inputFile)
 		for {
 			line, err := reader.ReadString('\n')
 			if err != nil {
@@ -85,7 +96,7 @@ func sunbeamJQ(cmd *cobra.Command, args []string) {
 			inputs = append(inputs, strings.TrimRight(line, "\n"))
 		}
 	} else {
-		decoder := json.NewDecoder(os.Stdin)
+		decoder := json.NewDecoder(inputFile)
 		for {
 			var v interface{}
 			if err := decoder.Decode(&v); err != nil {
@@ -95,9 +106,23 @@ func sunbeamJQ(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	outputs := make([]gojq.Iter, len(inputs))
-	for i, input := range inputs {
-		outputs[i] = code.Run(input, values...)
+	var outputs []gojq.Iter
+	if JQFlags.Slurp {
+		if JQFlags.RawInput {
+			input := strings.Builder{}
+			for _, v := range inputs {
+				input.WriteString(v.(string))
+				input.WriteString("\n")
+			}
+			outputs = append(outputs, code.Run(input.String(), values...))
+		} else {
+			outputs = append(outputs, code.Run(inputs, values...))
+		}
+	} else {
+		outputs = make([]gojq.Iter, len(inputs))
+		for i, input := range inputs {
+			outputs[i] = code.Run(input, values...)
+		}
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
