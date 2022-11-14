@@ -11,10 +11,9 @@ func RenderString(templateString string, inputs map[string]string) (string, erro
 	funcMap := make(template.FuncMap)
 	for k, v := range inputs {
 		funcMap[k] = func() string {
-			return v
+			return shellescape.Quote(v)
 		}
 	}
-	funcMap["shellescape"] = shellescape.Quote
 	t, err := template.New("").Funcs(funcMap).Parse(templateString)
 
 	if err != nil {

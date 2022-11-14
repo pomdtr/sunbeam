@@ -3,8 +3,9 @@
 JQL=$1
 
 curl -X GET \
+    -G --data-urlencode jql="$JQL" \
     -u "achille.lacoin@dailymotion.com:$JIRA_TOKEN" \
-    "https://dailymotion.atlassian.net/rest/api/2/search?jql=$JQL" |
+    "https://dailymotion.atlassian.net/rest/api/2/search" |
 sunbeam jq '.issues[] | {
     title: .fields.summary,
     subtitle: .key,

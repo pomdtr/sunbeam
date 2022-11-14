@@ -38,6 +38,13 @@ func NewRunContainer(manifest api.Manifest, page api.Script, scriptParams map[st
 }
 
 func (c *RunContainer) Init() tea.Cmd {
+	return c.Run()
+}
+
+type ListOutput []ListItem
+type RawOutput string
+
+func (c *RunContainer) Run() tea.Cmd {
 	missing := c.Script.CheckMissingParams(c.params)
 
 	if len(missing) > 0 {
@@ -62,13 +69,6 @@ func (c *RunContainer) Init() tea.Cmd {
 		return c.form.Init()
 	}
 
-	return c.Run()
-}
-
-type ListOutput []ListItem
-type RawOutput string
-
-func (c *RunContainer) Run() tea.Cmd {
 	runCmd := func() tea.Msg {
 		if c.Script.Mode == "generator" {
 			c.params["query"] = c.list.Query()
@@ -79,12 +79,6 @@ func (c *RunContainer) Run() tea.Cmd {
 			return NewErrorCmd(err)
 		}
 		command.Dir = c.manifest.Dir()
-
-		if c.Script.Mode == "silent" {
-			return ExecMsg{
-				Command: command,
-			}
-		}
 
 		res, err := command.Output()
 		if err != nil {
@@ -152,6 +146,16 @@ func (c *RunContainer) Run() tea.Cmd {
 		c.detail = NewDetail(c.Script.Title)
 		c.detail.SetSize(c.width, c.height)
 		return tea.Batch(runCmd, c.detail.Init())
+	case "silent":
+		return func() tea.Msg {
+			cmd, err := c.Script.Cmd(c.params)
+			if err != nil {
+				return err
+			}
+			return ExecMsg{
+				Command: cmd,
+			}
+		}
 	default:
 		return nil
 	}

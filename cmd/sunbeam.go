@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/pomdtr/sunbeam/api"
 	"github.com/pomdtr/sunbeam/tui"
 )
 
@@ -33,7 +34,12 @@ func Execute() {
 }
 
 func Sunbeam(cmd *cobra.Command, args []string) {
-	rootList := tui.RootList()
+	manifests := make([]api.Manifest, 0)
+	for _, manifest := range api.Sunbeam.Extensions {
+		manifests = append(manifests, manifest)
+	}
+
+	rootList := tui.RootList(manifests...)
 	err := tui.Draw(rootList, options)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

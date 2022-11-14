@@ -83,10 +83,6 @@
                     ],
                     "default": "extensionDir"
                 },
-                "shell": {
-                    "type": "string",
-                    "default": "/bin/sh"
-                },
                 "params": {
                     "type": "array",
                     "items": {
@@ -231,9 +227,7 @@
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
-                                    "reload-page",
-                                    "open-url",
-                                    "copy-to-clipboard"
+                                    "reload-page"
                                 ]
                             }
                         }

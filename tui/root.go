@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"sort"
 	"strings"
@@ -38,6 +39,7 @@ type RootModel struct {
 
 	pages   []Container
 	exitMsg string
+	exitCmd *exec.Cmd
 }
 
 func NewRootModel(width, height int, rootPage Container) *RootModel {
@@ -110,33 +112,18 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, runner.Init()
 	case ExecMsg:
 		// Run the script
-		bytes, err := msg.Command.Output()
-		if err != nil {
-			return m, NewErrorCmd(err)
-		}
-		output := string(bytes)
-
-		return m, func() tea.Msg {
-			switch msg.OnSuccess {
-			case "copy-content":
-				return CopyMsg{
-					Content: output,
-				}
-			case "open-url":
-				return OpenUrlMsg{
-					Url: output,
-				}
-			case "open-file":
-				return OpenFileMessage{
-					Path: output,
-				}
-			case "reload-page":
+		if msg.OnSuccess == "reload-page" {
+			err := msg.Command.Run()
+			if err != nil {
+				return m, NewErrorCmd(err)
+			}
+			return m, func() tea.Msg {
 				return ReloadMsg{}
-			default:
-				m.exitMsg = output
-				return tea.Quit()
 			}
 		}
+
+		m.exitCmd = msg.Command
+		return m, tea.Quit
 	case popMsg:
 		if len(m.pages) == 1 {
 			return m, tea.Quit
@@ -226,9 +213,9 @@ func ScriptRunCmd(extension string, script string, params map[string]any) tea.Cm
 	}
 }
 
-func RootList() Container {
+func RootList(manifests ...api.Manifest) Container {
 	entrypoints := make([]ListItem, 0)
-	for _, manifest := range api.Sunbeam.Extensions {
+	for _, manifest := range manifests {
 		for _, rootItem := range manifest.Entrypoints {
 			title := rootItem.Title
 			rootItem.Title = "Open Command"
@@ -296,5 +283,15 @@ func Draw(container Container, options SunbeamOptions) (err error) {
 		fmt.Println(root.exitMsg)
 	}
 
+	if exitCmd := root.exitCmd; exitCmd != nil {
+		root.exitCmd.Stderr = os.Stderr
+		root.exitCmd.Stdout = os.Stdout
+		err := root.exitCmd.Run()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
+
 }

@@ -40,6 +40,14 @@ type OpenFileMessage struct {
 	Application string
 }
 
+func NewReloadCmd(params map[string]any) tea.Cmd {
+	return func() tea.Msg {
+		return ReloadMsg{
+			Params: params,
+		}
+	}
+}
+
 type ReloadMsg struct {
 	Params map[string]any
 }

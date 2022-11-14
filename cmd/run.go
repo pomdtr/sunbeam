@@ -24,16 +24,27 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run a sunbeam script",
 	Run:   sunbeamRun,
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.RangeArgs(1, 2),
 }
 
 func sunbeamRun(cmd *cobra.Command, args []string) {
-	extension, scriptName := args[0], args[1]
+	extensionName := args[0]
 
-	manifest, ok := api.Sunbeam.Extensions[extension]
+	manifest, ok := api.Sunbeam.Extensions[extensionName]
 	if !ok {
-		log.Fatalf("Extension %s not found", extension)
+		log.Fatalf("Extension %s not found", extensionName)
 	}
+
+	if len(args) < 2 {
+		model := tui.RootList(manifest)
+		err := tui.Draw(model, options)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	scriptName := args[1]
 
 	script, ok := manifest.Scripts[scriptName]
 	if !ok {

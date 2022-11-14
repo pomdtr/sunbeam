@@ -9,6 +9,9 @@ entrypoints:
     script: list-repositories
     with:
       owner: pomdtr
+  - title: List Repositories
+    type: run-script
+    script: list-repositories
   - title: List Dailymotion Repositories
     type: run-script
     script: list-repositories
@@ -103,7 +106,7 @@ scripts:
   list-issues:
     mode: filter
     title: List Issues
-    command: ./examples/jira.sh {{ jql | urlquery }}
+    command: ./examples/jira.sh {{ jql }}
     params:
       - name: jql
         title: JQL
@@ -120,7 +123,7 @@ entrypoints:
 scripts:
   google-suggestions:
     mode: generator
-    command: ./examples/google.mjs --query {{ query | urlquery | shellescape }}
+    command: ./examples/google.mjs --query {{ query }}
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: random
@@ -134,3 +137,19 @@ scripts:
   random-list:
     mode: filter
     command: ./examples/random_list.py
+---
+# yaml-language-server: $schema=./schemas/schema.json
+name: test
+title: Test
+version: "1.0"
+entrypoints:
+  - type: run-script
+    title: "Test Exec"
+    script: "test-exec"
+scripts:
+  test-exec:
+    mode: silent
+    command: |
+      echo "test"
+      sleep 5
+      echo "test"

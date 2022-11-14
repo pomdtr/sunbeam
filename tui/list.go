@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -49,7 +50,7 @@ func (i ListItem) Render(width int, selected bool) string {
 		subtitle = subtitle[:width-len(title+accessories)]
 	} else if width >= len(accessories) {
 		subtitle = ""
-		title = title[:width-len(" "+accessories)]
+		title = title[:width-len(accessories)]
 	} else {
 		accessories = ""
 		title = title[:width]
@@ -67,7 +68,9 @@ type List struct {
 	header  Header
 	footer  Footer
 	actions *ActionList
+
 	dynamic bool
+	tag     int
 
 	filter *Filter
 }
@@ -154,6 +157,15 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 				return c, PopCmd
 			}
 		}
+	case updateQueryMsg:
+		if msg.tag != c.tag {
+			return c, nil
+		}
+
+		return c, NewReloadCmd(map[string]any{
+			"query": msg.query,
+		})
+
 	}
 
 	var cmd tea.Cmd
@@ -170,13 +182,11 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	cmds = append(cmds, cmd)
 	if header.Value() != c.header.Value() {
 		if c.dynamic {
-			cmd = func() tea.Msg {
-				return ReloadMsg{
-					Params: map[string]any{
-						"query": header.Value(),
-					},
-				}
-			}
+			c.tag++
+			tag := c.tag
+			cmd = tea.Tick(500*time.Millisecond, func(_ time.Time) tea.Msg {
+				return updateQueryMsg{query: header.Value(), tag: tag}
+			})
 		} else {
 			cmd = c.filter.FilterItems(header.Value())
 		}
@@ -190,7 +200,10 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-type ListDetailOutputMsg string
+type updateQueryMsg struct {
+	query string
+	tag   int
+}
 
 func (c List) View() string {
 	if c.actions.Focused() {
