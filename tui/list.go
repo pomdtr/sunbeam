@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type ListItem struct {
@@ -30,34 +29,38 @@ func (i ListItem) Render(width int, selected bool) string {
 	}
 
 	var title string
+	var titleStyle lipgloss.Style
 	if selected {
-		title = styles.Title.Copy().Foreground(accentColor).PaddingRight(1).Render(fmt.Sprintf("> %s", i.Title))
+		title = fmt.Sprintf("> %s", i.Title)
+		titleStyle = styles.Title.Copy().Foreground(accentColor)
 	} else {
-		title = styles.Title.Copy().PaddingRight(1).Render(fmt.Sprintf("  %s", i.Title))
+		title = fmt.Sprintf("  %s", i.Title)
+		titleStyle = styles.Title.Copy()
 	}
 
-	blank := styles.Background.Render(" ")
-	accessories := strings.Join(i.Accessories, " • ")
-	accessories = styles.Text.Render(accessories)
-	subtitle := styles.Text.Render(i.Subtitle)
+	subtitle := fmt.Sprintf(" %s", i.Subtitle)
+	var blanks string
+	accessories := fmt.Sprintf(" %s", strings.Join(i.Accessories, " • "))
 
-	if lipgloss.Width(accessories) > width {
-		return title
-	} else if lipgloss.Width(title)+lipgloss.Width(accessories) > width {
-		availableWidth := width - lipgloss.Width(accessories)
-
-		title := title[:utils.Max(0, availableWidth)]
-
-		return lipgloss.JoinHorizontal(lipgloss.Top, title, accessories)
-	} else if lipgloss.Width(title+subtitle+accessories) > width {
-		availableWidth := width - lipgloss.Width(title+accessories)
-		subtitle := subtitle[:utils.Max(0, availableWidth)]
-		return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, accessories)
+	if width >= len(title+subtitle+accessories) {
+		availableWidth := width - len(title+subtitle+accessories)
+		blanks = strings.Repeat(" ", availableWidth)
+	} else if width >= len(title+accessories) {
+		subtitle = subtitle[:width-len(title+accessories)]
+	} else if width >= len(accessories) {
+		subtitle = ""
+		title = title[:width-len(" "+accessories)]
 	} else {
-		blankWidth := width - lipgloss.Width(title) - lipgloss.Width(subtitle) - lipgloss.Width(accessories)
-		blanks := strings.Repeat(blank, blankWidth)
-		return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
+		accessories = ""
+		title = title[:width]
 	}
+
+	title = titleStyle.Render(title)
+	subtitle = styles.Text.Copy().Render(subtitle)
+	blanks = styles.Text.Render(blanks)
+	accessories = styles.Text.Copy().Italic(true).Render(accessories)
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
 }
 
 type List struct {

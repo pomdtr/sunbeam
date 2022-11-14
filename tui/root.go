@@ -237,6 +237,9 @@ func RootList() Container {
 			entrypoints = append(entrypoints, ListItem{
 				Title:    title,
 				Subtitle: manifest.Title,
+				Accessories: []string{
+					rootItem.Type,
+				},
 				Actions: []Action{
 					NewAction(rootItem),
 					{
