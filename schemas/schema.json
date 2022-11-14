@@ -33,7 +33,7 @@
                 "$ref": "#/definitions/action"
             }
         },
-        "pages": {
+        "scripts": {
             "type": "object",
             "additionalProperties": {
                 "type": "object",
@@ -43,24 +43,19 @@
                     }
                 ],
                 "required": [
-                    "type"
+                    "mode"
                 ],
                 "properties": {
-                    "type": {
+                    "mode": {
                         "type": "string",
                         "enum": [
-                            "list",
+                            "filter",
+                            "generator",
                             "detail",
-                            "raw"
+                            "silent"
                         ]
                     }
                 }
-            }
-        },
-        "scripts": {
-            "type": "object",
-            "additionalProperties": {
-                "$ref": "#/definitions/script"
             }
         }
     },
@@ -143,9 +138,8 @@
                         "reload-page",
                         "open-url",
                         "open-file",
-                        "run-script",
-                        "exec",
-                        "push-page"
+                        "exec-command",
+                        "run-script"
                     ]
                 },
                 "with": {
@@ -167,17 +161,17 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "push-page"
+                                "const": "run-script"
                             }
                         }
                     },
                     "then": {
                         "required": [
                             "title",
-                            "page"
+                            "script"
                         ],
                         "properties": {
-                            "page": {
+                            "script": {
                                 "type": "string"
                             }
                         }
@@ -225,6 +219,30 @@
                     "if": {
                         "properties": {
                             "type": {
+                                "const": "exec-command"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "command": {
+                                "type": "string"
+                            },
+                            "onSuccess": {
+                                "type": "string",
+                                "enum": [
+                                    "reload-page",
+                                    "open-url",
+                                    "copy-to-clipboard"
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
                                 "const": "open-file"
                             }
                         }
@@ -236,33 +254,6 @@
                         "properties": {
                             "path": {
                                 "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "run-script"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "script"
-                        ],
-                        "properties": {
-                            "script": {
-                                "type": "string"
-                            },
-                            "onSuccess": {
-                                "type": "string",
-                                "enum": [
-                                    "reload-page",
-                                    "copy-content",
-                                    "open-url"
-                                ]
                             }
                         }
                     }

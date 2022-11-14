@@ -20,7 +20,6 @@ type Manifest struct {
 	Name  string `json:"name" yaml:"name"`
 
 	Entrypoints []Action          `json:"entrypoints" yaml:"entrypoints"`
-	Pages       map[string]Page   `json:"pages" yaml:"pages"`
 	Scripts     map[string]Script `json:"scripts" yaml:"scripts"`
 
 	Url url.URL
@@ -28,11 +27,6 @@ type Manifest struct {
 
 func (m Manifest) Dir() string {
 	return path.Dir(m.Url.Path)
-}
-
-type Page struct {
-	Script `yaml:",inline"`
-	Type   string `json:"type" yaml:"type"`
 }
 
 type RootItem struct {
@@ -107,17 +101,4 @@ func init() {
 	Sunbeam = Api{
 		Extensions: manifests,
 	}
-}
-
-func (api Api) GetScript(extensionName string, scriptName string) (Script, bool) {
-	manifest, ok := api.Extensions[extensionName]
-	if !ok {
-		return Script{}, false
-	}
-	script, ok := manifest.Scripts[scriptName]
-	if !ok {
-		return Script{}, false
-	}
-
-	return script, true
 }

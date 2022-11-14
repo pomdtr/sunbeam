@@ -17,7 +17,7 @@ type Detail struct {
 
 func NewDetail(title string, actions ...Action) *Detail {
 	viewport := viewport.New(0, 0)
-	viewport.Style = styles.Text.Copy().Padding(1, 2)
+	viewport.Style = styles.Text
 
 	footer := NewFooter(title)
 
@@ -48,6 +48,7 @@ func (d *Detail) Init() tea.Cmd {
 
 func (d *Detail) SetContent(content string) {
 	content = wordwrap.String(content, d.viewport.Width-4)
+	content = lipgloss.NewStyle().Padding(1, 2).Width(d.viewport.Width).Render(content)
 	d.viewport.SetContent(content)
 }
 

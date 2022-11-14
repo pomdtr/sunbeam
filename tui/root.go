@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"sort"
+	"strings"
 
 	"github.com/adrg/xdg"
+	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -15,6 +18,13 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/skratchdot/open-golang/open"
 )
+
+type SunbeamOptions struct {
+	MaxWidth  int
+	MaxHeight int
+	Theme     string
+	Accent    string
+}
 
 type Container interface {
 	Init() tea.Cmd
@@ -83,101 +93,29 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
-	case PushMsg:
-		manifest, ok := api.Sunbeam.Extensions[msg.Extension]
-		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
-		}
-		page, ok := manifest.Pages[msg.Page]
-		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Page))
-		}
-
-		missing := page.CheckMissingParams(msg.Params)
-		if len(missing) > 0 {
-			var err error
-			items := make([]FormItem, len(missing))
-			for i, param := range missing {
-				items[i], err = NewFormItem(param)
-				if err != nil {
-					return m, NewErrorCmd(err)
-				}
-			}
-			form := NewForm(page.Title, items, func(values map[string]any) tea.Cmd {
-				params := make(map[string]any)
-				for k, v := range msg.Params {
-					params[k] = v
-				}
-				for k, v := range values {
-					params[k] = v
-				}
-				return func() tea.Msg {
-					return PushMsg{
-						Extension: msg.Extension,
-						Page:      msg.Page,
-						Params:    params,
-					}
-				}
-			})
-			m.Push(form)
-			return m, form.Init()
-		}
-
-		if page.Title == "" {
-			page.Title = msg.Page
-		}
-		runner := NewRunContainer(manifest, page, msg.Params)
-		m.Push(runner)
-		return m, runner.Init()
 	case RunMsg:
 		manifest, ok := api.Sunbeam.Extensions[msg.Extension]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		script := manifest.Scripts[msg.Script]
+		script, ok := manifest.Scripts[msg.Script]
 		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("script %s does exists in extension %s", msg.Script, msg.Extension))
+			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Script))
 		}
 
-		missing := script.CheckMissingParams(msg.With)
-		if len(missing) > 0 {
-			items := make([]FormItem, len(missing))
-			var err error
-			for i, param := range missing {
-
-				items[i], err = NewFormItem(param)
-				if err != nil {
-					return m, NewErrorCmd(err)
-				}
-			}
-			if script.Title == "" {
-				script.Title = msg.Script
-			}
-			form := NewForm(script.Title, items, func(values map[string]any) tea.Cmd {
-				params := make(map[string]any)
-				for k, v := range msg.With {
-					params[k] = v
-				}
-				for k, v := range values {
-					params[k] = v
-				}
-				return func() tea.Msg {
-					return RunMsg{
-						Extension: msg.Extension,
-						Script:    msg.Script,
-						With:      params,
-					}
-				}
-			})
-			m.Push(form)
-			return m, form.Init()
+		if script.Title == "" {
+			script.Title = msg.Script
 		}
-
+		runner := NewRunContainer(manifest, script, msg.Params)
+		m.Push(runner)
+		return m, runner.Init()
+	case ExecMsg:
 		// Run the script
-		output, err := script.Run(manifest.Dir(), msg.With)
+		bytes, err := exec.Command("sh", "-c", msg.Command).Output()
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
+		output := string(bytes)
 
 		return m, func() tea.Msg {
 			switch msg.OnSuccess {
@@ -270,7 +208,26 @@ func (m *RootModel) Pop() {
 	}
 }
 
-func Start(width, height int) error {
+func ScriptRunCmd(extension string, script string, params map[string]any) tea.Cmd {
+	return func() tea.Msg {
+		args := make([]string, 0)
+		args = append(args, "sunbeam", "run", extension, script)
+		for param, value := range params {
+			switch value := value.(type) {
+			case string:
+				value = shellescape.Quote(value)
+				args = append(args, fmt.Sprintf("--param %s=%s", param, value))
+			case bool:
+				args = append(args, fmt.Sprintf("--param %s=%t", param, value))
+			}
+		}
+		return CopyMsg{
+			Content: strings.Join(args, " "),
+		}
+	}
+}
+
+func RootList() Container {
 	entrypoints := make([]ListItem, 0)
 	for _, manifest := range api.Sunbeam.Extensions {
 		for _, rootItem := range manifest.Entrypoints {
@@ -278,25 +235,16 @@ func Start(width, height int) error {
 			rootItem.Title = "Open Command"
 			rootItem.Extension = manifest.Name
 			rootItem.Shortcut = "enter"
-			for key, param := range rootItem.With {
-				param, ok := param.(string)
-				if !ok {
-					continue
-				}
-
-				param, err := utils.RenderString(param, nil)
-				if err != nil {
-					log.Printf("failed to render param %s: %v", param, err)
-					continue
-				}
-
-				rootItem.With[key] = param
-			}
 			entrypoints = append(entrypoints, ListItem{
 				Title:    title,
 				Subtitle: manifest.Title,
 				Actions: []Action{
 					NewAction(rootItem),
+					{
+						Title:    "Copy Shortcut",
+						Shortcut: "ctrl+y",
+						Cmd:      ScriptRunCmd(manifest.Name, rootItem.Script, rootItem.With),
+					},
 				},
 			})
 		}
@@ -310,16 +258,10 @@ func Start(width, height int) error {
 	list := NewList("Sunbeam")
 	list.SetItems(entrypoints)
 
-	m := NewRootModel(width, height, list)
-	return Draw(m)
+	return list
 }
 
-// func Run(command api.SunbeamScript, params map[string]string) error {
-// 	container := NewRunContainer(command, params)
-// 	return Draw(container)
-// }
-
-func Draw(model tea.Model) (err error) {
+func Draw(container Container, options SunbeamOptions) (err error) {
 	var logFile string
 	// Log to a file
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
@@ -339,6 +281,7 @@ func Draw(model tea.Model) (err error) {
 	}
 	defer f.Close()
 
+	model := NewRootModel(options.MaxWidth, options.MaxHeight, container)
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	m, err := p.Run()
 	if err != nil {

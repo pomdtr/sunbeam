@@ -1,9 +1,11 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
+	"strings"
 
 	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -14,41 +16,58 @@ type RunFlags struct {
 var runFlags = RunFlags{}
 
 func init() {
-	validargs := make([]string, 0)
-	for _, manifest := range api.Sunbeam.Extensions {
-		for scriptName := range manifest.Scripts {
-			validargs = append(validargs, fmt.Sprintf("%s.%s", manifest.Name, scriptName))
-		}
-	}
-
-	runCmd.ValidArgs = validargs
 	runCmd.Flags().StringArrayVarP(&runFlags.Params, "param", "p", []string{}, "Parameters to pass to the script")
 	rootCmd.AddCommand(runCmd)
 }
 
 var runCmd = &cobra.Command{
-	Use:   "run-script",
+	Use:   "run",
 	Short: "Run a sunbeam script",
-	Args:  cobra.ExactArgs(1),
-	// Run:   sunbeamRun,
+	Run:   sunbeamRun,
+	Args:  cobra.ExactArgs(2),
 }
 
-// func sunbeamRun(cmd *cobra.Command, args []string) {
-// 	params := make(map[string]string)
-// 	for _, param := range runFlags.Params {
-// 		tokens := strings.SplitN(param, "=", 2)
-// 		params[tokens[0]] = tokens[1]
-// 	}
+func sunbeamRun(cmd *cobra.Command, args []string) {
+	extension, scriptName := args[0], args[1]
 
-// 	tokens := strings.SplitN(args[0], ".", 2)
-// 	extensionName, scriptName := tokens[0], tokens[1]
-// 	command, ok := api.Sunbeam.GetScript(extensionName, scriptName)
-// 	if !ok {
-// 		log.Fatalf("Command %s.%s not found", extensionName, scriptName)
-// 	}
+	manifest, ok := api.Sunbeam.Extensions[extension]
+	if !ok {
+		log.Fatalf("Extension %s not found", extension)
+	}
 
-// 	err := tui.Run(command, params)
-// 	if err != nil {
-// 		log.Fatalf("could not run script: %v", err)
-// 	}
-// }
+	script, ok := manifest.Scripts[scriptName]
+	if !ok {
+		log.Fatalf("Script not found: %s", scriptName)
+	}
+
+	itemMap := make(map[string]api.FormItem)
+	for _, formItem := range script.Params {
+		itemMap[formItem.Name] = formItem
+	}
+
+	scriptParams := make(map[string]any)
+	for _, param := range runFlags.Params {
+		tokens := strings.SplitN(param, "=", 2)
+		if len(tokens) != 2 {
+			log.Fatalf("Invalid parameter: %s", param)
+		}
+
+		name, value := tokens[0], tokens[1]
+		formItem, ok := itemMap[name]
+		if !ok {
+			log.Fatalf("Params %s does not exists in script %s", name, tokens[1])
+		}
+		switch formItem.Type {
+		case "textfield":
+			scriptParams[name] = value
+		case "checkbox":
+			scriptParams[name] = value == "true"
+		}
+	}
+
+	container := tui.NewRunContainer(manifest, script, scriptParams)
+	err := tui.Draw(container, options)
+	if err != nil {
+		log.Fatalf("could not run script: %v", err)
+	}
+}

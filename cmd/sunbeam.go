@@ -9,10 +9,7 @@ import (
 	"github.com/pomdtr/sunbeam/tui"
 )
 
-var SunbeamFlags struct {
-	MaxWidth  int
-	MaxHeight int
-}
+var options tui.SunbeamOptions
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -22,8 +19,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().IntVarP(&SunbeamFlags.MaxWidth, "max-width", "W", 100, "width of the window")
-	rootCmd.Flags().IntVarP(&SunbeamFlags.MaxHeight, "max-height", "H", 30, "height of the window")
+	rootCmd.Flags().IntVarP(&options.MaxWidth, "max-width", "W", 100, "width of the window")
+	rootCmd.Flags().IntVarP(&options.MaxHeight, "max-height", "H", 30, "height of the window")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -36,7 +33,8 @@ func Execute() {
 }
 
 func Sunbeam(cmd *cobra.Command, args []string) {
-	err := tui.Start(SunbeamFlags.MaxWidth, SunbeamFlags.MaxHeight)
+	rootList := tui.RootList()
+	err := tui.Draw(rootList, options)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

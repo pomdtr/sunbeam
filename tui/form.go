@@ -41,9 +41,9 @@ func NewFormItem(formItem api.FormItem) (FormItem, error) {
 	case "textarea":
 		ta := NewTextArea(formItem)
 		input = &ta
-	// case "dropdown":
-	// 	dd := NewDropDown(formItem)
-	// 	input = &dd
+	case "dropdown":
+		dd := NewDropDown(formItem)
+		input = &dd
 	case "checkbox":
 		cb := NewCheckbox(formItem)
 		input = &cb

@@ -4,16 +4,23 @@ import json
 import random
 
 for _ in range(5):
+    random_number = random.randint(0, 100)
     print(
         json.dumps(
             {
-                "title": "Random number {}".format(random.randint(0, 100)),
+                "title": f"Random number {random_number}",
                 "actions": [
                     {
                         "title": "Reload List",
                         "shortcut": "enter",
                         "type": "reload-page",
-                    }
+                    },
+                    {
+                        "title": "Copy",
+                        "shortcut": "ctrl+y",
+                        "type": "copy-content",
+                        "content": str(random_number),
+                    },
                 ],
             }
         )

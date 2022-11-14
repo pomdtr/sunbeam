@@ -5,23 +5,23 @@ version: "1.0"
 title: GitHub
 entrypoints:
   - title: List My Repositories
-    type: push-page
-    page: list-repositories
+    type: run-script
+    script: list-repositories
     with:
       owner: pomdtr
   - title: List Dailymotion Repositories
-    type: push-page
-    page: list-repositories
+    type: run-script
+    script: list-repositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
-    type: push-page
-    page: list-pull-requests
+    type: run-script
+    script: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
-pages:
+scripts:
   list-repositories:
-    type: list
+    mode: filter
     title: List Repositories
     command: ./examples/github/list-repos.sh {{ owner }}
     params:
@@ -31,7 +31,7 @@ pages:
         required: false
         description: The owner of the repositories to list
   list-pull-requests:
-    type: list
+    mode: filter
     title: List Pull Requests
     command: examples/github/list-prs.sh {{ repository }}
     params:
@@ -46,26 +46,26 @@ version: "1.0"
 title: File Browser
 entrypoints:
   - title: Browse Custom Directory
-    type: push-page
-    page: file-browser
+    type: run-script
+    script: file-browser
   - title: Browse Home Directory
-    type: push-page
-    page: file-browser
+    type: run-script
+    script: file-browser
     with:
       root: "~"
   - title: Browse Root Directory
-    type: push-page
-    page: file-browser
+    type: run-script
+    script: file-browser
     with:
       root: "/"
   - title: Browse Current Directory
-    type: push-page
-    page: file-browser
+    type: run-script
+    script: file-browser
     with:
       root: "."
-pages:
+scripts:
   file-browser:
-    type: list
+    mode: filter
     title: File Browser
     command: ./examples/file-browser.py --root {{ root }}
     params:
@@ -80,44 +80,28 @@ version: "1.0"
 title: Bitwarden
 entrypoints:
   - title: Search Passwords
-    type: push-page
-    page: list-passwords
-pages:
+    type: run-script
+    script: list-passwords
+scripts:
   list-passwords:
-    type: list
+    mode: filter
     title: Search Passwords
     # Please do not do this, you are better of moving the logic to an external file
     command: ./examples/bitwarden.sh
----
-# yaml-language-server: $schema=./schemas/schema.json
-name: change-case
-version: "1.0"
-title: Change Case
-entrypoints:
-  - type: run-script
-    title: To Uppercase
-    script: to-uppercase
-scripts:
-  to-uppercase:
-    command: echo ${ input sentence } | tr [:lower:] [:upper:]
-    params:
-      - name: sentence
-        title: Sentence
-        type: textfield
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: jira
 version: "1.0"
 title: Jira
 entrypoints:
-  - type: push-page
+  - type: run-script
     title: List Issues
-    page: list-issues
+    script: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
-pages:
+scripts:
   list-issues:
-    type: list
+    mode: filter
     title: List Issues
     command: ./examples/jira.sh {{ jql | urlquery }}
     params:
@@ -126,46 +110,14 @@ pages:
         type: textfield
 ---
 # yaml-language-server: $schema=./schemas/schema.json
-name: examples
-version: "1.0"
-title: Examples
-entrypoints:
-  - type: run-script
-    title: Form
-    script: form
-scripts:
-  form:
-    title: Example Form
-    command: |
-      echo "Hello {{ name }}"
-      echo "You are {{ age }} years old"
-    params:
-      - name: textfield
-        placeholder: textfield
-        title: Name
-        type: textfield
-      - name: checkbox
-        title: checkbox
-        label: checkbox
-        type: checkbox
-      - name: dropdown
-        title: dropdown
-        type: dropdown
-        data:
-          - title: Option 1
-            value: option1
-          - title: Option 2
-            value: option2
----
-# yaml-language-server: $schema=./schemas/schema.json
 name: random
 title: Random
 version: "1.0"
 entrypoints:
-  - type: push-page
+  - type: run-script
     title: "Generate 5 random numbers"
-    page: "random-list"
-pages:
+    script: "random-list"
+scripts:
   random-list:
-    type: list
+    mode: filter
     command: ./examples/random_list.py

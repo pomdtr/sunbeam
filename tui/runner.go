@@ -14,13 +14,14 @@ type RunContainer struct {
 	manifest api.Manifest
 	params   map[string]any
 
+	form   *Form
 	list   *List
 	detail *Detail
 
-	Page api.Page
+	Script api.Script
 }
 
-func NewRunContainer(manifest api.Manifest, page api.Page, scriptParams map[string]any) *RunContainer {
+func NewRunContainer(manifest api.Manifest, page api.Script, scriptParams map[string]any) *RunContainer {
 	params := make(map[string]any)
 	for k, v := range scriptParams {
 		params[k] = v
@@ -28,39 +29,51 @@ func NewRunContainer(manifest api.Manifest, page api.Page, scriptParams map[stri
 
 	return &RunContainer{
 		manifest: manifest,
-		Page:     page,
+		Script:   page,
 		params:   params,
 	}
 }
 
 func (c *RunContainer) Init() tea.Cmd {
-	runCmd := c.Run()
+	missing := c.Script.CheckMissingParams(c.params)
 
-	if c.Page.Type == "list" {
-		c.currentView = "list"
-		c.list = NewList(c.Page.Title)
-		c.list.SetSize(c.width, c.height)
-		return tea.Batch(runCmd, c.list.Init())
-	} else {
-		c.currentView = "detail"
-		c.detail = NewDetail(c.Page.Title)
-		c.detail.SetSize(c.width, c.height)
-		return tea.Batch(runCmd, c.detail.Init())
+	if len(missing) > 0 {
+		var err error
+		items := make([]FormItem, len(missing))
+		for i, param := range missing {
+			items[i], err = NewFormItem(param)
+			if err != nil {
+				return NewErrorCmd(err)
+			}
+		}
+
+		c.currentView = "form"
+		c.form = NewForm(c.Script.Title, items, func(values map[string]any) tea.Cmd {
+			for k, v := range values {
+				c.params[k] = v
+			}
+
+			return c.Run()
+		})
+		c.form.SetSize(c.width, c.height)
+		return c.form.Init()
 	}
+
+	return c.Run()
 }
 
 type ListOutput []ListItem
 type RawOutput string
 
 func (c *RunContainer) Run() tea.Cmd {
-	return func() tea.Msg {
-		output, err := c.Page.Run(c.manifest.Dir(), c.params)
+	runCmd := func() tea.Msg {
+		output, err := c.Script.Run(c.manifest.Dir(), c.params)
 		if err != nil {
 			return err
 		}
 
-		switch c.Page.Type {
-		case "list":
+		switch c.Script.Mode {
+		case "filter", "generator":
 			scriptItems, err := api.ParseListItems(output)
 			if err != nil {
 				return err
@@ -91,8 +104,29 @@ func (c *RunContainer) Run() tea.Cmd {
 		case "raw":
 			return RawOutput(output)
 		default:
-			return fmt.Errorf("unknown page type %s", c.Page.Type)
+			return fmt.Errorf("unknown page type %s", c.Script.Mode)
 		}
+	}
+
+	switch c.Script.Mode {
+	case "filter", "generator":
+		c.currentView = "list"
+		if c.list != nil {
+			return runCmd
+		}
+		c.list = NewList(c.Script.Title)
+		c.list.SetSize(c.width, c.height)
+		return tea.Batch(runCmd, c.list.Init())
+	case "detail":
+		c.currentView = "detail"
+		if c.detail != nil {
+			return runCmd
+		}
+		c.detail = NewDetail(c.Script.Title)
+		c.detail.SetSize(c.width, c.height)
+		return tea.Batch(runCmd, c.detail.Init())
+	default:
+		return nil
 	}
 }
 
@@ -103,6 +137,8 @@ func (c *RunContainer) SetSize(width, height int) {
 		c.list.SetSize(width, height)
 	case "detail":
 		c.detail.SetSize(width, height)
+	case "form":
+		c.form.SetSize(width, height)
 	}
 }
 
@@ -118,7 +154,8 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		for k, v := range msg.Params {
 			c.params[k] = v
 		}
-		return c, c.Run()
+		cmd := c.list.header.SetIsLoading(true)
+		return c, tea.Batch(cmd, c.Run())
 	}
 
 	var cmd tea.Cmd
@@ -131,12 +168,17 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case "detail":
 		container, cmd = c.detail.Update(msg)
 		c.detail, _ = container.(*Detail)
+	case "form":
+		container, cmd = c.form.Update(msg)
+		c.form, _ = container.(*Form)
 	}
 	return c, cmd
 }
 
 func (c *RunContainer) View() string {
 	switch c.currentView {
+	case "form":
+		return c.form.View()
 	case "list":
 		return c.list.View()
 	case "detail":

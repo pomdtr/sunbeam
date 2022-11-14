@@ -11,7 +11,7 @@ import (
 )
 
 type Action struct {
-	Msg      tea.Msg
+	Cmd      tea.Cmd
 	Shortcut string
 	Title    string
 }
@@ -43,21 +43,15 @@ type ReloadMsg struct {
 	Params map[string]any
 }
 
-type PushMsg struct {
-	Extension string
-	Page      string
-	Params    map[string]any
-}
-
 type RunMsg struct {
 	Extension string
 	Script    string
-	With      map[string]any
-	OnSuccess string
+	Params    map[string]any
 }
 
-func (a Action) Cmd() tea.Msg {
-	return a.Msg
+type ExecMsg struct {
+	Command   string
+	OnSuccess string
 }
 
 func NewAction(scriptAction api.Action) Action {
@@ -92,23 +86,15 @@ func NewAction(scriptAction api.Action) Action {
 		msg = ReloadMsg{
 			Params: scriptAction.With,
 		}
-	case "push-page":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Open Page"
-		}
-		msg = PushMsg{
-			Extension: scriptAction.Extension,
-			Page:      scriptAction.Page,
-			Params:    scriptAction.With,
-		}
 	case "run-script":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Run Script"
-		}
 		msg = RunMsg{
 			Extension: scriptAction.Extension,
 			Script:    scriptAction.Script,
-			With:      scriptAction.With,
+			Params:    scriptAction.With,
+		}
+	case "exec-command":
+		msg = ExecMsg{
+			Command:   scriptAction.Command,
 			OnSuccess: scriptAction.OnSuccess,
 		}
 	default:
@@ -117,7 +103,9 @@ func NewAction(scriptAction api.Action) Action {
 	}
 
 	return Action{
-		Msg:      msg,
+		Cmd: func() tea.Msg {
+			return msg
+		},
 		Title:    scriptAction.Title,
 		Shortcut: scriptAction.Shortcut,
 	}

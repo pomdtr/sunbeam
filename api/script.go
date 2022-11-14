@@ -12,6 +12,7 @@ import (
 )
 
 type Script struct {
+	Mode    string     `json:"mode" yaml:"mode"`
 	Params  []FormItem `json:"params" yaml:"params"`
 	Title   string     `json:"title" yaml:"title"`
 	Command string     `json:"command" yaml:"command"`
@@ -22,6 +23,7 @@ type FormItem struct {
 	Name     string `json:"name"`
 	Title    string `json:"title"`
 	Required bool   `json:"required"`
+	Default  any    `json:"default"`
 
 	// textitem, textarea
 	Secure      bool   `json:"secure"`
@@ -119,8 +121,8 @@ type Action struct {
 	Application string `json:"application,omitempty" yaml:"application"`
 
 	Extension string `json:"extension,omitempty" yaml:"extension"`
-	Page      string `json:"page,omitempty" yaml:"page"`
 	Script    string `json:"script,omitempty" yaml:"script"`
+	Command   string `json:"command,omitempty" yaml:"command"`
 
 	OnSuccess string         `json:"onSuccess" yaml:"onSuccess"`
 	With      map[string]any `json:"with,omitempty" yaml:"with"`
