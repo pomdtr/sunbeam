@@ -11,14 +11,12 @@ import (
 
 type Footer struct {
 	title    string
-	style    lipgloss.Style
 	Width    int
 	bindings []key.Binding
 }
 
 func NewFooter(title string) Footer {
 	return Footer{
-		style: styles.Regular.Copy(),
 		title: title,
 	}
 }
@@ -29,10 +27,10 @@ func (f *Footer) SetBindings(bindings ...key.Binding) {
 
 func (f Footer) View() string {
 	horizontal := strings.Repeat("─", f.Width)
-	horizontal = f.style.Render(horizontal)
+	horizontal = styles.Regular.Render(horizontal)
 
 	if len(f.bindings) == 0 {
-		title := styles.Regular.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
+		title := styles.Italic.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
 		return lipgloss.JoinVertical(lipgloss.Left, horizontal, title)
 	}
 
@@ -42,12 +40,18 @@ func (f Footer) View() string {
 		keys[i] = fmt.Sprintf("%s %s", binding.Help().Desc, binding.Help().Key)
 	}
 	help := strings.Join(keys, " • ")
+	help = fmt.Sprintf(" %s ", help)
+	availableWidth := utils.Max(0, f.Width-lipgloss.Width(help))
 
-	titleView := f.style.Copy().Padding(0, 1).Render(f.title)
-	availableWidth := utils.Max(0, f.Width-lipgloss.Width(titleView))
-	helpView := f.style.Copy().Width(availableWidth).Align(lipgloss.Right).Padding(0, 1).Render(help)
+	var blanks string
+	title := fmt.Sprintf(" %s", f.title)
+	if availableWidth > lipgloss.Width(title) {
+		blanks = strings.Repeat(" ", availableWidth-lipgloss.Width(title))
+	} else {
+		title = title[:availableWidth]
+	}
 
-	footerRow := lipgloss.JoinHorizontal(lipgloss.Top, titleView, helpView)
+	footerRow := lipgloss.JoinHorizontal(lipgloss.Left, styles.Italic.Render(title), styles.Regular.Render(blanks), styles.Regular.Render(help))
 
 	return lipgloss.JoinVertical(lipgloss.Left, horizontal, footerRow)
 }

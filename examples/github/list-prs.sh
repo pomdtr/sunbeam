@@ -17,8 +17,8 @@ gh pr list --repo "$REPO" --json author,title,url,number | sunbeam jq '.[] |
         "#\(.number)"
     ],
     actions: [
-        {type: "open-url", url: .url},
-        {type: "copy-content", content: .url}
+        {type: "open-url", title: "Open in Browser", url: .url},
+        {type: "copy-content", shortcut: "ctrl+y", content: .url}
     ]
 }
 '
