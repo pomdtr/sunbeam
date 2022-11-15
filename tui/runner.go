@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -70,15 +71,17 @@ func (c *RunContainer) Run() tea.Cmd {
 	}
 
 	runCmd := func() tea.Msg {
-		if c.Script.Mode == "generator" {
-			c.params["query"] = c.list.Query()
-		}
 		command, err := c.Script.Cmd(c.params)
 		log.Println("Running command", command)
 		if err != nil {
 			return NewErrorCmd(err)
 		}
 		command.Dir = c.manifest.Dir()
+		env := os.Environ()
+		if c.Script.Mode == "generator" {
+			env = append(env, fmt.Sprintf("SUNBEAM_QUERY=%s", c.list.Query()))
+		}
+		command.Env = env
 
 		res, err := command.Output()
 		if err != nil {

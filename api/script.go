@@ -80,14 +80,6 @@ func (s Script) Cmd(params map[string]any) (*exec.Cmd, error) {
 		}
 	}
 
-	if s.Mode == "generator" {
-		query, ok := params["query"]
-		if !ok {
-			return nil, fmt.Errorf("missing param query")
-		}
-		inputs["query"] = query.(string)
-	}
-
 	rendered, err := utils.RenderString(s.Command, inputs)
 	if err != nil {
 		return nil, err

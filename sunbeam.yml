@@ -118,7 +118,7 @@ entrypoints:
 scripts:
   google-suggestions:
     mode: generator
-    command: ./examples/google.mjs --query {{ query }}
+    command: ./examples/google.mjs --query "$SUNBEAM_QUERY"
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: random
