@@ -63,8 +63,8 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
-	case CopyMsg:
-		err := clipboard.WriteAll(msg.Content)
+	case CopyTextMsg:
+		err := clipboard.WriteAll(msg.Text)
 		if err != nil {
 			m.exitMsg = fmt.Sprintf("Failed to copy to clipboard: %v", err)
 			return m, NewErrorCmd(err)
@@ -207,8 +207,8 @@ func ScriptRunCmd(extension string, script string, params map[string]any) tea.Cm
 				args = append(args, fmt.Sprintf("--param %s=%t", param, value))
 			}
 		}
-		return CopyMsg{
-			Content: strings.Join(args, " "),
+		return CopyTextMsg{
+			Text: strings.Join(args, " "),
 		}
 	}
 }
@@ -229,7 +229,7 @@ func RootList(manifests ...api.Manifest) Container {
 					{
 						Title:    "Copy Shortcut",
 						Shortcut: "ctrl+y",
-						Cmd:      ScriptRunCmd(manifest.Name, rootItem.Script, rootItem.With),
+						Cmd:      ScriptRunCmd(manifest.Name, rootItem.Page, rootItem.With),
 					},
 				},
 			})

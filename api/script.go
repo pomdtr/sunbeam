@@ -99,14 +99,14 @@ type Action struct {
 	Type     string `json:"type" yaml:"type"`
 	Shortcut string `json:"shortcut,omitempty" yaml:"shortcut"`
 
-	Content string `json:"content,omitempty" yaml:"content"`
+	Text string `json:"text,omitempty" yaml:"text"`
 
 	Url         string `json:"url,omitempty" yaml:"url"`
 	Path        string `json:"path,omitempty" yaml:"path"`
 	Application string `json:"application,omitempty" yaml:"application"`
 
 	Extension string `json:"extension,omitempty" yaml:"extension"`
-	Script    string `json:"script,omitempty" yaml:"script"`
+	Page      string `json:"script,omitempty" yaml:"page"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
 	OnSuccess string         `json:"onSuccess" yaml:"onSuccess"`

@@ -6,20 +6,20 @@ title: GitHub
 entrypoints:
   - title: List My Repositories
     type: push-page
-    script: list-repositories
+    page: list-repositories
     with:
       owner: pomdtr
   - title: List Repositories
     type: push-page
-    script: list-repositories
+    page: list-repositories
   - title: List Dailymotion Repositories
     type: push-page
-    script: list-repositories
+    page: list-repositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
     type: push-page
-    script: list-pull-requests
+    page: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
 pages:
@@ -50,15 +50,15 @@ title: File Browser
 entrypoints:
   - title: Browse Custom Directory
     type: push-page
-    script: file-browser
+    page: file-browser
   - title: Browse Root Directory
     type: push-page
-    script: file-browser
+    page: file-browser
     with:
       root: "/"
   - title: Browse Current Directory
     type: push-page
-    script: file-browser
+    page: file-browser
     with:
       root: "."
 pages:
@@ -79,7 +79,7 @@ title: Bitwarden
 entrypoints:
   - title: Search Passwords
     type: push-page
-    script: list-passwords
+    page: list-passwords
 pages:
   list-passwords:
     mode: filter
@@ -94,7 +94,7 @@ title: Jira
 entrypoints:
   - type: push-page
     title: List Issues
-    script: list-issues
+    page: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
 pages:
@@ -114,7 +114,7 @@ version: "1.0"
 entrypoints:
   - type: push-page
     title: Google Suggestions
-    script: google-suggestions
+    page: google-suggestions
 pages:
   google-suggestions:
     mode: generator
@@ -127,10 +127,10 @@ version: "1.0"
 entrypoints:
   - type: push-page
     title: "Generate 5 random numbers"
-    script: "random-list"
+    page: "random-list"
   - type: push-page
     title: "Random Number"
-    script: "random-number"
+    page: "random-number"
 pages:
   random-list:
     mode: filter

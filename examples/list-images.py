@@ -23,8 +23,8 @@ items = [
         "title": image["Repository"],
         "subtitle": image["Tag"],
         "actions": [
-            {"type": "copy-content", "content": image["Repository"]},
-            {"type": "copy-content", "content": image["Repository"]},
+            {"type": "copy-text", "text": image["Repository"]},
+            {"type": "copy-text", "text": image["Repository"]},
             {
                 "type": "push-page",
                 "script": "delete-image",

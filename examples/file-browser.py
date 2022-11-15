@@ -30,9 +30,9 @@ for path in sorted(root.iterdir(), key=lambda p: p.name):
                 "actions": [
                     primaryAction,
                     {
-                        "type": "copy-content",
+                        "type": "copy-text",
                         "title": "Copy Path",
-                        "content": str(path.absolute()),
+                        "text": str(path.absolute()),
                     },
                 ],
             }

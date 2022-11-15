@@ -40,7 +40,7 @@
                 "type": "object",
                 "allOf": [
                     {
-                        "$ref": "#/definitions/script"
+                        "$ref": "#/definitions/page"
                     }
                 ],
                 "required": [
@@ -60,7 +60,7 @@
         }
     },
     "definitions": {
-        "script": {
+        "page": {
             "type": "object",
             "required": [
                 "command"
@@ -130,7 +130,7 @@
                 "type": {
                     "type": "string",
                     "enum": [
-                        "copy-content",
+                        "copy-text",
                         "reload-page",
                         "open-url",
                         "open-file",
@@ -164,10 +164,10 @@
                     "then": {
                         "required": [
                             "title",
-                            "script"
+                            "page"
                         ],
                         "properties": {
-                            "script": {
+                            "page": {
                                 "type": "string"
                             }
                         }
@@ -177,7 +177,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "copy-content"
+                                "const": "copy-text"
                             }
                         }
                     },

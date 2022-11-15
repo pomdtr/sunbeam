@@ -175,8 +175,8 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		c.detail.SetActions(
 			Action{Title: "Quit", Shortcut: "enter", Cmd: tea.Quit},
 			Action{Title: "Copy Output", Shortcut: "ctrl+y", Cmd: func() tea.Msg {
-				return CopyMsg{
-					Content: string(msg),
+				return CopyTextMsg{
+					Text: string(msg),
 				}
 			}},
 			Action{Title: "Reload", Shortcut: "ctrl+r", Cmd: NewReloadCmd(nil)},

@@ -18,8 +18,8 @@ for _ in range(5):
                     {
                         "title": "Copy",
                         "shortcut": "ctrl+y",
-                        "type": "copy-content",
-                        "content": str(random_number),
+                        "type": "copy-text",
+                        "text": str(random_number),
                     },
                 ],
             }

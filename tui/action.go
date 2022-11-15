@@ -26,8 +26,8 @@ func (a Action) Binding() key.Binding {
 	return key.NewBinding(key.WithKeys(a.Shortcut), key.WithHelp(prettyKey, a.Title))
 }
 
-type CopyMsg struct {
-	Content string
+type CopyTextMsg struct {
+	Text string
 }
 
 type OpenUrlMsg struct {
@@ -81,12 +81,12 @@ func NewAction(scriptAction api.Action) Action {
 			Path:        scriptAction.Path,
 			Application: scriptAction.Application,
 		}
-	case "copy-content":
+	case "copy-text":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
-		msg = CopyMsg{
-			Content: scriptAction.Content,
+		msg = CopyTextMsg{
+			Text: scriptAction.Text,
 		}
 	case "reload-page":
 		if scriptAction.Title == "" {
@@ -98,7 +98,7 @@ func NewAction(scriptAction api.Action) Action {
 	case "push-page":
 		msg = RunMsg{
 			Extension: scriptAction.Extension,
-			Script:    scriptAction.Script,
+			Script:    scriptAction.Page,
 			Params:    scriptAction.With,
 		}
 	case "exec-command":

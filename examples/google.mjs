@@ -23,10 +23,10 @@ const items = res[1].map((suggestion) => ({
       url: `https://www.google.com/search?q=${encodeURIComponent(suggestion)}`,
     },
     {
-      type: "copy-content",
+      type: "copy-text",
       title: "Copy Suggestion",
       shortcut: "ctrl+y",
-      content: suggestion,
+      text: suggestion,
     },
   ],
 }));
