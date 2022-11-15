@@ -43,7 +43,7 @@ func (c *RunContainer) Init() tea.Cmd {
 }
 
 type ListOutput []ListItem
-type RawOutput string
+type FullOutput string
 
 func (c *RunContainer) Run() tea.Cmd {
 	missing := c.Script.CheckMissingParams(c.params)
@@ -121,7 +121,7 @@ func (c *RunContainer) Run() tea.Cmd {
 			}
 			return ListOutput(listItems)
 		case "pager":
-			return RawOutput(output)
+			return FullOutput(output)
 		default:
 			return fmt.Errorf("unknown page type %s", c.Script.Mode)
 		}
@@ -169,15 +169,29 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case ListOutput:
 		c.list.SetItems(msg)
 		return c, nil
-	case RawOutput:
+	case FullOutput:
 		c.detail.SetContent(string(msg))
 		c.detail.SetIsLoading(false)
+		c.detail.SetActions(
+			Action{Title: "Quit", Shortcut: "enter", Cmd: tea.Quit},
+			Action{Title: "Copy Output", Shortcut: "ctrl+y", Cmd: func() tea.Msg {
+				return CopyMsg{
+					Content: string(msg),
+				}
+			}},
+			Action{Title: "Reload", Shortcut: "ctrl+r", Cmd: NewReloadCmd(nil)},
+		)
 		return c, nil
 	case ReloadMsg:
 		for k, v := range msg.Params {
 			c.params[k] = v
 		}
-		cmd := c.list.header.SetIsLoading(true)
+		var cmd tea.Cmd
+		if c.currentView == "list" {
+			cmd = c.list.header.SetIsLoading(true)
+		} else if c.currentView == "detail" {
+			cmd = c.detail.header.SetIsLoading(true)
+		}
 		return c, tea.Batch(cmd, c.Run())
 	}
 

@@ -17,7 +17,7 @@ type Detail struct {
 	footer     Footer
 }
 
-func NewDetail(title string, actions ...Action) *Detail {
+func NewDetail(title string) *Detail {
 	viewport := viewport.New(0, 0)
 	viewport.Style = styles.Regular.Copy()
 
@@ -25,14 +25,6 @@ func NewDetail(title string, actions ...Action) *Detail {
 
 	actionList := NewActionList()
 	actionList.SetTitle(title)
-	actionList.SetActions(actions...)
-
-	if len(actions) > 0 {
-		footer.SetBindings(
-			actions[0].Binding(),
-			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
-		)
-	}
 
 	header := NewHeader()
 
@@ -44,6 +36,17 @@ func NewDetail(title string, actions ...Action) *Detail {
 	}
 
 	return &d
+}
+
+func (c *Detail) SetActions(actions ...Action) {
+	c.actionList.SetActions(actions...)
+
+	if len(actions) > 0 {
+		c.footer.SetBindings(
+			actions[0].Binding(),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+		)
+	}
 }
 
 func (d *Detail) Init() tea.Cmd {
@@ -71,6 +74,9 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 				return &c, tea.Quit
 			}
 		case tea.KeyEscape:
+			if c.actionList.Focused() {
+				break
+			}
 			return &c, PopCmd
 		}
 	}
@@ -78,6 +84,9 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 	var cmd tea.Cmd
 
 	c.viewport, cmd = c.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
+	c.actionList, cmd = c.actionList.Update(msg)
 	cmds = append(cmds, cmd)
 
 	c.header, cmd = c.header.Update(msg)
@@ -91,10 +100,14 @@ func (c *Detail) SetSize(width, height int) {
 	c.header.Width = width
 	c.viewport.Width = width
 	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+	c.actionList.SetSize(width, height)
 
 	c.SetContent(c.content)
 }
 
 func (c *Detail) View() string {
+	if c.actionList.Focused() {
+		return c.actionList.View()
+	}
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
 }

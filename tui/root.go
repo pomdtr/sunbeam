@@ -99,7 +99,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		script, ok := manifest.Scripts[msg.Script]
+		script, ok := manifest.Pages[msg.Script]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
@@ -224,9 +224,6 @@ func RootList(manifests ...api.Manifest) Container {
 			entrypoints = append(entrypoints, ListItem{
 				Title:    title,
 				Subtitle: manifest.Title,
-				Accessories: []string{
-					rootItem.Type,
-				},
 				Actions: []Action{
 					NewAction(rootItem),
 					{

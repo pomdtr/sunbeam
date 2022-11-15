@@ -4,7 +4,8 @@
     "type": "object",
     "required": [
         "name",
-        "version"
+        "version",
+        "pages"
     ],
     "additionalProperties": false,
     "properties": {
@@ -33,7 +34,7 @@
                 "$ref": "#/definitions/action"
             }
         },
-        "scripts": {
+        "pages": {
             "type": "object",
             "additionalProperties": {
                 "type": "object",
@@ -134,7 +135,7 @@
                         "open-url",
                         "open-file",
                         "exec-command",
-                        "run-script"
+                        "push-page"
                     ]
                 },
                 "with": {
@@ -156,7 +157,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "run-script"
+                                "const": "push-page"
                             }
                         }
                     },

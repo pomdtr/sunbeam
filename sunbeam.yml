@@ -5,24 +5,24 @@ version: "1.0"
 title: GitHub
 entrypoints:
   - title: List My Repositories
-    type: run-script
+    type: push-page
     script: list-repositories
     with:
       owner: pomdtr
   - title: List Repositories
-    type: run-script
+    type: push-page
     script: list-repositories
   - title: List Dailymotion Repositories
-    type: run-script
+    type: push-page
     script: list-repositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
-    type: run-script
+    type: push-page
     script: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
-scripts:
+pages:
   list-repositories:
     mode: filter
     title: List Repositories
@@ -49,19 +49,19 @@ version: "1.0"
 title: File Browser
 entrypoints:
   - title: Browse Custom Directory
-    type: run-script
+    type: push-page
     script: file-browser
   - title: Browse Root Directory
-    type: run-script
+    type: push-page
     script: file-browser
     with:
       root: "/"
   - title: Browse Current Directory
-    type: run-script
+    type: push-page
     script: file-browser
     with:
       root: "."
-scripts:
+pages:
   file-browser:
     mode: filter
     title: File Browser
@@ -78,9 +78,9 @@ version: "1.0"
 title: Bitwarden
 entrypoints:
   - title: Search Passwords
-    type: run-script
+    type: push-page
     script: list-passwords
-scripts:
+pages:
   list-passwords:
     mode: filter
     title: Search Passwords
@@ -92,12 +92,12 @@ name: jira
 version: "1.0"
 title: Jira
 entrypoints:
-  - type: run-script
+  - type: push-page
     title: List Issues
     script: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
-scripts:
+pages:
   list-issues:
     mode: filter
     title: List Issues
@@ -112,10 +112,10 @@ name: google
 title: Google
 version: "1.0"
 entrypoints:
-  - type: run-script
+  - type: push-page
     title: Google Suggestions
     script: google-suggestions
-scripts:
+pages:
   google-suggestions:
     mode: generator
     command: ./examples/google.mjs --query "$SUNBEAM_QUERY"
@@ -125,26 +125,18 @@ name: random
 title: Random
 version: "1.0"
 entrypoints:
-  - type: run-script
+  - type: push-page
     title: "Generate 5 random numbers"
     script: "random-list"
-scripts:
+  - type: push-page
+    title: "Random Number"
+    script: "random-number"
+pages:
   random-list:
     mode: filter
     command: ./examples/random_list.py
----
-# yaml-language-server: $schema=./schemas/schema.json
-name: test
-title: Test
-version: "1.0"
-entrypoints:
-  - type: run-script
-    title: "Test Exec"
-    script: "test-exec"
-scripts:
-  test-exec:
+  random-number:
     mode: pager
     command: |
-      echo "test"
-      sleep 5
-      echo "test"
+      sleep 2
+      echo "Random Number: $RANDOM"

@@ -18,7 +18,7 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
         actions: [
             {type: "open-url", url: .html_url},
             {
-                type: "run-script",
+                type: "push-page",
                 title: "List Pull Requests",
                 shortcut: "ctlr+p",
                 script: "list-pull-requests",

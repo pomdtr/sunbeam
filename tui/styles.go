@@ -9,6 +9,7 @@ type Styles struct {
 	Bold    lipgloss.Style
 	Regular lipgloss.Style
 	Faint   lipgloss.Style
+	Italic  lipgloss.Style
 }
 
 var (
@@ -29,5 +30,6 @@ func init() {
 		Bold:    lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Bold(true),
 		Regular: lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()),
 		Faint:   lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Faint(true),
+		Italic:  lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Italic(true),
 	}
 }

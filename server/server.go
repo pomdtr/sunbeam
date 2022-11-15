@@ -10,7 +10,7 @@ import (
 
 func Serve(address string, port int) error {
 	for _, manifest := range api.Sunbeam.Extensions {
-		for route, command := range manifest.Scripts {
+		for route, command := range manifest.Pages {
 			http.HandleFunc(route, serveCommand(command))
 		}
 	}

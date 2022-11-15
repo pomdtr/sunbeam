@@ -95,7 +95,7 @@ func NewAction(scriptAction api.Action) Action {
 		msg = ReloadMsg{
 			Params: scriptAction.With,
 		}
-	case "run-script":
+	case "push-page":
 		msg = RunMsg{
 			Extension: scriptAction.Extension,
 			Script:    scriptAction.Script,
@@ -243,7 +243,7 @@ func (al ActionList) Focused() bool {
 }
 
 func (al *ActionList) Focus() tea.Cmd {
-	return al.header.input.Focus()
+	return al.header.Focus()
 }
 
 func (al *ActionList) Blur() {

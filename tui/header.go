@@ -19,7 +19,7 @@ type Header struct {
 func NewHeader() Header {
 	ti := textinput.NewModel()
 	ti.Prompt = ""
-	ti.Placeholder = "Search..."
+	ti.Placeholder = ""
 	ti.PlaceholderStyle = styles.Faint.Copy().Italic(true)
 	spinner := spinner.New()
 	spinner.Style = styles.Regular.Copy().Padding(0, 1)
@@ -58,11 +58,14 @@ func (h Header) Update(msg tea.Msg) (Header, tea.Cmd) {
 func (h *Header) SetIsLoading(isLoading bool) tea.Cmd {
 	h.isLoading = isLoading
 	if isLoading {
-		h.input.Placeholder = "Loading..."
 		return h.spinner.Tick
 	}
-	h.input.Placeholder = "Search..."
 	return nil
+}
+
+func (h *Header) Focus() tea.Cmd {
+	h.input.Placeholder = "Search..."
+	return h.input.Focus()
 }
 
 func (c Header) View() string {
