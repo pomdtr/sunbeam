@@ -26,22 +26,20 @@ pages:
   list-repositories:
     mode: filter
     title: List Repositories
-    command: ./examples/github/list-repos.sh {{ owner }}
-    params:
+    command: ./examples/github/list-repos.sh ${{ input "owner" }}
+    inputs:
       - name: owner
         title: Owner
         type: textfield
         required: false
-        description: The owner of the repositories to list
   list-pull-requests:
     mode: filter
     title: List Pull Requests
-    command: examples/github/list-prs.sh {{ repository }}
-    params:
+    command: examples/github/list-prs.sh ${{ input "repository" }}
+    inputs:
       - name: repository
         title: Repository
         type: textfield
-        description: The repository to list pull requests for
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: file-browser
@@ -65,8 +63,8 @@ pages:
   file-browser:
     mode: filter
     title: File Browser
-    command: ./examples/file-browser.py --root {{ root }}
-    params:
+    command: ./examples/file-browser.py --root ${{ input "root" }}
+    inputs:
       - name: root
         title: Root
         type: textfield
@@ -101,8 +99,8 @@ pages:
   list-issues:
     mode: filter
     title: List Issues
-    command: ./examples/jira.sh {{ jql }}
-    params:
+    command: ./examples/jira.sh ${{ input "jql" }}
+    inputs:
       - name: jql
         title: JQL
         type: textfield
@@ -118,7 +116,7 @@ entrypoints:
 pages:
   google-suggestions:
     mode: generator
-    command: ./examples/google.mjs --query "$SUNBEAM_QUERY"
+    command: ./examples/google.mjs --query ${{ query }}
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: random
