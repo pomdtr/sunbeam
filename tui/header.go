@@ -20,9 +20,9 @@ func NewHeader() Header {
 	ti := textinput.NewModel()
 	ti.Prompt = ""
 	ti.Placeholder = "Search..."
-	ti.PlaceholderStyle = styles.Text.Copy().Italic(true)
+	ti.PlaceholderStyle = styles.Faint.Copy().Italic(true)
 	spinner := spinner.New()
-	spinner.Style = styles.Text.Copy().Padding(0, 1)
+	spinner.Style = styles.Regular.Copy().Padding(0, 1)
 	return Header{
 		input:   ti,
 		spinner: spinner,
@@ -69,13 +69,13 @@ func (c Header) View() string {
 	var headerRow string
 	if c.isLoading {
 		spinner := c.spinner.View()
-		textInput := styles.Text.Copy().Width(c.Width - lipgloss.Width(spinner)).Render(c.input.View())
+		textInput := styles.Regular.Copy().Width(c.Width - lipgloss.Width(spinner)).Render(c.input.View())
 		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), textInput)
 	} else {
-		headerRow = styles.Text.Copy().PaddingLeft(3).Width(c.Width).Render(c.input.View())
+		headerRow = styles.Regular.Copy().PaddingLeft(3).Width(c.Width).Render(c.input.View())
 	}
 
 	line := strings.Repeat("─", c.Width)
-	line = styles.Title.Render(line)
+	line = styles.Bold.Render(line)
 	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
 }

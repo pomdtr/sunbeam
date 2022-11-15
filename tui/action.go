@@ -176,7 +176,7 @@ func (al ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "tab":
-			if !al.Focused() && len(al.actions) > 0 {
+			if !al.Focused() && len(al.actions) > 1 {
 				return &al, al.Focus()
 			} else if al.Focused() {
 				al.header.input.SetValue("")

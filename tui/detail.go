@@ -10,6 +10,8 @@ import (
 
 type Detail struct {
 	header     Header
+	Style      lipgloss.Style
+	content    string
 	viewport   viewport.Model
 	actionList *ActionList
 	footer     Footer
@@ -17,7 +19,7 @@ type Detail struct {
 
 func NewDetail(title string, actions ...Action) *Detail {
 	viewport := viewport.New(0, 0)
-	viewport.Style = styles.Text
+	viewport.Style = styles.Regular.Copy()
 
 	footer := NewFooter(title)
 
@@ -34,12 +36,14 @@ func NewDetail(title string, actions ...Action) *Detail {
 
 	header := NewHeader()
 
-	return &Detail{
+	d := Detail{
 		viewport:   viewport,
 		header:     header,
 		actionList: actionList,
 		footer:     footer,
 	}
+
+	return &d
 }
 
 func (d *Detail) Init() tea.Cmd {
@@ -47,9 +51,14 @@ func (d *Detail) Init() tea.Cmd {
 }
 
 func (d *Detail) SetContent(content string) {
+	d.content = content
 	content = wordwrap.String(content, d.viewport.Width-4)
-	content = lipgloss.NewStyle().Padding(1, 2).Width(d.viewport.Width).Render(content)
+	content = lipgloss.NewStyle().Padding(0, 2).Width(d.viewport.Width).Render(content)
 	d.viewport.SetContent(content)
+}
+
+func (d *Detail) SetIsLoading(isLoading bool) {
+	d.header.SetIsLoading(isLoading)
 }
 
 func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
@@ -65,11 +74,16 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return &c, PopCmd
 		}
 	}
+	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
 	c.viewport, cmd = c.viewport.Update(msg)
+	cmds = append(cmds, cmd)
 
-	return &c, cmd
+	c.header, cmd = c.header.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return &c, tea.Batch(cmds...)
 }
 
 func (c *Detail) SetSize(width, height int) {
@@ -77,6 +91,8 @@ func (c *Detail) SetSize(width, height int) {
 	c.header.Width = width
 	c.viewport.Width = width
 	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+
+	c.SetContent(c.content)
 }
 
 func (c *Detail) View() string {

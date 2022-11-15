@@ -51,8 +51,7 @@
                         "enum": [
                             "filter",
                             "generator",
-                            "detail",
-                            "silent"
+                            "pager"
                         ]
                     }
                 }

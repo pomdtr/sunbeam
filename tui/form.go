@@ -66,8 +66,8 @@ type TextArea struct {
 
 func NewTextArea(formItem api.FormItem) TextArea {
 	ta := textarea.New()
-	ta.FocusedStyle.Text = styles.Text
-	ta.BlurredStyle.Text = styles.Text
+	ta.FocusedStyle.Text = styles.Regular
+	ta.BlurredStyle.Text = styles.Regular
 
 	ta.Placeholder = formItem.Placeholder
 	ta.SetHeight(5)
@@ -100,8 +100,8 @@ type TextInput struct {
 func NewTextInput(formItem api.FormItem) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	ti.TextStyle = styles.Title.Copy()
-	ti.PlaceholderStyle = styles.Text.Copy()
+	ti.TextStyle = styles.Bold.Copy()
+	ti.PlaceholderStyle = styles.Regular.Copy()
 	if formItem.Secure {
 		ti.EchoMode = textinput.EchoPassword
 	}
@@ -142,7 +142,7 @@ type Checkbox struct {
 
 func NewCheckbox(formItem api.FormItem) Checkbox {
 	return Checkbox{
-		Style: styles.Text.Copy(),
+		Style: styles.Regular.Copy(),
 		label: formItem.Label,
 		title: formItem.Title,
 	}
@@ -230,7 +230,7 @@ func NewDropDown(formItem api.FormItem) DropDown {
 	ti := textinput.New()
 	ti.Prompt = " "
 	ti.Placeholder = formItem.Placeholder
-	ti.PlaceholderStyle = styles.Text
+	ti.PlaceholderStyle = styles.Regular
 
 	filter := NewFilter()
 	filter.SetItems(choices)
@@ -321,7 +321,7 @@ type Form struct {
 func NewForm(title string, items []FormItem, submitCmd func(values map[string]any) tea.Cmd) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
-	viewport.Style = styles.Title
+	viewport.Style = styles.Bold
 	footer := NewFooter(title)
 	footer.SetBindings(
 		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
@@ -437,11 +437,11 @@ func (c *Form) View() string {
 	}
 
 	for i := range itemViews {
-		itemViews[i] = styles.Title.Copy().Width(maxWidth).Align(lipgloss.Right).Render(itemViews[i])
+		itemViews[i] = styles.Bold.Copy().Width(maxWidth).Align(lipgloss.Right).Render(itemViews[i])
 	}
 
 	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	formView = styles.Title.Copy().Width(c.footer.Width).Align(lipgloss.Center).PaddingTop(1).Render(formView)
+	formView = styles.Bold.Copy().Width(c.footer.Width).Align(lipgloss.Center).PaddingTop(1).Render(formView)
 
 	c.viewport.SetContent(formView)
 

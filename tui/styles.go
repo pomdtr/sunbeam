@@ -6,9 +6,9 @@ import (
 )
 
 type Styles struct {
-	Title      lipgloss.Style
-	Text       lipgloss.Style
-	Background lipgloss.Style
+	Bold    lipgloss.Style
+	Regular lipgloss.Style
+	Faint   lipgloss.Style
 }
 
 var (
@@ -26,8 +26,8 @@ func init() {
 	accentColor = theme.BrightPurple()
 
 	styles = Styles{
-		Title:      lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Bold(true),
-		Text:       lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()),
-		Background: lipgloss.NewStyle().Background(theme.Bg()),
+		Bold:    lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Bold(true),
+		Regular: lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()),
+		Faint:   lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Faint(true),
 	}
 }

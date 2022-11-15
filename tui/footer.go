@@ -18,7 +18,7 @@ type Footer struct {
 
 func NewFooter(title string) Footer {
 	return Footer{
-		style: styles.Text.Copy(),
+		style: styles.Regular.Copy(),
 		title: title,
 	}
 }
@@ -32,7 +32,7 @@ func (f Footer) View() string {
 	horizontal = f.style.Render(horizontal)
 
 	if len(f.bindings) == 0 {
-		title := styles.Text.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
+		title := styles.Regular.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
 		return lipgloss.JoinVertical(lipgloss.Left, horizontal, title)
 	}
 

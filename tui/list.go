@@ -34,10 +34,10 @@ func (i ListItem) Render(width int, selected bool) string {
 	var titleStyle lipgloss.Style
 	if selected {
 		title = fmt.Sprintf("> %s", i.Title)
-		titleStyle = styles.Title.Copy().Foreground(accentColor)
+		titleStyle = styles.Bold.Copy().Foreground(accentColor)
 	} else {
 		title = fmt.Sprintf("  %s", i.Title)
-		titleStyle = styles.Title.Copy()
+		titleStyle = styles.Bold.Copy()
 	}
 
 	subtitle := fmt.Sprintf(" %s", i.Subtitle)
@@ -58,9 +58,9 @@ func (i ListItem) Render(width int, selected bool) string {
 	}
 
 	title = titleStyle.Render(title)
-	subtitle = styles.Text.Copy().Render(subtitle)
-	blanks = styles.Text.Render(blanks)
-	accessories = styles.Text.Copy().Italic(true).Render(accessories)
+	subtitle = styles.Faint.Copy().Render(subtitle)
+	blanks = styles.Regular.Render(blanks)
+	accessories = styles.Regular.Copy().Italic(true).Render(accessories)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
 }
@@ -124,16 +124,22 @@ func (l *List) updateActions() {
 		l.actions.SetActions()
 		l.footer.SetBindings()
 	}
+
 	item, _ := l.filter.Selection().(ListItem)
 	l.actions.SetTitle(item.Title)
 	l.actions.SetActions(item.Actions...)
-	if len(item.Actions) > 0 {
+	if len(item.Actions) == 0 {
+		l.footer.SetBindings()
+
+	} else if len(item.Actions) == 1 {
+		l.footer.SetBindings(
+			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
+		)
+	} else {
 		l.footer.SetBindings(
 			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
-	} else {
-		l.footer.SetBindings()
 	}
 }
 

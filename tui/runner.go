@@ -120,9 +120,7 @@ func (c *RunContainer) Run() tea.Cmd {
 				}
 			}
 			return ListOutput(listItems)
-		case "detail":
-			return RawOutput(output)
-		case "raw":
+		case "pager":
 			return RawOutput(output)
 		default:
 			return fmt.Errorf("unknown page type %s", c.Script.Mode)
@@ -141,7 +139,7 @@ func (c *RunContainer) Run() tea.Cmd {
 		}
 		c.list.SetSize(c.width, c.height)
 		return tea.Batch(runCmd, c.list.Init())
-	case "detail":
+	case "pager":
 		c.currentView = "detail"
 		if c.detail != nil {
 			return runCmd
@@ -149,16 +147,6 @@ func (c *RunContainer) Run() tea.Cmd {
 		c.detail = NewDetail(c.Script.Title)
 		c.detail.SetSize(c.width, c.height)
 		return tea.Batch(runCmd, c.detail.Init())
-	case "silent":
-		return func() tea.Msg {
-			cmd, err := c.Script.Cmd(c.params)
-			if err != nil {
-				return err
-			}
-			return ExecMsg{
-				Command: cmd,
-			}
-		}
 	default:
 		return nil
 	}
@@ -183,6 +171,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		return c, nil
 	case RawOutput:
 		c.detail.SetContent(string(msg))
+		c.detail.SetIsLoading(false)
 		return c, nil
 	case ReloadMsg:
 		for k, v := range msg.Params {

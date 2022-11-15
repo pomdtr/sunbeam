@@ -89,7 +89,7 @@ func (m Filter) View() string {
 
 		if availableHeight > 0 {
 			separator := strings.Repeat("─", itemWidth)
-			separator = styles.Text.Render(separator)
+			separator = styles.Faint.Render(separator)
 			rows = append(rows, separator)
 			availableHeight--
 		}
@@ -104,7 +104,7 @@ func (m Filter) View() string {
 			emptyMessage = "No matches"
 		}
 
-		return styles.Text.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(emptyMessage)
+		return styles.Regular.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(emptyMessage)
 	}
 
 	filteredView = lipgloss.NewStyle().Padding(0, 1).Background(theme.Bg()).Render(filteredView)
