@@ -23,6 +23,7 @@ func (a Action) Binding() key.Binding {
 	prettyKey = strings.ReplaceAll(prettyKey, "shift", "⇧")
 	prettyKey = strings.ReplaceAll(prettyKey, "cmd", "⌘")
 	prettyKey = strings.ReplaceAll(prettyKey, "enter", "↩")
+
 	return key.NewBinding(key.WithKeys(a.Shortcut), key.WithHelp(prettyKey, a.Title))
 }
 
@@ -54,7 +55,7 @@ type ReloadMsg struct {
 
 type RunMsg struct {
 	Extension string
-	Script    string
+	Page      string
 	Params    map[string]any
 }
 
@@ -71,7 +72,8 @@ func NewAction(scriptAction api.Action) Action {
 			scriptAction.Title = "Open URL"
 		}
 		msg = OpenUrlMsg{
-			Url: scriptAction.Url,
+			Url:         scriptAction.Url,
+			Application: scriptAction.Application,
 		}
 	case "open-file":
 		if scriptAction.Title == "" {
@@ -98,7 +100,7 @@ func NewAction(scriptAction api.Action) Action {
 	case "push-page":
 		msg = RunMsg{
 			Extension: scriptAction.Extension,
-			Script:    scriptAction.Page,
+			Page:      scriptAction.Page,
 			Params:    scriptAction.With,
 		}
 	case "exec-command":
@@ -136,7 +138,7 @@ func NewActionList() *ActionList {
 	footer := NewFooter("Actions")
 	footer.SetBindings(
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("↩", "Confirm")),
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide Actions")),
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide")),
 	)
 
 	return &ActionList{

@@ -44,7 +44,7 @@ func (c *Detail) SetActions(actions ...Action) {
 	if len(actions) > 0 {
 		c.footer.SetBindings(
 			actions[0].Binding(),
-			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
 		)
 	}
 }

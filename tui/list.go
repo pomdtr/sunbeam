@@ -57,7 +57,7 @@ func (i ListItem) Render(width int, selected bool) string {
 		title = title[:width]
 	}
 
-	title = styles.Regular.Copy().Foreground(titleColor).Render(title)
+	title = styles.Bold.Copy().Foreground(titleColor).Render(title)
 	subtitle = styles.Faint.Render(subtitle)
 	blanks = styles.Regular.Render(blanks)
 	accessories = styles.Faint.Render(accessories)
@@ -137,7 +137,7 @@ func (l *List) updateActions() {
 	} else {
 		l.footer.SetBindings(
 			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
-			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
 		)
 	}
 }

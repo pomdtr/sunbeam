@@ -34,22 +34,21 @@ func (f Footer) View() string {
 		return lipgloss.JoinVertical(lipgloss.Left, horizontal, title)
 	}
 
-	// availableWidth := f.Width - lipgloss.Width(title)
 	keys := make([]string, len(f.bindings))
 	for i, binding := range f.bindings {
 		keys[i] = fmt.Sprintf("%s %s", binding.Help().Desc, binding.Help().Key)
 	}
 	help := strings.Join(keys, " • ")
-	help = fmt.Sprintf(" %s ", help)
-	availableWidth := utils.Max(0, f.Width-lipgloss.Width(help))
+	help = fmt.Sprintf("  %s ", help)
 
-	var blanks string
+	availableWidth := utils.Max(0, f.Width-lipgloss.Width(help))
 	title := fmt.Sprintf(" %s", f.title)
-	if availableWidth > lipgloss.Width(title) {
-		blanks = strings.Repeat(" ", availableWidth-lipgloss.Width(title))
-	} else {
+
+	if availableWidth < lipgloss.Width(title) {
 		title = title[:availableWidth]
 	}
+
+	blanks := strings.Repeat(" ", utils.Max(0, f.Width-lipgloss.Width(title)-lipgloss.Width(help)))
 
 	footerRow := lipgloss.JoinHorizontal(lipgloss.Left, styles.Italic.Render(title), styles.Regular.Render(blanks), styles.Regular.Render(help))
 

@@ -100,7 +100,7 @@ type TextInput struct {
 func NewTextInput(formItem api.FormItem) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	ti.TextStyle = styles.Bold.Copy()
+	ti.TextStyle = styles.Regular.Copy()
 	ti.PlaceholderStyle = styles.Regular.Copy()
 	if formItem.Secure {
 		ti.EchoMode = textinput.EchoPassword
@@ -321,7 +321,6 @@ type Form struct {
 func NewForm(title string, items []FormItem, submitCmd func(values map[string]any) tea.Cmd) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
-	viewport.Style = styles.Bold
 	footer := NewFooter(title)
 	footer.SetBindings(
 		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
@@ -437,11 +436,11 @@ func (c *Form) View() string {
 	}
 
 	for i := range itemViews {
-		itemViews[i] = styles.Bold.Copy().Width(maxWidth).Align(lipgloss.Right).Render(itemViews[i])
+		itemViews[i] = styles.Regular.Copy().Width(maxWidth).Align(lipgloss.Right).Render(itemViews[i])
 	}
 
 	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	formView = styles.Bold.Copy().Width(c.footer.Width).Align(lipgloss.Center).PaddingTop(1).Render(formView)
+	formView = styles.Regular.Copy().Width(c.footer.Width).Align(lipgloss.Center).PaddingTop(1).Render(formView)
 
 	c.viewport.SetContent(formView)
 

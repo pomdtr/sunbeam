@@ -12,7 +12,8 @@ import (
 )
 
 type Api struct {
-	Extensions map[string]Manifest
+	Extensions    map[string]Manifest
+	ExtensionRoot string
 }
 
 type Manifest struct {
@@ -32,6 +33,12 @@ func (m Manifest) Dir() string {
 var Sunbeam Api
 
 func init() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("could not get home directory: %v", err)
+	}
+	Sunbeam.ExtensionRoot = path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
+
 	scriptDirs := make([]string, 0)
 
 	currentDir, err := os.Getwd()
@@ -42,20 +49,15 @@ func init() {
 		}
 	}
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatalf("could not get home directory: %v", err)
-	}
 	var scriptDir = os.Getenv("SUNBEAM_SCRIPT_DIR")
 	if scriptDir == "" {
-		scriptDir = path.Join(homeDir, ".config", "sunbeam", "scripts")
+		scriptDir = path.Join(homeDir, ".config", "sunbeam")
 	}
 	scriptDirs = append(scriptDirs, scriptDir)
 
-	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
-	extensionDirs, _ := os.ReadDir(extensionRoot)
+	extensionDirs, _ := os.ReadDir(Sunbeam.ExtensionRoot)
 	for _, extensionDir := range extensionDirs {
-		extensionPath := path.Join(extensionRoot, extensionDir.Name())
+		extensionPath := path.Join(Sunbeam.ExtensionRoot, extensionDir.Name())
 		scriptDirs = append(scriptDirs, extensionPath)
 	}
 

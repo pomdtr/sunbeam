@@ -69,9 +69,6 @@
                 "command": {
                     "type": "string"
                 },
-                "input": {
-                    "type": "string"
-                },
                 "title": {
                     "type": "string"
                 },
@@ -83,7 +80,7 @@
                     ],
                     "default": "extensionDir"
                 },
-                "params": {
+                "inputs": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/formitem"
@@ -258,8 +255,7 @@
             "type": "object",
             "required": [
                 "type",
-                "name",
-                "title"
+                "name"
             ],
             "properties": {
                 "name": {
@@ -273,8 +269,10 @@
                     "enum": [
                         "textfield",
                         "textarea",
+                        "password",
                         "checkbox",
-                        "dropdown"
+                        "dropdown",
+                        "filePicker"
                     ]
                 }
             },
@@ -310,9 +308,6 @@
                         "properties": {
                             "placeholder": {
                                 "type": "string"
-                            },
-                            "secure": {
-                                "type": "boolean"
                             }
                         }
                     }
@@ -334,10 +329,12 @@
                                 "type": "string"
                             },
                             "true_substitution": {
-                                "type": "string"
+                                "type": "string",
+                                "default": "true"
                             },
                             "false_substitution": {
-                                "type": "string"
+                                "type": "string",
+                                "default": "false"
                             }
                         }
                     }

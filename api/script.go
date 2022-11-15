@@ -11,7 +11,7 @@ import (
 
 type Script struct {
 	Mode    string     `json:"mode" yaml:"mode"`
-	Params  []FormItem `json:"params" yaml:"params"`
+	Inputs  []FormItem `json:"inputs" yaml:"inputs"`
 	Title   string     `json:"title" yaml:"title"`
 	Command string     `json:"command" yaml:"command"`
 }
@@ -43,7 +43,7 @@ type DropDownItem struct {
 
 func (s Script) CheckMissingParams(inputParams map[string]any) []FormItem {
 	missing := make([]FormItem, 0)
-	for _, input := range s.Params {
+	for _, input := range s.Inputs {
 		if _, ok := inputParams[input.Name]; !ok {
 			missing = append(missing, input)
 		}
@@ -54,7 +54,7 @@ func (s Script) CheckMissingParams(inputParams map[string]any) []FormItem {
 func (s Script) Cmd(params map[string]any) (*exec.Cmd, error) {
 	var err error
 	inputs := make(map[string]string)
-	for _, formInput := range s.Params {
+	for _, formInput := range s.Inputs {
 		value, ok := params[formInput.Name]
 		if !ok {
 			return nil, fmt.Errorf("missing param %s", formInput.Name)
@@ -99,7 +99,7 @@ type Action struct {
 	Type     string `json:"type" yaml:"type"`
 	Shortcut string `json:"shortcut,omitempty" yaml:"shortcut"`
 
-	Text string `json:"text,omitempty" yaml:"text"`
+	Text string `json:"text,omitempty" yaml:"textfield"`
 
 	Url         string `json:"url,omitempty" yaml:"url"`
 	Path        string `json:"path,omitempty" yaml:"path"`

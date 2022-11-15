@@ -99,13 +99,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		script, ok := manifest.Pages[msg.Script]
+		script, ok := manifest.Pages[msg.Page]
 		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
+			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Page))
 		}
 
 		if script.Title == "" {
-			script.Title = msg.Script
+			script.Title = msg.Page
 		}
 		runner := NewRunContainer(manifest, script, msg.Params)
 		m.Push(runner)

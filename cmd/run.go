@@ -48,11 +48,11 @@ func sunbeamRun(cmd *cobra.Command, args []string) {
 
 	script, ok := manifest.Pages[scriptName]
 	if !ok {
-		log.Fatalf("Script not found: %s", scriptName)
+		log.Fatalf("Page not found: %s", scriptName)
 	}
 
 	itemMap := make(map[string]api.FormItem)
-	for _, formItem := range script.Params {
+	for _, formItem := range script.Inputs {
 		itemMap[formItem.Name] = formItem
 	}
 
