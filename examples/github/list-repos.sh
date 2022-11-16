@@ -10,8 +10,10 @@ fi
 
 gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
     {
+        id: (.id | tostring),
         title: .full_name,
         subtitle: .owner.login,
+        preview: (.description // "No description"),
         accessories: [
             "\(.stargazers_count) ⭐"
         ],

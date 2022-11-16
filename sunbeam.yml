@@ -6,36 +6,41 @@ title: GitHub
 entrypoints:
   - title: List My Repositories
     type: run-script
-    page: list-repositories
+    script: list-repositories
     with:
       owner: pomdtr
   - title: List Repositories
     type: run-script
-    page: list-repositories
+    script: list-repositories
   - title: List Dailymotion Repositories
     type: run-script
-    page: list-repositories
+    script: list-repositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
     type: run-script
-    page: list-pull-requests
+    script: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
 scripts:
   list-repositories:
-    mode: filter
     title: List Repositories
     command: ./examples/github/list-repos.sh ${{ input "owner" }}
+    output:
+      type: list
+      mode: filter
+      showPreview: true
     inputs:
       - name: owner
         title: Owner
         type: textfield
         required: false
   list-pull-requests:
-    mode: filter
     title: List Pull Requests
     command: examples/github/list-prs.sh ${{ input "repository" }}
+    output:
+      type: list
+      mode: filter
     inputs:
       - name: repository
         title: Repository
@@ -48,22 +53,24 @@ title: File Browser
 entrypoints:
   - title: Browse Custom Directory
     type: run-script
-    page: file-browser
+    script: file-browser
   - title: Browse Root Directory
     type: run-script
-    page: file-browser
+    script: file-browser
     with:
       root: "/"
   - title: Browse Current Directory
     type: run-script
-    page: file-browser
+    script: file-browser
     with:
       root: "."
 scripts:
   file-browser:
-    mode: filter
     title: File Browser
     command: ./examples/file-browser.py --root ${{ input "root" }}
+    output:
+      type: "list"
+      mode: filter
     inputs:
       - name: root
         title: Root
@@ -77,13 +84,15 @@ title: Bitwarden
 entrypoints:
   - title: Search Passwords
     type: run-script
-    page: list-passwords
+    script: list-passwords
 scripts:
   list-passwords:
-    mode: filter
     title: Search Passwords
     # Please do not do this, you are better of moving the logic to an external file
     command: ./examples/bitwarden.sh
+    output:
+      type: list
+      mode: filter
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: jira
@@ -92,14 +101,16 @@ title: Jira
 entrypoints:
   - type: run-script
     title: List Issues
-    page: list-issues
+    script: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
 scripts:
   list-issues:
-    mode: filter
     title: List Issues
     command: ./examples/jira.sh ${{ input "jql" }}
+    output:
+      type: list
+      mode: filter
     inputs:
       - name: jql
         title: JQL
@@ -112,11 +123,13 @@ version: "1.0"
 entrypoints:
   - type: run-script
     title: Google Suggestions
-    page: google-suggestions
+    script: google-suggestions
 scripts:
   google-suggestions:
-    mode: generator
     command: ./examples/google.mjs --query ${{ query }}
+    output:
+      type: list
+      mode: generator
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: random
@@ -125,30 +138,27 @@ version: "1.0"
 entrypoints:
   - type: run-script
     title: "Generate 5 random numbers"
-    page: "random-list"
+    script: "random-list"
   - type: run-script
     title: "Random Number"
-    page: "random-number"
+    script: "random-number"
 scripts:
   random-list:
-    mode: filter
     command: ./examples/random_list.py
-  random-number:
-    mode: pager
-    command: |
-      sleep 2
-      echo "Random Number: $RANDOM"
+    output:
+      type: list
+      mode: filter
 ---
+# yaml-language-server: $schema=./schemas/schema.json
 name: Sunbeam
 title: Sunbeam
 version: "1.0"
 entrypoints:
   - type: run-script
     title: "Search Extensions"
-    page: search-extensions
+    script: search-extensions
 scripts:
   search-extensions:
-    mode: filter
     command: |
       gh api '/search/repositories?q=topic:sunbeam-extension' \
         --jq '.items[] | {
@@ -161,4 +171,43 @@ scripts:
             accessories: [
               .owner.login
             ]
-          }'
+        }'
+    output:
+      type: list
+      mode: filter
+---
+# yaml-language-server: $schema=./schemas/schema.json
+name: tldr
+title: TLDR
+version: "1.0"
+entrypoints:
+  - type: run-script
+    title: "Search MacOS Pages"
+    script: search-pages
+    with:
+      platform: macos
+  - type: run-script
+    title: "Search Linux Pages"
+    script: search-pages
+    with:
+      platform: linux
+scripts:
+  search-pages:
+    title: Search TLDR Pages
+    command: |
+      tldr --list --platform ${{ input "platform" }} | sunbeam jq -R '{
+        id: .,
+        title: .,
+        previewCmd: "tldr --platform ${{ input "platform" }} \(.) --raw",
+        actions: [
+          { type: "exit" }
+        ]
+      }'
+    output:
+      type: list
+      mode: filter
+      showPreview: true
+    inputs:
+      - name: platform
+        type: textfield
+        title: Platform

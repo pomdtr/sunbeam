@@ -5,18 +5,26 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"text/template"
 
+	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Script struct {
-	Mode    string     `json:"mode" yaml:"mode"`
-	Inputs  []FormItem `json:"inputs" yaml:"inputs"`
-	Title   string     `json:"title" yaml:"title"`
-	Command string     `json:"command" yaml:"command"`
+	Output  ScriptOutput  `json:"output" yaml:"output"`
+	Inputs  []ScriptInput `json:"inputs" yaml:"inputs"`
+	Title   string        `json:"title" yaml:"title"`
+	Command string        `json:"command" yaml:"command"`
 }
 
-type FormItem struct {
+type ScriptOutput struct {
+	Type        string `json:"type" yaml:"type"`
+	Mode        string `json:"mode" yaml:"mode"`
+	ShowPreview bool   `json:"showPreview" yaml:"showPreview"`
+}
+
+type ScriptInput struct {
 	Type     string `json:"type"`
 	Name     string `json:"name"`
 	Title    string `json:"title"`
@@ -24,11 +32,13 @@ type FormItem struct {
 	Default  any    `json:"default"`
 
 	// textitem, textarea
-	Secure      bool   `json:"secure"`
 	Placeholder string `json:"placeholder"`
 
 	// dropdown
-	Data []DropDownItem `json:"data"`
+	Data []struct {
+		Title string `json:"title"`
+		Value string `json:"value"`
+	} `json:"data"`
 
 	// checkbox
 	Label             string `json:"label"`
@@ -36,13 +46,8 @@ type FormItem struct {
 	FalseSubstitution string `json:"falseSubstitution"`
 }
 
-type DropDownItem struct {
-	Title string `json:"title"`
-	Value string `json:"value"`
-}
-
-func (s Script) CheckMissingParams(inputParams map[string]any) []FormItem {
-	missing := make([]FormItem, 0)
+func (s Script) CheckMissingParams(inputParams map[string]any) []ScriptInput {
+	missing := make([]ScriptInput, 0)
 	for _, input := range s.Inputs {
 		if _, ok := inputParams[input.Name]; !ok {
 			missing = append(missing, input)
@@ -51,11 +56,16 @@ func (s Script) CheckMissingParams(inputParams map[string]any) []FormItem {
 	return missing
 }
 
-func (s Script) Cmd(params map[string]any) (*exec.Cmd, error) {
+type CommandInput struct {
+	Params map[string]any
+	Query  string
+}
+
+func (s Script) Cmd(input CommandInput) (*exec.Cmd, error) {
 	var err error
 	inputs := make(map[string]string)
 	for _, formInput := range s.Inputs {
-		value, ok := params[formInput.Name]
+		value, ok := input.Params[formInput.Name]
 		if !ok {
 			return nil, fmt.Errorf("missing param %s", formInput.Name)
 		}
@@ -80,21 +90,43 @@ func (s Script) Cmd(params map[string]any) (*exec.Cmd, error) {
 		}
 	}
 
-	rendered, err := utils.RenderString(s.Command, inputs)
+	funcMap := template.FuncMap{
+		"input": func(input string) (string, error) {
+			if value, ok := inputs[input]; ok {
+				return shellescape.Quote(value), nil
+			}
+			return "", fmt.Errorf("input %s not found", input)
+		},
+		"query": func() string {
+			return input.Query
+		},
+	}
+
+	rendered, err := utils.RenderString(s.Command, funcMap)
 	if err != nil {
 		return nil, err
 	}
 	return exec.Command("sh", "-c", rendered), nil
 }
 
-type ListItem struct {
-	Title       string   `json:"title"`
-	Subtitle    string   `json:"subtitle"`
-	Accessories []string `json:"accessories"`
-	Actions     []Action `json:"actions"`
+type ScriptItem struct {
+	Id          string         `json:"id"`
+	Title       string         `json:"title"`
+	Subtitle    string         `json:"subtitle"`
+	Preview     string         `json:"preview"`
+	PreviewCmd  string         `json:"previewCmd"`
+	Accessories []string       `json:"accessories"`
+	Actions     []ScriptAction `json:"actions"`
 }
 
-type Action struct {
+func (li ScriptItem) PreviewCommand() *exec.Cmd {
+	if li.PreviewCmd == "" {
+		return nil
+	}
+	return exec.Command("sh", "-c", li.PreviewCmd)
+}
+
+type ScriptAction struct {
 	Title    string `json:"title" yaml:"title"`
 	Type     string `json:"type" yaml:"type"`
 	Shortcut string `json:"shortcut,omitempty" yaml:"shortcut"`
@@ -106,20 +138,25 @@ type Action struct {
 	Application string `json:"application,omitempty" yaml:"application"`
 
 	Extension string `json:"extension,omitempty" yaml:"extension"`
-	Page      string `json:"script,omitempty" yaml:"page"`
+	Script    string `json:"script,omitempty" yaml:"script"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
 	OnSuccess string         `json:"onSuccess" yaml:"onSuccess"`
 	With      map[string]any `json:"with,omitempty" yaml:"with"`
 }
 
-func ParseListItems(output string) (items []ListItem, err error) {
+func ParseAction(output string) (action ScriptAction, err error) {
+	err = json.Unmarshal([]byte(output), &action)
+	return action, err
+}
+
+func ParseListItems(output string) (items []ScriptItem, err error) {
 	rows := strings.Split(output, "\n")
 	for _, row := range rows {
 		if row == "" {
 			continue
 		}
-		var item ListItem
+		var item ScriptItem
 		err = json.Unmarshal([]byte(row), &item)
 		if err != nil {
 			return nil, err

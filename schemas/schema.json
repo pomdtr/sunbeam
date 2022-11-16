@@ -42,19 +42,52 @@
                 "type": "object",
                 "allOf": [
                     {
-                        "$ref": "#/definitions/page"
+                        "$ref": "#/definitions/script"
                     }
                 ],
                 "required": [
-                    "mode"
+                    "output"
                 ],
                 "properties": {
-                    "mode": {
-                        "type": "string",
-                        "enum": [
-                            "filter",
-                            "generator",
-                            "pager"
+                    "output": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "list",
+                                    "detail",
+                                    "action"
+                                ]
+                            }
+                        },
+                        "allOf": [
+                            {
+                                "if": {
+                                    "properties": {
+                                        "type": {
+                                            "const": "list"
+                                        }
+                                    }
+                                },
+                                "then": {
+                                    "required": [
+                                        "mode"
+                                    ],
+                                    "properties": {
+                                        "mode": {
+                                            "type": "string",
+                                            "enum": [
+                                                "generator",
+                                                "filter"
+                                            ]
+                                        },
+                                        "showPreview": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
                         ]
                     }
                 }
@@ -62,7 +95,7 @@
         }
     },
     "definitions": {
-        "page": {
+        "script": {
             "type": "object",
             "required": [
                 "command"
@@ -130,11 +163,12 @@
                     "type": "string",
                     "enum": [
                         "copy-text",
-                        "reload-page",
+                        "reload-script",
                         "open-url",
                         "open-file",
                         "exec-command",
-                        "run-script"
+                        "run-script",
+                        "exit"
                     ]
                 },
                 "with": {
@@ -163,10 +197,10 @@
                     "then": {
                         "required": [
                             "title",
-                            "page"
+                            "script"
                         ],
                         "properties": {
-                            "page": {
+                            "script": {
                                 "type": "string"
                             }
                         }
@@ -226,7 +260,7 @@
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
-                                    "reload-page"
+                                    "reload-script"
                                 ]
                             }
                         }

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -32,7 +33,7 @@ type FormInput interface {
 	Update(tea.Msg) (FormInput, tea.Cmd)
 }
 
-func NewFormItem(formItem api.FormItem) (FormItem, error) {
+func NewFormItem(formItem api.ScriptInput) (FormItem, error) {
 	var input FormInput
 	switch formItem.Type {
 	case "textfield":
@@ -60,11 +61,10 @@ func NewFormItem(formItem api.FormItem) (FormItem, error) {
 }
 
 type TextArea struct {
-	secure bool
 	textarea.Model
 }
 
-func NewTextArea(formItem api.FormItem) TextArea {
+func NewTextArea(formItem api.ScriptInput) TextArea {
 	ta := textarea.New()
 	ta.FocusedStyle.Text = styles.Regular
 	ta.BlurredStyle.Text = styles.Regular
@@ -73,8 +73,7 @@ func NewTextArea(formItem api.FormItem) TextArea {
 	ta.SetHeight(5)
 
 	return TextArea{
-		Model:  ta,
-		secure: formItem.Secure,
+		Model: ta,
 	}
 }
 
@@ -97,14 +96,11 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem api.FormItem) TextInput {
+func NewTextInput(formItem api.ScriptInput) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.TextStyle = styles.Regular.Copy()
 	ti.PlaceholderStyle = styles.Regular.Copy()
-	if formItem.Secure {
-		ti.EchoMode = textinput.EchoPassword
-	}
 
 	return TextInput{
 		Model: ti,
@@ -140,7 +136,7 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(formItem api.FormItem) Checkbox {
+func NewCheckbox(formItem api.ScriptInput) Checkbox {
 	return Checkbox{
 		Style: styles.Regular.Copy(),
 		label: formItem.Label,
@@ -197,8 +193,13 @@ func (cb *Checkbox) Toggle() {
 }
 
 type DropDownItem struct {
+	id    string
 	title string
 	value string
+}
+
+func (d DropDownItem) ID() string {
+	return d.id
 }
 
 func (d DropDownItem) Render(width int, selected bool) string {
@@ -213,15 +214,16 @@ func (d DropDownItem) FilterValue() string {
 }
 
 type DropDown struct {
-	filter    *Filter
+	filter    Filter
 	textinput textinput.Model
 	value     string
 }
 
-func NewDropDown(formItem api.FormItem) DropDown {
+func NewDropDown(formItem api.ScriptInput) DropDown {
 	choices := make([]FilterItem, len(formItem.Data))
 	for i, formItem := range formItem.Data {
 		choices[i] = DropDownItem{
+			id:    strconv.Itoa(i),
 			title: formItem.Title,
 			value: formItem.Value,
 		}

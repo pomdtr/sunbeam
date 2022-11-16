@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/api"
@@ -71,16 +72,20 @@ func (c *RunContainer) Run() tea.Cmd {
 	}
 
 	runCmd := func() tea.Msg {
-		command, err := c.Script.Cmd(c.params)
+
+		input := api.CommandInput{
+			Params: c.params,
+		}
+		if c.Script.Output.Mode == "generator" {
+			input.Query = c.list.Query()
+		}
+		command, err := c.Script.Cmd(input)
 		log.Println("Running command", command)
 		if err != nil {
 			return NewErrorCmd(err)
 		}
 		command.Dir = c.manifest.Dir()
 		env := os.Environ()
-		if c.Script.Mode == "generator" {
-			env = append(env, fmt.Sprintf("SUNBEAM_QUERY=%s", c.list.Query()))
-		}
 		command.Env = env
 
 		res, err := command.Output()
@@ -93,8 +98,8 @@ func (c *RunContainer) Run() tea.Cmd {
 		}
 		output := string(res)
 
-		switch c.Script.Mode {
-		case "filter", "generator":
+		switch c.Script.Output.Type {
+		case "list":
 			scriptItems, err := api.ParseListItems(output)
 			if err != nil {
 				return err
@@ -102,6 +107,7 @@ func (c *RunContainer) Run() tea.Cmd {
 
 			listItems := make([]ListItem, len(scriptItems))
 			for i, scriptItem := range scriptItems {
+				scriptItem := scriptItem
 				actions := make([]Action, len(scriptItem.Actions))
 				for i, scriptAction := range scriptItem.Actions {
 					if i == 0 {
@@ -112,34 +118,65 @@ func (c *RunContainer) Run() tea.Cmd {
 					}
 					actions[i] = NewAction(scriptAction)
 				}
+				if scriptItem.Id == "" {
+					scriptItem.Id = strconv.Itoa(i)
+				}
 				listItems[i] = ListItem{
-					Title:       scriptItem.Title,
-					Subtitle:    scriptItem.Subtitle,
+					id:       scriptItem.Id,
+					Title:    scriptItem.Title,
+					Subtitle: scriptItem.Subtitle,
+					Preview:  scriptItem.Preview,
+					PreviewCmd: func() string {
+						cmd := scriptItem.PreviewCommand()
+						if cmd == nil {
+							return "No preview command"
+						}
+						out, err := cmd.Output()
+						if err != nil {
+							var exitErr *exec.ExitError
+							if errors.As(err, &exitErr) {
+								return string(exitErr.Stderr)
+							}
+							return err.Error()
+						}
+
+						return string(out)
+					},
 					Accessories: scriptItem.Accessories,
 					Actions:     actions,
 				}
 			}
 			return ListOutput(listItems)
-		case "pager":
+		case "action":
+			scriptAction, err := api.ParseAction(output)
+			if err != nil {
+				return err
+			}
+			action := NewAction(scriptAction)
+			return action
+		case "raw":
 			return FullOutput(output)
 		default:
-			return fmt.Errorf("unknown page type %s", c.Script.Mode)
+			return fmt.Errorf("unknown page type %s", c.Script.Output.Type)
 		}
 	}
 
-	switch c.Script.Mode {
-	case "filter", "generator":
+	switch c.Script.Output.Type {
+	case "list":
 		c.currentView = "list"
 		if c.list != nil {
 			return runCmd
 		}
 		c.list = NewList(c.Script.Title)
-		if c.Script.Mode == "generator" {
-			c.list.dynamic = true
+		if c.Script.Output.Mode == "generator" {
+			c.list.Dynamic = true
+		}
+		if c.Script.Output.ShowPreview {
+			c.list.ShowPreview = true
 		}
 		c.list.SetSize(c.width, c.height)
 		return tea.Batch(runCmd, c.list.Init())
-	case "pager":
+	case "raw":
 		c.currentView = "detail"
 		if c.detail != nil {
 			return runCmd
@@ -167,8 +204,8 @@ func (c *RunContainer) SetSize(width, height int) {
 func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case ListOutput:
-		c.list.SetItems(msg)
-		return c, nil
+		cmd := c.list.SetItems(msg)
+		return c, cmd
 	case FullOutput:
 		c.detail.SetContent(string(msg))
 		c.detail.SetIsLoading(false)

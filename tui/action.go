@@ -64,7 +64,7 @@ type ExecMsg struct {
 	OnSuccess string
 }
 
-func NewAction(scriptAction api.Action) Action {
+func NewAction(scriptAction api.ScriptAction) Action {
 	var msg tea.Msg
 	switch scriptAction.Type {
 	case "open-url":
@@ -100,7 +100,7 @@ func NewAction(scriptAction api.Action) Action {
 	case "run-script":
 		msg = RunMsg{
 			Extension: scriptAction.Extension,
-			Page:      scriptAction.Page,
+			Page:      scriptAction.Script,
 			Params:    scriptAction.With,
 		}
 	case "exec-command":
@@ -108,6 +108,11 @@ func NewAction(scriptAction api.Action) Action {
 			Command:   exec.Command("sh", "-c", scriptAction.Command),
 			OnSuccess: scriptAction.OnSuccess,
 		}
+	case "exit":
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Exit"
+		}
+		msg = tea.Quit()
 	default:
 		scriptAction.Title = "Unknown"
 		msg = fmt.Errorf("unknown action type: %s", scriptAction.Type)
@@ -124,13 +129,13 @@ func NewAction(scriptAction api.Action) Action {
 
 type ActionList struct {
 	header Header
-	filter *Filter
+	filter Filter
 	footer Footer
 
 	actions []Action
 }
 
-func NewActionList() *ActionList {
+func NewActionList() ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
 
@@ -141,7 +146,7 @@ func NewActionList() *ActionList {
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide")),
 	)
 
-	return &ActionList{
+	return ActionList{
 		header: header,
 		filter: filter,
 		footer: footer,
@@ -171,49 +176,50 @@ func (al *ActionList) SetActions(actions ...Action) {
 		}
 	}
 	al.filter.SetItems(filterItems)
+	al.filter.FilterItems(al.header.Value())
 }
 
-func (al ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
+func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "tab":
 			if !al.Focused() && len(al.actions) > 1 {
-				return &al, al.Focus()
+				return al, al.Focus()
 			} else if al.Focused() {
 				al.header.input.SetValue("")
 				al.filter.FilterItems("")
 				al.Blur()
-				return &al, nil
+				return al, nil
 			}
 		case "esc":
 			if !al.Focused() {
-				return &al, nil
+				return al, nil
 			}
 
 			if al.header.input.Value() != "" {
 				al.header.input.SetValue("")
 				al.filter.FilterItems("")
-				return &al, nil
+				return al, nil
 			}
 
 			al.Blur()
-			return &al, nil
+			return al, nil
 
 		case "enter":
 			selectedItem := al.filter.Selection()
 			if selectedItem == nil {
-				return &al, nil
+				return al, nil
 			}
 			listItem, _ := selectedItem.(ListItem)
 			al.Blur()
-			return &al, listItem.Actions[0].Cmd
+			return al, listItem.Actions[0].Cmd
 		}
 
 		for _, action := range al.actions {
 			if key.Matches(msg, action.Binding()) {
 				al.Blur()
-				return &al, action.Cmd
+				return al, action.Cmd
 			}
 		}
 	}
@@ -222,21 +228,20 @@ func (al ActionList) Update(msg tea.Msg) (*ActionList, tea.Cmd) {
 	var cmd tea.Cmd
 
 	if !al.Focused() {
-		return &al, nil
+		return al, nil
 	}
 
 	header, cmd := al.header.Update(msg)
 	cmds = append(cmds, cmd)
 	if header.Value() != al.header.Value() {
-		cmd = al.filter.FilterItems(header.Value())
-		cmds = append(cmds, cmd)
+		al.filter.FilterItems(header.Value())
 	}
 	al.header = header
 
 	al.filter, cmd = al.filter.Update(msg)
 	cmds = append(cmds, cmd)
 
-	return &al, tea.Batch(cmds...)
+	return al, tea.Batch(cmds...)
 }
 
 func (al ActionList) Focused() bool {

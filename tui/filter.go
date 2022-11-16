@@ -11,6 +11,7 @@ import (
 type FilterItem interface {
 	FilterValue() string
 	Render(width int, selected bool) string
+	ID() string
 }
 
 type Filter struct {
@@ -26,8 +27,8 @@ type Filter struct {
 	cursor    int
 }
 
-func NewFilter() *Filter {
-	return &Filter{}
+func NewFilter() Filter {
+	return Filter{}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -44,10 +45,9 @@ func (f Filter) Selection() FilterItem {
 
 func (f *Filter) SetItems(items []FilterItem) {
 	f.choices = items
-	f.FilterItems(f.Query)
 }
 
-func (f *Filter) FilterItems(query string) tea.Cmd {
+func (f *Filter) FilterItems(query string) {
 	values := make([]string, len(f.choices))
 	for i, choice := range f.choices {
 		values[i] = choice.FilterValue()
@@ -68,8 +68,6 @@ func (f *Filter) FilterItems(query string) tea.Cmd {
 	// Reset the cursor
 	f.cursor = 0
 	f.minIndex = 0
-
-	return NewFilterItemChangeCmd(f.Selection())
 }
 
 func (m Filter) Init() tea.Cmd { return nil }
@@ -111,20 +109,18 @@ func (m Filter) View() string {
 	return lipgloss.Place(m.Width, m.Height, lipgloss.Top, lipgloss.Left, filteredView, lipgloss.WithWhitespaceBackground(theme.Bg()))
 }
 
-func (f Filter) Update(msg tea.Msg) (*Filter, tea.Cmd) {
+func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+n", "ctrl+j", "down":
 			f.CursorDown()
-			return &f, NewFilterItemChangeCmd(f.Selection())
 		case "ctrl+p", "ctrl+k", "up":
 			f.CursorUp()
-			return &f, NewFilterItemChangeCmd(f.Selection())
 		}
 	}
 
-	return &f, nil
+	return f, nil
 }
 
 func (m Filter) itemHeight() int {
@@ -162,14 +158,4 @@ func clamp(min, max, val int) int {
 		return max
 	}
 	return val
-}
-
-type FilterItemChange struct {
-	FilterItem FilterItem
-}
-
-func NewFilterItemChangeCmd(filterItem FilterItem) tea.Cmd {
-	return func() tea.Msg {
-		return FilterItemChange{FilterItem: filterItem}
-	}
 }

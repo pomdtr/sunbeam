@@ -6,16 +6,25 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type ListItem struct {
+	id          string
 	Title       string
-	PreviewCmd  string
 	Subtitle    string
+	Preview     string
+	PreviewCmd  func() string
 	Accessories []string
 	Actions     []Action
+}
+
+func (i ListItem) ID() string {
+	return i.id
 }
 
 func (i ListItem) FilterValue() string {
@@ -68,11 +77,14 @@ func (i ListItem) Render(width int, selected bool) string {
 type List struct {
 	header  Header
 	footer  Footer
-	actions *ActionList
+	actions ActionList
 
-	dynamic bool
+	Dynamic     bool
+	ShowPreview bool
 
-	filter *Filter
+	previewContent string
+	filter         Filter
+	viewport       viewport.Model
 }
 
 func NewList(title string) *List {
@@ -81,16 +93,20 @@ func NewList(title string) *List {
 	header := NewHeader()
 	header.SetIsLoading(true)
 
+	viewport := viewport.New(0, 0)
+	viewport.Style = styles.Regular
+
 	filter := NewFilter()
 	filter.DrawLines = true
 
 	footer := NewFooter(title)
 
 	return &List{
-		actions: actions,
-		header:  header,
-		filter:  filter,
-		footer:  footer,
+		actions:  actions,
+		header:   header,
+		filter:   filter,
+		viewport: viewport,
+		footer:   footer,
 	}
 }
 
@@ -99,14 +115,28 @@ func (c *List) Init() tea.Cmd {
 }
 
 func (c *List) SetSize(width, height int) {
-	availableHeight := height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+	availableHeight := utils.Max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
 	c.footer.Width = width
 	c.header.Width = width
-	c.filter.SetSize(width, availableHeight)
 	c.actions.SetSize(width, height)
+	if c.ShowPreview {
+		c.viewport.Width = width / 2
+		c.viewport.Height = availableHeight
+		c.filter.SetSize(width-c.viewport.Width-1, availableHeight)
+		c.setPreviewContent(c.previewContent)
+	} else {
+		c.filter.SetSize(width, availableHeight)
+	}
 }
 
-func (c *List) SetItems(items []ListItem) {
+func (l *List) setPreviewContent(content string) {
+	l.previewContent = content
+	content = wordwrap.String(content, l.viewport.Width-4)
+	content = lipgloss.NewStyle().Padding(0, 1).Width(l.viewport.Width).Render(content)
+	l.viewport.SetContent(content)
+}
+
+func (c *List) SetItems(items []ListItem) tea.Cmd {
 	c.header.SetIsLoading(false)
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
@@ -114,22 +144,28 @@ func (c *List) SetItems(items []ListItem) {
 	}
 
 	c.filter.SetItems(filterItems)
-	c.updateActions()
+	return c.FilterItems(c.Query())
 }
 
-func (l *List) updateActions() {
-	if l.filter.Selection() == nil {
-		l.actions.SetTitle("")
-		l.actions.SetActions()
-		l.footer.SetBindings()
-	}
+type PreviewMsg string
 
-	item, _ := l.filter.Selection().(ListItem)
+func (l *List) updateActions(item ListItem) tea.Cmd {
 	l.actions.SetTitle(item.Title)
 	l.actions.SetActions(item.Actions...)
+	if l.ShowPreview {
+		if item.Preview != "" {
+			l.setPreviewContent(item.Preview)
+
+		} else if item.PreviewCmd != nil {
+			l.setPreviewContent("Loading preview...")
+			return func() tea.Msg {
+				return PreviewMsg(item.PreviewCmd())
+			}
+		}
+	}
+
 	if len(item.Actions) == 0 {
 		l.footer.SetBindings()
-
 	} else if len(item.Actions) == 1 {
 		l.footer.SetBindings(
 			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
@@ -140,16 +176,11 @@ func (l *List) updateActions() {
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
 		)
 	}
+	return nil
 }
 
 func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
-	case FilterItemChange:
-		if c.actions.Focused() {
-			return c, nil
-		}
-		c.updateActions()
-
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEscape:
@@ -157,7 +188,8 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 				break
 			} else if c.header.input.Value() != "" {
 				c.header.input.SetValue("")
-				c.filter.FilterItems("")
+				cmd := c.FilterItems("")
+				return c, cmd
 			} else {
 				return c, PopCmd
 			}
@@ -170,7 +202,9 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 		return c, NewReloadCmd(map[string]any{
 			"query": msg.query,
 		})
-
+	case PreviewMsg:
+		c.setPreviewContent(string(msg))
+		return c, nil
 	}
 
 	var cmd tea.Cmd
@@ -186,19 +220,31 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	header, cmd := c.header.Update(msg)
 	cmds = append(cmds, cmd)
 	if header.Value() != c.header.Value() {
-		if c.dynamic {
+		if c.Dynamic {
 			cmd = tea.Tick(500*time.Millisecond, func(_ time.Time) tea.Msg {
 				return updateQueryMsg{query: header.Value()}
 			})
+			cmds = append(cmds, cmd)
 		} else {
-			cmd = c.filter.FilterItems(header.Value())
+			cmd = c.FilterItems(header.Value())
+			cmds = append(cmds, cmd)
 		}
-		cmds = append(cmds, cmd)
 	}
 	c.header = header
 
-	c.filter, cmd = c.filter.Update(msg)
+	filter, cmd := c.filter.Update(msg)
 	cmds = append(cmds, cmd)
+	if filter.Selection() == nil {
+		c.actions.SetTitle("")
+		c.actions.SetActions()
+		c.footer.SetBindings()
+		c.setPreviewContent("")
+	} else if c.filter.Selection() == nil || c.filter.Selection().ID() != filter.Selection().ID() {
+		selection := filter.Selection().(ListItem)
+		cmd = c.updateActions(selection)
+		cmds = append(cmds, cmd)
+	}
+	c.filter = filter
 
 	return c, tea.Batch(cmds...)
 }
@@ -207,10 +253,30 @@ type updateQueryMsg struct {
 	query string
 }
 
+func (c *List) FilterItems(query string) tea.Cmd {
+	c.filter.FilterItems(query)
+	if c.filter.Selection() != nil {
+		return c.updateActions(c.filter.Selection().(ListItem))
+	}
+	return nil
+}
+
 func (c List) View() string {
 	if c.actions.Focused() {
 		return c.actions.View()
 	}
+
+	if c.ShowPreview {
+		var separatorChars = make([]string, c.viewport.Height)
+		for i := 0; i < c.viewport.Height; i++ {
+			separatorChars[i] = "│"
+		}
+		separator := styles.Regular.Render(strings.Join(separatorChars, "\n"))
+		view := lipgloss.JoinHorizontal(lipgloss.Top, c.filter.View(), separator, c.viewport.View())
+
+		return lipgloss.JoinVertical(lipgloss.Top, c.header.View(), view, c.footer.View())
+	}
+
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.filter.View(), c.footer.View())
 }
 

@@ -2,20 +2,10 @@ package utils
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
-
-	"github.com/alessio/shellescape"
 )
 
-func RenderString(templateString string, inputs map[string]string) (string, error) {
-	funcMap := template.FuncMap{}
-	funcMap["input"] = func(input string) (string, error) {
-		if value, ok := inputs[input]; ok {
-			return shellescape.Quote(value), nil
-		}
-		return "", fmt.Errorf("input %s not found", input)
-	}
+func RenderString(templateString string, funcMap template.FuncMap) (string, error) {
 
 	t, err := template.New("").Delims("${{", "}}").Funcs(funcMap).Parse(templateString)
 

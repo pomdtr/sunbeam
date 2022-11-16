@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/adrg/xdg"
@@ -216,12 +217,13 @@ func ScriptRunCmd(extension string, script string, params map[string]any) tea.Cm
 func RootList(manifests ...api.Manifest) Container {
 	entrypoints := make([]ListItem, 0)
 	for _, manifest := range manifests {
-		for _, rootItem := range manifest.Entrypoints {
+		for i, rootItem := range manifest.Entrypoints {
 			title := rootItem.Title
 			rootItem.Title = "Open Command"
 			rootItem.Extension = manifest.Name
 			rootItem.Shortcut = "enter"
 			entrypoints = append(entrypoints, ListItem{
+				id:       strconv.Itoa(i),
 				Title:    title,
 				Subtitle: manifest.Title,
 				Actions: []Action{
@@ -229,7 +231,7 @@ func RootList(manifests ...api.Manifest) Container {
 					{
 						Title:    "Copy Shortcut",
 						Shortcut: "ctrl+y",
-						Cmd:      ScriptRunCmd(manifest.Name, rootItem.Page, rootItem.With),
+						Cmd:      ScriptRunCmd(manifest.Name, rootItem.Script, rootItem.With),
 					},
 				},
 			})

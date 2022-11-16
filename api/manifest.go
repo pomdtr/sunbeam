@@ -20,7 +20,7 @@ type Manifest struct {
 	Title string `json:"title" yaml:"title"`
 	Name  string `json:"name" yaml:"name"`
 
-	Entrypoints []Action          `json:"entrypoints" yaml:"entrypoints"`
+	Entrypoints []ScriptAction    `json:"entrypoints" yaml:"entrypoints"`
 	Scripts     map[string]Script `json:"scripts" yaml:"scripts"`
 
 	Url url.URL

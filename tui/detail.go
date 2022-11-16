@@ -13,7 +13,7 @@ type Detail struct {
 	Style      lipgloss.Style
 	content    string
 	viewport   viewport.Model
-	actionList *ActionList
+	actionList ActionList
 	footer     Footer
 }
 

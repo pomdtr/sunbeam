@@ -51,7 +51,7 @@ func sunbeamRun(cmd *cobra.Command, args []string) {
 		log.Fatalf("Page not found: %s", scriptName)
 	}
 
-	itemMap := make(map[string]api.FormItem)
+	itemMap := make(map[string]api.ScriptInput)
 	for _, formItem := range script.Inputs {
 		itemMap[formItem.Name] = formItem
 	}
