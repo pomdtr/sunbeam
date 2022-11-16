@@ -10,11 +10,6 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": [
-                "extension",
-                "install",
-                "https://github.com/pomdtr/sunbeam-brew"
-            ],
             "showLog": true
         }
     ]

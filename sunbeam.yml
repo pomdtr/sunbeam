@@ -5,20 +5,16 @@ version: "1.0"
 title: GitHub
 entrypoints:
   - title: List My Repositories
-    type: run-script
     script: list-repositories
     with:
       owner: pomdtr
   - title: List Repositories
-    type: run-script
     script: list-repositories
   - title: List Dailymotion Repositories
-    type: run-script
     script: list-repositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
-    type: run-script
     script: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
@@ -26,7 +22,9 @@ scripts:
   list-repositories:
     title: List Repositories
     command: ./examples/github/list-repos.sh ${{ input "owner" }}
-    output:
+    onSuccess: push-page
+    page:
+      title: List Repositories
       type: list
       mode: filter
       showPreview: true
@@ -38,7 +36,9 @@ scripts:
   list-pull-requests:
     title: List Pull Requests
     command: examples/github/list-prs.sh ${{ input "repository" }}
-    output:
+    onSuccess: push-page
+    page:
+      title: List Pull Requests
       type: list
       mode: filter
     inputs:
@@ -52,15 +52,12 @@ version: "1.0"
 title: File Browser
 entrypoints:
   - title: Browse Custom Directory
-    type: run-script
     script: file-browser
   - title: Browse Root Directory
-    type: run-script
     script: file-browser
     with:
       root: "/"
   - title: Browse Current Directory
-    type: run-script
     script: file-browser
     with:
       root: "."
@@ -68,7 +65,9 @@ scripts:
   file-browser:
     title: File Browser
     command: ./examples/file-browser.py --root ${{ input "root" }}
-    output:
+    onSuccess: push-page
+    page:
+      title: File Browser
       type: "list"
       mode: filter
     inputs:
@@ -83,14 +82,13 @@ version: "1.0"
 title: Bitwarden
 entrypoints:
   - title: Search Passwords
-    type: run-script
     script: list-passwords
 scripts:
   list-passwords:
-    title: Search Passwords
-    # Please do not do this, you are better of moving the logic to an external file
     command: ./examples/bitwarden.sh
-    output:
+    onSuccess: push-page
+    page:
+      title: Seach Passwords
       type: list
       mode: filter
 ---
@@ -99,16 +97,16 @@ name: jira
 version: "1.0"
 title: Jira
 entrypoints:
-  - type: run-script
-    title: List Issues
+  - title: List Issues
     script: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
 scripts:
   list-issues:
-    title: List Issues
     command: ./examples/jira.sh ${{ input "jql" }}
-    output:
+    onSuccess: push-page
+    page:
+      title: List Issues
       type: list
       mode: filter
     inputs:
@@ -121,13 +119,14 @@ name: google
 title: Google
 version: "1.0"
 entrypoints:
-  - type: run-script
-    title: Google Suggestions
+  - title: Google Suggestions
     script: google-suggestions
 scripts:
   google-suggestions:
     command: ./examples/google.mjs --query ${{ query }}
-    output:
+    onSuccess: push-page
+    page:
+      title: Google Suggestions
       type: list
       mode: generator
 ---
@@ -136,16 +135,16 @@ name: random
 title: Random
 version: "1.0"
 entrypoints:
-  - type: run-script
-    title: "Generate 5 random numbers"
+  - title: "Generate 5 random numbers"
     script: "random-list"
-  - type: run-script
-    title: "Random Number"
+  - title: "Random Number"
     script: "random-number"
 scripts:
   random-list:
     command: ./examples/random_list.py
-    output:
+    onSuccess: push-page
+    page:
+      title: Random List
       type: list
       mode: filter
 ---
@@ -154,8 +153,7 @@ name: Sunbeam
 title: Sunbeam
 version: "1.0"
 entrypoints:
-  - type: run-script
-    title: "Search Extensions"
+  - title: "Search Extensions"
     script: search-extensions
 scripts:
   search-extensions:
@@ -172,7 +170,9 @@ scripts:
               .owner.login
             ]
         }'
-    output:
+    onSuccess: push-page
+    page:
+      title: Search Extensions
       type: list
       mode: filter
 ---
@@ -181,33 +181,30 @@ name: tldr
 title: TLDR
 version: "1.0"
 entrypoints:
-  - type: run-script
-    title: "Search MacOS Pages"
+  - title: "Search MacOS Pages"
     script: search-pages
     with:
-      platform: macos
-  - type: run-script
-    title: "Search Linux Pages"
+      platform: osx
+  - title: "Search Linux Pages"
     script: search-pages
     with:
       platform: linux
 scripts:
   search-pages:
-    title: Search TLDR Pages
     command: |
       tldr --list --platform ${{ input "platform" }} | sunbeam jq -R '{
         id: .,
         title: .,
         previewCmd: "tldr --platform ${{ input "platform" }} \(.) --raw",
         actions: [
-          { type: "exit" }
+          {"type": "open-url", "url": "https://tldr.ostera.io/${{ input "platform" }}/\(.)", "title": "Open in Browser"}
         ]
-      }'
-    output:
-      type: list
-      mode: filter
-      showPreview: true
     inputs:
       - name: platform
         type: textfield
-        title: Platform
+        title: Platform      }'
+    onSuccess: push-page
+    page:
+      title: Search TLDR Pages
+      type: list
+      mode: filter

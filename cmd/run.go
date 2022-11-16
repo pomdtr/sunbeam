@@ -10,13 +10,13 @@ import (
 )
 
 type RunFlags struct {
-	Params []string
+	With []string
 }
 
 var runFlags = RunFlags{}
 
 func init() {
-	runCmd.Flags().StringArrayVarP(&runFlags.Params, "param", "p", []string{}, "Parameters to pass to the script")
+	runCmd.Flags().StringArrayVarP(&runFlags.With, "with", "w", []string{}, "Parameters to pass to the script")
 	rootCmd.AddCommand(runCmd)
 }
 
@@ -57,7 +57,7 @@ func sunbeamRun(cmd *cobra.Command, args []string) {
 	}
 
 	scriptParams := make(map[string]any)
-	for _, param := range runFlags.Params {
+	for _, param := range runFlags.With {
 		tokens := strings.SplitN(param, "=", 2)
 		if len(tokens) != 2 {
 			log.Fatalf("Invalid parameter: %s", param)

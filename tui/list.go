@@ -152,12 +152,12 @@ type PreviewMsg string
 func (l *List) updateActions(item ListItem) tea.Cmd {
 	l.actions.SetTitle(item.Title)
 	l.actions.SetActions(item.Actions...)
+	var cmd tea.Cmd
 	if l.ShowPreview {
 		if item.Preview != "" {
 			l.setPreviewContent(item.Preview)
 		} else if item.PreviewCmd != nil {
-			cmd := l.header.SetIsLoading(true)
-			return tea.Batch(cmd, func() tea.Msg {
+			cmd = tea.Batch(l.header.SetIsLoading(true), func() tea.Msg {
 				return PreviewMsg(item.PreviewCmd())
 			})
 		}
@@ -175,7 +175,7 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
 		)
 	}
-	return nil
+	return cmd
 }
 
 func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {

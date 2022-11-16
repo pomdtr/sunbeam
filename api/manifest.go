@@ -16,11 +16,17 @@ type Api struct {
 	ExtensionRoot string
 }
 
+type Entrypoint struct {
+	Script string
+	Title  string
+	With   map[string]any
+}
+
 type Manifest struct {
 	Title string `json:"title" yaml:"title"`
 	Name  string `json:"name" yaml:"name"`
 
-	Entrypoints []ScriptAction    `json:"entrypoints" yaml:"entrypoints"`
+	Entrypoints []Entrypoint      `json:"entrypoints" yaml:"entrypoints"`
 	Scripts     map[string]Script `json:"scripts" yaml:"scripts"`
 
 	Url url.URL

@@ -12,14 +12,15 @@ import (
 )
 
 type Script struct {
-	Output  ScriptOutput  `json:"output" yaml:"output"`
-	Inputs  []ScriptInput `json:"inputs" yaml:"inputs"`
-	Title   string        `json:"title" yaml:"title"`
-	Command string        `json:"command" yaml:"command"`
+	Command   string        `json:"command" yaml:"command"`
+	OnSuccess string        `json:"onSuccess" yaml:"onSuccess"`
+	Inputs    []ScriptInput `json:"inputs" yaml:"inputs"`
+	Page      Page          `json:"page" yaml:"page"`
 }
 
-type ScriptOutput struct {
+type Page struct {
 	Type        string `json:"type" yaml:"type"`
+	Title       string `json:"title" yaml:"title"`
 	Mode        string `json:"mode" yaml:"mode"`
 	ShowPreview bool   `json:"showPreview" yaml:"showPreview"`
 }
@@ -98,7 +99,7 @@ func (s Script) Cmd(input CommandInput) (*exec.Cmd, error) {
 			return "", fmt.Errorf("input %s not found", input)
 		},
 		"query": func() string {
-			return input.Query
+			return shellescape.Quote(input.Query)
 		},
 	}
 

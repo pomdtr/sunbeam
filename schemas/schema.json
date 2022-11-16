@@ -33,64 +33,32 @@
         "entrypoints": {
             "type": "array",
             "items": {
-                "$ref": "#/definitions/action"
+                "type": "object",
+                "required": [
+                    "script",
+                    "title"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "script": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "with": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "scripts": {
             "type": "object",
             "additionalProperties": {
-                "type": "object",
-                "allOf": [
-                    {
-                        "$ref": "#/definitions/script"
-                    }
-                ],
-                "required": [
-                    "output"
-                ],
-                "properties": {
-                    "output": {
-                        "type": "object",
-                        "properties": {
-                            "type": {
-                                "type": "string",
-                                "enum": [
-                                    "list",
-                                    "detail",
-                                    "action"
-                                ]
-                            }
-                        },
-                        "allOf": [
-                            {
-                                "if": {
-                                    "properties": {
-                                        "type": {
-                                            "const": "list"
-                                        }
-                                    }
-                                },
-                                "then": {
-                                    "required": [
-                                        "mode"
-                                    ],
-                                    "properties": {
-                                        "mode": {
-                                            "type": "string",
-                                            "enum": [
-                                                "generator",
-                                                "filter"
-                                            ]
-                                        },
-                                        "showPreview": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
+                "$ref": "#/definitions/script"
             }
         }
     },
@@ -101,19 +69,25 @@
                 "command"
             ],
             "properties": {
-                "command": {
-                    "type": "string"
+                "onSuccess": {
+                    "type": "string",
+                    "enum": [
+                        "push-page",
+                        "copy-to-clipboard",
+                        "open-in-browser"
+                    ]
                 },
-                "title": {
+                "command": {
                     "type": "string"
                 },
                 "cwd": {
                     "type": "string",
                     "enum": [
-                        "currentDir",
-                        "extensionDir"
+                        "current",
+                        "extension",
+                        "home"
                     ],
-                    "default": "extensionDir"
+                    "default": "extension"
                 },
                 "inputs": {
                     "type": "array",
@@ -121,7 +95,89 @@
                         "$ref": "#/definitions/formitem"
                     }
                 }
-            }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "onSuccess": {
+                                "const": "push-page"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "page"
+                        ],
+                        "properties": {
+                            "page": {
+                                "$ref": "#/definitions/page"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "page": {
+            "type": "object",
+            "required": [
+                "type",
+                "title"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "list",
+                        "detail"
+                    ]
+                },
+                "title": {
+                    "type": "string"
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "list"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "mode"
+                        ],
+                        "properties": {
+                            "mode": {
+                                "type": "string",
+                                "enum": [
+                                    "generator",
+                                    "filter"
+                                ]
+                            },
+                            "showPreview": {
+                                "type": "boolean"
+                            },
+                            "searchPlaceholder": {
+                                "type": "string",
+                                "default": "Search..."
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "list"
+                            }
+                        }
+                    },
+                    "then": {}
+                }
+            ]
         },
         "listitem": {
             "type": "object",

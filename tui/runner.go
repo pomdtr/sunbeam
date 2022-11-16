@@ -60,7 +60,7 @@ func (c *RunContainer) Run() tea.Cmd {
 		}
 
 		c.currentView = "form"
-		c.form = NewForm(c.Script.Title, items, func(values map[string]any) tea.Cmd {
+		c.form = NewForm(c.Script.Page.Title, items, func(values map[string]any) tea.Cmd {
 			for k, v := range values {
 				c.params[k] = v
 			}
@@ -76,7 +76,7 @@ func (c *RunContainer) Run() tea.Cmd {
 		input := api.CommandInput{
 			Params: c.params,
 		}
-		if c.Script.Output.Mode == "generator" {
+		if c.Script.Page.Mode == "generator" {
 			input.Query = c.list.Query()
 		}
 		command, err := c.Script.Cmd(input)
@@ -98,7 +98,7 @@ func (c *RunContainer) Run() tea.Cmd {
 		}
 		output := string(res)
 
-		switch c.Script.Output.Type {
+		switch c.Script.Page.Type {
 		case "list":
 			scriptItems, err := api.ParseListItems(output)
 			if err != nil {
@@ -157,21 +157,21 @@ func (c *RunContainer) Run() tea.Cmd {
 		case "raw":
 			return FullOutput(output)
 		default:
-			return fmt.Errorf("unknown page type %s", c.Script.Output.Type)
+			return fmt.Errorf("unknown page type %s", c.Script.Page.Type)
 		}
 	}
 
-	switch c.Script.Output.Type {
+	switch c.Script.Page.Type {
 	case "list":
 		c.currentView = "list"
 		if c.list != nil {
 			return runCmd
 		}
-		c.list = NewList(c.Script.Title)
-		if c.Script.Output.Mode == "generator" {
+		c.list = NewList(c.Script.Page.Title)
+		if c.Script.Page.Mode == "generator" {
 			c.list.Dynamic = true
 		}
-		if c.Script.Output.ShowPreview {
+		if c.Script.Page.ShowPreview {
 			c.list.ShowPreview = true
 		}
 		c.list.SetSize(c.width, c.height)
@@ -181,7 +181,7 @@ func (c *RunContainer) Run() tea.Cmd {
 		if c.detail != nil {
 			return runCmd
 		}
-		c.detail = NewDetail(c.Script.Title)
+		c.detail = NewDetail(c.Script.Page.Title)
 		c.detail.SetSize(c.width, c.height)
 		return tea.Batch(runCmd, c.detail.Init())
 	default:
@@ -219,7 +219,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			Action{Title: "Reload", Shortcut: "ctrl+r", Cmd: NewReloadCmd(nil)},
 		)
 		return c, nil
-	case ReloadMsg:
+	case ReloadPageMsg:
 		for k, v := range msg.Params {
 			c.params[k] = v
 		}

@@ -43,20 +43,20 @@ type OpenFileMessage struct {
 
 func NewReloadCmd(params map[string]any) tea.Cmd {
 	return func() tea.Msg {
-		return ReloadMsg{
+		return ReloadPageMsg{
 			Params: params,
 		}
 	}
 }
 
-type ReloadMsg struct {
+type ReloadPageMsg struct {
 	Params map[string]any
 }
 
-type RunMsg struct {
+type RunScriptMsg struct {
 	Extension string
-	Page      string
-	Params    map[string]any
+	Script    string
+	With      map[string]any
 }
 
 type ExecMsg struct {
@@ -94,14 +94,14 @@ func NewAction(scriptAction api.ScriptAction) Action {
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Reload Script"
 		}
-		msg = ReloadMsg{
+		msg = ReloadPageMsg{
 			Params: scriptAction.With,
 		}
 	case "run-script":
-		msg = RunMsg{
+		msg = RunScriptMsg{
 			Extension: scriptAction.Extension,
-			Page:      scriptAction.Script,
-			Params:    scriptAction.With,
+			Script:    scriptAction.Script,
+			With:      scriptAction.With,
 		}
 	case "exec-command":
 		msg = ExecMsg{

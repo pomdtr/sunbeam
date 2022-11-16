@@ -95,20 +95,20 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
-	case RunMsg:
+	case RunScriptMsg:
 		manifest, ok := api.Sunbeam.Extensions[msg.Extension]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		script, ok := manifest.Scripts[msg.Page]
+		script, ok := manifest.Scripts[msg.Script]
 		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Page))
+			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Script))
 		}
 
-		if script.Title == "" {
-			script.Title = msg.Page
+		if script.Page.Title == "" {
+			script.Page.Title = msg.Script
 		}
-		runner := NewRunContainer(manifest, script, msg.Params)
+		runner := NewRunContainer(manifest, script, msg.With)
 		m.Push(runner)
 		return m, runner.Init()
 	case ExecMsg:
@@ -119,7 +119,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, NewErrorCmd(err)
 			}
 			return m, func() tea.Msg {
-				return ReloadMsg{}
+				return ReloadPageMsg{}
 			}
 		}
 
@@ -203,9 +203,9 @@ func ScriptRunCmd(extension string, script string, params map[string]any) tea.Cm
 			switch value := value.(type) {
 			case string:
 				value = shellescape.Quote(value)
-				args = append(args, fmt.Sprintf("--param %s=%s", param, value))
+				args = append(args, fmt.Sprintf("--with %s=%s", param, value))
 			case bool:
-				args = append(args, fmt.Sprintf("--param %s=%t", param, value))
+				args = append(args, fmt.Sprintf("--with %s=%t", param, value))
 			}
 		}
 		return CopyTextMsg{
@@ -217,21 +217,28 @@ func ScriptRunCmd(extension string, script string, params map[string]any) tea.Cm
 func RootList(manifests ...api.Manifest) Container {
 	entrypoints := make([]ListItem, 0)
 	for _, manifest := range manifests {
-		for i, rootItem := range manifest.Entrypoints {
-			title := rootItem.Title
-			rootItem.Title = "Open Command"
-			rootItem.Extension = manifest.Name
-			rootItem.Shortcut = "enter"
+		for i, entrypoint := range manifest.Entrypoints {
+			entrypoint := entrypoint
 			entrypoints = append(entrypoints, ListItem{
 				id:       strconv.Itoa(i),
-				Title:    title,
+				Title:    entrypoint.Title,
 				Subtitle: manifest.Title,
 				Actions: []Action{
-					NewAction(rootItem),
+					{
+						Title:    "Run Script",
+						Shortcut: "enter",
+						Cmd: func() tea.Msg {
+							return RunScriptMsg{
+								Extension: manifest.Name,
+								Script:    entrypoint.Script,
+								With:      entrypoint.With,
+							}
+						},
+					},
 					{
 						Title:    "Copy Shortcut",
 						Shortcut: "ctrl+y",
-						Cmd:      ScriptRunCmd(manifest.Name, rootItem.Script, rootItem.With),
+						Cmd:      ScriptRunCmd(manifest.Name, entrypoint.Script, entrypoint.With),
 					},
 				},
 			})
