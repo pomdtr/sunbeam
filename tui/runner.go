@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"strconv"
 
@@ -26,15 +25,18 @@ type RunContainer struct {
 	Script api.Script
 }
 
-func NewRunContainer(manifest api.Manifest, page api.Script, scriptParams map[string]any) *RunContainer {
+func NewRunContainer(manifest api.Manifest, script api.Script, scriptParams map[string]any) *RunContainer {
 	params := make(map[string]any)
 	for k, v := range scriptParams {
 		params[k] = v
 	}
+	if script.Page.Title == "" {
+		script.Page.Title = manifest.Title
+	}
 
 	return &RunContainer{
 		manifest: manifest,
-		Script:   page,
+		Script:   script,
 		params:   params,
 	}
 }
@@ -46,58 +48,48 @@ func (c *RunContainer) Init() tea.Cmd {
 type ListOutput []ListItem
 type FullOutput string
 
-func (c *RunContainer) Run() tea.Cmd {
-	missing := c.Script.CheckMissingParams(c.params)
-
-	if len(missing) > 0 {
-		var err error
-		items := make([]FormItem, len(missing))
-		for i, param := range missing {
-			items[i], err = NewFormItem(param)
-			if err != nil {
-				return NewErrorCmd(err)
-			}
-		}
-
-		c.currentView = "form"
-		c.form = NewForm(c.Script.Page.Title, items, func(values map[string]any) tea.Cmd {
-			for k, v := range values {
-				c.params[k] = v
-			}
-
-			return c.Run()
-		})
-		c.form.SetSize(c.width, c.height)
-		return c.form.Init()
+func (c RunContainer) ScriptCmd() tea.Msg {
+	input := api.CommandInput{
+		Params: c.params,
+	}
+	if c.currentView == "list" {
+		input.Query = c.list.Query()
 	}
 
-	runCmd := func() tea.Msg {
+	command, err := c.Script.Cmd(input)
+	if err != nil {
+		return NewErrorCmd(err)
+	}
 
-		input := api.CommandInput{
-			Params: c.params,
+	command.Dir = c.manifest.Dir()
+	if c.Script.OnSuccess == "" {
+		return ExecMsg{
+			Command: command,
 		}
-		if c.Script.Page.Mode == "generator" {
-			input.Query = c.list.Query()
-		}
-		command, err := c.Script.Cmd(input)
-		log.Println("Running command", command)
-		if err != nil {
-			return NewErrorCmd(err)
-		}
-		command.Dir = c.manifest.Dir()
-		env := os.Environ()
-		command.Env = env
+	}
 
-		res, err := command.Output()
-		if err != nil {
-			var exitErr *exec.ExitError
-			if ok := errors.As(err, &exitErr); ok {
-				return fmt.Errorf("%s", exitErr.Stderr)
-			}
-			return err
+	log.Println("Running command", command)
+	res, err := command.Output()
+	if err != nil {
+		var exitErr *exec.ExitError
+		if ok := errors.As(err, &exitErr); ok {
+			return fmt.Errorf("%s", exitErr.Stderr)
 		}
-		output := string(res)
+		return err
+	}
 
+	output := string(res)
+
+	switch c.Script.OnSuccess {
+	case "copy-to-clipboard":
+		return CopyTextMsg{
+			Text: output,
+		}
+	case "open-in-browser":
+		return OpenUrlMsg{
+			Url: output,
+		}
+	case "push-page":
 		switch c.Script.Page.Type {
 		case "list":
 			scriptItems, err := api.ParseListItems(output)
@@ -159,13 +151,41 @@ func (c *RunContainer) Run() tea.Cmd {
 		default:
 			return fmt.Errorf("unknown page type %s", c.Script.Page.Type)
 		}
+	default:
+		return fmt.Errorf("unknown onSuccess %s", c.Script.OnSuccess)
+	}
+}
+
+func (c *RunContainer) Run() tea.Cmd {
+	missing := c.Script.CheckMissingParams(c.params)
+
+	if len(missing) > 0 {
+		var err error
+		items := make([]FormItem, len(missing))
+		for i, param := range missing {
+			items[i], err = NewFormItem(param)
+			if err != nil {
+				return NewErrorCmd(err)
+			}
+		}
+
+		c.currentView = "form"
+		c.form = NewForm(c.Script.Page.Title, items, func(values map[string]any) tea.Cmd {
+			for k, v := range values {
+				c.params[k] = v
+			}
+
+			return c.Run()
+		})
+		c.form.SetSize(c.width, c.height)
+		return c.form.Init()
 	}
 
 	switch c.Script.Page.Type {
 	case "list":
 		c.currentView = "list"
 		if c.list != nil {
-			return runCmd
+			return c.ScriptCmd
 		}
 		c.list = NewList(c.Script.Page.Title)
 		if c.Script.Page.Mode == "generator" {
@@ -175,17 +195,17 @@ func (c *RunContainer) Run() tea.Cmd {
 			c.list.ShowPreview = true
 		}
 		c.list.SetSize(c.width, c.height)
-		return tea.Batch(runCmd, c.list.Init())
-	case "raw":
+		return tea.Batch(c.ScriptCmd, c.list.Init())
+	case "detail":
 		c.currentView = "detail"
 		if c.detail != nil {
-			return runCmd
+			return c.ScriptCmd
 		}
 		c.detail = NewDetail(c.Script.Page.Title)
 		c.detail.SetSize(c.width, c.height)
-		return tea.Batch(runCmd, c.detail.Init())
+		return tea.Batch(c.ScriptCmd, c.detail.Init())
 	default:
-		return nil
+		return c.ScriptCmd
 	}
 }
 
@@ -258,6 +278,6 @@ func (c *RunContainer) View() string {
 	case "detail":
 		return c.detail.View()
 	default:
-		return "Unknown view"
+		return ""
 	}
 }

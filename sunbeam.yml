@@ -24,7 +24,6 @@ scripts:
     command: ./examples/github/list-repos.sh ${{ input "owner" }}
     onSuccess: push-page
     page:
-      title: List Repositories
       type: list
       mode: filter
       showPreview: true
@@ -38,7 +37,6 @@ scripts:
     command: examples/github/list-prs.sh ${{ input "repository" }}
     onSuccess: push-page
     page:
-      title: List Pull Requests
       type: list
       mode: filter
     inputs:
@@ -67,7 +65,6 @@ scripts:
     command: ./examples/file-browser.py --root ${{ input "root" }}
     onSuccess: push-page
     page:
-      title: File Browser
       type: "list"
       mode: filter
     inputs:
@@ -88,7 +85,6 @@ scripts:
     command: ./examples/bitwarden.sh
     onSuccess: push-page
     page:
-      title: Seach Passwords
       type: list
       mode: filter
 ---
@@ -106,7 +102,6 @@ scripts:
     command: ./examples/jira.sh ${{ input "jql" }}
     onSuccess: push-page
     page:
-      title: List Issues
       type: list
       mode: filter
     inputs:
@@ -126,7 +121,6 @@ scripts:
     command: ./examples/google.mjs --query ${{ query }}
     onSuccess: push-page
     page:
-      title: Google Suggestions
       type: list
       mode: generator
 ---
@@ -144,7 +138,6 @@ scripts:
     command: ./examples/random_list.py
     onSuccess: push-page
     page:
-      title: Random List
       type: list
       mode: filter
 ---
@@ -172,7 +165,6 @@ scripts:
         }'
     onSuccess: push-page
     page:
-      title: Search Extensions
       type: list
       mode: filter
 ---
@@ -182,29 +174,42 @@ title: TLDR
 version: "1.0"
 entrypoints:
   - title: "Search MacOS Pages"
-    script: search-pages
+    script: list
     with:
       platform: osx
   - title: "Search Linux Pages"
-    script: search-pages
+    script: list
     with:
       platform: linux
 scripts:
-  search-pages:
+  list:
     command: |
       tldr --list --platform ${{ input "platform" }} | sunbeam jq -R '{
         id: .,
         title: .,
-        previewCmd: "tldr --platform ${{ input "platform" }} \(.) --raw",
+        previewCmd: "tldr --color always --platform  ${{ input "platform" }} \(.)",
         actions: [
           {"type": "open-url", "url": "https://tldr.ostera.io/${{ input "platform" }}/\(.)", "title": "Open in Browser"}
         ]
+      }'
     inputs:
       - name: platform
         type: textfield
-        title: Platform      }'
+        title: Platform
     onSuccess: push-page
     page:
-      title: Search TLDR Pages
       type: list
       mode: filter
+      showPreview: true
+---
+# yaml-language-server: $schema=./schemas/schema.json
+version: "1.0"
+title: Date Utils
+name: date
+entrypoints:
+  - script: utc
+    title: Copy UTC Timestamp
+scripts:
+  utc:
+    command: date +%Y-%m-%dT%H:%M:%SZ | tr -d '\n'
+    onSuccess: copy-to-clipboard

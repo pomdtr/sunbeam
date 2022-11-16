@@ -53,12 +53,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("could not get home directory: %v", err)
 	}
-	var scriptDir = os.Getenv("SUNBEAM_SCRIPT_DIR")
-	if scriptDir == "" {
-		scriptDir = path.Join(homeDir, ".config", "sunbeam")
-	}
-	scriptDirs = append(scriptDirs, scriptDir)
-
 	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
 	extensionDirs, _ := os.ReadDir(extensionRoot)
 	for _, extensionDir := range extensionDirs {

@@ -121,8 +121,7 @@
         "page": {
             "type": "object",
             "required": [
-                "type",
-                "title"
+                "type"
             ],
             "properties": {
                 "type": {

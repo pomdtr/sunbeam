@@ -36,7 +36,15 @@ func InstallExtension(cmd *cobra.Command, args []string) {
 
 	if _, err = os.Stat(args[0]); err == nil {
 		// Local path
-		name := path.Base(args[0])
+		extensionPath := args[0]
+		if !path.IsAbs(args[0]) {
+			wd, err := os.Getwd()
+			if err != nil {
+				log.Fatal(err)
+			}
+			extensionPath = path.Join(wd, args[0])
+		}
+		name := path.Base(extensionPath)
 		err = os.Symlink(args[0], path.Join(api.Sunbeam.ExtensionRoot, name))
 		if err != nil {
 			log.Fatalln(err)
