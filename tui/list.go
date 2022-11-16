@@ -155,12 +155,11 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 	if l.ShowPreview {
 		if item.Preview != "" {
 			l.setPreviewContent(item.Preview)
-
 		} else if item.PreviewCmd != nil {
-			l.setPreviewContent("Loading preview...")
-			return func() tea.Msg {
+			cmd := l.header.SetIsLoading(true)
+			return tea.Batch(cmd, func() tea.Msg {
 				return PreviewMsg(item.PreviewCmd())
-			}
+			})
 		}
 	}
 
@@ -203,6 +202,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 			"query": msg.query,
 		})
 	case PreviewMsg:
+		c.header.SetIsLoading(false)
 		c.setPreviewContent(string(msg))
 		return c, nil
 	}
