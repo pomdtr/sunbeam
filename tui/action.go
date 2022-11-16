@@ -97,7 +97,7 @@ func NewAction(scriptAction api.Action) Action {
 		msg = ReloadMsg{
 			Params: scriptAction.With,
 		}
-	case "push-page":
+	case "run-script":
 		msg = RunMsg{
 			Extension: scriptAction.Extension,
 			Page:      scriptAction.Page,

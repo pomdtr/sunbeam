@@ -14,6 +14,7 @@ import (
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cli/browser"
 	"github.com/pomdtr/sunbeam/api"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/skratchdot/open-golang/open"
@@ -71,26 +72,25 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.exitMsg = "Copied to clipboard"
 		return m, tea.Quit
-	case OpenUrlMsg, OpenFileMessage:
-		var err error
-		var target, application string
-		switch msg := msg.(type) {
-		case OpenUrlMsg:
-			target = msg.Url
-			application = msg.Application
-		case OpenFileMessage:
-			target = msg.Path
-			application = msg.Application
+	case OpenUrlMsg:
+		err := browser.OpenURL(msg.Url)
+		if err != nil {
+			m.exitMsg = fmt.Sprintf("Failed to open url: %v", err)
 		}
-		if application != "" {
-			err = open.RunWith(target, application)
-			m.exitMsg = fmt.Sprintf("Opened %s with %s", target, application)
+		m.exitMsg = fmt.Sprintf("Opened %s in browser.", msg.Url)
+		return m, tea.Quit
+	case OpenFileMessage:
+		var err error
+
+		if msg.Application != "" {
+			err = open.RunWith(msg.Path, msg.Application)
+			m.exitMsg = fmt.Sprintf("Opened %s with %s", msg.Path, msg.Application)
 		} else {
-			err = open.Run(target)
-			m.exitMsg = fmt.Sprintf("Opened %s", target)
+			err = open.Run(msg.Path)
+			m.exitMsg = fmt.Sprintf("Opened %s", msg.Path)
 		}
 		if err != nil {
-			m.exitMsg = fmt.Sprintf("Failed to open %s: %v", target, err)
+			m.exitMsg = fmt.Sprintf("Failed to open %s: %v", msg.Path, err)
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
@@ -99,7 +99,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		script, ok := manifest.Pages[msg.Page]
+		script, ok := manifest.Scripts[msg.Page]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Page))
 		}

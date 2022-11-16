@@ -1,39 +1,71 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"net/url"
 	"os"
+	"os/exec"
+	"path"
 
-	"github.com/go-git/go-git/v5"
+	"github.com/pomdtr/sunbeam/api"
 	"github.com/spf13/cobra"
 )
 
-var installExtensionCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install a sunbeam extension",
+var extensionCmd = &cobra.Command{
+	Use: "extension",
+}
+
+var extensionInstallCmd = &cobra.Command{
+	Use:   "install <repository>",
+	Short: "Install a sunbeam extension from a git repository",
 	Args:  cobra.ExactArgs(1),
 	Run:   InstallExtension,
 }
 
 func init() {
-	rootCmd.AddCommand(installExtensionCmd)
+	extensionCmd.AddCommand(extensionInstallCmd)
+	rootCmd.AddCommand(extensionCmd)
 }
 
 func InstallExtension(cmd *cobra.Command, args []string) {
-	_, err := git.PlainClone("/tmp", false, &git.CloneOptions{
-		URL:      args[0],
-		Progress: os.Stdout,
-	})
+	var err error
+	if _, err = os.Stat(api.Sunbeam.ExtensionRoot); os.IsNotExist(err) {
+		os.MkdirAll(api.Sunbeam.ExtensionRoot, 0755)
+	}
+
+	if _, err = os.Stat(args[0]); err == nil {
+		// Local path
+		name := path.Base(args[0])
+		err = os.Symlink(args[0], path.Join(api.Sunbeam.ExtensionRoot, name))
+		if err != nil {
+			log.Fatalln(err)
+		}
+		fmt.Println("Installed extension", name)
+		os.Exit(0)
+	}
+
+	// Remote repository
+	url, err := url.Parse(args[0])
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-}
+	name := path.Base(url.Path)
+	target := path.Join(api.Sunbeam.ExtensionRoot, name)
+	if _, err = os.Stat(target); os.IsNotExist(err) {
+		log.Fatalf("Extension %s already installed", name)
+	}
 
-// func ExtensionInstall() *cobra.Command {
-// 	return &cobra.Command{
-// 		Use:   "install",
-// 		Short: "Install an extension",
-// 		Run:   ExtensionInstall,
-// 	}
-// }
+	command := exec.Command("git", "clone", url.String())
+	command.Dir = api.Sunbeam.ExtensionRoot
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+
+	err = command.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Installed extension", name)
+}

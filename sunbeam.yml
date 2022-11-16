@@ -5,24 +5,24 @@ version: "1.0"
 title: GitHub
 entrypoints:
   - title: List My Repositories
-    type: push-page
+    type: run-script
     page: list-repositories
     with:
       owner: pomdtr
   - title: List Repositories
-    type: push-page
+    type: run-script
     page: list-repositories
   - title: List Dailymotion Repositories
-    type: push-page
+    type: run-script
     page: list-repositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
-    type: push-page
+    type: run-script
     page: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
-pages:
+scripts:
   list-repositories:
     mode: filter
     title: List Repositories
@@ -47,19 +47,19 @@ version: "1.0"
 title: File Browser
 entrypoints:
   - title: Browse Custom Directory
-    type: push-page
+    type: run-script
     page: file-browser
   - title: Browse Root Directory
-    type: push-page
+    type: run-script
     page: file-browser
     with:
       root: "/"
   - title: Browse Current Directory
-    type: push-page
+    type: run-script
     page: file-browser
     with:
       root: "."
-pages:
+scripts:
   file-browser:
     mode: filter
     title: File Browser
@@ -76,9 +76,9 @@ version: "1.0"
 title: Bitwarden
 entrypoints:
   - title: Search Passwords
-    type: push-page
+    type: run-script
     page: list-passwords
-pages:
+scripts:
   list-passwords:
     mode: filter
     title: Search Passwords
@@ -90,12 +90,12 @@ name: jira
 version: "1.0"
 title: Jira
 entrypoints:
-  - type: push-page
+  - type: run-script
     title: List Issues
     page: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
-pages:
+scripts:
   list-issues:
     mode: filter
     title: List Issues
@@ -110,10 +110,10 @@ name: google
 title: Google
 version: "1.0"
 entrypoints:
-  - type: push-page
+  - type: run-script
     title: Google Suggestions
     page: google-suggestions
-pages:
+scripts:
   google-suggestions:
     mode: generator
     command: ./examples/google.mjs --query ${{ query }}
@@ -123,13 +123,13 @@ name: random
 title: Random
 version: "1.0"
 entrypoints:
-  - type: push-page
+  - type: run-script
     title: "Generate 5 random numbers"
     page: "random-list"
-  - type: push-page
+  - type: run-script
     title: "Random Number"
     page: "random-number"
-pages:
+scripts:
   random-list:
     mode: filter
     command: ./examples/random_list.py
@@ -138,3 +138,27 @@ pages:
     command: |
       sleep 2
       echo "Random Number: $RANDOM"
+---
+name: Sunbeam
+title: Sunbeam
+version: "1.0"
+entrypoints:
+  - type: run-script
+    title: "Search Extensions"
+    page: search-extensions
+scripts:
+  search-extensions:
+    mode: filter
+    command: |
+      gh api '/search/repositories?q=topic:sunbeam-extension' \
+        --jq '.items[] | {
+            title: .full_name,
+            subtitle: .description,
+            actions: [
+              { type: "open-url", title: "Open in Browser", url: .html_url },
+              { type: "exec-command", title: "Install Extension", command: "sunbeam extension install \(.html_url)" }
+            ],
+            accessories: [
+              .owner.login
+            ]
+          }'

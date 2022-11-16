@@ -46,7 +46,7 @@ func sunbeamRun(cmd *cobra.Command, args []string) {
 
 	scriptName := args[1]
 
-	script, ok := manifest.Pages[scriptName]
+	script, ok := manifest.Scripts[scriptName]
 	if !ok {
 		log.Fatalf("Page not found: %s", scriptName)
 	}

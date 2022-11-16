@@ -21,7 +21,7 @@ type Manifest struct {
 	Name  string `json:"name" yaml:"name"`
 
 	Entrypoints []Action          `json:"entrypoints" yaml:"entrypoints"`
-	Pages       map[string]Script `json:"pages" yaml:"pages"`
+	Scripts     map[string]Script `json:"scripts" yaml:"scripts"`
 
 	Url url.URL
 }
@@ -33,12 +33,6 @@ func (m Manifest) Dir() string {
 var Sunbeam Api
 
 func init() {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatalf("could not get home directory: %v", err)
-	}
-	Sunbeam.ExtensionRoot = path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
-
 	scriptDirs := make([]string, 0)
 
 	currentDir, err := os.Getwd()
@@ -49,15 +43,20 @@ func init() {
 		}
 	}
 
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("could not get home directory: %v", err)
+	}
 	var scriptDir = os.Getenv("SUNBEAM_SCRIPT_DIR")
 	if scriptDir == "" {
 		scriptDir = path.Join(homeDir, ".config", "sunbeam")
 	}
 	scriptDirs = append(scriptDirs, scriptDir)
 
-	extensionDirs, _ := os.ReadDir(Sunbeam.ExtensionRoot)
+	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
+	extensionDirs, _ := os.ReadDir(extensionRoot)
 	for _, extensionDir := range extensionDirs {
-		extensionPath := path.Join(Sunbeam.ExtensionRoot, extensionDir.Name())
+		extensionPath := path.Join(extensionRoot, extensionDir.Name())
 		scriptDirs = append(scriptDirs, extensionPath)
 	}
 
@@ -95,6 +94,7 @@ func init() {
 	}
 
 	Sunbeam = Api{
-		Extensions: manifests,
+		ExtensionRoot: extensionRoot,
+		Extensions:    manifests,
 	}
 }

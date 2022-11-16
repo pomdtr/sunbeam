@@ -26,7 +26,7 @@ items = [
             {"type": "copy-text", "text": image["Repository"]},
             {"type": "copy-text", "text": image["Repository"]},
             {
-                "type": "push-page",
+                "type": "run-script",
                 "script": "delete-image",
                 "with": {"image": image["Repository"]},
             },
