@@ -99,6 +99,9 @@
             "allOf": [
                 {
                     "if": {
+                        "required": [
+                            "onSuccess"
+                        ],
                         "properties": {
                             "onSuccess": {
                                 "const": "push-page"
