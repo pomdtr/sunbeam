@@ -3,7 +3,7 @@
 name: github
 version: "1.0"
 title: GitHub
-entrypoints:
+rootItems:
   - title: List My Repositories
     script: list-repositories
     with:
@@ -47,7 +47,7 @@ scripts:
 name: file-browser
 version: "1.0"
 title: File Browser
-entrypoints:
+rootItems:
   - title: Browse Custom Directory
     script: file-browser
   - title: Browse Root Directory
@@ -75,7 +75,7 @@ scripts:
 name: bitwarden
 version: "1.0"
 title: Bitwarden
-entrypoints:
+rootItems:
   - title: Search Passwords
     script: list-passwords
 scripts:
@@ -90,7 +90,7 @@ scripts:
 name: jira
 version: "1.0"
 title: Jira
-entrypoints:
+rootItems:
   - title: List Issues
     script: list-issues
     with:
@@ -111,7 +111,7 @@ scripts:
 name: google
 title: Google
 version: "1.0"
-entrypoints:
+rootItems:
   - title: Google Suggestions
     script: google-suggestions
 scripts:
@@ -126,7 +126,7 @@ scripts:
 name: random
 title: Random
 version: "1.0"
-entrypoints:
+rootItems:
   - title: "Generate 5 random numbers"
     script: "random-list"
   - title: "Random Number"
@@ -143,7 +143,7 @@ scripts:
 name: sunbeam
 title: Sunbeam
 version: "1.0"
-entrypoints:
+rootItems:
   - title: "Search Extensions"
     script: search-extensions
 scripts:
@@ -170,7 +170,7 @@ scripts:
 name: tldr
 title: TLDR Pages
 version: "1.0"
-entrypoints:
+rootItems:
   - title: "Search MacOS Pages"
     script: list
     with:
@@ -211,7 +211,7 @@ scripts:
 version: "1.0"
 title: Date Utils
 name: date
-entrypoints:
+rootItems:
   - script: utc
     title: Copy UTC Timestamp
 scripts:

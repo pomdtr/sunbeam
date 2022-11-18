@@ -26,8 +26,8 @@ type Extension struct {
 	Title string `json:"title" yaml:"title"`
 	Name  string `json:"name" yaml:"name"`
 
-	Entrypoints []Entrypoint      `json:"entrypoints" yaml:"entrypoints"`
-	Scripts     map[string]Script `json:"scripts" yaml:"scripts"`
+	RootItems []Entrypoint      `json:"rootItems" yaml:"rootItems"`
+	Scripts   map[string]Script `json:"scripts" yaml:"scripts"`
 
 	Url url.URL
 }

@@ -212,20 +212,20 @@ func ScriptCommand(extension string, entrypoint api.Entrypoint) string {
 	return strings.Join(args, " ")
 }
 
-func RootList(manifests ...api.Extension) Container {
-	entrypoints := make([]ListItem, 0)
-	for _, manifest := range manifests {
-		for _, entrypoint := range manifest.Entrypoints {
+func RootList(extensions ...api.Extension) Container {
+	rootItems := make([]ListItem, 0)
+	for _, extension := range extensions {
+		for _, entrypoint := range extension.RootItems {
 			runMsg := RunScriptMsg{
-				Extension: manifest.Name,
+				Extension: extension.Name,
 				Script:    entrypoint.Script,
 				With:      entrypoint.With,
 			}
-			command := ScriptCommand(manifest.Name, entrypoint)
-			entrypoints = append(entrypoints, ListItem{
+			command := ScriptCommand(extension.Name, entrypoint)
+			rootItems = append(rootItems, ListItem{
 				id:       command,
 				Title:    entrypoint.Title,
-				Subtitle: manifest.Title,
+				Subtitle: extension.Title,
 				Actions: []Action{
 					{
 						Title:    "Run Script",
@@ -244,13 +244,13 @@ func RootList(manifests ...api.Extension) Container {
 		}
 	}
 
-	// Sort entrypoints by title
-	sort.SliceStable(entrypoints, func(i, j int) bool {
-		return entrypoints[i].Title < entrypoints[j].Title
+	// Sort root items by title
+	sort.SliceStable(rootItems, func(i, j int) bool {
+		return rootItems[i].Title < rootItems[j].Title
 	})
 
 	list := NewList("Sunbeam")
-	list.SetItems(entrypoints)
+	list.SetItems(rootItems)
 
 	return list
 }

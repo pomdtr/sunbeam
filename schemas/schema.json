@@ -6,7 +6,7 @@
         "name",
         "title",
         "version",
-        "entrypoints",
+        "rootItems",
         "scripts"
     ],
     "additionalProperties": false,
@@ -31,7 +31,7 @@
         "preferences": {
             "type": "array"
         },
-        "entrypoints": {
+        "rootItems": {
             "type": "array",
             "items": {
                 "type": "object",
@@ -63,7 +63,17 @@
                 "^[a-z-]+$": {
                     "$ref": "#/definitions/script"
                 }
-            }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "required": [
+                            "extension"
+                        ]
+                    },
+                    "then": false
+                }
+            ]
         }
     },
     "definitions": {
