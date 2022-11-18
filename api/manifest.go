@@ -12,7 +12,7 @@ import (
 )
 
 type Api struct {
-	Extensions    map[string]Manifest
+	Extensions    map[string]Extension
 	ExtensionRoot string
 }
 
@@ -22,7 +22,7 @@ type Entrypoint struct {
 	With   map[string]any
 }
 
-type Manifest struct {
+type Extension struct {
 	Title string `json:"title" yaml:"title"`
 	Name  string `json:"name" yaml:"name"`
 
@@ -32,7 +32,7 @@ type Manifest struct {
 	Url url.URL
 }
 
-func (m Manifest) Dir() string {
+func (m Extension) Dir() string {
 	return path.Dir(m.Url.Path)
 }
 
@@ -60,7 +60,7 @@ func init() {
 		scriptDirs = append(scriptDirs, extensionPath)
 	}
 
-	manifests := make(map[string]Manifest)
+	extensions := make(map[string]Extension)
 	for _, scriptDir := range scriptDirs {
 		manifestPath := path.Join(scriptDir, "sunbeam.yml")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
@@ -71,11 +71,12 @@ func init() {
 		if err != nil {
 			continue
 		}
+
 		decoder := yaml.NewDecoder(bytes.NewReader(manifestBytes))
-		var manifest Manifest
 
 		for {
-			err := decoder.Decode(&manifest)
+			var extension Extension
+			err := decoder.Decode(&extension)
 			if err == io.EOF {
 				break
 			}
@@ -84,17 +85,24 @@ func init() {
 				continue
 			}
 
-			manifest.Url = url.URL{
+			for key, script := range extension.Scripts {
+				if script.Page.Title == "" {
+					script.Page.Title = extension.Title
+				}
+				extension.Scripts[key] = script
+			}
+
+			extension.Url = url.URL{
 				Scheme: "file",
 				Path:   manifestPath,
 			}
 
-			manifests[manifest.Name] = manifest
+			extensions[extension.Name] = extension
 		}
 	}
 
 	Sunbeam = Api{
 		ExtensionRoot: extensionRoot,
-		Extensions:    manifests,
+		Extensions:    extensions,
 	}
 }

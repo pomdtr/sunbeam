@@ -50,23 +50,28 @@ type ScriptInput struct {
 func (s Script) CheckMissingParams(inputParams map[string]any) []ScriptInput {
 	missing := make([]ScriptInput, 0)
 	for _, input := range s.Inputs {
-		if _, ok := inputParams[input.Name]; !ok {
+		value, ok := inputParams[input.Name]
+		if !ok {
+			missing = append(missing, input)
+		}
+		if input.Type != "checkbox" && value == "" {
 			missing = append(missing, input)
 		}
 	}
 	return missing
 }
 
-type CommandInput struct {
-	Params map[string]any
-	Query  string
+type CommandParams struct {
+	With  map[string]any
+	Query string
 }
 
-func (s Script) Cmd(input CommandInput) (*exec.Cmd, error) {
+func (s Script) Cmd(params CommandParams) (*exec.Cmd, error) {
 	var err error
+
 	inputs := make(map[string]string)
 	for _, formInput := range s.Inputs {
-		value, ok := input.Params[formInput.Name]
+		value, ok := params.With[formInput.Name]
 		if !ok {
 			return nil, fmt.Errorf("missing param %s", formInput.Name)
 		}
@@ -92,14 +97,16 @@ func (s Script) Cmd(input CommandInput) (*exec.Cmd, error) {
 	}
 
 	funcMap := template.FuncMap{
-		"input": func(input string) (string, error) {
-			if value, ok := inputs[input]; ok {
-				return shellescape.Quote(value), nil
+		"input": func(key string) (string, error) {
+			value, ok := inputs[key]
+			if !ok {
+				return "", fmt.Errorf("input %s not found", params)
 			}
-			return "", fmt.Errorf("input %s not found", input)
+
+			return shellescape.Quote(value), nil
 		},
 		"query": func() string {
-			return shellescape.Quote(input.Query)
+			return shellescape.Quote(params.Query)
 		},
 	}
 

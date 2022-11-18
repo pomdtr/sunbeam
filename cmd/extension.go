@@ -13,14 +13,16 @@ import (
 )
 
 var extensionCmd = &cobra.Command{
-	Use: "extension",
+	Use:     "extension",
+	GroupID: "core",
+	Short:   "Manage sunbeam extensions",
 }
 
 var extensionInstallCmd = &cobra.Command{
 	Use:   "install <repository>",
 	Short: "Install a sunbeam extension from a git repository",
 	Args:  cobra.ExactArgs(1),
-	Run:   InstallExtension,
+	RunE:  InstallExtension,
 }
 
 func init() {
@@ -28,8 +30,7 @@ func init() {
 	rootCmd.AddCommand(extensionCmd)
 }
 
-func InstallExtension(cmd *cobra.Command, args []string) {
-	var err error
+func InstallExtension(cmd *cobra.Command, args []string) (err error) {
 	if _, err = os.Stat(api.Sunbeam.ExtensionRoot); os.IsNotExist(err) {
 		os.MkdirAll(api.Sunbeam.ExtensionRoot, 0755)
 	}
@@ -40,14 +41,14 @@ func InstallExtension(cmd *cobra.Command, args []string) {
 		if !path.IsAbs(args[0]) {
 			wd, err := os.Getwd()
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			extensionPath = path.Join(wd, args[0])
 		}
 		name := path.Base(extensionPath)
 		err = os.Symlink(args[0], path.Join(api.Sunbeam.ExtensionRoot, name))
 		if err != nil {
-			log.Fatalln(err)
+			return err
 		}
 		fmt.Println("Installed extension", name)
 		os.Exit(0)
@@ -76,4 +77,5 @@ func InstallExtension(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println("Installed extension", name)
+	return nil
 }

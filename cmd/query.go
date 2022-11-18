@@ -12,11 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var jqCmd = &cobra.Command{
-	Use:   "jq",
-	Short: "Run a jq query",
-	Run:   sunbeamJQ,
-	Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+var queryCmd = &cobra.Command{
+	Use:     "query",
+	Short:   "Run a jq query",
+	GroupID: "core",
+	Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+	RunE:    sunbeamJQ,
 }
 
 var JQFlags struct {
@@ -28,15 +29,15 @@ var JQFlags struct {
 }
 
 func init() {
-	rootCmd.AddCommand(jqCmd)
-	jqCmd.Flags().BoolVarP(&JQFlags.NullInput, "null-input", "n", false, "use null as input value")
-	jqCmd.Flags().BoolVarP(&JQFlags.RawInput, "raw-input", "R", false, "read input as raw strings")
-	jqCmd.Flags().BoolVarP(&JQFlags.Slurp, "slurp", "s", false, "read all inputs into an array")
-	jqCmd.Flags().StringArrayVar(&JQFlags.Arg, "arg", []string{}, "add string variable in the form of name=value")
-	jqCmd.Flags().StringArrayVar(&JQFlags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
+	rootCmd.AddCommand(queryCmd)
+	queryCmd.Flags().BoolVarP(&JQFlags.NullInput, "null-input", "n", false, "use null as input value")
+	queryCmd.Flags().BoolVarP(&JQFlags.RawInput, "raw-input", "R", false, "read input as raw strings")
+	queryCmd.Flags().BoolVarP(&JQFlags.Slurp, "slurp", "s", false, "read all inputs into an array")
+	queryCmd.Flags().StringArrayVar(&JQFlags.Arg, "arg", []string{}, "add string variable in the form of name=value")
+	queryCmd.Flags().StringArrayVar(&JQFlags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
 }
 
-func sunbeamJQ(cmd *cobra.Command, args []string) {
+func sunbeamJQ(cmd *cobra.Command, args []string) error {
 	var err error
 	vars := make([]string, 0)
 	values := make([]interface{}, 0)
@@ -78,7 +79,7 @@ func sunbeamJQ(cmd *cobra.Command, args []string) {
 	if len(args) == 2 {
 		inputFile, err = os.Open(args[1])
 		if err != nil {
-			log.Fatalln("could not open file:", err)
+			return fmt.Errorf("could not open file: %w", err)
 		}
 	} else {
 		inputFile = os.Stdin
@@ -133,15 +134,13 @@ func sunbeamJQ(cmd *cobra.Command, args []string) {
 				break
 			}
 			if err, ok := v.(error); ok {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 			err := encoder.Encode(v)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 		}
 	}
-
+	return nil
 }

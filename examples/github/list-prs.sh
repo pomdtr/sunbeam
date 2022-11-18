@@ -9,7 +9,7 @@ if [[ -z "$REPO" ]]; then
     exit 1
 fi
 
-gh pr list --repo "$REPO" --json author,title,url,number | sunbeam jq '.[] |
+gh pr list --repo "$REPO" --json author,title,url,number | sunbeam query '.[] |
 {
     title: .title,
     subtitle: .author.login,

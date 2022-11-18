@@ -33,7 +33,6 @@ scripts:
         type: textfield
         required: false
   list-pull-requests:
-    title: List Pull Requests
     command: examples/github/list-prs.sh ${{ input "repository" }}
     onSuccess: push-page
     page:
@@ -61,7 +60,6 @@ entrypoints:
       root: "."
 scripts:
   file-browser:
-    title: File Browser
     command: ./examples/file-browser.py --root ${{ input "root" }}
     onSuccess: push-page
     page:
@@ -142,7 +140,7 @@ scripts:
       mode: filter
 ---
 # yaml-language-server: $schema=./schemas/schema.json
-name: Sunbeam
+name: sunbeam
 title: Sunbeam
 version: "1.0"
 entrypoints:
@@ -170,7 +168,7 @@ scripts:
 ---
 # yaml-language-server: $schema=./schemas/schema.json
 name: tldr
-title: TLDR
+title: TLDR Pages
 version: "1.0"
 entrypoints:
   - title: "Search MacOS Pages"
@@ -184,7 +182,7 @@ entrypoints:
 scripts:
   list:
     command: |
-      tldr --list --platform ${{ input "platform" }} | sunbeam jq -R '{
+      tldr --list --platform ${{ input "platform" }} | sunbeam query -R '{
         id: .,
         title: .,
         previewCmd: "tldr --color always --platform  ${{ input "platform" }} \(.)",
@@ -194,8 +192,15 @@ scripts:
       }'
     inputs:
       - name: platform
-        type: textfield
+        type: dropdown
         title: Platform
+        data:
+          - title: Windows
+            value: windows
+          - title: MacOS
+            value: macos
+          - title: Linux
+            value: linux
     onSuccess: push-page
     page:
       type: list

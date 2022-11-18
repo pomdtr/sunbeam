@@ -6,7 +6,7 @@ curl -X GET \
     -G --data-urlencode jql="$JQL" \
     -u "achille.lacoin@dailymotion.com:$JIRA_TOKEN" \
     "https://dailymotion.atlassian.net/rest/api/2/search" |
-sunbeam jq '.issues[] | {
+sunbeam query '.issues[] | {
     title: .fields.summary,
     subtitle: .key,
     actions: [

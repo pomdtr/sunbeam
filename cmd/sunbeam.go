@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -14,101 +11,110 @@ import (
 
 var globalOptions tui.SunbeamOptions
 
-var rootOptions struct {
-	With []string
-}
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "sunbeam",
 	Short: "Command Line Launcher",
-	Run:   Sunbeam,
+	RunE:  Sunbeam,
 	Args:  cobra.ArbitraryArgs,
 }
 
-func init() {
-	rootCmd.PersistentFlags().IntVarP(&globalOptions.Width, "width", "W", 0, "width of the window")
-	rootCmd.PersistentFlags().IntVarP(&globalOptions.Height, "height", "H", 0, "height of the window")
-	rootCmd.Flags().StringArrayVarP(&rootOptions.With, "with", "w", nil, "script parameters in the form of name=value")
+func Execute() (err error) {
+	rootCmd.Flags().IntVarP(&globalOptions.Width, "width", "W", 0, "width of the window")
+	rootCmd.Flags().IntVarP(&globalOptions.Height, "height", "H", 0, "height of the window")
+
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "core",
+		Title: "Core Commands",
+	}, &cobra.Group{
+		ID:    "extensions",
+		Title: "Extension Commands",
+	})
+
+	for _, extension := range api.Sunbeam.Extensions {
+		cmd := NewExtensionCommand(extension)
+		cmd.GroupID = "extensions"
+		rootCmd.AddCommand(cmd)
+	}
+
+	return rootCmd.Execute()
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
+func NewExtensionCommand(extension api.Extension) *cobra.Command {
+	extensionCmd := &cobra.Command{
+		Use:   extension.Name,
+		Short: extension.Title,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			model := tui.RootList(extension)
+			err = tui.Draw(model, globalOptions)
+			if err != nil {
+				return fmt.Errorf("could not run extension: %w", err)
+			}
+			return nil
+		},
 	}
+
+	for key, script := range extension.Scripts {
+		script := script
+		scriptCmd := &cobra.Command{
+			Use: key,
+			RunE: func(cmd *cobra.Command, args []string) (err error) {
+				with := make(map[string]any)
+				for _, input := range script.Inputs {
+					switch input.Type {
+					case "checkbox":
+						with[input.Name], err = cmd.Flags().GetBool(input.Name)
+						if err != nil {
+							return err
+						}
+					default:
+						with[input.Name], err = cmd.Flags().GetString(input.Name)
+						if err != nil {
+							return err
+						}
+					}
+				}
+
+				container := tui.NewRunContainer(extension, script, with)
+				err = tui.Draw(container, globalOptions)
+				if err != nil {
+					return fmt.Errorf("could not run script: %w", err)
+				}
+				return nil
+			},
+		}
+
+		for _, input := range script.Inputs {
+			flag := NewCustomFlag(input)
+			scriptCmd.Flags().Var(flag, input.Name, input.Title)
+			if input.Type == "dropdown" {
+				choices := make([]string, len(input.Data))
+				for i, choice := range input.Data {
+					choices[i] = fmt.Sprintf("%s\t%s", choice.Value, choice.Title)
+				}
+				scriptCmd.RegisterFlagCompletionFunc(input.Name, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+					return choices, cobra.ShellCompDirectiveNoFileComp
+				})
+
+			}
+		}
+
+		extensionCmd.AddCommand(scriptCmd)
+	}
+
+	return extensionCmd
 }
 
-// TODO: handle arbitrary args (https://github.com/cli/cli/blob/trunk/cmd/gh/main.go)
-func Sunbeam(cmd *cobra.Command, args []string) {
-	if len(args) == 0 {
-		manifests := make([]api.Manifest, 0)
-		for _, manifest := range api.Sunbeam.Extensions {
-			manifests = append(manifests, manifest)
-		}
-
-		rootList := tui.RootList(manifests...)
-		err := tui.Draw(rootList, globalOptions)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		os.Exit(0)
+func Sunbeam(cmd *cobra.Command, args []string) (err error) {
+	manifests := make([]api.Extension, 0)
+	for _, manifest := range api.Sunbeam.Extensions {
+		manifests = append(manifests, manifest)
 	}
 
-	extensionName := args[0]
-
-	manifest, ok := api.Sunbeam.Extensions[extensionName]
-	if !ok {
-		log.Fatalf("Extension %s not found", extensionName)
-	}
-
-	if len(args) < 2 {
-		model := tui.RootList(manifest)
-		err := tui.Draw(model, globalOptions)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-
-	scriptName := args[1]
-
-	script, ok := manifest.Scripts[scriptName]
-	if !ok {
-		log.Fatalf("Page not found: %s", scriptName)
-	}
-
-	itemMap := make(map[string]api.ScriptInput)
-	for _, formItem := range script.Inputs {
-		itemMap[formItem.Name] = formItem
-	}
-
-	scriptParams := make(map[string]any)
-	for _, param := range rootOptions.With {
-		tokens := strings.SplitN(param, "=", 2)
-		if len(tokens) != 2 {
-			log.Fatalf("Invalid parameter: %s", param)
-		}
-
-		name, value := tokens[0], tokens[1]
-		formItem, ok := itemMap[name]
-		if !ok {
-			log.Fatalf("Params %s does not exists in script %s", name, tokens[1])
-		}
-		switch formItem.Type {
-		case "textfield":
-			scriptParams[name] = value
-		case "checkbox":
-			scriptParams[name] = value == "true"
-		}
-	}
-
-	container := tui.NewRunContainer(manifest, script, scriptParams)
-	err := tui.Draw(container, globalOptions)
+	rootList := tui.RootList(manifests...)
+	err = tui.Draw(rootList, globalOptions)
 	if err != nil {
-		log.Fatalf("could not run script: %v", err)
+		return err
 	}
+	return
 }

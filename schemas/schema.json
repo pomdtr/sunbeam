@@ -12,7 +12,8 @@
     "additionalProperties": false,
     "properties": {
         "name": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[a-z-]+$"
         },
         "title": {
             "type": "string"
@@ -57,8 +58,11 @@
         },
         "scripts": {
             "type": "object",
-            "additionalProperties": {
-                "$ref": "#/definitions/script"
+            "additionalProperties": false,
+            "patternProperties": {
+                "^[a-z-]+$": {
+                    "$ref": "#/definitions/script"
+                }
             }
         }
     },
@@ -353,7 +357,8 @@
             ],
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^[a-z]+$"
                 },
                 "title": {
                     "type": "string"
@@ -421,14 +426,6 @@
                         "properties": {
                             "label": {
                                 "type": "string"
-                            },
-                            "true_substitution": {
-                                "type": "string",
-                                "default": "true"
-                            },
-                            "false_substitution": {
-                                "type": "string",
-                                "default": "false"
                             }
                         }
                     }

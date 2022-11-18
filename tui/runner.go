@@ -15,8 +15,8 @@ type RunContainer struct {
 	width, height int
 	currentView   string
 
-	manifest api.Manifest
-	params   map[string]any
+	manifest api.Extension
+	with     map[string]any
 
 	form   *Form
 	list   *List
@@ -25,19 +25,16 @@ type RunContainer struct {
 	Script api.Script
 }
 
-func NewRunContainer(manifest api.Manifest, script api.Script, scriptParams map[string]any) *RunContainer {
+func NewRunContainer(manifest api.Extension, script api.Script, with map[string]any) *RunContainer {
 	params := make(map[string]any)
-	for k, v := range scriptParams {
+	for k, v := range with {
 		params[k] = v
-	}
-	if script.Page.Title == "" {
-		script.Page.Title = manifest.Title
 	}
 
 	return &RunContainer{
 		manifest: manifest,
 		Script:   script,
-		params:   params,
+		with:     params,
 	}
 }
 
@@ -49,8 +46,8 @@ type ListOutput []ListItem
 type FullOutput string
 
 func (c RunContainer) ScriptCmd() tea.Msg {
-	input := api.CommandInput{
-		Params: c.params,
+	input := api.CommandParams{
+		With: c.with,
 	}
 	if c.currentView == "list" {
 		input.Query = c.list.Query()
@@ -157,7 +154,7 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 }
 
 func (c *RunContainer) Run() tea.Cmd {
-	missing := c.Script.CheckMissingParams(c.params)
+	missing := c.Script.CheckMissingParams(c.with)
 
 	if len(missing) > 0 {
 		var err error
@@ -172,7 +169,7 @@ func (c *RunContainer) Run() tea.Cmd {
 		c.currentView = "form"
 		c.form = NewForm(c.Script.Page.Title, items, func(values map[string]any) tea.Cmd {
 			for k, v := range values {
-				c.params[k] = v
+				c.with[k] = v
 			}
 
 			return c.Run()
@@ -241,7 +238,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 		return c, nil
 	case ReloadPageMsg:
 		for k, v := range msg.Params {
-			c.params[k] = v
+			c.with[k] = v
 		}
 		var cmd tea.Cmd
 		if c.currentView == "list" {

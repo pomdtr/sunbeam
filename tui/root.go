@@ -212,7 +212,7 @@ func ScriptCommand(extension string, entrypoint api.Entrypoint) string {
 	return strings.Join(args, " ")
 }
 
-func RootList(manifests ...api.Manifest) Container {
+func RootList(manifests ...api.Extension) Container {
 	entrypoints := make([]ListItem, 0)
 	for _, manifest := range manifests {
 		for _, entrypoint := range manifest.Entrypoints {
