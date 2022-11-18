@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/pomdtr/sunbeam/api"
 )
 
@@ -28,6 +30,18 @@ func (f *CustomFlag) String() string {
 }
 
 func (f *CustomFlag) Set(value string) error {
+	if f.input.Type == "dropdown" {
+		found := false
+		for _, item := range f.input.Data {
+			if item.Value == value {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("invalid value for %s: %s", f.input.Name, value)
+		}
+	}
 	f.value = value
 	return nil
 }
