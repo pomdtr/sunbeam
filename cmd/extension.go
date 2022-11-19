@@ -12,25 +12,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var extensionCmd = &cobra.Command{
+var extensionCommand = &cobra.Command{
 	Use:     "extension",
 	GroupID: "core",
 	Short:   "Manage sunbeam extensions",
 }
 
-var extensionInstallCmd = &cobra.Command{
+var extensionInstallCommand = &cobra.Command{
 	Use:   "install <repository>",
 	Short: "Install a sunbeam extension from a git repository",
 	Args:  cobra.ExactArgs(1),
-	RunE:  InstallExtension,
+	RunE:  runExtensionInstall,
+}
+
+var extensionListCommand = &cobra.Command{
+	Use:   "list",
+	Short: "List installed extensions",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		for _, extension := range api.Sunbeam.Extensions {
+			fmt.Println(extension.Name)
+		}
+		return nil
+	},
 }
 
 func init() {
-	extensionCmd.AddCommand(extensionInstallCmd)
-	rootCmd.AddCommand(extensionCmd)
+	extensionCommand.AddCommand(extensionInstallCommand)
+	extensionCommand.AddCommand(extensionListCommand)
+	rootCmd.AddCommand(extensionCommand)
 }
 
-func InstallExtension(cmd *cobra.Command, args []string) (err error) {
+func runExtensionInstall(cmd *cobra.Command, args []string) (err error) {
 	if _, err = os.Stat(api.Sunbeam.ExtensionRoot); os.IsNotExist(err) {
 		os.MkdirAll(api.Sunbeam.ExtensionRoot, 0755)
 	}

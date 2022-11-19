@@ -166,7 +166,6 @@ scripts:
       type: list
       mode: filter
 ---
-# yaml-language-server: $schema=./schemas/schema.json
 name: tldr
 title: TLDR Pages
 version: "1.0"

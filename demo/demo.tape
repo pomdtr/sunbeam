@@ -61,8 +61,20 @@ Sleep 2s
 Enter
 
 Sleep 5s
-Type excalidraw
+Type dailymotion
+Ctrl+S
+
+
+Sleep 5s
+Type asteroid
 Sleep 2s
-Ctrl+p
+Tab
+Down
+Sleep 2s
+Enter
+
+Sleep 5s
+Ctrl+Y
+
 
 Sleep 5s

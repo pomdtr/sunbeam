@@ -15,7 +15,7 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
         subtitle: .owner.login,
         preview: (.description // "No description"),
         accessories: [
-            "\(.stargazers_count) ⭐"
+            "\(.stargazers_count) *"
         ],
         actions: [
             {type: "open-url", url: .html_url},

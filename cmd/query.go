@@ -17,7 +17,7 @@ var queryCmd = &cobra.Command{
 	Short:   "Transform or generate JSON using a jq query",
 	GroupID: "core",
 	Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
-	RunE:    sunbeamJQ,
+	RunE:    queryCommand,
 }
 
 var jqFlags struct {
@@ -37,7 +37,7 @@ func init() {
 	queryCmd.Flags().StringArrayVar(&jqFlags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
 }
 
-func sunbeamJQ(cmd *cobra.Command, args []string) error {
+func queryCommand(cmd *cobra.Command, args []string) error {
 	var err error
 	vars := make([]string, 0)
 	values := make([]interface{}, 0)

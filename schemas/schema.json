@@ -64,16 +64,30 @@
                     "$ref": "#/definitions/script"
                 }
             },
-            "allOf": [
-                {
-                    "if": {
+            "not": {
+                "anyOf": [
+                    {
                         "required": [
                             "extension"
                         ]
                     },
-                    "then": false
-                }
-            ]
+                    {
+                        "required": [
+                            "query"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "completion"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "help"
+                        ]
+                    }
+                ]
+            }
         }
     },
     "definitions": {
