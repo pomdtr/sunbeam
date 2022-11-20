@@ -187,7 +187,7 @@ scripts:
         title: .,
         previewCmd: "tldr --color always --platform  ${{ input "platform" }} \(.)",
         actions: [
-          {"type": "open-url", "url": "https://tldr.ostera.io/${{ input "platform" }}/\(.)", "title": "Open in Browser"}
+          {"type": "open-url", "url": "https://tldr.ostera.io/\(.)", "title": "Open in Browser"}
         ]
       }'
     inputs:
