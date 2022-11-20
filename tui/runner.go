@@ -136,14 +136,7 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 				}
 			}
 			return ListOutput(listItems)
-		case "action":
-			scriptAction, err := api.ParseAction(output)
-			if err != nil {
-				return err
-			}
-			action := NewAction(scriptAction)
-			return action
-		case "raw":
+		case "detail":
 			return FullOutput(output)
 		default:
 			return fmt.Errorf("unknown page type %s", c.Script.Page.Type)
