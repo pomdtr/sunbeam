@@ -6,7 +6,6 @@
         "name",
         "title",
         "version",
-        "rootItems",
         "scripts"
     ],
     "additionalProperties": false,
