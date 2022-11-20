@@ -368,7 +368,7 @@
             "properties": {
                 "name": {
                     "type": "string",
-                    "pattern": "^[a-z]+$"
+                    "pattern": "^[a-z-]+$"
                 },
                 "title": {
                     "type": "string"

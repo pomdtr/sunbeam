@@ -216,9 +216,9 @@ func ScriptCommand(extension string, entrypoint api.Entrypoint) string {
 		switch value := value.(type) {
 		case string:
 			value = shellescape.Quote(value)
-			args = append(args, fmt.Sprintf("--with %s=%s", param, value))
+			args = append(args, fmt.Sprintf("--%s=%s", param, value))
 		case bool:
-			args = append(args, fmt.Sprintf("--with %s=%t", param, value))
+			args = append(args, fmt.Sprintf("--%s=%t", param, value))
 		}
 	}
 	return strings.Join(args, " ")
