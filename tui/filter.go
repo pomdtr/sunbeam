@@ -113,9 +113,9 @@ func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+n", "ctrl+j", "down":
+		case "ctrl+j", "down":
 			f.CursorDown()
-		case "ctrl+p", "ctrl+k", "up":
+		case "ctrl+k", "up":
 			f.CursorUp()
 		}
 	}

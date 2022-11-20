@@ -12,7 +12,7 @@ root: pathlib.Path = args.root
 
 for path in sorted(root.iterdir(), key=lambda p: p.name):
     primaryAction = (
-        {"type": "open-file", "path": str(path.absolute())}
+        {"type": "open-path", "path": str(path.absolute())}
         if path.is_file()
         else {
             "type": "run-script",

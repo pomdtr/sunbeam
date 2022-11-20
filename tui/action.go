@@ -36,7 +36,7 @@ type OpenUrlMsg struct {
 	Application string
 }
 
-type OpenFileMessage struct {
+type OpenPathMessage struct {
 	Path        string
 	Application string
 }
@@ -75,11 +75,11 @@ func NewAction(scriptAction api.ScriptAction) Action {
 			Url:         scriptAction.Url,
 			Application: scriptAction.Application,
 		}
-	case "open-file":
+	case "open-path":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open File"
 		}
-		msg = OpenFileMessage{
+		msg = OpenPathMessage{
 			Path:        scriptAction.Path,
 			Application: scriptAction.Application,
 		}

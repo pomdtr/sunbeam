@@ -75,7 +75,7 @@ func runExtensionInstall(cmd *cobra.Command, args []string) (err error) {
 
 	name := path.Base(url.Path)
 	target := path.Join(api.Sunbeam.ExtensionRoot, name)
-	if _, err = os.Stat(target); os.IsNotExist(err) {
+	if _, err = os.Stat(target); err == nil {
 		log.Fatalf("Extension %s already installed", name)
 	}
 

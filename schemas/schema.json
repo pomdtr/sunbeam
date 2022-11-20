@@ -250,7 +250,7 @@
                         "copy-text",
                         "reload-script",
                         "open-url",
-                        "open-file",
+                        "open-path",
                         "exec-command",
                         "run-script",
                         "exit"
@@ -345,7 +345,9 @@
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
-                                    "reload-script"
+                                    "reload-script",
+                                    "copy-to-clipboard",
+                                    "open-in-browser"
                                 ]
                             }
                         }
@@ -355,7 +357,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "open-file"
+                                "const": "open-path"
                             }
                         }
                     },

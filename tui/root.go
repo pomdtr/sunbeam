@@ -85,7 +85,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.exitMsg = fmt.Sprintf("Opened %s in browser.", msg.Url)
 		m.quitting = true
 		return m, tea.Quit
-	case OpenFileMessage:
+	case OpenPathMessage:
 		var err error
 
 		if msg.Application != "" {
@@ -234,6 +234,7 @@ func ScriptCommand(extension string, entrypoint api.Entrypoint) string {
 func RootList(extensions ...api.Extension) Container {
 	rootItems := make([]ListItem, 0)
 	for _, extension := range extensions {
+		extension := extension
 		for _, entrypoint := range extension.RootItems {
 			runMsg := RunScriptMsg{
 				Extension: extension.Name,
@@ -252,6 +253,10 @@ func RootList(extensions ...api.Extension) Container {
 						Cmd: func() tea.Msg {
 							return runMsg
 						},
+					}, {
+						Title:    "Open Extension Folder",
+						Shortcut: "ctrl+o",
+						Cmd:      func() tea.Msg { return OpenPathMessage{Path: extension.Dir()} },
 					},
 					{
 						Title:    "Copy Full Command",
