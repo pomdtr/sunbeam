@@ -21,9 +21,10 @@ import (
 )
 
 type SunbeamOptions struct {
-	Height int
-	Theme  string
-	Accent string
+	NoBorders bool
+	Height    int
+	Theme     string
+	Accent    string
 }
 
 type Container interface {
@@ -36,6 +37,7 @@ type Container interface {
 type RootModel struct {
 	maxHeight     int
 	width, height int
+	showBorders   bool
 
 	pages []Container
 
@@ -44,8 +46,8 @@ type RootModel struct {
 	exitCmd  *exec.Cmd
 }
 
-func NewRootModel(height int, rootPage Container) *RootModel {
-	return &RootModel{pages: []Container{rootPage}, maxHeight: height}
+func NewRootModel(rootPage Container, options SunbeamOptions) *RootModel {
+	return &RootModel{pages: []Container{rootPage}, maxHeight: options.Height, showBorders: !options.NoBorders}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -164,7 +166,12 @@ func (m *RootModel) View() string {
 	currentPage := m.pages[len(m.pages)-1]
 	embedView = currentPage.View()
 
-	pageStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(theme.Fg())
+	pageStyle := lipgloss.NewStyle()
+	if m.showBorders {
+		pageStyle = pageStyle.Border(lipgloss.RoundedBorder()).BorderForeground(theme.Fg())
+	} else {
+		pageStyle = pageStyle.Padding(1)
+	}
 
 	if m.maxHeight > 0 {
 		return pageStyle.Render(embedView)
@@ -186,10 +193,10 @@ func (m *RootModel) pageWidth() int {
 }
 
 func (m *RootModel) pageHeight() int {
-	if m.maxHeight == 0 {
-		return m.height - 2
+	if m.maxHeight > 0 {
+		return utils.Min(m.maxHeight, m.height)
 	}
-	return utils.Min(m.maxHeight, m.height-2)
+	return m.height - 2
 }
 
 type popMsg struct{}
@@ -292,7 +299,7 @@ func Draw(container Container, options SunbeamOptions) (err error) {
 		programOptions = append(programOptions, tea.WithAltScreen())
 	}
 
-	model := NewRootModel(options.Height, container)
+	model := NewRootModel(container, options)
 	p := tea.NewProgram(model, programOptions...)
 	m, err := p.Run()
 	if err != nil {

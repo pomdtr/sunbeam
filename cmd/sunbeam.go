@@ -21,6 +21,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() (err error) {
 	rootCmd.PersistentFlags().IntVarP(&globalOptions.Height, "height", "H", 0, "height of the window")
+	rootCmd.PersistentFlags().BoolVar(&globalOptions.NoBorders, "no-borders", false, "disable borders")
 
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    "core",
