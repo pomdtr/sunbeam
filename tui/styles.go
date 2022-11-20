@@ -27,9 +27,9 @@ func init() {
 	accentColor = theme.BrightPurple()
 
 	styles = Styles{
-		Bold:    lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Bold(true),
-		Regular: lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()),
-		Faint:   lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Faint(true),
-		Italic:  lipgloss.NewStyle().Background(theme.Bg()).Foreground(theme.Fg()).Italic(true),
+		Bold:    lipgloss.NewStyle().Foreground(theme.Fg()).Bold(true),
+		Regular: lipgloss.NewStyle().Foreground(theme.Fg()),
+		Faint:   lipgloss.NewStyle().Foreground(theme.Fg()).Faint(true),
+		Italic:  lipgloss.NewStyle().Foreground(theme.Fg()).Italic(true),
 	}
 }

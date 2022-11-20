@@ -419,8 +419,8 @@ func (c *Form) SetSize(width, height int) {
 }
 
 func (c *Form) View() string {
-	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(accentColor).BorderBackground(theme.Bg())
-	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(theme.Fg()).BorderBackground(theme.Bg())
+	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(accentColor)
+	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(theme.Fg())
 	itemViews := make([]string, len(c.items))
 	maxWidth := 0
 	for i, item := range c.items {

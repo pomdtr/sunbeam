@@ -14,13 +14,13 @@ import (
 
 var queryCmd = &cobra.Command{
 	Use:     "query",
-	Short:   "Run a jq query",
+	Short:   "Transform or generate JSON using a jq query",
 	GroupID: "core",
 	Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 	RunE:    sunbeamJQ,
 }
 
-var JQFlags struct {
+var jqFlags struct {
 	NullInput bool
 	RawInput  bool
 	Slurp     bool
@@ -30,18 +30,18 @@ var JQFlags struct {
 
 func init() {
 	rootCmd.AddCommand(queryCmd)
-	queryCmd.Flags().BoolVarP(&JQFlags.NullInput, "null-input", "n", false, "use null as input value")
-	queryCmd.Flags().BoolVarP(&JQFlags.RawInput, "raw-input", "R", false, "read input as raw strings")
-	queryCmd.Flags().BoolVarP(&JQFlags.Slurp, "slurp", "s", false, "read all inputs into an array")
-	queryCmd.Flags().StringArrayVar(&JQFlags.Arg, "arg", []string{}, "add string variable in the form of name=value")
-	queryCmd.Flags().StringArrayVar(&JQFlags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
+	queryCmd.Flags().BoolVarP(&jqFlags.NullInput, "null-input", "n", false, "use null as input value")
+	queryCmd.Flags().BoolVarP(&jqFlags.RawInput, "raw-input", "R", false, "read input as raw strings")
+	queryCmd.Flags().BoolVarP(&jqFlags.Slurp, "slurp", "s", false, "read all inputs into an array")
+	queryCmd.Flags().StringArrayVar(&jqFlags.Arg, "arg", []string{}, "add string variable in the form of name=value")
+	queryCmd.Flags().StringArrayVar(&jqFlags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
 }
 
 func sunbeamJQ(cmd *cobra.Command, args []string) error {
 	var err error
 	vars := make([]string, 0)
 	values := make([]interface{}, 0)
-	for _, arg := range JQFlags.Arg {
+	for _, arg := range jqFlags.Arg {
 		tokens := strings.SplitN(arg, "=", 2)
 		if len(tokens) != 2 {
 			log.Fatalln("invalid argument:", arg)
@@ -50,7 +50,7 @@ func sunbeamJQ(cmd *cobra.Command, args []string) error {
 		values = append(values, tokens[1])
 	}
 
-	for _, arg := range JQFlags.ArgJSON {
+	for _, arg := range jqFlags.ArgJSON {
 		tokens := strings.SplitN(arg, "=", 2)
 		if len(tokens) != 2 {
 			log.Fatalln("invalid argument:", arg)
@@ -85,9 +85,9 @@ func sunbeamJQ(cmd *cobra.Command, args []string) error {
 		inputFile = os.Stdin
 	}
 	var inputs []interface{}
-	if JQFlags.NullInput {
+	if jqFlags.NullInput {
 		inputs = append(inputs, nil)
-	} else if JQFlags.RawInput {
+	} else if jqFlags.RawInput {
 		reader := bufio.NewReader(inputFile)
 		for {
 			line, err := reader.ReadString('\n')
@@ -108,8 +108,8 @@ func sunbeamJQ(cmd *cobra.Command, args []string) error {
 	}
 
 	var outputs []gojq.Iter
-	if JQFlags.Slurp {
-		if JQFlags.RawInput {
+	if jqFlags.Slurp {
+		if jqFlags.RawInput {
 			input := strings.Builder{}
 			for _, v := range inputs {
 				input.WriteString(v.(string))

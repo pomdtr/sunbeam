@@ -20,7 +20,6 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() (err error) {
-	rootCmd.Flags().IntVarP(&globalOptions.Width, "width", "W", 0, "width of the window")
 	rootCmd.Flags().IntVarP(&globalOptions.Height, "height", "H", 0, "height of the window")
 
 	rootCmd.AddGroup(&cobra.Group{

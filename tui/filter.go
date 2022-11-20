@@ -105,8 +105,8 @@ func (m Filter) View() string {
 		return styles.Faint.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(emptyMessage)
 	}
 
-	filteredView = lipgloss.NewStyle().Padding(0, 1).Background(theme.Bg()).Render(filteredView)
-	return lipgloss.Place(m.Width, m.Height, lipgloss.Top, lipgloss.Left, filteredView, lipgloss.WithWhitespaceBackground(theme.Bg()))
+	filteredView = lipgloss.NewStyle().Padding(0, 1).Render(filteredView)
+	return lipgloss.Place(m.Width, m.Height, lipgloss.Top, lipgloss.Left, filteredView)
 }
 
 func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {

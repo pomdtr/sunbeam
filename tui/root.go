@@ -21,7 +21,6 @@ import (
 )
 
 type SunbeamOptions struct {
-	Width  int
 	Height int
 	Theme  string
 	Accent string
@@ -35,16 +34,18 @@ type Container interface {
 }
 
 type RootModel struct {
-	maxWidth, maxHeight int
-	width, height       int
+	maxHeight     int
+	width, height int
 
-	pages   []Container
-	exitMsg string
-	exitCmd *exec.Cmd
+	pages []Container
+
+	quitting bool
+	exitMsg  string
+	exitCmd  *exec.Cmd
 }
 
-func NewRootModel(width, height int, rootPage Container) *RootModel {
-	return &RootModel{pages: []Container{rootPage}, maxWidth: width, maxHeight: height}
+func NewRootModel(height int, rootPage Container) *RootModel {
+	return &RootModel{pages: []Container{rootPage}, maxHeight: height}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -59,6 +60,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
+			m.quitting = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
@@ -71,6 +73,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(err)
 		}
 		m.exitMsg = "Copied to clipboard"
+		m.quitting = true
 		return m, tea.Quit
 	case OpenUrlMsg:
 		err := browser.OpenURL(msg.Url)
@@ -78,6 +81,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.exitMsg = fmt.Sprintf("Failed to open url: %v", err)
 		}
 		m.exitMsg = fmt.Sprintf("Opened %s in browser.", msg.Url)
+		m.quitting = true
 		return m, tea.Quit
 	case OpenFileMessage:
 		var err error
@@ -93,6 +97,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.exitMsg = fmt.Sprintf("Failed to open %s: %v", msg.Path, err)
 			return m, NewErrorCmd(err)
 		}
+		m.quitting = true
 		return m, tea.Quit
 	case RunScriptMsg:
 		manifest, ok := api.Sunbeam.Extensions[msg.Extension]
@@ -120,9 +125,11 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.exitCmd = msg.Command
+		m.quitting = true
 		return m, tea.Quit
 	case popMsg:
 		if len(m.pages) == 1 {
+			m.quitting = true
 			return m, tea.Quit
 		} else {
 			m.Pop()
@@ -145,7 +152,11 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *RootModel) View() string {
+	if m.quitting {
+		return ""
+	}
 	var embedView string
+
 	if len(m.pages) == 0 {
 		return "This should not happen, please report this bug"
 	}
@@ -153,8 +164,12 @@ func (m *RootModel) View() string {
 	currentPage := m.pages[len(m.pages)-1]
 	embedView = currentPage.View()
 
-	pageStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderBackground(theme.Bg()).BorderForeground(theme.Fg())
-	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(embedView), lipgloss.WithWhitespaceBackground(theme.Bg()))
+	pageStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(theme.Fg())
+
+	if m.maxHeight > 0 {
+		return pageStyle.Render(embedView)
+	}
+	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(embedView))
 }
 
 func (m *RootModel) SetSize(width, height int) {
@@ -167,10 +182,7 @@ func (m *RootModel) SetSize(width, height int) {
 }
 
 func (m *RootModel) pageWidth() int {
-	if m.maxWidth == 0 {
-		return m.width - 2
-	}
-	return utils.Min(m.maxWidth, m.width-2)
+	return m.width - 2
 }
 
 func (m *RootModel) pageHeight() int {
@@ -275,8 +287,13 @@ func Draw(container Container, options SunbeamOptions) (err error) {
 	}
 	defer f.Close()
 
-	model := NewRootModel(options.Width, options.Height, container)
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	programOptions := make([]tea.ProgramOption, 0)
+	if options.Height == 0 {
+		programOptions = append(programOptions, tea.WithAltScreen())
+	}
+
+	model := NewRootModel(options.Height, container)
+	p := tea.NewProgram(model, programOptions...)
 	m, err := p.Run()
 	if err != nil {
 		return err
