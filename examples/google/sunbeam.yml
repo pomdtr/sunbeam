@@ -1,0 +1,13 @@
+name: google
+title: Google
+version: "1.0"
+rootItems:
+  - title: Google Suggestions
+    script: google-suggestions
+scripts:
+  google-suggestions:
+    command: ./google.mjs --query ${{ query }}
+    onSuccess: push-page
+    page:
+      type: list
+      mode: generator

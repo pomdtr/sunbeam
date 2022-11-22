@@ -169,8 +169,6 @@ func (m *RootModel) View() string {
 	pageStyle := lipgloss.NewStyle()
 	if m.showBorders {
 		pageStyle = pageStyle.Border(lipgloss.RoundedBorder()).BorderForeground(theme.Fg())
-	} else {
-		pageStyle = pageStyle.Padding(1)
 	}
 
 	if m.maxHeight > 0 {
@@ -189,14 +187,24 @@ func (m *RootModel) SetSize(width, height int) {
 }
 
 func (m *RootModel) pageWidth() int {
-	return m.width - 2
+	if m.showBorders {
+		return m.width - 2
+	}
+	return m.width
 }
 
 func (m *RootModel) pageHeight() int {
+	var height int
 	if m.maxHeight > 0 {
-		return utils.Min(m.maxHeight, m.height)
+		height = utils.Min(m.maxHeight, m.height)
+	} else {
+		height = m.height
 	}
-	return m.height - 2
+
+	if m.showBorders {
+		return height - 2
+	}
+	return m.height
 }
 
 type popMsg struct{}

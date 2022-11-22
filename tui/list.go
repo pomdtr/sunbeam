@@ -91,7 +91,6 @@ func NewList(title string) *List {
 	actions := NewActionList()
 
 	header := NewHeader()
-	header.SetIsLoading(true)
 
 	viewport := viewport.New(0, 0)
 	viewport.Style = styles.Regular
@@ -137,7 +136,6 @@ func (l *List) setPreviewContent(content string) {
 }
 
 func (c *List) SetItems(items []ListItem) tea.Cmd {
-	c.header.SetIsLoading(false)
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
 		filterItems[i] = item

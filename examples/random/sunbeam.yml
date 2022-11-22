@@ -1,0 +1,15 @@
+name: random
+title: Random
+version: "1.0"
+rootItems:
+  - title: "Generate 5 random numbers"
+    script: "random-list"
+  - title: "Random Number"
+    script: "random-number"
+scripts:
+  random-list:
+    command: ./random_list.py
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter

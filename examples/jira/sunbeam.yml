@@ -1,0 +1,20 @@
+---
+name: jira
+version: "1.0"
+title: Jira
+rootItems:
+  - title: List Issues
+    script: list-issues
+    with:
+      jql: assignee=currentUser() and status!=Closed
+scripts:
+  list-issues:
+    command: ./jira.sh ${{ input "jql" }}
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter
+    inputs:
+      - name: jql
+        title: JQL
+        type: textfield

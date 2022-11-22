@@ -1,0 +1,42 @@
+name: github
+version: "1.0"
+title: GitHub
+rootItems:
+  - title: List My Repositories
+    script: list-repositories
+    with:
+      owner: pomdtr
+  - title: List Repositories
+    script: list-repositories
+  - title: List Dailymotion Repositories
+    script: list-repositories
+    with:
+      owner: dailymotion
+  - title: List Airflow Pull Requests
+    script: list-pull-requests
+    with:
+      repository: dailymotion/dwh-dags
+scripts:
+  list-repositories:
+    title: List Repositories
+    command: ./list-repos.sh ${{ input "owner" }}
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter
+      showPreview: true
+    inputs:
+      - name: owner
+        title: Owner
+        type: textfield
+        required: false
+  list-pull-requests:
+    command: ./list-prs.sh ${{ input "repository" }}
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter
+    inputs:
+      - name: repository
+        title: Repository
+        type: textfield

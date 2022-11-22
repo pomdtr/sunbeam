@@ -1,0 +1,7 @@
+{
+    "yaml.schemas": {
+        "./schemas/schema.json": [
+            "sunbeam.yml"
+        ],
+    }
+}

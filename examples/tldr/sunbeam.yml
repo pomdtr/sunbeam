@@ -1,0 +1,39 @@
+name: tldr
+title: TLDR Pages
+version: "1.0"
+rootItems:
+  - title: "Search MacOS Pages"
+    script: list
+    with:
+      platform: osx
+  - title: "Search Linux Pages"
+    script: list
+    with:
+      platform: linux
+scripts:
+  list:
+    command: |
+      tldr --list --platform ${{ input "platform" }} | sunbeam query -R '{
+        id: .,
+        title: .,
+        previewCmd: "tldr --color always --platform  ${{ input "platform" }} \(.)",
+        actions: [
+          {"type": "open-url", "url": "https://tldr.ostera.io/\(.)", "title": "Open in Browser"}
+        ]
+      }'
+    inputs:
+      - name: platform
+        type: dropdown
+        title: Platform
+        data:
+          - title: Windows
+            value: windows
+          - title: MacOS
+            value: macos
+          - title: Linux
+            value: linux
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter
+      showPreview: true

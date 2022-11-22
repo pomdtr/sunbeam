@@ -13,7 +13,7 @@ import (
 )
 
 var queryCmd = &cobra.Command{
-	Use:     "query",
+	Use:     "query <query>",
 	Short:   "Transform or generate JSON using a jq query",
 	GroupID: "core",
 	Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),

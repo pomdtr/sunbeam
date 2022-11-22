@@ -1,0 +1,26 @@
+name: file-browser
+version: "1.0"
+title: File Browser
+rootItems:
+  - title: Browse Custom Directory
+    script: file-browser
+  - title: Browse Root Directory
+    script: file-browser
+    with:
+      root: "/"
+  - title: Browse Current Directory
+    script: file-browser
+    with:
+      root: "."
+scripts:
+  file-browser:
+    command: ./file-browser.py --root ${{ input "root" }}
+    onSuccess: push-page
+    page:
+      type: "list"
+      mode: filter
+    inputs:
+      - name: root
+        title: Root
+        type: textfield
+        placeholder: Select a directory

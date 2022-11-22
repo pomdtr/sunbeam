@@ -1,0 +1,13 @@
+name: bitwarden
+version: "1.0"
+title: Bitwarden
+rootItems:
+  - title: Search Passwords
+    script: list-passwords
+scripts:
+  list-passwords:
+    command: ./bitwarden.sh
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter

@@ -1,0 +1,10 @@
+version: "1.0"
+title: Date Utils
+name: date
+rootItems:
+  - script: utc
+    title: Copy UTC Timestamp
+scripts:
+  utc:
+    command: date +%Y-%m-%dT%H:%M:%SZ | tr -d '\n'
+    onSuccess: copy-to-clipboard

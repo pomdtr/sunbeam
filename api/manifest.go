@@ -1,8 +1,6 @@
 package api
 
 import (
-	"bytes"
-	"io"
 	"log"
 	"net/url"
 	"os"
@@ -72,33 +70,26 @@ func init() {
 			continue
 		}
 
-		decoder := yaml.NewDecoder(bytes.NewReader(manifestBytes))
-
-		for {
-			var extension Extension
-			err := decoder.Decode(&extension)
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Printf("error decoding manifest at %s: %v", manifestPath, err)
-				continue
-			}
-
-			for key, script := range extension.Scripts {
-				if script.Page.Title == "" {
-					script.Page.Title = extension.Title
-				}
-				extension.Scripts[key] = script
-			}
-
-			extension.Url = url.URL{
-				Scheme: "file",
-				Path:   manifestPath,
-			}
-
-			extensions[extension.Name] = extension
+		var extension Extension
+		err = yaml.Unmarshal(manifestBytes, &extension)
+		if err != nil {
+			log.Printf("error decoding manifest at %s: %v", manifestPath, err)
+			continue
 		}
+
+		for key, script := range extension.Scripts {
+			if script.Page.Title == "" {
+				script.Page.Title = extension.Title
+			}
+			extension.Scripts[key] = script
+		}
+
+		extension.Url = url.URL{
+			Scheme: "file",
+			Path:   manifestPath,
+		}
+
+		extensions[extension.Name] = extension
 	}
 
 	Sunbeam = Api{
