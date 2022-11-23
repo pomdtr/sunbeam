@@ -98,17 +98,15 @@ func (s Script) Cmd(params CommandParams) (*exec.Cmd, error) {
 	}
 
 	funcMap := template.FuncMap{
-		"input": func(key string) (string, error) {
-			value, ok := inputs[key]
-			if !ok {
-				return "", fmt.Errorf("input %s not found", params)
-			}
-
-			return shellescape.Quote(value), nil
-		},
 		"query": func() string {
 			return shellescape.Quote(params.Query)
 		},
+	}
+
+	for key, value := range inputs {
+		funcMap[key] = func() string {
+			return shellescape.Quote(value)
+		}
 	}
 
 	rendered, err := utils.RenderString(s.Command, funcMap)

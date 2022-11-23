@@ -16,7 +16,7 @@ rootItems:
       root: "."
 scripts:
   file-browser:
-    command: ./file-browser.py --root ${{ input "root" }}
+    command: ./file-browser.py --root ${{ root }}
     onSuccess: push-page
     page:
       type: "list"

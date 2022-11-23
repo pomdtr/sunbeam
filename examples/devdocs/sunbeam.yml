@@ -29,12 +29,12 @@ scripts:
       mode: filter
   search-entries:
     command: |
-      curl https://devdocs.io/docs/${{ input "slug" }}/index.json | sunbeam query '.entries[] |
+      curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
         {
           title: .name,
           subtitle: .type,
           actions: [
-            {type: "open-url", url: "https://devdocs.io/${{ input "slug" }}/\(.path)"}
+            {type: "open-url", url: "https://devdocs.io/${{ slug }}/\(.path)"}
           ]
         }
       '

@@ -9,7 +9,7 @@ rootItems:
       jql: assignee=currentUser() and status!=Closed
 scripts:
   list-issues:
-    command: ./jira.sh ${{ input "jql" }}
+    command: ./jira.sh ${{ jql }}
     onSuccess: push-page
     page:
       type: list

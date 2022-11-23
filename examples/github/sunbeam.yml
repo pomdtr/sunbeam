@@ -21,7 +21,7 @@ rootItems:
 scripts:
   list-repositories:
     title: List Repositories
-    command: ./list-repos.sh ${{ input "owner" }}
+    command: ./list-repos.sh ${{ owner }}
     onSuccess: push-page
     page:
       type: list
@@ -33,7 +33,7 @@ scripts:
         type: textfield
         required: false
   list-pull-requests:
-    command: ./list-prs.sh ${{ input "repository" }}
+    command: ./list-prs.sh ${{ repository }}
     onSuccess: push-page
     page:
       type: list
