@@ -1,6 +1,8 @@
 name: github
 version: "1.0"
 title: GitHub
+requirements:
+  - gh
 rootItems:
   - title: List My Repositories
     script: list-repositories

@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
 )
 
@@ -15,8 +15,19 @@ var globalOptions tui.SunbeamOptions
 var rootCmd = &cobra.Command{
 	Use:   "sunbeam",
 	Short: "Command Line Launcher",
-	RunE:  Sunbeam,
-	Args:  cobra.ArbitraryArgs,
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		manifests := make([]app.Extension, 0)
+		for _, manifest := range app.Sunbeam.Extensions {
+			manifests = append(manifests, manifest)
+		}
+
+		rootList := tui.RootList(manifests...)
+		err = tui.Draw(rootList, globalOptions)
+		if err != nil {
+			return err
+		}
+		return
+	},
 }
 
 func Execute() (err error) {
@@ -31,7 +42,7 @@ func Execute() (err error) {
 		Title: "Extension Commands",
 	})
 
-	for _, extension := range api.Sunbeam.Extensions {
+	for _, extension := range app.Sunbeam.Extensions {
 		cmd := NewExtensionCommand(extension)
 		cmd.GroupID = "extensions"
 		rootCmd.AddCommand(cmd)
@@ -40,16 +51,28 @@ func Execute() (err error) {
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(extension api.Extension) *cobra.Command {
+func NewExtensionCommand(extension app.Extension) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:   extension.Name,
 		Short: extension.Title,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			model := tui.RootList(extension)
-			err = tui.Draw(model, globalOptions)
+			var runner tui.Container
+			// If there is only one root item, just run it
+			if len(extension.RootItems) == 1 {
+				item := extension.RootItems[0]
+				script, ok := extension.Scripts[item.Script]
+				if !ok {
+					return fmt.Errorf("script %s not found", item.Script)
+				}
+				runner = tui.NewRunContainer(extension, script, item.With)
+			} else {
+				runner = tui.RootList(extension)
+			}
+			err = tui.Draw(runner, globalOptions)
 			if err != nil {
 				return fmt.Errorf("could not run extension: %w", err)
 			}
+
 			return nil
 		},
 	}
@@ -103,18 +126,4 @@ func NewExtensionCommand(extension api.Extension) *cobra.Command {
 	}
 
 	return extensionCmd
-}
-
-func Sunbeam(cmd *cobra.Command, args []string) (err error) {
-	manifests := make([]api.Extension, 0)
-	for _, manifest := range api.Sunbeam.Extensions {
-		manifests = append(manifests, manifest)
-	}
-
-	rootList := tui.RootList(manifests...)
-	err = tui.Draw(rootList, globalOptions)
-	if err != nil {
-		return err
-	}
-	return
 }

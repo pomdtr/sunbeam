@@ -31,7 +31,6 @@ require (
 )
 
 require (
-	github.com/adrg/xdg v0.4.0
 	github.com/alessio/shellescape v1.4.1
 	github.com/atotto/clipboard v0.1.4
 	github.com/containerd/console v1.0.3 // indirect

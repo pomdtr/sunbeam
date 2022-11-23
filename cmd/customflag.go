@@ -3,15 +3,15 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/app"
 )
 
 type CustomFlag struct {
-	input api.ScriptInput
+	input app.ScriptInput
 	value string
 }
 
-func NewCustomFlag(input api.ScriptInput) *CustomFlag {
+func NewCustomFlag(input app.ScriptInput) *CustomFlag {
 	var value string
 	switch input.Type {
 	case "checkbox":

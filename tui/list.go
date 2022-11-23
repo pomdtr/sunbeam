@@ -145,6 +145,10 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 	return c.FilterItems(c.Query())
 }
 
+func (c *List) SetIsLoading(isLoading bool) {
+	c.header.SetIsLoading(isLoading)
+}
+
 type PreviewMsg string
 
 func (l *List) updateActions(item ListItem) tea.Cmd {

@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -33,7 +33,7 @@ type FormInput interface {
 	Update(tea.Msg) (FormInput, tea.Cmd)
 }
 
-func NewFormItem(formItem api.ScriptInput) (FormItem, error) {
+func NewFormItem(formItem app.ScriptInput) (FormItem, error) {
 	var input FormInput
 	switch formItem.Type {
 	case "textfield":
@@ -64,7 +64,7 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem api.ScriptInput) TextArea {
+func NewTextArea(formItem app.ScriptInput) TextArea {
 	ta := textarea.New()
 	ta.FocusedStyle.Text = styles.Regular
 	ta.BlurredStyle.Text = styles.Regular
@@ -96,7 +96,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem api.ScriptInput) TextInput {
+func NewTextInput(formItem app.ScriptInput) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.TextStyle = styles.Regular.Copy()
@@ -136,7 +136,7 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(formItem api.ScriptInput) Checkbox {
+func NewCheckbox(formItem app.ScriptInput) Checkbox {
 	return Checkbox{
 		Style: styles.Regular.Copy(),
 		label: formItem.Label,
@@ -219,7 +219,7 @@ type DropDown struct {
 	value     string
 }
 
-func NewDropDown(formItem api.ScriptInput) DropDown {
+func NewDropDown(formItem app.ScriptInput) DropDown {
 	choices := make([]FilterItem, len(formItem.Data))
 	for i, formItem := range formItem.Data {
 		choices[i] = DropDownItem{

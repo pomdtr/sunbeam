@@ -14,6 +14,12 @@
             "type": "string",
             "pattern": "^[a-z-]+$"
         },
+        "requirements": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
         "title": {
             "type": "string"
         },
@@ -110,11 +116,11 @@
                 "cwd": {
                     "type": "string",
                     "enum": [
-                        "current",
-                        "extension",
-                        "home"
+                        "currentDir",
+                        "extensionDir",
+                        "homeDir"
                     ],
-                    "default": "extension"
+                    "default": "extensionDir"
                 },
                 "inputs": {
                     "type": "array",

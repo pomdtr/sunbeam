@@ -12,7 +12,7 @@ bw list items | sunbeam query '.[] | {
         },
         {
             type: "copy-text",
-            title: "Copy Password",
+            title: "Copy Login",
             shortcut: "ctrl+y",
             text: "\(.login)"
         }

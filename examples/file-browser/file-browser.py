@@ -16,7 +16,7 @@ for path in sorted(root.iterdir(), key=lambda p: p.name):
         if path.is_file()
         else {
             "type": "run-script",
-            "page": "file-browser",
+            "script": "file-browser",
             "title": "Browse Directory",
             "with": {"root": str(path.absolute())},
         }

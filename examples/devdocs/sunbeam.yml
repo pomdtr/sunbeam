@@ -1,0 +1,48 @@
+name: devdocs
+title: DevDocs
+version: "1.0"
+requirements:
+  - curl
+rootItems:
+  - script: search-docsets
+    title: Browse Docset
+  - script: search-entries
+    title: Python 3.11
+    with:
+      slug: python~3.11
+scripts:
+  search-docsets:
+    command: |
+      curl https://devdocs.io/docs/docs.json | sunbeam query '.[] |
+        {
+          title: .name,
+          subtitle: .release,
+          actions: [
+            { type: "run-script", script: "search-entries", title: "Search Entries", with: { slug: .slug } },
+            { type: "open-url", title: "Open in Browser", url: "https://devdocs.io/\(.slug)" }
+          ]
+        }
+      '
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter
+  search-entries:
+    command: |
+      curl https://devdocs.io/docs/${{ input "slug" }}/index.json | sunbeam query '.entries[] |
+        {
+          title: .name,
+          subtitle: .type,
+          actions: [
+            {type: "open-url", url: "https://devdocs.io/${{ input "slug" }}/\(.path)"}
+          ]
+        }
+      '
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter
+    inputs:
+      - name: slug
+        type: textfield
+        title: Slug

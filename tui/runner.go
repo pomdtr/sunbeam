@@ -4,37 +4,39 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/app"
 )
 
 type RunContainer struct {
 	width, height int
 	currentView   string
 
-	manifest api.Extension
-	with     map[string]any
+	extension app.Extension
+	with      map[string]any
 
+	// TODO: remove form responsability from here
 	form   *Form
 	list   *List
 	detail *Detail
 
-	Script api.Script
+	Script app.Script
 }
 
-func NewRunContainer(manifest api.Extension, script api.Script, with map[string]any) *RunContainer {
+func NewRunContainer(manifest app.Extension, script app.Script, with map[string]any) *RunContainer {
 	params := make(map[string]any)
 	for k, v := range with {
 		params[k] = v
 	}
 
 	return &RunContainer{
-		manifest: manifest,
-		Script:   script,
-		with:     params,
+		extension: manifest,
+		Script:    script,
+		with:      params,
 	}
 }
 
@@ -42,11 +44,11 @@ func (c *RunContainer) Init() tea.Cmd {
 	return c.Run()
 }
 
-type ListOutput []ListItem
+type ListOutput []app.ScriptItem
 type FullOutput string
 
 func (c RunContainer) ScriptCmd() tea.Msg {
-	input := api.CommandParams{
+	input := app.CommandParams{
 		With: c.with,
 	}
 	if c.currentView == "list" {
@@ -58,7 +60,23 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 		return NewErrorCmd(err)
 	}
 
-	command.Dir = c.manifest.Dir()
+	switch c.Script.Cwd {
+	case "homeDir":
+		command.Dir, err = os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+	case "extensionDir":
+		command.Dir = c.extension.Dir()
+	case "currentDir":
+		command.Dir, err = os.Getwd()
+		if err != nil {
+			return err
+		}
+	default:
+		command.Dir = c.extension.Dir()
+	}
+
 	if c.Script.OnSuccess == "" {
 		return ExecMsg{
 			Command: command,
@@ -70,79 +88,34 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 	if err != nil {
 		var exitErr *exec.ExitError
 		if ok := errors.As(err, &exitErr); ok {
-			return fmt.Errorf("%s", exitErr.Stderr)
+			return fmt.Errorf("command failed with exit code %d, error: %s", exitErr.ExitCode(), exitErr.Stderr)
 		}
 		return err
 	}
-
 	output := string(res)
 
 	switch c.Script.OnSuccess {
+	case "reload-page":
+		return ReloadPageMsg{}
 	case "copy-to-clipboard":
-		return CopyTextMsg{
-			Text: output,
-		}
+		return CopyTextMsg{Text: output}
 	case "open-in-browser":
-		return OpenUrlMsg{
-			Url: output,
-		}
+		return OpenUrlMsg{Url: output}
 	case "push-page":
 		switch c.Script.Page.Type {
 		case "list":
-			scriptItems, err := api.ParseListItems(output)
+			scriptItems, err := app.ParseListItems(output)
 			if err != nil {
 				return err
 			}
-
-			listItems := make([]ListItem, len(scriptItems))
-			for i, scriptItem := range scriptItems {
-				scriptItem := scriptItem
-				actions := make([]Action, len(scriptItem.Actions))
-				for i, scriptAction := range scriptItem.Actions {
-					if i == 0 {
-						scriptAction.Shortcut = "enter"
-					}
-					if scriptAction.Extension == "" {
-						scriptAction.Extension = c.manifest.Name
-					}
-					actions[i] = NewAction(scriptAction)
-				}
-				if scriptItem.Id == "" {
-					scriptItem.Id = strconv.Itoa(i)
-				}
-				listItems[i] = ListItem{
-					id:       scriptItem.Id,
-					Title:    scriptItem.Title,
-					Subtitle: scriptItem.Subtitle,
-					Preview:  scriptItem.Preview,
-					PreviewCmd: func() string {
-						cmd := scriptItem.PreviewCommand()
-						if cmd == nil {
-							return "No preview command"
-						}
-						out, err := cmd.Output()
-						if err != nil {
-							var exitErr *exec.ExitError
-							if errors.As(err, &exitErr) {
-								return string(exitErr.Stderr)
-							}
-							return err.Error()
-						}
-
-						return string(out)
-					},
-					Accessories: scriptItem.Accessories,
-					Actions:     actions,
-				}
-			}
-			return ListOutput(listItems)
+			return ListOutput(scriptItems)
 		case "detail":
 			return FullOutput(output)
 		default:
 			return fmt.Errorf("unknown page type %s", c.Script.Page.Type)
 		}
 	default:
-		return fmt.Errorf("unknown onSuccess %s", c.Script.OnSuccess)
+		return fmt.Errorf("unknown OnSuccess %s", c.Script.OnSuccess)
 	}
 }
 
@@ -175,6 +148,7 @@ func (c *RunContainer) Run() tea.Cmd {
 	case "list":
 		c.currentView = "list"
 		if c.list != nil {
+			c.list.SetIsLoading(true)
 			return c.ScriptCmd
 		}
 		c.list = NewList(c.Script.Page.Title)
@@ -185,14 +159,18 @@ func (c *RunContainer) Run() tea.Cmd {
 			c.list.ShowPreview = true
 		}
 		c.list.SetSize(c.width, c.height)
+		c.list.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, c.list.Init())
-	case "detail":
+	case "detail", "copy-to-clipboard", "open-in-browser":
 		c.currentView = "detail"
 		if c.detail != nil {
+			c.detail.SetIsLoading(true)
 			return c.ScriptCmd
 		}
+
 		c.detail = NewDetail(c.Script.Page.Title)
 		c.detail.SetSize(c.width, c.height)
+		c.detail.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, c.detail.Init())
 	default:
 		return c.ScriptCmd
@@ -214,7 +192,51 @@ func (c *RunContainer) SetSize(width, height int) {
 func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case ListOutput:
-		cmd := c.list.SetItems(msg)
+		listItems := make([]ListItem, len(msg))
+
+		for i, scriptItem := range msg {
+			scriptItem := scriptItem
+			actions := make([]Action, len(scriptItem.Actions))
+			for i, scriptAction := range scriptItem.Actions {
+				if i == 0 {
+					scriptAction.Shortcut = "enter"
+				}
+				if scriptAction.Extension == "" {
+					scriptAction.Extension = c.extension.Name
+				}
+				actions[i] = NewAction(scriptAction)
+			}
+			if scriptItem.Id == "" {
+				scriptItem.Id = strconv.Itoa(i)
+			}
+			listItems[i] = ListItem{
+				id:       scriptItem.Id,
+				Title:    scriptItem.Title,
+				Subtitle: scriptItem.Subtitle,
+				Preview:  scriptItem.Preview,
+				PreviewCmd: func() string {
+					cmd := scriptItem.PreviewCommand()
+					if cmd == nil {
+						return "No preview command"
+					}
+					out, err := cmd.Output()
+					if err != nil {
+						var exitErr *exec.ExitError
+						if errors.As(err, &exitErr) {
+							return string(exitErr.Stderr)
+						}
+						return err.Error()
+					}
+
+					return string(out)
+				},
+				Accessories: scriptItem.Accessories,
+				Actions:     actions,
+			}
+		}
+
+		cmd := c.list.SetItems(listItems)
+		c.list.SetIsLoading(false)
 		return c, cmd
 	case FullOutput:
 		c.detail.SetContent(string(msg))

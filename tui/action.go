@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/app"
 )
 
 type Action struct {
@@ -27,8 +27,24 @@ func (a Action) Binding() key.Binding {
 	return key.NewBinding(key.WithKeys(a.Shortcut), key.WithHelp(prettyKey, a.Title))
 }
 
+func NewCopyTextCmd(text string) tea.Cmd {
+	return func() tea.Msg {
+		return CopyTextMsg{
+			Text: text,
+		}
+	}
+}
+
 type CopyTextMsg struct {
 	Text string
+}
+
+func NewOpenUrlCmd(url string) tea.Cmd {
+	return func() tea.Msg {
+		return OpenUrlMsg{
+			Url: url,
+		}
+	}
 }
 
 type OpenUrlMsg struct {
@@ -36,7 +52,16 @@ type OpenUrlMsg struct {
 	Application string
 }
 
-type OpenPathMessage struct {
+func NewOpenPathCmd(path string, application string) tea.Cmd {
+	return func() tea.Msg {
+		return OpenPathMsg{
+			Path:        path,
+			Application: application,
+		}
+	}
+}
+
+type OpenPathMsg struct {
 	Path        string
 	Application string
 }
@@ -59,12 +84,20 @@ type RunScriptMsg struct {
 	With      map[string]any
 }
 
+func NewExecCmd(command *exec.Cmd) tea.Cmd {
+	return func() tea.Msg {
+		return ExecMsg{
+			Command: command,
+		}
+	}
+}
+
 type ExecMsg struct {
 	Command   *exec.Cmd
 	OnSuccess string
 }
 
-func NewAction(scriptAction api.ScriptAction) Action {
+func NewAction(scriptAction app.ScriptAction) Action {
 	var msg tea.Msg
 	switch scriptAction.Type {
 	case "open-url":
@@ -79,7 +112,7 @@ func NewAction(scriptAction api.ScriptAction) Action {
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open File"
 		}
-		msg = OpenPathMessage{
+		msg = OpenPathMsg{
 			Path:        scriptAction.Path,
 			Application: scriptAction.Application,
 		}

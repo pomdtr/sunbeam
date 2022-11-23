@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"encoding/json"
@@ -14,6 +14,7 @@ import (
 type Script struct {
 	Command   string        `json:"command" yaml:"command"`
 	OnSuccess string        `json:"onSuccess" yaml:"onSuccess"`
+	Cwd       string        `json:"cwd" yaml:"cwd"`
 	Inputs    []ScriptInput `json:"inputs" yaml:"inputs"`
 	Page      Page          `json:"page" yaml:"page"`
 }

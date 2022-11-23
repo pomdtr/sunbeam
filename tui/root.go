@@ -5,17 +5,15 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"sort"
 	"strings"
 
-	"github.com/adrg/xdg"
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cli/browser"
-	"github.com/pomdtr/sunbeam/api"
+	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/skratchdot/open-golang/open"
 )
@@ -46,8 +44,8 @@ type RootModel struct {
 	exitCmd  *exec.Cmd
 }
 
-func NewRootModel(rootPage Container, options SunbeamOptions) *RootModel {
-	return &RootModel{pages: []Container{rootPage}, maxHeight: options.Height, showBorders: !options.NoBorders}
+func NewRootModel(options SunbeamOptions) *RootModel {
+	return &RootModel{maxHeight: options.Height, showBorders: !options.NoBorders}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -85,7 +83,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.exitMsg = fmt.Sprintf("Opened %s in browser.", msg.Url)
 		m.quitting = true
 		return m, tea.Quit
-	case OpenPathMessage:
+	case OpenPathMsg:
 		var err error
 
 		if msg.Application != "" {
@@ -102,33 +100,23 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.quitting = true
 		return m, tea.Quit
 	case RunScriptMsg:
-		manifest, ok := api.Sunbeam.Extensions[msg.Extension]
+		manifest, ok := app.Sunbeam.Extensions[msg.Extension]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
 		script, ok := manifest.Scripts[msg.Script]
 		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("page %s not found", msg.Script))
+			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
 		runner := NewRunContainer(manifest, script, msg.With)
 		m.Push(runner)
 		return m, runner.Init()
 	case ExecMsg:
-		// Run the script
-		if msg.OnSuccess == "reload-page" {
-			err := msg.Command.Run()
-			if err != nil {
-				return m, NewErrorCmd(err)
-			}
-			return m, func() tea.Msg {
-				return ReloadPageMsg{}
-			}
-		}
-
-		m.exitCmd = msg.Command
 		m.quitting = true
+		m.exitCmd = msg.Command
 		return m, tea.Quit
+
 	case popMsg:
 		if len(m.pages) == 1 {
 			m.quitting = true
@@ -160,7 +148,7 @@ func (m *RootModel) View() string {
 	var embedView string
 
 	if len(m.pages) == 0 {
-		return "This should not happen, please report this bug"
+		return "No Pages"
 	}
 
 	currentPage := m.pages[len(m.pages)-1]
@@ -188,7 +176,7 @@ func (m *RootModel) SetSize(width, height int) {
 
 func (m *RootModel) pageWidth() int {
 	if m.showBorders {
-		return m.width - 2
+		return utils.Max(0, m.width-2)
 	}
 	return m.width
 }
@@ -202,7 +190,7 @@ func (m *RootModel) pageHeight() int {
 	}
 
 	if m.showBorders {
-		return height - 2
+		return utils.Max(0, height-2)
 	}
 	return m.height
 }
@@ -224,7 +212,7 @@ func (m *RootModel) Pop() {
 	}
 }
 
-func ScriptCommand(extension string, entrypoint api.Entrypoint) string {
+func ScriptCommand(extension string, entrypoint app.Entrypoint) string {
 	args := make([]string, 0)
 	args = append(args, "sunbeam", extension, entrypoint.Script)
 	for param, value := range entrypoint.With {
@@ -239,7 +227,7 @@ func ScriptCommand(extension string, entrypoint api.Entrypoint) string {
 	return strings.Join(args, " ")
 }
 
-func RootList(extensions ...api.Extension) Container {
+func RootList(extensions ...app.Extension) Container {
 	rootItems := make([]ListItem, 0)
 	for _, extension := range extensions {
 		extension := extension
@@ -264,7 +252,7 @@ func RootList(extensions ...api.Extension) Container {
 					}, {
 						Title:    "Open Extension Folder",
 						Shortcut: "ctrl+o",
-						Cmd:      func() tea.Msg { return OpenPathMessage{Path: extension.Dir()} },
+						Cmd:      func() tea.Msg { return OpenPathMsg{Path: extension.Dir()} },
 					},
 					{
 						Title:    "Copy Full Command",
@@ -288,31 +276,24 @@ func RootList(extensions ...api.Extension) Container {
 }
 
 func Draw(container Container, options SunbeamOptions) (err error) {
-	var logFile string
 	// Log to a file
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
-		logFile = env
-	} else {
-		if _, err := os.Stat(xdg.StateHome); os.IsNotExist(err) {
-			err = os.MkdirAll(xdg.StateHome, 0755)
-			if err != nil {
-				log.Fatalln(err)
-			}
+		f, err := tea.LogToFile(env, "debug")
+		if err != nil {
+			log.Fatalf("could not open log file: %v", err)
 		}
-		logFile = path.Join(xdg.StateHome, "api.log")
+		defer f.Close()
+	} else {
+		tea.LogToFile("/dev/null", "")
 	}
-	f, err := tea.LogToFile(logFile, "debug")
-	if err != nil {
-		log.Fatalf("could not open log file: %v", err)
-	}
-	defer f.Close()
 
 	programOptions := make([]tea.ProgramOption, 0)
 	if options.Height == 0 {
 		programOptions = append(programOptions, tea.WithAltScreen())
 	}
 
-	model := NewRootModel(container, options)
+	model := NewRootModel(options)
+	model.Push(container)
 	p := tea.NewProgram(model, programOptions...)
 	m, err := p.Run()
 	if err != nil {
