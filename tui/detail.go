@@ -50,7 +50,7 @@ func (c *Detail) SetActions(actions ...Action) {
 }
 
 func (d *Detail) Init() tea.Cmd {
-	return d.header.SetIsLoading(true)
+	return nil
 }
 
 func (d *Detail) SetContent(content string) {
@@ -60,8 +60,8 @@ func (d *Detail) SetContent(content string) {
 	d.viewport.SetContent(content)
 }
 
-func (d *Detail) SetIsLoading(isLoading bool) {
-	d.header.SetIsLoading(isLoading)
+func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
+	return d.header.SetIsLoading(isLoading)
 }
 
 func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {

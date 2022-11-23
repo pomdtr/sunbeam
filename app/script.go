@@ -104,6 +104,7 @@ func (s Script) Cmd(params CommandParams) (*exec.Cmd, error) {
 	}
 
 	for key, value := range inputs {
+		value := value
 		funcMap[key] = func() string {
 			return shellescape.Quote(value)
 		}

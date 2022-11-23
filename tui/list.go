@@ -112,7 +112,7 @@ func NewList(title string) *List {
 }
 
 func (c *List) Init() tea.Cmd {
-	return tea.Batch(c.header.Init(), c.header.Focus())
+	return c.header.Focus()
 }
 
 func (c *List) SetSize(width, height int) {

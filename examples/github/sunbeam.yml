@@ -4,6 +4,11 @@ title: GitHub
 requirements:
   - gh
 rootItems:
+  - title: Open Sunbeam Repository
+    script: open-repository
+    with:
+      owner: pomdtr
+      name: sunbeam
   - title: List My Repositories
     script: list-repositories
     with:

@@ -160,11 +160,10 @@ func (c *RunContainer) Run() tea.Cmd {
 			c.list.ShowPreview = true
 		}
 		c.list.SetSize(c.width, c.height)
-		c.list.SetIsLoading(true)
-		return tea.Batch(c.ScriptCmd, c.list.Init())
-	case "detail", "copy-to-clipboard", "open-in-browser":
+		cmd := c.list.SetIsLoading(true)
+		return tea.Batch(c.ScriptCmd, c.list.Init(), cmd)
+	default:
 		c.currentView = "detail"
-		c.detail.SetContent("")
 		if c.detail != nil {
 			c.detail.SetIsLoading(true)
 			return c.ScriptCmd
@@ -172,10 +171,8 @@ func (c *RunContainer) Run() tea.Cmd {
 
 		c.detail = NewDetail(c.Script.Page.Title)
 		c.detail.SetSize(c.width, c.height)
-		c.detail.SetIsLoading(true)
-		return tea.Batch(c.ScriptCmd, c.detail.Init())
-	default:
-		return c.ScriptCmd
+		cmd := c.detail.SetIsLoading(true)
+		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
 	}
 }
 
