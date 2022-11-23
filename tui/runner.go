@@ -57,7 +57,7 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 
 	command, err := c.Script.Cmd(input)
 	if err != nil {
-		return NewErrorCmd(err)
+		return err
 	}
 
 	switch c.Script.Cwd {
