@@ -13,6 +13,8 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
+var debounceDuration = 300 * time.Millisecond
+
 type ListItem struct {
 	id          string
 	Title       string
@@ -182,7 +184,7 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 					return PreviewUpdateMsg{selectedItem: item}
 				}
 			} else {
-				cmd = tea.Tick(500*time.Millisecond, func(_ time.Time) tea.Msg {
+				cmd = tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {
 					return PreviewUpdateMsg{selectedItem: item}
 				})
 			}
@@ -245,7 +247,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 	cmds = append(cmds, cmd)
 	if header.Value() != c.header.Value() {
 		if c.Dynamic {
-			cmd = tea.Tick(500*time.Millisecond, func(_ time.Time) tea.Msg {
+			cmd = tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {
 				return updateQueryMsg{query: header.Value()}
 			})
 			cmds = append(cmds, cmd)

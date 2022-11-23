@@ -6,7 +6,7 @@ rootItems:
     script: google-suggestions
 scripts:
   google-suggestions:
-    command: ./google.mjs --query ${{ query }}
+    command: ./google.mjs --query {{ query }}
     onSuccess: push-page
     page:
       type: list

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/app"
@@ -100,7 +101,7 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 	case "copy-to-clipboard":
 		return CopyTextMsg{Text: output}
 	case "open-in-browser":
-		return OpenUrlMsg{Url: output}
+		return OpenUrlMsg{Url: strings.TrimSpace(output)}
 	case "push-page":
 		switch c.Script.Page.Type {
 		case "list":
@@ -163,6 +164,7 @@ func (c *RunContainer) Run() tea.Cmd {
 		return tea.Batch(c.ScriptCmd, c.list.Init())
 	case "detail", "copy-to-clipboard", "open-in-browser":
 		c.currentView = "detail"
+		c.detail.SetContent("")
 		if c.detail != nil {
 			c.detail.SetIsLoading(true)
 			return c.ScriptCmd

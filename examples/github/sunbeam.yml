@@ -19,9 +19,19 @@ rootItems:
     with:
       repository: dailymotion/dwh-dags
 scripts:
+  open-repository:
+    command: printf 'https://github.com/%s/%s' {{owner}} {{name}}
+    onSuccess: open-in-browser
+    inputs:
+      - name: owner
+        type: textfield
+        title: Owner
+      - name: name
+        type: textfield
+        title: Name
   list-repositories:
     title: List Repositories
-    command: ./list-repos.sh ${{ owner }}
+    command: ./list-repos.sh {{ owner }}
     onSuccess: push-page
     page:
       type: list
@@ -33,7 +43,7 @@ scripts:
         type: textfield
         required: false
   list-pull-requests:
-    command: ./list-prs.sh ${{ repository }}
+    command: ./list-prs.sh {{ repository }}
     onSuccess: push-page
     page:
       type: list

@@ -38,7 +38,7 @@ func (f Footer) View() string {
 	for i, binding := range f.bindings {
 		keys[i] = fmt.Sprintf("%s %s", binding.Help().Desc, binding.Help().Key)
 	}
-	help := strings.Join(keys, " • ")
+	help := strings.Join(keys, " · ")
 	help = fmt.Sprintf("  %s ", help)
 
 	availableWidth := utils.Max(0, f.Width-lipgloss.Width(help))

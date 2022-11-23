@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -13,18 +12,17 @@ import (
 	"github.com/cli/go-gh"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	extensionCommand.AddCommand(extensionBrowseCommand)
 	extensionCommand.AddCommand(extensionCreateCommand)
-	extensionCommand.AddCommand(extensionExecCommand)
 	extensionCommand.AddCommand(extensionInstallCommand)
 	extensionCommand.AddCommand(extensionListCommand)
 	extensionCommand.AddCommand(extensionManageCommand)
 	extensionCommand.AddCommand(extensionRemoveCommand)
-	extensionCommand.AddCommand(extensionSearchCommand)
 	extensionCommand.AddCommand(extensionUpgradeCommand)
 
 	rootCmd.AddCommand(extensionCommand)
@@ -66,19 +64,17 @@ var extensionInstallCommand = &cobra.Command{
 			return nil
 		}
 
-		// Remote repository
-		url, err := url.Parse(args[0])
+		repo, err := utils.ParseWithHost(args[0], "github.com")
 		if err != nil {
-			log.Fatalln(err)
+			return err
 		}
 
-		name := path.Base(url.Path)
-		target := path.Join(app.Sunbeam.ExtensionRoot, name)
+		target := path.Join(app.Sunbeam.ExtensionRoot, repo.Name)
 		if _, err = os.Stat(target); err == nil {
-			log.Fatalf("Extension %s already installed", name)
+			log.Fatalf("Extension %s already installed", repo.Name)
 		}
 
-		command := exec.Command("git", "clone", url.String())
+		command := exec.Command("git", "clone", repo.Url())
 		command.Dir = app.Sunbeam.ExtensionRoot
 		command.Stdout = os.Stdout
 		command.Stderr = os.Stderr
@@ -88,15 +84,7 @@ var extensionInstallCommand = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Println("Installed extension", name)
-		return nil
-	},
-}
-
-var extensionExecCommand = &cobra.Command{
-	Use:   "exec",
-	Short: "Execute an installed extension",
-	RunE: func(cmd *cobra.Command, args []string) error {
+		fmt.Println("Installed extension", repo.Name)
 		return nil
 	},
 }
@@ -115,14 +103,6 @@ var extensionRemoveCommand = &cobra.Command{
 			return err
 		}
 		fmt.Printf("Removed extension %s", args[0])
-		return nil
-	},
-}
-
-var extensionSearchCommand = &cobra.Command{
-	Use:   "search",
-	Short: "Search for extensions",
-	RunE: func(cmd *cobra.Command, args []string) error {
 		return nil
 	},
 }

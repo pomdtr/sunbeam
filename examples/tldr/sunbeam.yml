@@ -13,10 +13,10 @@ rootItems:
 scripts:
   list:
     command: |
-      tldr --list --platform ${{ platform }} | sunbeam query -R '{
+      tldr --list --platform {{ platform }} | sunbeam query -R '{
         id: .,
         title: .,
-        previewCmd: "tldr --color always --platform  ${{ platform }} \(.)",
+        previewCmd: "tldr --color always --platform  {{ platform }} \(.)",
         actions: [
           {"type": "open-url", "url": "https://tldr.ostera.io/\(.)", "title": "Open in Browser"}
         ]
