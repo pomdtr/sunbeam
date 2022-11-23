@@ -145,25 +145,19 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 	return c.FilterItems(c.Query())
 }
 
-func (c *List) SetIsLoading(isLoading bool) {
-	c.header.SetIsLoading(isLoading)
+func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
+	return c.header.SetIsLoading(isLoading)
 }
 
-type PreviewMsg string
+type PreviewUpdateMsg struct {
+	selectedItem ListItem
+}
+
+type PreviewContentMsg string
 
 func (l *List) updateActions(item ListItem) tea.Cmd {
 	l.actions.SetTitle(item.Title)
 	l.actions.SetActions(item.Actions...)
-	var cmd tea.Cmd
-	if l.ShowPreview {
-		if item.Preview != "" {
-			l.setPreviewContent(item.Preview)
-		} else if item.PreviewCmd != nil {
-			cmd = tea.Batch(l.header.SetIsLoading(true), func() tea.Msg {
-				return PreviewMsg(item.PreviewCmd())
-			})
-		}
-	}
 
 	if len(item.Actions) == 0 {
 		l.footer.SetBindings()
@@ -176,6 +170,23 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
 		)
+	}
+
+	var cmd tea.Cmd
+	if l.ShowPreview {
+		if item.Preview != "" {
+			l.setPreviewContent(item.Preview)
+		} else if item.PreviewCmd != nil {
+			if l.previewContent == "" {
+				cmd = func() tea.Msg {
+					return PreviewUpdateMsg{selectedItem: item}
+				}
+			} else {
+				cmd = tea.Tick(500*time.Millisecond, func(_ time.Time) tea.Msg {
+					return PreviewUpdateMsg{selectedItem: item}
+				})
+			}
+		}
 	}
 	return cmd
 }
@@ -203,7 +214,18 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 		return c, NewReloadCmd(map[string]any{
 			"query": msg.query,
 		})
-	case PreviewMsg:
+	case PreviewUpdateMsg:
+		if c.filter.Selection() == nil {
+			return c, nil
+		}
+		if msg.selectedItem.ID() != c.filter.Selection().ID() {
+			return c, nil
+		}
+		cmd := c.header.SetIsLoading(true)
+		return c, tea.Batch(cmd, func() tea.Msg {
+			return PreviewContentMsg(msg.selectedItem.PreviewCmd())
+		})
+	case PreviewContentMsg:
 		c.header.SetIsLoading(false)
 		c.setPreviewContent(string(msg))
 		return c, nil
