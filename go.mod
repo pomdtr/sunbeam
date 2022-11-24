@@ -10,6 +10,7 @@ require (
 	github.com/cli/go-gh v1.0.0
 	github.com/itchyny/gojq v0.12.9
 	github.com/lrstanley/bubbletint v0.0.0-20221106213237-947d333795f8
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v3 v3.0.1

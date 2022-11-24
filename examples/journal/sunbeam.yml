@@ -1,0 +1,33 @@
+name: journal
+title: Journal
+version: "1.0"
+
+rootItems:
+  - script: list-entries
+    title: List Entries
+  - script: write-entry
+    title: Write Entry
+
+scripts:
+  list-entries:
+    command: ./list-entries.py
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter
+      showPreview: true
+  write-entry:
+    command: ./write-entry.py --title {{ title }} --message {{ message }}
+    params:
+      - name: title
+        title: Title
+        type: textfield
+      - name: message
+        title: Message
+        type: textfield
+  delete-entry:
+    command: ./delete-entry.py --index {{ index }}
+    params:
+      - name: index
+        title: Index
+        type: textfield

@@ -3,11 +3,9 @@ package tui
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/app"
@@ -20,7 +18,6 @@ type RunContainer struct {
 	extension app.Extension
 	with      map[string]any
 
-	// TODO: remove form responsability from here
 	form   *Form
 	list   *List
 	detail *Detail
@@ -45,8 +42,7 @@ func (c *RunContainer) Init() tea.Cmd {
 	return c.Run()
 }
 
-type ListOutput []app.ScriptItem
-type FullOutput string
+type CommandOutput string
 
 func (c RunContainer) ScriptCmd() tea.Msg {
 	input := app.CommandParams{
@@ -79,45 +75,19 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 	}
 
 	if c.Script.OnSuccess == "" {
-		return ExecMsg{
-			Command: command,
-		}
+		return ExecCommandMsg{Command: command}
 	}
 
-	log.Println("Running command", command)
 	res, err := command.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
 		if ok := errors.As(err, &exitErr); ok {
-			return fmt.Errorf("command failed with exit code %d, error: %s", exitErr.ExitCode(), exitErr.Stderr)
+			return NewErrorCmd(fmt.Errorf("command failed with exit code %d, error: %s", exitErr.ExitCode(), exitErr.Stderr))
 		}
-		return err
+		return NewErrorCmd(err)
 	}
-	output := string(res)
 
-	switch c.Script.OnSuccess {
-	case "reload-page":
-		return ReloadPageMsg{}
-	case "copy-to-clipboard":
-		return CopyTextMsg{Text: output}
-	case "open-in-browser":
-		return OpenUrlMsg{Url: strings.TrimSpace(output)}
-	case "push-page":
-		switch c.Script.Page.Type {
-		case "list":
-			scriptItems, err := app.ParseListItems(output)
-			if err != nil {
-				return err
-			}
-			return ListOutput(scriptItems)
-		case "detail":
-			return FullOutput(output)
-		default:
-			return fmt.Errorf("unknown page type %s", c.Script.Page.Type)
-		}
-	default:
-		return fmt.Errorf("unknown OnSuccess %s", c.Script.OnSuccess)
-	}
+	return CommandOutput(string(res))
 }
 
 func (c *RunContainer) Run() tea.Cmd {
@@ -190,66 +160,83 @@ func (c *RunContainer) SetSize(width, height int) {
 
 func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
-	case ListOutput:
-		listItems := make([]ListItem, len(msg))
-
-		for i, scriptItem := range msg {
-			scriptItem := scriptItem
-			actions := make([]Action, len(scriptItem.Actions))
-			for i, scriptAction := range scriptItem.Actions {
-				if i == 0 {
-					scriptAction.Shortcut = "enter"
-				}
-				if scriptAction.Extension == "" {
-					scriptAction.Extension = c.extension.Name
-				}
-				actions[i] = NewAction(scriptAction)
-			}
-			if scriptItem.Id == "" {
-				scriptItem.Id = strconv.Itoa(i)
-			}
-			listItems[i] = ListItem{
-				id:       scriptItem.Id,
-				Title:    scriptItem.Title,
-				Subtitle: scriptItem.Subtitle,
-				Preview:  scriptItem.Preview,
-				PreviewCmd: func() string {
-					cmd := scriptItem.PreviewCommand()
-					if cmd == nil {
-						return "No preview command"
-					}
-					out, err := cmd.Output()
-					if err != nil {
-						var exitErr *exec.ExitError
-						if errors.As(err, &exitErr) {
-							return string(exitErr.Stderr)
+	case CommandOutput:
+		switch c.Script.OnSuccess {
+		// Reload page is used to reload the *previous* page
+		case "reload-page":
+			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
+		case "copy-to-clipboard":
+			return c, NewCopyTextCmd(string(msg))
+		case "open-url":
+			return c, NewOpenUrlCmd(string(msg))
+		case "push-page":
+			switch c.currentView {
+			case "detail":
+				c.detail.SetContent(string(msg))
+				c.detail.SetIsLoading(false)
+				c.detail.SetActions(
+					Action{Title: "Quit", Shortcut: "enter", Cmd: tea.Quit},
+					Action{Title: "Copy Output", Shortcut: "ctrl+y", Cmd: func() tea.Msg {
+						return CopyTextMsg{
+							Text: string(msg),
 						}
-						return err.Error()
-					}
+					}},
+					Action{Title: "Reload", Shortcut: "ctrl+r", Cmd: NewReloadPageCmd(nil)},
+				)
+				return c, nil
+			case "list":
+				scriptItems, err := app.ParseListItems(string(msg))
+				if err != nil {
+					return c, NewErrorCmd(err)
+				}
+				listItems := make([]ListItem, len(scriptItems))
 
-					return string(out)
-				},
-				Accessories: scriptItem.Accessories,
-				Actions:     actions,
+				for i, scriptItem := range scriptItems {
+					scriptItem := scriptItem
+					actions := make([]Action, len(scriptItem.Actions))
+					for i, scriptAction := range scriptItem.Actions {
+						if i == 0 {
+							scriptAction.Shortcut = "enter"
+						}
+						if scriptAction.Extension == "" {
+							scriptAction.Extension = c.extension.Name
+						}
+						actions[i] = NewAction(scriptAction)
+					}
+					if scriptItem.Id == "" {
+						scriptItem.Id = strconv.Itoa(i)
+					}
+					listItems[i] = ListItem{
+						id:       scriptItem.Id,
+						Title:    scriptItem.Title,
+						Subtitle: scriptItem.Subtitle,
+						Preview:  scriptItem.Preview,
+						PreviewCmd: func() string {
+							cmd := scriptItem.PreviewCommand()
+							if cmd == nil {
+								return "No preview command"
+							}
+							out, err := cmd.Output()
+							if err != nil {
+								var exitErr *exec.ExitError
+								if errors.As(err, &exitErr) {
+									return string(exitErr.Stderr)
+								}
+								return err.Error()
+							}
+
+							return string(out)
+						},
+						Accessories: scriptItem.Accessories,
+						Actions:     actions,
+					}
+				}
+
+				cmd := c.list.SetItems(listItems)
+				c.list.SetIsLoading(false)
+				return c, cmd
 			}
 		}
-
-		cmd := c.list.SetItems(listItems)
-		c.list.SetIsLoading(false)
-		return c, cmd
-	case FullOutput:
-		c.detail.SetContent(string(msg))
-		c.detail.SetIsLoading(false)
-		c.detail.SetActions(
-			Action{Title: "Quit", Shortcut: "enter", Cmd: tea.Quit},
-			Action{Title: "Copy Output", Shortcut: "ctrl+y", Cmd: func() tea.Msg {
-				return CopyTextMsg{
-					Text: string(msg),
-				}
-			}},
-			Action{Title: "Reload", Shortcut: "ctrl+r", Cmd: NewReloadCmd(nil)},
-		)
-		return c, nil
 	case ReloadPageMsg:
 		for k, v := range msg.Params {
 			c.with[k] = v

@@ -21,7 +21,7 @@ scripts:
     page:
       type: "list"
       mode: filter
-    inputs:
+    params:
       - name: root
         title: Root
         type: textfield

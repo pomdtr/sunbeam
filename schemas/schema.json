@@ -122,7 +122,7 @@
                     ],
                     "default": "extensionDir"
                 },
-                "inputs": {
+                "params": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/formitem"
@@ -291,6 +291,12 @@
                             "script"
                         ],
                         "properties": {
+                            "onSuccess": {
+                                "type": "string",
+                                "enum": [
+                                    "reload-page"
+                                ]
+                            },
                             "script": {
                                 "type": "string"
                             }

@@ -7,11 +7,11 @@ import (
 )
 
 type CustomFlag struct {
-	input app.ScriptInput
+	input app.ScriptParams
 	value string
 }
 
-func NewCustomFlag(input app.ScriptInput) *CustomFlag {
+func NewCustomFlag(input app.ScriptParams) *CustomFlag {
 	var value string
 	switch input.Type {
 	case "checkbox":

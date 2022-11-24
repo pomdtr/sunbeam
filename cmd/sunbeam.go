@@ -32,7 +32,6 @@ var rootCmd = &cobra.Command{
 
 func Execute() (err error) {
 	rootCmd.PersistentFlags().IntVarP(&globalOptions.Height, "height", "H", 0, "height of the window")
-	rootCmd.PersistentFlags().BoolVar(&globalOptions.NoBorders, "no-borders", false, "disable borders")
 
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    "core",
@@ -42,6 +41,12 @@ func Execute() (err error) {
 		Title: "Extension Commands",
 	})
 
+	// Core Commands
+	rootCmd.AddCommand(NewCmdExtension())
+	rootCmd.AddCommand(NewCmdQuery())
+	rootCmd.AddCommand(NewCmdVersion())
+
+	// Extensions
 	for _, extension := range app.Sunbeam.Extensions {
 		cmd := NewExtensionCommand(extension)
 		cmd.GroupID = "extensions"
@@ -83,7 +88,7 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 			Use: key,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(map[string]any)
-				for _, input := range script.Inputs {
+				for _, input := range script.Params {
 					switch input.Type {
 					case "checkbox":
 						with[input.Name], err = cmd.Flags().GetBool(input.Name)
@@ -107,7 +112,7 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 			},
 		}
 
-		for _, input := range script.Inputs {
+		for _, input := range script.Params {
 			flag := NewCustomFlag(input)
 			scriptCmd.Flags().Var(flag, input.Name, input.Title)
 			if input.Type == "dropdown" {

@@ -19,10 +19,9 @@ import (
 )
 
 type SunbeamOptions struct {
-	NoBorders bool
-	Height    int
-	Theme     string
-	Accent    string
+	Height int
+	Theme  string
+	Accent string
 }
 
 type Container interface {
@@ -35,7 +34,6 @@ type Container interface {
 type RootModel struct {
 	maxHeight     int
 	width, height int
-	showBorders   bool
 
 	pages []Container
 
@@ -45,7 +43,7 @@ type RootModel struct {
 }
 
 func NewRootModel(options SunbeamOptions) *RootModel {
-	return &RootModel{maxHeight: options.Height, showBorders: !options.NoBorders}
+	return &RootModel{maxHeight: options.Height}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -109,13 +107,33 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
+		if msg.OnSuccess != "" {
+			script.OnSuccess = msg.OnSuccess
+		}
+
 		runner := NewRunContainer(manifest, script, msg.With)
 		m.Push(runner)
 		return m, runner.Init()
-	case ExecMsg:
-		m.quitting = true
-		m.exitCmd = msg.Command
-		return m, tea.Quit
+	case ExecCommandMsg:
+		if msg.OnSuccess == "" {
+			m.quitting = true
+			m.exitCmd = msg.Command
+			return m, tea.Quit
+		}
+
+		res, err := msg.Command.Output()
+		if err != nil {
+			return m, NewErrorCmd(err)
+		}
+		output := strings.TrimSpace(string(res))
+		switch msg.OnSuccess {
+		case "copy-to-clipboard":
+			return m, NewCopyTextCmd(output)
+		case "open-url":
+			return m, NewOpenUrlCmd(output)
+		case "reload-page":
+			return m, NewReloadPageCmd(nil)
+		}
 
 	case popMsg:
 		if len(m.pages) == 1 {
@@ -154,10 +172,7 @@ func (m *RootModel) View() string {
 	currentPage := m.pages[len(m.pages)-1]
 	embedView = currentPage.View()
 
-	pageStyle := lipgloss.NewStyle()
-	if m.showBorders {
-		pageStyle = pageStyle.Border(lipgloss.RoundedBorder()).BorderForeground(theme.Fg())
-	}
+	pageStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(theme.Fg())
 
 	if m.maxHeight > 0 {
 		return pageStyle.Render(embedView)
@@ -175,10 +190,7 @@ func (m *RootModel) SetSize(width, height int) {
 }
 
 func (m *RootModel) pageWidth() int {
-	if m.showBorders {
-		return utils.Max(0, m.width-2)
-	}
-	return m.width
+	return utils.Max(0, m.width-2)
 }
 
 func (m *RootModel) pageHeight() int {
@@ -189,10 +201,7 @@ func (m *RootModel) pageHeight() int {
 		height = m.height
 	}
 
-	if m.showBorders {
-		return utils.Max(0, height-2)
-	}
-	return m.height
+	return utils.Max(0, height-2)
 }
 
 type popMsg struct{}
@@ -307,8 +316,9 @@ func Draw(container Container, options SunbeamOptions) (err error) {
 	}
 
 	if exitCmd := root.exitCmd; exitCmd != nil {
-		root.exitCmd.Stderr = os.Stderr
+		root.exitCmd.Stdin = os.Stdin
 		root.exitCmd.Stdout = os.Stdout
+		root.exitCmd.Stderr = os.Stderr
 		err := root.exitCmd.Run()
 		if err != nil {
 			return err
@@ -316,5 +326,4 @@ func Draw(container Container, options SunbeamOptions) (err error) {
 	}
 
 	return nil
-
 }

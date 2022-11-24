@@ -21,7 +21,7 @@ scripts:
           {"type": "open-url", "url": "https://tldr.ostera.io/\(.)", "title": "Open in Browser"}
         ]
       }'
-    inputs:
+    params:
       - name: platform
         type: dropdown
         title: Platform

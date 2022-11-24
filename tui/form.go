@@ -33,7 +33,7 @@ type FormInput interface {
 	Update(tea.Msg) (FormInput, tea.Cmd)
 }
 
-func NewFormItem(formItem app.ScriptInput) (FormItem, error) {
+func NewFormItem(formItem app.ScriptParams) (FormItem, error) {
 	var input FormInput
 	switch formItem.Type {
 	case "textfield":
@@ -64,7 +64,7 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.ScriptInput) TextArea {
+func NewTextArea(formItem app.ScriptParams) TextArea {
 	ta := textarea.New()
 	ta.FocusedStyle.Text = styles.Regular
 	ta.BlurredStyle.Text = styles.Regular
@@ -96,7 +96,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem app.ScriptInput) TextInput {
+func NewTextInput(formItem app.ScriptParams) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.TextStyle = styles.Regular.Copy()
@@ -136,7 +136,7 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(formItem app.ScriptInput) Checkbox {
+func NewCheckbox(formItem app.ScriptParams) Checkbox {
 	return Checkbox{
 		Style: styles.Regular.Copy(),
 		label: formItem.Label,
@@ -219,7 +219,7 @@ type DropDown struct {
 	value     string
 }
 
-func NewDropDown(formItem app.ScriptInput) DropDown {
+func NewDropDown(formItem app.ScriptParams) DropDown {
 	choices := make([]FilterItem, len(formItem.Data))
 	for i, formItem := range formItem.Data {
 		choices[i] = DropDownItem{

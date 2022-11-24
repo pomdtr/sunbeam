@@ -213,7 +213,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, nil
 		}
 
-		return c, NewReloadCmd(map[string]any{
+		return c, NewReloadPageCmd(map[string]any{
 			"query": msg.query,
 		})
 	case PreviewUpdateMsg:

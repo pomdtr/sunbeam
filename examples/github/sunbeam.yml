@@ -27,7 +27,7 @@ scripts:
   open-repository:
     command: printf 'https://github.com/%s/%s' {{owner}} {{name}}
     onSuccess: open-in-browser
-    inputs:
+    params:
       - name: owner
         type: textfield
         title: Owner
@@ -42,7 +42,7 @@ scripts:
       type: list
       mode: filter
       showPreview: true
-    inputs:
+    params:
       - name: owner
         title: Owner
         type: textfield
@@ -53,7 +53,7 @@ scripts:
     page:
       type: list
       mode: filter
-    inputs:
+    params:
       - name: repository
         title: Repository
         type: textfield

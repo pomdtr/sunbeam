@@ -71,3 +71,6 @@ sunbeam
 
 # Goreleaser output
 dist/
+
+# Python Cache
+*.pyc

@@ -12,11 +12,11 @@ import (
 )
 
 type Script struct {
-	Command   string        `json:"command" yaml:"command"`
-	OnSuccess string        `json:"onSuccess" yaml:"onSuccess"`
-	Cwd       string        `json:"cwd" yaml:"cwd"`
-	Inputs    []ScriptInput `json:"inputs" yaml:"inputs"`
-	Page      Page          `json:"page" yaml:"page"`
+	Command   string         `json:"command" yaml:"command"`
+	OnSuccess string         `json:"onSuccess" yaml:"onSuccess"`
+	Cwd       string         `json:"cwd" yaml:"cwd"`
+	Params    []ScriptParams `json:"params" yaml:"params"`
+	Page      Page           `json:"page" yaml:"page"`
 }
 
 type Page struct {
@@ -26,7 +26,7 @@ type Page struct {
 	ShowPreview bool   `json:"showPreview" yaml:"showPreview"`
 }
 
-type ScriptInput struct {
+type ScriptParams struct {
 	Type     string `json:"type"`
 	Name     string `json:"name"`
 	Title    string `json:"title"`
@@ -48,9 +48,9 @@ type ScriptInput struct {
 	FalseSubstitution string `json:"falseSubstitution"`
 }
 
-func (s Script) CheckMissingParams(inputParams map[string]any) []ScriptInput {
-	missing := make([]ScriptInput, 0)
-	for _, input := range s.Inputs {
+func (s Script) CheckMissingParams(inputParams map[string]any) []ScriptParams {
+	missing := make([]ScriptParams, 0)
+	for _, input := range s.Params {
 		value, ok := inputParams[input.Name]
 		if !ok {
 			missing = append(missing, input)
@@ -71,7 +71,7 @@ func (s Script) Cmd(params CommandParams) (*exec.Cmd, error) {
 	var err error
 
 	inputs := make(map[string]string)
-	for _, formInput := range s.Inputs {
+	for _, formInput := range s.Params {
 		value, ok := params.With[formInput.Name]
 		if !ok {
 			return nil, fmt.Errorf("missing param %s", formInput.Name)

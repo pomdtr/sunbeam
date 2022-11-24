@@ -14,7 +14,7 @@ scripts:
     page:
       type: list
       mode: filter
-    inputs:
+    params:
       - name: jql
         title: JQL
         type: textfield
