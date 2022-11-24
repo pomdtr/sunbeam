@@ -257,7 +257,6 @@
                         "reload-script",
                         "open-url",
                         "open-path",
-                        "exec-command",
                         "run-script",
                         "exit"
                     ]
@@ -337,30 +336,6 @@
                         "properties": {
                             "url": {
                                 "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "exec-command"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "command": {
-                                "type": "string"
-                            },
-                            "onSuccess": {
-                                "type": "string",
-                                "enum": [
-                                    "reload-script",
-                                    "copy-to-clipboard",
-                                    "open-in-browser"
-                                ]
                             }
                         }
                     }

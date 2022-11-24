@@ -94,8 +94,7 @@ func NewExecCmd(command *exec.Cmd) tea.Cmd {
 }
 
 type ExecCommandMsg struct {
-	Command   *exec.Cmd
-	OnSuccess string
+	Command *exec.Cmd
 }
 
 func NewAction(scriptAction app.ScriptAction) Action {
@@ -138,15 +137,6 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			With:      scriptAction.With,
 			OnSuccess: scriptAction.OnSuccess,
 		}
-	case "exec-command":
-		msg = ExecCommandMsg{
-			Command: exec.Command("sh", "-c", scriptAction.Command),
-		}
-	case "exit":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Exit"
-		}
-		msg = tea.Quit()
 	default:
 		scriptAction.Title = "Unknown"
 		msg = fmt.Errorf("unknown action type: %s", scriptAction.Type)

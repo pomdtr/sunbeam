@@ -115,25 +115,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Push(runner)
 		return m, runner.Init()
 	case ExecCommandMsg:
-		if msg.OnSuccess == "" {
-			m.quitting = true
-			m.exitCmd = msg.Command
-			return m, tea.Quit
-		}
-
-		res, err := msg.Command.Output()
-		if err != nil {
-			return m, NewErrorCmd(err)
-		}
-		output := strings.TrimSpace(string(res))
-		switch msg.OnSuccess {
-		case "copy-to-clipboard":
-			return m, NewCopyTextCmd(output)
-		case "open-url":
-			return m, NewOpenUrlCmd(output)
-		case "reload-page":
-			return m, NewReloadPageCmd(nil)
-		}
+		m.quitting = true
+		m.exitCmd = msg.Command
+		return m, tea.Quit
 
 	case popMsg:
 		if len(m.pages) == 1 {
