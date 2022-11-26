@@ -5,6 +5,20 @@ from journal import load_journal
 
 
 journal = load_journal()
+
+if len(journal['entries']) == 0:
+    print(json.dumps({
+        'title': 'No entries',
+        'actions': [
+            {
+                'type': 'run-script',
+                'script': 'write-entry',
+                'title': 'Write Entry',
+            }
+        ]
+    }))
+    exit()
+
 for index, entry in enumerate(journal["entries"]):
     print(
         json.dumps(
