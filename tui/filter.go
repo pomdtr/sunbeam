@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"log"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -85,7 +86,7 @@ func (m Filter) View() string {
 		index++
 		availableHeight--
 
-		if availableHeight > 0 {
+		if availableHeight > 0 && m.DrawLines {
 			separator := strings.Repeat("─", itemWidth)
 			separator = styles.Faint.Render(separator)
 			rows = append(rows, separator)
@@ -144,6 +145,7 @@ func (m Filter) nbVisibleItems() int {
 
 func (m *Filter) CursorDown() {
 	m.cursor = clamp(0, len(m.filtered)-1, m.cursor+1)
+	log.Println(m.nbVisibleItems())
 	if m.cursor >= m.minIndex+m.nbVisibleItems() {
 		m.minIndex += 1
 	}

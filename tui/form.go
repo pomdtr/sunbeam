@@ -67,6 +67,7 @@ type TextArea struct {
 func NewTextArea(formItem app.ScriptParams) TextArea {
 	ta := textarea.New()
 	ta.FocusedStyle.Text = styles.Regular
+	ta.Prompt = ""
 	ta.BlurredStyle.Text = styles.Regular
 
 	ta.Placeholder = formItem.Placeholder
@@ -78,7 +79,7 @@ func NewTextArea(formItem app.ScriptParams) TextArea {
 }
 
 func (ta *TextArea) SetWidth(w int) {
-	ta.Model.SetWidth(w - 2)
+	ta.Model.SetWidth(w)
 }
 
 func (ta *TextArea) Value() any {
@@ -100,10 +101,18 @@ func NewTextInput(formItem app.ScriptParams) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.TextStyle = styles.Regular.Copy()
-	ti.PlaceholderStyle = styles.Regular.Copy()
+
+	var placeholder string
+	if formItem.Placeholder != "" {
+		placeholder = formItem.Placeholder
+	} else {
+		placeholder = formItem.Name
+	}
+	ti.PlaceholderStyle = styles.Faint.Copy()
 
 	return TextInput{
-		Model: ti,
+		Model:       ti,
+		placeholder: placeholder,
 	}
 }
 
@@ -230,12 +239,15 @@ func NewDropDown(formItem app.ScriptParams) DropDown {
 	}
 
 	ti := textinput.New()
-	ti.Prompt = " "
+	ti.Prompt = ""
 	ti.Placeholder = formItem.Placeholder
-	ti.PlaceholderStyle = styles.Regular
+	ti.PlaceholderStyle = styles.Faint
 
 	filter := NewFilter()
 	filter.SetItems(choices)
+	filter.FilterItems("")
+	filter.DrawLines = false
+	filter.Height = 3
 
 	return DropDown{
 		filter:    filter,
@@ -245,24 +257,27 @@ func NewDropDown(formItem app.ScriptParams) DropDown {
 }
 
 func (dd *DropDown) SetWidth(width int) {
-	dd.filter.Width = width - 2
+	dd.textinput.Width = width - 1
+	placeholderPadding := width - len(dd.textinput.Placeholder)
+	dd.textinput.Placeholder = fmt.Sprintf("%s%s", dd.textinput.Placeholder, strings.Repeat(" ", placeholderPadding))
+	dd.filter.Width = width
 }
 
-func (d DropDown) View() string {
-	modelView := d.textinput.View()
+func (dd DropDown) View() string {
+	modelView := dd.textinput.View()
 	paddingRight := 0
-	if d.Value() == "" {
-		paddingRight = utils.Max(0, d.filter.Width-lipgloss.Width(modelView)+2)
+	if dd.Value() == "" {
+		paddingRight = utils.Max(0, dd.filter.Width-lipgloss.Width(modelView))
 	}
 	textInputView := fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
 
-	if !d.textinput.Focused() {
+	if !dd.textinput.Focused() {
 		return textInputView
-	} else if d.value != "" && d.value == d.textinput.Value() {
+	} else if dd.value != "" && dd.value == dd.textinput.Value() {
 		return textInputView
 	} else {
-		d.filter.Height = len(d.filter.filtered)
-		return lipgloss.JoinVertical(lipgloss.Left, textInputView, d.filter.View())
+		dd.filter.Height = len(dd.filter.filtered)
+		return lipgloss.JoinVertical(lipgloss.Left, textInputView, dd.filter.View())
 	}
 }
 
@@ -283,24 +298,32 @@ func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 				return d, nil
 			}
 			selection := d.filter.Selection()
-			dropDownItem, ok := selection.(DropDownItem)
-			if !ok {
-				return d, NewErrorCmd(fmt.Errorf("invalid selection type: %T", selection))
-			}
+			dropDownItem := selection.(DropDownItem)
 
 			d.value = dropDownItem.value
-			d.filter.FilterItems(dropDownItem.value)
 			d.textinput.SetValue(dropDownItem.value)
+			d.filter.FilterItems(dropDownItem.value)
+			d.value = dropDownItem.value
 			d.textinput.CursorEnd()
 
 			return d, nil
 		}
 	}
 
+	var cmds []tea.Cmd
 	var cmd tea.Cmd
-	d.filter, cmd = d.filter.Update(msg)
 
-	return d, cmd
+	ti, cmd := d.textinput.Update(msg)
+	cmds = append(cmds, cmd)
+	if ti.Value() != d.textinput.Value() {
+		d.filter.FilterItems(ti.Value())
+	}
+	d.textinput = ti
+
+	d.filter, cmd = d.filter.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return d, tea.Batch(cmds...)
 }
 
 func (d *DropDown) Focus() tea.Cmd {

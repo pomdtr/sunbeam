@@ -33,7 +33,7 @@ type ScriptParams struct {
 	Required bool   `json:"required"`
 	Default  any    `json:"default"`
 
-	// textitem, textarea
+	// textitem, textarea, dropdown
 	Placeholder string `json:"placeholder"`
 
 	// dropdown

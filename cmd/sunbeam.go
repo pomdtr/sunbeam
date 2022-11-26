@@ -13,8 +13,9 @@ var globalOptions tui.SunbeamOptions
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "sunbeam",
-	Short: "Command Line Launcher",
+	Use:     "sunbeam",
+	Short:   "Command Line Launcher",
+	Version: app.Version,
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		manifests := make([]app.Extension, 0)
 		for _, manifest := range app.Sunbeam.Extensions {
@@ -44,7 +45,6 @@ func Execute() (err error) {
 	// Core Commands
 	rootCmd.AddCommand(NewCmdExtension())
 	rootCmd.AddCommand(NewCmdQuery())
-	rootCmd.AddCommand(NewCmdVersion())
 
 	// Extensions
 	for _, extension := range app.Sunbeam.Extensions {

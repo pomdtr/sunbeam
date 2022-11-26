@@ -24,7 +24,19 @@ scripts:
         type: textfield
       - name: message
         title: Message
-        type: textfield
+        type: textarea
+      - name: checkbox
+        title: Pinned
+        type: checkbox
+        label: Pin this entry
+      - name: type
+        title: Pinned
+        type: dropdown
+        data:
+          - title: "Log"
+            value: log
+          - title: "Task"
+            value: task
   delete-entry:
     command: ./delete-entry.py --index {{ index }}
     params:
