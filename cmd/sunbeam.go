@@ -56,6 +56,7 @@ func Execute() (err error) {
 	// Core Commands
 	rootCmd.AddCommand(NewCmdExtension(config))
 	rootCmd.AddCommand(NewCmdQuery())
+	rootCmd.AddCommand(NewRawInputCommand(config))
 
 	// Extensions
 	for _, extension := range app.Sunbeam.Extensions {

@@ -158,44 +158,18 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 				listItems := make([]ListItem, len(scriptItems))
 
 				for i, scriptItem := range scriptItems {
-					scriptItem := scriptItem
-					actions := make([]Action, len(scriptItem.Actions))
-					for i, scriptAction := range scriptItem.Actions {
-						if i == 0 {
-							scriptAction.Shortcut = "enter"
-						}
-						if scriptAction.Extension == "" {
-							scriptAction.Extension = c.extension.Name
-						}
-						actions[i] = NewAction(scriptAction)
-					}
 					if scriptItem.Id == "" {
 						scriptItem.Id = strconv.Itoa(i)
 					}
-					listItems[i] = ListItem{
-						id:       scriptItem.Id,
-						Title:    scriptItem.Title,
-						Subtitle: scriptItem.Subtitle,
-						Preview:  scriptItem.Preview,
-						PreviewCmd: func() string {
-							cmd := scriptItem.PreviewCommand()
-							if cmd == nil {
-								return "No preview command"
-							}
-							out, err := cmd.Output()
-							if err != nil {
-								var exitErr *exec.ExitError
-								if errors.As(err, &exitErr) {
-									return string(exitErr.Stderr)
-								}
-								return err.Error()
-							}
 
-							return string(out)
-						},
-						Accessories: scriptItem.Accessories,
-						Actions:     actions,
+					for i, action := range scriptItem.Actions {
+						if action.Extension == "" {
+							action.Extension = c.extension.Name
+						}
+						scriptItem.Actions[i] = action
 					}
+
+					listItems[i] = ParseScriptItem(scriptItem)
 				}
 
 				cmd := c.list.SetItems(listItems)

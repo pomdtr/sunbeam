@@ -1,7 +1,9 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
+	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -23,6 +26,42 @@ type ListItem struct {
 	PreviewCmd  func() string
 	Accessories []string
 	Actions     []Action
+}
+
+func ParseScriptItem(scriptItem app.ScriptItem) ListItem {
+	actions := make([]Action, len(scriptItem.Actions))
+	for i, scriptAction := range scriptItem.Actions {
+		if i == 0 {
+			scriptAction.Shortcut = "enter"
+		}
+		actions[i] = NewAction(scriptAction)
+	}
+
+	return ListItem{
+		id:       scriptItem.Id,
+		Title:    scriptItem.Title,
+		Subtitle: scriptItem.Subtitle,
+		Preview:  scriptItem.Preview,
+		PreviewCmd: func() string {
+			cmd := scriptItem.PreviewCommand()
+			if cmd == nil {
+				return "No preview command"
+			}
+			out, err := cmd.Output()
+			if err != nil {
+				var exitErr *exec.ExitError
+				if errors.As(err, &exitErr) {
+					return string(exitErr.Stderr)
+				}
+				return err.Error()
+			}
+
+			return string(out)
+		},
+		Accessories: scriptItem.Accessories,
+		Actions:     actions,
+	}
+
 }
 
 func (i ListItem) ID() string {
