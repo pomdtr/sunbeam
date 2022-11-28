@@ -22,16 +22,13 @@ scripts:
         ]
       }'
     params:
-      - name: platform
-        type: dropdown
-        title: Platform
-        data:
-          - title: Windows
-            value: windows
-          - title: MacOS
-            value: macos
-          - title: Linux
-            value: linux
+      platform:
+        type: string
+        enum:
+          - linux
+          - osx
+          - windows
+
     onSuccess: push-page
     page:
       type: list

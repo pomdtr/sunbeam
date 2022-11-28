@@ -18,7 +18,6 @@ type RunContainer struct {
 	extension app.Extension
 	with      map[string]any
 
-	form   *Form
 	list   *List
 	detail *Detail
 
@@ -45,7 +44,7 @@ func (c *RunContainer) Init() tea.Cmd {
 type CommandOutput string
 
 func (c RunContainer) ScriptCmd() tea.Msg {
-	input := app.CommandParams{
+	input := app.CommandInput{
 		With: c.with,
 	}
 	if c.currentView == "list" {
@@ -74,10 +73,6 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 		command.Dir = c.extension.Dir()
 	}
 
-	if c.Script.OnSuccess == "" {
-		return ExecCommandMsg{Command: command}
-	}
-
 	res, err := command.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
@@ -91,30 +86,6 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 }
 
 func (c *RunContainer) Run() tea.Cmd {
-	missing := c.Script.CheckMissingParams(c.with)
-
-	if len(missing) > 0 {
-		var err error
-		items := make([]FormItem, len(missing))
-		for i, param := range missing {
-			items[i], err = NewFormItem(param)
-			if err != nil {
-				return NewErrorCmd(err)
-			}
-		}
-
-		c.currentView = "form"
-		c.form = NewForm(c.Script.Page.Title, items, func(values map[string]any) tea.Cmd {
-			for k, v := range values {
-				c.with[k] = v
-			}
-
-			return c.Run()
-		})
-		c.form.SetSize(c.width, c.height)
-		return c.form.Init()
-	}
-
 	switch c.Script.Page.Type {
 	case "list":
 		c.currentView = "list"
@@ -153,8 +124,6 @@ func (c *RunContainer) SetSize(width, height int) {
 		c.list.SetSize(width, height)
 	case "detail":
 		c.detail.SetSize(width, height)
-	case "form":
-		c.form.SetSize(width, height)
 	}
 }
 
@@ -162,9 +131,6 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case CommandOutput:
 		switch c.Script.OnSuccess {
-		// Reload page is used to reload the *previous* page
-		case "reload-page":
-			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
 		case "copy-to-clipboard":
 			return c, NewCopyTextCmd(string(msg))
 		case "open-url":
@@ -260,17 +226,12 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case "detail":
 		container, cmd = c.detail.Update(msg)
 		c.detail, _ = container.(*Detail)
-	case "form":
-		container, cmd = c.form.Update(msg)
-		c.form, _ = container.(*Form)
 	}
 	return c, cmd
 }
 
 func (c *RunContainer) View() string {
 	switch c.currentView {
-	case "form":
-		return c.form.View()
 	case "list":
 		return c.list.View()
 	case "detail":

@@ -13,8 +13,6 @@ rootItems:
     script: list-repositories
     with:
       owner: pomdtr
-  - title: List Repositories
-    script: list-repositories
   - title: List Dailymotion Repositories
     script: list-repositories
     with:
@@ -28,12 +26,10 @@ scripts:
     command: printf 'https://github.com/%s/%s' {{owner}} {{name}}
     onSuccess: open-in-browser
     params:
-      - name: owner
-        type: textfield
-        title: Owner
-      - name: name
-        type: textfield
-        title: Name
+      owner:
+        type: string
+      name:
+        type: string
   list-repositories:
     title: List Repositories
     command: ./list-repos.sh {{ owner }}
@@ -43,10 +39,8 @@ scripts:
       mode: filter
       showPreview: true
     params:
-      - name: owner
-        title: Owner
-        type: textfield
-        required: false
+      owner:
+        type: string
   list-pull-requests:
     command: ./list-prs.sh {{ repository }}
     onSuccess: push-page
@@ -54,6 +48,5 @@ scripts:
       type: list
       mode: filter
     params:
-      - name: repository
-        title: Repository
-        type: textfield
+      repository:
+        type: string

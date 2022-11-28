@@ -15,6 +15,5 @@ scripts:
       type: list
       mode: filter
     params:
-      - name: jql
-        title: JQL
-        type: textfield
+      jql:
+        type: string

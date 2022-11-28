@@ -126,9 +126,33 @@
                     "default": "extensionDir"
                 },
                 "params": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/formitem"
+                    "type": "object",
+                    "additionalProperties": false,
+                    "patternProperties": {
+                        "^[a-z-]+$": {
+                            "type": "object",
+                            "required": [
+                                "type"
+                            ],
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "string",
+                                        "number",
+                                        "boolean",
+                                        "file",
+                                        "directory"
+                                    ]
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "enum": {
+                                    "type": "array"
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -257,11 +281,10 @@
                     "type": "string",
                     "enum": [
                         "copy-text",
-                        "reload-script",
+                        "reload-page",
                         "open-url",
                         "open-path",
-                        "run-script",
-                        "exit"
+                        "run-script"
                     ]
                 },
                 "with": {
@@ -293,12 +316,6 @@
                             "script"
                         ],
                         "properties": {
-                            "onSuccess": {
-                                "type": "string",
-                                "enum": [
-                                    "reload-page"
-                                ]
-                            },
                             "script": {
                                 "type": "string"
                             }

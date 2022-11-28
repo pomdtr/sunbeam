@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdExtension() *cobra.Command {
+func NewCmdExtension(config tui.Config) *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
@@ -242,7 +242,7 @@ func NewCmdExtension() *cobra.Command {
 				list := tui.NewList("Browse Extensions")
 				list.ShowPreview = true
 				list.SetItems(extensionItems)
-				return tui.Draw(list, globalOptions)
+				return tui.Draw(list, config)
 			},
 		}
 	}())

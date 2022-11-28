@@ -12,6 +12,7 @@ import (
 type Api struct {
 	Extensions    map[string]Extension
 	ExtensionRoot string
+	ConfigRoot    string
 }
 
 type Entrypoint struct {
@@ -53,6 +54,7 @@ func init() {
 		log.Fatalf("could not get home directory: %v", err)
 	}
 	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
+	configRoot := path.Join(homeDir, ".config", "sunbeam")
 	extensionDirs, _ := os.ReadDir(extensionRoot)
 	for _, extensionDir := range extensionDirs {
 		extensionPath := path.Join(extensionRoot, extensionDir.Name())
@@ -73,6 +75,7 @@ func init() {
 
 	Sunbeam = Api{
 		ExtensionRoot: extensionRoot,
+		ConfigRoot:    configRoot,
 		Extensions:    extensions,
 	}
 }

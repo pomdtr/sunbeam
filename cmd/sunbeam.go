@@ -4,35 +4,46 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
 )
 
-var globalOptions tui.SunbeamOptions
+func ParseConfig() tui.Config {
+	viper.AddConfigPath(app.Sunbeam.ConfigRoot)
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.SetEnvPrefix("sunbeam")
+	viper.AutomaticEnv()
+	viper.ReadInConfig()
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:     "sunbeam",
-	Short:   "Command Line Launcher",
-	Version: app.Version,
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		manifests := make([]app.Extension, 0)
-		for _, manifest := range app.Sunbeam.Extensions {
-			manifests = append(manifests, manifest)
-		}
-
-		rootList := tui.RootList(manifests...)
-		err = tui.Draw(rootList, globalOptions)
-		if err != nil {
-			return err
-		}
-		return
-	},
+	return tui.Config{
+		Height: viper.GetInt("height"),
+	}
 }
 
 func Execute() (err error) {
-	rootCmd.PersistentFlags().IntVarP(&globalOptions.Height, "height", "H", 0, "height of the window")
+	config := ParseConfig()
+	// rootCmd represents the base command when called without any subcommands
+	var rootCmd = &cobra.Command{
+		Use:     "sunbeam",
+		Short:   "Command Line Launcher",
+		Version: app.Version,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			manifests := make([]app.Extension, 0)
+			for _, manifest := range app.Sunbeam.Extensions {
+				manifests = append(manifests, manifest)
+			}
+
+			rootList := tui.RootList(manifests...)
+			err = tui.Draw(rootList, config)
+			if err != nil {
+				return err
+			}
+			return
+		},
+	}
 
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    "core",
@@ -43,12 +54,12 @@ func Execute() (err error) {
 	})
 
 	// Core Commands
-	rootCmd.AddCommand(NewCmdExtension())
+	rootCmd.AddCommand(NewCmdExtension(config))
 	rootCmd.AddCommand(NewCmdQuery())
 
 	// Extensions
 	for _, extension := range app.Sunbeam.Extensions {
-		cmd := NewExtensionCommand(extension)
+		cmd := NewExtensionCommand(extension, config)
 		cmd.GroupID = "extensions"
 		rootCmd.AddCommand(cmd)
 	}
@@ -56,7 +67,7 @@ func Execute() (err error) {
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(extension app.Extension) *cobra.Command {
+func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:   extension.Name,
 		Short: extension.Title,
@@ -73,7 +84,7 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 			} else {
 				runner = tui.RootList(extension)
 			}
-			err = tui.Draw(runner, globalOptions)
+			err = tui.Draw(runner, config)
 			if err != nil {
 				return fmt.Errorf("could not run extension: %w", err)
 			}
@@ -88,15 +99,15 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 			Use: key,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(map[string]any)
-				for _, input := range script.Params {
-					switch input.Type {
-					case "checkbox":
-						with[input.Name], err = cmd.Flags().GetBool(input.Name)
+				for key, param := range script.Params {
+					switch param.Type {
+					case "boolean":
+						with[key], err = cmd.Flags().GetBool(key)
 						if err != nil {
 							return err
 						}
 					default:
-						with[input.Name], err = cmd.Flags().GetString(input.Name)
+						with[key], err = cmd.Flags().GetString(key)
 						if err != nil {
 							return err
 						}
@@ -104,7 +115,7 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 				}
 
 				container := tui.NewRunContainer(extension, script, with)
-				err = tui.Draw(container, globalOptions)
+				err = tui.Draw(container, config)
 				if err != nil {
 					return fmt.Errorf("could not run script: %w", err)
 				}
@@ -112,18 +123,20 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 			},
 		}
 
-		for _, input := range script.Params {
-			flag := NewCustomFlag(input)
-			scriptCmd.Flags().Var(flag, input.Name, input.Title)
-			if input.Type == "dropdown" {
-				choices := make([]string, len(input.Data))
-				for i, choice := range input.Data {
-					choices[i] = fmt.Sprintf("%s\t%s", choice.Value, choice.Title)
+		for key, param := range script.Params {
+			flag := NewCustomFlag(param)
+			scriptCmd.Flags().Var(flag, key, param.Description)
+			if param.Default == nil {
+				scriptCmd.MarkFlagRequired(key)
+			}
+			if param.Enum != nil {
+				choices := make([]string, len(param.Enum))
+				for i, choice := range param.Enum {
+					choices[i] = fmt.Sprintf("%v", choice)
 				}
-				scriptCmd.RegisterFlagCompletionFunc(input.Name, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+				scriptCmd.RegisterFlagCompletionFunc(key, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 					return choices, cobra.ShellCompDirectiveNoFileComp
 				})
-
 			}
 		}
 

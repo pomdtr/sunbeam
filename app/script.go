@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"os/exec"
 	"strings"
 	"text/template"
@@ -12,11 +11,11 @@ import (
 )
 
 type Script struct {
-	Command   string         `json:"command" yaml:"command"`
-	OnSuccess string         `json:"onSuccess" yaml:"onSuccess"`
-	Cwd       string         `json:"cwd" yaml:"cwd"`
-	Params    []ScriptParams `json:"params" yaml:"params"`
-	Page      Page           `json:"page" yaml:"page"`
+	Command   string                 `json:"command" yaml:"command"`
+	OnSuccess string                 `json:"onSuccess" yaml:"onSuccess"`
+	Cwd       string                 `json:"cwd" yaml:"cwd"`
+	Params    map[string]ScriptParam `json:"params" yaml:"params"`
+	Page      Page                   `json:"page" yaml:"page"`
 }
 
 type Page struct {
@@ -26,87 +25,47 @@ type Page struct {
 	ShowPreview bool   `json:"showPreview" yaml:"showPreview"`
 }
 
-type ScriptParams struct {
-	Type     string `json:"type"`
-	Name     string `json:"name"`
-	Title    string `json:"title"`
-	Required bool   `json:"required"`
-	Default  any    `json:"default"`
-
-	// textitem, textarea, dropdown
-	Placeholder string `json:"placeholder"`
-
-	// dropdown
-	Data []struct {
-		Title string `json:"title"`
-		Value string `json:"value"`
-	} `json:"data"`
-
-	// checkbox
-	Label             string `json:"label"`
-	TrueSubstitution  string `json:"trueSubstitution"`
-	FalseSubstitution string `json:"falseSubstitution"`
+type ScriptParam struct {
+	Type        string `json:"type"`
+	Enum        []any  `json:"enum"`
+	Default     any    `json:"default"`
+	Description string `json:"description"`
 }
 
-func (s Script) CheckMissingParams(inputParams map[string]any) []ScriptParams {
-	missing := make([]ScriptParams, 0)
-	for _, input := range s.Params {
-		value, ok := inputParams[input.Name]
+func (s Script) CheckMissingParams(inputParams map[string]any) []string {
+	missing := make([]string, 0)
+	for key := range s.Params {
+		_, ok := inputParams[key]
 		if !ok {
-			missing = append(missing, input)
-		}
-		if input.Type != "checkbox" && value == "" {
-			missing = append(missing, input)
+			missing = append(missing, key)
 		}
 	}
 	return missing
 }
 
-type CommandParams struct {
+type CommandInput struct {
 	With  map[string]any
 	Query string
 }
 
-func (s Script) Cmd(params CommandParams) (*exec.Cmd, error) {
+func (s Script) Cmd(input CommandInput) (*exec.Cmd, error) {
 	var err error
-
-	inputs := make(map[string]string)
-	for _, formInput := range s.Params {
-		value, ok := params.With[formInput.Name]
-		if !ok {
-			return nil, fmt.Errorf("missing param %s", formInput.Name)
-		}
-		if formInput.Type == "checkbox" {
-			value, ok := value.(bool)
-			if !ok {
-				return nil, fmt.Errorf("invalid type for param %s", formInput.Name)
-			}
-			if value {
-				inputs[formInput.Name] = formInput.TrueSubstitution
-			} else if formInput.FalseSubstitution != "" {
-				inputs[formInput.Name] = formInput.FalseSubstitution
-			} else {
-				inputs[formInput.Name] = ""
-			}
-		} else {
-			value, ok := value.(string)
-			if !ok {
-				return nil, fmt.Errorf("param %s is not a string", formInput.Name)
-			}
-			inputs[formInput.Name] = value
-		}
-	}
 
 	funcMap := template.FuncMap{
 		"query": func() string {
-			return shellescape.Quote(params.Query)
+			return shellescape.Quote(input.Query)
 		},
 	}
 
-	for key, value := range inputs {
+	for key, value := range input.With {
 		value := value
-		funcMap[key] = func() string {
-			return shellescape.Quote(value)
+		funcMap[key] = func() any {
+			switch value := value.(type) {
+			case string:
+				return shellescape.Quote(value)
+			default:
+				return value
+			}
 		}
 	}
 

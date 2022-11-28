@@ -18,10 +18,8 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-type SunbeamOptions struct {
+type Config struct {
 	Height int
-	Theme  string
-	Accent string
 }
 
 type Container interface {
@@ -42,8 +40,8 @@ type RootModel struct {
 	exitCmd  *exec.Cmd
 }
 
-func NewRootModel(options SunbeamOptions) *RootModel {
-	return &RootModel{maxHeight: options.Height}
+func NewRootModel(height int) *RootModel {
+	return &RootModel{maxHeight: height}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -107,13 +105,27 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
-		if msg.OnSuccess != "" {
-			script.OnSuccess = msg.OnSuccess
+		missing := script.CheckMissingParams(msg.With)
+		if len(missing) > 0 {
+			return m, NewErrorCmd(fmt.Errorf("missing params: %s", strings.Join(missing, ", ")))
 		}
 
-		runner := NewRunContainer(manifest, script, msg.With)
-		m.Push(runner)
-		return m, runner.Init()
+		if script.OnSuccess == "push-page" {
+			runner := NewRunContainer(manifest, script, msg.With)
+			m.Push(runner)
+			return m, runner.Init()
+		}
+
+		command, err := script.Cmd(app.CommandInput{
+			With: msg.With,
+		})
+		if err != nil {
+			return m, NewErrorCmd(err)
+		}
+
+		m.quitting = true
+		m.exitCmd = command
+		return m, tea.Quit
 	case ExecCommandMsg:
 		m.quitting = true
 		m.exitCmd = msg.Command
@@ -268,7 +280,7 @@ func RootList(extensions ...app.Extension) Container {
 	return list
 }
 
-func Draw(container Container, options SunbeamOptions) (err error) {
+func Draw(container Container, config Config) (err error) {
 	// Log to a file
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
 		f, err := tea.LogToFile(env, "debug")
@@ -281,11 +293,11 @@ func Draw(container Container, options SunbeamOptions) (err error) {
 	}
 
 	programOptions := make([]tea.ProgramOption, 0)
-	if options.Height == 0 {
+	if config.Height == 0 {
 		programOptions = append(programOptions, tea.WithAltScreen())
 	}
 
-	model := NewRootModel(options)
+	model := NewRootModel(config.Height)
 	model.Push(container)
 	p := tea.NewProgram(model, programOptions...)
 	m, err := p.Run()
