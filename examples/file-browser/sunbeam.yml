@@ -2,7 +2,8 @@ name: file-browser
 version: "1.0"
 title: File Browser
 requirements:
-  - python3
+  - which: python3
+    homePage: https://www.python.org
 rootItems:
   - title: Browse Root Directory
     script: file-browser

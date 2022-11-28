@@ -137,6 +137,11 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			With:      scriptAction.With,
 			OnSuccess: scriptAction.OnSuccess,
 		}
+	case "exec-command":
+		command := exec.Command(scriptAction.Command, scriptAction.Command)
+		msg = ExecCommandMsg{
+			Command: command,
+		}
 	default:
 		scriptAction.Title = "Unknown"
 		msg = fmt.Errorf("unknown action type: %s", scriptAction.Type)

@@ -177,7 +177,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return CopyTextMsg{Text: string(out)}
 			}
-		case "open-url":
+		case "open-in-browser":
 			return m, func() tea.Msg {
 				out, err := command.Output()
 				if err != nil {
@@ -195,6 +195,8 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "":
 			return m, NewExecCmd(command)
+		default:
+			return m, NewErrorCmd(fmt.Errorf("unknown onSuccess: %s", script.OnSuccess))
 		}
 
 	case ExecCommandMsg:

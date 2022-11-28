@@ -20,7 +20,20 @@
         "requirements": {
             "type": "array",
             "items": {
-                "type": "string"
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "homePage",
+                    "which"
+                ],
+                "properties": {
+                    "homePage": {
+                        "type": "string"
+                    },
+                    "which": {
+                        "type": "string"
+                    }
+                }
             }
         },
         "title": {
@@ -293,7 +306,8 @@
                         "reload-page",
                         "open-url",
                         "open-path",
-                        "run-script"
+                        "run-script",
+                        "exec-command"
                     ]
                 },
                 "with": {
@@ -335,6 +349,26 @@
                                     "copy-to-clipboard",
                                     "open-in-browser"
                                 ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "exec-command"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "title",
+                            "command"
+                        ],
+                        "properties": {
+                            "command": {
+                                "type": "string"
                             }
                         }
                     }

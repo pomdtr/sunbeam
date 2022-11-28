@@ -2,7 +2,8 @@ name: github
 version: "1.0"
 title: GitHub
 requirements:
-  - gh
+  - homePage: https://cli.github.com
+    which: gh
 rootItems:
   - title: Open Sunbeam Repository
     script: open-repository
@@ -13,6 +14,12 @@ rootItems:
     script: list-repositories
     with:
       owner: pomdtr
+  - title: List Owner Repositories
+    script: list-repositories
+    with:
+      owner:
+        type: textfield
+        title: Owner
   - title: List Dailymotion Repositories
     script: list-repositories
     with:
