@@ -21,8 +21,9 @@ type Entrypoint struct {
 }
 
 type Extension struct {
-	Title string `json:"title" yaml:"title"`
-	Name  string `json:"name" yaml:"name"`
+	Title       string `json:"title" yaml:"title"`
+	Name        string `json:"name" yaml:"name"`
+	PostInstall string `json:"postInstall" yaml:"postInstall"`
 
 	RootItems []Entrypoint      `json:"rootItems" yaml:"rootItems"`
 	Scripts   map[string]Script `json:"scripts" yaml:"scripts"`
@@ -60,33 +61,11 @@ func init() {
 
 	extensions := make(map[string]Extension)
 	for _, scriptDir := range scriptDirs {
+
 		manifestPath := path.Join(scriptDir, "sunbeam.yml")
-		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
-			continue
-		}
-
-		manifestBytes, err := os.ReadFile(manifestPath)
+		extension, err := ParseManifest(manifestPath)
 		if err != nil {
 			continue
-		}
-
-		var extension Extension
-		err = yaml.Unmarshal(manifestBytes, &extension)
-		if err != nil {
-			log.Printf("error decoding manifest at %s: %v", manifestPath, err)
-			continue
-		}
-
-		for key, script := range extension.Scripts {
-			if script.Page.Title == "" {
-				script.Page.Title = extension.Title
-			}
-			extension.Scripts[key] = script
-		}
-
-		extension.Url = url.URL{
-			Scheme: "file",
-			Path:   manifestPath,
 		}
 
 		extensions[extension.Name] = extension
@@ -96,4 +75,35 @@ func init() {
 		ExtensionRoot: extensionRoot,
 		Extensions:    extensions,
 	}
+}
+
+func ParseManifest(manifestPath string) (extension Extension, err error) {
+	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+		return extension, err
+	}
+
+	manifestBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return extension, err
+	}
+
+	err = yaml.Unmarshal(manifestBytes, &extension)
+	if err != nil {
+		return extension, err
+
+	}
+
+	for key, script := range extension.Scripts {
+		if script.Page.Title == "" {
+			script.Page.Title = extension.Title
+		}
+		extension.Scripts[key] = script
+	}
+
+	extension.Url = url.URL{
+		Scheme: "file",
+		Path:   manifestPath,
+	}
+
+	return extension, nil
 }

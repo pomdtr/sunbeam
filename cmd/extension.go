@@ -71,7 +71,30 @@ func NewCmdExtension() *cobra.Command {
 					log.Fatalf("Extension %s already installed", repo.Name)
 				}
 
-				return git.Clone(repo.Host, repo.FullName(), target)
+				err = git.Clone(repo.Host, repo.FullName(), target)
+				if err != nil {
+					return err
+				}
+
+				manifestPath := path.Join(target, "manifest.yml")
+				extension, err := app.ParseManifest(manifestPath)
+				if err != nil {
+					return err
+				}
+
+				if extension.PostInstall != "" {
+					cmd := exec.Command("sh", "-c", extension.PostInstall)
+					cmd.Dir = target
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+					cmd.Stdin = os.Stdin
+					if err != nil {
+						return err
+					}
+				}
+
+				fmt.Printf("Installed extension %s", repo.Name)
+				return nil
 			},
 		}
 	}())
