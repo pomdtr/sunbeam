@@ -327,6 +327,14 @@
                         "properties": {
                             "script": {
                                 "type": "string"
+                            },
+                            "onSuccess": {
+                                "type": "string",
+                                "enum": [
+                                    "push-page",
+                                    "copy-to-clipboard",
+                                    "open-in-browser"
+                                ]
                             }
                         }
                     }
