@@ -15,6 +15,7 @@ type CustomFlag struct {
 func NewCustomFlag(input app.ScriptParam) *CustomFlag {
 	return &CustomFlag{
 		input: input,
+		value: input.Default,
 	}
 }
 
@@ -27,12 +28,6 @@ func (f *CustomFlag) Set(value string) error {
 	switch f.input.Type {
 	case "string":
 		v = value
-	case "number":
-		i, err := strconv.Atoi(value)
-		if err != nil {
-			return err
-		}
-		v = i
 	case "boolean":
 		b, err := strconv.ParseBool(value)
 		if err != nil {
@@ -63,8 +58,6 @@ func (f *CustomFlag) Type() string {
 		return "string"
 	case "boolean":
 		return "bool"
-	case "number":
-		return "int"
 	default:
 		return "string"
 	}

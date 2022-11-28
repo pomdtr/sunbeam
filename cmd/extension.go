@@ -190,6 +190,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 				res := struct {
 					Items []struct {
 						Name        string
+						FullName    string `json:"full_name"`
 						Description string
 						HtmlURL     string `json:"html_url"`
 					}
@@ -210,7 +211,8 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 							res := struct {
 								Content string
 							}{}
-							err := client.Get(fmt.Sprintf("repos/%s/readme", repo.Name), &res)
+							err := client.Get(fmt.Sprintf("repos/%s/contents/sunbeam.yml", repo.FullName), &res)
+
 							if err != nil {
 								return err.Error()
 							}

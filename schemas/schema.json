@@ -57,8 +57,20 @@
                     },
                     "with": {
                         "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
+                        "patternProperties": {
+                            "^[a-z-]+$": {
+                                "anyOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "$ref": "#/definitions/forminput"
+                                    }
+                                ]
+                            }
                         }
                     }
                 }
@@ -125,6 +137,9 @@
                     ],
                     "default": "extensionDir"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "params": {
                     "type": "object",
                     "additionalProperties": false,
@@ -139,17 +154,11 @@
                                     "type": "string",
                                     "enum": [
                                         "string",
-                                        "number",
-                                        "boolean",
-                                        "file",
-                                        "directory"
+                                        "boolean"
                                     ]
                                 },
                                 "description": {
                                     "type": "string"
-                                },
-                                "enum": {
-                                    "type": "array"
                                 }
                             }
                         }
@@ -381,17 +390,12 @@
                 }
             ]
         },
-        "formitem": {
+        "forminput": {
             "type": "object",
             "required": [
-                "type",
-                "name"
+                "type"
             ],
             "properties": {
-                "name": {
-                    "type": "string",
-                    "pattern": "^[a-z-]+$"
-                },
                 "title": {
                     "type": "string"
                 },

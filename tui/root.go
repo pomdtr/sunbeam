@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -110,10 +111,55 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("missing params: %s", strings.Join(missing, ", ")))
 		}
 
+		inputs := make(map[string]app.FormInput)
+		params := make(map[string]any)
+		for key, param := range msg.With {
+			switch param := param.(type) {
+			case string:
+				params[key] = param
+			case bool:
+				params[key] = param
+			case map[string]interface{}:
+				bytes, err := json.Marshal(param)
+				if err != nil {
+					return m, NewErrorCmd(err)
+				}
+				var input app.FormInput
+				err = json.Unmarshal(bytes, &input)
+				if err != nil {
+					return m, NewErrorCmd(err)
+				}
+				inputs[key] = input
+			default:
+				return m, NewErrorCmd(fmt.Errorf("unknown input type: %T", param))
+			}
+		}
+
+		if len(inputs) > 0 {
+			items := make([]FormItem, 0, len(inputs))
+			for key, input := range inputs {
+				formItem, err := NewFormItem(key, input)
+				if err != nil {
+					return m, NewErrorCmd(err)
+				}
+				items = append(items, formItem)
+			}
+
+			form := NewForm(msg.Extension, items, func(values map[string]any) tea.Cmd {
+				msg.With = values
+				return func() tea.Msg {
+					return msg
+				}
+			})
+
+			cmd := m.Push(form)
+			return m, cmd
+		}
+
 		if script.OnSuccess == "push-page" {
 			runner := NewRunContainer(manifest, script, msg.With)
-			m.Push(runner)
-			return m, runner.Init()
+			cmd := m.Push(runner)
+			return m, cmd
 		}
 
 		command, err := script.Cmd(app.CommandInput{
@@ -122,10 +168,35 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
+		switch script.OnSuccess {
+		case "copy-to-clipboard":
+			return m, func() tea.Msg {
+				out, err := command.Output()
+				if err != nil {
+					return err
+				}
+				return CopyTextMsg{Text: string(out)}
+			}
+		case "open-url":
+			return m, func() tea.Msg {
+				out, err := command.Output()
+				if err != nil {
+					return err
+				}
+				return OpenUrlMsg{Url: string(out)}
+			}
+		case "reload-page":
+			return m, func() tea.Msg {
+				err := command.Run()
+				if err != nil {
+					return err
+				}
+				return ReloadPageMsg{}
+			}
+		case "":
+			return m, NewExecCmd(command)
+		}
 
-		m.quitting = true
-		m.exitCmd = command
-		return m, tea.Quit
 	case ExecCommandMsg:
 		m.quitting = true
 		m.exitCmd = msg.Command
@@ -206,9 +277,10 @@ func PopCmd() tea.Msg {
 	return popMsg{}
 }
 
-func (m *RootModel) Push(page Container) {
+func (m *RootModel) Push(page Container) tea.Cmd {
 	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
+	return page.Init()
 }
 
 func (m *RootModel) Pop() {

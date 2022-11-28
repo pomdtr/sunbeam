@@ -8,6 +8,12 @@ rootItems:
     script: file-browser
     with:
       root: "/"
+  - title: Browse Custom Directory
+    script: file-browser
+    with:
+      root:
+        type: textfield
+        title: Root Directory
   - title: Browse Current Directory
     script: file-browser
     with:

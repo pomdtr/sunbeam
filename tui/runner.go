@@ -130,52 +130,45 @@ func (c *RunContainer) SetSize(width, height int) {
 func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case CommandOutput:
-		switch c.Script.OnSuccess {
-		case "copy-to-clipboard":
-			return c, NewCopyTextCmd(string(msg))
-		case "open-url":
-			return c, NewOpenUrlCmd(string(msg))
-		case "push-page":
-			switch c.currentView {
-			case "detail":
-				c.detail.SetContent(string(msg))
-				c.detail.SetIsLoading(false)
-				c.detail.SetActions(
-					Action{Title: "Quit", Shortcut: "enter", Cmd: tea.Quit},
-					Action{Title: "Copy Output", Shortcut: "ctrl+y", Cmd: func() tea.Msg {
-						return CopyTextMsg{
-							Text: string(msg),
-						}
-					}},
-					Action{Title: "Reload", Shortcut: "ctrl+r", Cmd: NewReloadPageCmd(nil)},
-				)
-				return c, nil
-			case "list":
-				scriptItems, err := app.ParseListItems(string(msg))
-				if err != nil {
-					return c, NewErrorCmd(err)
-				}
-				listItems := make([]ListItem, len(scriptItems))
-
-				for i, scriptItem := range scriptItems {
-					if scriptItem.Id == "" {
-						scriptItem.Id = strconv.Itoa(i)
+		switch c.currentView {
+		case "detail":
+			c.detail.SetContent(string(msg))
+			c.detail.SetIsLoading(false)
+			c.detail.SetActions(
+				Action{Title: "Quit", Shortcut: "enter", Cmd: tea.Quit},
+				Action{Title: "Copy Output", Shortcut: "ctrl+y", Cmd: func() tea.Msg {
+					return CopyTextMsg{
+						Text: string(msg),
 					}
-
-					for i, action := range scriptItem.Actions {
-						if action.Extension == "" {
-							action.Extension = c.extension.Name
-						}
-						scriptItem.Actions[i] = action
-					}
-
-					listItems[i] = ParseScriptItem(scriptItem)
-				}
-
-				cmd := c.list.SetItems(listItems)
-				c.list.SetIsLoading(false)
-				return c, cmd
+				}},
+				Action{Title: "Reload", Shortcut: "ctrl+r", Cmd: NewReloadPageCmd(nil)},
+			)
+			return c, nil
+		case "list":
+			scriptItems, err := app.ParseListItems(string(msg))
+			if err != nil {
+				return c, NewErrorCmd(err)
 			}
+			listItems := make([]ListItem, len(scriptItems))
+
+			for i, scriptItem := range scriptItems {
+				if scriptItem.Id == "" {
+					scriptItem.Id = strconv.Itoa(i)
+				}
+
+				for i, action := range scriptItem.Actions {
+					if action.Extension == "" {
+						action.Extension = c.extension.Name
+					}
+					scriptItem.Actions[i] = action
+				}
+
+				listItems[i] = ParseScriptItem(scriptItem)
+			}
+
+			cmd := c.list.SetItems(listItems)
+			c.list.SetIsLoading(false)
+			return c, cmd
 		}
 	case ReloadPageMsg:
 		for k, v := range msg.Params {

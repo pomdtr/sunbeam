@@ -71,7 +71,7 @@ func Execute() (err error) {
 func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:   extension.Name,
-		Short: extension.Title,
+		Short: extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			var runner tui.Container
 			// If there is only one root item, just run it
@@ -97,7 +97,8 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 	for key, script := range extension.Scripts {
 		script := script
 		scriptCmd := &cobra.Command{
-			Use: key,
+			Use:   key,
+			Short: script.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(map[string]any)
 				for key, param := range script.Params {
@@ -130,15 +131,15 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			if param.Default == nil {
 				scriptCmd.MarkFlagRequired(key)
 			}
-			if param.Enum != nil {
-				choices := make([]string, len(param.Enum))
-				for i, choice := range param.Enum {
-					choices[i] = fmt.Sprintf("%v", choice)
-				}
-				scriptCmd.RegisterFlagCompletionFunc(key, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-					return choices, cobra.ShellCompDirectiveNoFileComp
-				})
-			}
+			// if param.Enum != nil {
+			// 	choices := make([]string, len(param.Enum))
+			// 	for i, choice := range param.Enum {
+			// 		choices[i] = fmt.Sprintf("%v", choice)
+			// 	}
+			// 	scriptCmd.RegisterFlagCompletionFunc(key, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			// 		return choices, cobra.ShellCompDirectiveNoFileComp
+			// 	})
+			// }
 		}
 
 		extensionCmd.AddCommand(scriptCmd)

@@ -11,11 +11,12 @@ import (
 )
 
 type Script struct {
-	Command   string                 `json:"command" yaml:"command"`
-	OnSuccess string                 `json:"onSuccess" yaml:"onSuccess"`
-	Cwd       string                 `json:"cwd" yaml:"cwd"`
-	Params    map[string]ScriptParam `json:"params" yaml:"params"`
-	Page      Page                   `json:"page" yaml:"page"`
+	Command     string                 `json:"command" yaml:"command"`
+	Description string                 `json:"description" yaml:"description"`
+	OnSuccess   string                 `json:"onSuccess" yaml:"onSuccess"`
+	Cwd         string                 `json:"cwd" yaml:"cwd"`
+	Params      map[string]ScriptParam `json:"params" yaml:"params"`
+	Page        Page                   `json:"page" yaml:"page"`
 }
 
 type Page struct {
@@ -30,6 +31,21 @@ type ScriptParam struct {
 	Enum        []any  `json:"enum"`
 	Default     any    `json:"default"`
 	Description string `json:"description"`
+}
+
+type FormInput struct {
+	Type string `json:"type"`
+
+	Title       string `json:"title"`
+	Value       string `json:"value"`
+	Placeholder string `json:"placeholder"`
+
+	Label string `json:"label"`
+
+	Data []struct {
+		Title string `json:"title"`
+		Value string `json:"value"`
+	} `json:"data"`
 }
 
 func (s Script) CheckMissingParams(inputParams map[string]any) []string {

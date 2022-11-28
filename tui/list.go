@@ -151,6 +151,9 @@ func NewList(title string) *List {
 }
 
 func (c *List) Init() tea.Cmd {
+	if len(c.filter.choices) > 0 {
+		return tea.Batch(c.FilterItems(c.Query()), c.header.Focus())
+	}
 	return c.header.Focus()
 }
 
@@ -246,6 +249,12 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 			} else {
 				return c, PopCmd
 			}
+		case tea.KeyShiftDown:
+			c.viewport.LineDown(1)
+			return c, nil
+		case tea.KeyShiftUp:
+			c.viewport.LineUp(1)
+			return c, nil
 		}
 	case updateQueryMsg:
 		if msg.query != c.Query() {
