@@ -9,11 +9,10 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/cli/go-gh"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/git"
 	"github.com/pomdtr/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -61,7 +60,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 					return nil
 				}
 
-				repo, err := git.ParseWithHost(args[0], "github.com")
+				repo, err := utils.ParseWithHost(args[0], "github.com")
 				if err != nil {
 					return err
 				}
@@ -71,12 +70,12 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 					log.Fatalf("Extension %s already installed", repo.Name)
 				}
 
-				err = git.Clone(repo.Host, repo.FullName(), target)
+				err = utils.GitClone(repo.Host, repo.FullName(), target)
 				if err != nil {
 					return err
 				}
 
-				manifestPath := path.Join(target, "manifest.yml")
+				manifestPath := path.Join(target, "sunbeam.yml")
 				extension, err := app.ParseManifest(manifestPath)
 				if err != nil {
 					return err
@@ -132,7 +131,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 					return fmt.Errorf("extension %s not found", args[0])
 				}
 				dir := extension.Dir()
-				gc := git.NewGitClient(dir)
+				gc := utils.NewGitClient(dir)
 
 				currentVersion := gc.GetCurrentVersion()
 				latestVersion, err := gc.GetLatestVersion()
@@ -159,9 +158,9 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 			Run: func(cmd *cobra.Command, args []string) {
 				rows := make([][]string, 0, len(app.Sunbeam.Extensions))
 				for _, extension := range app.Sunbeam.Extensions {
-					gc := git.NewGitClient(extension.Dir())
+					gc := utils.NewGitClient(extension.Dir())
 					origin := gc.GetOrigin()
-					repo, _ := git.ParseWithHost(origin, "github.com")
+					repo, _ := utils.ParseWithHost(origin, "github.com")
 					version := gc.GetCurrentVersion()
 					rows = append(rows, []string{extension.Name, repo.FullName(), version[:7]})
 				}
@@ -176,11 +175,15 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 	}())
 
 	extensionCommand.AddCommand(func() *cobra.Command {
-		return &cobra.Command{
+		command := cobra.Command{
 			Use:   "browse",
 			Short: "Enter a UI for browsing and installing extensions",
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				client, err := gh.RESTClient(nil)
+				host, err := cmd.Flags().GetString("host")
+				if err != nil {
+					return err
+				}
+				client := utils.NewGHClient(host)
 				if err != nil {
 					return err
 				}
@@ -196,10 +199,11 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				extensionItems := make([]tui.ListItem, len(res.Items))
 
+				extensionItems := make([]tui.ListItem, len(res.Items))
 				for i, repo := range res.Items {
 					item := tui.ListItem{
+						Id:       repo.HtmlURL,
 						Title:    repo.Name,
 						Subtitle: repo.Description,
 						PreviewCmd: func() string {
@@ -245,6 +249,8 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 				return tui.Draw(list, config)
 			},
 		}
+		command.Flags().String("host", "github.com", "Github Host")
+		return &command
 	}())
 	extensionCommand.AddCommand(func() *cobra.Command {
 		return &cobra.Command{

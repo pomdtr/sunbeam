@@ -19,7 +19,7 @@ import (
 var debounceDuration = 300 * time.Millisecond
 
 type ListItem struct {
-	id          string
+	Id          string
 	Title       string
 	Subtitle    string
 	Preview     string
@@ -38,7 +38,7 @@ func ParseScriptItem(scriptItem app.ScriptItem) ListItem {
 	}
 
 	return ListItem{
-		id:       scriptItem.Id,
+		Id:       scriptItem.Id,
 		Title:    scriptItem.Title,
 		Subtitle: scriptItem.Subtitle,
 		Preview:  scriptItem.Preview,
@@ -65,7 +65,7 @@ func ParseScriptItem(scriptItem app.ScriptItem) ListItem {
 }
 
 func (i ListItem) ID() string {
-	return i.id
+	return i.Id
 }
 
 func (i ListItem) FilterValue() string {

@@ -244,7 +244,7 @@ func RootList(extensions ...app.Extension) Container {
 			}
 			command := ScriptCommand(extension.Name, entrypoint)
 			rootItems = append(rootItems, ListItem{
-				id:       command,
+				Id:       command,
 				Title:    entrypoint.Title,
 				Subtitle: extension.Title,
 				Actions: []Action{

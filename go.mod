@@ -7,7 +7,6 @@ require (
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/cli/browser v1.1.0
-	github.com/cli/go-gh v1.0.0
 	github.com/itchyny/gojq v0.12.9
 	github.com/lrstanley/bubbletint v0.0.0-20221106213237-947d333795f8
 	github.com/olekukonko/tablewriter v0.0.5
@@ -19,11 +18,8 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
-	github.com/cli/safeexec v1.0.0 // indirect
-	github.com/cli/shurcooL-graphql v0.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/henvic/httpretty v0.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/itchyny/timefmt-go v0.1.4 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -35,8 +31,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	github.com/thlib/go-timezone-local v0.0.0-20210907160436-ef149e42d28e // indirect
-	golang.org/x/net v0.2.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

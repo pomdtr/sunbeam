@@ -1,4 +1,4 @@
-package git
+package utils
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ func NewGitClient(repo string) *GitClient {
 	}
 }
 
-func Clone(host, repo, target string) error {
+func GitClone(host, repo, target string) error {
 	cmd := exec.Command("git", "clone", fmt.Sprintf("https://%s/%s", host, repo), target)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
