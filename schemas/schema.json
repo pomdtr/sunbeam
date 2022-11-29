@@ -3,14 +3,14 @@
     "$id": "http://github.com/pomdtr/sunbeam/manifest",
     "type": "object",
     "required": [
-        "name",
+        "id",
         "title",
         "version",
         "scripts"
     ],
     "additionalProperties": false,
     "properties": {
-        "name": {
+        "id": {
             "type": "string",
             "pattern": "^[a-z-]+$"
         },
@@ -69,20 +69,31 @@
                         "type": "string"
                     },
                     "with": {
-                        "type": "object",
-                        "patternProperties": {
-                            "^[a-z-]+$": {
-                                "anyOf": [
-                                    {
-                                        "type": "string"
-                                    },
-                                    {
-                                        "type": "boolean"
-                                    },
-                                    {
-                                        "$ref": "#/definitions/forminput"
-                                    }
-                                ]
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "param",
+                                "value"
+                            ],
+                            "properties": {
+                                "param": {
+                                    "type": "string",
+                                    "pattern": "^[a-z-]+$"
+                                },
+                                "value": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        },
+                                        {
+                                            "$ref": "#/definitions/forminput"
+                                        }
+                                    ]
+                                }
                             }
                         }
                     }
@@ -311,16 +322,31 @@
                     ]
                 },
                 "with": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "anyOf": [
-                            {
-                                "type": "string"
+                    "type": "array",
+                    "items": {
+                        "required": [
+                            "param",
+                            "value"
+                        ],
+                        "properties": {
+                            "param": {
+                                "type": "string",
+                                "pattern": "^[a-z-]+$"
                             },
-                            {
-                                "type": "boolean"
+                            "value": {
+                                "anyOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "$ref": "#/definitions/forminput"
+                                    }
+                                ]
                             }
-                        ]
+                        }
                     }
                 }
             },
@@ -435,7 +461,8 @@
         "forminput": {
             "type": "object",
             "required": [
-                "type"
+                "type",
+                "title"
             ],
             "properties": {
                 "title": {
@@ -464,6 +491,9 @@
                     },
                     "then": {
                         "properties": {
+                            "value": {
+                                "type": "string"
+                            },
                             "placeholder": {
                                 "type": "string"
                             }
@@ -483,6 +513,9 @@
                             "title"
                         ],
                         "properties": {
+                            "value": {
+                                "type": "string"
+                            },
                             "placeholder": {
                                 "type": "string"
                             }
@@ -502,6 +535,9 @@
                             "label"
                         ],
                         "properties": {
+                            "value": {
+                                "type": "boolean"
+                            },
                             "label": {
                                 "type": "string"
                             }

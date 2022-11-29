@@ -26,7 +26,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 
 	extensionArgs := make([]string, 0, len(app.Sunbeam.Extensions))
 	for _, extension := range app.Sunbeam.Extensions {
-		extensionArgs = append(extensionArgs, extension.Name)
+		extensionArgs = append(extensionArgs, extension.Id)
 	}
 
 	extensionCommand.AddCommand(func() *cobra.Command {
@@ -76,7 +76,15 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 				}
 
 				manifestPath := path.Join(target, "sunbeam.yml")
-				extension, err := app.ParseManifest(manifestPath)
+				if _, err = os.Stat(manifestPath); os.IsNotExist(err) {
+					return fmt.Errorf("Extension %s does not have a sunbeam.yml manifest", repo.Name)
+				}
+
+				manifestBytes, err := os.ReadFile(manifestPath)
+				if err != nil {
+					return fmt.Errorf("Failed to read manifest for extension %s", repo.Name)
+				}
+				extension, err := app.ParseManifest(manifestBytes)
 				if err != nil {
 					return err
 				}
@@ -162,7 +170,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 					origin := gc.GetOrigin()
 					repo, _ := utils.ParseWithHost(origin, "github.com")
 					version := gc.GetCurrentVersion()
-					rows = append(rows, []string{extension.Name, repo.FullName(), version[:7]})
+					rows = append(rows, []string{extension.Id, repo.FullName(), version[:7]})
 				}
 
 				writer := tablewriter.NewWriter(os.Stdout)

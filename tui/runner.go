@@ -16,7 +16,7 @@ type RunContainer struct {
 	currentView   string
 
 	extension app.Extension
-	with      map[string]any
+	params    map[string]any
 
 	list   *List
 	detail *Detail
@@ -24,16 +24,12 @@ type RunContainer struct {
 	Script app.Script
 }
 
-func NewRunContainer(manifest app.Extension, script app.Script, with map[string]any) *RunContainer {
-	params := make(map[string]any)
-	for k, v := range with {
-		params[k] = v
-	}
+func NewRunContainer(manifest app.Extension, script app.Script, params map[string]any) *RunContainer {
 
 	return &RunContainer{
 		extension: manifest,
 		Script:    script,
-		with:      params,
+		params:    params,
 	}
 }
 
@@ -45,7 +41,7 @@ type CommandOutput string
 
 func (c RunContainer) ScriptCmd() tea.Msg {
 	input := app.CommandInput{
-		With: c.with,
+		Params: c.params,
 	}
 	if c.currentView == "list" {
 		input.Query = c.list.Query()
@@ -158,7 +154,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 				for i, action := range scriptItem.Actions {
 					if action.Extension == "" {
-						action.Extension = c.extension.Name
+						action.Extension = c.extension.Id
 					}
 					scriptItem.Actions[i] = action
 				}
@@ -171,8 +167,8 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, cmd
 		}
 	case ReloadPageMsg:
-		for k, v := range msg.Params {
-			c.with[k] = v
+		for _, arg := range msg.With {
+			c.params[arg.Param] = arg.Value
 		}
 		var cmd tea.Cmd
 		if c.currentView == "list" {

@@ -1,6 +1,6 @@
 version: "1.0"
 title: Date Utils
-name: date
+id: date
 rootItems:
   - script: utc
     title: Copy UTC Timestamp

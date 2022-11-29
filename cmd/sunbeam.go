@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -70,7 +71,7 @@ func Execute() (err error) {
 
 func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
-		Use:   extension.Name,
+		Use:   extension.Id,
 		Short: extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			var runner tui.Container
@@ -81,7 +82,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 				if !ok {
 					return fmt.Errorf("script %s not found", item.Script)
 				}
-				runner = tui.NewRunContainer(extension, script, item.With)
+				runner = tui.NewRunContainer(extension, script, nil)
 			} else {
 				runner = tui.RootList(extension)
 			}
@@ -100,23 +101,26 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			Use:   key,
 			Short: script.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				with := make(map[string]any)
-				for key, param := range script.Params {
-					switch param.Type {
-					case "boolean":
-						with[key], err = cmd.Flags().GetBool(key)
-						if err != nil {
-							return err
-						}
-					default:
-						with[key], err = cmd.Flags().GetString(key)
-						if err != nil {
-							return err
-						}
+				// with := make([]any, 0)
+				for key := range script.Params {
+					value, err := cmd.Flags().GetString(key)
+					if err != nil {
+						return err
+					}
+					var forminput map[string]interface{}
+					if err := json.Unmarshal([]byte(value), &forminput); err == nil {
+						// append(
+					} else {
+						// switch param.Type {
+						// case "string":
+						// 	appendkk
+						// case "bool":
+						// 	with[key] = value == "true"
+						// }
 					}
 				}
 
-				container := tui.NewRunContainer(extension, script, with)
+				container := tui.NewRunContainer(extension, script, nil)
 				err = tui.Draw(container, config)
 				if err != nil {
 					return fmt.Errorf("could not run script: %w", err)

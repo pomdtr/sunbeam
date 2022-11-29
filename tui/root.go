@@ -2,6 +2,7 @@ package tui
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -97,11 +98,11 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.quitting = true
 		return m, tea.Quit
 	case RunScriptMsg:
-		manifest, ok := app.Sunbeam.Extensions[msg.Extension]
+		extension, ok := app.Sunbeam.Extensions[msg.Extension]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		script, ok := manifest.Scripts[msg.Script]
+		script, ok := extension.Scripts[msg.Script]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
@@ -112,15 +113,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		inputs := make(map[string]app.FormInput)
-		params := make(map[string]any)
-		for key, param := range msg.With {
-			switch param := param.(type) {
-			case string:
-				params[key] = param
-			case bool:
-				params[key] = param
-			case map[string]interface{}:
-				bytes, err := json.Marshal(param)
+		for _, arg := range msg.With {
+			if value, ok := arg.Value.(map[string]any); ok {
+				bytes, err := json.Marshal(value)
 				if err != nil {
 					return m, NewErrorCmd(err)
 				}
@@ -129,9 +124,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					return m, NewErrorCmd(err)
 				}
-				inputs[key] = input
-			default:
-				return m, NewErrorCmd(fmt.Errorf("unknown input type: %T", param))
+				inputs[arg.Param] = input
 			}
 		}
 
@@ -146,25 +139,41 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			form := NewForm(msg.Extension, items, func(values map[string]any) tea.Cmd {
-				msg.With = values
-				return func() tea.Msg {
-					return msg
+				for key, value := range values {
+					for i, arg := range msg.With {
+						if arg.Param == key {
+							msg.With[i].Value = value
+						}
+					}
 				}
+				return tea.Sequence(PopCmd, func() tea.Msg {
+					return msg
+				})
 			})
 
 			cmd := m.Push(form)
 			return m, cmd
 		}
 
+		if msg.OnSuccess != "" {
+			script.OnSuccess = msg.OnSuccess
+		}
+
+		params := make(map[string]any, len(msg.With))
+		for _, arg := range msg.With {
+			params[arg.Param] = arg.Value
+		}
 		if script.OnSuccess == "push-page" {
-			runner := NewRunContainer(manifest, script, msg.With)
+
+			runner := NewRunContainer(extension, script, params)
 			cmd := m.Push(runner)
 			return m, cmd
 		}
 
 		command, err := script.Cmd(app.CommandInput{
-			With: msg.With,
+			Params: params,
 		})
+		command.Dir = extension.Dir()
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
@@ -188,9 +197,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "reload-page":
 			return m, func() tea.Msg {
 				err := command.Run()
-				if err != nil {
-					return err
+				var exitErr *exec.ExitError
+				if errors.As(err, &exitErr) {
+					return NewErrorCmd(fmt.Errorf("script exited with code %d: %s", exitErr.ExitCode(), exitErr.Error()))
+				} else if err != nil {
+					return NewErrorCmd(err)
 				}
+
 				return ReloadPageMsg{}
 			}
 		case "":
@@ -225,6 +238,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	currentPageIdx := len(m.pages) - 1
 	m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
+
 	return m, cmd
 }
 
@@ -232,14 +246,14 @@ func (m *RootModel) View() string {
 	if m.quitting {
 		return ""
 	}
+
 	var embedView string
-
-	if len(m.pages) == 0 {
-		return "No Pages"
+	if len(m.pages) > 0 {
+		currentPage := m.pages[len(m.pages)-1]
+		embedView = currentPage.View()
+	} else {
+		embedView = "No pages"
 	}
-
-	currentPage := m.pages[len(m.pages)-1]
-	embedView = currentPage.View()
 
 	pageStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(theme.Fg())
 
@@ -294,13 +308,15 @@ func (m *RootModel) Pop() {
 func ScriptCommand(extension string, entrypoint app.Entrypoint) string {
 	args := make([]string, 0)
 	args = append(args, "sunbeam", extension, entrypoint.Script)
-	for param, value := range entrypoint.With {
-		switch value := value.(type) {
+	for _, arg := range entrypoint.With {
+		switch value := arg.Value.(type) {
 		case string:
-			value = shellescape.Quote(value)
-			args = append(args, fmt.Sprintf("--%s=%s", param, value))
+			args = append(args, fmt.Sprintf("--%s=%s", arg.Param, value))
 		case bool:
-			args = append(args, fmt.Sprintf("--%s=%t", param, value))
+			args = append(args, fmt.Sprintf("--%s=%t", arg.Param, value))
+		case map[string]interface{}:
+			v, _ := json.Marshal(value)
+			args = append(args, fmt.Sprintf("--%s=%s", arg.Param, shellescape.Quote(string(v))))
 		}
 	}
 	return strings.Join(args, " ")
@@ -312,11 +328,11 @@ func RootList(extensions ...app.Extension) Container {
 		extension := extension
 		for _, entrypoint := range extension.RootItems {
 			runMsg := RunScriptMsg{
-				Extension: extension.Name,
+				Extension: extension.Id,
 				Script:    entrypoint.Script,
 				With:      entrypoint.With,
 			}
-			command := ScriptCommand(extension.Name, entrypoint)
+			command := ScriptCommand(extension.Id, entrypoint)
 			rootItems = append(rootItems, ListItem{
 				Id:       command,
 				Title:    entrypoint.Title,

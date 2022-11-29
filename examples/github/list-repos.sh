@@ -24,7 +24,7 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
                 title: "List Pull Requests",
                 shortcut: "ctrl+p",
                 script: "list-pull-requests",
-                with: {repository: .full_name}
+                with: [{param: "repository", value: .full_name}]
             }
         ]
     }

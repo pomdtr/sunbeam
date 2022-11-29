@@ -10,10 +10,6 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": [
-                "extension",
-                "list"
-            ],
             "showLog": true
         }
     ]

@@ -1,4 +1,4 @@
-name: github
+id: github
 version: "1.0"
 title: GitHub
 requirements:
@@ -8,26 +8,32 @@ rootItems:
   - title: Open Sunbeam Repository
     script: open-repository
     with:
-      owner: pomdtr
-      name: sunbeam
+      - param: owner
+        value: pomdtr
+      - param: name
+        value: sunbeam
   - title: List My Repositories
     script: list-repositories
     with:
-      owner: pomdtr
+      - param: owner
+        value: pomdtr
   - title: List Owner Repositories
     script: list-repositories
     with:
-      owner:
-        type: textfield
-        title: Owner
+      - param: owner
+        value:
+          type: textfield
+          title: Owner
   - title: List Dailymotion Repositories
     script: list-repositories
     with:
-      owner: dailymotion
+      - param: owner
+        value: dailymotion
   - title: List Airflow Pull Requests
     script: list-pull-requests
     with:
-      repository: dailymotion/dwh-dags
+      - param: repository
+        value: dailymotion/dwh-dags
 scripts:
   open-repository:
     command: printf 'https://github.com/%s/%s' {{owner}} {{name}}

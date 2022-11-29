@@ -1,0 +1,44 @@
+id: journal
+title: Journal
+version: "1.0"
+
+rootItems:
+  - script: list-entries
+    title: List Entries
+  - script: write-entry
+    title: Write Entry
+    with:
+      - param: title
+        value:
+          type: textfield
+          title: Title
+      - param: content
+        value:
+          type: textarea
+          title: Body
+scripts:
+  list-entries:
+    command: ./list-entries.py
+    onSuccess: push-page
+    page:
+      type: list
+      mode: filter
+      showPreview: true
+  write-entry:
+    command: ./write-entry.py --title {{ title }} --content {{ content }}
+    params:
+      title:
+        type: string
+      content:
+        type: string
+  edit-entry:
+    command: ./edit-entry.py --uuid {{ uuid }} --title {{ title }} --content {{ content }}
+    params:
+      uuid:
+        type: string
+      title:
+        type: string
+      content:
+        type: string
+  delete-entry:
+    command: ./delete-entry.py --uuid {{ uuid }}

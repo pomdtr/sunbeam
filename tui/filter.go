@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"log"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -145,7 +144,6 @@ func (m Filter) nbVisibleItems() int {
 
 func (m *Filter) CursorDown() {
 	m.cursor = clamp(0, len(m.filtered)-1, m.cursor+1)
-	log.Println(m.nbVisibleItems())
 	if m.cursor >= m.minIndex+m.nbVisibleItems() {
 		m.minIndex += 1
 	}

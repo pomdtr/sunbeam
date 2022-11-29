@@ -36,32 +36,37 @@ type ScriptParam struct {
 type FormInput struct {
 	Type string `json:"type"`
 
-	Title       string `json:"title"`
-	Value       string `json:"value"`
-	Placeholder string `json:"placeholder"`
+	Title       string `json:"title,omitempty"`
+	Value       any    `json:"value,omitempty"`
+	Placeholder string `json:"placeholder,omitempty"`
 
-	Label string `json:"label"`
+	Label string `json:"label,omitempty"`
 
 	Data []struct {
-		Title string `json:"title"`
-		Value string `json:"value"`
+		Title string `json:"title,omitempty"`
+		Value string `json:"value,omitempty"`
 	} `json:"data"`
 }
 
-func (s Script) CheckMissingParams(inputParams map[string]any) []string {
+func (s Script) CheckMissingParams(with ScriptArguments) []string {
 	missing := make([]string, 0)
 	for key := range s.Params {
-		_, ok := inputParams[key]
-		if !ok {
-			missing = append(missing, key)
+		for i, arg := range with {
+			if arg.Param == key {
+				break
+			}
+			if i == len(with)-1 {
+				missing = append(missing, key)
+			}
 		}
 	}
+
 	return missing
 }
 
 type CommandInput struct {
-	With  map[string]any
-	Query string
+	Params map[string]any
+	Query  string
 }
 
 func (s Script) Cmd(input CommandInput) (*exec.Cmd, error) {
@@ -73,7 +78,7 @@ func (s Script) Cmd(input CommandInput) (*exec.Cmd, error) {
 		},
 	}
 
-	for key, value := range input.With {
+	for key, value := range input.Params {
 		value := value
 		funcMap[key] = func() any {
 			switch value := value.(type) {
@@ -124,9 +129,16 @@ type ScriptAction struct {
 	Script    string `json:"script,omitempty" yaml:"script"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
-	OnSuccess string         `json:"onSuccess" yaml:"onSuccess"`
-	With      map[string]any `json:"with,omitempty" yaml:"with"`
+	OnSuccess string          `json:"onSuccess" yaml:"onSuccess"`
+	With      ScriptArguments `json:"with,omitempty" yaml:"with"`
 }
+
+type ScriptArgument struct {
+	Param string `json:"param"`
+	Value any    `json:"value"`
+}
+
+type ScriptArguments []ScriptArgument
 
 func ParseAction(output string) (action ScriptAction, err error) {
 	err = json.Unmarshal([]byte(output), &action)

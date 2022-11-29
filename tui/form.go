@@ -71,6 +71,10 @@ func NewTextArea(formItem app.FormInput) TextArea {
 	ta := textarea.New()
 	ta.FocusedStyle.Text = styles.Regular
 	ta.Prompt = ""
+	value, ok := formItem.Value.(string)
+	if ok {
+		ta.SetValue(value)
+	}
 	ta.BlurredStyle.Text = styles.Regular
 
 	ta.Placeholder = formItem.Placeholder
@@ -107,6 +111,10 @@ type TextInput struct {
 func NewTextInput(formItem app.FormInput) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
+	value, ok := formItem.Value.(string)
+	if ok {
+		ti.SetValue(value)
+	}
 	ti.TextStyle = styles.Regular.Copy()
 
 	placeholder := formItem.Placeholder
@@ -148,7 +156,7 @@ type Checkbox struct {
 	Style lipgloss.Style
 
 	focused bool
-	checked bool
+	value   bool
 }
 
 func NewCheckbox(formItem app.FormInput) Checkbox {
@@ -156,6 +164,7 @@ func NewCheckbox(formItem app.FormInput) Checkbox {
 		Style: styles.Regular.Copy(),
 		label: formItem.Label,
 		title: formItem.Title,
+		value: formItem.Value.(bool),
 	}
 }
 
@@ -194,7 +203,7 @@ func (cb Checkbox) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 
 func (cb Checkbox) View() string {
 	var checkbox string
-	if cb.checked {
+	if cb.value {
 		checkbox = fmt.Sprintf(" [x] %s", cb.label)
 	} else {
 		checkbox = fmt.Sprintf(" [ ] %s", cb.label)
@@ -204,11 +213,11 @@ func (cb Checkbox) View() string {
 }
 
 func (cb Checkbox) Value() any {
-	return cb.checked
+	return cb.value
 }
 
 func (cb *Checkbox) Toggle() {
-	cb.checked = !cb.checked
+	cb.value = !cb.value
 }
 
 type DropDownItem struct {

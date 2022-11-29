@@ -1,4 +1,4 @@
-name: bitwarden
+id: bitwarden
 version: "1.0"
 title: Bitwarden
 rootItems:

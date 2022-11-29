@@ -1,4 +1,4 @@
-name: file-browser
+id: file-browser
 version: "1.0"
 title: File Browser
 requirements:
@@ -8,17 +8,20 @@ rootItems:
   - title: Browse Root Directory
     script: file-browser
     with:
-      root: "/"
+      - param: root
+        value: "/"
   - title: Browse Custom Directory
     script: file-browser
     with:
-      root:
-        type: textfield
-        title: Root Directory
+      - param: "root"
+        value:
+          type: textfield
+          title: Root Directory
   - title: Browse Current Directory
     script: file-browser
     with:
-      root: "."
+      - param: root
+        value: "."
 scripts:
   file-browser:
     command: ./file-browser.py --root {{ root }}

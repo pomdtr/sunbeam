@@ -45,7 +45,7 @@ func ParseScriptItem(scriptItem app.ScriptItem) ListItem {
 		PreviewCmd: func() string {
 			cmd := scriptItem.PreviewCommand()
 			if cmd == nil {
-				return "No preview command"
+				return ""
 			}
 			out, err := cmd.Output()
 			if err != nil {
@@ -261,8 +261,8 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, nil
 		}
 
-		return c, NewReloadPageCmd(map[string]any{
-			"query": msg.query,
+		return c, NewReloadPageCmd([]app.ScriptArgument{
+			{Param: "query", Value: msg.query},
 		})
 	case PreviewUpdateMsg:
 		if c.filter.Selection() == nil {

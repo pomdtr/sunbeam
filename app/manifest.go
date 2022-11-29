@@ -18,13 +18,13 @@ type Api struct {
 type Entrypoint struct {
 	Script string
 	Title  string
-	With   map[string]any
+	With   ScriptArguments
 }
 
 type Extension struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
-	Name        string `json:"name" yaml:"name"`
+	Id          string `json:"id" yaml:"id"`
 	PostInstall string `json:"postInstall" yaml:"postInstall"`
 
 	RootItems []Entrypoint      `json:"rootItems" yaml:"rootItems"`
@@ -66,12 +66,26 @@ func init() {
 	for _, scriptDir := range scriptDirs {
 
 		manifestPath := path.Join(scriptDir, "sunbeam.yml")
-		extension, err := ParseManifest(manifestPath)
+		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+			continue
+		}
+
+		manifestBytes, err := os.ReadFile(manifestPath)
 		if err != nil {
 			continue
 		}
 
-		extensions[extension.Name] = extension
+		extension, err := ParseManifest(manifestBytes)
+		if err != nil {
+			log.Println(err)
+		}
+
+		extension.Url = url.URL{
+			Scheme: "file",
+			Path:   manifestPath,
+		}
+
+		extensions[extension.Id] = extension
 	}
 
 	Sunbeam = Api{
@@ -81,17 +95,8 @@ func init() {
 	}
 }
 
-func ParseManifest(manifestPath string) (extension Extension, err error) {
-	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
-		return extension, err
-	}
-
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		return extension, err
-	}
-
-	err = yaml.Unmarshal(manifestBytes, &extension)
+func ParseManifest(bytes []byte) (extension Extension, err error) {
+	err = yaml.Unmarshal(bytes, &extension)
 	if err != nil {
 		return extension, err
 
@@ -102,11 +107,6 @@ func ParseManifest(manifestPath string) (extension Extension, err error) {
 			script.Page.Title = extension.Title
 		}
 		extension.Scripts[key] = script
-	}
-
-	extension.Url = url.URL{
-		Scheme: "file",
-		Path:   manifestPath,
 	}
 
 	return extension, nil

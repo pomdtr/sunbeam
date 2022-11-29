@@ -1,15 +1,17 @@
-name: tldr
+id: tldr
 title: TLDR Pages
 version: "1.0"
 rootItems:
   - title: "Search MacOS Pages"
     script: list
     with:
-      platform: osx
+      - param: platform
+        value: osx
   - title: "Search Linux Pages"
     script: list
     with:
-      platform: linux
+      - param: platform
+        value: linux
 scripts:
   list:
     command: |
