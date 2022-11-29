@@ -15,19 +15,19 @@ type Api struct {
 	ConfigRoot    string
 }
 
-type Entrypoint struct {
+type RootItem struct {
 	Script string
 	Title  string
-	With   ScriptArguments
+	With   ScriptInputs
 }
 
 type Extension struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
-	Id          string `json:"id" yaml:"id"`
+	Name        string `json:"name" yaml:"name"`
 	PostInstall string `json:"postInstall" yaml:"postInstall"`
 
-	RootItems []Entrypoint      `json:"rootItems" yaml:"rootItems"`
+	RootItems []RootItem        `json:"rootItems" yaml:"rootItems"`
 	Scripts   map[string]Script `json:"scripts" yaml:"scripts"`
 
 	Url url.URL
@@ -85,7 +85,7 @@ func init() {
 			Path:   manifestPath,
 		}
 
-		extensions[extension.Id] = extension
+		extensions[extension.Name] = extension
 	}
 
 	Sunbeam = Api{

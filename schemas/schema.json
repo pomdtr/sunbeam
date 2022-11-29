@@ -3,14 +3,14 @@
     "$id": "http://github.com/pomdtr/sunbeam/manifest",
     "type": "object",
     "required": [
-        "id",
+        "name",
         "title",
         "version",
         "scripts"
     ],
     "additionalProperties": false,
     "properties": {
-        "id": {
+        "name": {
             "type": "string",
             "pattern": "^[a-z-]+$"
         },
@@ -69,31 +69,20 @@
                         "type": "string"
                     },
                     "with": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "required": [
-                                "param",
-                                "value"
-                            ],
-                            "properties": {
-                                "param": {
-                                    "type": "string",
-                                    "pattern": "^[a-z-]+$"
-                                },
-                                "value": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "$ref": "#/definitions/forminput"
-                                        }
-                                    ]
-                                }
+                        "type": "object",
+                        "patternProperties": {
+                            "^[a-z-]+$": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/definitions/input"
+                                    },
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    }
+                                ]
                             }
                         }
                     }
@@ -320,34 +309,6 @@
                         "run-script",
                         "exec-command"
                     ]
-                },
-                "with": {
-                    "type": "array",
-                    "items": {
-                        "required": [
-                            "param",
-                            "value"
-                        ],
-                        "properties": {
-                            "param": {
-                                "type": "string",
-                                "pattern": "^[a-z-]+$"
-                            },
-                            "value": {
-                                "anyOf": [
-                                    {
-                                        "type": "string"
-                                    },
-                                    {
-                                        "type": "boolean"
-                                    },
-                                    {
-                                        "$ref": "#/definitions/forminput"
-                                    }
-                                ]
-                            }
-                        }
-                    }
                 }
             },
             "allOf": [
@@ -365,6 +326,25 @@
                             "script"
                         ],
                         "properties": {
+                            "with": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "patternProperties": {
+                                    "^[a-z-]+$": {
+                                        "anyOf": [
+                                            {
+                                                "$ref": "#/definitions/input"
+                                            },
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "boolean"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
                             "script": {
                                 "type": "string"
                             },
@@ -458,15 +438,25 @@
                 }
             ]
         },
-        "forminput": {
+        "input": {
             "type": "object",
-            "required": [
-                "type",
-                "title"
-            ],
             "properties": {
                 "title": {
                     "type": "string"
+                },
+                "index": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "value": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "boolean"
+                        }
+                    ]
                 },
                 "type": {
                     "type": "string",
@@ -476,6 +466,7 @@
                         "password",
                         "checkbox",
                         "dropdown",
+                        "const",
                         "filePicker"
                     ]
                 }
@@ -483,6 +474,9 @@
             "allOf": [
                 {
                     "if": {
+                        "required": [
+                            "type"
+                        ],
                         "properties": {
                             "type": {
                                 "const": "textarea"
@@ -491,7 +485,7 @@
                     },
                     "then": {
                         "properties": {
-                            "value": {
+                            "default": {
                                 "type": "string"
                             },
                             "placeholder": {
@@ -502,6 +496,9 @@
                 },
                 {
                     "if": {
+                        "required": [
+                            "type"
+                        ],
                         "properties": {
                             "type": {
                                 "const": "textfield"
@@ -513,7 +510,7 @@
                             "title"
                         ],
                         "properties": {
-                            "value": {
+                            "default": {
                                 "type": "string"
                             },
                             "placeholder": {
@@ -524,6 +521,9 @@
                 },
                 {
                     "if": {
+                        "required": [
+                            "type"
+                        ],
                         "properties": {
                             "type": {
                                 "const": "checkbox"
@@ -535,7 +535,7 @@
                             "label"
                         ],
                         "properties": {
-                            "value": {
+                            "default": {
                                 "type": "boolean"
                             },
                             "label": {
@@ -546,6 +546,9 @@
                 },
                 {
                     "if": {
+                        "required": [
+                            "type"
+                        ],
                         "properties": {
                             "type": {
                                 "const": "dropdown"

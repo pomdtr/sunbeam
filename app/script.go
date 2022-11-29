@@ -8,6 +8,7 @@ import (
 
 	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
+	"gopkg.in/yaml.v3"
 )
 
 type Script struct {
@@ -33,31 +34,11 @@ type ScriptParam struct {
 	Description string `json:"description"`
 }
 
-type FormInput struct {
-	Type string `json:"type"`
-
-	Title       string `json:"title,omitempty"`
-	Value       any    `json:"value,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-
-	Label string `json:"label,omitempty"`
-
-	Data []struct {
-		Title string `json:"title,omitempty"`
-		Value string `json:"value,omitempty"`
-	} `json:"data"`
-}
-
-func (s Script) CheckMissingParams(with ScriptArguments) []string {
+func (s Script) CheckMissingParams(inputs ScriptInputs) []string {
 	missing := make([]string, 0)
-	for key := range s.Params {
-		for i, arg := range with {
-			if arg.Param == key {
-				break
-			}
-			if i == len(with)-1 {
-				missing = append(missing, key)
-			}
+	for param := range s.Params {
+		if _, ok := inputs[param]; !ok {
+			missing = append(missing, param)
 		}
 	}
 
@@ -129,16 +110,49 @@ type ScriptAction struct {
 	Script    string `json:"script,omitempty" yaml:"script"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
-	OnSuccess string          `json:"onSuccess" yaml:"onSuccess"`
-	With      ScriptArguments `json:"with,omitempty" yaml:"with"`
+	OnSuccess string       `json:"onSuccess" yaml:"onSuccess"`
+	With      ScriptInputs `json:"with,omitempty" yaml:"with"`
 }
 
-type ScriptArgument struct {
-	Param string `json:"param"`
-	Value any    `json:"value"`
+type FormItem struct {
+	Type        string `json:"type"`
+	Title       string `json:"title,omitempty"`
+	Value       any    `json:"value,omitempty"`
+	Placeholder string `json:"placeholder,omitempty"`
+	Default     any    `json:"default,omitempty"`
+
+	Label string `json:"label,omitempty"`
+
+	Data []struct {
+		Title string `json:"title,omitempty"`
+		Value string `json:"value,omitempty"`
+	} `json:"data"`
 }
 
-type ScriptArguments []ScriptArgument
+type ScriptInput struct {
+	Value any
+	FormItem
+}
+
+func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
+	err = value.Decode(&si.FormItem)
+	if err == nil {
+		return
+	}
+
+	return value.Decode(&si.Value)
+}
+
+func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
+	err = json.Unmarshal(bytes, &si.FormItem)
+	if err == nil {
+		return
+	}
+
+	return json.Unmarshal(bytes, &si.Value)
+}
+
+type ScriptInputs map[string]ScriptInput
 
 func ParseAction(output string) (action ScriptAction, err error) {
 	err = json.Unmarshal([]byte(output), &action)

@@ -1,48 +1,29 @@
-id: github
+name: github
 version: "1.0"
 title: GitHub
 requirements:
   - homePage: https://cli.github.com
     which: gh
 rootItems:
-  - title: Open Sunbeam Repository
-    script: open-repository
-    with:
-      - param: owner
-        value: pomdtr
-      - param: name
-        value: sunbeam
   - title: List My Repositories
     script: list-repositories
     with:
-      - param: owner
-        value: pomdtr
+      owner: pomdtr
   - title: List Owner Repositories
     script: list-repositories
     with:
-      - param: owner
-        value:
-          type: textfield
-          title: Owner
+      owner:
+        type: textfield
+        title: Owner
   - title: List Dailymotion Repositories
     script: list-repositories
     with:
-      - param: owner
-        value: dailymotion
+      owner: dailymotion
   - title: List Airflow Pull Requests
     script: list-pull-requests
     with:
-      - param: repository
-        value: dailymotion/dwh-dags
+      repository: dailymotion/dwh-dags
 scripts:
-  open-repository:
-    command: printf 'https://github.com/%s/%s' {{owner}} {{name}}
-    onSuccess: open-in-browser
-    params:
-      owner:
-        type: string
-      name:
-        type: string
   list-repositories:
     title: List Repositories
     command: ./list-repos.sh {{ owner }}
@@ -51,7 +32,7 @@ scripts:
       type: list
       mode: filter
       showPreview: true
-    params:
+    arguments:
       owner:
         type: string
   list-pull-requests:
@@ -60,6 +41,6 @@ scripts:
     page:
       type: list
       mode: filter
-    params:
+    arguments:
       repository:
         type: string

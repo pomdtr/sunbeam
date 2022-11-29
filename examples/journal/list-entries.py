@@ -19,22 +19,16 @@ if len(journal["entries"]) == 0:
                         "script": "write-entry",
                         "title": "Write Entry",
                         "onSuccess": "reload-page",
-                        "with": [
-                            {
-                                "param": "title",
-                                "value": {
-                                    "type": "textfield",
-                                    "title": "Title",
-                                },
+                        "with": {
+                            "title": {
+                                "type": "textfield",
+                                "title": "Title",
                             },
-                            {
-                                "param": "content",
-                                "value": {
-                                    "type": "textfield",
-                                    "title": "Content",
-                                },
+                            "content": {
+                                "type": "textfield",
+                                "title": "Content",
                             },
-                        ],
+                        },
                     }
                 ],
             }
@@ -66,16 +60,16 @@ for uuid, entry in journal["entries"].items():
                         "script": "write-entry",
                         "onSuccess": "reload-page",
                         "shortcut": "ctrl+n",
-                        "with": [
-                            {
-                                "param": "title",
-                                "value": {"type": "textfield", "title": "Title"},
+                        "with": {
+                            "title": {
+                                "type": "textfield",
+                                "title": "Title",
                             },
-                            {
-                                "param": "content",
-                                "value": {"type": "textarea", "title": "Content"},
+                            "content": {
+                                "type": "textarea",
+                                "title": "Content",
                             },
-                        ],
+                        },
                     },
                     {
                         "type": "run-script",
@@ -83,7 +77,7 @@ for uuid, entry in journal["entries"].items():
                         "script": "delete-entry",
                         "onSuccess": "reload-page",
                         "shortcut": "ctrl+d",
-                        "with": [{"param": "uuid", "value": uuid}],
+                        "with": {"uuid": uuid},
                     },
                     {
                         "type": "run-script",
@@ -91,25 +85,19 @@ for uuid, entry in journal["entries"].items():
                         "script": "edit-entry",
                         "onSuccess": "reload-page",
                         "shortcut": "ctrl+e",
-                        "with": [
-                            {"param": "uuid", "value": uuid},
-                            {
-                                "param": "title",
-                                "value": {
-                                    "type": "textfield",
-                                    "title": "Title",
-                                    "value": entry["title"],
-                                },
+                        "with": {
+                            "uuid": uuid,
+                            "title": {
+                                "type": "textfield",
+                                "title": "Title",
+                                "value": entry["title"],
                             },
-                            {
-                                "param": "content",
-                                "value": {
-                                    "type": "textarea",
-                                    "title": "Content",
-                                    "value": entry["content"],
-                                },
+                            "content": {
+                                "type": "textarea",
+                                "title": "Content",
+                                "value": entry["content"],
                             },
-                        ],
+                        },
                     },
                 ],
             }

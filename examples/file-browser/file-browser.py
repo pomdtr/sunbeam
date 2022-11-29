@@ -18,7 +18,7 @@ for path in sorted(root.iterdir(), key=lambda p: p.name):
             "type": "run-script",
             "script": "file-browser",
             "title": "Browse Directory",
-            "with": [{"param": "root", "value": str(path.absolute())}],
+            "with": {"root": str(path.absolute())},
         }
     )
 

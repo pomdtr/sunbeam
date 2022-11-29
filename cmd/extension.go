@@ -26,7 +26,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 
 	extensionArgs := make([]string, 0, len(app.Sunbeam.Extensions))
 	for _, extension := range app.Sunbeam.Extensions {
-		extensionArgs = append(extensionArgs, extension.Id)
+		extensionArgs = append(extensionArgs, extension.Name)
 	}
 
 	extensionCommand.AddCommand(func() *cobra.Command {
@@ -170,7 +170,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 					origin := gc.GetOrigin()
 					repo, _ := utils.ParseWithHost(origin, "github.com")
 					version := gc.GetCurrentVersion()
-					rows = append(rows, []string{extension.Id, repo.FullName(), version[:7]})
+					rows = append(rows, []string{extension.Name, repo.FullName(), version[:7]})
 				}
 
 				writer := tablewriter.NewWriter(os.Stdout)

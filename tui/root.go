@@ -112,19 +112,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("missing params: %s", strings.Join(missing, ", ")))
 		}
 
-		inputs := make(map[string]app.FormInput)
-		for _, arg := range msg.With {
-			if value, ok := arg.Value.(map[string]any); ok {
-				bytes, err := json.Marshal(value)
-				if err != nil {
-					return m, NewErrorCmd(err)
-				}
-				var input app.FormInput
-				err = json.Unmarshal(bytes, &input)
-				if err != nil {
-					return m, NewErrorCmd(err)
-				}
-				inputs[arg.Param] = input
+		inputs := make(map[string]app.ScriptInput)
+		for key, input := range msg.With {
+			if input.Value == "" {
+				inputs[key] = input
 			}
 		}
 
@@ -140,11 +131,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			form := NewForm(msg.Extension, items, func(values map[string]any) tea.Cmd {
 				for key, value := range values {
-					for i, arg := range msg.With {
-						if arg.Param == key {
-							msg.With[i].Value = value
-						}
-					}
+					input := msg.With[key]
+					input.Value = value
+					msg.With[key] = input
 				}
 				return tea.Sequence(PopCmd, func() tea.Msg {
 					return msg
@@ -160,8 +149,8 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		params := make(map[string]any, len(msg.With))
-		for _, arg := range msg.With {
-			params[arg.Param] = arg.Value
+		for key, input := range msg.With {
+			params[key] = input.Value
 		}
 		if script.OnSuccess == "push-page" {
 
@@ -305,18 +294,18 @@ func (m *RootModel) Pop() {
 	}
 }
 
-func ScriptCommand(extension string, entrypoint app.Entrypoint) string {
+func ScriptCommand(extension string, entrypoint app.RootItem) string {
 	args := make([]string, 0)
 	args = append(args, "sunbeam", extension, entrypoint.Script)
-	for _, arg := range entrypoint.With {
-		switch value := arg.Value.(type) {
+	for key, input := range entrypoint.With {
+		switch value := input.Value.(type) {
 		case string:
-			args = append(args, fmt.Sprintf("--%s=%s", arg.Param, value))
+			args = append(args, fmt.Sprintf("--%s=%s", key, value))
 		case bool:
-			args = append(args, fmt.Sprintf("--%s=%t", arg.Param, value))
+			args = append(args, fmt.Sprintf("--%s=%t", key, value))
 		case map[string]interface{}:
 			v, _ := json.Marshal(value)
-			args = append(args, fmt.Sprintf("--%s=%s", arg.Param, shellescape.Quote(string(v))))
+			args = append(args, fmt.Sprintf("--%s=%s", key, shellescape.Quote(string(v))))
 		}
 	}
 	return strings.Join(args, " ")
@@ -328,11 +317,11 @@ func RootList(extensions ...app.Extension) Container {
 		extension := extension
 		for _, entrypoint := range extension.RootItems {
 			runMsg := RunScriptMsg{
-				Extension: extension.Id,
+				Extension: extension.Name,
 				Script:    entrypoint.Script,
 				With:      entrypoint.With,
 			}
-			command := ScriptCommand(extension.Id, entrypoint)
+			command := ScriptCommand(extension.Name, entrypoint)
 			rootItems = append(rootItems, ListItem{
 				Id:       command,
 				Title:    entrypoint.Title,

@@ -71,7 +71,7 @@ func Execute() (err error) {
 
 func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
-		Use:   extension.Id,
+		Use:   extension.Name,
 		Short: extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			var runner tui.Container

@@ -154,7 +154,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 				for i, action := range scriptItem.Actions {
 					if action.Extension == "" {
-						action.Extension = c.extension.Id
+						action.Extension = c.extension.Name
 					}
 					scriptItem.Actions[i] = action
 				}
@@ -167,8 +167,8 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, cmd
 		}
 	case ReloadPageMsg:
-		for _, arg := range msg.With {
-			c.params[arg.Param] = arg.Value
+		for key, input := range msg.With {
+			c.params[key] = input.Value
 		}
 		var cmd tea.Cmd
 		if c.currentView == "list" {

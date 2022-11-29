@@ -1,11 +1,11 @@
-id: jira
+name: jira
 version: "1.0"
 title: Jira
 rootItems:
   - title: List Issues
     script: list-issues
     with:
-      - param: jql
+      jql:
         value: assignee=currentUser() and status!=Closed
 scripts:
   list-issues:

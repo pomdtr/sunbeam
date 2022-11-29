@@ -1,4 +1,4 @@
-id: journal
+name: journal
 title: Journal
 version: "1.0"
 
@@ -8,14 +8,12 @@ rootItems:
   - script: write-entry
     title: Write Entry
     with:
-      - param: title
-        value:
-          type: textfield
-          title: Title
-      - param: content
-        value:
-          type: textarea
-          title: Body
+      title:
+        type: textfield
+        title: Title
+      content:
+        type: textarea
+        title: Body
 scripts:
   list-entries:
     command: ./list-entries.py
