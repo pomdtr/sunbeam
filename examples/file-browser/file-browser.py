@@ -11,11 +11,11 @@ args = parser.parse_args()
 
 root: pathlib.Path = args.root
 
-items = sorted(root.iterdir(), key=lambda p: p.name)
+entries = root.iterdir()
 if not args.show_hidden:
-    items = filter(lambda p: not p.name.startswith("."), items)
+    entries = filter(lambda p: not p.name.startswith("."), entries)
 
-for path in sorted(root.iterdir(), key=lambda p: p.name):
+for path in sorted(entries, key=lambda p: p.name):
     primaryAction = (
         {"type": "openPath", "path": str(path.absolute())}
         if path.is_file()

@@ -34,23 +34,32 @@ type FormInput interface {
 	View() string
 }
 
-func extractFormItems(script app.Script, with map[string]app.ScriptInput) ([]FormItem, error) {
+func extractScriptInput(script app.Script, with map[string]app.ScriptInput) (map[string]any, []FormItem, error) {
 	formItems := make([]FormItem, 0)
-	for key := range script.Params {
+	params := make(map[string]any)
+	for key, param := range script.Params {
 		input, ok := with[key]
 		if !ok {
-			return nil, fmt.Errorf("missing input %s", key)
-		}
-		if input.Value == nil {
-			formItem, err := NewFormItem(key, input.FormItem)
-			if err != nil {
-				return nil, err
+			if param.Default != nil {
+				params[key] = param.Default
+				continue
 			}
-			formItems = append(formItems, formItem)
+			return nil, nil, fmt.Errorf("missing required parameter: %s", key)
 		}
+
+		if input.Value != nil {
+			params[key] = input.Value
+			continue
+		}
+
+		formItem, err := NewFormItem(key, input.FormItem)
+		if err != nil {
+			return nil, nil, err
+		}
+		formItems = append(formItems, formItem)
 	}
 
-	return formItems, nil
+	return params, formItems, nil
 }
 
 func NewFormItem(name string, formItem app.FormItem) (FormItem, error) {

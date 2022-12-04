@@ -178,6 +178,16 @@
                                         "directory"
                                     ]
                                 },
+                                "default": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
                                 "shellEscape": {
                                     "type": "boolean"
                                 },

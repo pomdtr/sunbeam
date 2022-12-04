@@ -103,9 +103,6 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 				with := make(map[string]any, 0)
 
 				for key, param := range script.Params {
-					if !cmd.Flags().Changed(key) {
-						continue
-					}
 					switch param.Type {
 					case "string", "file", "directory":
 						value, err := cmd.Flags().GetString(key)
@@ -120,7 +117,6 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 						}
 						with[key] = value
 					}
-
 				}
 
 				container := tui.NewRunContainer(extension, script, with)
@@ -134,25 +130,30 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 
 		for key, param := range script.Params {
 			switch param.Type {
-			case "string":
-				scriptCmd.Flags().String(key, "", param.Description)
-				if param.Enum != nil {
-					choices := make([]string, len(param.Enum))
-					for i, choice := range param.Enum {
-						choices[i] = fmt.Sprintf("%v", choice)
-					}
-					scriptCmd.RegisterFlagCompletionFunc(key, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-						return choices, cobra.ShellCompDirectiveNoFileComp
-					})
+			case "string", "file", "directory":
+				if defaultValue, ok := param.Default.(string); ok {
+					scriptCmd.Flags().String(key, defaultValue, param.Description)
+				} else {
+					scriptCmd.Flags().String(key, "", param.Description)
+					scriptCmd.MarkFlagRequired(key)
 				}
 			case "boolean":
-				scriptCmd.Flags().Bool(key, false, param.Description)
-			case "file":
-				scriptCmd.Flags().String(key, "", param.Description)
-			case "directory":
-				scriptCmd.Flags().String(key, "", param.Description)
+				if defaultValue, ok := param.Default.(bool); ok {
+					scriptCmd.Flags().Bool(key, defaultValue, param.Description)
+				} else {
+					scriptCmd.Flags().Bool(key, false, param.Description)
+					scriptCmd.MarkFlagRequired(key)
+				}
 			}
-			scriptCmd.MarkFlagRequired(key)
+			if param.Enum != nil {
+				choices := make([]string, len(param.Enum))
+				for i, choice := range param.Enum {
+					choices[i] = fmt.Sprintf("%v", choice)
+				}
+				scriptCmd.RegisterFlagCompletionFunc(key, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+					return choices, cobra.ShellCompDirectiveNoFileComp
+				})
+			}
 		}
 
 		extensionCmd.AddCommand(scriptCmd)

@@ -25,7 +25,7 @@ rootItems:
       root: .
 scripts:
   browseFiles:
-    command: ./file-browser.py --root {{ root }}
+    command: ./file-browser.py --root {{ root }} {{ showHidden }}
     output: page
     page:
       type: "list"
@@ -34,3 +34,8 @@ scripts:
       root:
         type: directory
         description: directory to browse
+      showHidden:
+        type: boolean
+        description: whether to show hidden files
+        default: false
+        trueSubstitution: "--show-hidden"

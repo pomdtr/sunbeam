@@ -82,7 +82,6 @@ type RunScriptMsg struct {
 	Extension string
 	Script    string
 	With      app.ScriptInputs
-	OnSuccess string
 }
 
 func NewExecCmd(command *exec.Cmd) tea.Cmd {
@@ -135,7 +134,6 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			Extension: scriptAction.Extension,
 			Script:    scriptAction.Script,
 			With:      scriptAction.With,
-			OnSuccess: scriptAction.OnSuccess,
 		}
 	case "execCommand":
 		command := exec.Command(scriptAction.Command, scriptAction.Command)

@@ -104,13 +104,12 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
-		formItems, err := extractFormItems(script, msg.With)
+		params, formItems, err := extractScriptInput(script, msg.With)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
 
 		if len(formItems) > 0 {
-
 			form := NewForm(msg.Extension, formItems, func(values map[string]any) tea.Cmd {
 				for key, value := range values {
 					input := msg.With[key]
@@ -126,14 +125,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		if msg.OnSuccess != "" {
-			script.Output = msg.OnSuccess
-		}
-
-		params := make(map[string]any, len(msg.With))
-		for key, input := range msg.With {
-			params[key] = input.Value
-		}
 		if script.Output == "page" {
 			runner := NewRunContainer(extension, script, params)
 			cmd := m.Push(runner)
