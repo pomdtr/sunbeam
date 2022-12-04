@@ -14,15 +14,19 @@ rootItems:
 scripts:
   searchDocsets:
     command: |
-      curl https://devdocs.io/docs/docs.json | sunbeam query '.[] |
-        {
-          title: .name,
-          subtitle: .release,
-          actions: [
-            { type: "runScript", script: "searchEntries", title: "Search Entries", with: { slug: .slug } },
-            { type: "openUrl", title: "Open in Browser", url: "https://devdocs.io/\(.slug)" }
-          ]
-        }
+      curl https://devdocs.io/docs/docs.json | sunbeam query '. | group_by(.name) | .[] |
+      {
+        title: .[0].name,
+        subtitle: (.[0].release // "latest"),
+        actions: map(
+          {
+              type: "runScript",
+              title: "Browse \(.release // "latest") entries",
+              script: "searchEntries",
+              with: { slug: .slug }
+          }
+        )
+      }
       '
     output: page
     page:
