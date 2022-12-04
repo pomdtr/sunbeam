@@ -24,6 +24,22 @@ rootItems:
     with:
       repository: dailymotion/dwh-dags
 scripts:
+  viewReadme:
+    command: |
+      gh api repos/{{repository}}/readme --jq '
+      {
+        preview: (.content | @base64d),
+        actions: [
+          { type: "openUrl", title: "Open in Browser", url: .html_url }
+        ]
+      }
+      '
+    output: page
+    page:
+      type: detail
+    params:
+      repository:
+        type: string
   listRepositories:
     command: ./list-repos.sh {{ owner }}
     output: page
@@ -34,7 +50,7 @@ scripts:
     params:
       owner:
         type: string
-  listPXullRequests:
+  listPullRequests:
     command: ./list-prs.sh {{ repository }}
     output: page
     page:

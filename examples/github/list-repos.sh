@@ -25,6 +25,13 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
                 title: "List Pull Requests",
                 shortcut: "ctrl+p",
                 with: {repository: .full_name}
+            },
+            {
+                type: "runScript",
+                script: "viewReadme",
+                title: "View Readme",
+                shortcut: "ctrl+r",
+                with: {repository: .full_name}
             }
         ]
     }

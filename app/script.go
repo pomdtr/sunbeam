@@ -106,12 +106,27 @@ func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
 	return exec.Command("sh", "-c", rendered), nil
 }
 
+type Detail struct {
+	Actions []ScriptAction `json:"actions"`
+	DetailData
+}
+
+type DetailData struct {
+	Preview    string           `json:"preview"`
+	PreviewCmd string           `json:"previewCmd"`
+	Metadatas  []ScriptMetadata `json:"metadatas"`
+}
+
+type ScriptMetadata struct {
+	Title string `json:"title"`
+	Value string `json:"value"`
+}
+
 type ScriptItem struct {
-	Id          string         `json:"id"`
-	Title       string         `json:"title"`
-	Subtitle    string         `json:"subtitle"`
-	Preview     string         `json:"preview"`
-	PreviewCmd  string         `json:"previewCmd"`
+	Id       string `json:"id"`
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+	DetailData
 	Accessories []string       `json:"accessories"`
 	Actions     []ScriptAction `json:"actions"`
 }

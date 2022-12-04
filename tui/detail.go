@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
+	"github.com/pomdtr/sunbeam/app"
 )
 
 type Detail struct {
@@ -58,6 +59,9 @@ func (d *Detail) SetContent(content string) {
 	content = wordwrap.String(content, d.viewport.Width-4)
 	content = lipgloss.NewStyle().Padding(0, 2).Width(d.viewport.Width).Render(content)
 	d.viewport.SetContent(content)
+}
+
+func (d *Detail) SetMetadatas(metadatas []app.ScriptMetadata) {
 }
 
 func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {

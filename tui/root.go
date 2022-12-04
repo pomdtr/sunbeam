@@ -111,13 +111,20 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if len(formItems) > 0 {
 			form := NewForm(msg.Extension, formItems, func(values map[string]any) tea.Cmd {
-				for key, value := range values {
-					input := msg.With[key]
-					input.Value = value
-					msg.With[key] = input
+				with := make(map[string]app.ScriptInput)
+				for key, param := range msg.With {
+					if value, ok := values[key]; ok {
+						param.Value = value
+					}
+					with[key] = param
 				}
+
 				return tea.Sequence(PopCmd, func() tea.Msg {
-					return msg
+					return RunScriptMsg{
+						Extension: msg.Extension,
+						Script:    msg.Script,
+						With:      with,
+					}
 				})
 			})
 

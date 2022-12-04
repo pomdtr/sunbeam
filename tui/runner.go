@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -98,7 +99,7 @@ func (c *RunContainer) Run() tea.Cmd {
 		c.list.SetSize(c.width, c.height)
 		cmd := c.list.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, c.list.Init(), cmd)
-	default:
+	case "detail":
 		c.currentView = "detail"
 		if c.detail != nil {
 			c.detail.SetIsLoading(true)
@@ -109,6 +110,8 @@ func (c *RunContainer) Run() tea.Cmd {
 		c.detail.SetSize(c.width, c.height)
 		cmd := c.detail.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
+	default:
+		return NewErrorCmd(fmt.Errorf("unknown page type: %s", c.Script.Page.Type))
 	}
 }
 
@@ -127,17 +130,15 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case CommandOutput:
 		switch c.currentView {
 		case "detail":
-			c.detail.SetContent(string(msg))
+			var detail app.Detail
+			json.Unmarshal([]byte(msg), &detail)
+			c.detail.SetContent(detail.Preview)
 			c.detail.SetIsLoading(false)
-			c.detail.SetActions(
-				Action{Title: "Quit", Shortcut: "enter", Cmd: tea.Quit},
-				Action{Title: "Copy Output", Shortcut: "ctrl+y", Cmd: func() tea.Msg {
-					return CopyTextMsg{
-						Text: string(msg),
-					}
-				}},
-				Action{Title: "Reload", Shortcut: "ctrl+r", Cmd: NewReloadPageCmd(nil)},
-			)
+			actions := make([]Action, len(detail.Actions))
+			for i, action := range detail.Actions {
+				actions[i] = NewAction(action)
+			}
+			c.detail.SetActions(actions...)
 			return c, nil
 		case "list":
 			scriptItems, err := app.ParseListItems(string(msg))
