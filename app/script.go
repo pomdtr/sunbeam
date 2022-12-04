@@ -33,13 +33,11 @@ type Page struct {
 }
 
 type ScriptParam struct {
-	Type              string `json:"type"`
-	Default           any    `json:"default"`
-	Enum              []any  `json:"enum"`
-	ShellEscape       bool   `json:"shellEscape"`
-	Description       string `json:"description"`
-	TrueSubstitution  string `json:"trueSubstitution" yaml:"trueSubstitution"`
-	FalseSubstitution string `json:"falseSubstitution" yaml:"falseSubstitution"`
+	Type        string `json:"type"`
+	Default     any    `json:"default"`
+	Enum        []any  `json:"enum"`
+	ShellEscape bool   `json:"shellEscape"`
+	Description string `json:"description"`
 }
 
 func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
@@ -53,36 +51,36 @@ func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
 		if !ok {
 			return nil, fmt.Errorf("unknown param %s", key)
 		}
-		funcMap[key] = func() (string, error) {
+		funcMap[key] = func() (any, error) {
 			switch paramSpec.Type {
 			case "string":
 				value, ok := value.(string)
 				if !ok {
-					return "", fmt.Errorf("expected string for param %s", key)
+					return nil, fmt.Errorf("expected string for param %s", key)
 				}
 
 				return shellescape.Quote(value), nil
 			case "directory", "file":
 				value, ok := value.(string)
 				if !ok {
-					return "", fmt.Errorf("expected string for param %s", key)
+					return nil, fmt.Errorf("expected string for param %s", key)
 				}
 
 				if strings.HasPrefix(value, "~") {
 					homeDir, err := os.UserHomeDir()
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 					value = strings.Replace(value, "~", homeDir, 1)
 				} else if value == "." {
 					value, err = os.Getwd()
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 				} else if !filepath.IsAbs(value) {
 					cwd, err := os.Getwd()
 					if err != nil {
-						return "", err
+						return nil, err
 					}
 					value = filepath.Join(cwd, value)
 				}
@@ -91,15 +89,12 @@ func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
 			case "boolean":
 				value, ok := value.(bool)
 				if !ok {
-					return "", fmt.Errorf("expected boolean for param %s", key)
+					return nil, fmt.Errorf("expected boolean for param %s", key)
 				}
-				if value {
-					return paramSpec.TrueSubstitution, nil
-				} else {
-					return paramSpec.FalseSubstitution, nil
-				}
+				return value, nil
+
 			default:
-				return "", fmt.Errorf("unsupported param type: %s", paramSpec.Type)
+				return nil, fmt.Errorf("unsupported param type: %s", paramSpec.Type)
 			}
 		}
 	}

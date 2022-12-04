@@ -18,14 +18,20 @@ rootItems:
     with:
       root:
         type: textfield
+        index: 0
         title: Root Directory
+      showHidden:
+        type: checkbox
+        index: 1
+        label: Show Hidden Files
+        title: Show Hidden
   - title: Browse Current Directory
     script: browseFiles
     with:
       root: .
 scripts:
   browseFiles:
-    command: ./file-browser.py --root {{ root }} {{ showHidden }}
+    command: ./file-browser.py --root {{ root }} {{- if showHidden }} --show-hidden {{ end }}
     output: page
     page:
       type: "list"
@@ -38,4 +44,3 @@ scripts:
         type: boolean
         description: whether to show hidden files
         default: false
-        trueSubstitution: "--show-hidden"
