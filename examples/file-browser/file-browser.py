@@ -6,9 +6,14 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", required=True, type=pathlib.Path)
+parser.add_argument("--show-hidden", action="store_true")
 args = parser.parse_args()
 
 root: pathlib.Path = args.root
+
+items = sorted(root.iterdir(), key=lambda p: p.name)
+if not args.show_hidden:
+    items = filter(lambda p: not p.name.startswith("."), items)
 
 for path in sorted(root.iterdir(), key=lambda p: p.name):
     primaryAction = (

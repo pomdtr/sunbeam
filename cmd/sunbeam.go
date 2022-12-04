@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -105,6 +103,9 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 				with := make(map[string]any, 0)
 
 				for key, param := range script.Params {
+					if !cmd.Flags().Changed(key) {
+						continue
+					}
 					switch param.Type {
 					case "string", "file", "directory":
 						value, err := cmd.Flags().GetString(key)
@@ -122,24 +123,6 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 
 				}
 
-				inputs, err := cmd.Flags().GetStringArray("input")
-				if err != nil {
-					return err
-				}
-
-				for _, input := range inputs {
-					tokens := strings.Split(input, "=")
-					if len(tokens) != 2 {
-						return fmt.Errorf("invalid input format: %s", input)
-					}
-					var scriptInput app.ScriptInput
-					err = json.Unmarshal([]byte(tokens[1]), &scriptInput)
-					if err != nil {
-						return fmt.Errorf("invalid input format: %s", tokens[1])
-					}
-					with[tokens[0]] = scriptInput
-				}
-
 				container := tui.NewRunContainer(extension, script, with)
 				err = tui.Draw(container, config)
 				if err != nil {
@@ -148,8 +131,6 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 				return nil
 			},
 		}
-
-		scriptCmd.Flags().StringArray("input", []string{}, "input to the script")
 
 		for key, param := range script.Params {
 			switch param.Type {
@@ -171,7 +152,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			case "directory":
 				scriptCmd.Flags().String(key, "", param.Description)
 			}
-
+			scriptCmd.MarkFlagRequired(key)
 		}
 
 		extensionCmd.AddCommand(scriptCmd)

@@ -1,16 +1,13 @@
 package tui
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"sort"
-	"strings"
 
-	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -107,19 +104,14 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
-		inputs := script.CheckMissingParams(msg.With)
+		formItems, err := extractFormItems(script, msg.With)
+		if err != nil {
+			return m, NewErrorCmd(err)
+		}
 
-		if len(inputs) > 0 {
-			items := make([]FormItem, 0, len(inputs))
-			for key, input := range inputs {
-				formItem, err := NewFormItem(key, input)
-				if err != nil {
-					return m, NewErrorCmd(err)
-				}
-				items = append(items, formItem)
-			}
+		if len(formItems) > 0 {
 
-			form := NewForm(msg.Extension, items, func(values map[string]any) tea.Cmd {
+			form := NewForm(msg.Extension, formItems, func(values map[string]any) tea.Cmd {
 				for key, value := range values {
 					input := msg.With[key]
 					input.Value = value
@@ -281,44 +273,19 @@ func (m *RootModel) Pop() {
 	}
 }
 
-func ScriptCommand(extension string, entrypoint app.RootItem) string {
-	args := make([]string, 0)
-	args = append(args, "sunbeam", extension, entrypoint.Script)
-	for key, input := range entrypoint.With {
-		var arg string
-		if input.Value != nil {
-			switch value := input.Value.(type) {
-			case string:
-				arg = fmt.Sprintf("--%s=%s", key, shellescape.Quote(value))
-			case bool:
-				arg = fmt.Sprintf("--%s=%t", key, value)
-			}
-		} else {
-			v, _ := json.Marshal(input.FormItem)
-			arg = fmt.Sprintf("--input=%s=%s", key, shellescape.Quote(string(v)))
-		}
-
-		args = append(args, arg)
-
-	}
-
-	return strings.Join(args, " ")
-}
-
 func RootList(extensions ...app.Extension) Container {
 	rootItems := make([]ListItem, 0)
 	for _, extension := range extensions {
 		extension := extension
-		for _, entrypoint := range extension.RootItems {
+		for index, rootItem := range extension.RootItems {
 			runMsg := RunScriptMsg{
 				Extension: extension.Name,
-				Script:    entrypoint.Script,
-				With:      entrypoint.With,
+				Script:    rootItem.Script,
+				With:      rootItem.With,
 			}
-			command := ScriptCommand(extension.Name, entrypoint)
 			rootItems = append(rootItems, ListItem{
-				Id:       command,
-				Title:    entrypoint.Title,
+				Id:       fmt.Sprintf("%s-%d", extension.Name, index),
+				Title:    rootItem.Title,
 				Subtitle: extension.Title,
 				Actions: []Action{
 					{
@@ -327,15 +294,11 @@ func RootList(extensions ...app.Extension) Container {
 						Cmd: func() tea.Msg {
 							return runMsg
 						},
-					}, {
+					},
+					{
 						Title:    "Open Extension Folder",
 						Shortcut: "ctrl+o",
 						Cmd:      func() tea.Msg { return OpenPathMsg{Path: extension.Dir()} },
-					},
-					{
-						Title:    "Copy Full Command",
-						Shortcut: "ctrl+y",
-						Cmd:      func() tea.Msg { return CopyTextMsg{Text: command} },
 					},
 				},
 			})

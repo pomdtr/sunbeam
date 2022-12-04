@@ -27,7 +27,6 @@ type RunContainer struct {
 }
 
 func NewRunContainer(manifest app.Extension, script app.Script, params map[string]any) *RunContainer {
-
 	return &RunContainer{
 		extension: manifest,
 		Script:    script,
@@ -67,15 +66,15 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 		command.Dir = c.extension.Dir()
 	}
 
-	log.Println(command.String())
+	log.Printf("Running command: %s", command.String())
 
 	res, err := command.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
 		if ok := errors.As(err, &exitErr); ok {
-			return NewErrorCmd(fmt.Errorf("command failed with exit code %d, error: %s", exitErr.ExitCode(), exitErr.Stderr))
+			return fmt.Errorf("command failed with exit code %d, error: %s", exitErr.ExitCode(), exitErr.Stderr)
 		}
-		return NewErrorCmd(err)
+		return err
 	}
 
 	return CommandOutput(string(res))

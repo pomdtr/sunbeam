@@ -39,31 +39,6 @@ type ScriptParam struct {
 	Description string `json:"description"`
 }
 
-func (s Script) CheckMissingParams(inputs ScriptInputs) map[string]FormItem {
-	missing := make(map[string]FormItem)
-	for key, param := range s.Params {
-		input, ok := inputs[key]
-		if !ok {
-			switch param.Type {
-			case "text", "file", "directory":
-				missing[key] = FormItem{
-					Type:  "textfield",
-					Title: key,
-				}
-			case "boolean":
-				missing[key] = FormItem{
-					Type:  "checkbox",
-					Title: key,
-				}
-			}
-		} else if input.Value == nil {
-			missing[key] = input.FormItem
-		}
-	}
-
-	return missing
-}
-
 func (s Script) Cmd(params map[string]any) (*exec.Cmd, error) {
 	var err error
 

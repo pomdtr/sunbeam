@@ -34,6 +34,25 @@ type FormInput interface {
 	View() string
 }
 
+func extractFormItems(script app.Script, with map[string]app.ScriptInput) ([]FormItem, error) {
+	formItems := make([]FormItem, 0)
+	for key := range script.Params {
+		input, ok := with[key]
+		if !ok {
+			return nil, fmt.Errorf("missing input %s", key)
+		}
+		if input.Value == nil {
+			formItem, err := NewFormItem(key, input.FormItem)
+			if err != nil {
+				return nil, err
+			}
+			formItems = append(formItems, formItem)
+		}
+	}
+
+	return formItems, nil
+}
+
 func NewFormItem(name string, formItem app.FormItem) (FormItem, error) {
 	var input FormInput
 	if formItem.Placeholder == "" {
@@ -160,11 +179,17 @@ type Checkbox struct {
 }
 
 func NewCheckbox(formItem app.FormItem) Checkbox {
+	var defaultValue bool
+	defaultValue, ok := formItem.Default.(bool)
+	if !ok {
+		defaultValue = false
+	}
+
 	return Checkbox{
 		Style: styles.Regular.Copy(),
 		label: formItem.Label,
 		title: formItem.Title,
-		value: formItem.Default.(bool),
+		value: defaultValue,
 	}
 }
 
