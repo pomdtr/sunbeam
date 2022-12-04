@@ -12,20 +12,24 @@ scripts:
         title: .name,
         subtitle: .state,
         accessories: [
-          .release
+          .release,
+          .ipv4[0]
         ],
-        actions: [
+        actions:
           (
             if
               .state == "Running"
             then
-              {type: "execCommand", title: "Stop", command: "multipass stop \(.name)"}
+              [
+                {type: "execCommand", title: "Stop", reloadPage: true, command: "multipass stop \(.name)"},
+                {type: "execCommand", title: "Open Shell", shortcut: "ctrl+l", command: "multipass shell \(.name)"}
+              ]
             else
-              {type: "execCommand", title: "Start", command: "multipass start \(.name)"}
+              [
+                {type: "execCommand", title: "Start", reloadPage: true, command: "multipass start \(.name)"}
+              ]
             end
           ),
-          {type: "copyText", title: "Copy IP", text: .ipv4[0]}
-        ]
       }
       '
     output: page
