@@ -23,7 +23,7 @@ for path in sorted(entries, key=lambda p: p.name):
             "type": "runScript",
             "script": "browseFiles",
             "title": "Browse Directory",
-            "with": {"root": str(path.absolute())},
+            "with": {"root": str(path.absolute()), "showHidden": args.show_hidden},
         }
     )
 
@@ -37,8 +37,15 @@ for path in sorted(entries, key=lambda p: p.name):
                     {
                         "type": "copyText",
                         "title": "Copy Path",
+                        "shorcut": "ctrl+y",
                         "text": str(path.absolute()),
                     },
+                    {
+                        "type": "reloadPage",
+                        "title": "Toggle Hidden Files",
+                        "shortcut": "ctrl+h",
+                        "with": {"showHidden": not args.show_hidden},
+                    }
                 ],
             }
         )
