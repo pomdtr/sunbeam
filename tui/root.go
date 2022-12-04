@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -111,6 +110,8 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if len(formItems) > 0 {
 			form := NewForm(msg.Extension, formItems, func(values map[string]any) tea.Cmd {
+				msg := msg
+
 				with := make(map[string]app.ScriptInput)
 				for key, param := range msg.With {
 					if value, ok := values[key]; ok {
@@ -118,13 +119,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					with[key] = param
 				}
+				msg.With = with
 
 				return tea.Sequence(PopCmd, func() tea.Msg {
-					return RunScriptMsg{
-						Extension: msg.Extension,
-						Script:    msg.Script,
-						With:      with,
-					}
+					return msg
 				})
 			})
 
@@ -139,6 +137,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		command, err := script.Cmd(params)
+		if err != nil {
+			return m, NewErrorCmd(err)
+		}
 		command.Dir = extension.Dir()
 		if err != nil {
 			return m, NewErrorCmd(err)
@@ -160,29 +161,24 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return OpenUrlMsg{Url: string(out)}
 			}
-		case "reloadPage":
+		case "stdout":
+			return m, NewExecCmd(command, msg.ReloadPage)
+		default:
+			return m, NewErrorCmd(fmt.Errorf("unknown output: %s", script.Output))
+		}
+	case ExecCommandMsg:
+		if msg.ReloadPage {
 			return m, func() tea.Msg {
-				err := command.Run()
-				var exitErr *exec.ExitError
-				if errors.As(err, &exitErr) {
-					return NewErrorCmd(fmt.Errorf("script exited with code %d: %s", exitErr.ExitCode(), exitErr.Error()))
-				} else if err != nil {
-					return NewErrorCmd(err)
+				err := msg.Command.Run()
+				if err != nil {
+					return err
 				}
-
 				return ReloadPageMsg{}
 			}
-		case "":
-			return m, NewExecCmd(command)
-		default:
-			return m, NewErrorCmd(fmt.Errorf("unknown onSuccess: %s", script.Output))
 		}
-
-	case ExecCommandMsg:
 		m.quitting = true
 		m.exitCmd = msg.Command
 		return m, tea.Quit
-
 	case popMsg:
 		if len(m.pages) == 1 {
 			m.quitting = true

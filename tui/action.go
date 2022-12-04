@@ -79,21 +79,24 @@ type ReloadPageMsg struct {
 }
 
 type RunScriptMsg struct {
-	Extension string
-	Script    string
-	With      app.ScriptInputs
+	Extension  string
+	Script     string
+	ReloadPage bool
+	With       app.ScriptInputs
 }
 
-func NewExecCmd(command *exec.Cmd) tea.Cmd {
+func NewExecCmd(command *exec.Cmd, reloadPage bool) tea.Cmd {
 	return func() tea.Msg {
 		return ExecCommandMsg{
-			Command: command,
+			Command:    command,
+			ReloadPage: reloadPage,
 		}
 	}
 }
 
 type ExecCommandMsg struct {
-	Command *exec.Cmd
+	Command    *exec.Cmd
+	ReloadPage bool
 }
 
 func NewAction(scriptAction app.ScriptAction) Action {
@@ -131,14 +134,16 @@ func NewAction(scriptAction app.ScriptAction) Action {
 		}
 	case "runScript":
 		msg = RunScriptMsg{
-			Extension: scriptAction.Extension,
-			Script:    scriptAction.Script,
-			With:      scriptAction.With,
+			Extension:  scriptAction.Extension,
+			Script:     scriptAction.Script,
+			With:       scriptAction.With,
+			ReloadPage: scriptAction.ReloadPage,
 		}
 	case "execCommand":
-		command := exec.Command(scriptAction.Command, scriptAction.Command)
+		command := exec.Command("sh", "-c", scriptAction.Command)
 		msg = ExecCommandMsg{
-			Command: command,
+			Command:    command,
+			ReloadPage: scriptAction.ReloadPage,
 		}
 	default:
 		scriptAction.Title = "Unknown"

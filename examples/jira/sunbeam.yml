@@ -10,7 +10,7 @@ rootItems:
 scripts:
   listIssues:
     command: ./jira.sh {{ jql }}
-    onSuccess: pushPage
+    output: page
     page:
       type: list
       mode: filter

@@ -1,0 +1,34 @@
+name: multipass
+title: Multipass
+version: "1.0"
+rootItems:
+  - script: manageVMs
+    title: Manage VMs
+scripts:
+  manageVMs:
+    command: |
+      multipass list --format json | sunbeam query '.list[] |
+      {
+        title: .name,
+        subtitle: .state,
+        accessories: [
+          .release
+        ],
+        actions: [
+          (
+            if
+              .state == "Running"
+            then
+              {type: "execCommand", title: "Stop", command: "multipass stop \(.name)"}
+            else
+              {type: "execCommand", title: "Start", command: "multipass start \(.name)"}
+            end
+          ),
+          {type: "copyText", title: "Copy IP", text: .ipv4[0]}
+        ]
+      }
+      '
+    output: page
+    page:
+      type: list
+      mode: filter

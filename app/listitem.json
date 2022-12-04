@@ -87,6 +87,9 @@
                                     "^[a-zA-Z_][a-zA-Z0-9_]+$": {
                                         "anyOf": [
                                             {
+                                                "type": "object"
+                                            },
+                                            {
                                                 "type": "string"
                                             },
                                             {
@@ -99,7 +102,7 @@
                             "script": {
                                 "type": "string"
                             },
-                            "reload": {
+                            "reloadPage": {
                                 "type": "boolean"
                             }
                         }
@@ -119,7 +122,7 @@
                             "command"
                         ],
                         "properties": {
-                            "reload": {
+                            "reloadPage": {
                                 "type": "boolean"
                             },
                             "command": {

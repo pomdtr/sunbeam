@@ -3,9 +3,9 @@ title: Journal
 version: "1.0"
 
 rootItems:
-  - script: list-entries
+  - script: listEntries
     title: List Entries
-  - script: write-entry
+  - script: writeEntry
     title: Write Entry
     with:
       title:
@@ -43,3 +43,6 @@ scripts:
   deleteEntry:
     command: ./delete-entry.py --uuid {{ uuid }}
     output: stdout
+    params:
+      uuid:
+        type: string

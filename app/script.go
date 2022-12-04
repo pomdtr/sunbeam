@@ -153,7 +153,8 @@ type ScriptAction struct {
 	Script    string `json:"script,omitempty" yaml:"script"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
-	With ScriptInputs `json:"with,omitempty" yaml:"with"`
+	ReloadPage bool         `json:"reloadPage,omitempty" yaml:"reloadPage"`
+	With       ScriptInputs `json:"with,omitempty" yaml:"with"`
 }
 
 type FormItem struct {
