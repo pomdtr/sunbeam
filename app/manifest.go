@@ -1,13 +1,20 @@
 package app
 
 import (
+	_ "embed"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"path"
+	"strings"
 
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed manifest.json
+var manifestSchema string
 
 type Api struct {
 	Extensions    map[string]Extension
@@ -40,6 +47,14 @@ func (m Extension) Dir() string {
 var Sunbeam Api
 
 func init() {
+	compiler := jsonschema.NewCompiler()
+	if err := compiler.AddResource("schema.json", strings.NewReader(manifestSchema)); err != nil {
+		panic(err)
+	}
+	schema, err := compiler.Compile("schema.json")
+	if err != nil {
+		panic(err)
+	}
 	scriptDirs := make([]string, 0)
 
 	currentDir, err := os.Getwd()
@@ -64,7 +79,6 @@ func init() {
 
 	extensions := make(map[string]Extension)
 	for _, scriptDir := range scriptDirs {
-
 		manifestPath := path.Join(scriptDir, "sunbeam.yml")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 			continue
@@ -75,9 +89,21 @@ func init() {
 			continue
 		}
 
+		var m any
+		err = yaml.Unmarshal(manifestBytes, &m)
+		if err != nil {
+			panic(err)
+		}
+
+		err = schema.Validate(m)
+		if err != nil {
+			log.Println(fmt.Errorf("error validating manifest %s: %w", manifestPath, err))
+			continue
+		}
+
 		extension, err := ParseManifest(manifestBytes)
 		if err != nil {
-			log.Println(err)
+			log.Println(fmt.Errorf("error parsing manifest %s: %w", manifestPath, err))
 		}
 
 		extension.Url = url.URL{

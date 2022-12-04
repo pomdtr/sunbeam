@@ -20,7 +20,7 @@ scripts:
         title: .,
         previewCmd: "tldr --color always --platform  {{ platform }} \(.)",
         actions: [
-          {"type": "open-url", "url": "https://tldr.ostera.io/\(.)", "title": "Open in Browser"}
+          {"type": "openUrl", "url": "https://tldr.ostera.io/\(.)", "title": "Open in Browser"}
         ]
       }'
     params:
@@ -31,7 +31,7 @@ scripts:
           - osx
           - windows
 
-    onSuccess: push-page
+    output: page
     page:
       type: list
       mode: filter

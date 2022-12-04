@@ -1,0 +1,194 @@
+{
+    "$schema": "http://json-schema.org/draft/2020-12/schema",
+    "$id": "http://github.com/pomdtr/sunbeam/manifest",
+    "type": "object",
+    "required": [
+        "title",
+        "actions"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "title": {
+            "type": "string"
+        },
+        "subtitle": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "accessories": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "actions": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/action"
+            }
+        }
+    },
+    "$defs": {
+        "action": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "shortcut": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "copyText",
+                        "reloadPage",
+                        "openUrl",
+                        "openPath",
+                        "runScript",
+                        "execCommand"
+                    ]
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "runScript"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "title",
+                            "script"
+                        ],
+                        "properties": {
+                            "with": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "patternProperties": {
+                                    "^[a-zA-Z_][a-zA-Z0-9_]+$": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "boolean"
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "script": {
+                                "type": "string"
+                            },
+                            "onSuccess": {
+                                "type": "string",
+                                "enum": [
+                                    "pushPage",
+                                    "copyToClipboard",
+                                    "openInBrowser"
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "execCommand"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "title",
+                            "command"
+                        ],
+                        "properties": {
+                            "command": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "copyText"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "text"
+                        ],
+                        "properties": {
+                            "text": {
+                                "anyOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "openUrl"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "url"
+                        ],
+                        "properties": {
+                            "url": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "openPath"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "path"
+                        ],
+                        "properties": {
+                            "path": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -9,7 +9,7 @@ rootItems:
 scripts:
   random-list:
     command: ./random_list.py
-    onSuccess: push-page
+    onSuccess: pushPage
     page:
       type: list
       mode: filter

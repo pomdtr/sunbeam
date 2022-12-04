@@ -15,22 +15,24 @@ rootItems:
         type: textarea
         title: Body
 scripts:
-  list-entries:
+  listEntries:
     command: ./list-entries.py
-    onSuccess: push-page
+    output: page
     page:
       type: list
       mode: filter
       showPreview: true
-  write-entry:
+  writeEntry:
     command: ./write-entry.py --title {{ title }} --content {{ content }}
+    output: stdout
     params:
       title:
         type: string
       content:
         type: string
-  edit-entry:
+  editEntry:
     command: ./edit-entry.py --uuid {{ uuid }} --title {{ title }} --content {{ content }}
+    output: stdout
     params:
       uuid:
         type: string
@@ -38,5 +40,6 @@ scripts:
         type: string
       content:
         type: string
-  delete-entry:
+  deleteEntry:
     command: ./delete-entry.py --uuid {{ uuid }}
+    output: stdout

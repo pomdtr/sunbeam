@@ -3,9 +3,11 @@ package tui
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pomdtr/sunbeam/app"
@@ -40,14 +42,10 @@ func (c *RunContainer) Init() tea.Cmd {
 type CommandOutput string
 
 func (c RunContainer) ScriptCmd() tea.Msg {
-	input := app.CommandInput{
-		Params: c.params,
+	command, err := c.Script.Cmd(c.params)
+	if c.Script.Page.Mode == "generator" {
+		command.Stdin = strings.NewReader(c.list.Query())
 	}
-	if c.currentView == "list" {
-		input.Query = c.list.Query()
-	}
-
-	command, err := c.Script.Cmd(input)
 	if err != nil {
 		return err
 	}
@@ -68,6 +66,8 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 	default:
 		command.Dir = c.extension.Dir()
 	}
+
+	log.Println(command.String())
 
 	res, err := command.Output()
 	if err != nil {

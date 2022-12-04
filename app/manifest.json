@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
+    "$schema": "http://json-schema.org/draft/2020-12/schema",
     "$id": "http://github.com/pomdtr/sunbeam/manifest",
     "type": "object",
     "required": [
@@ -12,7 +12,7 @@
     "properties": {
         "name": {
             "type": "string",
-            "pattern": "^[a-z-]+$"
+            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]+$"
         },
         "postInstall": {
             "type": "string"
@@ -71,10 +71,10 @@
                     "with": {
                         "type": "object",
                         "patternProperties": {
-                            "^[a-z-]+$": {
+                            "^[a-zA-Z_][a-zA-Z0-9_]+$": {
                                 "anyOf": [
                                     {
-                                        "$ref": "#/definitions/input"
+                                        "$ref": "#/$defs/input"
                                     },
                                     {
                                         "type": "string"
@@ -93,8 +93,8 @@
             "type": "object",
             "additionalProperties": false,
             "patternProperties": {
-                "^[a-z-]+$": {
-                    "$ref": "#/definitions/script"
+                "^[a-zA-Z_][a-zA-Z0-9_]+$": {
+                    "$ref": "#/$defs/script"
                 }
             },
             "not": {
@@ -123,19 +123,22 @@
             }
         }
     },
-    "definitions": {
+    "$defs": {
         "script": {
             "type": "object",
             "required": [
-                "command"
+                "command",
+                "output"
             ],
+            "additionalProperties": false,
             "properties": {
-                "onSuccess": {
+                "output": {
                     "type": "string",
                     "enum": [
-                        "push-page",
-                        "copy-to-clipboard",
-                        "open-in-browser"
+                        "page",
+                        "clipboard",
+                        "browser",
+                        "stdout"
                     ]
                 },
                 "command": {
@@ -150,6 +153,9 @@
                     ],
                     "default": "extensionDir"
                 },
+                "page": {
+                    "type": "object"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -157,7 +163,7 @@
                     "type": "object",
                     "additionalProperties": false,
                     "patternProperties": {
-                        "^[a-z-]+$": {
+                        "^[a-zA-Z_][a-zA-Z0-9_]+$": {
                             "type": "object",
                             "required": [
                                 "type"
@@ -167,8 +173,13 @@
                                     "type": "string",
                                     "enum": [
                                         "string",
-                                        "boolean"
+                                        "boolean",
+                                        "file",
+                                        "directory"
                                     ]
+                                },
+                                "shellEscape": {
+                                    "type": "boolean"
                                 },
                                 "description": {
                                     "type": "string"
@@ -177,31 +188,7 @@
                         }
                     }
                 }
-            },
-            "allOf": [
-                {
-                    "if": {
-                        "required": [
-                            "onSuccess"
-                        ],
-                        "properties": {
-                            "onSuccess": {
-                                "const": "push-page"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "page"
-                        ],
-                        "properties": {
-                            "page": {
-                                "$ref": "#/definitions/page"
-                            }
-                        }
-                    }
-                }
-            ]
+            }
         },
         "page": {
             "type": "object",
@@ -263,181 +250,6 @@
                 }
             ]
         },
-        "listitem": {
-            "type": "object",
-            "required": [
-                "title",
-                "actions"
-            ],
-            "properties": {
-                "title": {
-                    "type": "string"
-                },
-                "subtitle": {
-                    "type": "string"
-                },
-                "accessories": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "actions": {
-                    "$ref": "#/definitions/action"
-                }
-            }
-        },
-        "action": {
-            "type": "object",
-            "required": [
-                "type"
-            ],
-            "properties": {
-                "title": {
-                    "type": "string"
-                },
-                "shortcut": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "copy-text",
-                        "reload-page",
-                        "open-url",
-                        "open-path",
-                        "run-script",
-                        "exec-command"
-                    ]
-                }
-            },
-            "allOf": [
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "run-script"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "title",
-                            "script"
-                        ],
-                        "properties": {
-                            "with": {
-                                "type": "object",
-                                "additionalProperties": false,
-                                "patternProperties": {
-                                    "^[a-z-]+$": {
-                                        "anyOf": [
-                                            {
-                                                "$ref": "#/definitions/input"
-                                            },
-                                            {
-                                                "type": "string"
-                                            },
-                                            {
-                                                "type": "boolean"
-                                            }
-                                        ]
-                                    }
-                                }
-                            },
-                            "script": {
-                                "type": "string"
-                            },
-                            "onSuccess": {
-                                "type": "string",
-                                "enum": [
-                                    "push-page",
-                                    "copy-to-clipboard",
-                                    "open-in-browser"
-                                ]
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "exec-command"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "title",
-                            "command"
-                        ],
-                        "properties": {
-                            "command": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "copy-text"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "content"
-                        ],
-                        "properties": {
-                            "content": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "open-url"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "url"
-                        ],
-                        "properties": {
-                            "url": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "open-path"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "path"
-                        ],
-                        "properties": {
-                            "path": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            ]
-        },
         "input": {
             "type": "object",
             "properties": {
@@ -485,7 +297,7 @@
                     },
                     "then": {
                         "properties": {
-                            "default": {
+                            "value": {
                                 "type": "string"
                             },
                             "placeholder": {
@@ -535,7 +347,7 @@
                             "label"
                         ],
                         "properties": {
-                            "default": {
+                            "value": {
                                 "type": "boolean"
                             },
                             "label": {

@@ -2,43 +2,44 @@ name: devdocs
 title: DevDocs
 version: "1.0"
 requirements:
-  - curl
+  - which: curl
+    homePage: https://curl.se
 rootItems:
-  - script: search-docsets
+  - script: searchDocsets
     title: Browse Docset
-  - script: search-entries
+  - script: searchEntries
     title: Python 3.11
     with:
       slug: python~3.11
 scripts:
-  search-docsets:
+  searchDocsets:
     command: |
       curl https://devdocs.io/docs/docs.json | sunbeam query '.[] |
         {
           title: .name,
           subtitle: .release,
           actions: [
-            { type: "run-script", script: "search-entries", title: "Search Entries", with: { slug: .slug } },
-            { type: "open-url", title: "Open in Browser", url: "https://devdocs.io/\(.slug)" }
+            { type: "runScript", script: "searchEntries", title: "Search Entries", with: { slug: .slug } },
+            { type: "openUrl", title: "Open in Browser", url: "https://devdocs.io/\(.slug)" }
           ]
         }
       '
-    onSuccess: push-page
+    output: page
     page:
       type: list
       mode: filter
-  search-entries:
+  searchEntries:
     command: |
       curl https://devdocs.io/docs/{{ slug }}/index.json | sunbeam query '.entries[] |
         {
           title: .name,
           subtitle: .type,
           actions: [
-            {type: "open-url", url: "https://devdocs.io/{{ slug }}/\(.path)"}
+            {type: "openUrl", url: "https://devdocs.io/{{ slug }}/\(.path)"}
           ]
         }
       '
-    onSuccess: push-page
+    output: page
     page:
       type: list
       mode: filter

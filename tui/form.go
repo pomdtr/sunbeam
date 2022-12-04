@@ -34,7 +34,7 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormItem(name string, formItem app.ScriptInput) (FormItem, error) {
+func NewFormItem(name string, formItem app.FormItem) (FormItem, error) {
 	var input FormInput
 	if formItem.Placeholder == "" {
 		formItem.Placeholder = name
@@ -67,11 +67,11 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.ScriptInput) TextArea {
+func NewTextArea(formItem app.FormItem) TextArea {
 	ta := textarea.New()
 	ta.FocusedStyle.Text = styles.Regular
 	ta.Prompt = ""
-	value, ok := formItem.Value.(string)
+	value, ok := formItem.Default.(string)
 	if ok {
 		ta.SetValue(value)
 	}
@@ -108,10 +108,10 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem app.ScriptInput) TextInput {
+func NewTextInput(formItem app.FormItem) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	value, ok := formItem.Value.(string)
+	value, ok := formItem.Default.(string)
 	if ok {
 		ti.SetValue(value)
 	}
@@ -159,12 +159,12 @@ type Checkbox struct {
 	value   bool
 }
 
-func NewCheckbox(formItem app.ScriptInput) Checkbox {
+func NewCheckbox(formItem app.FormItem) Checkbox {
 	return Checkbox{
 		Style: styles.Regular.Copy(),
 		label: formItem.Label,
 		title: formItem.Title,
-		value: formItem.Value.(bool),
+		value: formItem.Default.(bool),
 	}
 }
 
@@ -247,7 +247,7 @@ type DropDown struct {
 	value     string
 }
 
-func NewDropDown(formItem app.ScriptInput) DropDown {
+func NewDropDown(formItem app.FormItem) DropDown {
 	choices := make([]FilterItem, len(formItem.Data))
 	for i, formItem := range formItem.Data {
 		choices[i] = DropDownItem{

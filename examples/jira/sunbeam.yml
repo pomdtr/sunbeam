@@ -3,14 +3,14 @@ version: "1.0"
 title: Jira
 rootItems:
   - title: List Issues
-    script: list-issues
+    script: listIssues
     with:
       jql:
         value: assignee=currentUser() and status!=Closed
 scripts:
-  list-issues:
+  listIssues:
     command: ./jira.sh {{ jql }}
-    onSuccess: push-page
+    onSuccess: pushPage
     page:
       type: list
       mode: filter

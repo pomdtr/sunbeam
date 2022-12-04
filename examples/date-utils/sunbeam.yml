@@ -7,4 +7,4 @@ rootItems:
 scripts:
   utc:
     command: date +%Y-%m-%dT%H:%M:%SZ | tr -d '\n'
-    onSuccess: copy-to-clipboard
+    output: clipboard

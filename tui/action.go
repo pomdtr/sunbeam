@@ -100,7 +100,7 @@ type ExecCommandMsg struct {
 func NewAction(scriptAction app.ScriptAction) Action {
 	var msg tea.Msg
 	switch scriptAction.Type {
-	case "open-url":
+	case "openUrl":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open URL"
 		}
@@ -108,7 +108,7 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			Url:         scriptAction.Url,
 			Application: scriptAction.Application,
 		}
-	case "open-path":
+	case "openPath":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open File"
 		}
@@ -116,28 +116,28 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			Path:        scriptAction.Path,
 			Application: scriptAction.Application,
 		}
-	case "copy-text":
+	case "copyText":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
 		msg = CopyTextMsg{
 			Text: scriptAction.Text,
 		}
-	case "reload-page":
+	case "reloadPage":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Reload Script"
 		}
 		msg = ReloadPageMsg{
 			With: scriptAction.With,
 		}
-	case "run-script":
+	case "runScript":
 		msg = RunScriptMsg{
 			Extension: scriptAction.Extension,
 			Script:    scriptAction.Script,
 			With:      scriptAction.With,
 			OnSuccess: scriptAction.OnSuccess,
 		}
-	case "exec-command":
+	case "execCommand":
 		command := exec.Command(scriptAction.Command, scriptAction.Command)
 		msg = ExecCommandMsg{
 			Command: command,

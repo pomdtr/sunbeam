@@ -20,6 +20,10 @@ go install github.com/pomdtr/sunbeam@latest
 
 ## Development
 
+## Libraries
+
+- [santhosh-tekuri/jsonschema](https://github.com/santhosh-tekuri/jsonschema): For validating the config file and scripts output
+
 ### Dependencies
 
 - Go >= 1.19

@@ -18,12 +18,12 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
             "\(.stargazers_count) *"
         ],
         actions: [
-            {type: "open-url", url: .html_url},
+            {type: "openUrl", url: .html_url},
             {
-                type: "run-script",
+                type: "runScript",
+                script: "listPullRequests",
                 title: "List Pull Requests",
                 shortcut: "ctrl+p",
-                script: "list-pull-requests",
                 with: {repository: .full_name}
             }
         ]

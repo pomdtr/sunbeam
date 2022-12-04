@@ -6,41 +6,40 @@ requirements:
     which: gh
 rootItems:
   - title: List My Repositories
-    script: list-repositories
+    script: listRepositories
     with:
       owner: pomdtr
   - title: List Owner Repositories
-    script: list-repositories
+    script: listRepositories
     with:
       owner:
         type: textfield
         title: Owner
   - title: List Dailymotion Repositories
-    script: list-repositories
+    script: listRepositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
-    script: list-pull-requests
+    script: listPullRequests
     with:
       repository: dailymotion/dwh-dags
 scripts:
-  list-repositories:
-    title: List Repositories
+  listRepositories:
     command: ./list-repos.sh {{ owner }}
-    onSuccess: push-page
+    output: page
     page:
       type: list
       mode: filter
       showPreview: true
-    arguments:
+    params:
       owner:
         type: string
-  list-pull-requests:
+  listPXullRequests:
     command: ./list-prs.sh {{ repository }}
-    onSuccess: push-page
+    output: page
     page:
       type: list
       mode: filter
-    arguments:
+    params:
       repository:
         type: string

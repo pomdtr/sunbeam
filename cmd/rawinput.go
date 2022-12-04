@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
 	"github.com/spf13/cobra"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func NewRawInputCommand(config tui.Config) *cobra.Command {
@@ -24,7 +25,7 @@ func NewRawInputCommand(config tui.Config) *cobra.Command {
 				return err
 			}
 			if title == "" {
-				title = strings.Title(format)
+				title = cases.Title(language.AmericanEnglish).String(format)
 			}
 
 			bytes, err := io.ReadAll(os.Stdin)

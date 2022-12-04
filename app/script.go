@@ -1,20 +1,25 @@
 package app
 
 import (
+	_ "embed"
 	"encoding/json"
+	"fmt"
+	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"text/template"
 
 	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )
 
 type Script struct {
 	Command     string                 `json:"command" yaml:"command"`
 	Description string                 `json:"description" yaml:"description"`
-	OnSuccess   string                 `json:"onSuccess" yaml:"onSuccess"`
+	Output      string                 `json:"output" yaml:"output"`
 	Cwd         string                 `json:"cwd" yaml:"cwd"`
 	Params      map[string]ScriptParam `json:"params" yaml:"params"`
 	Page        Page                   `json:"page" yaml:"page"`
@@ -30,43 +35,66 @@ type Page struct {
 type ScriptParam struct {
 	Type        string `json:"type"`
 	Enum        []any  `json:"enum"`
-	Default     any    `json:"default"`
+	ShellEscape bool   `json:"shellEscape"`
 	Description string `json:"description"`
 }
 
-func (s Script) CheckMissingParams(inputs ScriptInputs) []string {
-	missing := make([]string, 0)
-	for param := range s.Params {
-		if _, ok := inputs[param]; !ok {
-			missing = append(missing, param)
+func (s Script) CheckMissingParams(inputs ScriptInputs) map[string]FormItem {
+	missing := make(map[string]FormItem)
+	for key, param := range s.Params {
+		input, ok := inputs[key]
+		if !ok {
+			switch param.Type {
+			case "text", "file", "directory":
+				missing[key] = FormItem{
+					Type:  "textfield",
+					Title: key,
+				}
+			case "boolean":
+				missing[key] = FormItem{
+					Type:  "checkbox",
+					Title: key,
+				}
+			}
+		} else if input.Value == nil {
+			missing[key] = input.FormItem
 		}
 	}
 
 	return missing
 }
 
-type CommandInput struct {
-	Params map[string]any
-	Query  string
-}
-
-func (s Script) Cmd(input CommandInput) (*exec.Cmd, error) {
+func (s Script) Cmd(params map[string]any) (*exec.Cmd, error) {
 	var err error
 
-	funcMap := template.FuncMap{
-		"query": func() string {
-			return shellescape.Quote(input.Query)
-		},
-	}
+	funcMap := template.FuncMap{}
 
-	for key, value := range input.Params {
+	for key, value := range params {
 		value := value
-		funcMap[key] = func() any {
+		funcMap[key] = func() (string, error) {
+			input := s.Params[key]
 			switch value := value.(type) {
 			case string:
-				return shellescape.Quote(value)
+				if input.Type == "file" || input.Type == "directory" {
+					if strings.HasPrefix(value, "~") {
+						homeDir, err := os.UserHomeDir()
+						if err != nil {
+							return "", err
+						}
+						value = strings.Replace(value, "~", homeDir, 1)
+					} else if value == "." {
+						value, err = os.Getwd()
+						if err != nil {
+							return "", err
+						}
+					}
+				}
+
+				return shellescape.Quote(value), nil
+			case bool:
+				return strconv.FormatBool(value), nil
 			default:
-				return value
+				return "", fmt.Errorf("unsupported type %T", value)
 			}
 		}
 	}
@@ -117,7 +145,6 @@ type ScriptAction struct {
 type FormItem struct {
 	Type        string `json:"type"`
 	Title       string `json:"title,omitempty"`
-	Value       any    `json:"value,omitempty"`
 	Placeholder string `json:"placeholder,omitempty"`
 	Default     any    `json:"default,omitempty"`
 
@@ -126,7 +153,7 @@ type FormItem struct {
 	Data []struct {
 		Title string `json:"title,omitempty"`
 		Value string `json:"value,omitempty"`
-	} `json:"data"`
+	} `json:"data,omitempty"`
 }
 
 type ScriptInput struct {
@@ -154,9 +181,14 @@ func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
 
 type ScriptInputs map[string]ScriptInput
 
-func ParseAction(output string) (action ScriptAction, err error) {
-	err = json.Unmarshal([]byte(output), &action)
-	return action, err
+//go:embed listitem.json
+var itemSchemaString string
+var itemSchema *jsonschema.Schema
+
+func init() {
+	compiler := jsonschema.NewCompiler()
+	compiler.AddResource("listitem.json", strings.NewReader(itemSchemaString))
+	itemSchema = compiler.MustCompile("listitem.json")
 }
 
 func ParseListItems(output string) (items []ScriptItem, err error) {
@@ -165,6 +197,16 @@ func ParseListItems(output string) (items []ScriptItem, err error) {
 		if row == "" {
 			continue
 		}
+		var data any
+		err = json.Unmarshal([]byte(row), &data)
+		if err != nil {
+			return
+		}
+		err = itemSchema.Validate(data)
+		if err != nil {
+			return
+		}
+
 		var item ScriptItem
 		err = json.Unmarshal([]byte(row), &item)
 		if err != nil {

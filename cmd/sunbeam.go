@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -101,26 +102,45 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			Use:   key,
 			Short: script.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				// with := make([]any, 0)
-				for key := range script.Params {
-					value, err := cmd.Flags().GetString(key)
-					if err != nil {
-						return err
+				with := make(map[string]any, 0)
+
+				for key, param := range script.Params {
+					switch param.Type {
+					case "string", "file", "directory":
+						value, err := cmd.Flags().GetString(key)
+						if err != nil {
+							return err
+						}
+						with[key] = value
+					case "boolean":
+						value, err := cmd.Flags().GetBool(key)
+						if err != nil {
+							return err
+						}
+						with[key] = value
 					}
-					var forminput map[string]interface{}
-					if err := json.Unmarshal([]byte(value), &forminput); err == nil {
-						// append(
-					} else {
-						// switch param.Type {
-						// case "string":
-						// 	appendkk
-						// case "bool":
-						// 	with[key] = value == "true"
-						// }
-					}
+
 				}
 
-				container := tui.NewRunContainer(extension, script, nil)
+				inputs, err := cmd.Flags().GetStringArray("input")
+				if err != nil {
+					return err
+				}
+
+				for _, input := range inputs {
+					tokens := strings.Split(input, "=")
+					if len(tokens) != 2 {
+						return fmt.Errorf("invalid input format: %s", input)
+					}
+					var scriptInput app.ScriptInput
+					err = json.Unmarshal([]byte(tokens[1]), &scriptInput)
+					if err != nil {
+						return fmt.Errorf("invalid input format: %s", tokens[1])
+					}
+					with[tokens[0]] = scriptInput
+				}
+
+				container := tui.NewRunContainer(extension, script, with)
 				err = tui.Draw(container, config)
 				if err != nil {
 					return fmt.Errorf("could not run script: %w", err)
@@ -129,21 +149,29 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			},
 		}
 
+		scriptCmd.Flags().StringArray("input", []string{}, "input to the script")
+
 		for key, param := range script.Params {
-			flag := NewCustomFlag(param)
-			scriptCmd.Flags().Var(flag, key, param.Description)
-			if param.Default == nil {
-				scriptCmd.MarkFlagRequired(key)
+			switch param.Type {
+			case "string":
+				scriptCmd.Flags().String(key, "", param.Description)
+				if param.Enum != nil {
+					choices := make([]string, len(param.Enum))
+					for i, choice := range param.Enum {
+						choices[i] = fmt.Sprintf("%v", choice)
+					}
+					scriptCmd.RegisterFlagCompletionFunc(key, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+						return choices, cobra.ShellCompDirectiveNoFileComp
+					})
+				}
+			case "boolean":
+				scriptCmd.Flags().Bool(key, false, param.Description)
+			case "file":
+				scriptCmd.Flags().String(key, "", param.Description)
+			case "directory":
+				scriptCmd.Flags().String(key, "", param.Description)
 			}
-			// if param.Enum != nil {
-			// 	choices := make([]string, len(param.Enum))
-			// 	for i, choice := range param.Enum {
-			// 		choices[i] = fmt.Sprintf("%v", choice)
-			// 	}
-			// 	scriptCmd.RegisterFlagCompletionFunc(key, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			// 		return choices, cobra.ShellCompDirectiveNoFileComp
-			// 	})
-			// }
+
 		}
 
 		extensionCmd.AddCommand(scriptCmd)

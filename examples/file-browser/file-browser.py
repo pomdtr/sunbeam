@@ -5,18 +5,18 @@ import pathlib
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--root", type=pathlib.Path)
+parser.add_argument("--root", required=True, type=pathlib.Path)
 args = parser.parse_args()
 
 root: pathlib.Path = args.root
 
 for path in sorted(root.iterdir(), key=lambda p: p.name):
     primaryAction = (
-        {"type": "open-path", "path": str(path.absolute())}
+        {"type": "openPath", "path": str(path.absolute())}
         if path.is_file()
         else {
-            "type": "run-script",
-            "script": "file-browser",
+            "type": "runScript",
+            "script": "browseFiles",
             "title": "Browse Directory",
             "with": {"root": str(path.absolute())},
         }
@@ -30,7 +30,7 @@ for path in sorted(root.iterdir(), key=lambda p: p.name):
                 "actions": [
                     primaryAction,
                     {
-                        "type": "copy-text",
+                        "type": "copyText",
                         "title": "Copy Path",
                         "text": str(path.absolute()),
                     },

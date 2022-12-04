@@ -1,4 +1,4 @@
-name: file-browser
+name: fileBrowser
 version: "1.0"
 title: File Browser
 requirements:
@@ -6,28 +6,31 @@ requirements:
     homePage: https://www.python.org
 rootItems:
   - title: Browse Root Directory
-    script: file-browser
+    script: browseFiles
     with:
-      root:
-        value: "/"
+      root: /
+  - title: Browse Home Directory
+    script: browseFiles
+    with:
+      root: "~"
   - title: Browse Custom Directory
-    script: file-browser
+    script: browseFiles
     with:
       root:
         type: textfield
         title: Root Directory
   - title: Browse Current Directory
-    script: file-browser
+    script: browseFiles
     with:
-      root:
-        value: .
+      root: .
 scripts:
-  file-browser:
+  browseFiles:
     command: ./file-browser.py --root {{ root }}
-    onSuccess: push-page
+    output: page
     page:
       type: "list"
       mode: filter
     params:
       root:
-        type: string
+        type: directory
+        description: directory to browse

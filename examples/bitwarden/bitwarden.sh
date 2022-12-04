@@ -5,13 +5,13 @@ bw list items | sunbeam query '.[] | {
     subtitle: .login.username,
     actions: [
         {
-            type: "copy-text",
+            type: "copyText",
             title: "Copy Password",
             shortcut: "enter",
             text: .login.password
         },
         {
-            type: "copy-text",
+            type: "copyText",
             title: "Copy Login",
             shortcut: "ctrl+y",
             text: "\(.login)"

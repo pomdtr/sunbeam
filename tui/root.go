@@ -47,10 +47,10 @@ func NewRootModel(height int) *RootModel {
 }
 
 func (m *RootModel) Init() tea.Cmd {
-	if len(m.pages) > 0 {
-		return m.pages[0].Init()
+	if len(m.pages) == 0 {
+		return nil
 	}
-	return nil
+	return m.pages[0].Init()
 }
 
 func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -107,17 +107,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
-		missing := script.CheckMissingParams(msg.With)
-		if len(missing) > 0 {
-			return m, NewErrorCmd(fmt.Errorf("missing params: %s", strings.Join(missing, ", ")))
-		}
-
-		inputs := make(map[string]app.ScriptInput)
-		for key, input := range msg.With {
-			if input.Value == "" {
-				inputs[key] = input
-			}
-		}
+		inputs := script.CheckMissingParams(msg.With)
 
 		if len(inputs) > 0 {
 			items := make([]FormItem, 0, len(inputs))
@@ -145,29 +135,26 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.OnSuccess != "" {
-			script.OnSuccess = msg.OnSuccess
+			script.Output = msg.OnSuccess
 		}
 
 		params := make(map[string]any, len(msg.With))
 		for key, input := range msg.With {
 			params[key] = input.Value
 		}
-		if script.OnSuccess == "push-page" {
-
+		if script.Output == "page" {
 			runner := NewRunContainer(extension, script, params)
 			cmd := m.Push(runner)
 			return m, cmd
 		}
 
-		command, err := script.Cmd(app.CommandInput{
-			Params: params,
-		})
+		command, err := script.Cmd(params)
 		command.Dir = extension.Dir()
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
-		switch script.OnSuccess {
-		case "copy-to-clipboard":
+		switch script.Output {
+		case "clipboard":
 			return m, func() tea.Msg {
 				out, err := command.Output()
 				if err != nil {
@@ -175,7 +162,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return CopyTextMsg{Text: string(out)}
 			}
-		case "open-in-browser":
+		case "browser":
 			return m, func() tea.Msg {
 				out, err := command.Output()
 				if err != nil {
@@ -183,7 +170,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return OpenUrlMsg{Url: string(out)}
 			}
-		case "reload-page":
+		case "reloadPage":
 			return m, func() tea.Msg {
 				err := command.Run()
 				var exitErr *exec.ExitError
@@ -198,7 +185,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "":
 			return m, NewExecCmd(command)
 		default:
-			return m, NewErrorCmd(fmt.Errorf("unknown onSuccess: %s", script.OnSuccess))
+			return m, NewErrorCmd(fmt.Errorf("unknown onSuccess: %s", script.Output))
 		}
 
 	case ExecCommandMsg:
@@ -298,16 +285,23 @@ func ScriptCommand(extension string, entrypoint app.RootItem) string {
 	args := make([]string, 0)
 	args = append(args, "sunbeam", extension, entrypoint.Script)
 	for key, input := range entrypoint.With {
-		switch value := input.Value.(type) {
-		case string:
-			args = append(args, fmt.Sprintf("--%s=%s", key, value))
-		case bool:
-			args = append(args, fmt.Sprintf("--%s=%t", key, value))
-		case map[string]interface{}:
-			v, _ := json.Marshal(value)
-			args = append(args, fmt.Sprintf("--%s=%s", key, shellescape.Quote(string(v))))
+		var arg string
+		if input.Value != nil {
+			switch value := input.Value.(type) {
+			case string:
+				arg = fmt.Sprintf("--%s=%s", key, shellescape.Quote(value))
+			case bool:
+				arg = fmt.Sprintf("--%s=%t", key, value)
+			}
+		} else {
+			v, _ := json.Marshal(input.FormItem)
+			arg = fmt.Sprintf("--input=%s=%s", key, shellescape.Quote(string(v)))
 		}
+
+		args = append(args, arg)
+
 	}
+
 	return strings.Join(args, " ")
 }
 

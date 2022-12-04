@@ -1,6 +1,6 @@
 #!/usr/bin/env zx
 
-const query = argv.query;
+const query = await stdin();
 if (!query) {
   console.log(
     JSON.stringify({
@@ -18,12 +18,12 @@ const items = res[1].map((suggestion) => ({
   title: suggestion,
   actions: [
     {
-      type: "open-url",
+      type: "openUrl",
       shortcut: "enter",
       url: `https://www.google.com/search?q=${encodeURIComponent(suggestion)}`,
     },
     {
-      type: "copy-text",
+      type: "copyText",
       title: "Copy Suggestion",
       shortcut: "ctrl+y",
       text: suggestion,

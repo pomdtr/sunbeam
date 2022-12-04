@@ -77,12 +77,12 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 
 				manifestPath := path.Join(target, "sunbeam.yml")
 				if _, err = os.Stat(manifestPath); os.IsNotExist(err) {
-					return fmt.Errorf("Extension %s does not have a sunbeam.yml manifest", repo.Name)
+					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", repo.Name)
 				}
 
 				manifestBytes, err := os.ReadFile(manifestPath)
 				if err != nil {
-					return fmt.Errorf("Failed to read manifest for extension %s", repo.Name)
+					return fmt.Errorf("failed to read manifest for extension %s", repo.Name)
 				}
 				extension, err := app.ParseManifest(manifestBytes)
 				if err != nil {

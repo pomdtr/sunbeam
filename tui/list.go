@@ -107,7 +107,7 @@ func (i ListItem) Render(width int, selected bool) string {
 		title = title[:width]
 	}
 
-	title = styles.Bold.Copy().Foreground(titleColor).Render(title)
+	title = styles.Regular.Copy().Foreground(titleColor).Render(title)
 	subtitle = styles.Faint.Render(subtitle)
 	blanks = styles.Regular.Render(blanks)
 	accessories = styles.Faint.Render(accessories)
