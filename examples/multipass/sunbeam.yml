@@ -10,11 +10,10 @@ scripts:
       multipass list --format json | sunbeam query '.list[] |
       {
         title: .name,
-        subtitle: .state,
         accessories: [
-          .release,
-          .ipv4[0]
+          .state
         ],
+        previewCmd: "multipass info \(.name)",
         actions:
           (
             if
@@ -28,7 +27,9 @@ scripts:
               [
                 {type: "execCommand", title: "Start", reloadPage: true, command: "multipass start \(.name)"}
               ]
-            end
+            end + [
+              {type: "runScript", title: "Describe VM", script: "describeVM", with: {name: .name}}
+            ]
           ),
       }
       '
@@ -36,3 +37,4 @@ scripts:
     page:
       type: list
       mode: filter
+      showPreview: true

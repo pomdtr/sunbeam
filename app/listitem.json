@@ -27,6 +27,9 @@
         "preview": {
             "type": "string"
         },
+        "previewCmd": {
+            "type": "string"
+        },
         "accessories": {
             "type": "array",
             "items": {
