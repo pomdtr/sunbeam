@@ -17,24 +17,20 @@ import (
 )
 
 type Script struct {
-	Command      string            `json:"command" yaml:"command"`
-	Description  string            `json:"description" yaml:"description"`
-	Mode         string            `json:"mode" yaml:"mode"`
-	Cwd          string            `json:"cwd" yaml:"cwd"`
-	Inputs       []ScriptInputSpec `json:"inputs" yaml:"inputs"`
-	ScriptParams `json:"params" yaml:"params"`
+	Command     string        `json:"command" yaml:"command"`
+	Description string        `json:"description" yaml:"description"`
+	Mode        string        `json:"mode" yaml:"mode"`
+	Cwd         string        `json:"cwd" yaml:"cwd"`
+	Inputs      []ScriptParam `json:"params" yaml:"params"`
+	Title       string        `json:"title" yaml:"title"`
+	ShowPreview bool          `json:"showPreview" yaml:"showPreview"`
 }
 
 func (s Script) IsPage() bool {
 	return s.Mode == "filter" || s.Mode == "generator" || s.Mode == "detail"
 }
 
-type ScriptParams struct {
-	Title       string `json:"title" yaml:"title"`
-	ShowPreview bool   `json:"showPreview" yaml:"showPreview"`
-}
-
-type ScriptInputSpec struct {
+type ScriptParam struct {
 	Type        string `json:"type"`
 	Name        string `json:"name"`
 	Default     any    `json:"default"`

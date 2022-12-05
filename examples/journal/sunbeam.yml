@@ -21,7 +21,7 @@ scripts:
   writeEntry:
     command: ./write-entry.py --title ${{ title }} --content ${{ content }}
     mode: command
-    inputs:
+    params:
       - name: title
         type: string
       - name: content
@@ -29,7 +29,7 @@ scripts:
   editEntry:
     command: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     mode: command
-    inputs:
+    params:
       - name: uuid
         type: string
       - name: title
@@ -39,6 +39,6 @@ scripts:
   deleteEntry:
     command: ./delete-entry.py --uuid ${{ uuid }}
     mode: command
-    inputs:
+    params:
       - name: uuid
         type: string

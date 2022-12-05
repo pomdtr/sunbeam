@@ -35,19 +35,19 @@ scripts:
         ]
       }
       '
-    inputs:
+    params:
       - name: repository
         type: string
   listRepositories:
     command: ./list-repos.sh ${{ owner }}
     mode: filter
     showPreview: true
-    inputs:
+    params:
       - name: owner
         type: string
   listPullRequests:
     command: ./list-prs.sh ${{ repository }}
     mode: filter
-    inputs:
+    params:
       - name: repository
         type: string

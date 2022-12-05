@@ -14,7 +14,7 @@ scripts:
   list:
     mode: filter
     showPreview: true
-    inputs:
+    params:
       - name: platform
         type: string
         enum:

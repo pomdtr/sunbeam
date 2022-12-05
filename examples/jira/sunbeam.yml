@@ -11,6 +11,6 @@ scripts:
   listIssues:
     command: ./jira.sh ${{ jql }}
     mode: filter
-    inputs:
+    params:
       - name: jql
         type: string

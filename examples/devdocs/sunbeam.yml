@@ -6,9 +6,9 @@ requirements:
     homePage: https://curl.se
 rootItems:
   - script: searchDocsets
-    title: Browse Docset
+    title: Browse Docsets
   - script: searchEntries
-    title: Python 3.11
+    title: Search Python 3.11 Documentation
     with:
       slug: python~3.11
 scripts:
@@ -41,6 +41,6 @@ scripts:
         }
       '
     mode: filter
-    inputs:
+    params:
       - name: slug
         type: string
