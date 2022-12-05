@@ -7,7 +7,4 @@ rootItems:
 scripts:
   listPasswords:
     command: ./bitwarden.sh
-    output: page
-    page:
-      type: list
-      mode: filter
+    mode: filter

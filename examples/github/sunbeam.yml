@@ -25,6 +25,7 @@ rootItems:
       repository: dailymotion/dwh-dags
 scripts:
   viewReadme:
+    mode: detail
     command: |
       gh api repos/${{repository}}/readme --jq '
       {
@@ -34,28 +35,19 @@ scripts:
         ]
       }
       '
-    output: page
-    page:
-      type: detail
-    params:
+    inputs:
       - name: repository
         type: string
   listRepositories:
     command: ./list-repos.sh ${{ owner }}
-    output: page
-    page:
-      type: list
-      mode: filter
-      showPreview: true
-    params:
+    mode: filter
+    showPreview: true
+    inputs:
       - name: owner
         type: string
   listPullRequests:
     command: ./list-prs.sh ${{ repository }}
-    output: page
-    page:
-      type: list
-      mode: filter
-    params:
+    mode: filter
+    inputs:
       - name: repository
         type: string

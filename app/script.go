@@ -17,22 +17,24 @@ import (
 )
 
 type Script struct {
-	Command     string        `json:"command" yaml:"command"`
-	Description string        `json:"description" yaml:"description"`
-	Output      string        `json:"output" yaml:"output"`
-	Cwd         string        `json:"cwd" yaml:"cwd"`
-	Params      []ScriptParam `json:"params" yaml:"params"`
-	Page        Page          `json:"page" yaml:"page"`
+	Command      string            `json:"command" yaml:"command"`
+	Description  string            `json:"description" yaml:"description"`
+	Mode         string            `json:"mode" yaml:"mode"`
+	Cwd          string            `json:"cwd" yaml:"cwd"`
+	Inputs       []ScriptInputSpec `json:"inputs" yaml:"inputs"`
+	ScriptParams `json:"params" yaml:"params"`
 }
 
-type Page struct {
-	Type        string `json:"type" yaml:"type"`
+func (s Script) IsPage() bool {
+	return s.Mode == "filter" || s.Mode == "generator" || s.Mode == "detail"
+}
+
+type ScriptParams struct {
 	Title       string `json:"title" yaml:"title"`
-	Mode        string `json:"mode" yaml:"mode"`
 	ShowPreview bool   `json:"showPreview" yaml:"showPreview"`
 }
 
-type ScriptParam struct {
+type ScriptInputSpec struct {
 	Type        string `json:"type"`
 	Name        string `json:"name"`
 	Default     any    `json:"default"`
@@ -46,7 +48,7 @@ func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
 
 	funcMap := template.FuncMap{}
 
-	for _, param := range s.Params {
+	for _, param := range s.Inputs {
 		param := param
 		value, ok := with[param.Name]
 		if !ok {

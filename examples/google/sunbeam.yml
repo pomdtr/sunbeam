@@ -14,7 +14,4 @@ rootItems:
 scripts:
   search:
     command: ./google.mjs
-    output: page
-    page:
-      type: list
-      mode: generator
+    mode: generator

@@ -37,7 +37,7 @@ type FormInput interface {
 func extractScriptInput(script app.Script, with map[string]app.ScriptInput) (map[string]any, []FormItem, error) {
 	formItems := make([]FormItem, 0)
 	params := make(map[string]any)
-	for _, param := range script.Params {
+	for _, param := range script.Inputs {
 		input, ok := with[param.Name]
 		if !ok {
 			if param.Default != nil {

@@ -9,6 +9,8 @@ rootItems:
     title: Manage VMs
 scripts:
   manageVMs:
+    mode: filter
+    showPreview: true
     command: |
       multipass list --format json | sunbeam query '.list[] |
       {
@@ -34,8 +36,3 @@ scripts:
           ),
       }
       '
-    output: page
-    page:
-      type: list
-      mode: filter
-      showPreview: true

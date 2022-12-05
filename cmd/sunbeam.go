@@ -107,7 +107,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(map[string]any, 0)
 
-				for _, param := range script.Params {
+				for _, param := range script.Inputs {
 					switch param.Type {
 					case "string", "file", "directory":
 						value, err := cmd.Flags().GetString(param.Name)
@@ -133,7 +133,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			},
 		}
 
-		for _, param := range script.Params {
+		for _, param := range script.Inputs {
 			switch param.Type {
 			case "string", "file", "directory":
 				if defaultValue, ok := param.Default.(string); ok {

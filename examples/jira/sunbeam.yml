@@ -10,10 +10,7 @@ rootItems:
 scripts:
   listIssues:
     command: ./jira.sh ${{ jql }}
-    output: page
-    page:
-      type: list
-      mode: filter
-    params:
+    mode: filter
+    inputs:
       - name: jql
         type: string

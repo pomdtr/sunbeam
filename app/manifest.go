@@ -147,8 +147,8 @@ func ParseManifest(bytes []byte) (extension Extension, err error) {
 	}
 
 	for key, script := range extension.Scripts {
-		if script.Page.Title == "" {
-			script.Page.Title = extension.Title
+		if script.Title == "" {
+			script.Title = extension.Title
 		}
 		extension.Scripts[key] = script
 	}

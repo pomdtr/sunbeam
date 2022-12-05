@@ -127,16 +127,20 @@
         "script": {
             "type": "object",
             "required": [
-                "command"
+                "command",
+                "mode"
             ],
             "additionalProperties": false,
             "properties": {
-                "output": {
+                "mode": {
                     "type": "string",
                     "enum": [
-                        "page",
-                        "clipboard",
-                        "browser"
+                        "filter",
+                        "generator",
+                        "detail",
+                        "command",
+                        "snippet",
+                        "quicklink"
                     ]
                 },
                 "command": {
@@ -151,13 +155,14 @@
                     ],
                     "default": "extensionDir"
                 },
-                "page": {
-                    "type": "object"
+                "showPreview": {
+                    "type": "boolean",
+                    "default": false
                 },
-                "description": {
+                "title": {
                     "type": "string"
                 },
-                "params": {
+                "inputs": {
                     "type": "array",
                     "additionalProperties": false,
                     "items": {
@@ -201,66 +206,6 @@
                 }
             }
         },
-        "page": {
-            "type": "object",
-            "required": [
-                "type"
-            ],
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "list",
-                        "detail"
-                    ]
-                },
-                "title": {
-                    "type": "string"
-                }
-            },
-            "allOf": [
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "list"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "mode"
-                        ],
-                        "properties": {
-                            "mode": {
-                                "type": "string",
-                                "enum": [
-                                    "generator",
-                                    "filter"
-                                ]
-                            },
-                            "showPreview": {
-                                "type": "boolean"
-                            },
-                            "searchPlaceholder": {
-                                "type": "string",
-                                "default": "Search..."
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "list"
-                            }
-                        }
-                    },
-                    "then": {}
-                }
-            ]
-        },
         "input": {
             "type": "object",
             "properties": {
@@ -285,7 +230,6 @@
                         "password",
                         "checkbox",
                         "dropdown",
-                        "const",
                         "filePicker"
                     ]
                 }

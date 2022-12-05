@@ -139,7 +139,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		if script.Output == "page" {
+		if script.IsPage() {
 			runner := NewRunContainer(extension, script, params)
 			cmd := m.Push(runner)
 			return m, cmd
@@ -150,11 +150,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(err)
 		}
 		command.Dir = extension.Dir()
-		if script.Output == "" {
-			return m, NewExecCmd(command, msg.Silent, msg.OnSuccess)
-		}
 
-		switch script.Output {
+		switch script.Mode {
+		case "command":
+			return m, NewExecCmd(command, msg.Silent, msg.OnSuccess)
 		case "clipboard":
 			return m, func() tea.Msg {
 				out, err := command.Output()
@@ -172,7 +171,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return OpenUrlMsg{Url: string(out)}
 			}
 		default:
-			return m, NewErrorCmd(fmt.Errorf("unknown output: %s", script.Output))
+			return m, NewErrorCmd(fmt.Errorf("unknown mode: %s", script.Mode))
 		}
 	case ExecCommandMsg:
 		if msg.Silent {

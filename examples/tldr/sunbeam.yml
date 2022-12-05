@@ -12,6 +12,15 @@ rootItems:
       platform: linux
 scripts:
   list:
+    mode: filter
+    showPreview: true
+    inputs:
+      - name: platform
+        type: string
+        enum:
+          - linux
+          - osx
+          - windows
     command: |
       tldr --list --platform ${{ platform }} | sunbeam query -R '{
         id: .,
@@ -21,15 +30,3 @@ scripts:
           {"type": "openUrl", "url": "https://tldr.ostera.io/\(.)", "title": "Open in Browser"}
         ]
       }'
-    params:
-      - name: platform
-        type: string
-        enum:
-          - linux
-          - osx
-          - windows
-    output: page
-    page:
-      type: list
-      mode: filter
-      showPreview: true

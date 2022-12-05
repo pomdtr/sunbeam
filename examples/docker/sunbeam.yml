@@ -20,14 +20,12 @@ scripts:
         ]
       }
       '
-    output: page
-    page:
-      type: list
-      mode: filter
+    mode: filter
   execCommand:
     command: |
       docker exec -it ${{ container }} ${{ command }} | less
-    params:
+    mode: command
+    inputs:
       - name: container
         type: string
       - name: command

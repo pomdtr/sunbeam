@@ -43,7 +43,7 @@ type CommandOutput string
 
 func (c RunContainer) ScriptCmd() tea.Msg {
 	command, err := c.Script.Cmd(c.params)
-	if c.Script.Page.Mode == "generator" {
+	if c.Script.Mode == "generator" {
 		command.Stdin = strings.NewReader(c.list.Query())
 	}
 	if err != nil {
@@ -82,18 +82,18 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 }
 
 func (c *RunContainer) Run() tea.Cmd {
-	switch c.Script.Page.Type {
-	case "list":
+	switch c.Script.Mode {
+	case "filter", "generator":
 		c.currentView = "list"
 		if c.list != nil {
 			cmd := c.list.SetIsLoading(true)
 			return tea.Batch(cmd, c.ScriptCmd)
 		}
-		c.list = NewList(c.Script.Page.Title)
-		if c.Script.Page.Mode == "generator" {
+		c.list = NewList(c.Script.Title)
+		if c.Script.Mode == "generator" {
 			c.list.Dynamic = true
 		}
-		if c.Script.Page.ShowPreview {
+		if c.Script.ShowPreview {
 			c.list.ShowPreview = true
 		}
 		c.list.SetSize(c.width, c.height)
@@ -106,12 +106,12 @@ func (c *RunContainer) Run() tea.Cmd {
 			return tea.Batch(cmd, c.ScriptCmd)
 		}
 
-		c.detail = NewDetail(c.Script.Page.Title)
+		c.detail = NewDetail(c.Script.Title)
 		c.detail.SetSize(c.width, c.height)
 		cmd := c.detail.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
 	default:
-		return NewErrorCmd(fmt.Errorf("unknown page type: %s", c.Script.Page.Type))
+		return NewErrorCmd(fmt.Errorf("unknown script mode: %s", c.Script.Mode))
 	}
 }
 
