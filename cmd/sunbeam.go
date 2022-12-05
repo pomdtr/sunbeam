@@ -120,13 +120,13 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 						if err != nil {
 							return err
 						}
-						with[key] = value
+						with[param.Name] = value
 					case "boolean":
 						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
 							return err
 						}
-						with[key] = value
+						with[param.Name] = value
 					}
 				}
 
