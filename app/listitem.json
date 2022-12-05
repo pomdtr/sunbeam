@@ -3,8 +3,7 @@
     "$id": "http://github.com/pomdtr/sunbeam/manifest",
     "type": "object",
     "required": [
-        "title",
-        "actions"
+        "title"
     ],
     "additionalProperties": false,
     "properties": {

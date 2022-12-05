@@ -1,0 +1,34 @@
+name: docker
+title: Docker
+version: "1.0"
+requirements:
+  - homePage: https://www.docker.com/
+    which: docker
+rootItems:
+  - script: listContainers
+    title: List Containers
+scripts:
+  listContainers:
+    command: |
+      docker container ls --format '{{ json . }}' | sunbeam query '
+      {
+        title: .Names,
+        subtitle: .Image,
+        accessories: [ .State ],
+        actions: [
+          {type: "runScript", title: "Open Shell", script: "execCommand", "with": {"container": .Names, "command": "bash"}}
+        ]
+      }
+      '
+    output: page
+    page:
+      type: list
+      mode: filter
+  execCommand:
+    command: |
+      docker exec -it ${{ container }} ${{ command }}
+    params:
+      container:
+        type: string
+      command:
+        type: string

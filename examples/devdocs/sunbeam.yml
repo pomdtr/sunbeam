@@ -34,12 +34,12 @@ scripts:
       mode: filter
   searchEntries:
     command: |
-      curl https://devdocs.io/docs/{{ slug }}/index.json | sunbeam query '.entries[] |
+      curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
         {
           title: .name,
           subtitle: .type,
           actions: [
-            {type: "openUrl", url: "https://devdocs.io/{{ slug }}/\(.path)"}
+            {type: "openUrl", url: "https://devdocs.io/${{ slug }}/\(.path)"}
           ]
         }
       '

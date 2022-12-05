@@ -26,7 +26,7 @@ rootItems:
 scripts:
   viewReadme:
     command: |
-      gh api repos/{{repository}}/readme --jq '
+      gh api repos/${{repository}}/readme --jq '
       {
         preview: (.content | @base64d),
         actions: [
@@ -41,7 +41,7 @@ scripts:
       repository:
         type: string
   listRepositories:
-    command: ./list-repos.sh {{ owner }}
+    command: ./list-repos.sh ${{ owner }}
     output: page
     page:
       type: list
@@ -51,7 +51,7 @@ scripts:
       owner:
         type: string
   listPullRequests:
-    command: ./list-prs.sh {{ repository }}
+    command: ./list-prs.sh ${{ repository }}
     output: page
     page:
       type: list
