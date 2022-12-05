@@ -55,26 +55,31 @@ Type sunbeam
 Sleep 2s
 Enter
 
-Sleep 5s
-Type repo
+Sleep 2s
+Type owner
 Sleep 2s
 Enter
 
-Sleep 5s
-Type dailymotion
+Sleep 2s
+Type pomdtr
+Sleep 2s
 Ctrl+S
 
 
-Sleep 5s
-Type asteroid
+Sleep 2s
+Type sunbeam
+
 Sleep 2s
 Tab
-Down
+
+Sleep 2s
+Type view
 Sleep 2s
 Enter
 
-Sleep 5s
-Ctrl+Y
+Sleep 2s
+Type jjj
+Sleep 2s
+Enter
 
-
-Sleep 5s
+Sleep 2s

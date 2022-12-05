@@ -86,8 +86,8 @@ func (c *RunContainer) Run() tea.Cmd {
 	case "list":
 		c.currentView = "list"
 		if c.list != nil {
-			c.list.SetIsLoading(true)
-			return c.ScriptCmd
+			cmd := c.list.SetIsLoading(true)
+			return tea.Batch(cmd, c.ScriptCmd)
 		}
 		c.list = NewList(c.Script.Page.Title)
 		if c.Script.Page.Mode == "generator" {
@@ -102,8 +102,8 @@ func (c *RunContainer) Run() tea.Cmd {
 	case "detail":
 		c.currentView = "detail"
 		if c.detail != nil {
-			c.detail.SetIsLoading(true)
-			return c.ScriptCmd
+			cmd := c.detail.SetIsLoading(true)
+			return tea.Batch(cmd, c.ScriptCmd)
 		}
 
 		c.detail = NewDetail(c.Script.Page.Title)

@@ -5,13 +5,11 @@ rootItems:
   - title: "Search MacOS Pages"
     script: list
     with:
-      platform:
-        value: osx
+      platform: osx
   - title: "Search Linux Pages"
     script: list
     with:
-      platform:
-        value: linux
+      platform: linux
 scripts:
   list:
     command: |
