@@ -37,22 +37,22 @@ type FormInput interface {
 func extractScriptInput(script app.Script, with map[string]app.ScriptInput) (map[string]any, []FormItem, error) {
 	formItems := make([]FormItem, 0)
 	params := make(map[string]any)
-	for key, param := range script.Params {
-		input, ok := with[key]
+	for _, param := range script.Params {
+		input, ok := with[param.Name]
 		if !ok {
 			if param.Default != nil {
-				params[key] = param.Default
+				params[param.Name] = param.Default
 				continue
 			}
-			return nil, nil, fmt.Errorf("missing required parameter: %s", key)
+			return nil, nil, fmt.Errorf("missing required parameter: %s", param.Name)
 		}
 
 		if input.Value != nil {
-			params[key] = input.Value
+			params[param.Name] = input.Value
 			continue
 		}
 
-		formItem, err := NewFormItem(key, input.FormItem)
+		formItem, err := NewFormItem(param.Name, input.FormItem)
 		if err != nil {
 			return nil, nil, err
 		}

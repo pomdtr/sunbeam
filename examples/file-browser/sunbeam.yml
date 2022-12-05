@@ -37,10 +37,10 @@ scripts:
       type: "list"
       mode: filter
     params:
-      root:
+      - name: root
         type: directory
         description: directory to browse
-      showHidden:
+      - name: showHidden
         type: boolean
         description: whether to show hidden files
         default: false

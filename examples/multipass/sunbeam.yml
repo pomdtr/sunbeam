@@ -24,7 +24,7 @@ scripts:
             then
               [
                 {type: "execCommand", title: "Stop \(.name)", onSuccess: "reloadPage", command: "multipass stop \(.name)"},
-                {type: "execCommand", title: "Open Shell", shortcut: "ctrl+l", command: "multipass shell \(.name)"}
+                {type: "execCommand", title: "Open Shell", shortcut: "ctrl+s", command: "multipass shell \(.name)"}
               ]
             else
               [

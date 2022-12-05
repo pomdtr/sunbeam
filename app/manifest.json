@@ -158,40 +158,43 @@
                     "type": "string"
                 },
                 "params": {
-                    "type": "object",
+                    "type": "array",
                     "additionalProperties": false,
-                    "patternProperties": {
-                        "^[a-zA-Z_][a-zA-Z0-9_]+$": {
-                            "type": "object",
-                            "required": [
-                                "type"
-                            ],
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "enum": [
-                                        "string",
-                                        "boolean",
-                                        "file",
-                                        "directory"
-                                    ]
-                                },
-                                "default": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        }
-                                    ]
-                                },
-                                "shellEscape": {
-                                    "type": "boolean"
-                                },
-                                "description": {
-                                    "type": "string"
-                                }
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "type",
+                            "name"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z_][a-zA-Z0-9_]+$"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "string",
+                                    "boolean",
+                                    "file",
+                                    "directory"
+                                ]
+                            },
+                            "default": {
+                                "anyOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    }
+                                ]
+                            },
+                            "shellEscape": {
+                                "type": "boolean"
+                            },
+                            "description": {
+                                "type": "string"
                             }
                         }
                     }
@@ -263,10 +266,6 @@
             "properties": {
                 "title": {
                     "type": "string"
-                },
-                "index": {
-                    "type": "integer",
-                    "minimum": 0
                 },
                 "value": {
                     "anyOf": [

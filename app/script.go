@@ -17,12 +17,12 @@ import (
 )
 
 type Script struct {
-	Command     string                 `json:"command" yaml:"command"`
-	Description string                 `json:"description" yaml:"description"`
-	Output      string                 `json:"output" yaml:"output"`
-	Cwd         string                 `json:"cwd" yaml:"cwd"`
-	Params      map[string]ScriptParam `json:"params" yaml:"params"`
-	Page        Page                   `json:"page" yaml:"page"`
+	Command     string        `json:"command" yaml:"command"`
+	Description string        `json:"description" yaml:"description"`
+	Output      string        `json:"output" yaml:"output"`
+	Cwd         string        `json:"cwd" yaml:"cwd"`
+	Params      []ScriptParam `json:"params" yaml:"params"`
+	Page        Page          `json:"page" yaml:"page"`
 }
 
 type Page struct {
@@ -34,6 +34,7 @@ type Page struct {
 
 type ScriptParam struct {
 	Type        string `json:"type"`
+	Name        string `json:"name"`
 	Default     any    `json:"default"`
 	Enum        []any  `json:"enum"`
 	ShellEscape bool   `json:"shellEscape"`
@@ -45,25 +46,25 @@ func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
 
 	funcMap := template.FuncMap{}
 
-	for key, value := range with {
-		value := value
-		paramSpec, ok := s.Params[key]
+	for _, param := range s.Params {
+		param := param
+		value, ok := with[param.Name]
 		if !ok {
-			return nil, fmt.Errorf("unknown param %s", key)
+			return nil, fmt.Errorf("unknown param %s", param.Name)
 		}
-		funcMap[key] = func() (any, error) {
-			switch paramSpec.Type {
+		funcMap[param.Name] = func() (any, error) {
+			switch param.Type {
 			case "string":
 				value, ok := value.(string)
 				if !ok {
-					return nil, fmt.Errorf("expected string for param %s", key)
+					return nil, fmt.Errorf("expected string for param %s", param.Name)
 				}
 
 				return shellescape.Quote(value), nil
 			case "directory", "file":
 				value, ok := value.(string)
 				if !ok {
-					return nil, fmt.Errorf("expected string for param %s", key)
+					return nil, fmt.Errorf("expected string for param %s", param.Name)
 				}
 
 				if strings.HasPrefix(value, "~") {
@@ -89,12 +90,12 @@ func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
 			case "boolean":
 				value, ok := value.(bool)
 				if !ok {
-					return nil, fmt.Errorf("expected boolean for param %s", key)
+					return nil, fmt.Errorf("expected boolean for param %s", param.Name)
 				}
 				return value, nil
 
 			default:
-				return nil, fmt.Errorf("unsupported param type: %s", paramSpec.Type)
+				return nil, fmt.Errorf("unsupported param type: %s", param.Type)
 			}
 		}
 	}
@@ -153,6 +154,7 @@ type ScriptAction struct {
 	Script    string `json:"script,omitempty" yaml:"script"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
+	Silent    bool         `json:"silent,omitempty" yaml:"silent"`
 	OnSuccess string       `json:"onSuccess,omitempty" yaml:"onSuccess"`
 	With      ScriptInputs `json:"with,omitempty" yaml:"with"`
 }

@@ -38,7 +38,7 @@ scripts:
     page:
       type: detail
     params:
-      repository:
+      - name: repository
         type: string
   listRepositories:
     command: ./list-repos.sh ${{ owner }}
@@ -48,7 +48,7 @@ scripts:
       mode: filter
       showPreview: true
     params:
-      owner:
+      - name: owner
         type: string
   listPullRequests:
     command: ./list-prs.sh ${{ repository }}
@@ -57,5 +57,5 @@ scripts:
       type: list
       mode: filter
     params:
-      repository:
+      - name: repository
         type: string

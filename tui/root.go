@@ -151,7 +151,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		command.Dir = extension.Dir()
 		if script.Output == "" {
-			return m, NewExecCmd(command, msg.OnSuccess)
+			return m, NewExecCmd(command, msg.Silent, msg.OnSuccess)
 		}
 
 		switch script.Output {
@@ -175,26 +175,32 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("unknown output: %s", script.Output))
 		}
 	case ExecCommandMsg:
+		if msg.Silent {
+			err := msg.Command.Run()
+			if err != nil {
+				detail := NewDetail(msg.Command.String())
+				detail.SetContent(err.Error())
+				return m, NewPushCmd(detail)
+			}
+
+			return m, msg.OnSuccessCmd
+		}
 
 		m.hidden = true
 		return m, tea.ExecProcess(msg.Command, func(err error) tea.Msg {
 			if err != nil {
-				return showMsg{
-					cmd: NewErrorCmd(err),
-				}
+				detail := NewDetail(msg.Command.String())
+				detail.SetContent(err.Error())
+				return pushMsg{container: detail}
 			}
 
-			switch msg.OnSuccess {
-			case "exit":
-				return tea.Quit()
-			case "reloadPage":
-				return showMsg{
-					cmd: NewReloadPageCmd(nil),
-				}
-			default:
-				return showMsg{}
+			return showMsg{
+				cmd: msg.OnSuccessCmd,
 			}
 		})
+	case pushMsg:
+		cmd := m.Push(msg.container)
+		return m, cmd
 	case popMsg:
 		if len(m.pages) == 1 {
 			m.hidden = true
@@ -277,6 +283,16 @@ type showMsg struct {
 
 func PopCmd() tea.Msg {
 	return popMsg{}
+}
+
+type pushMsg struct {
+	container Container
+}
+
+func NewPushCmd(c Container) tea.Cmd {
+	return func() tea.Msg {
+		return pushMsg{c}
+	}
 }
 
 func (m *RootModel) Push(page Container) tea.Cmd {

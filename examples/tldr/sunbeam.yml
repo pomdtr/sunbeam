@@ -22,13 +22,12 @@ scripts:
         ]
       }'
     params:
-      platform:
+      - name: platform
         type: string
         enum:
           - linux
           - osx
           - windows
-
     output: page
     page:
       type: list

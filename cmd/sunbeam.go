@@ -107,16 +107,16 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(map[string]any, 0)
 
-				for key, param := range script.Params {
+				for _, param := range script.Params {
 					switch param.Type {
 					case "string", "file", "directory":
-						value, err := cmd.Flags().GetString(key)
+						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
 						with[key] = value
 					case "boolean":
-						value, err := cmd.Flags().GetBool(key)
+						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
 							return err
 						}
@@ -133,21 +133,21 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			},
 		}
 
-		for key, param := range script.Params {
+		for _, param := range script.Params {
 			switch param.Type {
 			case "string", "file", "directory":
 				if defaultValue, ok := param.Default.(string); ok {
-					scriptCmd.Flags().String(key, defaultValue, param.Description)
+					scriptCmd.Flags().String(param.Name, defaultValue, param.Description)
 				} else {
-					scriptCmd.Flags().String(key, "", param.Description)
-					scriptCmd.MarkFlagRequired(key)
+					scriptCmd.Flags().String(param.Name, "", param.Description)
+					scriptCmd.MarkFlagRequired(param.Name)
 				}
 			case "boolean":
 				if defaultValue, ok := param.Default.(bool); ok {
-					scriptCmd.Flags().Bool(key, defaultValue, param.Description)
+					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Description)
 				} else {
-					scriptCmd.Flags().Bool(key, false, param.Description)
-					scriptCmd.MarkFlagRequired(key)
+					scriptCmd.Flags().Bool(param.Name, false, param.Description)
+					scriptCmd.MarkFlagRequired(param.Name)
 				}
 			}
 			if param.Enum != nil {
@@ -155,7 +155,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 				for i, choice := range param.Enum {
 					choices[i] = fmt.Sprintf("%v", choice)
 				}
-				scriptCmd.RegisterFlagCompletionFunc(key, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+				scriptCmd.RegisterFlagCompletionFunc(param.Name, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 					return choices, cobra.ShellCompDirectiveNoFileComp
 				})
 			}

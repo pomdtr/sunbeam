@@ -83,12 +83,14 @@ type RunScriptMsg struct {
 	Script    string
 	With      app.ScriptInputs
 	OnSuccess string
+	Silent    bool
 }
 
-func NewExecCmd(command *exec.Cmd, onSuccess string) tea.Cmd {
+func NewExecCmd(command *exec.Cmd, silent bool, onSuccess string) tea.Cmd {
 	return func() tea.Msg {
 		return ExecCommandMsg{
 			Command:   command,
+			Silent:    silent,
 			OnSuccess: onSuccess,
 		}
 	}
@@ -96,7 +98,19 @@ func NewExecCmd(command *exec.Cmd, onSuccess string) tea.Cmd {
 
 type ExecCommandMsg struct {
 	Command   *exec.Cmd
+	Silent    bool
 	OnSuccess string
+}
+
+func (msg ExecCommandMsg) OnSuccessCmd() tea.Msg {
+	switch msg.OnSuccess {
+	case "exit":
+		return tea.Quit()
+	case "reloadPage":
+		return ReloadPageMsg{}
+	default:
+		return nil
+	}
 }
 
 func NewAction(scriptAction app.ScriptAction) Action {
@@ -138,12 +152,14 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			Script:    scriptAction.Script,
 			With:      scriptAction.With,
 			OnSuccess: scriptAction.OnSuccess,
+			Silent:    scriptAction.Silent,
 		}
 	case "execCommand":
 		command := exec.Command("sh", "-c", scriptAction.Command)
 		msg = ExecCommandMsg{
 			Command:   command,
 			OnSuccess: scriptAction.OnSuccess,
+			Silent:    scriptAction.Silent,
 		}
 	default:
 		scriptAction.Title = "Unknown"

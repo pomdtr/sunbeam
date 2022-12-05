@@ -10,7 +10,7 @@ rootItems:
 scripts:
   listContainers:
     command: |
-      docker container ls --format '{{ json . }}' | sunbeam query '
+      docker ps --all --format '{{ json . }}' | sunbeam query '
       {
         title: .Names,
         subtitle: .Image,
@@ -26,9 +26,9 @@ scripts:
       mode: filter
   execCommand:
     command: |
-      docker exec -it ${{ container }} ${{ command }}
+      docker exec -it ${{ container }} ${{ command }} | less
     params:
-      container:
+      - name: container
         type: string
-      command:
+      - name: command
         type: string

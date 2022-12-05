@@ -25,21 +25,21 @@ scripts:
   writeEntry:
     command: ./write-entry.py --title ${{ title }} --content ${{ content }}
     params:
-      title:
+      - name: title
         type: string
-      content:
+      - name: content
         type: string
   editEntry:
     command: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     params:
-      uuid:
+      - name: uuid
         type: string
-      title:
+      - name: title
         type: string
-      content:
+      - name: content
         type: string
   deleteEntry:
     command: ./delete-entry.py --uuid ${{ uuid }}
     params:
-      uuid:
+      - name: uuid
         type: string

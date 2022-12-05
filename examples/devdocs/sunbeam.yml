@@ -48,5 +48,5 @@ scripts:
       type: list
       mode: filter
     params:
-      slug:
+      - name: slug
         type: string
