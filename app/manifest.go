@@ -46,7 +46,7 @@ type Extension struct {
 
 type ExtensionRequirement struct {
 	Which    string `json:"which" yaml:"which"`
-	HomePage string `json:"homepage" yaml:"homepage"`
+	HomePage string `json:"homePage" yaml:"homePage"`
 }
 
 func (r ExtensionRequirement) Check() bool {
