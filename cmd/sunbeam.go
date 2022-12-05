@@ -45,11 +45,7 @@ func Execute() (err error) {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			rootItems := make([]app.RootItem, 0)
 			for _, extension := range app.Sunbeam.Extensions {
-				for _, rootItem := range extension.RootItems {
-					rootItem.Extension = extension.Name
-					rootItem.Subtitle = extension.Title
-					rootItems = append(rootItems, rootItem)
-				}
+				rootItems = append(rootItems, extension.RootItems...)
 			}
 
 			for _, rootItem := range config.RootItems {
@@ -93,19 +89,8 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 		Use:   extension.Name,
 		Short: extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			var runner tui.Container
-			// If there is only one root item, just run it
-			if len(extension.RootItems) == 1 {
-				item := extension.RootItems[0]
-				script, ok := extension.Scripts[item.Script]
-				if !ok {
-					return fmt.Errorf("script %s not found", item.Script)
-				}
-				runner = tui.NewRunContainer(extension, script, nil)
-			} else {
-				runner = tui.RootList(extension.RootItems...)
-			}
-			err = tui.Draw(runner, config)
+			root := tui.RootList(extension.RootItems...)
+			err = tui.Draw(root, config)
 			if err != nil {
 				return fmt.Errorf("could not run extension: %w", err)
 			}

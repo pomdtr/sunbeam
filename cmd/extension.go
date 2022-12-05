@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pomdtr/sunbeam/app"
@@ -212,7 +213,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 				extensionItems := make([]tui.ListItem, len(res.Items))
 				for i, repo := range res.Items {
 					item := tui.ListItem{
-						Id:       repo.HtmlURL,
+						Id:       strconv.Itoa(i),
 						Title:    repo.Name,
 						Subtitle: repo.Description,
 						PreviewCmd: func() string {
@@ -236,12 +237,12 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 					if _, ok := app.Sunbeam.Extensions[repo.Name]; ok {
 						primaryAction = tui.Action{
 							Title: "Uninstall",
-							Cmd:   tui.NewExecCmd(exec.Command("sunbeam", "extension", "remove", repo.Name), false),
+							Cmd:   tui.NewExecCmd(exec.Command("sunbeam", "extension", "remove", repo.Name), "exit"),
 						}
 					} else {
 						primaryAction = tui.Action{
 							Title: "Install",
-							Cmd:   tui.NewExecCmd(exec.Command("sunbeam", "extension", "install", repo.HtmlURL), false),
+							Cmd:   tui.NewExecCmd(exec.Command("sunbeam", "extension", "install", repo.HtmlURL), "exit"),
 						}
 					}
 

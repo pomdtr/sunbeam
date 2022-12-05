@@ -127,8 +127,7 @@
         "script": {
             "type": "object",
             "required": [
-                "command",
-                "output"
+                "command"
             ],
             "additionalProperties": false,
             "properties": {
@@ -137,8 +136,7 @@
                     "enum": [
                         "page",
                         "clipboard",
-                        "browser",
-                        "stdout"
+                        "browser"
                     ]
                 },
                 "command": {

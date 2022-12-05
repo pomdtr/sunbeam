@@ -102,11 +102,15 @@
                                     }
                                 }
                             },
+                            "onSuccess": {
+                                "type": "string",
+                                "enum": [
+                                    "reloadPage",
+                                    "exit"
+                                ]
+                            },
                             "script": {
                                 "type": "string"
-                            },
-                            "reloadPage": {
-                                "type": "boolean"
                             }
                         }
                     }
@@ -125,8 +129,12 @@
                             "command"
                         ],
                         "properties": {
-                            "reloadPage": {
-                                "type": "boolean"
+                            "onSuccess": {
+                                "type": "string",
+                                "enum": [
+                                    "reloadPage",
+                                    "exit"
+                                ]
                             },
                             "command": {
                                 "type": "string"

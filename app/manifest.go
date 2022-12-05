@@ -137,5 +137,11 @@ func ParseManifest(bytes []byte) (extension Extension, err error) {
 		extension.Scripts[key] = script
 	}
 
+	for key, rootItem := range extension.RootItems {
+		rootItem.Subtitle = extension.Title
+		rootItem.Extension = extension.Name
+		extension.RootItems[key] = rootItem
+	}
+
 	return extension, nil
 }

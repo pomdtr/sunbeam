@@ -1,6 +1,9 @@
 name: multipass
 title: Multipass
 version: "1.0"
+requirements:
+  - homePage: https://multipass.run
+    which: multipass
 rootItems:
   - script: manageVMs
     title: Manage VMs
@@ -20,16 +23,14 @@ scripts:
               .state == "Running"
             then
               [
-                {type: "execCommand", title: "Stop", reloadPage: true, command: "multipass stop \(.name)"},
+                {type: "execCommand", title: "Stop \(.name)", onSuccess: "reloadPage", command: "multipass stop \(.name)"},
                 {type: "execCommand", title: "Open Shell", shortcut: "ctrl+l", command: "multipass shell \(.name)"}
               ]
             else
               [
-                {type: "execCommand", title: "Start", reloadPage: true, command: "multipass start \(.name)"}
+                {type: "execCommand", title: "Start \(.name)", onSuccess: "reloadPage", command: "multipass start \(.name)"}
               ]
-            end + [
-              {type: "runScript", title: "Describe VM", script: "describeVM", with: {name: .name}}
-            ]
+            end
           ),
       }
       '

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"sort"
 	"strconv"
 
@@ -35,9 +34,8 @@ type RootModel struct {
 
 	pages []Container
 
-	quitting bool
-	exitMsg  string
-	exitCmd  *exec.Cmd
+	hidden  bool
+	exitMsg string
 }
 
 func NewRootModel(height int) *RootModel {
@@ -56,7 +54,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
-			m.quitting = true
+			m.hidden = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
@@ -69,7 +67,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(err)
 		}
 		m.exitMsg = "Copied to clipboard"
-		m.quitting = true
+		m.hidden = true
 		return m, tea.Quit
 	case OpenUrlMsg:
 		err := browser.OpenURL(msg.Url)
@@ -77,7 +75,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.exitMsg = fmt.Sprintf("Failed to open url: %v", err)
 		}
 		m.exitMsg = fmt.Sprintf("Opened %s in browser.", msg.Url)
-		m.quitting = true
+		m.hidden = true
 		return m, tea.Quit
 	case OpenPathMsg:
 		var err error
@@ -93,7 +91,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.exitMsg = fmt.Sprintf("Failed to open %s: %v", msg.Path, err)
 			return m, NewErrorCmd(err)
 		}
-		m.quitting = true
+		m.hidden = true
 		return m, tea.Quit
 	case RunScriptMsg:
 		extension, ok := app.Sunbeam.Extensions[msg.Extension]
@@ -143,9 +141,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(err)
 		}
 		command.Dir = extension.Dir()
-		if err != nil {
-			return m, NewErrorCmd(err)
+		if script.Output == "" {
+			return m, NewExecCmd(command, msg.OnSuccess)
 		}
+
 		switch script.Output {
 		case "clipboard":
 			return m, func() tea.Msg {
@@ -163,32 +162,42 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return OpenUrlMsg{Url: string(out)}
 			}
-		case "stdout":
-			return m, NewExecCmd(command, msg.ReloadPage)
 		default:
 			return m, NewErrorCmd(fmt.Errorf("unknown output: %s", script.Output))
 		}
 	case ExecCommandMsg:
-		if msg.ReloadPage {
-			return m, func() tea.Msg {
-				err := msg.Command.Run()
-				if err != nil {
-					return err
+
+		m.hidden = true
+		return m, tea.ExecProcess(msg.Command, func(err error) tea.Msg {
+			if err != nil {
+				return showMsg{
+					cmd: NewErrorCmd(err),
 				}
-				return ReloadPageMsg{}
 			}
-		}
-		m.quitting = true
-		m.exitCmd = msg.Command
-		return m, tea.Quit
+
+			switch msg.OnSuccess {
+			case "exit":
+				return tea.Quit()
+			case "reloadPage":
+				return showMsg{
+					cmd: NewReloadPageCmd(nil),
+				}
+			default:
+				return showMsg{}
+			}
+		})
 	case popMsg:
 		if len(m.pages) == 1 {
-			m.quitting = true
+			m.hidden = true
 			return m, tea.Quit
 		} else {
 			m.Pop()
 			return m, nil
 		}
+	case showMsg:
+		log.Println("showMsg", msg)
+		m.hidden = false
+		return m, msg.cmd
 	case error:
 		detail := NewDetail("Error")
 		detail.SetSize(m.pageWidth(), m.pageHeight())
@@ -207,7 +216,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *RootModel) View() string {
-	if m.quitting {
+	if m.hidden {
 		return ""
 	}
 
@@ -252,6 +261,10 @@ func (m *RootModel) pageHeight() int {
 }
 
 type popMsg struct{}
+
+type showMsg struct {
+	cmd tea.Cmd
+}
 
 func PopCmd() tea.Msg {
 	return popMsg{}
@@ -333,16 +346,6 @@ func Draw(container Container, config Config) (err error) {
 
 	if root.exitMsg != "" {
 		fmt.Println(root.exitMsg)
-	}
-
-	if exitCmd := root.exitCmd; exitCmd != nil {
-		root.exitCmd.Stdin = os.Stdin
-		root.exitCmd.Stdout = os.Stdout
-		root.exitCmd.Stderr = os.Stderr
-		err := root.exitCmd.Run()
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

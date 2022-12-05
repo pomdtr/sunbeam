@@ -24,7 +24,6 @@ scripts:
       showPreview: true
   writeEntry:
     command: ./write-entry.py --title {{ title }} --content {{ content }}
-    output: stdout
     params:
       title:
         type: string
@@ -32,7 +31,6 @@ scripts:
         type: string
   editEntry:
     command: ./edit-entry.py --uuid {{ uuid }} --title {{ title }} --content {{ content }}
-    output: stdout
     params:
       uuid:
         type: string
@@ -42,7 +40,6 @@ scripts:
         type: string
   deleteEntry:
     command: ./delete-entry.py --uuid {{ uuid }}
-    output: stdout
     params:
       uuid:
         type: string
