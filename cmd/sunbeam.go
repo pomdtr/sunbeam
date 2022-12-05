@@ -21,13 +21,19 @@ func ParseConfig() tui.Config {
 	viper.AutomaticEnv()
 	viper.ReadInConfig()
 
+	var config tui.Config
+
 	configFile := viper.ConfigFileUsed()
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		log.Printf("No config file found at %s, using default config", configFile)
+		return config
+	}
+
 	bytes, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Fatalf("could not read config file: %v", err)
 	}
 
-	var config tui.Config
 	err = yaml.Unmarshal(bytes, &config)
 	if err != nil {
 		log.Fatalf("could not parse config file: %v", err)
