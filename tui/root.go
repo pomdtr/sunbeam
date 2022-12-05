@@ -103,7 +103,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(extension.Requirements) > 0 {
 			for _, requirement := range extension.Requirements {
 				if !requirement.Check() {
-					return m, NewErrorCmd(fmt.Errorf("requirement %s not met.\nHomepage: %s", requirement.Which, requirement.HomePage))
+					container := NewDetail("Requirement not met")
+					container.SetContent(fmt.Sprintf("requirement %s not met.\nHomepage: %s", requirement.Which, requirement.HomePage))
+					return m, NewPushCmd(container)
 				}
 			}
 		}
