@@ -9,8 +9,8 @@
 
 - Finalize API V1, Write Documentation
 - An extension system inspired by [Github Cli](https://docs.github.com/en/github-cli/github-cli/creating-github-cli-extensions)
-- Support for running the sunbeam host on a remote machine
-- Cross platform UI (Using xterm.js and wails.io)
+- Support for running the sunbeam host on a remote machine, and access it from the browser using xterm.js
+- Add a GUI using wails.io
 
 ## Installation
 
