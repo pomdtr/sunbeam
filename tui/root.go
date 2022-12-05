@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strconv"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,7 +18,8 @@ import (
 )
 
 type Config struct {
-	Height int
+	Height    int
+	RootItems []app.RootItem `yaml:"rootItems"`
 }
 
 type Container interface {
@@ -267,45 +269,37 @@ func (m *RootModel) Pop() {
 	}
 }
 
-func RootList(extensions ...app.Extension) Container {
-	rootItems := make([]ListItem, 0)
-	for _, extension := range extensions {
-		extension := extension
-		for index, rootItem := range extension.RootItems {
-			runMsg := RunScriptMsg{
-				Extension: extension.Name,
-				Script:    rootItem.Script,
-				With:      rootItem.With,
-			}
-			rootItems = append(rootItems, ListItem{
-				Id:       fmt.Sprintf("%s-%d", extension.Name, index),
-				Title:    rootItem.Title,
-				Subtitle: extension.Title,
-				Actions: []Action{
-					{
-						Title:    "Run Script",
-						Shortcut: "enter",
-						Cmd: func() tea.Msg {
-							return runMsg
-						},
-					},
-					{
-						Title:    "Open Extension Folder",
-						Shortcut: "ctrl+o",
-						Cmd:      func() tea.Msg { return OpenPathMsg{Path: extension.Dir()} },
+func RootList(rootItems ...app.RootItem) *List {
+	listItems := make([]ListItem, len(rootItems))
+	for index, rootItem := range rootItems {
+		runMsg := RunScriptMsg{
+			Extension: rootItem.Extension,
+			Script:    rootItem.Script,
+			With:      rootItem.With,
+		}
+		listItems[index] = ListItem{
+			Id:       strconv.Itoa(index),
+			Title:    rootItem.Title,
+			Subtitle: rootItem.Subtitle,
+			Actions: []Action{
+				{
+					Title:    "Run Script",
+					Shortcut: "enter",
+					Cmd: func() tea.Msg {
+						return runMsg
 					},
 				},
-			})
+			},
 		}
 	}
 
 	// Sort root items by title
-	sort.SliceStable(rootItems, func(i, j int) bool {
-		return rootItems[i].Title < rootItems[j].Title
+	sort.SliceStable(listItems, func(i, j int) bool {
+		return listItems[i].Title < listItems[j].Title
 	})
 
 	list := NewList("Sunbeam")
-	list.SetItems(rootItems)
+	list.SetItems(listItems)
 
 	return list
 }

@@ -23,9 +23,11 @@ type Api struct {
 }
 
 type RootItem struct {
-	Script string
-	Title  string
-	With   ScriptInputs
+	Extension string
+	Script    string
+	Title     string
+	Subtitle  string
+	With      ScriptInputs
 }
 
 type Extension struct {

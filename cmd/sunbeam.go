@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
@@ -18,9 +21,18 @@ func ParseConfig() tui.Config {
 	viper.AutomaticEnv()
 	viper.ReadInConfig()
 
-	return tui.Config{
-		Height: viper.GetInt("height"),
+	configFile := viper.ConfigFileUsed()
+	bytes, err := os.ReadFile(configFile)
+	if err != nil {
+		log.Fatalf("could not read config file: %v", err)
 	}
+
+	var config tui.Config
+	err = yaml.Unmarshal(bytes, &config)
+	if err != nil {
+		log.Fatalf("could not parse config file: %v", err)
+	}
+	return config
 }
 
 func Execute() (err error) {
@@ -31,12 +43,21 @@ func Execute() (err error) {
 		Short:   "Command Line Launcher",
 		Version: app.Version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			manifests := make([]app.Extension, 0)
-			for _, manifest := range app.Sunbeam.Extensions {
-				manifests = append(manifests, manifest)
+			rootItems := make([]app.RootItem, 0)
+			for _, extension := range app.Sunbeam.Extensions {
+				for _, rootItem := range extension.RootItems {
+					rootItem.Extension = extension.Name
+					rootItem.Subtitle = extension.Title
+					rootItems = append(rootItems, rootItem)
+				}
 			}
 
-			rootList := tui.RootList(manifests...)
+			for _, rootItem := range config.RootItems {
+				rootItem.Subtitle = "User"
+				rootItems = append(rootItems, rootItem)
+			}
+
+			rootList := tui.RootList(rootItems...)
 			err = tui.Draw(rootList, config)
 			if err != nil {
 				return err
@@ -56,7 +77,6 @@ func Execute() (err error) {
 	// Core Commands
 	rootCmd.AddCommand(NewCmdExtension(config))
 	rootCmd.AddCommand(NewCmdQuery())
-	rootCmd.AddCommand(NewRawInputCommand(config))
 
 	// Extensions
 	for _, extension := range app.Sunbeam.Extensions {
@@ -83,7 +103,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 				}
 				runner = tui.NewRunContainer(extension, script, nil)
 			} else {
-				runner = tui.RootList(extension)
+				runner = tui.RootList(extension.RootItems...)
 			}
 			err = tui.Draw(runner, config)
 			if err != nil {
