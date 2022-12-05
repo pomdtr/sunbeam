@@ -159,7 +159,7 @@ func (ti *TextInput) Height() int {
 }
 
 func (ti *TextInput) SetWidth(width int) {
-	ti.Model.Width = width
+	ti.Model.Width = width - 1
 	placeholderPadding := width - len(ti.placeholder)
 	ti.Model.Placeholder = fmt.Sprintf("%s%s", ti.placeholder, strings.Repeat(" ", placeholderPadding))
 }
@@ -315,7 +315,7 @@ func (dd *DropDown) Height() int {
 }
 
 func (dd *DropDown) SetWidth(width int) {
-	dd.textinput.Width = width
+	dd.textinput.Width = width - 1
 	placeholderPadding := width - len(dd.textinput.Placeholder)
 	dd.textinput.Placeholder = fmt.Sprintf("%s%s", dd.textinput.Placeholder, strings.Repeat(" ", placeholderPadding))
 	dd.filter.Width = width
