@@ -24,7 +24,7 @@ func ParseConfig() tui.Config {
 	var config tui.Config
 
 	configFile := viper.ConfigFileUsed()
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+	if configFile == "" {
 		log.Printf("No config file found at %s, using default config", configFile)
 		return config
 	}
