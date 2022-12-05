@@ -18,6 +18,7 @@ if len(journal["entries"]) == 0:
                         "type": "runScript",
                         "script": "writeEntry",
                         "title": "Write Entry",
+                        "silent": True,
                         "onSuccess": "reloadPage",
                         "with": {
                             "title": {
@@ -59,6 +60,7 @@ for uuid, entry in journal["entries"].items():
                         "title": "New Entry",
                         "script": "writeEntry",
                         "onSuccess": "reloadPage",
+                        "silent": True,
                         "shortcut": "ctrl+n",
                         "with": {
                             "title": {
@@ -76,6 +78,7 @@ for uuid, entry in journal["entries"].items():
                         "title": "Delete Entry",
                         "script": "deleteEntry",
                         "onSuccess": "reloadPage",
+                        "silent": True,
                         "shortcut": "ctrl+d",
                         "with": {"uuid": uuid},
                     },
@@ -83,6 +86,7 @@ for uuid, entry in journal["entries"].items():
                         "type": "runScript",
                         "title": "Edit Entry",
                         "script": "editEntry",
+                        "silent": True,
                         "onSuccess": "reloadPage",
                         "shortcut": "ctrl+e",
                         "with": {

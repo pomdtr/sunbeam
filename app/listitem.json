@@ -101,6 +101,9 @@
                                     }
                                 }
                             },
+                            "silent": {
+                                "type": "boolean"
+                            },
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
@@ -128,6 +131,9 @@
                             "command"
                         ],
                         "properties": {
+                            "silent": {
+                                "type": "boolean"
+                            },
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
