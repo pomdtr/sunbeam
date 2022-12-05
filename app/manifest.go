@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -36,10 +37,25 @@ type Extension struct {
 	Name        string `json:"name" yaml:"name"`
 	PostInstall string `json:"postInstall" yaml:"postInstall"`
 
-	RootItems []RootItem        `json:"rootItems" yaml:"rootItems"`
-	Scripts   map[string]Script `json:"scripts" yaml:"scripts"`
+	Requirements []ExtensionRequirement `json:"requirements" yaml:"requirements"`
+	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
+	Scripts      map[string]Script      `json:"scripts" yaml:"scripts"`
 
 	Url url.URL
+}
+
+type ExtensionRequirement struct {
+	Which    string `json:"which" yaml:"which"`
+	HomePage string `json:"homepage" yaml:"homepage"`
+}
+
+func (r ExtensionRequirement) Check() bool {
+	cmd := exec.Command("which", r.Which)
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (m Extension) Dir() string {

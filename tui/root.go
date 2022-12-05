@@ -98,6 +98,15 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
+
+		if len(extension.Requirements) > 0 {
+			for _, requirement := range extension.Requirements {
+				if !requirement.Check() {
+					return m, NewErrorCmd(fmt.Errorf("requirement %s not met.\nHomepage: %s", requirement.Which, requirement.HomePage))
+				}
+			}
+		}
+
 		script, ok := extension.Scripts[msg.Script]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
