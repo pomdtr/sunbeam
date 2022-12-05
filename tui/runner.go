@@ -42,7 +42,9 @@ func (c *RunContainer) Init() tea.Cmd {
 type CommandOutput string
 
 func (c RunContainer) ScriptCmd() tea.Msg {
-	command, err := c.Script.Cmd(c.params)
+	commandString, err := c.Script.Cmd(c.params)
+	command := exec.Command("sh", "-c", commandString)
+
 	if c.Script.Mode == "generator" {
 		command.Stdin = strings.NewReader(c.list.Query())
 	}

@@ -233,23 +233,16 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 						},
 					}
 
-					var primaryAction tui.Action
-					if _, ok := app.Sunbeam.Extensions[repo.Name]; ok {
-						primaryAction = tui.Action{
-							Title: "Uninstall",
-							Cmd:   tui.NewExecCmd(exec.Command("sunbeam", "extension", "remove", repo.Name), false, "exit"),
-						}
-					} else {
-						primaryAction = tui.Action{
+					item.Actions = []tui.Action{
+						{
 							Title: "Install",
-							Cmd:   tui.NewExecCmd(exec.Command("sunbeam", "extension", "install", repo.HtmlURL), false, "exit"),
-						}
+							Cmd:   tui.NewExecCmd(fmt.Sprintf("sunbeam extension install %s", repo.HtmlURL), false, "exit"),
+						},
+						{
+							Title: "Open in Browser",
+							Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
+						},
 					}
-
-					item.Actions = []tui.Action{primaryAction, {
-						Title: "Open in Browser",
-						Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
-					}}
 
 					extensionItems[i] = item
 				}

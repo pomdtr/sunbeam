@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -86,7 +85,7 @@ type RunScriptMsg struct {
 	Silent    bool
 }
 
-func NewExecCmd(command *exec.Cmd, silent bool, onSuccess string) tea.Cmd {
+func NewExecCmd(command string, silent bool, onSuccess string) tea.Cmd {
 	return func() tea.Msg {
 		return ExecCommandMsg{
 			Command:   command,
@@ -97,7 +96,7 @@ func NewExecCmd(command *exec.Cmd, silent bool, onSuccess string) tea.Cmd {
 }
 
 type ExecCommandMsg struct {
-	Command   *exec.Cmd
+	Command   string
 	Silent    bool
 	OnSuccess string
 }
@@ -114,62 +113,48 @@ func (msg ExecCommandMsg) OnSuccessCmd() tea.Msg {
 }
 
 func NewAction(scriptAction app.ScriptAction) Action {
-	var msg tea.Msg
+	var cmd tea.Cmd
 	switch scriptAction.Type {
 	case "openUrl":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open URL"
 		}
-		msg = OpenUrlMsg{
-			Url:         scriptAction.Url,
-			Application: scriptAction.Application,
-		}
+		cmd = NewOpenUrlCmd(scriptAction.Url)
 	case "openPath":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open File"
 		}
-		msg = OpenPathMsg{
-			Path:        scriptAction.Path,
-			Application: scriptAction.Application,
-		}
+		cmd = NewOpenPathCmd(scriptAction.Path, scriptAction.Application)
 	case "copyText":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
-		msg = CopyTextMsg{
-			Text: scriptAction.Text,
-		}
+		cmd = NewCopyTextCmd(scriptAction.Text)
 	case "reloadPage":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Reload Script"
 		}
-		msg = ReloadPageMsg{
-			With: scriptAction.With,
-		}
+		cmd = NewReloadPageCmd(scriptAction.With)
 	case "runScript":
-		msg = RunScriptMsg{
-			Extension: scriptAction.Extension,
-			Script:    scriptAction.Script,
-			With:      scriptAction.With,
-			OnSuccess: scriptAction.OnSuccess,
-			Silent:    scriptAction.Silent,
+		cmd = func() tea.Msg {
+			return RunScriptMsg{
+				Extension: scriptAction.Extension,
+				Script:    scriptAction.Script,
+				With:      scriptAction.With,
+				OnSuccess: scriptAction.OnSuccess,
+				Silent:    scriptAction.Silent,
+			}
 		}
 	case "execCommand":
-		command := exec.Command("sh", "-c", scriptAction.Command)
-		msg = ExecCommandMsg{
-			Command:   command,
-			OnSuccess: scriptAction.OnSuccess,
-			Silent:    scriptAction.Silent,
-		}
+		cmd = NewExecCmd(scriptAction.Command, scriptAction.Silent, scriptAction.OnSuccess)
+
 	default:
 		scriptAction.Title = "Unknown"
-		msg = fmt.Errorf("unknown action type: %s", scriptAction.Type)
+		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))
 	}
 
 	return Action{
-		Cmd: func() tea.Msg {
-			return msg
-		},
+		Cmd:      cmd,
 		Title:    scriptAction.Title,
 		Shortcut: scriptAction.Shortcut,
 	}

@@ -39,7 +39,7 @@ type ScriptParam struct {
 	Description string `json:"description"`
 }
 
-func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
+func (s Script) Cmd(with map[string]any) (string, error) {
 	var err error
 
 	funcMap := template.FuncMap{}
@@ -48,21 +48,21 @@ func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
 		param := param
 		value, ok := with[param.Name]
 		if !ok {
-			return nil, fmt.Errorf("unknown param %s", param.Name)
+			return "", fmt.Errorf("unknown param %s", param.Name)
 		}
 		funcMap[param.Name] = func() (any, error) {
 			switch param.Type {
 			case "string":
 				value, ok := value.(string)
 				if !ok {
-					return nil, fmt.Errorf("expected string for param %s", param.Name)
+					return "", fmt.Errorf("expected string for param %s", param.Name)
 				}
 
 				return shellescape.Quote(value), nil
 			case "directory", "file":
 				value, ok := value.(string)
 				if !ok {
-					return nil, fmt.Errorf("expected string for param %s", param.Name)
+					return "", fmt.Errorf("expected string for param %s", param.Name)
 				}
 
 				if strings.HasPrefix(value, "~") {
@@ -100,9 +100,9 @@ func (s Script) Cmd(with map[string]any) (*exec.Cmd, error) {
 
 	rendered, err := utils.RenderString(s.Command, funcMap)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return exec.Command("sh", "-c", rendered), nil
+	return rendered, nil
 }
 
 type Detail struct {

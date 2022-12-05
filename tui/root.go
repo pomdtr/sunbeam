@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"sort"
 	"strconv"
 
@@ -145,17 +146,18 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		command, err := script.Cmd(params)
-		if err != nil {
-			return m, NewErrorCmd(err)
-		}
-		command.Dir = extension.Dir()
+		commandString, err := script.Cmd(params)
 
 		switch script.Mode {
 		case "command":
-			return m, NewExecCmd(command, msg.Silent, msg.OnSuccess)
+			return m, NewExecCmd(commandString, msg.Silent, msg.OnSuccess)
 		case "clipboard":
 			return m, func() tea.Msg {
+				command := exec.Command("sh", "-c", commandString)
+				if err != nil {
+					return err
+				}
+				command.Dir = extension.Dir()
 				out, err := command.Output()
 				if err != nil {
 					return err
@@ -164,6 +166,11 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "browser":
 			return m, func() tea.Msg {
+				command := exec.Command("sh", "-c", commandString)
+				if err != nil {
+					return err
+				}
+				command.Dir = extension.Dir()
 				out, err := command.Output()
 				if err != nil {
 					return err
@@ -174,10 +181,11 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("unknown mode: %s", script.Mode))
 		}
 	case ExecCommandMsg:
+		command := exec.Command("sh", "-c", msg.Command)
 		if msg.Silent {
-			err := msg.Command.Run()
+			err := command.Run()
 			if err != nil {
-				detail := NewDetail(msg.Command.String())
+				detail := NewDetail(command.String())
 				detail.SetContent(err.Error())
 				return m, NewPushCmd(detail)
 			}
@@ -186,9 +194,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.hidden = true
-		return m, tea.ExecProcess(msg.Command, func(err error) tea.Msg {
+		return m, tea.ExecProcess(command, func(err error) tea.Msg {
 			if err != nil {
-				detail := NewDetail(msg.Command.String())
+				log.Println("ERROR")
+				detail := NewDetail(command.String())
 				detail.SetContent(err.Error())
 				return pushMsg{container: detail}
 			}
@@ -198,6 +207,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		})
 	case pushMsg:
+		m.hidden = false
 		cmd := m.Push(msg.container)
 		return m, cmd
 	case popMsg:
@@ -209,7 +219,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case showMsg:
-		log.Println("showMsg", msg)
 		m.hidden = false
 		return m, msg.cmd
 	case error:
