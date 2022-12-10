@@ -59,11 +59,17 @@ func Execute() (err error) {
 				rootItems = append(rootItems, rootItem)
 			}
 
-			rootList := tui.RootList(rootItems...)
-			err = tui.Draw(rootList, config)
-			if err != nil {
-				return err
+			for {
+				rootList := tui.RootList(rootItems...)
+				err = tui.Draw(rootList, config)
+				if err != nil {
+					return err
+				}
+				if os.Getenv("SUNBEAM_RELOAD") == "" {
+					break
+				}
 			}
+
 			return
 		},
 	}

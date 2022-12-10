@@ -20,7 +20,7 @@ func NewHeader() Header {
 	ti := textinput.NewModel()
 	ti.Prompt = ""
 	ti.Placeholder = ""
-	ti.PlaceholderStyle = styles.Faint.Copy().Italic(true)
+	ti.PlaceholderStyle = styles.Faint.Copy()
 	spinner := spinner.New()
 	spinner.Style = styles.Regular.Copy().Padding(0, 1)
 	return Header{

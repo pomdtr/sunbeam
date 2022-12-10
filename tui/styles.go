@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"os"
+
 	"github.com/charmbracelet/lipgloss"
 	tint "github.com/lrstanley/bubbletint"
 )
@@ -19,11 +21,24 @@ var (
 )
 
 func init() {
-	if lipgloss.HasDarkBackground() {
-		theme = tint.NewRegistry(tint.TintTomorrowNight)
-	} else {
-		theme = tint.NewRegistry(tint.TintTomorrow)
+	lightTint := tint.TintTomorrowNight
+	darkTint := tint.TintTomorrow
+	switch os.Getenv("SUNBEAM_APPEARANCE") {
+	case "dark":
+		lipgloss.SetHasDarkBackground(true)
+		theme = tint.NewRegistry(lightTint)
+	case "light":
+		lipgloss.SetHasDarkBackground(false)
+		theme = tint.NewRegistry(darkTint)
+	case "auto", "":
+		// lipgloss default detection
+		if lipgloss.HasDarkBackground() {
+			theme = tint.NewRegistry(lightTint)
+		} else {
+			theme = tint.NewRegistry(darkTint)
+		}
 	}
+
 	accentColor = theme.BrightPurple()
 
 	styles = Styles{

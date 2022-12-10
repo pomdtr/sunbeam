@@ -10,7 +10,6 @@ import (
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cli/browser"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
@@ -18,7 +17,10 @@ import (
 )
 
 type Config struct {
-	Height    int
+	Appearance  string
+	Height      int
+	AccentColor string
+
 	RootItems []app.RootItem `yaml:"rootItems"`
 }
 
@@ -32,11 +34,11 @@ type Container interface {
 type RootModel struct {
 	maxHeight     int
 	width, height int
+	exit          bool
 
 	pages []Container
 
-	hidden  bool
-	exitMsg string
+	hidden bool
 }
 
 func NewRootModel(height int) *RootModel {
@@ -56,6 +58,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			m.hidden = true
+			m.exit = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
@@ -64,18 +67,15 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case CopyTextMsg:
 		err := clipboard.WriteAll(msg.Text)
 		if err != nil {
-			m.exitMsg = fmt.Sprintf("Failed to copy to clipboard: %v", err)
 			return m, NewErrorCmd(err)
 		}
-		m.exitMsg = "Copied to clipboard"
 		m.hidden = true
 		return m, tea.Quit
 	case OpenUrlMsg:
 		err := browser.OpenURL(msg.Url)
 		if err != nil {
-			m.exitMsg = fmt.Sprintf("Failed to open url: %v", err)
+			return m, NewErrorCmd(err)
 		}
-		m.exitMsg = fmt.Sprintf("Opened %s in browser.", msg.Url)
 		m.hidden = true
 		return m, tea.Quit
 	case OpenPathMsg:
@@ -83,13 +83,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.Application != "" {
 			err = open.RunWith(msg.Path, msg.Application)
-			m.exitMsg = fmt.Sprintf("Opened %s with %s", msg.Path, msg.Application)
 		} else {
 			err = open.Run(msg.Path)
-			m.exitMsg = fmt.Sprintf("Opened %s", msg.Path)
 		}
 		if err != nil {
-			m.exitMsg = fmt.Sprintf("Failed to open %s: %v", msg.Path, err)
 			return m, NewErrorCmd(err)
 		}
 		m.hidden = true
@@ -153,7 +150,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch script.Mode {
 		case "command":
 			return m, NewExecCmd(commandString, msg.Silent, msg.OnSuccess)
-		case "clipboard":
+		case "snippet":
 			return m, func() tea.Msg {
 				command := exec.Command("sh", "-c", commandString)
 				if err != nil {
@@ -166,7 +163,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return CopyTextMsg{Text: string(out)}
 			}
-		case "browser":
+		case "quicklink":
 			return m, func() tea.Msg {
 				command := exec.Command("sh", "-c", commandString)
 				if err != nil {
@@ -225,7 +222,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, msg.cmd
 	case error:
 		detail := NewDetail("Error")
-		detail.SetSize(m.pageWidth(), m.pageHeight())
+		detail.SetSize(m.width, m.pageHeight())
 		detail.SetContent(msg.Error())
 
 		currentIndex := len(m.pages) - 1
@@ -253,12 +250,7 @@ func (m *RootModel) View() string {
 		embedView = "No pages"
 	}
 
-	pageStyle := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(theme.Fg())
-
-	if m.maxHeight > 0 {
-		return pageStyle.Render(embedView)
-	}
-	return lipgloss.Place(m.width, m.height, lipgloss.Position(lipgloss.Center), lipgloss.Position(lipgloss.Center), pageStyle.Render(embedView))
+	return embedView
 }
 
 func (m *RootModel) SetSize(width, height int) {
@@ -266,23 +258,16 @@ func (m *RootModel) SetSize(width, height int) {
 	m.height = height
 
 	for _, page := range m.pages {
-		page.SetSize(m.pageWidth(), m.pageHeight())
+		page.SetSize(m.width, m.pageHeight())
 	}
-}
-
-func (m *RootModel) pageWidth() int {
-	return utils.Max(0, m.width-2)
 }
 
 func (m *RootModel) pageHeight() int {
-	var height int
 	if m.maxHeight > 0 {
-		height = utils.Min(m.maxHeight, m.height)
+		return utils.Min(m.maxHeight, m.height)
 	} else {
-		height = m.height
+		return m.height
 	}
-
-	return utils.Max(0, height-2)
 }
 
 type popMsg struct{}
@@ -306,7 +291,7 @@ func NewPushCmd(c Container) tea.Cmd {
 }
 
 func (m *RootModel) Push(page Container) tea.Cmd {
-	page.SetSize(m.pageWidth(), m.pageHeight())
+	page.SetSize(m.width, m.pageHeight())
 	m.pages = append(m.pages, page)
 	return page.Init()
 }
@@ -372,15 +357,9 @@ func Draw(container Container, config Config) (err error) {
 	model := NewRootModel(config.Height)
 	model.Push(container)
 	p := tea.NewProgram(model, programOptions...)
-	m, err := p.Run()
+	_, err = p.Run()
 	if err != nil {
 		return err
-	}
-
-	root, _ := m.(*RootModel)
-
-	if root.exitMsg != "" {
-		fmt.Println(root.exitMsg)
 	}
 
 	return nil
