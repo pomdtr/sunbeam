@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/cli/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -67,6 +68,10 @@ func Execute() (err error) {
 				}
 				if os.Getenv("SUNBEAM_RELOAD") == "" {
 					break
+				}
+				reloadHook := os.Getenv("SUNBEAM_RELOAD_HOOK")
+				if reloadHook != "" {
+					browser.OpenURL(reloadHook)
 				}
 			}
 
