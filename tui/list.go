@@ -163,9 +163,10 @@ func (c *List) SetSize(width, height int) {
 	c.header.Width = width
 	c.actions.SetSize(width, height)
 	if c.ShowPreview {
-		c.viewport.Width = width / 2
+		listWidth := width / 3
+		c.filter.SetSize(listWidth, availableHeight)
+		c.viewport.Width = c.viewport.Width - listWidth
 		c.viewport.Height = availableHeight
-		c.filter.SetSize(width-c.viewport.Width-1, availableHeight)
 		c.setPreviewContent(c.previewContent)
 	} else {
 		c.filter.SetSize(width, availableHeight)
