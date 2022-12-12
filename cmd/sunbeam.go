@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/cli/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -60,22 +59,8 @@ func Execute() (err error) {
 				rootItems = append(rootItems, rootItem)
 			}
 
-			for {
-				rootList := tui.RootList(rootItems...)
-				err = tui.Draw(rootList, config)
-				if err != nil {
-					return err
-				}
-				if os.Getenv("SUNBEAM_RELOAD") == "" {
-					break
-				}
-				reloadHook := os.Getenv("SUNBEAM_RELOAD_HOOK")
-				if reloadHook != "" {
-					browser.OpenURL(reloadHook)
-				}
-			}
-
-			return
+			rootList := tui.RootList(rootItems...)
+			return tui.Draw(rootList, config)
 		},
 	}
 

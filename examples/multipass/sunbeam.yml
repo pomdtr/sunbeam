@@ -15,6 +15,7 @@ scripts:
       multipass list --format json | sunbeam query '.list[] |
       {
         title: .name,
+        subtitle: .release,
         accessories: [
           .state
         ],
