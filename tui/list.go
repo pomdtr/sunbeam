@@ -11,7 +11,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/wordwrap"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 )
@@ -175,8 +174,6 @@ func (c *List) SetSize(width, height int) {
 
 func (l *List) setPreviewContent(content string) {
 	l.previewContent = content
-	content = wordwrap.String(content, l.viewport.Width-4)
-	content = lipgloss.NewStyle().Padding(0, 1).Width(l.viewport.Width).Render(content)
 	l.viewport.SetContent(content)
 }
 
