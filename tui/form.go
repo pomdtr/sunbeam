@@ -501,7 +501,7 @@ func (c *Form) SetSize(width, height int) {
 
 func (c *Form) View() string {
 	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(accentColor)
-	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(theme.Fg())
+	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
 	itemViews := make([]string, len(c.items))
 	maxWidth := 0
 	for i, item := range c.items {

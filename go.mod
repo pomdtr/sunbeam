@@ -8,7 +8,6 @@ require (
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/cli/browser v1.1.0
 	github.com/itchyny/gojq v0.12.10
-	github.com/lrstanley/bubbletint v0.0.0-20221106213237-947d333795f8
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966

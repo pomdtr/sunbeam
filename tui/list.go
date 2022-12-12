@@ -80,13 +80,12 @@ func (i ListItem) Render(width int, selected bool) string {
 	}
 
 	var title string
-	var titleColor lipgloss.TerminalColor
+	titleStyle := lipgloss.NewStyle().Bold(true)
 	if selected {
 		title = fmt.Sprintf("> %s", i.Title)
-		titleColor = accentColor
+		titleStyle = titleStyle.Foreground(accentColor)
 	} else {
 		title = fmt.Sprintf("  %s", i.Title)
-		titleColor = theme.Fg()
 	}
 
 	subtitle := fmt.Sprintf(" %s", i.Subtitle)
@@ -106,7 +105,7 @@ func (i ListItem) Render(width int, selected bool) string {
 		title = title[:width]
 	}
 
-	title = styles.Bold.Copy().Foreground(titleColor).Render(title)
+	title = titleStyle.Render(title)
 	subtitle = styles.Faint.Render(subtitle)
 	blanks = styles.Regular.Render(blanks)
 	accessories = styles.Faint.Render(accessories)
