@@ -113,7 +113,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.Push(runner)
 		return m, cmd
 	case ExecCommandMsg:
-		command := exec.Command("sh", "-c", msg.Command)
+		command := exec.Command("sh", "-c", fmt.Sprintf("%s; clear", msg.Command))
 		if msg.Silent {
 			err := command.Run()
 			if err != nil {
