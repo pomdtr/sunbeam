@@ -18,6 +18,8 @@
 go install github.com/pomdtr/sunbeam@latest
 ```
 
+In order to install extension, either use the `sunbeam extension browse command`, or download one of the directory in the example folder and run `sunbeam extension install .`
+
 ## Development
 
 ## Libraries
