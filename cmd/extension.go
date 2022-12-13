@@ -250,9 +250,9 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 				list := tui.NewList("Browse Extensions")
 				list.ShowPreview = true
 				list.SetItems(extensionItems)
+				root := tui.NewRootModel(list)
 
-				model := tui.NewRootModel(tui.NewPushCmd(list))
-				return tui.Draw(model)
+				return tui.Draw(root)
 			},
 		}
 		command.Flags().String("host", "github.com", "Github Host")

@@ -33,39 +33,6 @@ type FormInput interface {
 	View() string
 }
 
-func extractScriptInput(script app.Script, with map[string]any) (map[string]any, []FormItem, error) {
-	formItems := make([]FormItem, 0)
-	params := make(map[string]any)
-	for _, param := range script.Params {
-		value, ok := with[param.Name]
-		if !ok {
-			if param.Default != nil {
-				params[param.Name] = param.Default
-			} else {
-				switch param.Type {
-				case "string":
-					formItem, _ := NewFormItem(param.Name, app.FormItem{
-						Type:  "textfield",
-						Title: param.Name,
-					})
-					formItems = append(formItems, formItem)
-				case "boolean":
-					formItem, _ := NewFormItem(param.Name, app.FormItem{
-						Type:  "checkbox",
-						Title: param.Name,
-					})
-					formItems = append(formItems, formItem)
-				}
-			}
-			continue
-		}
-		params[param.Name] = value
-
-	}
-
-	return params, formItems, nil
-}
-
 func NewFormItem(name string, formItem app.FormItem) (FormItem, error) {
 	var input FormInput
 	if formItem.Placeholder == "" {

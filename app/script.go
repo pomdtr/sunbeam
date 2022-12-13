@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -67,7 +66,6 @@ type ScriptInputs map[string]ScriptInput
 
 func (s Script) Cmd(with map[string]any) (string, error) {
 	var err error
-	log.Println("with", with)
 
 	funcMap := template.FuncMap{}
 
@@ -75,8 +73,12 @@ func (s Script) Cmd(with map[string]any) (string, error) {
 		param := param
 		value, ok := with[param.Name]
 		if !ok {
-			return "", fmt.Errorf("unknown param %s", param.Name)
+			if param.Default == nil {
+				return "", fmt.Errorf("unknown param %s", param.Name)
+			}
+			value = param.Default
 		}
+
 		funcMap[param.Name] = func() (any, error) {
 			switch param.Type {
 			case "string":

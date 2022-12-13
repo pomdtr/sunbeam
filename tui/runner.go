@@ -14,35 +14,36 @@ import (
 	"github.com/pomdtr/sunbeam/app"
 )
 
-type RunContainer struct {
+type ScriptRunner struct {
 	width, height int
 	currentView   string
 
 	extension app.Extension
-	params    map[string]any
+	with      map[string]any
 
 	list   *List
 	detail *Detail
+	form   *Form
 
 	Script app.Script
 }
 
-func NewRunContainer(manifest app.Extension, script app.Script, params map[string]any) *RunContainer {
-	return &RunContainer{
+func NewScriptRunner(manifest app.Extension, script app.Script, params map[string]any) *ScriptRunner {
+	return &ScriptRunner{
 		extension: manifest,
 		Script:    script,
-		params:    params,
+		with:      params,
 	}
 }
 
-func (c *RunContainer) Init() tea.Cmd {
+func (c *ScriptRunner) Init() tea.Cmd {
 	return c.Run()
 }
 
 type CommandOutput string
 
-func (c RunContainer) ScriptCmd() tea.Msg {
-	commandString, err := c.Script.Cmd(c.params)
+func (c ScriptRunner) ScriptCmd() tea.Msg {
+	commandString, err := c.Script.Cmd(c.with)
 	command := exec.Command("sh", "-c", commandString)
 
 	if c.Script.Mode == "generator" {
@@ -83,7 +84,67 @@ func (c RunContainer) ScriptCmd() tea.Msg {
 	return CommandOutput(string(res))
 }
 
-func (c *RunContainer) Run() tea.Cmd {
+func (c *ScriptRunner) CheckMissingParams() ([]FormItem, error) {
+	formItems := make([]FormItem, 0)
+	for _, param := range c.Script.Params {
+		_, ok := c.with[param.Name]
+		if ok {
+			continue
+		}
+
+		if param.Default != nil {
+			continue
+		}
+
+		switch param.Type {
+		case "string", "file", "directory":
+			formItem, _ := NewFormItem(param.Name, app.FormItem{
+				Type:  "textfield",
+				Title: param.Name,
+			})
+			formItems = append(formItems, formItem)
+		case "boolean":
+			formItem, _ := NewFormItem(param.Name, app.FormItem{
+				Type:  "checkbox",
+				Title: param.Name,
+			})
+			formItems = append(formItems, formItem)
+		}
+	}
+
+	return formItems, nil
+}
+
+func (c *ScriptRunner) Run() tea.Cmd {
+	formItems, err := c.CheckMissingParams()
+	if err != nil {
+		return NewErrorCmd(err)
+	}
+
+	if len(formItems) > 0 {
+		c.currentView = "form"
+
+		c.form = NewForm(c.extension.Name, formItems, func(formValues map[string]any) tea.Cmd {
+			with := make(map[string]any)
+			for _, param := range c.Script.Params {
+				if value, ok := formValues[param.Name]; ok {
+					with[param.Name] = value
+				} else if value, ok := c.with[param.Name]; ok {
+					with[param.Name] = value
+				} else {
+					return NewErrorCmd(fmt.Errorf("missing param %s", param.Name))
+				}
+			}
+			c.with = with
+
+			return c.Run()
+		})
+
+		c.form.SetSize(c.width, c.height)
+
+		return c.form.Init()
+	}
+
 	switch c.Script.Mode {
 	case "filter", "generator":
 		c.currentView = "list"
@@ -112,12 +173,14 @@ func (c *RunContainer) Run() tea.Cmd {
 		c.detail.SetSize(c.width, c.height)
 		cmd := c.detail.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
+	case "snippet", "quicklink":
+		return c.ScriptCmd
 	default:
 		return NewErrorCmd(fmt.Errorf("unknown script mode: %s", c.Script.Mode))
 	}
 }
 
-func (c *RunContainer) SetSize(width, height int) {
+func (c *ScriptRunner) SetSize(width, height int) {
 	c.width, c.height = width, height
 	switch c.currentView {
 	case "list":
@@ -127,10 +190,10 @@ func (c *RunContainer) SetSize(width, height int) {
 	}
 }
 
-func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case CommandOutput:
-		switch c.currentView {
+		switch c.Script.Mode {
 		case "detail":
 			var detail app.Detail
 			json.Unmarshal([]byte(msg), &detail)
@@ -142,7 +205,7 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			}
 			c.detail.SetActions(actions...)
 			return c, nil
-		case "list":
+		case "filter", "generator":
 			scriptItems, err := app.ParseListItems(string(msg))
 			if err != nil {
 				return c, NewErrorCmd(err)
@@ -167,10 +230,16 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			cmd := c.list.SetItems(listItems)
 			c.list.SetIsLoading(false)
 			return c, cmd
+		case "command":
+			return c, tea.Quit
+		case "quicklink":
+			return c, NewOpenUrlCmd(string(msg))
+		case "snippet":
+			return c, NewCopyTextCmd(string(msg))
 		}
 	case ReloadPageMsg:
 		for key, value := range msg.With {
-			c.params[key] = value
+			c.with[key] = value
 		}
 		var cmd tea.Cmd
 		if c.currentView == "list" {
@@ -191,16 +260,21 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case "detail":
 		container, cmd = c.detail.Update(msg)
 		c.detail, _ = container.(*Detail)
+	case "form":
+		container, cmd = c.form.Update(msg)
+		c.form, _ = container.(*Form)
 	}
 	return c, cmd
 }
 
-func (c *RunContainer) View() string {
+func (c *ScriptRunner) View() string {
 	switch c.currentView {
 	case "list":
 		return c.list.View()
 	case "detail":
 		return c.detail.View()
+	case "form":
+		return c.form.View()
 	default:
 		return ""
 	}

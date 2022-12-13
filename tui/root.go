@@ -34,20 +34,20 @@ type RootModel struct {
 	maxHeight     int
 	width, height int
 	exit          bool
-	initCmd       tea.Cmd
 
-	pages []Container
-	Popup Container
+	rootPage Container
+	pages    []Container
+	Popup    Container
 
 	hidden bool
 }
 
-func NewRootModel(initCmd tea.Cmd) *RootModel {
-	return &RootModel{initCmd: initCmd}
+func NewRootModel(rootPage Container) *RootModel {
+	return &RootModel{rootPage: rootPage}
 }
 
 func (m *RootModel) Init() tea.Cmd {
-	return m.initCmd
+	return m.rootPage.Init()
 }
 
 func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -109,75 +109,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
-		inputParams, formItems, err := extractScriptInput(script, msg.With)
-		log.Println(inputParams, formItems, err)
-		if err != nil {
-			return m, NewErrorCmd(err)
-		}
-
-		if len(formItems) > 0 {
-			form := NewForm(msg.Extension, formItems, func(formValues map[string]any) tea.Cmd {
-				with := make(map[string]any)
-				for _, param := range script.Params {
-					if value, ok := formValues[param.Name]; ok {
-						with[param.Name] = value
-					} else if value, ok := inputParams[param.Name]; ok {
-						with[param.Name] = value
-					}
-				}
-				msg.With = with
-
-				return func() tea.Msg {
-					return msg
-				}
-			})
-
-			form.SetSize(m.width, m.pageHeight())
-			m.Popup = form
-
-			return m, m.Popup.Init()
-		}
-
-		if script.IsPage() {
-			runner := NewRunContainer(extension, script, inputParams)
-			cmd := m.Push(runner)
-			return m, cmd
-		}
-
-		commandString, err := script.Cmd(inputParams)
-
-		switch script.Mode {
-		case "command":
-			return m, NewExecCmd(commandString, msg.Silent, msg.OnSuccess)
-		case "snippet":
-			return m, func() tea.Msg {
-				command := exec.Command("sh", "-c", commandString)
-				if err != nil {
-					return err
-				}
-				command.Dir = extension.Dir()
-				out, err := command.Output()
-				if err != nil {
-					return err
-				}
-				return CopyTextMsg{Text: string(out)}
-			}
-		case "quicklink":
-			return m, func() tea.Msg {
-				command := exec.Command("sh", "-c", commandString)
-				if err != nil {
-					return err
-				}
-				command.Dir = extension.Dir()
-				out, err := command.Output()
-				if err != nil {
-					return err
-				}
-				return OpenUrlMsg{Url: string(out)}
-			}
-		default:
-			return m, NewErrorCmd(fmt.Errorf("unknown mode: %s", script.Mode))
-		}
+		runner := NewScriptRunner(extension, script, msg.With)
+		cmd := m.Push(runner)
+		return m, cmd
 	case ExecCommandMsg:
 		command := exec.Command("sh", "-c", msg.Command)
 		if msg.Silent {
@@ -215,7 +149,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.Popup = nil
 			return m, nil
-		} else if len(m.pages) == 1 {
+		} else if len(m.pages) == 0 {
 			return m, tea.Quit
 		} else {
 			m.Pop()
@@ -238,8 +172,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	if m.Popup != nil {
 		m.Popup, cmd = m.Popup.Update(msg)
-		return m, cmd
-	} else if len(m.pages) > 0 {
+	} else if len(m.pages) == 0 {
+		m.rootPage, cmd = m.rootPage.Update(msg)
+	} else {
 		currentPageIdx := len(m.pages) - 1
 		m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
 	}
@@ -254,6 +189,10 @@ func (m *RootModel) View() string {
 
 	if m.Popup != nil {
 		return m.Popup.View()
+	}
+
+	if len(m.pages) == 0 {
+		return m.rootPage.View()
 	}
 
 	var embedView string
@@ -274,6 +213,8 @@ func (m *RootModel) SetSize(width, height int) {
 	if m.Popup != nil {
 		m.Popup.SetSize(m.width, m.pageHeight())
 	}
+
+	m.rootPage.SetSize(m.width, m.pageHeight())
 
 	for _, page := range m.pages {
 		page.SetSize(m.width, m.pageHeight())

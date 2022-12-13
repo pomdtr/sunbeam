@@ -59,7 +59,7 @@ func Execute() (err error) {
 			}
 
 			rootList := tui.RootList(rootItems...)
-			model := tui.NewRootModel(tui.NewPushCmd(rootList))
+			model := tui.NewRootModel(rootList)
 			return tui.Draw(model)
 		},
 	}

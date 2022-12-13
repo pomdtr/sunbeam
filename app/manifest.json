@@ -179,7 +179,9 @@
                                 "type": "string",
                                 "enum": [
                                     "string",
-                                    "boolean"
+                                    "boolean",
+                                    "file",
+                                    "directory"
                                 ]
                             },
                             "description": {
