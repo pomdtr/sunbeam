@@ -17,7 +17,6 @@ import (
 )
 
 type Config struct {
-	Appearance  string
 	Height      int
 	AccentColor string
 
@@ -35,21 +34,19 @@ type RootModel struct {
 	maxHeight     int
 	width, height int
 	exit          bool
+	initCmd       tea.Cmd
 
 	pages []Container
 
 	hidden bool
 }
 
-func NewRootModel(height int) *RootModel {
-	return &RootModel{maxHeight: height}
+func NewRootModel(initCmd tea.Cmd) *RootModel {
+	return &RootModel{initCmd: initCmd}
 }
 
 func (m *RootModel) Init() tea.Cmd {
-	if len(m.pages) == 0 {
-		return nil
-	}
-	return m.pages[0].Init()
+	return m.initCmd
 }
 
 func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -57,7 +54,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
-			m.hidden = true
 			m.exit = true
 			return m, tea.Quit
 		}
@@ -69,14 +65,12 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
-		m.hidden = true
 		return m, tea.Quit
 	case OpenUrlMsg:
 		err := browser.OpenURL(msg.Url)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
-		m.hidden = true
 		return m, tea.Quit
 	case OpenPathMsg:
 		var err error
@@ -89,7 +83,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
-		m.hidden = true
 		return m, tea.Quit
 	case RunScriptMsg:
 		extension, ok := app.Sunbeam.Extensions[msg.Extension]
@@ -119,20 +112,19 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if len(formItems) > 0 {
 			form := NewForm(msg.Extension, formItems, func(values map[string]any) tea.Cmd {
-				msg := msg
-
-				with := make(map[string]app.ScriptInput)
-				for key, param := range msg.With {
-					if value, ok := values[key]; ok {
-						param.Value = value
-					}
-					with[key] = param
+				with := make(map[string]any)
+				for key, value := range msg.With {
+					with[key] = value
 				}
+				for key, value := range values {
+					with[key] = value
+				}
+
 				msg.With = with
 
-				return tea.Sequence(PopCmd, func() tea.Msg {
+				return func() tea.Msg {
 					return msg
-				})
+				}
 			})
 
 			cmd := m.Push(form)
@@ -337,7 +329,7 @@ func RootList(rootItems ...app.RootItem) *List {
 	return list
 }
 
-func Draw(container Container, config Config) (err error) {
+func Draw(model *RootModel) (err error) {
 	// Log to a file
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
 		f, err := tea.LogToFile(env, "debug")
@@ -349,14 +341,7 @@ func Draw(container Container, config Config) (err error) {
 		tea.LogToFile("/dev/null", "")
 	}
 
-	programOptions := make([]tea.ProgramOption, 0)
-	if config.Height == 0 {
-		programOptions = append(programOptions, tea.WithAltScreen())
-	}
-
-	model := NewRootModel(config.Height)
-	model.Push(container)
-	p := tea.NewProgram(model, programOptions...)
+	p := tea.NewProgram(model, tea.WithAltScreen())
 	_, err = p.Run()
 	if err != nil {
 		return err

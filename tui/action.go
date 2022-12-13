@@ -65,7 +65,7 @@ type OpenPathMsg struct {
 	Application string
 }
 
-func NewReloadPageCmd(params app.ScriptInputs) tea.Cmd {
+func NewReloadPageCmd(params map[string]any) tea.Cmd {
 	return func() tea.Msg {
 		return ReloadPageMsg{
 			With: params,
@@ -74,13 +74,23 @@ func NewReloadPageCmd(params app.ScriptInputs) tea.Cmd {
 }
 
 type ReloadPageMsg struct {
-	With app.ScriptInputs
+	With map[string]any
+}
+
+func NewRunScriptCmd(extension string, script string, with map[string]any) tea.Cmd {
+	return func() tea.Msg {
+		return RunScriptMsg{
+			Extension: extension,
+			Script:    script,
+			With:      with,
+		}
+	}
 }
 
 type RunScriptMsg struct {
 	Extension string
 	Script    string
-	With      app.ScriptInputs
+	With      map[string]any
 	OnSuccess string
 	Silent    bool
 }

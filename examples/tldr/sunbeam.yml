@@ -17,10 +17,6 @@ scripts:
     params:
       - name: platform
         type: string
-        enum:
-          - linux
-          - osx
-          - windows
     command: |
       tldr --list --platform ${{ platform }} | sunbeam query -R '{
         id: .,

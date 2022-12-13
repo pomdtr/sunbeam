@@ -7,7 +7,4 @@ rootItems:
 scripts:
   randomList:
     command: ./random_list.py
-    output: page
-    page:
-      type: list
-      mode: filter
+    mode: filter

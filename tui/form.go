@@ -16,9 +16,8 @@ import (
 )
 
 type FormItem struct {
-	Required bool
-	Title    string
-	Id       string
+	Title string
+	Id    string
 	FormInput
 }
 
@@ -34,29 +33,33 @@ type FormInput interface {
 	View() string
 }
 
-func extractScriptInput(script app.Script, with map[string]app.ScriptInput) (map[string]any, []FormItem, error) {
+func extractScriptInput(script app.Script, with map[string]any) (map[string]any, []FormItem, error) {
 	formItems := make([]FormItem, 0)
 	params := make(map[string]any)
-	for _, param := range script.Inputs {
-		input, ok := with[param.Name]
+	for _, param := range script.Params {
+		value, ok := with[param.Name]
 		if !ok {
 			if param.Default != nil {
 				params[param.Name] = param.Default
 				continue
 			}
-			return nil, nil, fmt.Errorf("missing required parameter: %s", param.Name)
+			switch param.Type {
+			case "string":
+				formItem, _ := NewFormItem(param.Name, app.FormItem{
+					Type:  "textfield",
+					Title: param.Name,
+				})
+				formItems = append(formItems, formItem)
+			case "boolean":
+				formItem, _ := NewFormItem(param.Name, app.FormItem{
+					Type:  "checkbox",
+					Title: param.Name,
+				})
+				formItems = append(formItems, formItem)
+			}
 		}
 
-		if input.Value != nil {
-			params[param.Name] = input.Value
-			continue
-		}
-
-		formItem, err := NewFormItem(param.Name, input.FormItem)
-		if err != nil {
-			return nil, nil, err
-		}
-		formItems = append(formItems, formItem)
+		params[param.Name] = value
 	}
 
 	return params, formItems, nil
@@ -160,7 +163,7 @@ func (ti *TextInput) Height() int {
 
 func (ti *TextInput) SetWidth(width int) {
 	ti.Model.Width = width - 1
-	placeholderPadding := width - len(ti.placeholder)
+	placeholderPadding := utils.Max(0, width-len(ti.placeholder))
 	ti.Model.Placeholder = fmt.Sprintf("%s%s", ti.placeholder, strings.Repeat(" ", placeholderPadding))
 }
 

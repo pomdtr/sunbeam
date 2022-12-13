@@ -7,13 +7,6 @@ rootItems:
     title: List Entries
   - script: writeEntry
     title: Write Entry
-    with:
-      title:
-        type: textfield
-        title: Title
-      content:
-        type: textarea
-        title: Body
 scripts:
   listEntries:
     command: ./list-entries.py

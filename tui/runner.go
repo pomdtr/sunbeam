@@ -169,8 +169,8 @@ func (c *RunContainer) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, cmd
 		}
 	case ReloadPageMsg:
-		for key, input := range msg.With {
-			c.params[key] = input.Value
+		for key, value := range msg.With {
+			c.params[key] = value
 		}
 		var cmd tea.Cmd
 		if c.currentView == "list" {

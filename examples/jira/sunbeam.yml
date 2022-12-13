@@ -5,8 +5,7 @@ rootItems:
   - title: List Issues
     script: listIssues
     with:
-      jql:
-        value: assignee=currentUser() and status!=Closed
+      jql: assignee=currentUser() and status!=Closed
 scripts:
   listIssues:
     command: ./jira.sh ${{ jql }}

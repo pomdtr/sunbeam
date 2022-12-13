@@ -74,9 +74,6 @@
                             "^[a-zA-Z_][a-zA-Z0-9_]+$": {
                                 "anyOf": [
                                     {
-                                        "$ref": "#/$defs/input"
-                                    },
-                                    {
                                         "type": "string"
                                     },
                                     {
@@ -171,37 +168,63 @@
                             "type",
                             "name"
                         ],
+                        "additionalProperties": false,
                         "properties": {
                             "name": {
                                 "type": "string",
                                 "pattern": "^[a-zA-Z_][a-zA-Z0-9_]+$"
                             },
+                            "default": {},
                             "type": {
                                 "type": "string",
                                 "enum": [
                                     "string",
-                                    "boolean",
-                                    "file",
-                                    "directory"
+                                    "boolean"
                                 ]
-                            },
-                            "default": {
-                                "anyOf": [
-                                    {
-                                        "type": "string"
-                                    },
-                                    {
-                                        "type": "boolean"
-                                    }
-                                ]
-                            },
-                            "shellEscape": {
-                                "type": "boolean"
                             },
                             "description": {
                                 "type": "string"
                             }
-                        }
+                        },
+                        "allOf": [
+                            {
+                                "if": {
+                                    "properties": {
+                                        "type": {
+                                            "const": "boolean"
+                                        }
+                                    }
+                                },
+                                "then": {
+                                    "properties": {
+                                        "default": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "if": {
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "string",
+                                                "file",
+                                                "directory"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "then": {
+                                    "properties": {
+                                        "default": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
                     }
                 }
             }

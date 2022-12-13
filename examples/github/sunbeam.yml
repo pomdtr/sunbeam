@@ -11,10 +11,6 @@ rootItems:
       owner: pomdtr
   - title: List Owner Repositories
     script: listRepositories
-    with:
-      owner:
-        type: textfield
-        title: Owner
   - title: List Dailymotion Repositories
     script: listRepositories
     with:

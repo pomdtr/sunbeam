@@ -13,7 +13,6 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/santhosh-tekuri/jsonschema/v5"
-	"gopkg.in/yaml.v3"
 )
 
 type Script struct {
@@ -21,7 +20,7 @@ type Script struct {
 	Description string        `json:"description" yaml:"description"`
 	Mode        string        `json:"mode" yaml:"mode"`
 	Cwd         string        `json:"cwd" yaml:"cwd"`
-	Inputs      []ScriptParam `json:"params" yaml:"params"`
+	Params      []ScriptParam `json:"params" yaml:"params"`
 	Title       string        `json:"title" yaml:"title"`
 	ShowPreview bool          `json:"showPreview" yaml:"showPreview"`
 }
@@ -31,12 +30,12 @@ func (s Script) IsPage() bool {
 }
 
 type ScriptParam struct {
-	Type        string `json:"type"`
-	Name        string `json:"name"`
-	Default     any    `json:"default"`
-	Enum        []any  `json:"enum"`
-	ShellEscape bool   `json:"shellEscape"`
-	Description string `json:"description"`
+	Type        string     `json:"type"`
+	Name        string     `json:"name"`
+	Default     any        `json:"default"`
+	ShellEscape bool       `json:"shellEscape"`
+	Description string     `json:"description"`
+	Form        []FormItem `json:"form"`
 }
 
 func (s Script) Cmd(with map[string]any) (string, error) {
@@ -44,7 +43,7 @@ func (s Script) Cmd(with map[string]any) (string, error) {
 
 	funcMap := template.FuncMap{}
 
-	for _, param := range s.Inputs {
+	for _, param := range s.Params {
 		param := param
 		value, ok := with[param.Name]
 		if !ok {
@@ -152,9 +151,9 @@ type ScriptAction struct {
 	Script    string `json:"script,omitempty" yaml:"script"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
-	Silent    bool         `json:"silent,omitempty" yaml:"silent"`
-	OnSuccess string       `json:"onSuccess,omitempty" yaml:"onSuccess"`
-	With      ScriptInputs `json:"with,omitempty" yaml:"with"`
+	Silent    bool           `json:"silent,omitempty" yaml:"silent"`
+	OnSuccess string         `json:"onSuccess,omitempty" yaml:"onSuccess"`
+	With      map[string]any `json:"with,omitempty" yaml:"with"`
 }
 
 type FormItem struct {
@@ -170,31 +169,6 @@ type FormItem struct {
 		Value string `json:"value,omitempty"`
 	} `json:"data,omitempty"`
 }
-
-type ScriptInput struct {
-	Value any
-	FormItem
-}
-
-func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
-	err = value.Decode(&si.FormItem)
-	if err == nil {
-		return
-	}
-
-	return value.Decode(&si.Value)
-}
-
-func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
-	err = json.Unmarshal(bytes, &si.FormItem)
-	if err == nil {
-		return
-	}
-
-	return json.Unmarshal(bytes, &si.Value)
-}
-
-type ScriptInputs map[string]ScriptInput
 
 //go:embed listitem.json
 var itemSchemaString string

@@ -28,7 +28,7 @@ type RootItem struct {
 	Script    string
 	Title     string
 	Subtitle  string
-	With      ScriptInputs
+	With      map[string]any
 }
 
 type Extension struct {
