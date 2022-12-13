@@ -37,6 +37,7 @@ type RootModel struct {
 	initCmd       tea.Cmd
 
 	pages []Container
+	form  *Form
 
 	hidden bool
 }
@@ -85,6 +86,9 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Quit
 	case RunScriptMsg:
+		// remove form
+		m.form = nil
+
 		extension, ok := app.Sunbeam.Extensions[msg.Extension]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
@@ -127,8 +131,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			})
 
-			cmd := m.Push(form)
-			return m, cmd
+			form.SetSize(m.width, m.pageHeight())
+			m.form = form
+
+			return m, m.form.Init()
 		}
 
 		if script.IsPage() {
@@ -223,8 +229,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Update the current page
 	var cmd tea.Cmd
-	currentPageIdx := len(m.pages) - 1
-	m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
+	if m.form != nil {
+		m.form, cmd = m.form.Update(msg)
+		return m, cmd
+	} else {
+		currentPageIdx := len(m.pages) - 1
+		m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
+	}
 
 	return m, cmd
 }
@@ -232,6 +243,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *RootModel) View() string {
 	if m.hidden {
 		return ""
+	}
+
+	if m.form != nil {
+		return m.form.View()
 	}
 
 	var embedView string
@@ -248,6 +263,10 @@ func (m *RootModel) View() string {
 func (m *RootModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
+
+	if m.form != nil {
+		m.form.SetSize(m.width, m.pageHeight())
+	}
 
 	for _, page := range m.pages {
 		page.SetSize(m.width, m.pageHeight())

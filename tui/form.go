@@ -429,7 +429,7 @@ func (c Form) Init() tea.Cmd {
 	return c.items[0].Focus()
 }
 
-func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
