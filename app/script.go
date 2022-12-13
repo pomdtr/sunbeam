@@ -31,21 +31,26 @@ func (s Script) IsPage() bool {
 }
 
 type ScriptParam struct {
-	Type        string     `json:"type"`
-	Name        string     `json:"name"`
-	Default     any        `json:"default"`
-	ShellEscape bool       `json:"shellEscape"`
-	Description string     `json:"description"`
-	Form        []FormItem `json:"form"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Required    bool   `json:"required"`
+	Title       string `json:"title"`
+	Placeholder string `json:"placeholder"`
+	Default     any    `json:"default"`
+	Data        []struct {
+		Title string `json:"title,omitempty"`
+		Value string `json:"value,omitempty"`
+	} `json:"data,omitempty"`
+	Label string `json:"label"`
 }
 
 type ScriptInput struct {
 	Value any
-	FormItem
+	ScriptParam
 }
 
 func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
-	err = value.Decode(&si.FormItem)
+	err = value.Decode(&si.ScriptParam)
 	if err == nil {
 		return
 	}
@@ -54,7 +59,7 @@ func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
 }
 
 func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
-	err = json.Unmarshal(bytes, &si.FormItem)
+	err = json.Unmarshal(bytes, &si.ScriptParam)
 	if err == nil {
 		return
 	}
@@ -73,21 +78,14 @@ func (s Script) Cmd(with map[string]any) (string, error) {
 		param := param
 		value, ok := with[param.Name]
 		if !ok {
-			if param.Default == nil {
-				return "", fmt.Errorf("unknown param %s", param.Name)
+			if param.Required {
+				return "", fmt.Errorf("missing required param %s", param.Name)
 			}
 			value = param.Default
 		}
 
 		funcMap[param.Name] = func() (any, error) {
 			switch param.Type {
-			case "string":
-				value, ok := value.(string)
-				if !ok {
-					return "", fmt.Errorf("expected string for param %s", param.Name)
-				}
-
-				return shellescape.Quote(value), nil
 			case "directory", "file":
 				value, ok := value.(string)
 				if !ok {
@@ -114,15 +112,19 @@ func (s Script) Cmd(with map[string]any) (string, error) {
 				}
 
 				return shellescape.Quote(value), nil
-			case "boolean":
+			case "checkbox":
 				value, ok := value.(bool)
 				if !ok {
 					return nil, fmt.Errorf("expected boolean for param %s", param.Name)
 				}
 				return value, nil
-
 			default:
-				return nil, fmt.Errorf("unsupported param type: %s", param.Type)
+				value, ok := value.(string)
+				if !ok {
+					return "", fmt.Errorf("expected string for param %s", param.Name)
+				}
+
+				return shellescape.Quote(value), nil
 			}
 		}
 	}
@@ -185,20 +187,6 @@ type ScriptAction struct {
 	OnSuccess string         `json:"onSuccess,omitempty" yaml:"onSuccess"`
 	With      map[string]any `json:"with,omitempty" yaml:"with"`
 	Inputs    ScriptInputs   `json:"inputs,omitempty" yaml:"inputs"`
-}
-
-type FormItem struct {
-	Type        string `json:"type"`
-	Title       string `json:"title,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     any    `json:"default,omitempty"`
-
-	Label string `json:"label,omitempty"`
-
-	Data []struct {
-		Title string `json:"title,omitempty"`
-		Value string `json:"value,omitempty"`
-	} `json:"data,omitempty"`
 }
 
 //go:embed listitem.json

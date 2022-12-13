@@ -53,19 +53,20 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 						continue
 					}
 					switch param.Type {
-					case "string", "file", "directory":
-						value, err := cmd.Flags().GetString(param.Name)
-						if err != nil {
-							return err
-						}
-						with[param.Name] = value
-					case "boolean":
+					case "checkbox":
 						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
 							return err
 						}
 						with[param.Name] = value
+					default:
+						value, err := cmd.Flags().GetString(param.Name)
+						if err != nil {
+							return err
+						}
+						with[param.Name] = value
 					}
+
 				}
 
 				runner := tui.NewScriptRunner(extension, script, with)
@@ -82,15 +83,15 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			switch param.Type {
 			case "string":
 				if defaultValue, ok := param.Default.(string); ok {
-					scriptCmd.Flags().String(param.Name, defaultValue, param.Description)
+					scriptCmd.Flags().String(param.Name, defaultValue, param.Title)
 				} else {
-					scriptCmd.Flags().String(param.Name, "", param.Description)
+					scriptCmd.Flags().String(param.Name, "", param.Title)
 				}
 			case "boolean":
 				if defaultValue, ok := param.Default.(bool); ok {
-					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Description)
+					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Title)
 				} else {
-					scriptCmd.Flags().Bool(param.Name, false, param.Description)
+					scriptCmd.Flags().Bool(param.Name, false, param.Title)
 				}
 			}
 		}

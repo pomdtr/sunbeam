@@ -29,10 +29,14 @@ type ScriptRunner struct {
 }
 
 func NewScriptRunner(manifest app.Extension, script app.Script, params map[string]any) *ScriptRunner {
+	with := make(map[string]any)
+	for key, value := range params {
+		with[key] = value
+	}
 	return &ScriptRunner{
 		extension: manifest,
 		Script:    script,
-		with:      params,
+		with:      with,
 	}
 }
 
@@ -92,24 +96,15 @@ func (c *ScriptRunner) CheckMissingParams() ([]FormItem, error) {
 			continue
 		}
 
-		if param.Default != nil {
+		if !param.Required {
 			continue
 		}
 
-		switch param.Type {
-		case "string", "file", "directory":
-			formItem, _ := NewFormItem(param.Name, app.FormItem{
-				Type:  "textfield",
-				Title: param.Name,
-			})
-			formItems = append(formItems, formItem)
-		case "boolean":
-			formItem, _ := NewFormItem(param.Name, app.FormItem{
-				Type:  "checkbox",
-				Title: param.Name,
-			})
-			formItems = append(formItems, formItem)
+		formItem, err := NewFormItem(param)
+		if err != nil {
+			return nil, err
 		}
+		formItems = append(formItems, formItem)
 	}
 
 	return formItems, nil
@@ -124,24 +119,8 @@ func (c *ScriptRunner) Run() tea.Cmd {
 	if len(formItems) > 0 {
 		c.currentView = "form"
 
-		c.form = NewForm(c.extension.Name, formItems, func(formValues map[string]any) tea.Cmd {
-			with := make(map[string]any)
-			for _, param := range c.Script.Params {
-				if value, ok := formValues[param.Name]; ok {
-					with[param.Name] = value
-				} else if value, ok := c.with[param.Name]; ok {
-					with[param.Name] = value
-				} else {
-					return NewErrorCmd(fmt.Errorf("missing param %s", param.Name))
-				}
-			}
-			c.with = with
-
-			return c.Run()
-		})
-
+		c.form = NewForm(c.extension.Name, formItems)
 		c.form.SetSize(c.width, c.height)
-
 		return c.form.Init()
 	}
 
@@ -237,17 +216,17 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 		case "snippet":
 			return c, NewCopyTextCmd(string(msg))
 		}
+	case SubmitMsg:
+		for key, value := range msg.Values {
+			c.with[key] = value
+		}
+		return c, c.Run()
 	case ReloadPageMsg:
 		for key, value := range msg.With {
 			c.with[key] = value
 		}
-		var cmd tea.Cmd
-		if c.currentView == "list" {
-			cmd = c.list.header.SetIsLoading(true)
-		} else if c.currentView == "detail" {
-			cmd = c.detail.header.SetIsLoading(true)
-		}
-		return c, tea.Batch(cmd, c.Run())
+
+		return c, c.Run()
 	}
 
 	var cmd tea.Cmd

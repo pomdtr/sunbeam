@@ -33,17 +33,23 @@ scripts:
       '
     params:
       - name: repository
-        type: string
+        type: textfield
+        required: true
+        title: Repository
   listRepositories:
     command: ./list-repos.sh ${{ owner }}
     mode: filter
     showPreview: true
     params:
       - name: owner
-        type: string
+        type: textfield
+        title: Owner
+        required: true
   listPullRequests:
     command: ./list-prs.sh ${{ repository }}
     mode: filter
     params:
       - name: repository
-        type: string
+        type: textfield
+        title: Repository
+        required: true

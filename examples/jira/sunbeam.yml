@@ -12,4 +12,6 @@ scripts:
     mode: filter
     params:
       - name: jql
-        type: string
+        type: textfield
+        title: JQL
+        required: true

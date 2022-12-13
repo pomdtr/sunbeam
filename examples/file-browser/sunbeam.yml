@@ -25,9 +25,11 @@ scripts:
     mode: filter
     params:
       - name: root
-        type: file
-        description: directory to browse
+        required: true
+        title: Root Directory
+        type: directory
       - name: showHidden
-        type: boolean
+        required: false
+        label: "Show Hidden Files"
+        type: checkbox
         default: false
-        description: whether to show hidden files

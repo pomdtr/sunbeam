@@ -16,22 +16,34 @@ scripts:
     mode: command
     params:
       - name: title
-        type: string
+        type: textfield
+        title: Title
+        required: true
       - name: content
-        type: string
+        type: textfield
+        title: Content
+        required: true
   editEntry:
     command: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     mode: command
     params:
       - name: uuid
-        type: string
+        type: textfield
+        title: UUID
+        required: true
       - name: title
-        type: string
+        type: textfield
+        required: true
+        title: Title
       - name: content
-        type: string
+        type: textfield
+        required: true
+        title: Content
   deleteEntry:
     command: ./delete-entry.py --uuid ${{ uuid }}
     mode: command
     params:
       - name: uuid
-        type: string
+        type: textfield
+        required: true
+        title: UUID

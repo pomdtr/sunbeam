@@ -27,6 +27,10 @@ scripts:
     mode: command
     params:
       - name: container
-        type: string
+        type: textfield
+        required: true
+        title: Command
       - name: command
-        type: string
+        type: textfield
+        required: true
+        title: Command

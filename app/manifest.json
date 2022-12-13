@@ -14,6 +14,12 @@
             "type": "string",
             "pattern": "^[a-zA-Z_][a-zA-Z0-9_]+$"
         },
+        "preferences": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/input"
+            }
+        },
         "postInstall": {
             "type": "string"
         },
@@ -48,9 +54,6 @@
         },
         "author": {
             "type": "string"
-        },
-        "preferences": {
-            "type": "array"
         },
         "rootItems": {
             "type": "array",
@@ -152,6 +155,12 @@
                     ],
                     "default": "extensionDir"
                 },
+                "preferences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/input"
+                    }
+                },
                 "showPreview": {
                     "type": "boolean",
                     "default": false
@@ -163,100 +172,43 @@
                     "type": "array",
                     "additionalProperties": false,
                     "items": {
-                        "type": "object",
-                        "required": [
-                            "type",
-                            "name"
-                        ],
-                        "additionalProperties": false,
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "pattern": "^[a-zA-Z_][a-zA-Z0-9_]+$"
-                            },
-                            "default": {},
-                            "type": {
-                                "type": "string",
-                                "enum": [
-                                    "string",
-                                    "boolean",
-                                    "file",
-                                    "directory"
-                                ]
-                            },
-                            "description": {
-                                "type": "string"
-                            }
-                        },
-                        "allOf": [
-                            {
-                                "if": {
-                                    "properties": {
-                                        "type": {
-                                            "const": "boolean"
-                                        }
-                                    }
-                                },
-                                "then": {
-                                    "properties": {
-                                        "default": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            },
-                            {
-                                "if": {
-                                    "properties": {
-                                        "type": {
-                                            "type": "string",
-                                            "enum": [
-                                                "string",
-                                                "file",
-                                                "directory"
-                                            ]
-                                        }
-                                    }
-                                },
-                                "then": {
-                                    "properties": {
-                                        "default": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        ]
+                        "$ref": "#/$defs/input"
                     }
                 }
             }
         },
         "input": {
             "type": "object",
+            "required": [
+                "type",
+                "name",
+                "required"
+            ],
             "properties": {
-                "title": {
-                    "type": "string"
-                },
-                "value": {
-                    "anyOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "boolean"
-                        }
-                    ]
-                },
                 "type": {
                     "type": "string",
                     "enum": [
                         "textfield",
-                        "textarea",
                         "password",
-                        "checkbox",
+                        "textarea",
                         "dropdown",
-                        "filePicker"
+                        "checkbox",
+                        "file",
+                        "directory"
                     ]
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]+$"
+                },
+                "description": {
+                    "type": "string"
                 }
             },
             "allOf": [
@@ -267,16 +219,28 @@
                         ],
                         "properties": {
                             "type": {
-                                "const": "textarea"
+                                "enum": [
+                                    "textfield",
+                                    "password",
+                                    "textarea",
+                                    "file",
+                                    "directory"
+                                ]
                             }
                         }
                     },
                     "then": {
+                        "required": [
+                            "title"
+                        ],
                         "properties": {
-                            "value": {
+                            "title": {
                                 "type": "string"
                             },
                             "placeholder": {
+                                "type": "string"
+                            },
+                            "default": {
                                 "type": "string"
                             }
                         }
@@ -289,19 +253,37 @@
                         ],
                         "properties": {
                             "type": {
-                                "const": "textfield"
+                                "const": "dropown"
                             }
                         }
                     },
                     "then": {
                         "required": [
-                            "title"
+                            "label"
                         ],
                         "properties": {
-                            "default": {
+                            "title": {
                                 "type": "string"
                             },
-                            "placeholder": {
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "title",
+                                        "value"
+                                    ],
+                                    "properties": {
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "default": {
                                 "type": "string"
                             }
                         }
@@ -323,53 +305,14 @@
                             "label"
                         ],
                         "properties": {
-                            "value": {
-                                "type": "boolean"
+                            "title": {
+                                "type": "string"
                             },
                             "label": {
                                 "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "required": [
-                            "type"
-                        ],
-                        "properties": {
-                            "type": {
-                                "const": "dropdown"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "data"
-                        ],
-                        "properties": {
-                            "placeholder": {
-                                "type": "string"
                             },
-                            "data": {
-                                "type": "array",
-                                "minItems": 1,
-                                "items": {
-                                    "type": "object",
-                                    "required": [
-                                        "title",
-                                        "value"
-                                    ],
-                                    "additionalProperties": false,
-                                    "properties": {
-                                        "title": {
-                                            "type": "string"
-                                        },
-                                        "value": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
+                            "default": {
+                                "type": "boolean"
                             }
                         }
                     }

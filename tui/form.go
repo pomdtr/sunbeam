@@ -33,31 +33,31 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormItem(name string, formItem app.FormItem) (FormItem, error) {
+func NewFormItem(param app.ScriptParam) (FormItem, error) {
 	var input FormInput
-	if formItem.Placeholder == "" {
-		formItem.Placeholder = name
+	if param.Placeholder == "" {
+		param.Placeholder = param.Name
 	}
-	switch formItem.Type {
-	case "textfield":
-		ti := NewTextInput(formItem)
+	switch param.Type {
+	case "textfield", "file", "directory", "password":
+		ti := NewTextInput(param)
 		input = &ti
 	case "textarea":
-		ta := NewTextArea(formItem)
+		ta := NewTextArea(param)
 		input = &ta
 	case "dropdown":
-		dd := NewDropDown(formItem)
+		dd := NewDropDown(param)
 		input = &dd
 	case "checkbox":
-		cb := NewCheckbox(formItem)
+		cb := NewCheckbox(param)
 		input = &cb
 	default:
-		return FormItem{}, fmt.Errorf("unknown form item type: %s", formItem.Type)
+		return FormItem{}, fmt.Errorf("unknown form item type: %s", param.Type)
 	}
 
 	return FormItem{
-		Id:        name,
-		Title:     formItem.Title,
+		Id:        param.Name,
+		Title:     param.Title,
 		FormInput: input,
 	}, nil
 }
@@ -66,7 +66,7 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.FormItem) TextArea {
+func NewTextArea(formItem app.ScriptParam) TextArea {
 	ta := textarea.New()
 	ta.FocusedStyle.Text = styles.Regular
 	ta.Prompt = ""
@@ -107,7 +107,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem app.FormItem) TextInput {
+func NewTextInput(formItem app.ScriptParam) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	value, ok := formItem.Default.(string)
@@ -158,7 +158,7 @@ type Checkbox struct {
 	value   bool
 }
 
-func NewCheckbox(formItem app.FormItem) Checkbox {
+func NewCheckbox(formItem app.ScriptParam) Checkbox {
 	var defaultValue bool
 	defaultValue, ok := formItem.Default.(bool)
 	if !ok {
@@ -252,7 +252,7 @@ type DropDown struct {
 	value     string
 }
 
-func NewDropDown(formItem app.FormItem) DropDown {
+func NewDropDown(formItem app.ScriptParam) DropDown {
 	choices := make([]FilterItem, len(formItem.Data))
 	for i, formItem := range formItem.Data {
 		choices[i] = DropDownItem{
@@ -365,14 +365,17 @@ func (d *DropDown) Blur() {
 
 type Form struct {
 	header     Header
-	submitCmd  func(values map[string]any) tea.Cmd
 	footer     Footer
 	viewport   viewport.Model
 	items      []FormItem
 	focusIndex int
 }
 
-func NewForm(title string, items []FormItem, submitCmd func(values map[string]any) tea.Cmd) *Form {
+type SubmitMsg struct {
+	Values map[string]any
+}
+
+func NewForm(title string, items []FormItem) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
@@ -382,11 +385,10 @@ func NewForm(title string, items []FormItem, submitCmd func(values map[string]an
 	)
 
 	return &Form{
-		header:    header,
-		footer:    footer,
-		submitCmd: submitCmd,
-		viewport:  viewport,
-		items:     items,
+		header:   header,
+		footer:   footer,
+		viewport: viewport,
+		items:    items,
 	}
 }
 
@@ -439,7 +441,9 @@ func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
 			for _, input := range c.items {
 				values[input.Id] = input.Value()
 			}
-			return &c, c.submitCmd(values)
+			return &c, func() tea.Msg {
+				return SubmitMsg{Values: values}
+			}
 		}
 	}
 

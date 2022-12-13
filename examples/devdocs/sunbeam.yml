@@ -43,4 +43,6 @@ scripts:
     mode: filter
     params:
       - name: slug
-        type: string
+        type: textfield
+        required: true
+        title: Slug
