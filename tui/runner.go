@@ -19,7 +19,7 @@ type ScriptRunner struct {
 	currentView   string
 
 	extension app.Extension
-	with      map[string]any
+	with      app.ScriptInputs
 
 	list   *List
 	detail *Detail
@@ -28,8 +28,8 @@ type ScriptRunner struct {
 	Script app.Script
 }
 
-func NewScriptRunner(manifest app.Extension, script app.Script, params map[string]any) *ScriptRunner {
-	with := make(map[string]any)
+func NewScriptRunner(manifest app.Extension, script app.Script, params app.ScriptInputs) *ScriptRunner {
+	with := make(app.ScriptInputs)
 	for key, value := range params {
 		with[key] = value
 	}
@@ -47,7 +47,11 @@ func (c *ScriptRunner) Init() tea.Cmd {
 type CommandOutput string
 
 func (c ScriptRunner) ScriptCmd() tea.Msg {
-	commandString, err := c.Script.Cmd(c.with)
+	with := make(map[string]any)
+	for key, input := range c.with {
+		with[key] = input.Value
+	}
+	commandString, err := c.Script.Cmd(with)
 	command := exec.Command("sh", "-c", commandString)
 
 	if c.Script.Mode == "generator" {
@@ -218,7 +222,14 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 		}
 	case SubmitMsg:
 		for key, value := range msg.Values {
-			c.with[key] = value
+			input, ok := c.with[key]
+			if !ok {
+				c.with[key] = app.ScriptInput{Value: value}
+				continue
+			}
+
+			input.Value = value
+			c.with[key] = input
 		}
 		return c, c.Run()
 	case ReloadPageMsg:

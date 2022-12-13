@@ -183,10 +183,9 @@ type ScriptAction struct {
 	Script    string `json:"script,omitempty" yaml:"script"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
-	Silent    bool           `json:"silent,omitempty" yaml:"silent"`
-	OnSuccess string         `json:"onSuccess,omitempty" yaml:"onSuccess"`
-	With      map[string]any `json:"with,omitempty" yaml:"with"`
-	Inputs    ScriptInputs   `json:"inputs,omitempty" yaml:"inputs"`
+	Silent    bool         `json:"silent,omitempty" yaml:"silent"`
+	OnSuccess string       `json:"onSuccess,omitempty" yaml:"onSuccess"`
+	With      ScriptInputs `json:"with,omitempty" yaml:"with"`
 }
 
 //go:embed listitem.json

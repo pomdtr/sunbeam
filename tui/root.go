@@ -264,10 +264,14 @@ func (m *RootModel) Pop() {
 func RootList(rootItems ...app.RootItem) *List {
 	listItems := make([]ListItem, len(rootItems))
 	for index, rootItem := range rootItems {
+		with := make(app.ScriptInputs)
+		for key, value := range rootItem.With {
+			with[key] = app.ScriptInput{Value: value}
+		}
 		runMsg := RunScriptMsg{
 			Extension: rootItem.Extension,
 			Script:    rootItem.Script,
-			With:      rootItem.With,
+			With:      with,
 		}
 		listItems[index] = ListItem{
 			Id:       strconv.Itoa(index),
