@@ -47,7 +47,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			Use:   key,
 			Short: script.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				with := make(map[string]any, 0)
+				with := make(map[string]any)
 				for _, param := range script.Params {
 					if !cmd.Flags().Changed(param.Name) {
 						continue

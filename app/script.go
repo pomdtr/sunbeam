@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/santhosh-tekuri/jsonschema/v5"
+	"gopkg.in/yaml.v3"
 )
 
 type Script struct {
@@ -38,8 +40,34 @@ type ScriptParam struct {
 	Form        []FormItem `json:"form"`
 }
 
+type ScriptInput struct {
+	Value any
+	FormItem
+}
+
+func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
+	err = value.Decode(&si.FormItem)
+	if err == nil {
+		return
+	}
+
+	return value.Decode(&si.Value)
+}
+
+func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
+	err = json.Unmarshal(bytes, &si.FormItem)
+	if err == nil {
+		return
+	}
+
+	return json.Unmarshal(bytes, &si.Value)
+}
+
+type ScriptInputs map[string]ScriptInput
+
 func (s Script) Cmd(with map[string]any) (string, error) {
 	var err error
+	log.Println("with", with)
 
 	funcMap := template.FuncMap{}
 
@@ -154,6 +182,7 @@ type ScriptAction struct {
 	Silent    bool           `json:"silent,omitempty" yaml:"silent"`
 	OnSuccess string         `json:"onSuccess,omitempty" yaml:"onSuccess"`
 	With      map[string]any `json:"with,omitempty" yaml:"with"`
+	Inputs    ScriptInputs   `json:"inputs,omitempty" yaml:"inputs"`
 }
 
 type FormItem struct {

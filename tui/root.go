@@ -37,7 +37,7 @@ type RootModel struct {
 	initCmd       tea.Cmd
 
 	pages []Container
-	form  *Form
+	Popup Container
 
 	hidden bool
 }
@@ -87,7 +87,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	case RunScriptMsg:
 		// remove form
-		m.form = nil
+		m.Popup = nil
 
 		extension, ok := app.Sunbeam.Extensions[msg.Extension]
 		if !ok {
@@ -109,21 +109,22 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
 
-		params, formItems, err := extractScriptInput(script, msg.With)
+		inputParams, formItems, err := extractScriptInput(script, msg.With)
+		log.Println(inputParams, formItems, err)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
 
 		if len(formItems) > 0 {
-			form := NewForm(msg.Extension, formItems, func(values map[string]any) tea.Cmd {
+			form := NewForm(msg.Extension, formItems, func(formValues map[string]any) tea.Cmd {
 				with := make(map[string]any)
-				for key, value := range msg.With {
-					with[key] = value
+				for _, param := range script.Params {
+					if value, ok := formValues[param.Name]; ok {
+						with[param.Name] = value
+					} else if value, ok := inputParams[param.Name]; ok {
+						with[param.Name] = value
+					}
 				}
-				for key, value := range values {
-					with[key] = value
-				}
-
 				msg.With = with
 
 				return func() tea.Msg {
@@ -132,18 +133,18 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			})
 
 			form.SetSize(m.width, m.pageHeight())
-			m.form = form
+			m.Popup = form
 
-			return m, m.form.Init()
+			return m, m.Popup.Init()
 		}
 
 		if script.IsPage() {
-			runner := NewRunContainer(extension, script, params)
+			runner := NewRunContainer(extension, script, inputParams)
 			cmd := m.Push(runner)
 			return m, cmd
 		}
 
-		commandString, err := script.Cmd(params)
+		commandString, err := script.Cmd(inputParams)
 
 		switch script.Mode {
 		case "command":
@@ -208,8 +209,13 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.Push(msg.container)
 		return m, cmd
 	case popMsg:
-		if len(m.pages) == 1 {
-			m.hidden = true
+		if m.Popup != nil {
+			if len(m.pages) == 0 {
+				return m, tea.Quit
+			}
+			m.Popup = nil
+			return m, nil
+		} else if len(m.pages) == 1 {
 			return m, tea.Quit
 		} else {
 			m.Pop()
@@ -223,16 +229,17 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		detail.SetSize(m.width, m.pageHeight())
 		detail.SetContent(msg.Error())
 
-		currentIndex := len(m.pages) - 1
-		m.pages[currentIndex] = detail
+		m.Popup = detail
+		m.Popup.SetSize(m.width, m.pageHeight())
+		return m, detail.Init()
 	}
 
 	// Update the current page
 	var cmd tea.Cmd
-	if m.form != nil {
-		m.form, cmd = m.form.Update(msg)
+	if m.Popup != nil {
+		m.Popup, cmd = m.Popup.Update(msg)
 		return m, cmd
-	} else {
+	} else if len(m.pages) > 0 {
 		currentPageIdx := len(m.pages) - 1
 		m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
 	}
@@ -245,8 +252,8 @@ func (m *RootModel) View() string {
 		return ""
 	}
 
-	if m.form != nil {
-		return m.form.View()
+	if m.Popup != nil {
+		return m.Popup.View()
 	}
 
 	var embedView string
@@ -264,8 +271,8 @@ func (m *RootModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 
-	if m.form != nil {
-		m.form.SetSize(m.width, m.pageHeight())
+	if m.Popup != nil {
+		m.Popup.SetSize(m.width, m.pageHeight())
 	}
 
 	for _, page := range m.pages {

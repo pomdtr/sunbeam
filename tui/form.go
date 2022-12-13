@@ -41,25 +41,26 @@ func extractScriptInput(script app.Script, with map[string]any) (map[string]any,
 		if !ok {
 			if param.Default != nil {
 				params[param.Name] = param.Default
-				continue
+			} else {
+				switch param.Type {
+				case "string":
+					formItem, _ := NewFormItem(param.Name, app.FormItem{
+						Type:  "textfield",
+						Title: param.Name,
+					})
+					formItems = append(formItems, formItem)
+				case "boolean":
+					formItem, _ := NewFormItem(param.Name, app.FormItem{
+						Type:  "checkbox",
+						Title: param.Name,
+					})
+					formItems = append(formItems, formItem)
+				}
 			}
-			switch param.Type {
-			case "string":
-				formItem, _ := NewFormItem(param.Name, app.FormItem{
-					Type:  "textfield",
-					Title: param.Name,
-				})
-				formItems = append(formItems, formItem)
-			case "boolean":
-				formItem, _ := NewFormItem(param.Name, app.FormItem{
-					Type:  "checkbox",
-					Title: param.Name,
-				})
-				formItems = append(formItems, formItem)
-			}
+			continue
 		}
-
 		params[param.Name] = value
+
 	}
 
 	return params, formItems, nil
@@ -429,7 +430,7 @@ func (c Form) Init() tea.Cmd {
 	return c.items[0].Focus()
 }
 
-func (c Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
+func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

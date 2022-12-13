@@ -65,10 +65,10 @@ type OpenPathMsg struct {
 	Application string
 }
 
-func NewReloadPageCmd(params map[string]any) tea.Cmd {
+func NewReloadPageCmd(with map[string]any) tea.Cmd {
 	return func() tea.Msg {
 		return ReloadPageMsg{
-			With: params,
+			With: with,
 		}
 	}
 }
