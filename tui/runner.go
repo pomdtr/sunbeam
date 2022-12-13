@@ -114,7 +114,44 @@ func (c *ScriptRunner) CheckMissingParams() ([]FormItem, error) {
 	return formItems, nil
 }
 
+func (c *ScriptRunner) checkPreferences() error {
+	environ := make(map[string]struct{})
+
+	for _, env := range os.Environ() {
+		pair := strings.SplitN(env, "=", 2)
+		environ[pair[0]] = struct{}{}
+	}
+
+	for _, param := range c.Script.Preferences {
+		_, ok := environ[param.Name]
+		if ok {
+			continue
+		}
+
+		if param.Required {
+			return fmt.Errorf("missing required pref %s", param.Name)
+		}
+
+		if param.Default != nil {
+			switch defaultValue := param.Default.(type) {
+			case bool:
+				os.Setenv(param.Name, strconv.FormatBool(defaultValue))
+			case string:
+				os.Setenv(param.Name, defaultValue)
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (c *ScriptRunner) Run() tea.Cmd {
+	err := c.checkPreferences()
+	if err != nil {
+		return NewErrorCmd(err)
+	}
+
 	formItems, err := c.CheckMissingParams()
 	if err != nil {
 		return NewErrorCmd(err)

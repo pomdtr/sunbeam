@@ -32,10 +32,11 @@ type RootItem struct {
 }
 
 type Extension struct {
-	Title       string `json:"title" yaml:"title"`
-	Description string `json:"description" yaml:"description"`
-	Name        string `json:"name" yaml:"name"`
-	PostInstall string `json:"postInstall" yaml:"postInstall"`
+	Title       string        `json:"title" yaml:"title"`
+	Description string        `json:"description" yaml:"description"`
+	Name        string        `json:"name" yaml:"name"`
+	PostInstall string        `json:"postInstall" yaml:"postInstall"`
+	Preferences []ScriptParam `json:"preferences" yaml:"preferences"`
 
 	Requirements []ExtensionRequirement `json:"requirements" yaml:"requirements"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`

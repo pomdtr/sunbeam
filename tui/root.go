@@ -131,13 +131,18 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				log.Println("ERROR")
 				detail := NewDetail(command.String())
 				detail.SetContent(err.Error())
-				return pushMsg{container: detail}
+				return showMsg{
+					cmd: NewErrorCmd(err),
+				}
 			}
 
 			return showMsg{
 				cmd: msg.OnSuccessCmd,
 			}
 		})
+	case showMsg:
+		m.hidden = false
+		return m, msg.cmd
 	case pushMsg:
 		m.hidden = false
 		cmd := m.Push(msg.container)
@@ -155,9 +160,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Pop()
 			return m, nil
 		}
-	case showMsg:
-		m.hidden = false
-		return m, msg.cmd
 	case error:
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())

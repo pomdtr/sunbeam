@@ -19,6 +19,7 @@ import (
 type Script struct {
 	Command     string        `json:"command" yaml:"command"`
 	Description string        `json:"description" yaml:"description"`
+	Preferences []ScriptParam `json:"preferences" yaml:"preferences"`
 	Mode        string        `json:"mode" yaml:"mode"`
 	Cwd         string        `json:"cwd" yaml:"cwd"`
 	Params      []ScriptParam `json:"params" yaml:"params"`

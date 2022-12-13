@@ -1,6 +1,11 @@
 name: jira
 version: "1.0"
 title: Jira
+preferences:
+  - type: textfield
+    required: true
+    name: JIRA_TOKEN
+    title: Jira Token
 rootItems:
   - title: List Issues
     script: listIssues

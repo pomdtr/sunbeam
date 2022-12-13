@@ -1,6 +1,11 @@
 name: bitwarden
 version: "1.0"
 title: Bitwarden
+preferences:
+  - type: textfield
+    required: true
+    name: BW_TOKEN
+    title: Bitwarden Token
 rootItems:
   - title: Search Passwords
     script: listPasswords
