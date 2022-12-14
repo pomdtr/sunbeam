@@ -114,6 +114,14 @@ func (c *ScriptRunner) CheckMissingParams() ([]FormItem, error) {
 	return formItems, nil
 }
 
+func (c ScriptRunner) Preferences() []app.ScriptParam {
+	preferences := make([]app.ScriptParam, 0, len(c.extension.Preferences)+len(c.Script.Preferences))
+	preferences = append(preferences, c.extension.Preferences...)
+	preferences = append(preferences, c.Script.Preferences...)
+
+	return preferences
+}
+
 func (c *ScriptRunner) checkPreferences() error {
 	environ := make(map[string]struct{})
 
@@ -122,7 +130,7 @@ func (c *ScriptRunner) checkPreferences() error {
 		environ[pair[0]] = struct{}{}
 	}
 
-	for _, param := range c.Script.Preferences {
+	for _, param := range c.Preferences() {
 		_, ok := environ[param.Name]
 		if ok {
 			continue
@@ -216,15 +224,15 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 		switch c.Script.Mode {
 		case "detail":
 			var detail app.Detail
-			json.Unmarshal([]byte(msg), &detail)
-			c.detail.SetContent(detail.Preview)
-			c.detail.SetIsLoading(false)
-			actions := make([]Action, len(detail.Actions))
-			for i, action := range detail.Actions {
-				actions[i] = NewAction(action)
+			err := json.Unmarshal([]byte(msg), &detail)
+			if err != nil {
+				return c, NewErrorCmd(err)
 			}
-			c.detail.SetActions(actions...)
-			return c, nil
+
+			c.detail.SetIsLoading(false)
+			cmd := c.detail.SetDetail(detail)
+
+			return c, cmd
 		case "filter", "generator":
 			scriptItems, err := app.ParseListItems(string(msg))
 			if err != nil {

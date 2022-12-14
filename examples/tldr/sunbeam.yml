@@ -23,7 +23,7 @@ scripts:
       tldr --list --platform ${{ platform }} | sunbeam query -R '{
         id: .,
         title: .,
-        previewCmd: "tldr --color always --platform  ${{ platform }} \(.)",
+        previewCmd: "tldr --raw --platform  ${{ platform }} \(.)",
         actions: [
           {"type": "openUrl", "url": "https://tldr.ostera.io/\(.)", "title": "Open in Browser"}
         ]

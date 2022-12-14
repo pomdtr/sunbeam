@@ -163,7 +163,7 @@ func (c *List) SetSize(width, height int) {
 	if c.ShowPreview {
 		listWidth := width / 3
 		c.filter.SetSize(listWidth, availableHeight)
-		c.viewport.Width = c.viewport.Width - listWidth
+		c.viewport.Width = width - listWidth
 		c.viewport.Height = availableHeight
 		c.setPreviewContent(c.previewContent)
 	} else {
@@ -173,6 +173,7 @@ func (c *List) SetSize(width, height int) {
 
 func (l *List) setPreviewContent(content string) {
 	l.previewContent = content
+	content = lipgloss.NewStyle().Padding(0, 1).Width(l.viewport.Width - 2).Render(content)
 	l.viewport.SetContent(content)
 }
 

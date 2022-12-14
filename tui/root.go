@@ -35,19 +35,17 @@ type RootModel struct {
 	width, height int
 	exit          bool
 
-	rootPage Container
-	pages    []Container
-	Popup    Container
+	pages []Container
 
 	hidden bool
 }
 
 func NewRootModel(rootPage Container) *RootModel {
-	return &RootModel{rootPage: rootPage}
+	return &RootModel{pages: []Container{rootPage}}
 }
 
 func (m *RootModel) Init() tea.Cmd {
-	return m.rootPage.Init()
+	return m.pages[0].Init()
 }
 
 func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -86,9 +84,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Quit
 	case RunScriptMsg:
-		// remove form
-		m.Popup = nil
-
 		extension, ok := app.Sunbeam.Extensions[msg.Extension]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
@@ -148,13 +143,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.Push(msg.container)
 		return m, cmd
 	case popMsg:
-		if m.Popup != nil {
-			if len(m.pages) == 0 {
-				return m, tea.Quit
-			}
-			m.Popup = nil
-			return m, nil
-		} else if len(m.pages) == 0 {
+		if len(m.pages) == 1 {
 			return m, tea.Quit
 		} else {
 			m.Pop()
@@ -164,22 +153,16 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())
 		detail.SetContent(msg.Error())
+		m.pages[len(m.pages)-1] = detail
 
-		m.Popup = detail
-		m.Popup.SetSize(m.width, m.pageHeight())
 		return m, detail.Init()
 	}
 
 	// Update the current page
 	var cmd tea.Cmd
-	if m.Popup != nil {
-		m.Popup, cmd = m.Popup.Update(msg)
-	} else if len(m.pages) == 0 {
-		m.rootPage, cmd = m.rootPage.Update(msg)
-	} else {
-		currentPageIdx := len(m.pages) - 1
-		m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
-	}
+
+	currentPageIdx := len(m.pages) - 1
+	m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
 
 	return m, cmd
 }
@@ -187,14 +170,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *RootModel) View() string {
 	if m.hidden {
 		return ""
-	}
-
-	if m.Popup != nil {
-		return m.Popup.View()
-	}
-
-	if len(m.pages) == 0 {
-		return m.rootPage.View()
 	}
 
 	var embedView string
@@ -211,12 +186,6 @@ func (m *RootModel) View() string {
 func (m *RootModel) SetSize(width, height int) {
 	m.width = width
 	m.height = height
-
-	if m.Popup != nil {
-		m.Popup.SetSize(m.width, m.pageHeight())
-	}
-
-	m.rootPage.SetSize(m.width, m.pageHeight())
 
 	for _, page := range m.pages {
 		page.SetSize(m.width, m.pageHeight())

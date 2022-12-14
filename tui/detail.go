@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"os/exec"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -61,7 +63,28 @@ func (d *Detail) SetContent(content string) {
 	d.viewport.SetContent(content)
 }
 
-func (d *Detail) SetMetadatas(metadatas []app.ScriptMetadata) {
+type DetailMsg string
+
+func (d *Detail) SetDetail(detail app.Detail) tea.Cmd {
+	actions := make([]Action, len(detail.Actions))
+	for i, action := range detail.Actions {
+		actions[i] = NewAction(action)
+	}
+
+	d.SetActions(actions...)
+	d.SetContent(detail.Preview)
+
+	if detail.PreviewCmd == "" {
+		return nil
+	}
+	runPreviewCmd := func() tea.Msg {
+		output, err := exec.Command("sh", "-c", detail.PreviewCmd).Output()
+		if err != nil {
+			return err
+		}
+		return DetailMsg(output)
+	}
+	return tea.Batch(d.header.SetIsLoading(true), runPreviewCmd)
 }
 
 func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
