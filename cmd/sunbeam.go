@@ -1,12 +1,8 @@
 package cmd
 
 import (
-	"log"
-	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
@@ -22,21 +18,11 @@ func ParseConfig() tui.Config {
 
 	var config tui.Config
 
-	configFile := viper.ConfigFileUsed()
-	if configFile == "" {
-		log.Printf("No config file found, using default config")
-		return config
+	err := viper.Unmarshal(&config)
+	if err != nil {
+		panic(err)
 	}
 
-	bytes, err := os.ReadFile(configFile)
-	if err != nil {
-		log.Fatalf("could not read config file: %v", err)
-	}
-
-	err = yaml.Unmarshal(bytes, &config)
-	if err != nil {
-		log.Fatalf("could not parse config file: %v", err)
-	}
 	return config
 }
 
@@ -59,7 +45,7 @@ func Execute() (err error) {
 			}
 
 			rootList := tui.RootList(rootItems...)
-			model := tui.NewRootModel(rootList)
+			model := tui.NewRootModel(rootList, config)
 			return tui.Draw(model)
 		},
 	}

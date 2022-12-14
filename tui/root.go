@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,8 +18,10 @@ import (
 )
 
 type Config struct {
-	Height      int
-	AccentColor string
+	Height         int
+	AccentColor    string
+	CopyCommand    string
+	OpenUrlCommand string
 
 	RootItems []app.RootItem `yaml:"rootItems"`
 }
@@ -31,17 +34,17 @@ type Container interface {
 }
 
 type RootModel struct {
-	maxHeight     int
 	width, height int
 	exit          bool
+	config        Config
 
 	pages []Container
 
 	hidden bool
 }
 
-func NewRootModel(rootPage Container) *RootModel {
-	return &RootModel{pages: []Container{rootPage}}
+func NewRootModel(rootPage Container, config Config) *RootModel {
+	return &RootModel{pages: []Container{rootPage}, config: config}
 }
 
 func (m *RootModel) Init() tea.Cmd {
@@ -60,13 +63,27 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case CopyTextMsg:
-		err := clipboard.WriteAll(msg.Text)
+		var err error
+		if m.config.CopyCommand != "" {
+			cmd := exec.Command("sh", "-c", m.config.CopyCommand)
+			cmd.Stdin = strings.NewReader(msg.Text)
+			err = cmd.Run()
+		} else {
+			err = clipboard.WriteAll(msg.Text)
+		}
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
 	case OpenUrlMsg:
-		err := browser.OpenURL(msg.Url)
+		var err error
+		if m.config.OpenUrlCommand != "" {
+			cmd := exec.Command("sh", "-c", m.config.OpenUrlCommand)
+			cmd.Stdin = strings.NewReader(msg.Url)
+			err = cmd.Run()
+		} else {
+			err = browser.OpenURL(msg.Url)
+		}
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
@@ -193,8 +210,8 @@ func (m *RootModel) SetSize(width, height int) {
 }
 
 func (m *RootModel) pageHeight() int {
-	if m.maxHeight > 0 {
-		return utils.Min(m.maxHeight, m.height)
+	if m.config.Height > 0 {
+		return utils.Min(m.config.Height, m.height)
 	} else {
 		return m.height
 	}
