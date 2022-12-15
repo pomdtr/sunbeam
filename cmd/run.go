@@ -48,7 +48,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			Short: script.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(app.ScriptInputs)
-				for _, param := range script.Params {
+				for _, param := range script.Inputs {
 					if !cmd.Flags().Changed(param.Name) {
 						continue
 					}
@@ -58,13 +58,13 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.ScriptInput{Value: value}
+						with[param.Name] = app.ScriptParam{Value: value}
 					default:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.ScriptInput{Value: value}
+						with[param.Name] = app.ScriptParam{Value: value}
 					}
 
 				}
@@ -79,7 +79,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			},
 		}
 
-		for _, param := range script.Params {
+		for _, param := range script.Inputs {
 			switch param.Type {
 			case "string":
 				if defaultValue, ok := param.Default.(string); ok {

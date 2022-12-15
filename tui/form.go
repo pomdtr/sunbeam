@@ -33,7 +33,7 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormItem(param app.ScriptParam) (FormItem, error) {
+func NewFormInput(param app.ScriptInput) FormItem {
 	var input FormInput
 	if param.Placeholder == "" {
 		param.Placeholder = param.Name
@@ -52,21 +52,21 @@ func NewFormItem(param app.ScriptParam) (FormItem, error) {
 		cb := NewCheckbox(param)
 		input = &cb
 	default:
-		return FormItem{}, fmt.Errorf("unknown form item type: %s", param.Type)
+		return FormItem{}
 	}
 
 	return FormItem{
 		Id:        param.Name,
 		Title:     param.Title,
 		FormInput: input,
-	}, nil
+	}
 }
 
 type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.ScriptParam) TextArea {
+func NewTextArea(formItem app.ScriptInput) TextArea {
 	ta := textarea.New()
 	ta.FocusedStyle.Text = styles.Regular
 	ta.Prompt = ""
@@ -107,7 +107,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem app.ScriptParam) TextInput {
+func NewTextInput(formItem app.ScriptInput) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	value, ok := formItem.Default.(string)
@@ -158,7 +158,7 @@ type Checkbox struct {
 	value   bool
 }
 
-func NewCheckbox(formItem app.ScriptParam) Checkbox {
+func NewCheckbox(formItem app.ScriptInput) Checkbox {
 	var defaultValue bool
 	defaultValue, ok := formItem.Default.(bool)
 	if !ok {
@@ -252,7 +252,7 @@ type DropDown struct {
 	value     string
 }
 
-func NewDropDown(formItem app.ScriptParam) DropDown {
+func NewDropDown(formItem app.ScriptInput) DropDown {
 	choices := make([]FilterItem, len(formItem.Data))
 	for i, formItem := range formItem.Data {
 		choices[i] = DropDownItem{
@@ -365,6 +365,7 @@ func (d *DropDown) Blur() {
 
 type Form struct {
 	header     Header
+	Name       string
 	footer     Footer
 	viewport   viewport.Model
 	items      []FormItem
@@ -372,10 +373,11 @@ type Form struct {
 }
 
 type SubmitMsg struct {
+	Name   string
 	Values map[string]any
 }
 
-func NewForm(title string, items []FormItem) *Form {
+func NewForm(name string, title string, items []FormItem) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
@@ -386,6 +388,7 @@ func NewForm(title string, items []FormItem) *Form {
 
 	return &Form{
 		header:   header,
+		Name:     name,
 		footer:   footer,
 		viewport: viewport,
 		items:    items,
@@ -442,7 +445,7 @@ func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
 				values[input.Id] = input.Value()
 			}
 			return &c, func() tea.Msg {
-				return SubmitMsg{Values: values}
+				return SubmitMsg{Name: c.Name, Values: values}
 			}
 		}
 	}

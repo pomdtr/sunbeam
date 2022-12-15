@@ -168,7 +168,7 @@
                 "title": {
                     "type": "string"
                 },
-                "params": {
+                "inputs": {
                     "type": "array",
                     "additionalProperties": false,
                     "items": {

@@ -20,6 +20,7 @@ type ScriptRunner struct {
 
 	extension app.Extension
 	with      app.ScriptInputs
+	environ   []string
 
 	list   *List
 	detail *Detail
@@ -78,7 +79,10 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		command.Dir = c.extension.Dir()
 	}
 
-	log.Printf("Running command: %s", command.String())
+	command.Env = os.Environ()
+	command.Env = append(command.Env, c.environ...)
+
+	log.Printf("Running command: %s, env: %s", command.String(), c.environ)
 
 	res, err := command.Output()
 	if err != nil {
@@ -92,9 +96,9 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 	return CommandOutput(string(res))
 }
 
-func (c *ScriptRunner) CheckMissingParams() ([]FormItem, error) {
+func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 	formItems := make([]FormItem, 0)
-	for _, param := range c.Script.Params {
+	for _, param := range c.Script.Inputs {
 		_, ok := c.with[param.Name]
 		if ok {
 			continue
@@ -104,71 +108,93 @@ func (c *ScriptRunner) CheckMissingParams() ([]FormItem, error) {
 			continue
 		}
 
-		formItem, err := NewFormItem(param)
-		if err != nil {
-			return nil, err
-		}
+		formItem := NewFormInput(param)
 		formItems = append(formItems, formItem)
 	}
 
-	return formItems, nil
+	return formItems
 }
 
-func (c ScriptRunner) Preferences() []app.ScriptParam {
-	preferences := make([]app.ScriptParam, 0, len(c.extension.Preferences)+len(c.Script.Preferences))
+func (c ScriptRunner) Preferences() []app.ScriptInput {
+	preferences := make([]app.ScriptInput, 0, len(c.extension.Preferences)+len(c.Script.Preferences))
 	preferences = append(preferences, c.extension.Preferences...)
 	preferences = append(preferences, c.Script.Preferences...)
 
 	return preferences
 }
 
-func (c *ScriptRunner) checkPreferences() error {
-	environ := make(map[string]struct{})
+func (c *ScriptRunner) checkPreferences(preferences []app.ScriptPreference) (environ []string, missing []FormItem) {
+	preferenceMap := make(map[string]any)
+	for _, preference := range preferences {
+		if preference.Extension != c.extension.Name {
+			continue
+		}
 
+		if preference.Script != "" && preference.Script != c.Script.Name {
+			continue
+		}
+
+		preferenceMap[preference.Name] = preference.Value
+	}
+
+	envMap := make(map[string]struct{})
 	for _, env := range os.Environ() {
 		pair := strings.SplitN(env, "=", 2)
-		environ[pair[0]] = struct{}{}
+		envMap[pair[0]] = struct{}{}
 	}
 
 	for _, param := range c.Preferences() {
-		_, ok := environ[param.Name]
-		if ok {
+		if pref, ok := envMap[param.Name]; ok {
+			environ = append(environ, fmt.Sprintf("%s=%s", param.Name, pref))
+			continue
+		}
+
+		if pref, ok := preferenceMap[param.Name]; ok {
+			environ = append(environ, fmt.Sprintf("%s=%s", param.Name, pref))
 			continue
 		}
 
 		if param.Required {
-			return fmt.Errorf("missing required pref %s", param.Name)
+			missing = append(missing, FormItem{
+				Title:     param.Title,
+				Id:        param.Name,
+				FormInput: NewFormInput(param),
+			})
+			continue
 		}
 
-		if param.Default != nil {
-			switch defaultValue := param.Default.(type) {
-			case bool:
-				os.Setenv(param.Name, strconv.FormatBool(defaultValue))
-			case string:
-				os.Setenv(param.Name, defaultValue)
-			}
+		if param.Default != "" {
+			environ = append(environ, param.Name, fmt.Sprintf("%s=%s", param.Name, param.Default))
 		}
 
 	}
 
-	return nil
+	return environ, missing
 }
 
 func (c *ScriptRunner) Run() tea.Cmd {
-	err := c.checkPreferences()
+	preferences, err := getPreferences()
 	if err != nil {
 		return NewErrorCmd(err)
 	}
 
-	formItems, err := c.CheckMissingParams()
-	if err != nil {
-		return NewErrorCmd(err)
+	environ, missing := c.checkPreferences(preferences)
+	if len(missing) > 0 {
+		c.currentView = "form"
+		title := fmt.Sprintf("%s · Preferences", c.extension.Title)
+		c.form = NewForm("preferences", title, missing)
+		c.form.SetSize(c.width, c.height)
+		return c.form.Init()
 	}
+
+	c.environ = environ
+	formItems := c.CheckMissingParameters()
 
 	if len(formItems) > 0 {
 		c.currentView = "form"
 
-		c.form = NewForm(c.extension.Name, formItems)
+		title := fmt.Sprintf("%s · Params", c.extension.Title)
+		c.form = NewForm("params", title, formItems)
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
@@ -180,7 +206,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 			cmd := c.list.SetIsLoading(true)
 			return tea.Batch(cmd, c.ScriptCmd)
 		}
-		c.list = NewList(c.Script.Title)
+		c.list = NewList(c.extension.Title)
 		if c.Script.Mode == "generator" {
 			c.list.Dynamic = true
 		}
@@ -197,7 +223,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 			return tea.Batch(cmd, c.ScriptCmd)
 		}
 
-		c.detail = NewDetail(c.Script.Title)
+		c.detail = NewDetail(c.extension.Title)
 		c.detail.SetSize(c.width, c.height)
 		cmd := c.detail.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
@@ -215,6 +241,8 @@ func (c *ScriptRunner) SetSize(width, height int) {
 		c.list.SetSize(width, height)
 	case "detail":
 		c.detail.SetSize(width, height)
+	case "form":
+		c.form.SetSize(width, height)
 	}
 }
 
@@ -266,17 +294,56 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, NewCopyTextCmd(string(msg))
 		}
 	case SubmitMsg:
-		for key, value := range msg.Values {
-			input, ok := c.with[key]
-			if !ok {
-				c.with[key] = app.ScriptInput{Value: value}
-				continue
+		switch msg.Name {
+		case "preferences":
+			preferences := make([]app.ScriptPreference, 0)
+			for _, input := range c.extension.Preferences {
+				value, ok := msg.Values[input.Name]
+				if !ok {
+					continue
+				}
+				preference := app.ScriptPreference{
+					Name:      input.Name,
+					Value:     value,
+					Extension: c.extension.Name,
+				}
+				preferences = append(preferences, preference)
 			}
 
-			input.Value = value
-			c.with[key] = input
+			for _, input := range c.Script.Preferences {
+				value, ok := msg.Values[input.Name]
+				if !ok {
+					continue
+				}
+				preference := app.ScriptPreference{
+					Name:      input.Name,
+					Value:     value,
+					Extension: c.extension.Name,
+					Script:    c.Script.Name,
+				}
+				preferences = append(preferences, preference)
+			}
+
+			err := setPreference(preferences...)
+			if err != nil {
+				return c, NewErrorCmd(err)
+			}
+
+			return c, c.Run()
+		case "params":
+			for key, value := range msg.Values {
+				input, ok := c.with[key]
+				if !ok {
+					c.with[key] = app.ScriptParam{Value: value}
+					continue
+				}
+
+				input.Value = value
+				c.with[key] = input
+			}
+			return c, c.Run()
 		}
-		return c, c.Run()
+
 	case ReloadPageMsg:
 		for key, value := range msg.With {
 			c.with[key] = value

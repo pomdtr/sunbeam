@@ -25,7 +25,7 @@ scripts:
     command: |
       docker exec -it ${{ container }} ${{ command }} | less
     mode: command
-    params:
+    inputs:
       - name: container
         type: textfield
         required: true

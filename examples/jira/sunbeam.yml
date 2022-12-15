@@ -15,7 +15,7 @@ scripts:
   listIssues:
     command: ./jira.sh ${{ jql }}
     mode: filter
-    params:
+    inputs:
       - name: jql
         type: textfield
         title: JQL

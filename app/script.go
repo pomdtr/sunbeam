@@ -17,13 +17,13 @@ import (
 )
 
 type Script struct {
+	Name        string
 	Command     string        `json:"command" yaml:"command"`
 	Description string        `json:"description" yaml:"description"`
-	Preferences []ScriptParam `json:"preferences" yaml:"preferences"`
+	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
 	Mode        string        `json:"mode" yaml:"mode"`
 	Cwd         string        `json:"cwd" yaml:"cwd"`
-	Params      []ScriptParam `json:"params" yaml:"params"`
-	Title       string        `json:"title" yaml:"title"`
+	Inputs      []ScriptInput `json:"inputs" yaml:"inputs"`
 	ShowPreview bool          `json:"showPreview" yaml:"showPreview"`
 }
 
@@ -31,7 +31,7 @@ func (s Script) IsPage() bool {
 	return s.Mode == "filter" || s.Mode == "generator" || s.Mode == "detail"
 }
 
-type ScriptParam struct {
+type ScriptInput struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Required    bool   `json:"required"`
@@ -45,13 +45,28 @@ type ScriptParam struct {
 	Label string `json:"label"`
 }
 
-type ScriptInput struct {
-	Value any
-	ScriptParam
+type ScriptPreference struct {
+	Name      string `json:"name"`
+	Script    string `json:"script"`
+	Extension string `json:"extension"`
+	Value     any    `json:"value"`
 }
 
-func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
-	err = value.Decode(&si.ScriptParam)
+func (pref ScriptPreference) Id() string {
+	if pref.Script != "" {
+		return fmt.Sprintf("%s.%s.%s", pref.Extension, pref.Script, pref.Name)
+	}
+	return fmt.Sprintf("%s.%s", pref.Extension, pref.Name)
+
+}
+
+type ScriptParam struct {
+	Value any
+	ScriptInput
+}
+
+func (si *ScriptParam) UnmarshalYAML(value *yaml.Node) (err error) {
+	err = value.Decode(&si.ScriptInput)
 	if err == nil {
 		return
 	}
@@ -59,8 +74,8 @@ func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
 	return value.Decode(&si.Value)
 }
 
-func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
-	err = json.Unmarshal(bytes, &si.ScriptParam)
+func (si *ScriptParam) UnmarshalJSON(bytes []byte) (err error) {
+	err = json.Unmarshal(bytes, &si.ScriptInput)
 	if err == nil {
 		return
 	}
@@ -68,14 +83,14 @@ func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
 	return json.Unmarshal(bytes, &si.Value)
 }
 
-type ScriptInputs map[string]ScriptInput
+type ScriptInputs map[string]ScriptParam
 
 func (s Script) Cmd(with map[string]any) (string, error) {
 	var err error
 
 	funcMap := template.FuncMap{}
 
-	for _, param := range s.Params {
+	for _, param := range s.Inputs {
 		param := param
 		value, ok := with[param.Name]
 		if !ok {

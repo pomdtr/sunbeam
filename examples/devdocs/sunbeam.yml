@@ -41,7 +41,7 @@ scripts:
         }
       '
     mode: filter
-    params:
+    inputs:
       - name: slug
         type: textfield
         required: true

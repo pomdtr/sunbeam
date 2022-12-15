@@ -36,7 +36,7 @@ type Extension struct {
 	Description string        `json:"description" yaml:"description"`
 	Name        string        `json:"name" yaml:"name"`
 	PostInstall string        `json:"postInstall" yaml:"postInstall"`
-	Preferences []ScriptParam `json:"preferences" yaml:"preferences"`
+	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
 
 	Requirements []ExtensionRequirement `json:"requirements" yaml:"requirements"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
@@ -148,9 +148,7 @@ func ParseManifest(bytes []byte) (extension Extension, err error) {
 	}
 
 	for key, script := range extension.Scripts {
-		if script.Title == "" {
-			script.Title = extension.Title
-		}
+		script.Name = key
 		extension.Scripts[key] = script
 	}
 

@@ -23,7 +23,7 @@ scripts:
   browseFiles:
     command: ./file-browser.py --root ${{ root }} ${{- if showHidden }} --show-hidden ${{ end }}
     mode: filter
-    params:
+    inputs:
       - name: root
         required: true
         title: Root Directory

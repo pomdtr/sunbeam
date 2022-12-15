@@ -14,7 +14,7 @@ scripts:
   list:
     mode: filter
     showPreview: true
-    params:
+    inputs:
       - name: platform
         type: dropdown
         required: true

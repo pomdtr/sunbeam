@@ -31,7 +31,7 @@ scripts:
         ]
       }
       '
-    params:
+    inputs:
       - name: repository
         type: textfield
         required: true
@@ -40,7 +40,7 @@ scripts:
     command: ./list-repos.sh ${{ owner }}
     mode: filter
     showPreview: true
-    params:
+    inputs:
       - name: owner
         type: textfield
         title: Owner
@@ -48,7 +48,7 @@ scripts:
   listPullRequests:
     command: ./list-prs.sh ${{ repository }}
     mode: filter
-    params:
+    inputs:
       - name: repository
         type: textfield
         title: Repository

@@ -14,7 +14,7 @@ scripts:
   writeEntry:
     command: ./write-entry.py --title ${{ title }} --content ${{ content }}
     mode: command
-    params:
+    inputs:
       - name: title
         type: textfield
         title: Title
@@ -26,7 +26,7 @@ scripts:
   editEntry:
     command: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     mode: command
-    params:
+    inputs:
       - name: uuid
         type: textfield
         title: UUID
@@ -42,7 +42,7 @@ scripts:
   deleteEntry:
     command: ./delete-entry.py --uuid ${{ uuid }}
     mode: command
-    params:
+    inputs:
       - name: uuid
         type: textfield
         required: true

@@ -254,7 +254,7 @@ func RootList(rootItems ...app.RootItem) *List {
 	for index, rootItem := range rootItems {
 		with := make(app.ScriptInputs)
 		for key, value := range rootItem.With {
-			with[key] = app.ScriptInput{Value: value}
+			with[key] = app.ScriptParam{Value: value}
 		}
 		runMsg := RunScriptMsg{
 			Extension: rootItem.Extension,
