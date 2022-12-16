@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"sort"
-	"strconv"
 	"strings"
 
+	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cli/browser"
@@ -246,10 +246,33 @@ func (m *RootModel) Pop() {
 	}
 }
 
-func RootList(rootItems ...app.RootItem) *List {
+func Shortcut(extension string, rootItem app.RootItem) string {
+	args := make([]string, 0)
+	args = append(args, "sunbeam", "run", extension, rootItem.Script)
+	for param, value := range rootItem.With {
+		switch value := value.(type) {
+		case string:
+			value = shellescape.Quote(value)
+			args = append(args, fmt.Sprintf("--%s=%s", param, value))
+		case bool:
+			if !value {
+				continue
+			}
+			args = append(args, fmt.Sprintf("--%s", param))
+		}
+	}
+	return strings.Join(args, " ")
+}
+
+func RootList(rootItems ...app.RootItem) Container {
 	listItems := make([]ListItem, len(rootItems))
 	for index, rootItem := range rootItems {
+		extension, ok := app.Sunbeam.Extensions[rootItem.Extension]
+		if !ok {
+			continue
+		}
 		with := make(app.ScriptInputs)
+		shortcut := Shortcut(rootItem.Extension, rootItem)
 		for key, value := range rootItem.With {
 			with[key] = app.ScriptParam{Value: value}
 		}
@@ -259,7 +282,7 @@ func RootList(rootItems ...app.RootItem) *List {
 			With:      with,
 		}
 		listItems[index] = ListItem{
-			Id:       strconv.Itoa(index),
+			Id:       shortcut,
 			Title:    rootItem.Title,
 			Subtitle: rootItem.Subtitle,
 			Actions: []Action{
@@ -269,6 +292,21 @@ func RootList(rootItems ...app.RootItem) *List {
 					Cmd: func() tea.Msg {
 						return runMsg
 					},
+				},
+				{
+					Title:    "Edit Script Manifest",
+					Shortcut: "ctrl+e",
+					Cmd:      NewEditCmd(extension.Url.Path),
+				},
+				{
+					Title:    "Open Extension Directory",
+					Shortcut: "ctrl+o",
+					Cmd:      NewOpenPathCmd(extension.Dir()),
+				},
+				{
+					Title:    "Copy Shortcut",
+					Shortcut: "ctrl+y",
+					Cmd:      NewCopyTextCmd(shortcut),
 				},
 			},
 		}

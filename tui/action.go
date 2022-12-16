@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -47,15 +48,13 @@ func NewOpenUrlCmd(url string) tea.Cmd {
 }
 
 type OpenUrlMsg struct {
-	Url         string
-	Application string
+	Url string
 }
 
-func NewOpenPathCmd(path string, application string) tea.Cmd {
+func NewOpenPathCmd(path string) tea.Cmd {
 	return func() tea.Msg {
 		return OpenPathMsg{
-			Path:        path,
-			Application: application,
+			Path: path,
 		}
 	}
 }
@@ -122,6 +121,15 @@ func (msg ExecCommandMsg) OnSuccessCmd() tea.Msg {
 	}
 }
 
+func NewEditCmd(path string) tea.Cmd {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "vim"
+	}
+
+	return NewExecCmd(fmt.Sprintf("%s %s", editor, path), false, "reloadPage")
+}
+
 func NewAction(scriptAction app.ScriptAction) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
@@ -134,7 +142,7 @@ func NewAction(scriptAction app.ScriptAction) Action {
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open File"
 		}
-		cmd = NewOpenPathCmd(scriptAction.Path, scriptAction.Application)
+		cmd = NewOpenPathCmd(scriptAction.Path)
 	case "copyText":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
@@ -157,7 +165,11 @@ func NewAction(scriptAction app.ScriptAction) Action {
 		}
 	case "execCommand":
 		cmd = NewExecCmd(scriptAction.Command, scriptAction.Silent, scriptAction.OnSuccess)
-
+	case "edit":
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Open in Text Editor"
+		}
+		cmd = NewEditCmd(scriptAction.Path)
 	default:
 		scriptAction.Title = "Unknown"
 		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))

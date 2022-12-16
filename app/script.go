@@ -191,9 +191,8 @@ type ScriptAction struct {
 
 	Text string `json:"text,omitempty" yaml:"textfield"`
 
-	Url         string `json:"url,omitempty" yaml:"url"`
-	Path        string `json:"path,omitempty" yaml:"path"`
-	Application string `json:"application,omitempty" yaml:"application"`
+	Url  string `json:"url,omitempty" yaml:"url"`
+	Path string `json:"path,omitempty" yaml:"path"`
 
 	Extension string `json:"extension,omitempty" yaml:"extension"`
 	Script    string `json:"script,omitempty" yaml:"script"`
