@@ -128,6 +128,12 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 				break
 			}
 			return &c, PopCmd
+		case tea.KeyShiftDown:
+			c.sideViewport.LineDown(1)
+			return &c, nil
+		case tea.KeyShiftUp:
+			c.sideViewport.LineUp(1)
+			return &c, nil
 		}
 	}
 	var cmds []tea.Cmd
