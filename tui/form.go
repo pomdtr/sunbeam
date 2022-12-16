@@ -360,11 +360,14 @@ func (d *DropDown) Blur() {
 }
 
 type Form struct {
-	header     Header
-	Name       string
-	footer     Footer
-	viewport   viewport.Model
-	items      []FormItem
+	Name  string
+	items []FormItem
+	width int
+
+	header   Header
+	footer   Footer
+	viewport viewport.Model
+
 	focusIndex int
 }
 
@@ -467,6 +470,7 @@ func (c *Form) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
 
+	c.width = width
 	for _, input := range c.items {
 		input.SetWidth(width / 2)
 	}
@@ -497,7 +501,11 @@ func (c *Form) View() string {
 	}
 
 	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	formView = lipgloss.NewStyle().Width(c.footer.Width).Align(lipgloss.Center).PaddingTop(1).Render(formView)
+	titleSize := utils.Max(0, maxWidth-c.width/2)
+	paddingSize := c.width / 4
+	paddingLeft := utils.Max(0, paddingSize-titleSize)
+
+	formView = lipgloss.NewStyle().PaddingLeft(paddingLeft).PaddingRight(paddingSize).Render(formView)
 
 	c.viewport.SetContent(formView)
 
