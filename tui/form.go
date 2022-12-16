@@ -490,7 +490,7 @@ func (c *Form) View() string {
 			inputView = normalBorder.Render(inputView)
 		}
 
-		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Top, fmt.Sprintf("\n%s: ", item.Title), inputView)
+		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Top, fmt.Sprintf("\n%s: ", styles.Bold.Render(item.Title)), inputView)
 		if lipgloss.Width(itemViews[i]) > maxWidth {
 			maxWidth = lipgloss.Width(itemViews[i])
 		}
@@ -501,11 +501,7 @@ func (c *Form) View() string {
 	}
 
 	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	titleSize := utils.Max(0, maxWidth-c.width/2)
-	paddingSize := c.width / 4
-	paddingLeft := utils.Max(0, paddingSize-titleSize)
-
-	formView = lipgloss.NewStyle().PaddingLeft(paddingLeft).PaddingRight(paddingSize).Render(formView)
+	formView = lipgloss.NewStyle().Width(c.footer.Width).Align(lipgloss.Center).PaddingTop(1).Render(formView)
 
 	c.viewport.SetContent(formView)
 
