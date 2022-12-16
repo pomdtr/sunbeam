@@ -33,7 +33,7 @@ type Container interface {
 	SetSize(width, height int)
 }
 
-type RootModel struct {
+type Model struct {
 	width, height int
 	exit          bool
 	config        Config
@@ -43,15 +43,15 @@ type RootModel struct {
 	hidden bool
 }
 
-func NewRootModel(rootPage Container, config Config) *RootModel {
-	return &RootModel{pages: []Container{rootPage}, config: config}
+func NewModel(rootPage Container, config Config) *Model {
+	return &Model{pages: []Container{rootPage}, config: config}
 }
 
-func (m *RootModel) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	return m.pages[0].Init()
 }
 
-func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -181,7 +181,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *RootModel) View() string {
+func (m *Model) View() string {
 	if m.hidden {
 		return ""
 	}
@@ -197,7 +197,7 @@ func (m *RootModel) View() string {
 	return embedView
 }
 
-func (m *RootModel) SetSize(width, height int) {
+func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 
@@ -206,7 +206,7 @@ func (m *RootModel) SetSize(width, height int) {
 	}
 }
 
-func (m *RootModel) pageHeight() int {
+func (m *Model) pageHeight() int {
 	if m.config.Height > 0 {
 		return utils.Min(m.config.Height, m.height)
 	} else {
@@ -234,13 +234,13 @@ func NewPushCmd(c Container) tea.Cmd {
 	}
 }
 
-func (m *RootModel) Push(page Container) tea.Cmd {
+func (m *Model) Push(page Container) tea.Cmd {
 	page.SetSize(m.width, m.pageHeight())
 	m.pages = append(m.pages, page)
 	return page.Init()
 }
 
-func (m *RootModel) Pop() {
+func (m *Model) Pop() {
 	if len(m.pages) > 0 {
 		m.pages = m.pages[:len(m.pages)-1]
 	}
@@ -323,7 +323,7 @@ func RootList(rootItems ...app.RootItem) Container {
 	return list
 }
 
-func Draw(model *RootModel) (err error) {
+func Draw(model *Model) (err error) {
 	// Log to a file
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
 		f, err := tea.LogToFile(env, "debug")

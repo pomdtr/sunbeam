@@ -31,7 +31,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 		Short: extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			list := tui.RootList(extension.RootItems...)
-			root := tui.NewRootModel(list, config)
+			root := tui.NewModel(list, config)
 			err = tui.Draw(root)
 			if err != nil {
 				return fmt.Errorf("could not run extension: %w", err)
@@ -70,7 +70,7 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 				}
 
 				runner := tui.NewScriptRunner(extension, script, with)
-				model := tui.NewRootModel(runner, config)
+				model := tui.NewModel(runner, config)
 				err = tui.Draw(model)
 				if err != nil {
 					return fmt.Errorf("could not run script: %w", err)

@@ -250,7 +250,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 				list := tui.NewList("Browse Extensions")
 				list.ShowPreview = true
 				list.SetItems(extensionItems)
-				root := tui.NewRootModel(list, config)
+				root := tui.NewModel(list, config)
 
 				return tui.Draw(root)
 			},

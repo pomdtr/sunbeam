@@ -45,7 +45,7 @@ func Execute() (err error) {
 			}
 
 			rootList := tui.RootList(rootItems...)
-			model := tui.NewRootModel(rootList, config)
+			model := tui.NewModel(rootList, config)
 			return tui.Draw(model)
 		},
 	}
