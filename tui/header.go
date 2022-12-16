@@ -22,7 +22,7 @@ func NewHeader() Header {
 	ti.Placeholder = ""
 	ti.PlaceholderStyle = styles.Faint.Copy()
 	spinner := spinner.New()
-	spinner.Style = styles.Regular.Copy().Padding(0, 1)
+	spinner.Style = lipgloss.NewStyle().Padding(0, 1)
 	return Header{
 		input:   ti,
 		spinner: spinner,
@@ -72,10 +72,10 @@ func (c Header) View() string {
 	var headerRow string
 	if c.isLoading {
 		spinner := c.spinner.View()
-		textInput := styles.Regular.Copy().Width(c.Width - lipgloss.Width(spinner)).Render(c.input.View())
+		textInput := lipgloss.NewStyle().Width(c.Width - lipgloss.Width(spinner)).Render(c.input.View())
 		headerRow = lipgloss.JoinHorizontal(lipgloss.Top, c.spinner.View(), textInput)
 	} else {
-		headerRow = styles.Regular.Copy().PaddingLeft(3).Width(c.Width).Render(c.input.View())
+		headerRow = lipgloss.NewStyle().Copy().PaddingLeft(3).Width(c.Width).Render(c.input.View())
 	}
 
 	line := strings.Repeat("─", c.Width)

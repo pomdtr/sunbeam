@@ -110,7 +110,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for _, requirement := range extension.Requirements {
 				if !requirement.Check() {
 					container := NewDetail("Requirement not met")
-					container.SetContent(fmt.Sprintf("requirement %s not met.\nHomepage: %s", requirement.Which, requirement.HomePage))
+					container.content = fmt.Sprintf("requirement %s not met.\nHomepage: %s", requirement.Which, requirement.HomePage)
 					return m, NewPushCmd(container)
 				}
 			}
@@ -130,7 +130,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			err := command.Run()
 			if err != nil {
 				detail := NewDetail(command.String())
-				detail.SetContent(err.Error())
+				detail.content = err.Error()
 				return m, NewPushCmd(detail)
 			}
 
@@ -140,9 +140,6 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.ExecProcess(command, func(err error) tea.Msg {
 			if err != nil {
-				log.Println("ERROR")
-				detail := NewDetail(command.String())
-				detail.SetContent(err.Error())
 				return showMsg{
 					cmd: NewErrorCmd(err),
 				}
@@ -169,7 +166,7 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case error:
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())
-		detail.SetContent(msg.Error())
+		detail.content = msg.Error()
 		m.pages[len(m.pages)-1] = detail
 
 		return m, detail.Init()

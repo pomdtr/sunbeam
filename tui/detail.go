@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"fmt"
+	"log"
 	"os/exec"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -9,20 +12,23 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Detail struct {
-	header     Header
-	Style      lipgloss.Style
-	content    string
-	viewport   viewport.Model
-	actionList ActionList
-	footer     Footer
+	header       Header
+	Style        lipgloss.Style
+	content      string
+	metadatas    []app.ScriptMetadata
+	mainViewport viewport.Model
+	sideViewport viewport.Model
+	actionList   ActionList
+	footer       Footer
 }
 
 func NewDetail(title string) *Detail {
-	viewport := viewport.New(0, 0)
-	viewport.Style = styles.Regular.Copy()
+	mainViewport := viewport.New(0, 0)
+	sideViewport := viewport.New(0, 0)
 
 	footer := NewFooter(title)
 
@@ -32,10 +38,11 @@ func NewDetail(title string) *Detail {
 	header := NewHeader()
 
 	d := Detail{
-		viewport:   viewport,
-		header:     header,
-		actionList: actionList,
-		footer:     footer,
+		mainViewport: mainViewport,
+		sideViewport: sideViewport,
+		header:       header,
+		actionList:   actionList,
+		footer:       footer,
 	}
 
 	return &d
@@ -56,11 +63,25 @@ func (d *Detail) Init() tea.Cmd {
 	return nil
 }
 
-func (d *Detail) SetContent(content string) {
-	d.content = content
-	content = wordwrap.String(content, d.viewport.Width-4)
-	content = lipgloss.NewStyle().Padding(0, 2).Width(d.viewport.Width).Render(content)
-	d.viewport.SetContent(content)
+func (d *Detail) updateContent() {
+	mainContent := wordwrap.String(d.content, utils.Max(0, d.mainViewport.Width-2))
+	mainContent = lipgloss.NewStyle().Padding(0, 1).Width(d.mainViewport.Width).Render(mainContent)
+	d.mainViewport.SetContent(mainContent)
+
+	items := make([]string, 0)
+	maxWidth := utils.Max(d.sideViewport.Width-2, 0)
+	for _, metadata := range d.metadatas {
+		items = append(items, fmt.Sprintf(
+			"%s\n%s",
+			styles.Faint.MaxWidth(maxWidth).Render(metadata.Title),
+			lipgloss.NewStyle().MaxWidth(maxWidth).Render(metadata.Value),
+		))
+	}
+
+	sideContent := strings.Join(items, "\n\n")
+	sideContent = lipgloss.NewStyle().Padding(0, 1).Width(maxWidth).Render(sideContent)
+	log.Println(sideContent)
+	d.sideViewport.SetContent(sideContent)
 }
 
 type DetailMsg string
@@ -72,7 +93,9 @@ func (d *Detail) SetDetail(detail app.Detail) tea.Cmd {
 	}
 
 	d.SetActions(actions...)
-	d.SetContent(detail.Preview)
+	d.content = detail.Preview
+	d.metadatas = detail.Metadatas
+	d.updateContent()
 
 	if detail.PreviewCmd == "" {
 		return nil
@@ -110,7 +133,7 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
-	c.viewport, cmd = c.viewport.Update(msg)
+	c.mainViewport, cmd = c.mainViewport.Update(msg)
 	cmds = append(cmds, cmd)
 
 	c.actionList, cmd = c.actionList.Update(msg)
@@ -122,19 +145,51 @@ func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
 	return &c, tea.Batch(cmds...)
 }
 
+func (c Detail) SideBarVisible() bool {
+	return len(c.metadatas) > 0
+}
+
 func (c *Detail) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
-	c.viewport.Width = width
-	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 	c.actionList.SetSize(width, height)
 
-	c.SetContent(c.content)
+	viewportHeight := height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+	if c.SideBarVisible() {
+		metadataWidth := width / 3
+
+		c.mainViewport.Width = width - metadataWidth - 1
+		c.mainViewport.Height = viewportHeight
+
+		c.sideViewport.Width = metadataWidth
+		c.sideViewport.Height = viewportHeight
+	} else {
+		c.mainViewport.Width = width
+		c.mainViewport.Height = viewportHeight
+	}
+
+	c.updateContent()
 }
 
 func (c *Detail) View() string {
 	if c.actionList.Focused() {
 		return c.actionList.View()
 	}
-	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
+
+	if c.SideBarVisible() {
+		var separatorChars = make([]string, c.mainViewport.Height)
+		for i := 0; i < c.mainViewport.Height; i++ {
+			separatorChars[i] = "│"
+		}
+		separator := strings.Join(separatorChars, "\n")
+
+		view := lipgloss.JoinHorizontal(lipgloss.Top,
+			c.mainViewport.View(),
+			separator,
+			c.sideViewport.View(),
+		)
+
+		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), view, c.footer.View())
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.mainViewport.View(), c.footer.View())
 }

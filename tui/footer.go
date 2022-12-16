@@ -27,7 +27,6 @@ func (f *Footer) SetBindings(bindings ...key.Binding) {
 
 func (f Footer) View() string {
 	horizontal := strings.Repeat("─", f.Width)
-	horizontal = styles.Regular.Render(horizontal)
 
 	if len(f.bindings) == 0 {
 		title := styles.Italic.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
@@ -50,7 +49,7 @@ func (f Footer) View() string {
 
 	blanks := strings.Repeat(" ", utils.Max(0, f.Width-lipgloss.Width(title)-lipgloss.Width(help)))
 
-	footerRow := lipgloss.JoinHorizontal(lipgloss.Left, styles.Italic.Render(title), styles.Regular.Render(blanks), styles.Regular.Render(help))
+	footerRow := lipgloss.JoinHorizontal(lipgloss.Left, styles.Italic.Render(title), blanks, help)
 
 	return lipgloss.JoinVertical(lipgloss.Left, horizontal, footerRow)
 }

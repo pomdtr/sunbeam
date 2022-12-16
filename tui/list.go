@@ -107,7 +107,6 @@ func (i ListItem) Render(width int, selected bool) string {
 
 	title = titleStyle.Render(title)
 	subtitle = styles.Faint.Render(subtitle)
-	blanks = styles.Regular.Render(blanks)
 	accessories = styles.Faint.Render(accessories)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
@@ -132,7 +131,6 @@ func NewList(title string) *List {
 	header := NewHeader()
 
 	viewport := viewport.New(0, 0)
-	viewport.Style = styles.Regular
 
 	filter := NewFilter()
 	filter.DrawLines = true
@@ -343,7 +341,7 @@ func (c List) View() string {
 		for i := 0; i < c.viewport.Height; i++ {
 			separatorChars[i] = "│"
 		}
-		separator := styles.Regular.Render(strings.Join(separatorChars, "\n"))
+		separator := strings.Join(separatorChars, "\n")
 		view := lipgloss.JoinHorizontal(lipgloss.Top, c.filter.View(), separator, c.viewport.View())
 
 		return lipgloss.JoinVertical(lipgloss.Top, c.header.View(), view, c.footer.View())

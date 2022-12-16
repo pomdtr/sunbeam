@@ -29,7 +29,7 @@ type ScriptRunner struct {
 	Script app.Script
 }
 
-func NewScriptRunner(manifest app.Extension, script app.Script, params app.ScriptInputs) *ScriptRunner {
+func NewScriptRunner(manifest app.Extension, script app.Script, params map[string]app.ScriptParam) *ScriptRunner {
 	with := make(app.ScriptInputs)
 	for key, value := range params {
 		with[key] = value
@@ -259,6 +259,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 
 			c.detail.SetIsLoading(false)
 			cmd := c.detail.SetDetail(detail)
+			c.SetSize(c.width, c.height)
 
 			return c, cmd
 		case "filter", "generator":

@@ -26,6 +26,12 @@ scripts:
       gh api repos/${{repository}}/readme --jq '
       {
         preview: (.content | @base64d),
+        metadatas: [
+          {
+            title: "Repository",
+            value: "${{repository}}"
+          }
+        ],
         actions: [
           { type: "openUrl", title: "Open in Browser", url: .html_url }
         ]

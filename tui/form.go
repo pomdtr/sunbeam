@@ -68,13 +68,11 @@ type TextArea struct {
 
 func NewTextArea(formItem app.ScriptInput) TextArea {
 	ta := textarea.New()
-	ta.FocusedStyle.Text = styles.Regular
 	ta.Prompt = ""
 	value, ok := formItem.Default.(string)
 	if ok {
 		ta.SetValue(value)
 	}
-	ta.BlurredStyle.Text = styles.Regular
 
 	ta.Placeholder = formItem.Placeholder
 	ta.SetHeight(5)
@@ -114,7 +112,6 @@ func NewTextInput(formItem app.ScriptInput) TextInput {
 	if ok {
 		ti.SetValue(value)
 	}
-	ti.TextStyle = styles.Regular.Copy()
 
 	placeholder := formItem.Placeholder
 	ti.PlaceholderStyle = styles.Faint.Copy()
@@ -166,7 +163,6 @@ func NewCheckbox(formItem app.ScriptInput) Checkbox {
 	}
 
 	return Checkbox{
-		Style: styles.Regular.Copy(),
 		label: formItem.Label,
 		title: formItem.Title,
 		value: defaultValue,
@@ -497,11 +493,11 @@ func (c *Form) View() string {
 	}
 
 	for i := range itemViews {
-		itemViews[i] = styles.Regular.Copy().Width(maxWidth).Align(lipgloss.Right).Render(itemViews[i])
+		itemViews[i] = lipgloss.NewStyle().Width(maxWidth).Align(lipgloss.Right).Render(itemViews[i])
 	}
 
 	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	formView = styles.Regular.Copy().Width(c.footer.Width).Align(lipgloss.Center).PaddingTop(1).Render(formView)
+	formView = lipgloss.NewStyle().Width(c.footer.Width).Align(lipgloss.Center).PaddingTop(1).Render(formView)
 
 	c.viewport.SetContent(formView)
 
