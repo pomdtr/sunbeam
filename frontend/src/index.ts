@@ -28,7 +28,10 @@ async function main() {
     theme,
   });
 
-  const ws = new WebSocket(`ws://${location.host}/ws`);
+  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  const ws = new WebSocket(
+    `${protocol}://${location.host}/ws${location.search}`
+  );
 
   const fitAddon = new FitAddon();
   const canvasAddon = new CanvasAddon();

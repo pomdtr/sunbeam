@@ -1,19 +1,21 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/creack/pty"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +27,6 @@ func NewCmdServe() *cobra.Command {
 
 	serveCmd.Flags().StringP("host", "H", "localhost", "Host to listen on")
 	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
-	serveCmd.Flags().String("reload-hook", "", "url to call when the server reloads")
 	serveCmd.Flags().String("theme", "Tomorrow Night", "Theme to use for the frontend")
 
 	return serveCmd
@@ -39,14 +40,34 @@ func StartServer(cmd *cobra.Command, args []string) error {
 		w.Write([]byte("OK"))
 	})
 
-	reloadHook, _ := cmd.Flags().GetString("reload-hook")
-	r.Handle("/ws", WebsocketHandler{
-		reloadHook: reloadHook,
-	})
+	r.Handle("/ws", WebsocketHandler{})
 	theme, _ := cmd.Flags().GetString("theme")
 	r.HandleFunc("/theme.json", func(w http.ResponseWriter, r *http.Request) {
 		themePath := fmt.Sprintf("./frontend/dist/themes/%s.json", theme)
 		http.ServeFile(w, r, themePath)
+	})
+	r.HandleFunc("/run/{extension}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		extension := vars["extension"]
+
+		// redirect to the index.html file
+		http.Redirect(w, r, fmt.Sprintf("/index.html?extension=%s", extension), http.StatusFound)
+	})
+	r.HandleFunc("/run/{extension}/{script}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		extension := vars["extension"]
+		script := vars["script"]
+
+		var arguments []string
+		for name, value := range r.URL.Query() {
+			arg := fmt.Sprintf("--%s=%s", name, value[0])
+			arg = url.QueryEscape(arg)
+			arguments = append(arguments, fmt.Sprintf("arg=%s", arg))
+		}
+
+		query := strings.Join(arguments, "&")
+
+		http.Redirect(w, r, fmt.Sprintf("/index.html?extension=%s&script=%s&%s", extension, script, query), http.StatusFound)
 	})
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./frontend/dist")))
 
@@ -57,10 +78,39 @@ func StartServer(cmd *cobra.Command, args []string) error {
 }
 
 type WebsocketHandler struct {
-	reloadHook string
+}
+
+func extractArgs(r *http.Request) (arguments []string) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+
+	extension, ok := r.Form["extension"]
+	if !ok {
+		return arguments
+	}
+	arguments = append(arguments, "run", extension[0])
+
+	script, ok := r.Form["script"]
+	if !ok {
+		return arguments
+	}
+	arguments = append(arguments, script[0])
+
+	args, ok := r.Form["arg"]
+	if !ok {
+		return arguments
+	}
+
+	arguments = append(arguments, args...)
+	return arguments
 }
 
 func (h WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	arguments := extractArgs(r)
+
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -76,8 +126,11 @@ func (h WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
-	command := exec.Command("sunbeam")
+	command := exec.Command("sunbeam", arguments...)
+	var errBuf bytes.Buffer
+	command.Stderr = &errBuf
 	tty, err := pty.Start(command)
+
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -173,16 +226,14 @@ func (h WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				buf := make([]byte, 1024)
 				n, err := tty.Read(buf)
 				if err != nil {
+					if errBuf.String() != "" {
+						log.Printf("text from stderr: %v", errBuf.String())
+					}
 					// if the pty is closed, restart it
 					if err.Error() == "EOF" {
-						if h.reloadHook != "" {
-							log.Println("reloading hook")
-							err := open.Run(h.reloadHook)
-							if err != nil {
-								log.Printf("error running reload hook: %v", err)
-							}
-						}
 						command = exec.Command("sunbeam")
+						errBuf.Reset()
+						command.Stderr = &errBuf
 						tty, _ = pty.Start(command)
 						pty.Setsize(tty, &ptySize)
 					} else {
