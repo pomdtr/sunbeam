@@ -26,6 +26,7 @@ func NewCmdServe() *cobra.Command {
 	serveCmd.Flags().StringP("host", "H", "localhost", "Host to listen on")
 	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
 	serveCmd.Flags().String("reload-hook", "", "url to call when the server reloads")
+	serveCmd.Flags().String("theme", "Tomorrow Night", "Theme to use for the frontend")
 
 	return serveCmd
 }
@@ -41,6 +42,11 @@ func StartServer(cmd *cobra.Command, args []string) error {
 	reloadHook, _ := cmd.Flags().GetString("reload-hook")
 	r.Handle("/ws", WebsocketHandler{
 		reloadHook: reloadHook,
+	})
+	theme, _ := cmd.Flags().GetString("theme")
+	r.HandleFunc("/theme.json", func(w http.ResponseWriter, r *http.Request) {
+		themePath := fmt.Sprintf("./frontend/dist/themes/%s.json", theme)
+		http.ServeFile(w, r, themePath)
 	})
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./frontend/dist")))
 
