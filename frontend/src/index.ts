@@ -1,3 +1,8 @@
+import { Terminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import { CanvasAddon } from "xterm-addon-canvas";
+import { AttachAddon } from "xterm-addon-attach";
+
 const terminal = new Terminal({
   cursorBlink: true,
   allowTransparency: true,
@@ -9,11 +14,11 @@ const terminal = new Terminal({
 
 const ws = new WebSocket(`ws://${location.host}/ws`);
 
-const fitAddon = new FitAddon.FitAddon();
-const canvasAddon = new CanvasAddon.CanvasAddon();
-const attachAddon = new AttachAddon.AttachAddon(ws);
+const fitAddon = new FitAddon();
+const canvasAddon = new CanvasAddon();
+const attachAddon = new AttachAddon(ws);
 
-terminal.open(document.getElementById("terminal"));
+terminal.open(document.getElementById("terminal")!);
 
 terminal.loadAddon(fitAddon);
 terminal.loadAddon(canvasAddon);

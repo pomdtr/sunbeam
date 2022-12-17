@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os/exec"
@@ -12,6 +13,7 @@ import (
 	"github.com/creack/pty"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +22,10 @@ func NewCmdServe() *cobra.Command {
 		Use:  "serve",
 		RunE: StartServer,
 	}
+
+	serveCmd.Flags().StringP("host", "H", "localhost", "Host to listen on")
+	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
+	serveCmd.Flags().String("reload-hook", "", "url to call when the server reloads")
 
 	return serveCmd
 }
@@ -31,13 +37,24 @@ func StartServer(cmd *cobra.Command, args []string) error {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
-	r.HandleFunc("/ws", WebsocketHandler)
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./frontend/")))
 
-	return http.ListenAndServe(":8080", r)
+	reloadHook, _ := cmd.Flags().GetString("reload-hook")
+	r.Handle("/ws", WebsocketHandler{
+		reloadHook: reloadHook,
+	})
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./frontend/dist")))
+
+	host, _ := cmd.Flags().GetString("host")
+	port, _ := cmd.Flags().GetInt("port")
+	log.Printf("Listening on %s:%d", host, port)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), r)
 }
 
-func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
+type WebsocketHandler struct {
+	reloadHook string
+}
+
+func (h WebsocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -152,6 +169,13 @@ func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					// if the pty is closed, restart it
 					if err.Error() == "EOF" {
+						if h.reloadHook != "" {
+							log.Println("reloading hook")
+							err := open.Run(h.reloadHook)
+							if err != nil {
+								log.Printf("error running reload hook: %v", err)
+							}
+						}
 						command = exec.Command("sunbeam")
 						tty, _ = pty.Start(command)
 						pty.Setsize(tty, &ptySize)
