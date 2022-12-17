@@ -62,6 +62,7 @@ func Execute() (err error) {
 	rootCmd.AddCommand(NewCmdExtension(config))
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(config))
+	rootCmd.AddCommand(NewCmdServe())
 
 	return rootCmd.Execute()
 }
