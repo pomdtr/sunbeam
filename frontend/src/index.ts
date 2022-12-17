@@ -30,7 +30,7 @@ async function main() {
 
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
   const ws = new WebSocket(
-    `${protocol}://${location.host}/ws${location.search}`
+    `${protocol}//${location.host}/ws${location.search}`
   );
 
   const fitAddon = new FitAddon();
