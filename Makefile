@@ -2,7 +2,7 @@ APP_NAME:=sunbeam
 
 .PHONY: build-frontend
 build-frontend:
-	cd frontend && npm run build
+	cd web/frontend && npm run build
 
 .PHONY: build
 build: build-frontend
@@ -11,6 +11,10 @@ build: build-frontend
 .PHONY: start
 run: start
 	./bin/$(APP_NAME)
+
+.PHONY: install
+install: build-frontend
+	go install
 
 .PHONY: start-server
 start-server: build
