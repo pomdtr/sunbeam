@@ -2,7 +2,6 @@ package web
 
 import (
 	"bytes"
-	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -15,8 +14,6 @@ import (
 	"sync"
 	"time"
 
-	_ "embed"
-
 	"github.com/creack/pty"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -25,7 +22,13 @@ import (
 //go:embed frontend/dist
 var frontendDist embed.FS
 
-func NewRouter(theme string) (http.Handler, error) {
+func NewServer(address string, theme string) (*http.Server, error) {
+
+	sub, err := fs.Sub(frontendDist, "frontend/dist")
+	if err != nil {
+		return nil, err
+	}
+
 	r := mux.NewRouter()
 
 	r.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
@@ -35,15 +38,14 @@ func NewRouter(theme string) (http.Handler, error) {
 
 	r.HandleFunc("/ws", WebsocketHandle)
 	r.HandleFunc("/theme.json", func(w http.ResponseWriter, r *http.Request) {
-		themePath := fmt.Sprintf("./frontend/dist/themes/%s.json", theme)
-		http.ServeFile(w, r, themePath)
+		http.Redirect(w, r, fmt.Sprintf("/themes/%s.json", theme), http.StatusSeeOther)
 	})
 	r.HandleFunc("/run/{extension}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		extension := vars["extension"]
 
 		// redirect to the index.html file
-		http.Redirect(w, r, fmt.Sprintf("/index.html?extension=%s", extension), http.StatusFound)
+		http.Redirect(w, r, fmt.Sprintf("/index.html?extension=%s", extension), http.StatusSeeOther)
 	})
 	r.HandleFunc("/run/{extension}/{script}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -59,16 +61,15 @@ func NewRouter(theme string) (http.Handler, error) {
 
 		query := strings.Join(arguments, "&")
 
-		http.Redirect(w, r, fmt.Sprintf("/index.html?extension=%s&script=%s&%s", extension, script, query), http.StatusFound)
+		http.Redirect(w, r, fmt.Sprintf("/index.html?extension=%s&script=%s&%s", extension, script, query), http.StatusSeeOther)
 	})
 
-	sub, err := fs.Sub(frontendDist, "frontend/dist")
-	if err != nil {
-		return nil, err
-	}
 	r.PathPrefix("/").Handler(http.FileServer(http.FS(sub)))
 
-	return r, nil
+	return &http.Server{
+		Addr:    address,
+		Handler: r,
+	}, nil
 }
 
 func extractArgs(r *http.Request) (arguments []string) {
@@ -138,28 +139,19 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	// Send a ping message every 5 seconds to keep the connection alive
 	keepAliveTimeout := 10 * time.Second
 	go func() {
 		defer waiter.Done()
 		for {
-			select {
-			case <-ctx.Done():
+			if err := ws.WriteMessage(websocket.PingMessage, []byte("keepalive")); err != nil {
+				log.Printf("error writing ping message: %v", err)
 				return
-			default:
-				if err := ws.WriteMessage(websocket.PingMessage, []byte("keepalive")); err != nil {
-					log.Printf("error writing ping message: %v", err)
-					cancel()
-					return
-				}
-				time.Sleep(keepAliveTimeout / 2)
-				if time.Since(lastPongTime) > keepAliveTimeout {
-					log.Printf("no pong message received for %v, closing connection", keepAliveTimeout)
-					cancel()
-					return
-				}
+			}
+			time.Sleep(keepAliveTimeout / 2)
+			if time.Since(lastPongTime) > keepAliveTimeout {
+				log.Printf("no pong message received for %v, closing connection", keepAliveTimeout)
+				return
 			}
 
 		}
@@ -170,38 +162,29 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer waiter.Done()
 		for {
-			select {
-			case <-ctx.Done():
+			messageType, message, err := ws.ReadMessage()
+			if err != nil {
+				log.Printf("error reading from websocket: %v", err)
 				return
-			default:
-				messageType, message, err := ws.ReadMessage()
-				if err != nil {
-					log.Printf("error reading from websocket: %v", err)
-					cancel()
-					return
-				}
+			}
 
-				if messageType == websocket.BinaryMessage {
+			if messageType == websocket.BinaryMessage {
 
-					if err = json.Unmarshal(message, &ptySize); err != nil {
-						log.Printf("error unmarshalling pty size: %v", err)
-						cancel()
-						return
-					}
-
-					if err = pty.Setsize(tty, &ptySize); err != nil {
-						log.Printf("error setting pty size: %v", err)
-						cancel()
-						return
-					}
+				if err = json.Unmarshal(message, &ptySize); err != nil {
+					log.Printf("error unmarshalling pty size: %v", err)
 					continue
 				}
 
-				if _, err := tty.Write(message); err != nil {
-					log.Printf("error writing to pty: %v", err)
-					cancel()
-					return
+				if err = pty.Setsize(tty, &ptySize); err != nil {
+					log.Printf("error setting pty size: %v", err)
+					continue
 				}
+				continue
+			}
+
+			if _, err := tty.Write(message); err != nil {
+				log.Printf("error writing to pty: %v", err)
+				return
 			}
 		}
 	}()
@@ -209,37 +192,24 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 	// this is a loop that reads from the pty and writes to the websocket
 	go func() {
 		defer waiter.Done()
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			for {
-				buf := make([]byte, 1024)
-				n, err := tty.Read(buf)
-				if err != nil {
-					if errBuf.String() != "" {
-						log.Printf("text from stderr: %v", errBuf.String())
-						// ws.WriteMessage(websocket.TextMessage, errBuf.Bytes())
-					}
-					// if the pty is closed, restart it
-					if err.Error() == "EOF" {
-						log.Println("pty closed, restarting")
-						command = exec.Command("sunbeam")
-						errBuf.Reset()
-						command.Stderr = &errBuf
-						tty, _ = pty.Start(command)
-						pty.Setsize(tty, &ptySize)
-					} else {
-						log.Printf("error reading from pty: %v", err)
-						cancel()
-						return
-					}
+
+		for {
+			buf := make([]byte, 1024)
+			n, err := tty.Read(buf)
+			if err != nil {
+				if errBuf.String() != "" {
+					log.Printf("text from stderr: %v", errBuf.String())
+					ws.WriteMessage(websocket.TextMessage, errBuf.Bytes())
 				}
-				if err := ws.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
-					log.Printf("error writing to websocket: %v", err)
-					cancel()
-					return
-				}
+
+				log.Printf("error reading from pty: %v", err)
+				ws.Close()
+				return
+			}
+
+			if err := ws.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
+				log.Printf("error writing to websocket: %v", err)
+				return
 			}
 		}
 

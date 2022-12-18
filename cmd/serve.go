@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/pomdtr/sunbeam/web"
 	"github.com/spf13/cobra"
@@ -14,10 +13,6 @@ func NewCmdServe() *cobra.Command {
 		Use: "serve",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			theme, err := cmd.Flags().GetString("theme")
-			if err != nil {
-				return err
-			}
-			router, err := web.NewRouter(theme)
 			if err != nil {
 				return err
 			}
@@ -32,8 +27,13 @@ func NewCmdServe() *cobra.Command {
 			}
 
 			addr := fmt.Sprintf("%s:%d", host, port)
+			server, err := web.NewServer(addr, theme)
+			if err != nil {
+				return err
+			}
+
 			log.Printf("Listening on %s", addr)
-			return http.ListenAndServe(addr, router)
+			return server.ListenAndServe()
 		},
 	}
 

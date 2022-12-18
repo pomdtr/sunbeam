@@ -55,6 +55,11 @@ async function main() {
     fitAddon.fit();
   };
 
+  ws.onclose = () => {
+    // @ts-ignore
+    window.location = "/";
+  };
+
   window.onresize = () => {
     fitAddon.fit();
   };
