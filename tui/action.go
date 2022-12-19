@@ -198,7 +198,7 @@ func NewActionList() ActionList {
 	footer := NewFooter("Actions")
 	footer.SetBindings(
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("↩", "Confirm")),
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide")),
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide Actions")),
 	)
 
 	return ActionList{

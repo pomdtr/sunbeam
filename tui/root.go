@@ -304,7 +304,7 @@ func RootList(rootItems ...app.RootItem) Container {
 					Cmd:      NewOpenPathCmd(extension.Dir()),
 				},
 				{
-					Title:    "Copy Shortcut",
+					Title:    "Copy as Shell Command",
 					Shortcut: "ctrl+y",
 					Cmd:      NewCopyTextCmd(shortcut),
 				},

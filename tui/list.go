@@ -208,7 +208,7 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 	} else {
 		l.footer.SetBindings(
 			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
-			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}
 
