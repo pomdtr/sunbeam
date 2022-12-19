@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )
@@ -78,7 +79,7 @@ func init() {
 
 	currentDir, err := os.Getwd()
 	if err == nil {
-		for currentDir != "/" {
+		for !utils.IsRoot(currentDir) {
 			scriptDirs = append(scriptDirs, currentDir)
 			currentDir = path.Dir(currentDir)
 		}
