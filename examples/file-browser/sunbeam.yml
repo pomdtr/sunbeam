@@ -19,17 +19,20 @@ rootItems:
     script: browseFiles
     with:
       root: .
+      showHidden: true
 scripts:
   browseFiles:
-    command: ./file-browser.py --root ${{ root }} ${{- if showHidden }} --show-hidden ${{ end }}
+    command: ./file-browser.py --root ${{ root }} ${{ showHidden }}
     mode: filter
-    inputs:
+    params:
       - name: root
-        required: true
-        title: Root Directory
-        type: directory
+        input:
+          type: directory
+          required: true
+          title: Root Directory
       - name: showHidden
-        required: false
-        label: "Show Hidden Files"
-        type: checkbox
-        default: false
+        input:
+          required: false
+          label: "Show Hidden Files"
+          type: checkbox
+          trueSubstitution: "--show-hidden"

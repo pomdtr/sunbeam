@@ -41,8 +41,9 @@ scripts:
         }
       '
     mode: filter
-    inputs:
+    params:
       - name: slug
-        type: textfield
-        required: true
-        title: Slug
+        input:
+          type: textfield
+          required: true
+          title: Slug

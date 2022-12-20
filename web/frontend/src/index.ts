@@ -55,6 +55,16 @@ async function main() {
     fitAddon.fit();
   };
 
+  ws.onmessage = async (event) => {
+    const data = event.data;
+    if (typeof data === "string") {
+      // Copy to clipboard
+      // await navigator.clipboard.writeText(data);
+      // Open URL
+      window.open(data);
+    }
+  };
+
   ws.onclose = () => {
     // @ts-ignore
     window.location = "/";

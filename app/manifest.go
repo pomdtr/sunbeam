@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed manifest.json
+//go:embed schemas/manifest.json
 var manifestSchema string
 
 type Api struct {
@@ -37,7 +37,7 @@ type Extension struct {
 	Description string        `json:"description" yaml:"description"`
 	Name        string        `json:"name" yaml:"name"`
 	PostInstall string        `json:"postInstall" yaml:"postInstall"`
-	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
+	Preferences []ScriptParam `json:"preferences" yaml:"preferences"`
 
 	Requirements []ExtensionRequirement `json:"requirements" yaml:"requirements"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`

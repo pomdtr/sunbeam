@@ -4,9 +4,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"os"
+	"log"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -20,10 +19,10 @@ type Script struct {
 	Name        string
 	Command     string        `json:"command" yaml:"command"`
 	Description string        `json:"description" yaml:"description"`
-	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
+	Preferences []ScriptParam `json:"preferences" yaml:"preferences"`
 	Mode        string        `json:"mode" yaml:"mode"`
 	Cwd         string        `json:"cwd" yaml:"cwd"`
-	Inputs      []ScriptInput `json:"inputs" yaml:"inputs"`
+	Params      []ScriptParam `json:"params" yaml:"params"`
 	ShowPreview bool          `json:"showPreview" yaml:"showPreview"`
 }
 
@@ -31,42 +30,89 @@ func (s Script) IsPage() bool {
 	return s.Mode == "filter" || s.Mode == "generator" || s.Mode == "detail"
 }
 
-type ScriptInput struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Required    bool   `json:"required"`
-	Title       string `json:"title"`
-	Placeholder string `json:"placeholder"`
-	Default     any    `json:"default"`
-	Data        []struct {
+type FormInput struct {
+	Type         string `json:"type"`
+	Required     bool   `json:"required"`
+	Title        string `json:"title"`
+	Placeholder  string `json:"placeholder"`
+	DefaultValue any    `json:"default"`
+
+	TrueSubstitution  string `json:"trueSubstitution"`
+	FalseSubstitution string `json:"falseSubstitution"`
+
+	Data []struct {
 		Title string `json:"title,omitempty"`
 		Value string `json:"value,omitempty"`
 	} `json:"data,omitempty"`
 	Label string `json:"label"`
 }
 
-type ScriptPreference struct {
-	Name      string `json:"name"`
-	Script    string `json:"script"`
-	Extension string `json:"extension"`
-	Value     any    `json:"value"`
-}
-
-func (pref ScriptPreference) Id() string {
-	if pref.Script != "" {
-		return fmt.Sprintf("%s.%s.%s", pref.Extension, pref.Script, pref.Name)
-	}
-	return fmt.Sprintf("%s.%s", pref.Extension, pref.Name)
-
-}
-
 type ScriptParam struct {
-	Value any
-	ScriptInput
+	Name  string
+	Input FormInput `json:"input"`
 }
 
-func (si *ScriptParam) UnmarshalYAML(value *yaml.Node) (err error) {
-	err = value.Decode(&si.ScriptInput)
+type ScriptInput struct {
+	Value any
+	FormInput
+}
+
+func (si ScriptInput) GetValue() (string, error) {
+	if si.Value == nil && si.Required {
+		return "", fmt.Errorf("required value is empty")
+	}
+
+	switch si.Type {
+	case "checkbox":
+		var value bool
+		if si.Value != nil {
+			if v, ok := si.Value.(bool); ok {
+				value = v
+			} else {
+				return "", fmt.Errorf("invalid value for checkbox")
+			}
+		} else if si.DefaultValue != nil {
+			if v, ok := si.DefaultValue.(bool); ok {
+				value = v
+			} else {
+				return "", fmt.Errorf("invalid value for checkbox")
+			}
+		}
+
+		if value {
+			return si.TrueSubstitution, nil
+		}
+		return si.FalseSubstitution, nil
+	default:
+		var value string
+		if si.Value != nil {
+			if v, ok := si.Value.(string); ok {
+				value = v
+			} else {
+				return "", fmt.Errorf("invalid value for checkbox")
+			}
+		} else if si.DefaultValue != nil {
+			if v, ok := si.DefaultValue.(string); ok {
+				value = v
+			} else {
+				return "", fmt.Errorf("invalid value for checkbox")
+			}
+		}
+
+		if si.Type == "file" || si.Type == "directory" {
+			if v, err := utils.ResolvePath(value); err != nil {
+				return "", err
+			} else {
+				value = v
+			}
+		}
+
+		return shellescape.Quote(value), nil
+	}
+}
+
+func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
+	err = value.Decode(&si.FormInput)
 	if err == nil {
 		return
 	}
@@ -74,8 +120,8 @@ func (si *ScriptParam) UnmarshalYAML(value *yaml.Node) (err error) {
 	return value.Decode(&si.Value)
 }
 
-func (si *ScriptParam) UnmarshalJSON(bytes []byte) (err error) {
-	err = json.Unmarshal(bytes, &si.ScriptInput)
+func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
+	err = json.Unmarshal(bytes, &si.FormInput)
 	if err == nil {
 		return
 	}
@@ -83,68 +129,19 @@ func (si *ScriptParam) UnmarshalJSON(bytes []byte) (err error) {
 	return json.Unmarshal(bytes, &si.Value)
 }
 
-type ScriptInputs map[string]ScriptParam
-
-func (s Script) Cmd(with map[string]any) (string, error) {
+func (s Script) Cmd(with map[string]string) (string, error) {
 	var err error
 
 	funcMap := template.FuncMap{}
 
-	for _, param := range s.Inputs {
-		param := param
-		value, ok := with[param.Name]
-		if !ok {
-			if param.Required {
-				return "", fmt.Errorf("missing required param %s", param.Name)
-			}
-			value = param.Default
-		}
-
-		funcMap[param.Name] = func() (any, error) {
-			switch param.Type {
-			case "directory", "file":
-				value, ok := value.(string)
-				if !ok {
-					return "", fmt.Errorf("expected string for param %s", param.Name)
-				}
-
-				if strings.HasPrefix(value, "~") {
-					homeDir, err := os.UserHomeDir()
-					if err != nil {
-						return nil, err
-					}
-					value = strings.Replace(value, "~", homeDir, 1)
-				} else if value == "." {
-					value, err = os.Getwd()
-					if err != nil {
-						return nil, err
-					}
-				} else if !filepath.IsAbs(value) {
-					cwd, err := os.Getwd()
-					if err != nil {
-						return nil, err
-					}
-					value = filepath.Join(cwd, value)
-				}
-
-				return shellescape.Quote(value), nil
-			case "checkbox":
-				value, ok := value.(bool)
-				if !ok {
-					return nil, fmt.Errorf("expected boolean for param %s", param.Name)
-				}
-				return value, nil
-			default:
-				value, ok := value.(string)
-				if !ok {
-					return "", fmt.Errorf("expected string for param %s", param.Name)
-				}
-
-				return shellescape.Quote(value), nil
-			}
+	for key, value := range with {
+		value := value
+		funcMap[key] = func() string {
+			return value
 		}
 	}
 
+	log.Println(s.Command)
 	rendered, err := utils.RenderString(s.Command, funcMap)
 	if err != nil {
 		return "", err
@@ -198,12 +195,12 @@ type ScriptAction struct {
 	Script    string `json:"script,omitempty" yaml:"script"`
 	Command   string `json:"command,omitempty" yaml:"command"`
 
-	Silent    bool         `json:"silent,omitempty" yaml:"silent"`
-	OnSuccess string       `json:"onSuccess,omitempty" yaml:"onSuccess"`
-	With      ScriptInputs `json:"with,omitempty" yaml:"with"`
+	Silent    bool                   `json:"silent,omitempty" yaml:"silent"`
+	OnSuccess string                 `json:"onSuccess,omitempty" yaml:"onSuccess"`
+	With      map[string]ScriptInput `json:"with,omitempty" yaml:"with"`
 }
 
-//go:embed listitem.json
+//go:embed schemas/listitem.json
 var itemSchemaString string
 var itemSchema *jsonschema.Schema
 

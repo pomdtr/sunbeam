@@ -168,11 +168,23 @@
                 "title": {
                     "type": "string"
                 },
-                "inputs": {
+                "params": {
                     "type": "array",
-                    "additionalProperties": false,
                     "items": {
-                        "$ref": "#/$defs/input"
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                            "name",
+                            "input"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "input": {
+                                "$ref": "#/$defs/input"
+                            }
+                        }
                     }
                 }
             }
@@ -181,7 +193,6 @@
             "type": "object",
             "required": [
                 "type",
-                "name",
                 "required"
             ],
             "properties": {
@@ -202,10 +213,6 @@
                 },
                 "title": {
                     "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]+$"
                 },
                 "description": {
                     "type": "string"

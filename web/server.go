@@ -198,7 +198,6 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 			n, err := tty.Read(buf)
 			if err != nil {
 				if errBuf.String() != "" {
-					log.Printf("text from stderr: %v", errBuf.String())
 					ws.WriteMessage(websocket.TextMessage, errBuf.Bytes())
 				}
 
@@ -216,5 +215,5 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	waiter.Wait()
-	log.Println("all goroutines exited, closing connection")
+	command.Process.Kill()
 }

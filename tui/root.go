@@ -18,10 +18,8 @@ import (
 )
 
 type Config struct {
-	Height         int
-	AccentColor    string
-	CopyCommand    string
-	OpenUrlCommand string
+	Height      int
+	AccentColor string
 
 	RootItems []app.RootItem `yaml:"rootItems"`
 }
@@ -63,27 +61,27 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case CopyTextMsg:
+		// if m.config.Remote {
+		// 	fmt.Fprint(os.Stderr, msg.Text)
+		// 	return m, tea.Quit
+		// }
+
 		var err error
-		if m.config.CopyCommand != "" {
-			cmd := exec.Command("sh", "-c", m.config.CopyCommand)
-			cmd.Stdin = strings.NewReader(msg.Text)
-			err = cmd.Run()
-		} else {
-			err = clipboard.WriteAll(msg.Text)
-		}
+
+		err = clipboard.WriteAll(msg.Text)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
 	case OpenUrlMsg:
+		// if m.config.Remote {
+		// 	fmt.Fprintf(os.Stderr, msg.Url)
+		// 	return m, tea.Quit
+		// }
+
 		var err error
-		if m.config.OpenUrlCommand != "" {
-			cmd := exec.Command("sh", "-c", m.config.OpenUrlCommand)
-			cmd.Stdin = strings.NewReader(msg.Url)
-			err = cmd.Run()
-		} else {
-			err = browser.OpenURL(msg.Url)
-		}
+
+		err = browser.OpenURL(msg.Url)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
@@ -164,9 +162,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case error:
+		log.Printf("error: %s", msg)
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())
-		detail.content = msg.Error()
+		detail.SetContent(msg.Error())
 		m.pages[len(m.pages)-1] = detail
 
 		return m, detail.Init()
@@ -269,12 +268,13 @@ func RootList(rootItems ...app.RootItem) Container {
 	for index, rootItem := range rootItems {
 		extension, ok := app.Sunbeam.Extensions[rootItem.Extension]
 		if !ok {
+			log.Println("extension not found:", rootItem.Extension)
 			continue
 		}
-		with := make(app.ScriptInputs)
+		with := make(map[string]app.ScriptInput)
 		shortcut := Shortcut(rootItem.Extension, rootItem)
 		for key, value := range rootItem.With {
-			with[key] = app.ScriptParam{Value: value}
+			with[key] = app.ScriptInput{Value: value}
 		}
 		runMsg := RunScriptMsg{
 			Extension: rootItem.Extension,

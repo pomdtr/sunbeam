@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 	"strings"
 
@@ -80,11 +79,15 @@ func (d *Detail) updateContent() {
 
 	sideContent := strings.Join(items, "\n\n")
 	sideContent = lipgloss.NewStyle().Padding(0, 1).Width(maxWidth).Render(sideContent)
-	log.Println(sideContent)
 	d.sideViewport.SetContent(sideContent)
 }
 
 type DetailMsg string
+
+func (d *Detail) SetContent(content string) {
+	d.content = content
+	d.updateContent()
+}
 
 func (d *Detail) SetDetail(detail app.Detail) tea.Cmd {
 	actions := make([]Action, len(detail.Actions))

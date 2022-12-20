@@ -257,7 +257,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, nil
 		}
 
-		return c, NewReloadPageCmd(app.ScriptInputs{
+		return c, NewReloadPageCmd(map[string]app.ScriptInput{
 			"query": {Value: msg.query},
 		})
 	case PreviewUpdateMsg:

@@ -19,25 +19,41 @@ type ScriptRunner struct {
 	currentView   string
 
 	extension app.Extension
-	with      app.ScriptInputs
+	with      map[string]app.ScriptInput
 	environ   []string
 
 	list   *List
 	detail *Detail
 	form   *Form
 
-	Script app.Script
+	script app.Script
 }
 
-func NewScriptRunner(manifest app.Extension, script app.Script, params map[string]app.ScriptParam) *ScriptRunner {
-	with := make(app.ScriptInputs)
-	for key, value := range params {
-		with[key] = value
+func NewScriptRunner(manifest app.Extension, script app.Script, inputs map[string]app.ScriptInput) *ScriptRunner {
+	mergedParams := make(map[string]app.ScriptInput)
+
+	for _, scriptParam := range script.Params {
+		inputParam, ok := inputs[scriptParam.Name]
+		merged := app.ScriptInput{}
+		if !ok {
+			merged.FormInput = scriptParam.Input
+			mergedParams[scriptParam.Name] = merged
+			continue
+		}
+
+		if inputParam.Value != "" {
+			merged.FormInput = scriptParam.Input
+			merged.Value = inputParam.Value
+		} else {
+			merged.FormInput = inputParam.FormInput
+		}
+		mergedParams[scriptParam.Name] = merged
 	}
+
 	return &ScriptRunner{
 		extension: manifest,
-		Script:    script,
-		with:      with,
+		script:    script,
+		with:      mergedParams,
 	}
 }
 
@@ -48,21 +64,27 @@ func (c *ScriptRunner) Init() tea.Cmd {
 type CommandOutput string
 
 func (c ScriptRunner) ScriptCmd() tea.Msg {
-	with := make(map[string]any)
-	for key, input := range c.with {
-		with[key] = input.Value
-	}
-	commandString, err := c.Script.Cmd(with)
-	command := exec.Command("sh", "-c", commandString)
+	with := make(map[string]string)
 
-	if c.Script.Mode == "generator" {
-		command.Stdin = strings.NewReader(c.list.Query())
+	for key, param := range c.with {
+		value, err := param.GetValue()
+		if err != nil {
+			return err
+		}
+		with[key] = value
 	}
+
+	commandString, err := c.script.Cmd(with)
 	if err != nil {
 		return err
 	}
 
-	switch c.Script.Cwd {
+	command := exec.Command("sh", "-c", commandString)
+	if c.script.Mode == "generator" {
+		command.Stdin = strings.NewReader(c.list.Query())
+	}
+
+	switch c.script.Cwd {
 	case "homeDir":
 		command.Dir, err = os.UserHomeDir()
 		if err != nil {
@@ -82,8 +104,6 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 	command.Env = os.Environ()
 	command.Env = append(command.Env, c.environ...)
 
-	log.Printf("Running command: %s, env: %s", command.String(), c.environ)
-
 	res, err := command.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
@@ -98,9 +118,9 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 
 func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 	formItems := make([]FormItem, 0)
-	for _, param := range c.Script.Inputs {
-		_, ok := c.with[param.Name]
-		if ok {
+	for name, param := range c.with {
+		log.Println(name, param.Value, param.Required)
+		if param.Value != nil {
 			continue
 		}
 
@@ -108,63 +128,57 @@ func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 			continue
 		}
 
-		formItem := NewFormInput(param)
+		formItem := NewFormItem(name, param.FormInput)
 		formItems = append(formItems, formItem)
 	}
 
 	return formItems
 }
 
-func (c ScriptRunner) Preferences() []app.ScriptInput {
-	preferences := make([]app.ScriptInput, 0, len(c.extension.Preferences)+len(c.Script.Preferences))
+func (c ScriptRunner) Preferences() map[string]app.ScriptInput {
+	preferences := make([]app.ScriptParam, 0, len(c.extension.Preferences)+len(c.script.Preferences))
 	preferences = append(preferences, c.extension.Preferences...)
-	preferences = append(preferences, c.Script.Preferences...)
+	preferences = append(preferences, c.script.Preferences...)
 
-	return preferences
-}
-
-func (c *ScriptRunner) checkPreferences(preferences []app.ScriptPreference) (environ []string, missing []FormItem) {
-	preferenceMap := make(map[string]any)
+	preferenceMap := make(map[string]app.ScriptInput)
 	for _, preference := range preferences {
-		if preference.Extension != c.extension.Name {
-			continue
+		preferenceMap[preference.Name] = app.ScriptInput{
+			FormInput: preference.Input,
 		}
-
-		if preference.Script != "" && preference.Script != c.Script.Name {
-			continue
-		}
-
-		preferenceMap[preference.Name] = preference.Value
 	}
 
+	return preferenceMap
+}
+
+func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem) {
 	envMap := make(map[string]struct{})
 	for _, env := range os.Environ() {
 		pair := strings.SplitN(env, "=", 2)
 		envMap[pair[0]] = struct{}{}
 	}
 
-	for _, param := range c.Preferences() {
-		if pref, ok := envMap[param.Name]; ok {
-			environ = append(environ, fmt.Sprintf("%s=%s", param.Name, pref))
+	for name, param := range c.Preferences() {
+		if pref, ok := envMap[name]; ok {
+			environ = append(environ, fmt.Sprintf("%s=%s", name, pref))
 			continue
 		}
 
-		if pref, ok := preferenceMap[param.Name]; ok {
-			environ = append(environ, fmt.Sprintf("%s=%s", param.Name, pref))
+		if pref, ok := keystore.GetPreference(c.extension.Name, c.script.Name, name); ok {
+			environ = append(environ, fmt.Sprintf("%s=%s", name, pref))
 			continue
 		}
 
 		if param.Required {
-			missing = append(missing, FormItem{
-				Title:     param.Title,
-				Id:        param.Name,
-				FormInput: NewFormInput(param),
-			})
+			missing = append(missing, NewFormItem(name, param.FormInput))
 			continue
 		}
 
-		if param.Default != "" {
-			environ = append(environ, param.Name, fmt.Sprintf("%s=%s", param.Name, param.Default))
+		if param.DefaultValue != nil {
+			value, err := param.GetValue()
+			if err != nil {
+				return
+			}
+			environ = append(environ, fmt.Sprintf("%s=%s", name, value))
 		}
 
 	}
@@ -173,12 +187,7 @@ func (c *ScriptRunner) checkPreferences(preferences []app.ScriptPreference) (env
 }
 
 func (c *ScriptRunner) Run() tea.Cmd {
-	preferences, err := getPreferences()
-	if err != nil {
-		return NewErrorCmd(err)
-	}
-
-	environ, missing := c.checkPreferences(preferences)
+	environ, missing := c.checkPreferences()
 	if len(missing) > 0 {
 		c.currentView = "form"
 		title := fmt.Sprintf("%s · Preferences", c.extension.Title)
@@ -186,8 +195,8 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
-
 	c.environ = environ
+
 	formItems := c.CheckMissingParameters()
 
 	if len(formItems) > 0 {
@@ -199,7 +208,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		return c.form.Init()
 	}
 
-	switch c.Script.Mode {
+	switch c.script.Mode {
 	case "filter", "generator":
 		c.currentView = "list"
 		if c.list != nil {
@@ -207,10 +216,10 @@ func (c *ScriptRunner) Run() tea.Cmd {
 			return tea.Batch(cmd, c.ScriptCmd)
 		}
 		c.list = NewList(c.extension.Title)
-		if c.Script.Mode == "generator" {
+		if c.script.Mode == "generator" {
 			c.list.Dynamic = true
 		}
-		if c.Script.ShowPreview {
+		if c.script.ShowPreview {
 			c.list.ShowPreview = true
 		}
 		c.list.SetSize(c.width, c.height)
@@ -230,7 +239,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 	case "snippet", "quicklink":
 		return c.ScriptCmd
 	default:
-		return NewErrorCmd(fmt.Errorf("unknown script mode: %s", c.Script.Mode))
+		return NewErrorCmd(fmt.Errorf("unknown script mode: %s", c.script.Mode))
 	}
 }
 
@@ -249,7 +258,7 @@ func (c *ScriptRunner) SetSize(width, height int) {
 func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 	switch msg := msg.(type) {
 	case CommandOutput:
-		switch c.Script.Mode {
+		switch c.script.Mode {
 		case "detail":
 			var detail app.Detail
 			err := json.Unmarshal([]byte(msg), &detail)
@@ -297,13 +306,13 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 	case SubmitMsg:
 		switch msg.Name {
 		case "preferences":
-			preferences := make([]app.ScriptPreference, 0)
+			preferences := make([]ScriptPreference, 0)
 			for _, input := range c.extension.Preferences {
 				value, ok := msg.Values[input.Name]
 				if !ok {
 					continue
 				}
-				preference := app.ScriptPreference{
+				preference := ScriptPreference{
 					Name:      input.Name,
 					Value:     value,
 					Extension: c.extension.Name,
@@ -311,21 +320,21 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 				preferences = append(preferences, preference)
 			}
 
-			for _, input := range c.Script.Preferences {
+			for _, input := range c.script.Preferences {
 				value, ok := msg.Values[input.Name]
 				if !ok {
 					continue
 				}
-				preference := app.ScriptPreference{
+				preference := ScriptPreference{
 					Name:      input.Name,
 					Value:     value,
 					Extension: c.extension.Name,
-					Script:    c.Script.Name,
+					Script:    c.script.Name,
 				}
 				preferences = append(preferences, preference)
 			}
 
-			err := setPreference(preferences...)
+			err := keystore.SetPreference(preferences...)
 			if err != nil {
 				return c, NewErrorCmd(err)
 			}
@@ -333,14 +342,13 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, c.Run()
 		case "params":
 			for key, value := range msg.Values {
-				input, ok := c.with[key]
+				param, ok := c.with[key]
 				if !ok {
-					c.with[key] = app.ScriptParam{Value: value}
-					continue
+					return c, NewErrorCmd(fmt.Errorf("unknown param: %s", key))
 				}
 
-				input.Value = value
-				c.with[key] = input
+				param.Value = value
+				c.with[key] = param
 			}
 			return c, c.Run()
 		}

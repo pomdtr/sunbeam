@@ -47,24 +47,24 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			Use:   key,
 			Short: script.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				with := make(app.ScriptInputs)
-				for _, param := range script.Inputs {
+				with := make(map[string]app.ScriptInput)
+				for _, param := range script.Params {
 					if !cmd.Flags().Changed(param.Name) {
 						continue
 					}
-					switch param.Type {
+					switch param.Input.Type {
 					case "checkbox":
 						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.ScriptParam{Value: value}
+						with[param.Name] = app.ScriptInput{Value: value}
 					default:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.ScriptParam{Value: value}
+						with[param.Name] = app.ScriptInput{Value: value}
 					}
 
 				}
@@ -79,19 +79,19 @@ func NewExtensionCommand(extension app.Extension, config tui.Config) *cobra.Comm
 			},
 		}
 
-		for _, param := range script.Inputs {
-			switch param.Type {
+		for _, param := range script.Params {
+			switch param.Input.Type {
 			case "checkbox":
-				if defaultValue, ok := param.Default.(bool); ok {
-					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Title)
+				if defaultValue, ok := param.Input.DefaultValue.(bool); ok {
+					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Input.Title)
 				} else {
-					scriptCmd.Flags().Bool(param.Name, false, param.Title)
+					scriptCmd.Flags().Bool(param.Name, false, param.Input.Title)
 				}
 			default:
-				if defaultValue, ok := param.Default.(string); ok {
-					scriptCmd.Flags().String(param.Name, defaultValue, param.Title)
+				if defaultValue, ok := param.Input.DefaultValue.(string); ok {
+					scriptCmd.Flags().String(param.Name, defaultValue, param.Input.Title)
 				} else {
-					scriptCmd.Flags().String(param.Name, "", param.Title)
+					scriptCmd.Flags().String(param.Name, "", param.Input.Title)
 				}
 			}
 		}

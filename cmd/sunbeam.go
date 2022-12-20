@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -13,14 +15,17 @@ func ParseConfig() tui.Config {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.SetEnvPrefix("sunbeam")
-	viper.AutomaticEnv()
 	viper.ReadInConfig()
+	viper.AutomaticEnv()
+
+	viper.SetDefault("accentColor", "13")
+	viper.SetDefault("height", 0)
 
 	var config tui.Config
 
 	err := viper.Unmarshal(&config)
 	if err != nil {
-		panic(err)
+		log.Printf("unable to decode config into struct, %v", err)
 	}
 
 	return config

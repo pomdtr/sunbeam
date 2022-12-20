@@ -7,10 +7,6 @@ version: "1.0"
 rootItems:
   - title: Google Suggestions
     script: search
-    with:
-      query:
-        type: textfield
-        title: Query
 scripts:
   search:
     command: ./google.mjs

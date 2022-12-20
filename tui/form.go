@@ -33,10 +33,10 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormInput(param app.ScriptInput) FormItem {
+func NewFormItem(name string, param app.FormInput) FormItem {
 	var input FormInput
 	if param.Placeholder == "" {
-		param.Placeholder = param.Name
+		param.Placeholder = name
 	}
 	switch param.Type {
 	case "textfield", "file", "directory", "password":
@@ -56,7 +56,7 @@ func NewFormInput(param app.ScriptInput) FormItem {
 	}
 
 	return FormItem{
-		Id:        param.Name,
+		Id:        name,
 		Title:     param.Title,
 		FormInput: input,
 	}
@@ -66,12 +66,11 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.ScriptInput) TextArea {
+func NewTextArea(formItem app.FormInput) TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
-	value, ok := formItem.Default.(string)
-	if ok {
-		ta.SetValue(value)
+	if defaultValue, ok := formItem.DefaultValue.(string); ok {
+		ta.SetValue(defaultValue)
 	}
 
 	ta.Placeholder = formItem.Placeholder
@@ -103,14 +102,14 @@ func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 type TextInput struct {
 	textinput.Model
 	placeholder string
+	isPath      bool
 }
 
-func NewTextInput(formItem app.ScriptInput) TextInput {
+func NewTextInput(formItem app.FormInput) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	value, ok := formItem.Default.(string)
-	if ok {
-		ti.SetValue(value)
+	if defaultValue, ok := formItem.DefaultValue.(string); ok {
+		ti.SetValue(defaultValue)
 	}
 
 	placeholder := formItem.Placeholder
@@ -118,6 +117,7 @@ func NewTextInput(formItem app.ScriptInput) TextInput {
 
 	return TextInput{
 		Model:       ti,
+		isPath:      formItem.Type == "file" || formItem.Type == "directory",
 		placeholder: placeholder,
 	}
 }
@@ -133,6 +133,10 @@ func (ti *TextInput) SetWidth(width int) {
 }
 
 func (ti *TextInput) Value() any {
+	if ti.isPath {
+		value, _ := utils.ResolvePath(ti.Model.Value())
+		return value
+	}
 	return ti.Model.Value()
 }
 
@@ -152,20 +156,20 @@ type Checkbox struct {
 	Style lipgloss.Style
 
 	focused bool
-	value   bool
+	checked bool
 }
 
-func NewCheckbox(formItem app.ScriptInput) Checkbox {
+func NewCheckbox(formItem app.FormInput) Checkbox {
 	var defaultValue bool
-	defaultValue, ok := formItem.Default.(bool)
+	defaultValue, ok := formItem.DefaultValue.(bool)
 	if !ok {
 		defaultValue = false
 	}
 
 	return Checkbox{
-		label: formItem.Label,
-		title: formItem.Title,
-		value: defaultValue,
+		label:   formItem.Label,
+		title:   formItem.Title,
+		checked: defaultValue,
 	}
 }
 
@@ -204,7 +208,7 @@ func (cb Checkbox) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 
 func (cb Checkbox) View() string {
 	var checkbox string
-	if cb.value {
+	if cb.checked {
 		checkbox = fmt.Sprintf(" [x] %s", cb.label)
 	} else {
 		checkbox = fmt.Sprintf(" [ ] %s", cb.label)
@@ -214,11 +218,11 @@ func (cb Checkbox) View() string {
 }
 
 func (cb Checkbox) Value() any {
-	return cb.value
+	return cb.checked
 }
 
 func (cb *Checkbox) Toggle() {
-	cb.value = !cb.value
+	cb.checked = !cb.checked
 }
 
 type DropDownItem struct {
@@ -248,7 +252,7 @@ type DropDown struct {
 	value     string
 }
 
-func NewDropDown(formItem app.ScriptInput) DropDown {
+func NewDropDown(formItem app.FormInput) DropDown {
 	choices := make([]FilterItem, len(formItem.Data))
 	for i, formItem := range formItem.Data {
 		choices[i] = DropDownItem{

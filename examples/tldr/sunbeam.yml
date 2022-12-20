@@ -14,11 +14,12 @@ scripts:
   list:
     mode: filter
     showPreview: true
-    inputs:
+    params:
       - name: platform
-        type: dropdown
-        required: true
-        title: Platform
+        input:
+          type: dropdown
+          required: true
+          title: Platform
     command: |
       tldr --list --platform ${{ platform }} | sunbeam query -R '{
         id: .,

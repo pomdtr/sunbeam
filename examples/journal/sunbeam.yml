@@ -14,36 +14,42 @@ scripts:
   writeEntry:
     command: ./write-entry.py --title ${{ title }} --content ${{ content }}
     mode: command
-    inputs:
+    params:
       - name: title
-        type: textfield
-        title: Title
-        required: true
+        input:
+          type: textfield
+          title: Title
+          required: true
       - name: content
-        type: textfield
-        title: Content
-        required: true
+        input:
+          type: textfield
+          title: Content
+          required: true
   editEntry:
     command: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     mode: command
-    inputs:
+    params:
       - name: uuid
-        type: textfield
-        title: UUID
-        required: true
+        input:
+          type: textfield
+          title: UUID
+          required: true
       - name: title
-        type: textfield
-        required: true
-        title: Title
+        input:
+          type: textfield
+          required: true
+          title: Title
       - name: content
-        type: textfield
-        required: true
-        title: Content
+        input:
+          type: textfield
+          required: true
+          title: Content
   deleteEntry:
     command: ./delete-entry.py --uuid ${{ uuid }}
     mode: command
-    inputs:
+    params:
       - name: uuid
-        type: textfield
-        required: true
-        title: UUID
+        input:
+          type: textfield
+          required: true
+          title: UUID

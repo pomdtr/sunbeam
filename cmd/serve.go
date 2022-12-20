@@ -32,7 +32,7 @@ func NewCmdServe() *cobra.Command {
 				return err
 			}
 
-			log.Printf("Listening on %s", addr)
+			log.Printf("Listening on http://%s", addr)
 			return server.ListenAndServe()
 		},
 	}
