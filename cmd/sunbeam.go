@@ -1,38 +1,13 @@
 package cmd
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
 )
 
-func ParseConfig() tui.Config {
-	viper.AddConfigPath(app.Sunbeam.ConfigRoot)
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.SetEnvPrefix("sunbeam")
-	viper.ReadInConfig()
-	viper.AutomaticEnv()
-
-	viper.SetDefault("accentColor", "13")
-	viper.SetDefault("height", 0)
-
-	var config tui.Config
-
-	err := viper.Unmarshal(&config)
-	if err != nil {
-		log.Printf("unable to decode config into struct, %v", err)
-	}
-
-	return config
-}
-
 func Execute() (err error) {
-	config := ParseConfig()
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:     "sunbeam",
@@ -44,13 +19,13 @@ func Execute() (err error) {
 				rootItems = append(rootItems, extension.RootItems...)
 			}
 
-			for _, rootItem := range config.RootItems {
+			for _, rootItem := range tui.Config.RootItems {
 				rootItem.Subtitle = "User"
 				rootItems = append(rootItems, rootItem)
 			}
 
 			rootList := tui.RootList(rootItems...)
-			model := tui.NewModel(rootList, config)
+			model := tui.NewModel(rootList)
 			return tui.Draw(model)
 		},
 	}
@@ -64,9 +39,9 @@ func Execute() (err error) {
 	})
 
 	// Core Commands
-	rootCmd.AddCommand(NewCmdExtension(config))
+	rootCmd.AddCommand(NewCmdExtension())
 	rootCmd.AddCommand(NewCmdQuery())
-	rootCmd.AddCommand(NewCmdRun(config))
+	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdServe())
 
 	return rootCmd.Execute()

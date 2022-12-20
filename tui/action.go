@@ -91,31 +91,39 @@ type RunScriptMsg struct {
 	Script    string
 	With      map[string]app.ScriptInput
 	OnSuccess string
-	Silent    bool
 }
 
-func NewExecCmd(command string, silent bool, onSuccess string) tea.Cmd {
+func (msg RunScriptMsg) OnSuccessCmd() tea.Cmd {
+	switch msg.OnSuccess {
+	case "exit":
+		return tea.Quit
+	case "reloadPage":
+		return tea.Sequence(PopCmd, NewReloadPageCmd(msg.With))
+	default:
+		return tea.Quit
+	}
+}
+
+func NewExecCmd(command string) tea.Cmd {
 	return func() tea.Msg {
 		return ExecCommandMsg{
-			Command:   command,
-			Silent:    silent,
-			OnSuccess: onSuccess,
+			Command: command,
 		}
 	}
 }
 
 type ExecCommandMsg struct {
 	Command   string
-	Silent    bool
+	Directory string
 	OnSuccess string
 }
 
-func (msg ExecCommandMsg) OnSuccessCmd() tea.Msg {
+func (msg ExecCommandMsg) OnSuccessCmd() tea.Cmd {
 	switch msg.OnSuccess {
 	case "exit":
-		return tea.Quit()
+		return tea.Quit
 	case "reloadPage":
-		return ReloadPageMsg{}
+		return NewReloadPageCmd(nil)
 	default:
 		return nil
 	}
@@ -127,7 +135,7 @@ func NewEditCmd(path string) tea.Cmd {
 		editor = "vim"
 	}
 
-	return NewExecCmd(fmt.Sprintf("%s %s", editor, path), false, "reloadPage")
+	return NewExecCmd(fmt.Sprintf("%s %s", editor, path))
 }
 
 func NewAction(scriptAction app.ScriptAction) Action {
@@ -160,11 +168,17 @@ func NewAction(scriptAction app.ScriptAction) Action {
 				Script:    scriptAction.Script,
 				With:      scriptAction.With,
 				OnSuccess: scriptAction.OnSuccess,
-				Silent:    scriptAction.Silent,
 			}
 		}
 	case "execCommand":
-		cmd = NewExecCmd(scriptAction.Command, scriptAction.Silent, scriptAction.OnSuccess)
+		cmd = func() tea.Msg {
+			return ExecCommandMsg{
+				Command:   scriptAction.Command,
+				OnSuccess: scriptAction.OnSuccess,
+				Directory: scriptAction.Dir,
+			}
+		}
+
 	case "edit":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open in Text Editor"

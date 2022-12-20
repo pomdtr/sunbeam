@@ -18,9 +18,11 @@ type ScriptRunner struct {
 	width, height int
 	currentView   string
 
-	extension app.Extension
-	with      map[string]app.ScriptInput
-	environ   []string
+	extension    app.Extension
+	with         map[string]app.ScriptInput
+	environ      []string
+	dir          string
+	OnSuccessCmd tea.Cmd
 
 	list   *List
 	detail *Detail
@@ -29,7 +31,7 @@ type ScriptRunner struct {
 	script app.Script
 }
 
-func NewScriptRunner(manifest app.Extension, script app.Script, inputs map[string]app.ScriptInput) *ScriptRunner {
+func NewScriptRunner(extension app.Extension, script app.Script, inputs map[string]app.ScriptInput) *ScriptRunner {
 	mergedParams := make(map[string]app.ScriptInput)
 
 	for _, scriptParam := range script.Params {
@@ -50,10 +52,23 @@ func NewScriptRunner(manifest app.Extension, script app.Script, inputs map[strin
 		mergedParams[scriptParam.Name] = merged
 	}
 
+	var directory string
+	switch script.Cwd {
+	case "homeDir":
+		directory, _ = os.UserHomeDir()
+	case "extensionDir":
+		directory = extension.Dir()
+	case "currentDir":
+		directory, _ = os.Getwd()
+	default:
+		directory = extension.Dir()
+	}
+
 	return &ScriptRunner{
-		extension: manifest,
+		extension: extension,
 		script:    script,
 		with:      mergedParams,
+		dir:       directory,
 	}
 }
 
@@ -84,23 +99,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		command.Stdin = strings.NewReader(c.list.Query())
 	}
 
-	switch c.script.Cwd {
-	case "homeDir":
-		command.Dir, err = os.UserHomeDir()
-		if err != nil {
-			return err
-		}
-	case "extensionDir":
-		command.Dir = c.extension.Dir()
-	case "currentDir":
-		command.Dir, err = os.Getwd()
-		if err != nil {
-			return err
-		}
-	default:
-		command.Dir = c.extension.Dir()
-	}
-
+	command.Dir = c.dir
 	command.Env = os.Environ()
 	command.Env = append(command.Env, c.environ...)
 
@@ -236,7 +235,11 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		c.detail.SetSize(c.width, c.height)
 		cmd := c.detail.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
-	case "snippet", "quicklink":
+	case "snippet", "quicklink", "command":
+		if c.form != nil {
+			cmd := c.form.SetIsLoading(true)
+			return tea.Batch(cmd, c.ScriptCmd)
+		}
 		return c.ScriptCmd
 	default:
 		return NewErrorCmd(fmt.Errorf("unknown script mode: %s", c.script.Mode))
@@ -286,6 +289,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 				for i, action := range scriptItem.Actions {
 					if action.Extension == "" {
 						action.Extension = c.extension.Name
+						action.Dir = c.dir
 					}
 					scriptItem.Actions[i] = action
 				}
@@ -297,7 +301,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 			c.list.SetIsLoading(false)
 			return c, cmd
 		case "command":
-			return c, tea.Quit
+			return c, c.OnSuccessCmd
 		case "quicklink":
 			return c, NewOpenUrlCmd(string(msg))
 		case "snippet":

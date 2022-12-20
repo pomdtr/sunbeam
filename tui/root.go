@@ -15,13 +15,40 @@ import (
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/spf13/viper"
 )
 
-type Config struct {
+type SunbeamConfig struct {
 	Height      int
+	Width       int
+	FullScreen  bool
 	AccentColor string
 
 	RootItems []app.RootItem `yaml:"rootItems"`
+}
+
+var Config SunbeamConfig = SunbeamConfig{
+	Height:      0,
+	Width:       0,
+	AccentColor: "13",
+	FullScreen:  true,
+}
+
+func init() {
+	viper.AddConfigPath(app.Sunbeam.ConfigRoot)
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.SetEnvPrefix("sunbeam")
+	viper.ReadInConfig()
+	viper.AutomaticEnv()
+
+	viper.SetDefault("accentColor", "13")
+	viper.SetDefault("height", 0)
+
+	err := viper.Unmarshal(&Config)
+	if err != nil {
+		log.Printf("unable to decode config into struct, %v", err)
+	}
 }
 
 type Container interface {
@@ -34,15 +61,14 @@ type Container interface {
 type Model struct {
 	width, height int
 	exit          bool
-	config        Config
 
 	pages []Container
 
 	hidden bool
 }
 
-func NewModel(rootPage Container, config Config) *Model {
-	return &Model{pages: []Container{rootPage}, config: config}
+func NewModel(rootPage Container) *Model {
+	return &Model{pages: []Container{rootPage}}
 }
 
 func (m *Model) Init() tea.Cmd {
@@ -120,20 +146,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		runner := NewScriptRunner(extension, script, msg.With)
+		runner.OnSuccessCmd = msg.OnSuccessCmd()
 		cmd := m.Push(runner)
 		return m, cmd
 	case ExecCommandMsg:
 		command := exec.Command("sh", "-c", fmt.Sprintf("%s; clear", msg.Command))
-		if msg.Silent {
-			err := command.Run()
-			if err != nil {
-				detail := NewDetail(command.String())
-				detail.content = err.Error()
-				return m, NewPushCmd(detail)
-			}
-
-			return m, msg.OnSuccessCmd
-		}
+		command.Dir = msg.Directory
 
 		m.hidden = true
 		return m, tea.ExecProcess(command, func(err error) tea.Msg {
@@ -144,7 +162,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			return showMsg{
-				cmd: msg.OnSuccessCmd,
+				cmd: msg.OnSuccessCmd(),
 			}
 		})
 	case showMsg:
@@ -206,8 +224,8 @@ func (m *Model) SetSize(width, height int) {
 }
 
 func (m *Model) pageHeight() int {
-	if m.config.Height > 0 {
-		return utils.Min(m.config.Height, m.height)
+	if Config.Height > 0 {
+		return utils.Min(Config.Height, m.height)
 	} else {
 		return m.height
 	}
@@ -335,7 +353,13 @@ func Draw(model *Model) (err error) {
 		tea.LogToFile("/dev/null", "")
 	}
 
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	var p *tea.Program
+	if Config.FullScreen {
+		p = tea.NewProgram(model, tea.WithAltScreen())
+	} else {
+		p = tea.NewProgram(model)
+	}
+
 	_, err = p.Run()
 	if err != nil {
 		return err

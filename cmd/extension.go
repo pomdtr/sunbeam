@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdExtension(config tui.Config) *cobra.Command {
+func NewCmdExtension() *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
@@ -236,7 +236,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 					item.Actions = []tui.Action{
 						{
 							Title: "Install",
-							Cmd:   tui.NewExecCmd(fmt.Sprintf("sunbeam extension install %s", repo.HtmlURL), false, "exit"),
+							Cmd:   tui.NewExecCmd(fmt.Sprintf("sunbeam extension install %s", repo.HtmlURL)),
 						},
 						{
 							Title: "Open in Browser",
@@ -250,7 +250,7 @@ func NewCmdExtension(config tui.Config) *cobra.Command {
 				list := tui.NewList("Browse Extensions")
 				list.ShowPreview = true
 				list.SetItems(extensionItems)
-				root := tui.NewModel(list, config)
+				root := tui.NewModel(list)
 
 				return tui.Draw(root)
 			},

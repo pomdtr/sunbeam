@@ -398,6 +398,10 @@ func NewForm(name string, title string, items []FormItem) *Form {
 	}
 }
 
+func (c *Form) SetIsLoading(isLoading bool) tea.Cmd {
+	return c.header.SetIsLoading(isLoading)
+}
+
 func (c Form) Init() tea.Cmd {
 	if len(c.items) == 0 {
 		return nil
@@ -482,7 +486,7 @@ func (c *Form) SetSize(width, height int) {
 }
 
 func (c *Form) View() string {
-	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(accentColor)
+	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(lipgloss.Color(Config.AccentColor))
 	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
 	itemViews := make([]string, len(c.items))
 	maxWidth := 0
