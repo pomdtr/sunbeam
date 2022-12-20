@@ -118,6 +118,13 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
+	mu := sync.Mutex{}
+	send := func(messageType int, data []byte) error {
+		mu.Lock()
+		defer mu.Unlock()
+		return ws.WriteMessage(messageType, data)
+	}
+
 	command := exec.Command("sunbeam", arguments...)
 	var errBuf bytes.Buffer
 	command.Stderr = &errBuf
@@ -144,7 +151,7 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer waiter.Done()
 		for {
-			if err := ws.WriteMessage(websocket.PingMessage, []byte("keepalive")); err != nil {
+			if err := send(websocket.PingMessage, []byte("keepalive")); err != nil {
 				log.Printf("error writing ping message: %v", err)
 				return
 			}
@@ -198,7 +205,7 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 			n, err := tty.Read(buf)
 			if err != nil {
 				if errBuf.String() != "" {
-					ws.WriteMessage(websocket.TextMessage, errBuf.Bytes())
+					send(websocket.TextMessage, errBuf.Bytes())
 				}
 
 				log.Printf("error reading from pty: %v", err)
@@ -206,7 +213,7 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err := ws.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
+			if err := send(websocket.BinaryMessage, buf[:n]); err != nil {
 				log.Printf("error writing to websocket: %v", err)
 				return
 			}

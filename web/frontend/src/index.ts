@@ -66,8 +66,7 @@ async function main() {
   };
 
   ws.onclose = () => {
-    // @ts-ignore
-    window.location = "/";
+    window.close();
   };
 
   window.onresize = () => {
