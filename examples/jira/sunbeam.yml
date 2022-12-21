@@ -8,11 +8,11 @@ preferences:
     title: Jira Token
 rootItems:
   - title: List Issues
-    script: listIssues
+    script: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
 scripts:
-  listIssues:
+  list-issues:
     command: ./jira.sh ${{ jql }}
     mode: filter
     params:

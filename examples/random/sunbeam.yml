@@ -3,8 +3,8 @@ title: Random
 version: "1.0"
 rootItems:
   - title: Generate 5 random numbers
-    script: randomList
+    script: random-list
 scripts:
-  randomList:
+  random-list:
     command: ./random_list.py
     mode: filter

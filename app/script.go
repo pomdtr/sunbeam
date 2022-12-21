@@ -133,9 +133,10 @@ func (s Script) Cmd(with map[string]string) (string, error) {
 
 	funcMap := template.FuncMap{}
 
-	for key, value := range with {
+	for sanitizedKey, value := range with {
 		value := value
-		funcMap[key] = func() string {
+		sanitizedKey = strings.Replace(sanitizedKey, "-", "_", -1)
+		funcMap[sanitizedKey] = func() string {
 			return value
 		}
 	}

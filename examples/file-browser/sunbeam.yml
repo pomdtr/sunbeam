@@ -1,4 +1,4 @@
-name: fileBrowser
+name: file-browser
 version: "1.0"
 title: File Browser
 requirements:
@@ -6,23 +6,23 @@ requirements:
     homePage: https://www.python.org
 rootItems:
   - title: Browse Root Directory
-    script: browseFiles
+    script: browse-files
     with:
       root: /
   - title: Browse Home Directory
-    script: browseFiles
+    script: browse-files
     with:
       root: "~"
   - title: Browse Custom Directory
-    script: browseFiles
+    script: browse-files
   - title: Browse Current Directory
-    script: browseFiles
+    script: browse-files
     with:
       root: .
-      showHidden: true
+      show-hidden: true
 scripts:
-  browseFiles:
-    command: ./file-browser.py --root ${{ root }} ${{ showHidden }}
+  browse-files:
+    command: ./file-browser.py --root ${{ root }} ${{ show_hidden }}
     mode: filter
     params:
       - name: root
@@ -30,7 +30,7 @@ scripts:
           type: directory
           required: true
           title: Root Directory
-      - name: showHidden
+      - name: show-hidden
         input:
           required: false
           label: "Show Hidden Files"

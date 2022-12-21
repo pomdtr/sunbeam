@@ -76,7 +76,6 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Println("message type:", fmt.Sprintf("%T", msg))
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {

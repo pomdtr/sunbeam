@@ -6,21 +6,21 @@ requirements:
     which: gh
 rootItems:
   - title: List My Repositories
-    script: listRepositories
+    script: list-repositories
     with:
       owner: pomdtr
   - title: List Owner Repositories
-    script: listRepositories
+    script: list-repositories
   - title: List Dailymotion Repositories
-    script: listRepositories
+    script: list-repositories
     with:
       owner: dailymotion
   - title: List Airflow Pull Requests
-    script: listPullRequests
+    script: list-pull-requests
     with:
       repository: dailymotion/dwh-dags
 scripts:
-  viewReadme:
+  view-readme:
     mode: detail
     command: |
       gh api repos/${{repository}}/readme --jq '
@@ -43,7 +43,7 @@ scripts:
           type: textfield
           required: true
           title: Repository
-  listRepositories:
+  list-repositories:
     command: ./list-repos.sh ${{ owner }}
     mode: filter
     showPreview: true
@@ -53,7 +53,7 @@ scripts:
           type: textfield
           title: Owner
           required: true
-  listPullRequests:
+  list-pull-requests:
     command: ./list-prs.sh ${{ repository }}
     mode: filter
     params:

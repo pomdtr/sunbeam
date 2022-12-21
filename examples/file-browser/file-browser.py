@@ -31,7 +31,7 @@ for path in sorted(entries, key=lambda p: p.name):
         json.dumps(
             {
                 "title": path.name,
-                "subtitle": str(root.absolute()),
+                "accessories": [str(root.absolute())],
                 "actions": [
                     primaryAction,
                     {

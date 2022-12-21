@@ -12,7 +12,7 @@
     "properties": {
         "name": {
             "type": "string",
-            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]+$"
+            "pattern": "^[a-z][a-z0-9-]+$"
         },
         "preferences": {
             "type": "array",
@@ -66,15 +66,17 @@
                 "additionalProperties": false,
                 "properties": {
                     "script": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9-]+$"
                     },
                     "title": {
                         "type": "string"
                     },
                     "with": {
                         "type": "object",
+                        "additionalProperties": false,
                         "patternProperties": {
-                            "^[a-zA-Z_][a-zA-Z0-9_]+$": {
+                            "^[a-z][a-z0-9-]+$": {
                                 "anyOf": [
                                     {
                                         "type": "string"
@@ -93,7 +95,7 @@
             "type": "object",
             "additionalProperties": false,
             "patternProperties": {
-                "^[a-zA-Z_][a-zA-Z0-9_]+$": {
+                "^[a-z][a-z0-9-]+$": {
                     "$ref": "#/$defs/script"
                 }
             },
@@ -179,7 +181,8 @@
                         ],
                         "properties": {
                             "name": {
-                                "type": "string"
+                                "type": "string",
+                                "pattern": "^[a-z][a-z0-9-]+$"
                             },
                             "input": {
                                 "$ref": "#/$defs/input"

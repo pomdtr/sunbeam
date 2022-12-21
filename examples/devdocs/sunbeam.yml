@@ -5,14 +5,14 @@ requirements:
   - which: curl
     homePage: https://curl.se
 rootItems:
-  - script: searchDocsets
+  - script: search-docsets
     title: Browse Docsets
-  - script: searchEntries
+  - script: search-entries
     title: Search Python 3.11 Documentation
     with:
       slug: python~3.11
 scripts:
-  searchDocsets:
+  search-docsets:
     command: |
       curl https://devdocs.io/docs/docs.json | sunbeam query '. | group_by(.name) | .[] |
       {
@@ -29,7 +29,7 @@ scripts:
       }
       '
     mode: filter
-  searchEntries:
+  search-entries:
     command: |
       curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
         {
