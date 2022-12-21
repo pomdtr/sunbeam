@@ -66,7 +66,7 @@ for uuid, entry in journal["entries"].items():
                     {
                         "type": "run-script",
                         "title": "Delete Entry",
-                        "script": "deleteEntry",
+                        "script": "delete-entry",
                         "onSuccess": "reload-page",
                         "silent": True,
                         "shortcut": "ctrl+d",
