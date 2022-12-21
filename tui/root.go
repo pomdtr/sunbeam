@@ -259,8 +259,8 @@ func Shortcut(extension string, rootItem app.RootItem) string {
 }
 
 func RootList(rootItems ...app.RootItem) Container {
-	listItems := make([]ListItem, len(rootItems))
-	for index, rootItem := range rootItems {
+	listItems := make([]ListItem, 0)
+	for _, rootItem := range rootItems {
 		extension, ok := app.Sunbeam.Extensions[rootItem.Extension]
 		if !ok {
 			log.Println("extension not found:", rootItem.Extension)
@@ -276,7 +276,7 @@ func RootList(rootItems ...app.RootItem) Container {
 			Script:    rootItem.Script,
 			With:      with,
 		}
-		listItems[index] = ListItem{
+		listItems = append(listItems, ListItem{
 			Id:       shortcut,
 			Title:    rootItem.Title,
 			Subtitle: rootItem.Subtitle,
@@ -299,7 +299,7 @@ func RootList(rootItems ...app.RootItem) Container {
 					Cmd:      NewCopyTextCmd(shortcut),
 				},
 			},
-		}
+		})
 	}
 
 	// Sort root items by title

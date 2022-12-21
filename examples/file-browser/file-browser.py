@@ -17,7 +17,7 @@ if not args.show_hidden:
 
 for path in sorted(entries, key=lambda p: p.name):
     primaryAction = (
-        {"type": "exec-command", "command": f"vim {path.absolute()}"}
+        {"type": "exec-command", "title": "Open in Vim", "command": f"vim {path.absolute()}"}
         if path.is_file()
         else {
             "type": "run-script",

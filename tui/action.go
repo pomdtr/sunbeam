@@ -112,7 +112,7 @@ func (msg ExecCommandMsg) OnSuccessCmd() tea.Cmd {
 	case "reload-page":
 		return NewReloadPageCmd(nil)
 	default:
-		return nil
+		return tea.Quit
 	}
 }
 
