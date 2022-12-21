@@ -12,14 +12,14 @@ build-frontend:
 build: build-frontend
 	go build -o bin/$(APP_NAME) .
 
-.PHONY: start
-run: start
+.PHONY: run
+run: build
 	./bin/$(APP_NAME)
 
 .PHONY: install
 install: build-frontend
 	go install
 
-.PHONY: start-server
-start-server: build
+.PHONY: serve
+serve: build
 	./bin/$(APP_NAME) serve

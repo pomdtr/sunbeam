@@ -4,6 +4,13 @@ import { CanvasAddon } from "xterm-addon-canvas";
 import { AttachAddon } from "xterm-addon-attach";
 import defaultTheme from "./theme.json";
 
+declare global {
+  interface Window {
+    electron?: {
+      windowHide: () => Promise<void>;
+    };
+  }
+}
 async function loadTheme() {
   const res = await fetch("/theme.json");
   if (res.ok) {
@@ -65,8 +72,14 @@ async function main() {
     }
   };
 
-  ws.onclose = () => {
-    window.close();
+  ws.onclose = async () => {
+    if (window.electron) {
+      await window.electron.windowHide();
+      // @ts-ignore
+      window.location = window.location.pathname;
+    } else {
+      location.reload();
+    }
   };
 
   window.onresize = () => {
