@@ -7,7 +7,8 @@
     "xterm": "^5.1.0",
     "xterm-addon-attach": "^0.8.0",
     "xterm-addon-canvas": "^0.3.0",
-    "xterm-addon-fit": "0.7.0-beta.2"
+    "xterm-addon-fit": "0.7.0-beta.2",
+    "xterm-addon-web-links": "^0.8.0"
   },
   "devDependencies": {
     "degit": "^2.8.4",

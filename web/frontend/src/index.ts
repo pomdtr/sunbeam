@@ -2,6 +2,7 @@ import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import { CanvasAddon } from "xterm-addon-canvas";
 import { AttachAddon } from "xterm-addon-attach";
+import { WebLinksAddon } from "xterm-addon-web-links";
 import defaultTheme from "./theme.json";
 
 declare global {
@@ -43,12 +44,14 @@ async function main() {
   const fitAddon = new FitAddon();
   const canvasAddon = new CanvasAddon();
   const attachAddon = new AttachAddon(ws);
+  const webLinksAddon = new WebLinksAddon();
 
   terminal.open(document.getElementById("terminal")!);
 
   terminal.loadAddon(fitAddon);
   terminal.loadAddon(canvasAddon);
   terminal.loadAddon(attachAddon);
+  terminal.loadAddon(webLinksAddon);
 
   terminal.focus();
 
