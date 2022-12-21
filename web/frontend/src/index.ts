@@ -9,6 +9,7 @@ declare global {
   interface Window {
     electron?: {
       windowHide: () => Promise<void>;
+      openInBrowser: (url: string) => Promise<void>;
     };
   }
 }
@@ -44,7 +45,13 @@ async function main() {
   const fitAddon = new FitAddon();
   const canvasAddon = new CanvasAddon();
   const attachAddon = new AttachAddon(ws);
-  const webLinksAddon = new WebLinksAddon();
+  const webLinksAddon = new WebLinksAddon((_, url) => {
+    if (window.electron) {
+      window.electron.openInBrowser(url);
+    } else {
+      window.open(url);
+    }
+  });
 
   terminal.open(document.getElementById("terminal")!);
 
