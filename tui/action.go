@@ -98,7 +98,7 @@ func (msg RunScriptMsg) OnSuccessCmd() tea.Cmd {
 	case "exit":
 		return tea.Quit
 	case "reloadPage":
-		return tea.Sequence(PopCmd, NewReloadPageCmd(msg.With))
+		return tea.Sequence(PopCmd, NewReloadPageCmd(nil))
 	default:
 		return tea.Quit
 	}

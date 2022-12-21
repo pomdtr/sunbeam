@@ -31,22 +31,26 @@ type ScriptRunner struct {
 	script app.Script
 }
 
-func NewScriptRunner(extension app.Extension, script app.Script, inputs map[string]app.ScriptInput) *ScriptRunner {
+func NewScriptRunner(extension app.Extension, script app.Script, with map[string]app.ScriptInput) *ScriptRunner {
 	mergedParams := make(map[string]app.ScriptInput)
+	log.Println("with", with)
 
 	for _, scriptParam := range script.Params {
-		inputParam, ok := inputs[scriptParam.Name]
+		inputParam, ok := with[scriptParam.Name]
 		merged := app.ScriptInput{}
 		if !ok {
+			log.Println("no input param found for", scriptParam.Name, "using default")
 			merged.FormInput = scriptParam.Input
 			mergedParams[scriptParam.Name] = merged
 			continue
 		}
 
-		if inputParam.Value != "" {
+		if inputParam.Value != nil {
+			log.Println("input param found for", scriptParam.Name, "using value", inputParam.Value)
 			merged.FormInput = scriptParam.Input
 			merged.Value = inputParam.Value
 		} else {
+			log.Println("input param found for", scriptParam.Name, "using form input", inputParam.FormInput)
 			merged.FormInput = inputParam.FormInput
 		}
 		mergedParams[scriptParam.Name] = merged
@@ -118,7 +122,6 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 	formItems := make([]FormItem, 0)
 	for name, param := range c.with {
-		log.Println(name, param.Value, param.Required)
 		if param.Value != nil {
 			continue
 		}
@@ -172,7 +175,7 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 			continue
 		}
 
-		if param.DefaultValue != nil {
+		if param.Default != nil {
 			value, err := param.GetValue()
 			if err != nil {
 				return
@@ -301,6 +304,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 			c.list.SetIsLoading(false)
 			return c, cmd
 		case "command":
+			log.Printf("on success msg: %v", c.OnSuccessCmd())
 			return c, c.OnSuccessCmd
 		case "quicklink":
 			return c, NewOpenUrlCmd(string(msg))

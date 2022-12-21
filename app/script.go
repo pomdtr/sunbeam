@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os/exec"
 	"strings"
 	"text/template"
@@ -31,11 +30,11 @@ func (s Script) IsPage() bool {
 }
 
 type FormInput struct {
-	Type         string `json:"type"`
-	Required     bool   `json:"required"`
-	Title        string `json:"title"`
-	Placeholder  string `json:"placeholder"`
-	DefaultValue any    `json:"default"`
+	Type        string `json:"type"`
+	Required    bool   `json:"required"`
+	Title       string `json:"title"`
+	Placeholder string `json:"placeholder"`
+	Default     any    `json:"default"`
 
 	TrueSubstitution  string `json:"trueSubstitution"`
 	FalseSubstitution string `json:"falseSubstitution"`
@@ -71,8 +70,8 @@ func (si ScriptInput) GetValue() (string, error) {
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
 			}
-		} else if si.DefaultValue != nil {
-			if v, ok := si.DefaultValue.(bool); ok {
+		} else if si.Default != nil {
+			if v, ok := si.Default.(bool); ok {
 				value = v
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
@@ -91,8 +90,8 @@ func (si ScriptInput) GetValue() (string, error) {
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
 			}
-		} else if si.DefaultValue != nil {
-			if v, ok := si.DefaultValue.(string); ok {
+		} else if si.Default != nil {
+			if v, ok := si.Default.(string); ok {
 				value = v
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
@@ -141,7 +140,6 @@ func (s Script) Cmd(with map[string]string) (string, error) {
 		}
 	}
 
-	log.Println(s.Command)
 	rendered, err := utils.RenderString(s.Command, funcMap)
 	if err != nil {
 		return "", err

@@ -34,5 +34,6 @@ scripts:
         input:
           required: false
           label: "Show Hidden Files"
+          default: true
           type: checkbox
           trueSubstitution: "--show-hidden"

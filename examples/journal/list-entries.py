@@ -61,17 +61,7 @@ for uuid, entry in journal["entries"].items():
                         "script": "writeEntry",
                         "onSuccess": "reloadPage",
                         "silent": True,
-                        "shortcut": "ctrl+n",
-                        "with": {
-                            "title": {
-                                "type": "textfield",
-                                "title": "Title",
-                            },
-                            "content": {
-                                "type": "textarea",
-                                "title": "Content",
-                            },
-                        },
+                        "shortcut": "ctrl+n"
                     },
                     {
                         "type": "runScript",
@@ -94,10 +84,12 @@ for uuid, entry in journal["entries"].items():
                             "title": {
                                 "type": "textfield",
                                 "title": "Title",
+                                "required": True,
                                 "default": entry["title"],
                             },
                             "content": {
                                 "type": "textarea",
+                                "required": True,
                                 "title": "Content",
                                 "default": entry["content"],
                             },
