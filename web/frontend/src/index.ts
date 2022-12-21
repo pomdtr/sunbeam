@@ -8,7 +8,8 @@ import defaultTheme from "./theme.json";
 declare global {
   interface Window {
     electron?: {
-      windowHide: () => Promise<void>;
+      showWindow: () => Promise<void>;
+      hideWindow: () => Promise<void>;
       openInBrowser: (url: string) => Promise<void>;
     };
   }
@@ -28,7 +29,6 @@ async function main() {
   const theme = await loadTheme();
 
   const terminal = new Terminal({
-    cursorBlink: true,
     allowTransparency: true,
     macOptionIsMeta: true,
     fontSize: 13,
@@ -72,7 +72,16 @@ async function main() {
     fitAddon.fit();
   };
 
+  let ready = false;
   ws.onmessage = async (event) => {
+    // Show window after run command
+    if (!ready) {
+      ready = true;
+      const params = new URLSearchParams(location.search);
+      if (window.electron && params.get("extension")) {
+        window.electron.showWindow();
+      }
+    }
     const data = event.data;
     if (typeof data === "string") {
       // Copy to clipboard
@@ -84,7 +93,7 @@ async function main() {
 
   ws.onclose = async () => {
     if (window.electron) {
-      await window.electron.windowHide();
+      await window.electron.hideWindow();
       // @ts-ignore
       window.location = window.location.pathname;
     } else {
