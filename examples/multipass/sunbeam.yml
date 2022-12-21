@@ -26,12 +26,12 @@ scripts:
               .state == "Running"
             then
               [
-                {type: "execCommand", title: "Stop \(.name)", onSuccess: "reloadPage", command: "multipass stop \(.name)"},
-                {type: "execCommand", title: "Open Shell", shortcut: "ctrl+s", command: "multipass shell \(.name)"}
+                {type: "exec-command", title: "Stop \(.name)", onSuccess: "reload-page", command: "multipass stop \(.name)"},
+                {type: "exec-command", title: "Open Shell", shortcut: "ctrl+s", command: "multipass shell \(.name)"}
               ]
             else
               [
-                {type: "execCommand", title: "Start \(.name)", onSuccess: "reloadPage", command: "multipass start \(.name)"}
+                {type: "exec-command", title: "Start \(.name)", onSuccess: "reload-page", command: "multipass start \(.name)"}
               ]
             end
           ),

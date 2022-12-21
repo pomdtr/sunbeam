@@ -17,11 +17,11 @@ if not args.show_hidden:
 
 for path in sorted(entries, key=lambda p: p.name):
     primaryAction = (
-        {"type": "openPath", "path": str(path.absolute())}
+        {"type": "exec-command", "command": f"vim {path.absolute()}"}
         if path.is_file()
         else {
-            "type": "runScript",
-            "script": "browseFiles",
+            "type": "run-script",
+            "script": "browse-files",
             "title": "Browse Directory",
             "with": {"root": str(path.absolute()), "showHidden": args.show_hidden},
         }
@@ -35,13 +35,13 @@ for path in sorted(entries, key=lambda p: p.name):
                 "actions": [
                     primaryAction,
                     {
-                        "type": "copyText",
+                        "type": "copy-text",
                         "title": "Copy Path",
                         "shorcut": "ctrl+y",
                         "text": str(path.absolute()),
                     },
                     {
-                        "type": "reloadPage",
+                        "type": "reload-page",
                         "title": "Toggle Hidden Files",
                         "shortcut": "ctrl+h",
                         "with": {"showHidden": not args.show_hidden},

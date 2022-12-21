@@ -15,11 +15,11 @@ if len(journal["entries"]) == 0:
                 "preview": "Hit enter to create a new entry !",
                 "actions": [
                     {
-                        "type": "runScript",
-                        "script": "writeEntry",
+                        "type": "run-script",
+                        "script": "write-entry",
                         "title": "Write Entry",
                         "silent": True,
-                        "onSuccess": "reloadPage",
+                        "onSuccess": "reload-page",
                         "with": {
                             "title": {
                                 "type": "textfield",
@@ -51,33 +51,33 @@ for uuid, entry in journal["entries"].items():
                 ],
                 "actions": [
                     {
-                        "type": "copyText",
+                        "type": "copy-text",
                         "text": entry["content"],
                         "title": "Copy Message",
                     },
                     {
-                        "type": "runScript",
+                        "type": "run-script",
                         "title": "New Entry",
-                        "script": "writeEntry",
-                        "onSuccess": "reloadPage",
+                        "script": "write-entry",
+                        "onSuccess": "reload-page",
                         "silent": True,
                         "shortcut": "ctrl+n"
                     },
                     {
-                        "type": "runScript",
+                        "type": "run-script",
                         "title": "Delete Entry",
                         "script": "deleteEntry",
-                        "onSuccess": "reloadPage",
+                        "onSuccess": "reload-page",
                         "silent": True,
                         "shortcut": "ctrl+d",
                         "with": {"uuid": uuid},
                     },
                     {
-                        "type": "runScript",
+                        "type": "run-script",
                         "title": "Edit Entry",
-                        "script": "editEntry",
+                        "script": "edit-entry",
                         "silent": True,
-                        "onSuccess": "reloadPage",
+                        "onSuccess": "reload-page",
                         "shortcut": "ctrl+e",
                         "with": {
                             "uuid": uuid,

@@ -18,12 +18,12 @@ const items = res[1].map((suggestion) => ({
   title: suggestion,
   actions: [
     {
-      type: "openUrl",
+      type: "open-url",
       shortcut: "enter",
       url: `https://www.google.com/search?q=${encodeURIComponent(suggestion)}`,
     },
     {
-      type: "copyText",
+      type: "copy-text",
       title: "Copy Suggestion",
       shortcut: "ctrl+y",
       text: suggestion,

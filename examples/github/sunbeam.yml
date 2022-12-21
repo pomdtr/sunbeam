@@ -33,7 +33,7 @@ scripts:
           }
         ],
         actions: [
-          { type: "openUrl", title: "Open in Browser", url: .html_url }
+          { type: "open-url", title: "Open in Browser", url: .html_url }
         ]
       }
       '

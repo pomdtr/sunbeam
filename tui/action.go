@@ -51,19 +51,6 @@ type OpenUrlMsg struct {
 	Url string
 }
 
-func NewOpenPathCmd(path string) tea.Cmd {
-	return func() tea.Msg {
-		return OpenPathMsg{
-			Path: path,
-		}
-	}
-}
-
-type OpenPathMsg struct {
-	Path        string
-	Application string
-}
-
 func NewReloadPageCmd(with map[string]app.ScriptInput) tea.Cmd {
 	return func() tea.Msg {
 		return ReloadPageMsg{
@@ -97,7 +84,7 @@ func (msg RunScriptMsg) OnSuccessCmd() tea.Cmd {
 	switch msg.OnSuccess {
 	case "exit":
 		return tea.Quit
-	case "reloadPage":
+	case "reload-page":
 		return tea.Sequence(PopCmd, NewReloadPageCmd(nil))
 	default:
 		return tea.Quit
@@ -122,7 +109,7 @@ func (msg ExecCommandMsg) OnSuccessCmd() tea.Cmd {
 	switch msg.OnSuccess {
 	case "exit":
 		return tea.Quit
-	case "reloadPage":
+	case "reload-page":
 		return NewReloadPageCmd(nil)
 	default:
 		return nil
@@ -141,27 +128,22 @@ func NewEditCmd(path string) tea.Cmd {
 func NewAction(scriptAction app.ScriptAction) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
-	case "openUrl":
+	case "open-url":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open URL"
 		}
 		cmd = NewOpenUrlCmd(scriptAction.Url)
-	case "openPath":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Open File"
-		}
-		cmd = NewOpenPathCmd(scriptAction.Path)
-	case "copyText":
+	case "copy-text":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
 		cmd = NewCopyTextCmd(scriptAction.Text)
-	case "reloadPage":
+	case "reload-page":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Reload Script"
 		}
 		cmd = NewReloadPageCmd(scriptAction.With)
-	case "runScript":
+	case "run-script":
 		cmd = func() tea.Msg {
 			return RunScriptMsg{
 				Extension: scriptAction.Extension,
@@ -170,7 +152,7 @@ func NewAction(scriptAction app.ScriptAction) Action {
 				OnSuccess: scriptAction.OnSuccess,
 			}
 		}
-	case "execCommand":
+	case "exec-command":
 		cmd = func() tea.Msg {
 			return ExecCommandMsg{
 				Command:   scriptAction.Command,

@@ -14,7 +14,6 @@ import (
 	"github.com/cli/browser"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
-	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/viper"
 )
 
@@ -87,11 +86,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case CopyTextMsg:
-		// if m.config.Remote {
-		// 	fmt.Fprint(os.Stderr, msg.Text)
-		// 	return m, tea.Quit
-		// }
-
 		var err error
 
 		err = clipboard.WriteAll(msg.Text)
@@ -100,26 +94,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Quit
 	case OpenUrlMsg:
-		// if m.config.Remote {
-		// 	fmt.Fprintf(os.Stderr, msg.Url)
-		// 	return m, tea.Quit
-		// }
-
 		var err error
 
 		err = browser.OpenURL(msg.Url)
-		if err != nil {
-			return m, NewErrorCmd(err)
-		}
-		return m, tea.Quit
-	case OpenPathMsg:
-		var err error
-
-		if msg.Application != "" {
-			err = open.RunWith(msg.Path, msg.Application)
-		} else {
-			err = open.Run(msg.Path)
-		}
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
@@ -315,11 +292,6 @@ func RootList(rootItems ...app.RootItem) Container {
 					Title:    "Edit Script Manifest",
 					Shortcut: "ctrl+e",
 					Cmd:      NewEditCmd(extension.Url.Path),
-				},
-				{
-					Title:    "Open Extension Directory",
-					Shortcut: "ctrl+o",
-					Cmd:      NewOpenPathCmd(extension.Dir()),
 				},
 				{
 					Title:    "Copy as Shell Command",

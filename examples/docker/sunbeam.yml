@@ -16,7 +16,7 @@ scripts:
         subtitle: .Image,
         accessories: [ .State ],
         actions: [
-          {type: "runScript", title: "Open Shell", script: "execCommand", "with": {"container": .Names, "command": "bash"}}
+          {type: "run-script", title: "Open Shell", script: "exec-command", "with": {"container": .Names, "command": "bash"}}
         ]
       }
       '

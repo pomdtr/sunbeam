@@ -13,12 +13,12 @@ for _ in range(5):
                     {
                         "title": "Reload List",
                         "shortcut": "enter",
-                        "type": "reloadPage",
+                        "type": "reload-page",
                     },
                     {
                         "title": "Copy",
                         "shortcut": "ctrl+y",
-                        "type": "copyText",
+                        "type": "copy-text",
                         "text": str(random_number),
                     },
                 ],

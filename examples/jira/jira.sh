@@ -11,7 +11,7 @@ sunbeam query '.issues[] | {
     subtitle: .key,
     actions: [
         {
-            type: "openUrl",
+            type: "open-url",
             url: "https://dailymotion.atlassian.net/browse/\(.key)"
         }
     ],

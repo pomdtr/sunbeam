@@ -58,12 +58,11 @@
                 "type": {
                     "type": "string",
                     "enum": [
-                        "copyText",
-                        "reloadPage",
-                        "openUrl",
-                        "openPath",
-                        "runScript",
-                        "execCommand"
+                        "copy-text",
+                        "reload-page",
+                        "open-url",
+                        "run-script",
+                        "exec-command"
                     ]
                 }
             },
@@ -72,7 +71,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "runScript"
+                                "const": "run-script"
                             }
                         }
                     },
@@ -104,7 +103,7 @@
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
-                                    "reloadPage",
+                                    "reload-page",
                                     "exit"
                                 ]
                             },
@@ -118,7 +117,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "execCommand"
+                                "const": "exec-command"
                             }
                         }
                     },
@@ -131,7 +130,7 @@
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
-                                    "reloadPage",
+                                    "reload-page",
                                     "exit"
                                 ]
                             },
@@ -145,7 +144,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "copyText"
+                                "const": "copy-text"
                             }
                         }
                     },
@@ -171,7 +170,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "openUrl"
+                                "const": "open-url"
                             }
                         }
                     },
@@ -181,25 +180,6 @@
                         ],
                         "properties": {
                             "url": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "openPath"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "path"
-                        ],
-                        "properties": {
-                            "path": {
                                 "type": "string"
                             }
                         }

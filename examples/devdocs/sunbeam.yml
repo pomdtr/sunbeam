@@ -20,9 +20,9 @@ scripts:
         subtitle: (.[0].release // "latest"),
         actions: map(
           {
-              type: "runScript",
+              type: "run-script",
               title: "Browse \(.release // "latest") entries",
-              script: "searchEntries",
+              script: "search-entries",
               with: { slug: .slug }
           }
         )
@@ -36,7 +36,7 @@ scripts:
           title: .name,
           subtitle: .type,
           actions: [
-            {type: "openUrl", url: "https://devdocs.io/${{ slug }}/\(.path)"}
+            {type: "open-url", url: "https://devdocs.io/${{ slug }}/\(.path)"}
           ]
         }
       '
