@@ -3,6 +3,7 @@ APP_NAME:=sunbeam
 .PHONY:
 init:
 	cd web/frontend && npm install
+	cd gui && npm install
 
 .PHONY: build-frontend
 build-frontend:
