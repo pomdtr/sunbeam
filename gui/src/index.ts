@@ -7,6 +7,7 @@ import {
   ipcMain,
   shell,
   clipboard,
+  Notification,
 } from "electron";
 import path from "path";
 import axios from "axios";
@@ -15,7 +16,7 @@ import minimist from "minimist";
 
 const args = minimist(process.argv.slice(2));
 
-function createWindow() {
+function createWindow(host: string, port: number) {
   const bounds = getCenterOnCurrentScreen();
   const win = new BrowserWindow({
     title: "Sunbeam",
@@ -43,7 +44,7 @@ function createWindow() {
     hasShadow: true,
   });
   win.setMenu(null);
-  win.loadURL("http://localhost:8080");
+  win.loadURL(`http://${host}:${port}`);
   ipcMain.handle("hideWindow", () => win.hide());
   ipcMain.handle("showWindow", () => win.show());
 
@@ -51,7 +52,17 @@ function createWindow() {
     clipboard.writeText(text);
   });
   ipcMain.handle("openInBrowser", (_: unknown, url: string) => {
-    shell.openExternal(url);
+    return shell.openExternal(url);
+  });
+  ipcMain.handle("open", (_: unknown, path: string) => {
+    if (host !== "localhost" && host !== "0.0.0.0") {
+      new Notification({
+        title: "Sunbeam",
+        body: "Cannot open files on remote server",
+      }).show();
+      return;
+    }
+    return shell.openPath(path);
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => {

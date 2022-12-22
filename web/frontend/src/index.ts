@@ -11,6 +11,7 @@ declare global {
       showWindow: () => Promise<void>;
       hideWindow: () => Promise<void>;
       openInBrowser: (url: string) => Promise<void>;
+      open: (path: string) => Promise<void>;
       copyToClipboard: (text: string) => Promise<void>;
     };
   }
@@ -40,6 +41,14 @@ async function copyText(text: string) {
     await window.electron.copyToClipboard(text);
   } else {
     await navigator.clipboard.writeText(text);
+  }
+}
+
+async function openPath(path: string) {
+  if (window.electron) {
+    await window.electron.open(path);
+  } else {
+    console.error("Cannot open files on remote server");
   }
 }
 
@@ -121,6 +130,9 @@ async function main() {
           break;
         case "copy-text":
           await copyText(msg.text);
+          break;
+        case "open-path":
+          await openPath(msg.path);
           break;
         case "exit":
           break;

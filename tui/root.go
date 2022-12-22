@@ -17,6 +17,7 @@ import (
 	"github.com/cli/browser"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
+	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/viper"
 )
 
@@ -90,15 +91,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
-	case CopyTextMsg:
+	case OpenPathMsg:
 		if os.Getenv("SUNBEAM_SERVER") != "" {
 			action, err := json.Marshal(map[string]interface{}{
+				"action": "open-path",
+				"path":   msg.Path,
+			})
+
+			fmt.Println(string(action))
+		}
+
+		err := open.Run(msg.Path)
+		if err != nil {
+			return m, NewErrorCmd(err)
+		}
+		return m, tea.Quit
+
+	case CopyTextMsg:
+		if os.Getenv("SUNBEAM_SERVER") != "" {
+			action, _ := json.Marshal(map[string]interface{}{
 				"action": "copy-text",
 				"text":   msg.Text,
 			})
-			if err != nil {
-				return m, NewErrorCmd(err)
-			}
 
 			fmt.Fprintln(os.Stderr, string(action))
 			return m, tea.Quit
@@ -111,13 +125,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	case OpenUrlMsg:
 		if os.Getenv("SUNBEAM_SERVER") != "" {
-			action, err := json.Marshal(map[string]interface{}{
+			action, _ := json.Marshal(map[string]interface{}{
 				"action": "open-url",
 				"url":    msg.Url,
 			})
-			if err != nil {
-				return m, NewErrorCmd(err)
-			}
 
 			fmt.Fprintln(os.Stderr, string(action))
 			return m, tea.Quit

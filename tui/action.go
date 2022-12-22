@@ -39,6 +39,18 @@ type CopyTextMsg struct {
 	Text string
 }
 
+func NewOpenPathCmd(path string) tea.Cmd {
+	return func() tea.Msg {
+		return OpenPathMsg{
+			Path: path,
+		}
+	}
+}
+
+type OpenPathMsg struct {
+	Path string
+}
+
 func NewOpenUrlCmd(url string) tea.Cmd {
 	return func() tea.Msg {
 		return OpenUrlMsg{
@@ -160,7 +172,11 @@ func NewAction(scriptAction app.ScriptAction) Action {
 				Directory: scriptAction.Dir,
 			}
 		}
-
+	case "open-path":
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Open File"
+		}
+		cmd = NewOpenPathCmd(scriptAction.Path)
 	case "edit":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open in Text Editor"
