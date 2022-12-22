@@ -147,7 +147,7 @@ app.whenReady().then(async () => {
     }
   }
 
-  const win = createWindow();
+  const win = createWindow(host, port);
   win.webContents.on("dom-ready", () => {
     globalShortcut.register("CommandOrControl+;", async () => {
       if (win.isVisible()) {
