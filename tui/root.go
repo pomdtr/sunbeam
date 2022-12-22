@@ -18,10 +18,12 @@ import (
 )
 
 type SunbeamConfig struct {
-	Height      int
-	Width       int
-	FullScreen  bool
-	AccentColor string
+	Height         int
+	Width          int
+	FullScreen     bool
+	AccentColor    string
+	CopyCommand    string
+	OpenUrlCommand string
 
 	RootItems []app.RootItem `yaml:"rootItems"`
 }

@@ -194,7 +194,7 @@ func NewActionList() ActionList {
 	footer := NewFooter("Actions")
 	footer.SetBindings(
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("↩", "Confirm")),
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Hide Actions")),
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⎋", "Hide Actions")),
 	)
 
 	return ActionList{
@@ -234,27 +234,30 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "tab":
+		case "tab", "shift+tab":
 			if !al.Focused() && len(al.actions) > 1 {
 				return al, al.Focus()
 			} else if al.Focused() {
-				al.header.input.SetValue("")
-				al.filter.FilterItems("")
-				al.Blur()
-				return al, nil
+				if msg.String() == "tab" {
+					al.filter.CursorDown()
+				} else {
+					al.filter.CursorUp()
+				}
 			}
 		case "esc":
 			if !al.Focused() {
 				return al, nil
 			}
 
+			al.filter.FilterItems("")
+
 			if al.header.input.Value() != "" {
 				al.header.input.SetValue("")
-				al.filter.FilterItems("")
 				return al, nil
+			} else {
+				al.Blur()
 			}
 
-			al.Blur()
 			return al, nil
 
 		case "enter":
