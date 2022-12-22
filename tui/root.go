@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"sort"
@@ -242,9 +243,8 @@ func (m *Model) Pop() {
 	}
 }
 
-func Shortcut(extension string, rootItem app.RootItem) string {
-	args := make([]string, 0)
-	args = append(args, "sunbeam", "run", extension, rootItem.Script)
+func toShellCommand(rootItem app.RootItem) string {
+	args := []string{"sunbeam", "run", rootItem.Extension, rootItem.Script}
 	for param, value := range rootItem.With {
 		switch value := value.(type) {
 		case string:
@@ -260,6 +260,25 @@ func Shortcut(extension string, rootItem app.RootItem) string {
 	return strings.Join(args, " ")
 }
 
+func toSunbeamUrl(rootItem app.RootItem) string {
+	path := fmt.Sprintf("run/%s/%s", rootItem.Extension, rootItem.Script)
+	queryParams := make([]string, 0)
+	for param, value := range rootItem.With {
+		switch value := value.(type) {
+		case string:
+			value = (value)
+			queryParams = append(queryParams, fmt.Sprintf("%s=%s", param, url.QueryEscape(value)))
+		case bool:
+			if !value {
+				continue
+			}
+			queryParams = append(queryParams, param)
+		}
+	}
+	query := strings.Join(queryParams, "&")
+	return fmt.Sprintf("sunbeam://%s?%s", path, query)
+}
+
 func RootList(rootItems ...app.RootItem) Container {
 	listItems := make([]ListItem, 0)
 	for _, rootItem := range rootItems {
@@ -269,7 +288,8 @@ func RootList(rootItems ...app.RootItem) Container {
 			continue
 		}
 		with := make(map[string]app.ScriptInput)
-		shortcut := Shortcut(rootItem.Extension, rootItem)
+		itemDesktopUrl := toSunbeamUrl(rootItem)
+		itemShellCommand := toShellCommand(rootItem)
 		for key, value := range rootItem.With {
 			with[key] = app.ScriptInput{Value: value}
 		}
@@ -279,7 +299,7 @@ func RootList(rootItems ...app.RootItem) Container {
 			With:      with,
 		}
 		listItems = append(listItems, ListItem{
-			Id:       shortcut,
+			Id:       itemDesktopUrl,
 			Title:    rootItem.Title,
 			Subtitle: rootItem.Subtitle,
 			Actions: []Action{
@@ -298,7 +318,12 @@ func RootList(rootItems ...app.RootItem) Container {
 				{
 					Title:    "Copy as Shell Command",
 					Shortcut: "ctrl+y",
-					Cmd:      NewCopyTextCmd(shortcut),
+					Cmd:      NewCopyTextCmd(itemShellCommand),
+				},
+				{
+					Title:    "Copy as Sunbeam URL",
+					Shortcut: "ctrl+y",
+					Cmd:      NewCopyTextCmd(itemDesktopUrl),
 				},
 			},
 		})
