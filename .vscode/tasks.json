@@ -2,27 +2,31 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Start Sunbeam",
-            "type": "shell",
+            "label": "Run headless dlv",
+            "type": "process",
             "command": [
-                "go",
-                "run",
-                "main.go"
+                "dlv",
             ],
-            "problemMatcher": [],
-        },
-        {
-            "label": "Add Package to Devbox",
-            "command": "devbox --config /devbox/devbox.json add ${input:package} && cp /devbox/devbox.json .devcontainer/devbox.json",
-            "type": "shell",
-            "group": "build"
-        },
-    ],
-    "inputs": [
-        {
-            "id": "package",
-            "type": "promptString",
-            "description": "Package name",
+            "args": [
+                "debug",
+                "--headless",
+                "--listen=:2345",
+                "--api-version=2",
+                "${workspaceFolder}/main.go"
+            ],
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "go",
+                "fileLocation": "relative",
+                "pattern": {
+                    "regexp": "^couldn't start listener:",
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^API server listening at:",
+                    "endsPattern": "^Got a connection, launched process"
+                }
+            }
         }
     ]
 }
