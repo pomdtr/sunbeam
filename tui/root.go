@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"sort"
 	"strings"
 
@@ -349,7 +350,18 @@ func Draw(model *Model) (err error) {
 		}
 		defer f.Close()
 	} else {
-		tea.LogToFile("/dev/null", "")
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		logDir := path.Join(home, ".local", "state", "sunbeam")
+		if _, err := os.Stat(logDir); os.IsNotExist(err) {
+			err = os.MkdirAll(path.Join(home, ".local", "state", "sunbeam"), 0755)
+			if err != nil {
+				return err
+			}
+		}
+		tea.LogToFile(path.Join(logDir, "sunbeam.log"), "")
 	}
 
 	var p *tea.Program
