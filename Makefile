@@ -23,3 +23,11 @@ install: build-frontend
 .PHONY: serve
 serve: build
 	./bin/$(APP_NAME) serve
+
+.PHONY: gui
+gui: install
+	cd gui && npm run start
+
+.PHONY: install-gui
+install-gui: install
+	cd gui && npm run install
