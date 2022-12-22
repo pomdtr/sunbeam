@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -125,9 +126,22 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 		return ws.WriteMessage(messageType, data)
 	}
 
-	command := exec.Command("sunbeam", arguments...)
+	var sunbeamPath string
+	if len(os.Args) == 0 {
+		sunbeamPath = "sunbeam"
+	} else {
+		sunbeamPath = os.Args[0]
+	}
+
+	command := exec.Command(sunbeamPath, arguments...)
+	command.Env = []string{
+		"SUNBEAM_SERVER=1",
+	}
+	command.Env = append(command.Env, os.Environ()...)
+
 	var errBuf bytes.Buffer
 	command.Stderr = &errBuf
+
 	tty, err := pty.Start(command)
 
 	if err != nil {
@@ -206,10 +220,10 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				if errBuf.String() != "" {
 					send(websocket.TextMessage, errBuf.Bytes())
+				} else {
+					action, _ := json.Marshal(map[string]any{"action": "exit"})
+					send(websocket.TextMessage, action)
 				}
-
-				log.Printf("error reading from pty: %v", err)
-				ws.Close()
 				return
 			}
 

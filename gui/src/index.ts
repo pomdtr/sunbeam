@@ -39,7 +39,7 @@ function createWindow() {
     },
     resizable: false,
     type: "panel",
-    show: false,
+    show: true,
     hasShadow: true,
   });
   win.setMenu(null);
@@ -52,6 +52,11 @@ function createWindow() {
   });
   ipcMain.handle("openInBrowser", (_: unknown, url: string) => {
     shell.openExternal(url);
+  });
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
   });
 
   win.on("blur", () => {
@@ -105,15 +110,17 @@ app.whenReady().then(async () => {
     port = args.port;
   } else {
     console.log(`Starting sunbeam at http://${host}:${port}`);
-    const cmd = spawn(sunbeam, ["serve", `host=${host}`, `port=${port}`], {
+    const shell = process.env.SHELL;
+    const command = `${sunbeam} serve --host ${host} --port ${port}`;
+    const server = spawn(shell, ["-c", command], {
       env: {
-        ...process.env,
         TERM: "xterm-256color",
+        PATH: `${process.resourcesPath}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin`,
       },
     });
 
     app.on("before-quit", () => {
-      cmd.kill();
+      server.kill();
     });
   }
   let ready = false;
@@ -125,7 +132,6 @@ app.whenReady().then(async () => {
         ready = true;
       }
     } catch (e) {
-      console.log(e);
       console.log("Sunbeam not ready yet...");
     }
   }

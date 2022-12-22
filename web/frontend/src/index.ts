@@ -11,6 +11,7 @@ declare global {
       showWindow: () => Promise<void>;
       hideWindow: () => Promise<void>;
       openInBrowser: (url: string) => Promise<void>;
+      copyToClipboard: (text: string) => Promise<void>;
     };
   }
 }
@@ -22,6 +23,31 @@ async function loadTheme() {
     const error = await res.text();
     console.error("Failed to load theme", error);
     return defaultTheme;
+  }
+}
+
+async function reloadPage() {
+  if (window.electron) {
+    // @ts-ignore
+    window.location = window.location.pathname;
+  } else {
+    location.reload();
+  }
+}
+
+async function copyText(text: string) {
+  if (window.electron) {
+    await window.electron.copyToClipboard(text);
+  } else {
+    await navigator.clipboard.writeText(text);
+  }
+}
+
+async function openUrl(url: string) {
+  if (window.electron) {
+    await window.electron.openInBrowser(url);
+  } else {
+    window.open(url, "_blank");
   }
 }
 
@@ -82,23 +108,32 @@ async function main() {
         window.electron.showWindow();
       }
     }
+
     const data = event.data;
     if (typeof data === "string") {
-      // Copy to clipboard
-      // await navigator.clipboard.writeText(data);
-      // Open URL
-      window.open(data);
+      if (window.electron) {
+        await window.electron.hideWindow();
+      }
+      const msg = JSON.parse(data);
+      switch (msg.action) {
+        case "open-url":
+          await openUrl(msg.url);
+          break;
+        case "copy-text":
+          await copyText(msg.text);
+          break;
+        case "exit":
+          break;
+        default:
+          await copyText(`Unknown action: ${msg.action}`);
+          break;
+      }
+      reloadPage();
     }
   };
 
   ws.onclose = async () => {
-    if (window.electron) {
-      await window.electron.hideWindow();
-      // @ts-ignore
-      window.location = window.location.pathname;
-    } else {
-      location.reload();
-    }
+    reloadPage();
   };
 
   window.onresize = () => {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -300,7 +299,6 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 			c.list.SetIsLoading(false)
 			return c, cmd
 		case "command":
-			log.Printf("on success msg: %v", c.OnSuccessCmd())
 			return c, c.OnSuccessCmd
 		case "quicklink":
 			return c, NewOpenUrlCmd(string(msg))

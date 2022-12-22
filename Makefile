@@ -21,8 +21,8 @@ install: build-frontend
 	go install
 
 .PHONY: serve
-serve: build
-	./bin/$(APP_NAME) serve
+serve: install
+	sunbeam serve
 
 .PHONY: gui
 gui: install

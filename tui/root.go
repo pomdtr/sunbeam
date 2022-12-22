@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -90,17 +91,38 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case CopyTextMsg:
-		var err error
+		if os.Getenv("SUNBEAM_SERVER") != "" {
+			action, err := json.Marshal(map[string]interface{}{
+				"action": "copy-text",
+				"text":   msg.Text,
+			})
+			if err != nil {
+				return m, NewErrorCmd(err)
+			}
 
-		err = clipboard.WriteAll(msg.Text)
+			fmt.Fprintln(os.Stderr, string(action))
+			return m, tea.Quit
+		}
+
+		err := clipboard.WriteAll(msg.Text)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
 	case OpenUrlMsg:
-		var err error
+		if os.Getenv("SUNBEAM_SERVER") != "" {
+			action, err := json.Marshal(map[string]interface{}{
+				"action": "open-url",
+				"url":    msg.Url,
+			})
+			if err != nil {
+				return m, NewErrorCmd(err)
+			}
 
-		err = browser.OpenURL(msg.Url)
+			fmt.Fprintln(os.Stderr, string(action))
+			return m, tea.Quit
+		}
+		err := browser.OpenURL(msg.Url)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
