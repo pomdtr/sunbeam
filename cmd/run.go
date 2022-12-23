@@ -10,10 +10,9 @@ import (
 
 func NewCmdRun() *cobra.Command {
 	runCmd := &cobra.Command{
-		Use:     "run <extension> [script] [params]",
-		Short:   "Run a script",
-		GroupID: "core",
-		Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+		Use:   "run <extension> [script] [params]",
+		Short: "Run a script",
+		Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 	}
 
 	// Extensions

@@ -30,17 +30,11 @@ func Execute() (err error) {
 		},
 	}
 
-	rootCmd.AddGroup(&cobra.Group{
-		ID:    "core",
-		Title: "Core Commands",
-	}, &cobra.Group{
-		ID:    "extensions",
-		Title: "Extension Commands",
-	})
-
 	// Core Commands
 	rootCmd.AddCommand(NewCmdExtension())
 	rootCmd.AddCommand(NewCmdQuery())
+	rootCmd.AddCommand(NewCmdDetail())
+	rootCmd.AddCommand(NewCmdFilter())
 	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdExec())
 	rootCmd.AddCommand(NewCmdServe())

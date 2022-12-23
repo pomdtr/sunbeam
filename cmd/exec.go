@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
@@ -10,19 +8,13 @@ import (
 
 func NewCmdExec() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "exec <script>",
-		Args:    cobra.MinimumNArgs(1),
-		Short:   "Exec a script",
-		GroupID: "core",
+		Use:   "exec <script>",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Exec a script",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			wd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
 			i := interp.New(interp.Options{
-				Args:                 args,
-				SourcecodeFilesystem: os.DirFS(wd),
+				Args:         args,
+				Unrestricted: true,
 			})
 			i.Use(stdlib.Symbols)
 

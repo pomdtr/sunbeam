@@ -21,7 +21,6 @@ func NewCmdExtension() *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
-		GroupID: "core",
 		Short:   "Manage sunbeam extensions",
 	}
 
