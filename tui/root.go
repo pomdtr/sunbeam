@@ -93,7 +93,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case OpenPathMsg:
 		if os.Getenv("SUNBEAM_SERVER") != "" {
-			action, err := json.Marshal(map[string]interface{}{
+			action, _ := json.Marshal(map[string]interface{}{
 				"action": "open-path",
 				"path":   msg.Path,
 			})
