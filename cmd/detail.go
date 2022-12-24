@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/pomdtr/sunbeam/app"
@@ -15,7 +15,7 @@ func NewCmdDetail() *cobra.Command {
 		Use:   "detail",
 		Short: "Show detail view",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			input, err := ioutil.ReadAll(os.Stdin)
+			input, err := io.ReadAll(os.Stdin)
 			if err != nil {
 				return err
 			}

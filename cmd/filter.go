@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 
@@ -15,7 +15,7 @@ func NewCmdFilter() *cobra.Command {
 		Use:   "filter",
 		Short: "Show filter",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			input, err := ioutil.ReadAll(os.Stdin)
+			input, err := io.ReadAll(os.Stdin)
 			if err != nil {
 				return err
 			}
