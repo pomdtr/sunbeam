@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
+	"github.com/traefik/yaegi/stdlib/unrestricted"
 )
 
 func NewCmdExec() *cobra.Command {
@@ -17,6 +18,7 @@ func NewCmdExec() *cobra.Command {
 				Unrestricted: true,
 			})
 			i.Use(stdlib.Symbols)
+			i.Use(unrestricted.Symbols)
 
 			imports, err := cmd.Flags().GetStringSlice("include")
 			if err != nil {
