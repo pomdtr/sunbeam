@@ -19,8 +19,8 @@ func NewGitClient(repo string) *GitClient {
 	}
 }
 
-func GitClone(host, repo, target string) error {
-	cmd := exec.Command("git", "clone", fmt.Sprintf("https://%s/%s", host, repo), target)
+func GitClone(url string, target string) error {
+	cmd := exec.Command("git", "clone", url, target)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd.Run()
@@ -78,7 +78,11 @@ type Repository struct {
 }
 
 func (r Repository) FullName() string {
-	return fmt.Sprintf("%s/%s", r.Owner, r.Name)
+	return fmt.Sprintf("%s/%s/%s", r.Host, r.Owner, r.Name)
+}
+
+func (r Repository) Url() string {
+	return fmt.Sprintf("https://%s/%s/%s", r.Host, r.Owner, r.Name)
 }
 
 // Parse extracts the repository information from the following

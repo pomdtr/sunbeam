@@ -2,6 +2,7 @@ package app
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -19,9 +20,42 @@ import (
 var manifestSchema string
 
 type Api struct {
-	Extensions    map[string]Extension
-	ExtensionRoot string
-	ConfigRoot    string
+	Extensions       map[string]Extension
+	ExtensionRoot    string
+	ExtensionConfigs map[string]ExtensionConfig
+	ConfigRoot       string
+}
+
+var Sunbeam Api
+
+func (api Api) AddExtension(name string, config ExtensionConfig) error {
+	if _, ok := api.ExtensionConfigs[name]; ok {
+		return fmt.Errorf("extension %s already exists", name)
+	}
+	api.ExtensionConfigs[name] = config
+	bytes, err := json.Marshal(api.ExtensionConfigs)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path.Join(api.ExtensionRoot, "extensions.json"), bytes, 0644)
+}
+
+func (api Api) RemoveExtension(configName string) error {
+	config, ok := api.ExtensionConfigs[configName]
+	if !ok {
+		return fmt.Errorf("extension %s does not exist", configName)
+	}
+
+	if err := os.RemoveAll(config.Root); err != nil {
+		return err
+	}
+
+	delete(api.ExtensionConfigs, configName)
+	bytes, err := json.Marshal(api.ExtensionConfigs)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path.Join(api.ExtensionRoot, "extensions.json"), bytes, 0644)
 }
 
 type RootItem struct {
@@ -31,6 +65,13 @@ type RootItem struct {
 	Subtitle  string
 	With      map[string]any
 }
+
+type ExtensionConfig struct {
+	Root   string `json:"root"`
+	Remote string `json:"remote,omitempty"`
+}
+
+type ExtensionManifest []ExtensionConfig
 
 type Extension struct {
 	Title       string        `json:"title" yaml:"title"`
@@ -64,8 +105,6 @@ func (m Extension) Dir() string {
 	return path.Dir(m.Url.Path)
 }
 
-var Sunbeam Api
-
 func init() {
 	compiler := jsonschema.NewCompiler()
 	if err := compiler.AddResource("schema.json", strings.NewReader(manifestSchema)); err != nil {
@@ -75,31 +114,30 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	scriptDirs := make([]string, 0)
-
-	currentDir, err := os.Getwd()
-	if err == nil {
-		for !utils.IsRoot(currentDir) {
-			scriptDirs = append(scriptDirs, currentDir)
-			currentDir = path.Dir(currentDir)
-		}
-	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("could not get home directory: %v", err)
 	}
+
 	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
-	configRoot := path.Join(homeDir, ".config", "sunbeam")
-	extensionDirs, _ := os.ReadDir(extensionRoot)
-	for _, extensionDir := range extensionDirs {
-		extensionPath := path.Join(extensionRoot, extensionDir.Name())
-		scriptDirs = append(scriptDirs, extensionPath)
+	if _, err := os.Stat(extensionRoot); os.IsNotExist(err) {
+		os.MkdirAll(extensionRoot, 0755)
+	}
+
+	extensionManifestPath := path.Join(extensionRoot, "extensions.json")
+	if _, err := os.Stat(extensionManifestPath); os.IsNotExist(err) {
+		os.WriteFile(extensionManifestPath, []byte("{}"), 0644)
+	}
+
+	var ExtensionConfigs map[string]ExtensionConfig
+	if err := utils.ReadJson(extensionManifestPath, &ExtensionConfigs); err != nil {
+		log.Fatalf("could not read extension manifest: %v", err)
 	}
 
 	extensions := make(map[string]Extension)
-	for _, scriptDir := range scriptDirs {
-		manifestPath := path.Join(scriptDir, "sunbeam.yml")
+	for _, extensionConfig := range ExtensionConfigs {
+		manifestPath := path.Join(extensionConfig.Root, "sunbeam.yml")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 			continue
 		}
@@ -135,9 +173,10 @@ func init() {
 	}
 
 	Sunbeam = Api{
-		ExtensionRoot: extensionRoot,
-		ConfigRoot:    configRoot,
-		Extensions:    extensions,
+		ExtensionRoot:    extensionRoot,
+		ExtensionConfigs: ExtensionConfigs,
+		ConfigRoot:       path.Join(homeDir, ".config", "sunbeam"),
+		Extensions:       extensions,
 	}
 }
 

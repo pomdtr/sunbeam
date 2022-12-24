@@ -10,6 +10,18 @@
             "port": 2345,
             "host": "127.0.0.1",
             "preLaunchTask": "Run headless dlv"
+        },
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/main.go",
+            // "args": [
+            //     "extension",
+            //     "install",
+            //     "pomdtr/sunbeam-vscode"
+            // ]
         }
     ]
 }
