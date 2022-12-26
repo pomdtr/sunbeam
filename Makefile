@@ -21,9 +21,10 @@ run: build
 install: build-frontend
 	go install
 
+PORT := 8000
 .PHONY: serve
 serve: install
-	sunbeam serve
+	sunbeam serve -p $(PORT)
 
 .PHONY: gui
 gui: install

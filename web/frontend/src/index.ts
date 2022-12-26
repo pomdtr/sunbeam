@@ -16,8 +16,11 @@ declare global {
     };
   }
 }
-async function loadTheme() {
-  const res = await fetch("/theme.json");
+async function loadTheme(theme: string | null) {
+  if (!theme) {
+    return defaultTheme;
+  }
+  const res = await fetch(`/themes/${theme}.json`);
   if (res.ok) {
     return res.json();
   } else {
@@ -61,7 +64,9 @@ async function openUrl(url: string) {
 }
 
 async function main() {
-  const theme = await loadTheme();
+  const terminalElement = document.getElementById("terminal")!;
+  const themeName = terminalElement.getAttribute("data-sunbeam-theme");
+  const theme = await loadTheme(themeName);
 
   const terminal = new Terminal({
     allowTransparency: true,

@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"html/template"
 	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -23,8 +26,7 @@ import (
 //go:embed frontend/dist
 var frontendDist embed.FS
 
-func NewServer(address string, theme string) (*http.Server, error) {
-
+func NewServer(address string) (*http.Server, error) {
 	sub, err := fs.Sub(frontendDist, "frontend/dist")
 	if err != nil {
 		return nil, err
@@ -38,15 +40,12 @@ func NewServer(address string, theme string) (*http.Server, error) {
 	})
 
 	r.HandleFunc("/ws", WebsocketHandle)
-	r.HandleFunc("/theme.json", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, fmt.Sprintf("/themes/%s.json", theme), http.StatusSeeOther)
-	})
 	r.HandleFunc("/run/{extension}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		extension := vars["extension"]
 
 		// redirect to the index.html file
-		http.Redirect(w, r, fmt.Sprintf("/index.html?extension=%s", extension), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/?extension=%s", extension), http.StatusSeeOther)
 	})
 	r.HandleFunc("/run/{extension}/{script}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -55,16 +54,31 @@ func NewServer(address string, theme string) (*http.Server, error) {
 
 		var arguments []string
 		for name, value := range r.URL.Query() {
-			arg := fmt.Sprintf("--%s=%s", name, value[0])
+			var arg string
+			if len(value) == 0 {
+				arg = fmt.Sprintf("--%s", name)
+			} else {
+				arg = fmt.Sprintf("--%s=%s", name, value[0])
+			}
 			arg = url.QueryEscape(arg)
 			arguments = append(arguments, fmt.Sprintf("arg=%s", arg))
 		}
 
 		query := strings.Join(arguments, "&")
 
-		http.Redirect(w, r, fmt.Sprintf("/index.html?extension=%s&script=%s&%s", extension, script, query), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/?extension=%s&script=%s&%s", extension, script, query), http.StatusSeeOther)
 	})
 
+	tmpl := template.Must(template.ParseFS(sub, "index.html"))
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		theme := r.Header.Get("X-Sunbeam-Theme")
+		if fs.Stat(sub, path.Join("themes", fmt.Sprintf(theme, ".json"))); errors.Is(err, fs.ErrNotExist) {
+			theme = "tomorrow-night"
+		}
+		tmpl.Execute(w, map[string]string{
+			"theme": theme,
+		})
+	})
 	r.PathPrefix("/").Handler(http.FileServer(http.FS(sub)))
 
 	return &http.Server{

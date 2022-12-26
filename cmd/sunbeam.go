@@ -38,6 +38,9 @@ func Execute() (err error) {
 	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdExec())
 	rootCmd.AddCommand(NewCmdServe())
+	rootCmd.AddCommand(NewCmdCopy())
+	rootCmd.AddCommand(NewCmdOpen())
+	rootCmd.AddCommand(NewCmdBrowse())
 
 	return rootCmd.Execute()
 }

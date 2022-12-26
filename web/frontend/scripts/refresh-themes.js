@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs/promises";
 import url from "url";
 import os from "os";
+import _ from "lodash";
 
 const replacementMap = {
   "terminal.foreground": "foreground",
@@ -42,8 +43,8 @@ async function main() {
 
   const entries = await fs.readdir(vscodeDir);
   console.log(`Converting ${entries.length} themes...`);
-  const promises = entries.map(async (entry) => {
-    const filepath = path.join(vscodeDir, entry);
+  const promises = entries.map(async (theme) => {
+    const filepath = path.join(vscodeDir, theme);
     const content = await fs.readFile(filepath, "utf-8");
     const vscodeTheme = JSON.parse(content);
     const xtermTheme = {};
@@ -54,8 +55,10 @@ async function main() {
       xtermTheme[replacementMap[key]] = color;
     }
 
+    const { name, ext } = path.parse(theme);
+    const clean = _.kebabCase(name);
     await fs.writeFile(
-      path.join(targetDir, `${entry}`),
+      path.join(targetDir, `${clean}${ext}`),
       JSON.stringify(xtermTheme, null, 2)
     );
   });

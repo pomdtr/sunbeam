@@ -16,7 +16,7 @@ import minimist from "minimist";
 
 const args = minimist(process.argv.slice(2));
 
-function createWindow(host: string, port: number) {
+function createWindow(host: string, port: number, theme: string) {
   const bounds = getCenterOnCurrentScreen();
   const win = new BrowserWindow({
     title: "Sunbeam",
@@ -44,7 +44,9 @@ function createWindow(host: string, port: number) {
     hasShadow: true,
   });
   win.setMenu(null);
-  win.loadURL(`http://${host}:${port}`);
+  win.loadURL(`http://${host}:${port}`, {
+    extraHeaders: `X-Sunbeam-Theme: ${theme}`,
+  });
   ipcMain.handle("hideWindow", () => win.hide());
   ipcMain.handle("showWindow", () => win.show());
 
@@ -147,7 +149,7 @@ app.whenReady().then(async () => {
     }
   }
 
-  const win = createWindow(host, port);
+  const win = createWindow(host, port, args.theme);
   win.webContents.on("dom-ready", () => {
     globalShortcut.register("CommandOrControl+;", async () => {
       if (win.isVisible()) {
@@ -167,7 +169,9 @@ app.whenReady().then(async () => {
     const parsedUrl = url.parse(sunbeamUrl);
     switch (parsedUrl.host) {
       case "run":
-        win.loadURL(`http://${host}:${port}/run${parsedUrl.path}`);
+        win.loadURL(`http://${host}:${port}/run${parsedUrl.path}`, {
+          extraHeaders: `X-Sunbeam-Theme: ${args.theme}`,
+        });
     }
   });
 });
