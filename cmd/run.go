@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/tui"
+	"github.com/SunbeamLauncher/sunbeam/app"
+	"github.com/SunbeamLauncher/sunbeam/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +29,7 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 		Use:   extension.Name,
 		Short: extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			list := tui.RootList(extension.RootItems...)
+			list := tui.NewRootList(extension.RootItems...)
 			root := tui.NewModel(list)
 			err = tui.Draw(root)
 			if err != nil {

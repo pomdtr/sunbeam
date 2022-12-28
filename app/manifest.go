@@ -11,7 +11,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/pomdtr/sunbeam/utils"
+	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )

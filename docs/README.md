@@ -13,7 +13,7 @@
 ## Installation
 
 ```bash
-go install github.com/pomdtr/sunbeam@latest
+go install github.com/SunbeamLauncher/sunbeam@latest
 ```
 
 ## Development

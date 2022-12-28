@@ -74,3 +74,4 @@ dist/
 
 # Python Cache
 *.pyc
+go.work

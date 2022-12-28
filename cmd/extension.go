@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SunbeamLauncher/sunbeam/app"
+	"github.com/SunbeamLauncher/sunbeam/tui"
+	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/tui"
-	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
 

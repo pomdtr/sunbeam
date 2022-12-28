@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Footer struct {

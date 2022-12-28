@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"sort"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,6 +20,7 @@ type Filter struct {
 	Width, Height int
 	Query         string
 	Background    lipgloss.TerminalColor
+	Less          func(i, j FilterItem) bool
 
 	choices  []FilterItem
 	filtered []FilterItem
@@ -48,23 +50,32 @@ func (f *Filter) SetItems(items []FilterItem) {
 }
 
 func (f *Filter) FilterItems(query string) {
+	f.Query = query
 	values := make([]string, len(f.choices))
 	for i, choice := range f.choices {
 		values[i] = choice.FilterValue()
 	}
 	// If the search field is empty, let's not display the matches
 	// (none), but rather display all possible choices.
+	var filtered []FilterItem
 	if query == "" {
-		f.filtered = f.choices
+		filtered = f.choices
 	} else {
 		matches := fuzzy.Find(query, values)
-		f.filtered = make([]FilterItem, len(matches))
+		filtered = make([]FilterItem, len(matches))
 		for i, match := range matches {
-			f.filtered[i] = f.choices[match.Index]
+			filtered[i] = f.choices[match.Index]
 		}
 	}
 
-	f.Query = query
+	if f.Less != nil {
+		sort.SliceStable(filtered, func(i, j int) bool {
+			return f.Less(filtered[i], filtered[j])
+		})
+	}
+
+	f.filtered = filtered
+
 	// Reset the cursor
 	f.cursor = 0
 	f.minIndex = 0

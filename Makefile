@@ -32,9 +32,13 @@ PORT := 8000
 serve: install
 	sunbeam serve -p $(PORT)
 
-.PHONY: gui
-gui: install
+.PHONY: start-gui
+start-gui: install
 	npm --prefix gui run start
+
+.PHONY: build-gui
+build-gui: install
+	npm --prefix gui run make
 
 .PHONY: install-gui
 install-gui: install

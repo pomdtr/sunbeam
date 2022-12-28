@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/SunbeamLauncher/sunbeam/app"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/app"
 )
 
 type Action struct {
@@ -131,7 +131,7 @@ func (msg ExecCommandMsg) OnSuccessCmd() tea.Cmd {
 func NewEditCmd(path string) tea.Cmd {
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
-		editor = "vim"
+		editor = "vi"
 	}
 
 	return NewExecCmd(fmt.Sprintf("%s %s", editor, path))

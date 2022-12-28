@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/pomdtr/sunbeam/cmd"
+	"github.com/SunbeamLauncher/sunbeam/cmd"
 )
 
 const version = "dev"

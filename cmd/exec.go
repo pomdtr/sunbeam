@@ -20,12 +20,12 @@ func NewCmdExec() *cobra.Command {
 			i.Use(stdlib.Symbols)
 			i.Use(unrestricted.Symbols)
 
-			imports, err := cmd.Flags().GetStringSlice("include")
+			include, err := cmd.Flags().GetStringSlice("include")
 			if err != nil {
 				return err
 			}
 
-			for _, pkg := range imports {
+			for _, pkg := range include {
 				if _, err := i.EvalPath(pkg); err != nil {
 					return err
 				}

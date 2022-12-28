@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/pomdtr/sunbeam/web"
+	"github.com/SunbeamLauncher/sunbeam/web"
 	"github.com/spf13/cobra"
 )
 

@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/tui"
+	"github.com/SunbeamLauncher/sunbeam/app"
+	"github.com/SunbeamLauncher/sunbeam/tui"
 	"github.com/spf13/cobra"
 )
 

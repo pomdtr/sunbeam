@@ -8,15 +8,15 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"sort"
 	"strings"
 
+	"github.com/SunbeamLauncher/frecency"
+	"github.com/SunbeamLauncher/sunbeam/app"
+	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cli/browser"
-	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/utils"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/viper"
 )
@@ -313,9 +313,30 @@ func toSunbeamUrl(rootItem app.RootItem) string {
 	return fmt.Sprintf("sunbeam://%s?%s", path, query)
 }
 
-func RootList(rootItems ...app.RootItem) Container {
+func NewRootList(rootItems ...app.RootItem) Container {
+
+	stateDir := path.Join(os.Getenv("HOME"), ".local", "state", "sunbeam")
+	frecencyPath := path.Join(stateDir, "frecency.json")
+
+	var sorter *frecency.Sorter
+	if _, err := os.Stat(frecencyPath); err == nil {
+		sorter, err = frecency.Load(frecencyPath)
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		sorter = frecency.NewSorter()
+	}
+
+	list := NewList("Sunbeam")
+
+	list.filter.Less = func(i, j FilterItem) bool {
+		return sorter.Score(i.ID(), list.Query()) > sorter.Score(j.ID(), list.Query())
+	}
+
 	listItems := make([]ListItem, 0)
 	for _, rootItem := range rootItems {
+		rootItem := rootItem
 		extension, ok := app.Sunbeam.Extensions[rootItem.Extension]
 		if !ok {
 			log.Println("extension not found:", rootItem.Extension)
@@ -327,11 +348,6 @@ func RootList(rootItems ...app.RootItem) Container {
 		for key, value := range rootItem.With {
 			with[key] = app.ScriptInput{Value: value}
 		}
-		runMsg := RunScriptMsg{
-			Extension: rootItem.Extension,
-			Script:    rootItem.Script,
-			With:      with,
-		}
 		listItems = append(listItems, ListItem{
 			Id:       itemDesktopUrl,
 			Title:    rootItem.Title,
@@ -341,7 +357,16 @@ func RootList(rootItems ...app.RootItem) Container {
 					Title:    "Run Script",
 					Shortcut: "enter",
 					Cmd: func() tea.Msg {
-						return runMsg
+						sorter.Inc(itemDesktopUrl, list.Query())
+						if _, err := os.Stat(stateDir); os.IsNotExist(err) {
+							os.MkdirAll(stateDir, 0755)
+						}
+						sorter.Save(frecencyPath)
+						return RunScriptMsg{
+							Extension: rootItem.Extension,
+							Script:    rootItem.Script,
+							With:      with,
+						}
 					},
 				},
 				{
@@ -363,12 +388,6 @@ func RootList(rootItems ...app.RootItem) Container {
 		})
 	}
 
-	// Sort root items by title
-	sort.SliceStable(listItems, func(i, j int) bool {
-		return listItems[i].Title < listItems[j].Title
-	})
-
-	list := NewList("Sunbeam")
 	list.SetItems(listItems)
 
 	return list

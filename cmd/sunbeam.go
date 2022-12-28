@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/tui"
+	"github.com/SunbeamLauncher/sunbeam/app"
+	"github.com/SunbeamLauncher/sunbeam/tui"
 )
 
 func Execute(version string) (err error) {
@@ -24,7 +24,7 @@ func Execute(version string) (err error) {
 				rootItems = append(rootItems, rootItem)
 			}
 
-			rootList := tui.RootList(rootItems...)
+			rootList := tui.NewRootList(rootItems...)
 			model := tui.NewModel(rootList)
 			return tui.Draw(model)
 		},

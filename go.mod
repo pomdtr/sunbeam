@@ -1,4 +1,4 @@
-module github.com/pomdtr/sunbeam
+module github.com/SunbeamLauncher/sunbeam
 
 go 1.19
 
@@ -22,6 +22,7 @@ require (
 )
 
 require (
+	github.com/SunbeamLauncher/frecency v0.0.0-20221228180320-9d6935c1fa9a // indirect
 	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
