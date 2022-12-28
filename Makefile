@@ -1,13 +1,19 @@
 APP_NAME:=sunbeam
 
-.PHONY:
-init:
-	cd web/frontend && npm install
-	cd gui && npm install
+.PHONY: init-frontend
+init-frontend:
+	npm --prefix web/frontend install
+
+.PHONY: init-gui
+init-gui:
+	npm --prefix gui install
+
+.PHONY: init
+init: init-frontend init-gui
 
 .PHONY: build-frontend
 build-frontend:
-	cd web/frontend && npm run build
+	npm --prefix web/frontend run build
 
 .PHONY: build
 build: build-frontend
@@ -28,8 +34,8 @@ serve: install
 
 .PHONY: gui
 gui: install
-	cd gui && npm run start
+	npm --prefix gui run start
 
 .PHONY: install-gui
 install-gui: install
-	cd gui && npm run install
+	npm --prefix gui run install

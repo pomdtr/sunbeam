@@ -4,8 +4,8 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
-    - cd web/frontend && npm install
-    - cd web/frontend && npm run build
+    - make init-frontend
+    - make build-frontend
 builds:
   - env:
       - CGO_ENABLED=0

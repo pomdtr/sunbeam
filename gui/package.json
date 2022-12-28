@@ -7,7 +7,7 @@
   "scripts": {
     "start": "tsc && electron-forge start",
     "package": "tsc && electron-forge package",
-    "install": "rm -rf /Applications/Sunbeam.app && npm run package && cp -r out/Sunbeam-darwin-arm64/Sunbeam.app /Applications",
+    "install-app": "rm -rf /Applications/Sunbeam.app && npm run package && cp -r out/Sunbeam-darwin-arm64/Sunbeam.app /Applications",
     "make": "tsc && electron-forge make",
     "publish": "electron-forge publish"
   },
