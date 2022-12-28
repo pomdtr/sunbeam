@@ -24,6 +24,12 @@ checksum:
   name_template: "checksums.txt"
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
+brews:
+  - name: sunbeam
+    homepage: https://github.com/SunbeamLauncher/sunbeam
+    tap:
+      owner: SunbeamLauncher
+      name: homebrew-tap
 changelog:
   sort: asc
   filters:
