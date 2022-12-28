@@ -7,12 +7,12 @@ import (
 	"github.com/pomdtr/sunbeam/tui"
 )
 
-func Execute() (err error) {
+func Execute(version string) (err error) {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:     "sunbeam",
 		Short:   "Command Line Launcher",
-		Version: app.Version,
+		Version: version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			rootItems := make([]app.RootItem, 0)
 			for _, extension := range app.Sunbeam.Extensions {
