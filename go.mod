@@ -3,13 +3,11 @@ module github.com/SunbeamLauncher/sunbeam
 go 1.19
 
 require (
+	github.com/SunbeamLauncher/frecency v0.0.0-20221228180320-9d6935c1fa9a
 	github.com/charmbracelet/bubbles v0.14.0
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/cli/browser v1.1.0
-	github.com/creack/pty v1.1.18
-	github.com/gorilla/mux v1.8.0
-	github.com/gorilla/websocket v1.5.0
 	github.com/itchyny/gojq v0.12.10
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1
@@ -19,10 +17,10 @@ require (
 	github.com/traefik/yaegi v0.14.3
 	github.com/zalando/go-keyring v0.2.1
 	gopkg.in/yaml.v3 v3.0.1
+	modernc.org/sqlite v1.20.0
 )
 
 require (
-	github.com/SunbeamLauncher/frecency v0.0.0-20221228180320-9d6935c1fa9a // indirect
 	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -54,7 +52,6 @@ require (
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.4.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
-	modernc.org/sqlite v1.20.0 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.0.1 // indirect
 )
