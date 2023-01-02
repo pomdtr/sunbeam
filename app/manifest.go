@@ -93,11 +93,9 @@ type ExtensionRequirement struct {
 }
 
 func (r ExtensionRequirement) Check() bool {
-	cmd := exec.Command("which", r.Which)
-	if err := cmd.Run(); err != nil {
+	if _, err := exec.LookPath(r.Which); err != nil {
 		return false
 	}
-
 	return true
 }
 
