@@ -102,7 +102,7 @@ func (i ListItem) Render(width int, selected bool) string {
 		title = title[:width-lipgloss.Width(accessories)]
 	} else {
 		accessories = ""
-		title = title[:width]
+		title = title[:utils.Min(len(title), width)]
 	}
 
 	title = titleStyle.Render(title)
