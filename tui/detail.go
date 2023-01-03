@@ -5,13 +5,13 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/SunbeamLauncher/sunbeam/app"
-	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
+	"github.com/sunbeamlauncher/sunbeam/app"
+	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
 type Detail struct {

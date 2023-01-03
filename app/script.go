@@ -8,9 +8,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/alessio/shellescape"
 	"github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/sunbeamlauncher/sunbeam/utils"
 	"gopkg.in/yaml.v3"
 )
 

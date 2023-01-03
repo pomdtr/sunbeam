@@ -38,8 +38,8 @@ cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3f
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/SunbeamLauncher/frecency v0.0.0-20221228180320-9d6935c1fa9a h1:gUPSk/Ctrr8uRj64vLfjicEEZR8f1uS6OnzK2PmJ728=
-github.com/SunbeamLauncher/frecency v0.0.0-20221228180320-9d6935c1fa9a/go.mod h1:UJ8CJghaPtQrn/AjJN/iuABgcbdaCfcYes4LBL+7vaQ=
+github.com/sunbeamlauncher/frecency v0.0.0-20221228180320-9d6935c1fa9a h1:gUPSk/Ctrr8uRj64vLfjicEEZR8f1uS6OnzK2PmJ728=
+github.com/sunbeamlauncher/frecency v0.0.0-20221228180320-9d6935c1fa9a/go.mod h1:UJ8CJghaPtQrn/AjJN/iuABgcbdaCfcYes4LBL+7vaQ=
 github.com/alessio/shellescape v1.4.1 h1:V7yhSDDn8LP4lc4jS8pFkt0zCnzVJlG5JXy9BVKJUX0=
 github.com/alessio/shellescape v1.4.1/go.mod h1:PZAiSCk0LJaZkiCSkPv8qIobYglO3FPpyFjDCtHLS30=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=

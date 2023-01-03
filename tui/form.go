@@ -5,14 +5,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SunbeamLauncher/sunbeam/app"
-	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/sunbeamlauncher/sunbeam/app"
+	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
 type FormItem struct {

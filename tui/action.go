@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/SunbeamLauncher/sunbeam/app"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/sunbeamlauncher/sunbeam/app"
 )
 
 type Action struct {

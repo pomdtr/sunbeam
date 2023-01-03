@@ -10,15 +10,15 @@ import (
 	"path"
 	"strings"
 
-	"github.com/SunbeamLauncher/frecency"
-	"github.com/SunbeamLauncher/sunbeam/app"
-	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cli/browser"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/viper"
+	"github.com/sunbeamlauncher/sunbeam/app"
+	"github.com/sunbeamlauncher/sunbeam/frecency"
+	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
 type SunbeamConfig struct {

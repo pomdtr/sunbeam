@@ -1,9 +1,8 @@
-module github.com/SunbeamLauncher/sunbeam
+module github.com/sunbeamlauncher/sunbeam
 
 go 1.19
 
 require (
-	github.com/SunbeamLauncher/frecency v0.0.0-20221228180320-9d6935c1fa9a
 	github.com/charmbracelet/bubbles v0.14.0
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0

@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/SunbeamLauncher/sunbeam/app"
-	"github.com/SunbeamLauncher/sunbeam/tui"
 	"github.com/spf13/cobra"
+	"github.com/sunbeamlauncher/sunbeam/app"
+	"github.com/sunbeamlauncher/sunbeam/tui"
 )
 
 func NewCmdRun() *cobra.Command {

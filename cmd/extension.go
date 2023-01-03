@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SunbeamLauncher/sunbeam/app"
-	"github.com/SunbeamLauncher/sunbeam/tui"
-	"github.com/SunbeamLauncher/sunbeam/utils"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"github.com/sunbeamlauncher/sunbeam/app"
+	"github.com/sunbeamlauncher/sunbeam/tui"
+	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
 func NewCmdExtension() *cobra.Command {

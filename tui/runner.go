@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SunbeamLauncher/sunbeam/app"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/sunbeamlauncher/sunbeam/app"
 )
 
 type ScriptRunner struct {

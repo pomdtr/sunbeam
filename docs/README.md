@@ -13,7 +13,7 @@
 ## Installation
 
 ```bash
-go install github.com/SunbeamLauncher/sunbeam@latest
+go install github.com/sunbeamlauncher/sunbeam@latest
 ```
 
 ## Development
