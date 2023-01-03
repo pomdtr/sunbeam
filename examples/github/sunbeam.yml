@@ -5,20 +5,12 @@ requirements:
   - homePage: https://cli.github.com
     which: gh
 rootItems:
-  - title: List My Repositories
+  - title: List Repositories
     script: list-repositories
+  - title: View sunbeam README
+    script: view-readme
     with:
-      owner: pomdtr
-  - title: List Owner Repositories
-    script: list-repositories
-  - title: List Dailymotion Repositories
-    script: list-repositories
-    with:
-      owner: dailymotion
-  - title: List Airflow Pull Requests
-    script: list-pull-requests
-    with:
-      repository: dailymotion/dwh-dags
+      repository: sunbeamlauncher/sunbeam
 scripts:
   view-readme:
     mode: detail
