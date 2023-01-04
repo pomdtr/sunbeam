@@ -39,28 +39,16 @@ type CopyTextMsg struct {
 	Text string
 }
 
-func NewOpenPathCmd(path string) tea.Cmd {
+func NewOpenCmd(path string) tea.Cmd {
 	return func() tea.Msg {
-		return OpenPathMsg{
-			Path: path,
+		return OpenMsg{
+			Target: path,
 		}
 	}
 }
 
-type OpenPathMsg struct {
-	Path string
-}
-
-func NewOpenUrlCmd(url string) tea.Cmd {
-	return func() tea.Msg {
-		return OpenUrlMsg{
-			Url: url,
-		}
-	}
-}
-
-type OpenUrlMsg struct {
-	Url string
+type OpenMsg struct {
+	Target string
 }
 
 func NewReloadPageCmd(with map[string]app.ScriptInput) tea.Cmd {
@@ -145,12 +133,7 @@ func NewEditCmd(path string) tea.Cmd {
 func NewAction(scriptAction app.ScriptAction) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
-	case "open-url":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Open URL"
-		}
-		cmd = NewOpenUrlCmd(scriptAction.Url)
-	case "copy-text":
+	case "copy":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
@@ -177,11 +160,11 @@ func NewAction(scriptAction app.ScriptAction) Action {
 				Directory: scriptAction.Dir,
 			}
 		}
-	case "open-path":
+	case "open":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open File"
 		}
-		cmd = NewOpenPathCmd(scriptAction.Path)
+		cmd = NewOpenCmd(scriptAction.Path)
 	case "edit":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open in Text Editor"

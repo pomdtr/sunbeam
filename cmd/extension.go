@@ -233,6 +233,10 @@ func NewCmdExtension() *cobra.Command {
 								Title: "Remove Extension",
 								Cmd:   tui.NewExecCmd(fmt.Sprintf("sunbeam extension remove %s", repo.Name)),
 							},
+							{
+								Title: "Open in Browser",
+								Cmd:   tui.NewOpenCmd(repo.HtmlURL),
+							},
 						}
 					} else {
 						item.Actions = []tui.Action{
@@ -242,7 +246,7 @@ func NewCmdExtension() *cobra.Command {
 							},
 							{
 								Title: "Open in Browser",
-								Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
+								Cmd:   tui.NewOpenCmd(repo.HtmlURL),
 							},
 						}
 					}

@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -13,7 +12,6 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cli/browser"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/viper"
 	"github.com/sunbeamlauncher/sunbeam/app"
@@ -22,12 +20,11 @@ import (
 )
 
 type SunbeamConfig struct {
-	Height         int
-	Width          int
-	FullScreen     bool
-	AccentColor    string
-	CopyCommand    string
-	OpenUrlCommand string
+	Height      int
+	Width       int
+	FullScreen  bool
+	AccentColor string
+	CopyCommand string
 
 	RootItems []app.RootItem `yaml:"rootItems"`
 }
@@ -91,49 +88,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
-	case OpenPathMsg:
-		if os.Getenv("SUNBEAM_SERVER") != "" {
-			action, _ := json.Marshal(map[string]interface{}{
-				"action": "open-path",
-				"path":   msg.Path,
-			})
-
-			fmt.Println(string(action))
-		}
-
-		err := open.Run(msg.Path)
+	case OpenMsg:
+		err := open.Run(msg.Target)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
 		return m, tea.Quit
 
 	case CopyTextMsg:
-		if os.Getenv("SUNBEAM_SERVER") != "" {
-			action, _ := json.Marshal(map[string]interface{}{
-				"action": "copy-text",
-				"text":   msg.Text,
-			})
-
-			fmt.Fprintln(os.Stderr, string(action))
-			return m, tea.Quit
-		}
-
 		err := clipboard.WriteAll(msg.Text)
-		if err != nil {
-			return m, NewErrorCmd(err)
-		}
-		return m, tea.Quit
-	case OpenUrlMsg:
-		if os.Getenv("SUNBEAM_SERVER") != "" {
-			action, _ := json.Marshal(map[string]interface{}{
-				"action": "open-url",
-				"url":    msg.Url,
-			})
-
-			fmt.Fprintln(os.Stderr, string(action))
-			return m, tea.Quit
-		}
-		err := browser.OpenURL(msg.Url)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}

@@ -51,7 +51,7 @@ for uuid, entry in journal["entries"].items():
                 ],
                 "actions": [
                     {
-                        "type": "copy-text",
+                        "type": "copy",
                         "text": entry["content"],
                         "title": "Copy Message",
                     },

@@ -35,7 +35,7 @@ for path in sorted(entries, key=lambda p: p.name):
                 "actions": [
                     primaryAction,
                     {
-                        "type": "copy-text",
+                        "type": "copy",
                         "title": "Copy Path",
                         "shorcut": "ctrl+y",
                         "text": str(path.absolute()),

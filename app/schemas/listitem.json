@@ -58,9 +58,9 @@
                 "type": {
                     "type": "string",
                     "enum": [
-                        "copy-text",
+                        "copy",
                         "reload-page",
-                        "open-url",
+                        "open",
                         "run-script",
                         "exec-command"
                     ]
@@ -144,7 +144,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "copy-text"
+                                "const": "copy"
                             }
                         }
                     },
@@ -170,16 +170,16 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "open-url"
+                                "const": "open"
                             }
                         }
                     },
                     "then": {
                         "required": [
-                            "url"
+                            "target"
                         ],
                         "properties": {
-                            "url": {
+                            "target": {
                                 "type": "string"
                             }
                         }

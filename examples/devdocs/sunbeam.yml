@@ -36,13 +36,12 @@ scripts:
           title: .name,
           subtitle: .type,
           actions: [
-            {type: "open-url", url: "https://devdocs.io/${{ slug }}/\(.path)"}
+            {type: "open", target: "https://devdocs.io/${{ slug }}/\(.path)"}
           ]
         }
       '
     mode: filter
     params:
       - name: slug
-        input:
-          type: textfield
-          title: Slug
+        type: textfield
+        title: Slug

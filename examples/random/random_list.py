@@ -18,7 +18,7 @@ for _ in range(5):
                     {
                         "title": "Copy",
                         "shortcut": "ctrl+y",
-                        "type": "copy-text",
+                        "type": "copy",
                         "text": str(random_number),
                     },
                 ],
