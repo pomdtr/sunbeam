@@ -133,9 +133,24 @@ func init() {
 		log.Fatalf("could not read extension manifest: %v", err)
 	}
 
-	extensions := make(map[string]Extension)
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("could not get working directory: %v", err)
+	}
+
+	extensionRoots := make([]string, 0)
+	for currentDir != path.Dir(currentDir) {
+		extensionRoots = append(extensionRoots, currentDir)
+		currentDir = path.Dir(currentDir)
+	}
+
 	for _, extensionConfig := range ExtensionConfigs {
-		manifestPath := path.Join(extensionConfig.Root, "sunbeam.yml")
+		extensionRoots = append(extensionRoots, extensionConfig.Root)
+	}
+
+	extensions := make(map[string]Extension)
+	for _, rootDir := range extensionRoots {
+		manifestPath := path.Join(rootDir, "sunbeam.yml")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 			continue
 		}
