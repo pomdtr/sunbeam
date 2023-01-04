@@ -150,7 +150,7 @@ func (m *Filter) CursorUp() {
 }
 
 func (m Filter) nbVisibleItems() int {
-	return m.Height / m.itemHeight()
+	return m.Height/m.itemHeight() + m.Height%m.itemHeight()
 }
 
 func (m *Filter) CursorDown() {
