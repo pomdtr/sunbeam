@@ -30,11 +30,11 @@ func (s Script) IsPage() bool {
 }
 
 type FormInput struct {
-	Type        string `json:"type"`
-	Required    bool   `json:"required"`
-	Title       string `json:"title"`
-	Placeholder string `json:"placeholder"`
-	Default     any    `json:"default"`
+	Type         string `json:"type"`
+	Optional     bool   `json:"optional"`
+	Title        string `json:"title"`
+	Placeholder  string `json:"placeholder"`
+	DefaultValue any    `json:"defaultValue"`
 
 	TrueSubstitution  string `json:"trueSubstitution"`
 	FalseSubstitution string `json:"falseSubstitution"`
@@ -57,7 +57,7 @@ type ScriptInput struct {
 }
 
 func (si ScriptInput) GetValue() (string, error) {
-	if si.Value == nil && si.Required {
+	if si.Value == nil && !si.Optional {
 		return "", fmt.Errorf("required value is empty")
 	}
 
@@ -70,8 +70,8 @@ func (si ScriptInput) GetValue() (string, error) {
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
 			}
-		} else if si.Default != nil {
-			if v, ok := si.Default.(bool); ok {
+		} else if si.DefaultValue != nil {
+			if v, ok := si.DefaultValue.(bool); ok {
 				value = v
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
@@ -90,8 +90,8 @@ func (si ScriptInput) GetValue() (string, error) {
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
 			}
-		} else if si.Default != nil {
-			if v, ok := si.Default.(string); ok {
+		} else if si.DefaultValue != nil {
+			if v, ok := si.DefaultValue.(string); ok {
 				value = v
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")

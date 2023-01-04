@@ -81,13 +81,13 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 		for _, param := range script.Params {
 			switch param.Input.Type {
 			case "checkbox":
-				if defaultValue, ok := param.Input.Default.(bool); ok {
+				if defaultValue, ok := param.Input.DefaultValue.(bool); ok {
 					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Input.Title)
 				} else {
 					scriptCmd.Flags().Bool(param.Name, false, param.Input.Title)
 				}
 			default:
-				if defaultValue, ok := param.Input.Default.(string); ok {
+				if defaultValue, ok := param.Input.DefaultValue.(string); ok {
 					scriptCmd.Flags().String(param.Name, defaultValue, param.Input.Title)
 				} else {
 					scriptCmd.Flags().String(param.Name, "", param.Input.Title)

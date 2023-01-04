@@ -121,7 +121,7 @@ func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 			continue
 		}
 
-		if !param.Required {
+		if param.Optional {
 			continue
 		}
 
@@ -165,12 +165,12 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 			continue
 		}
 
-		if param.Required {
+		if !param.Optional {
 			missing = append(missing, NewFormItem(name, param.FormInput))
 			continue
 		}
 
-		if param.Default != nil {
+		if param.DefaultValue != nil {
 			value, err := param.GetValue()
 			if err != nil {
 				return

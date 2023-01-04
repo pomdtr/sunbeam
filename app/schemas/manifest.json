@@ -140,9 +140,7 @@
                         "filter",
                         "generator",
                         "detail",
-                        "command",
-                        "snippet",
-                        "quicklink"
+                        "command"
                     ]
                 },
                 "command": {
@@ -195,8 +193,7 @@
         "input": {
             "type": "object",
             "required": [
-                "type",
-                "required"
+                "type"
             ],
             "properties": {
                 "type": {
@@ -211,7 +208,7 @@
                         "directory"
                     ]
                 },
-                "required": {
+                "optional": {
                     "type": "boolean"
                 },
                 "title": {
@@ -250,7 +247,7 @@
                             "placeholder": {
                                 "type": "string"
                             },
-                            "default": {
+                            "defaultValue": {
                                 "type": "string"
                             }
                         }
@@ -293,7 +290,7 @@
                                     }
                                 }
                             },
-                            "default": {
+                            "defaultValue": {
                                 "type": "string"
                             }
                         }
@@ -321,7 +318,7 @@
                             "label": {
                                 "type": "string"
                             },
-                            "default": {
+                            "defaultValue": {
                                 "type": "boolean"
                             }
                         }

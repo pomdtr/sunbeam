@@ -69,7 +69,7 @@ type TextArea struct {
 func NewTextArea(formItem app.FormInput) TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
-	if defaultValue, ok := formItem.Default.(string); ok {
+	if defaultValue, ok := formItem.DefaultValue.(string); ok {
 		ta.SetValue(defaultValue)
 	}
 
@@ -108,7 +108,7 @@ type TextInput struct {
 func NewTextInput(formItem app.FormInput) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	if defaultValue, ok := formItem.Default.(string); ok {
+	if defaultValue, ok := formItem.DefaultValue.(string); ok {
 		ti.SetValue(defaultValue)
 	}
 
@@ -161,7 +161,7 @@ type Checkbox struct {
 
 func NewCheckbox(formItem app.FormInput) Checkbox {
 	var defaultValue bool
-	defaultValue, ok := formItem.Default.(bool)
+	defaultValue, ok := formItem.DefaultValue.(bool)
 	if !ok {
 		defaultValue = false
 	}
