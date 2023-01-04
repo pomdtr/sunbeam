@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/sahilm/fuzzy"
+	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
 type FilterItem interface {
@@ -142,10 +143,15 @@ func (m Filter) itemHeight() int {
 }
 
 func (m *Filter) CursorUp() {
-	m.cursor = clamp(0, len(m.filtered)-1, m.cursor-1)
+	if m.cursor != 0 {
+		m.cursor = m.cursor - 1
 
-	if m.cursor < m.minIndex {
-		m.minIndex = m.cursor
+		if m.cursor < m.minIndex {
+			m.minIndex = m.cursor
+		}
+	} else {
+		m.cursor = len(m.filtered) - 1
+		m.minIndex = utils.Max(0, m.cursor-m.nbVisibleItems()+1)
 	}
 }
 
@@ -154,19 +160,13 @@ func (m Filter) nbVisibleItems() int {
 }
 
 func (m *Filter) CursorDown() {
-	m.cursor = clamp(0, len(m.filtered)-1, m.cursor+1)
-	if m.cursor >= m.minIndex+m.nbVisibleItems() {
-		m.minIndex += 1
+	if m.cursor < len(m.filtered)-1 {
+		m.cursor += 1
+		if m.cursor >= m.minIndex+m.nbVisibleItems() {
+			m.minIndex += 1
+		}
+	} else {
+		m.cursor = 0
+		m.minIndex = 0
 	}
-}
-
-//nolint:unparam
-func clamp(min, max, val int) int {
-	if val < min {
-		return min
-	}
-	if val > max {
-		return max
-	}
-	return val
 }
