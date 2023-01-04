@@ -193,7 +193,8 @@
         "input": {
             "type": "object",
             "required": [
-                "type"
+                "type",
+                "title"
             ],
             "properties": {
                 "type": {
@@ -237,13 +238,7 @@
                         }
                     },
                     "then": {
-                        "required": [
-                            "title"
-                        ],
                         "properties": {
-                            "title": {
-                                "type": "string"
-                            },
                             "placeholder": {
                                 "type": "string"
                             },
@@ -312,9 +307,6 @@
                             "label"
                         ],
                         "properties": {
-                            "title": {
-                                "type": "string"
-                            },
                             "label": {
                                 "type": "string"
                             },

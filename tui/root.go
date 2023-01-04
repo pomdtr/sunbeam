@@ -339,7 +339,7 @@ func NewRootList(rootItems ...app.RootItem) Container {
 		rootItem := rootItem
 		extension, ok := app.Sunbeam.Extensions[rootItem.Extension]
 		if !ok {
-			log.Println("extension not found:", rootItem.Extension)
+			fmt.Fprintln(os.Stderr, "extension not found:", rootItem.Extension)
 			continue
 		}
 		with := make(map[string]app.ScriptInput)

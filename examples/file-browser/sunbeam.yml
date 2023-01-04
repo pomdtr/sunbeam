@@ -31,8 +31,9 @@ scripts:
           title: Root Directory
       - name: show-hidden
         input:
-          required: false
-          label: "Show Hidden Files"
-          default: true
           type: checkbox
+          title: Vibility
+          optional: true
+          label: "Show Hidden Files"
+          defaultValue: true
           trueSubstitution: "--show-hidden"

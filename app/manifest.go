@@ -157,18 +157,20 @@ func init() {
 
 		manifestBytes, err := os.ReadFile(manifestPath)
 		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
 
 		var m any
 		err = yaml.Unmarshal(manifestBytes, &m)
 		if err != nil {
-			panic(err)
+			fmt.Fprintln(os.Stderr, err)
+			continue
 		}
 
 		err = schema.Validate(m)
 		if err != nil {
-			log.Println(fmt.Errorf("error validating manifest %s: %w", manifestPath, err))
+			fmt.Fprintf(os.Stderr, "%#v", err)
 			continue
 		}
 

@@ -233,7 +233,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		c.detail.SetSize(c.width, c.height)
 		cmd := c.detail.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
-	case "snippet", "quicklink", "command":
+	case "command":
 		if c.form != nil {
 			cmd := c.form.SetIsLoading(true)
 			return tea.Batch(cmd, c.ScriptCmd)
@@ -300,10 +300,6 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, cmd
 		case "command":
 			return c, c.OnSuccessCmd
-		case "quicklink":
-			return c, NewOpenUrlCmd(string(msg))
-		case "snippet":
-			return c, NewCopyTextCmd(string(msg))
 		}
 	case SubmitMsg:
 		switch msg.Name {
