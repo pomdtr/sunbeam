@@ -531,7 +531,7 @@ func (c *Form) View() string {
 	itemViews := make([]string, len(c.items))
 	maxWidth := 0
 	for i, item := range c.items {
-		var inputView = item.FormInput.View()
+		var inputView = lipgloss.NewStyle().Padding(0, 1).Render(item.FormInput.View())
 		if i == c.focusIndex {
 			inputView = selectedBorder.Render(inputView)
 		} else {

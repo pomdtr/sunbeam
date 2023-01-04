@@ -134,7 +134,12 @@ func NewEditCmd(path string) tea.Cmd {
 		editor = "vi"
 	}
 
-	return NewExecCmd(fmt.Sprintf("%s %s", editor, path))
+	return func() tea.Msg {
+		return ExecCommandMsg{
+			Command:   fmt.Sprintf("%s %s", editor, path),
+			OnSuccess: "reload-page",
+		}
+	}
 }
 
 func NewAction(scriptAction app.ScriptAction) Action {
