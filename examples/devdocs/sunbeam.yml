@@ -45,5 +45,4 @@ scripts:
       - name: slug
         input:
           type: textfield
-          required: true
           title: Slug

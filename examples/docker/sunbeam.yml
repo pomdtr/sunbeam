@@ -5,10 +5,10 @@ requirements:
   - homePage: https://www.docker.com/
     which: docker
 rootItems:
-  - script: listContainers
+  - script: list-containers
     title: List Containers
 scripts:
-  listContainers:
+  list-containers:
     command: |
       docker ps --all --format '{{ json . }}' | sunbeam query '
       {
@@ -21,16 +21,16 @@ scripts:
       }
       '
     mode: filter
-  execCommand:
+  exec-command:
     command: |
       docker exec -it ${{ container }} ${{ command }} | less
     mode: command
-    inputs:
+    params:
       - name: container
-        type: textfield
-        required: true
-        title: Command
+        input:
+          type: textfield
+          title: Command
       - name: command
-        type: textfield
-        required: true
-        title: Command
+        input:
+          type: textfield
+          title: Command

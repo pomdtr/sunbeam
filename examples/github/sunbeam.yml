@@ -33,7 +33,6 @@ scripts:
       - name: repository
         input:
           type: textfield
-          required: true
           title: Repository
   list-repositories:
     command: ./list-repos.sh ${{ owner }}
@@ -44,7 +43,6 @@ scripts:
         input:
           type: textfield
           title: Owner
-          required: true
   list-pull-requests:
     command: ./list-prs.sh ${{ repository }}
     mode: filter
@@ -53,4 +51,3 @@ scripts:
         input:
           type: textfield
           title: Repository
-          required: true

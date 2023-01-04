@@ -3,7 +3,6 @@ version: "1.0"
 title: Bitwarden
 preferences:
   - type: textfield
-    required: true
     name: BW_SESSION
     title: Bitwarden Token
 rootItems:

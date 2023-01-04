@@ -28,7 +28,6 @@ scripts:
       - name: root
         input:
           type: directory
-          required: true
           title: Root Directory
       - name: show-hidden
         input:

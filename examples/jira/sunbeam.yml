@@ -3,7 +3,6 @@ version: "1.0"
 title: Jira
 preferences:
   - type: textfield
-    required: true
     name: JIRA_TOKEN
     title: Jira Token
 rootItems:
@@ -20,4 +19,3 @@ scripts:
         input:
           type: textfield
           title: JQL
-          required: true

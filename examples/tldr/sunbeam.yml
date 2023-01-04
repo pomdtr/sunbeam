@@ -18,7 +18,6 @@ scripts:
       - name: platform
         input:
           type: dropdown
-          required: true
           title: Platform
     command: |
       tldr --list --platform ${{ platform }} | sunbeam query -R '{
