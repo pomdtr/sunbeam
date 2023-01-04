@@ -34,20 +34,26 @@ func NewScriptRunner(extension app.Extension, script app.Script, with map[string
 	mergedParams := make(map[string]app.ScriptInput)
 
 	for _, scriptParam := range script.Params {
-		inputParam, ok := with[scriptParam.Name]
-		merged := app.ScriptInput{}
-		if !ok {
-			merged.FormInput = scriptParam.Input
-			mergedParams[scriptParam.Name] = merged
-			continue
+		merged := app.ScriptInput{
+			ScriptParam: scriptParam,
 		}
 
-		if inputParam.Value != nil {
-			merged.FormInput = scriptParam.Input
-			merged.Value = inputParam.Value
-		} else {
-			merged.FormInput = inputParam.FormInput
+		input, ok := with[scriptParam.Name]
+		if ok {
+			if input.Value != nil {
+				merged.Value = input.Value
+			} else {
+				if input.Default.Defined {
+					merged.Default.Value = input.Default.Value
+				}
+
+				if input.Optional.Defined {
+					merged.Optional.Value = input.Optional.Value
+				}
+
+			}
 		}
+
 		mergedParams[scriptParam.Name] = merged
 	}
 
@@ -116,16 +122,17 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 
 func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 	formItems := make([]FormItem, 0)
-	for name, param := range c.with {
-		if param.Value != nil {
+	for _, param := range c.script.Params {
+		input := c.with[param.Name]
+		if input.Value != nil {
 			continue
 		}
 
-		if param.Optional {
+		if param.Optional.Value {
 			continue
 		}
 
-		formItem := NewFormItem(name, param.FormInput)
+		formItem := NewFormItem(param.Name, input.ScriptParam)
 		formItems = append(formItems, formItem)
 	}
 
@@ -140,7 +147,7 @@ func (c ScriptRunner) Preferences() map[string]app.ScriptInput {
 	preferenceMap := make(map[string]app.ScriptInput)
 	for _, preference := range preferences {
 		preferenceMap[preference.Name] = app.ScriptInput{
-			FormInput: preference.Input,
+			ScriptParam: preference,
 		}
 	}
 
@@ -165,12 +172,12 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 			continue
 		}
 
-		if !param.Optional {
-			missing = append(missing, NewFormItem(name, param.FormInput))
+		if !param.Optional.Value {
+			missing = append(missing, NewFormItem(name, param.ScriptParam))
 			continue
 		}
 
-		if param.DefaultValue != nil {
+		if param.Default.Value != nil {
 			value, err := param.GetValue()
 			if err != nil {
 				return

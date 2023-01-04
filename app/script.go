@@ -29,12 +29,30 @@ func (s Script) IsPage() bool {
 	return s.Mode == "filter" || s.Mode == "generator" || s.Mode == "detail"
 }
 
-type FormInput struct {
-	Type         string `json:"type"`
-	Optional     bool   `json:"optional"`
-	Title        string `json:"title"`
-	Placeholder  string `json:"placeholder"`
-	DefaultValue any    `json:"defaultValue"`
+type Optional[T any] struct {
+	Defined bool
+	Value   T
+}
+
+// UnmarshalJSON is implemented by deferring to the wrapped type (T).
+// It will be called only if the value is defined in the JSON payload.
+func (o *Optional[T]) UnmarshalJSON(data []byte) error {
+	o.Defined = true
+	return json.Unmarshal(data, &o.Value)
+}
+
+func (o *Optional[T]) UnmarshalYAML(value *yaml.Node) (err error) {
+	o.Defined = true
+	return value.Decode(&o.Value)
+}
+
+type ScriptParam struct {
+	Name        string           `json:"name" yaml:"name"`
+	Type        string           `json:"type"`
+	Optional    Optional[bool]   `json:"optional"`
+	Title       string           `json:"title"`
+	Placeholder Optional[string] `json:"placeholder"`
+	Default     Optional[any]    `json:"defaultValue"`
 
 	TrueSubstitution  string `json:"trueSubstitution"`
 	FalseSubstitution string `json:"falseSubstitution"`
@@ -46,18 +64,13 @@ type FormInput struct {
 	Label string `json:"label"`
 }
 
-type ScriptParam struct {
-	Name  string
-	Input FormInput `json:"input"`
-}
-
 type ScriptInput struct {
 	Value any
-	FormInput
+	ScriptParam
 }
 
 func (si ScriptInput) GetValue() (string, error) {
-	if si.Value == nil && !si.Optional {
+	if si.Value == nil && !si.Optional.Value {
 		return "", fmt.Errorf("required value is empty")
 	}
 
@@ -70,8 +83,8 @@ func (si ScriptInput) GetValue() (string, error) {
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
 			}
-		} else if si.DefaultValue != nil {
-			if v, ok := si.DefaultValue.(bool); ok {
+		} else if si.Default.Value != nil {
+			if v, ok := si.Default.Value.(bool); ok {
 				value = v
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
@@ -90,8 +103,8 @@ func (si ScriptInput) GetValue() (string, error) {
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
 			}
-		} else if si.DefaultValue != nil {
-			if v, ok := si.DefaultValue.(string); ok {
+		} else if si.Default.Value != nil {
+			if v, ok := si.Default.Value.(string); ok {
 				value = v
 			} else {
 				return "", fmt.Errorf("invalid value for checkbox")
@@ -111,7 +124,7 @@ func (si ScriptInput) GetValue() (string, error) {
 }
 
 func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
-	err = value.Decode(&si.FormInput)
+	err = value.Decode(&si.ScriptParam)
 	if err == nil {
 		return
 	}
@@ -120,7 +133,7 @@ func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
 }
 
 func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
-	err = json.Unmarshal(bytes, &si.FormInput)
+	err = json.Unmarshal(bytes, &si.ScriptParam)
 	if err == nil {
 		return
 	}

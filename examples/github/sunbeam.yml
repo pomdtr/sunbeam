@@ -31,23 +31,20 @@ scripts:
       '
     params:
       - name: repository
-        input:
-          type: textfield
-          title: Repository
+        type: textfield
+        title: Repository
   list-repositories:
     command: ./list-repos.sh ${{ owner }}
     mode: filter
     showPreview: true
     params:
       - name: owner
-        input:
-          type: textfield
-          title: Owner
+        type: textfield
+        title: Owner
   list-pull-requests:
     command: ./list-prs.sh ${{ repository }}
     mode: filter
     params:
       - name: repository
-        input:
-          type: textfield
-          title: Repository
+        type: textfield
+        title: Repository

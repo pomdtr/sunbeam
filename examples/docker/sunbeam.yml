@@ -27,10 +27,8 @@ scripts:
     mode: command
     params:
       - name: container
-        input:
-          type: textfield
-          title: Command
+        type: textfield
+        title: Command
       - name: command
-        input:
-          type: textfield
-          title: Command
+        type: textfield
+        title: Command

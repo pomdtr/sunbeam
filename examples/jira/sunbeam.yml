@@ -16,6 +16,5 @@ scripts:
     mode: filter
     params:
       - name: jql
-        input:
-          type: textfield
-          title: JQL
+        type: textfield
+        title: JQL

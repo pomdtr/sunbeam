@@ -51,7 +51,7 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 					if !cmd.Flags().Changed(param.Name) {
 						continue
 					}
-					switch param.Input.Type {
+					switch param.Type {
 					case "checkbox":
 						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
@@ -79,18 +79,18 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 		}
 
 		for _, param := range script.Params {
-			switch param.Input.Type {
+			switch param.Type {
 			case "checkbox":
-				if defaultValue, ok := param.Input.DefaultValue.(bool); ok {
-					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Input.Title)
+				if defaultValue, ok := param.Default.Value.(bool); ok {
+					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Title)
 				} else {
-					scriptCmd.Flags().Bool(param.Name, false, param.Input.Title)
+					scriptCmd.Flags().Bool(param.Name, false, param.Title)
 				}
 			default:
-				if defaultValue, ok := param.Input.DefaultValue.(string); ok {
-					scriptCmd.Flags().String(param.Name, defaultValue, param.Input.Title)
+				if defaultValue, ok := param.Default.Value.(string); ok {
+					scriptCmd.Flags().String(param.Name, defaultValue, param.Title)
 				} else {
-					scriptCmd.Flags().String(param.Name, "", param.Input.Title)
+					scriptCmd.Flags().String(param.Name, "", param.Title)
 				}
 			}
 		}

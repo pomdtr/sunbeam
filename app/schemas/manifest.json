@@ -171,21 +171,7 @@
                 "params": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "required": [
-                            "name",
-                            "input"
-                        ],
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "pattern": "^[a-z][a-z0-9-]+$"
-                            },
-                            "input": {
-                                "$ref": "#/$defs/input"
-                            }
-                        }
+                        "$ref": "#/$defs/input"
                     }
                 }
             }
@@ -194,9 +180,13 @@
             "type": "object",
             "required": [
                 "type",
+                "name",
                 "title"
             ],
             "properties": {
+                "name": {
+                    "type": "string"
+                },
                 "type": {
                     "type": "string",
                     "enum": [
@@ -255,18 +245,15 @@
                         ],
                         "properties": {
                             "type": {
-                                "const": "dropown"
+                                "const": "dropdown"
                             }
                         }
                     },
                     "then": {
                         "required": [
-                            "label"
+                            "data"
                         ],
                         "properties": {
-                            "title": {
-                                "type": "string"
-                            },
                             "data": {
                                 "type": "array",
                                 "items": {

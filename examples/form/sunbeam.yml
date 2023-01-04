@@ -1,0 +1,43 @@
+name: form
+title: Example Form
+version: "1.0"
+rootItems:
+  - script: example-form
+    title: Example form
+scripts:
+  example-form:
+    mode: command
+    command: |
+      CAT << EOF
+      textfield: ${{ textfield }}
+      EOF
+    params:
+      - name: textfield
+        type: textfield
+        title: Textfield
+      - name: password
+        type: password
+        title: Password
+      - name: checkbox
+        type: checkbox
+        title: Checkbox
+        label: "Label"
+      - name: textarea
+        type: textarea
+        title: Textarea
+      - name: dropdown
+        type: dropdown
+        title: Dropdown
+        data:
+          - title: "Option 1"
+            value: "option1"
+          - title: "Option 2"
+            value: "option2"
+          - title: "Option 3"
+            value: "option3"
+      - name: file
+        type: file
+        title: File
+      - name: directory
+        type: directory
+        title: Directory

@@ -16,9 +16,8 @@ scripts:
     showPreview: true
     params:
       - name: platform
-        input:
-          type: dropdown
-          title: Platform
+        type: textfield
+        title: Platform
     command: |
       tldr --list --platform ${{ platform }} | sunbeam query -R '{
         id: .,

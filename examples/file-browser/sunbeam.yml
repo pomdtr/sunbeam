@@ -26,14 +26,12 @@ scripts:
     mode: filter
     params:
       - name: root
-        input:
-          type: directory
-          title: Root Directory
+        type: directory
+        title: Root Directory
       - name: show-hidden
-        input:
-          type: checkbox
-          title: Vibility
-          optional: true
-          label: "Show Hidden Files"
-          defaultValue: true
-          trueSubstitution: "--show-hidden"
+        type: checkbox
+        title: Vibility
+        optional: true
+        label: "Show Hidden Files"
+        defaultValue: true
+        trueSubstitution: "--show-hidden"
