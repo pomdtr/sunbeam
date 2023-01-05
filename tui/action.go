@@ -164,12 +164,12 @@ func NewAction(scriptAction app.ScriptAction) Action {
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open File"
 		}
-		cmd = NewOpenCmd(scriptAction.Path)
+		cmd = NewOpenCmd(scriptAction.Target)
 	case "edit":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open in Text Editor"
 		}
-		cmd = NewEditCmd(scriptAction.Path)
+		cmd = NewEditCmd(scriptAction.Target)
 	default:
 		scriptAction.Title = "Unknown"
 		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))
