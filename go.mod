@@ -6,7 +6,6 @@ require (
 	github.com/charmbracelet/bubbles v0.14.0
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0
-	github.com/cli/browser v1.1.0
 	github.com/itchyny/gojq v0.12.10
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1

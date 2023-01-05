@@ -99,6 +99,13 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		return err
 	}
 
+	if c.script.Mode == "command" {
+		return ExecCommandMsg{
+			Command:   commandString,
+			Directory: c.dir,
+		}
+	}
+
 	command := exec.Command("sh", "-c", commandString)
 	if c.script.Mode == "generator" {
 		command.Stdin = strings.NewReader(c.list.Query())

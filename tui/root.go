@@ -62,6 +62,7 @@ type Container interface {
 
 type Model struct {
 	width, height int
+	exitCmd       *exec.Cmd
 	exit          bool
 
 	pages []Container
@@ -127,8 +128,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.Push(runner)
 		return m, cmd
 	case ExecCommandMsg:
-		command := exec.Command("sh", "-c", fmt.Sprintf("%s; clear", msg.Command))
+		command := exec.Command("sh", "-c", msg.Command)
 		command.Dir = msg.Directory
+		if msg.OnSuccess == "" {
+			m.exitCmd = command
+			m.exit = true
+			return m, tea.Quit
+		}
 
 		m.hidden = true
 		return m, tea.ExecProcess(command, func(err error) tea.Msg {
@@ -386,9 +392,18 @@ func Draw(model *Model) (err error) {
 		p = tea.NewProgram(model)
 	}
 
-	_, err = p.Run()
+	m, err := p.Run()
 	if err != nil {
 		return err
+	}
+
+	model = m.(*Model)
+
+	if exitCmd := model.exitCmd; exitCmd != nil {
+		exitCmd.Stderr = os.Stderr
+		exitCmd.Stdout = os.Stdout
+
+		exitCmd.Run()
 	}
 
 	return nil

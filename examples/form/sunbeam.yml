@@ -8,7 +8,7 @@ scripts:
   example-form:
     mode: command
     command: |
-      CAT << EOF
+      cat << EOF
       textfield: ${{ textfield }}
       EOF
     params:
