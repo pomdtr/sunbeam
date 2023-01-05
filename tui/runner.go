@@ -45,11 +45,6 @@ func NewScriptRunner(extension app.Extension, script app.Script, with map[string
 				if input.Default.Defined {
 					merged.Default.Value = input.Default.Value
 				}
-
-				if input.Optional.Defined {
-					merged.Optional.Value = input.Optional.Value
-				}
-
 			}
 		}
 
@@ -70,7 +65,7 @@ func (c *ScriptRunner) Init() tea.Cmd {
 type CommandOutput string
 
 func (c ScriptRunner) ScriptCmd() tea.Msg {
-	with := make(map[string]string)
+	with := make(map[string]any)
 
 	for key, param := range c.with {
 		value, err := param.GetValue()
@@ -121,10 +116,6 @@ func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 			continue
 		}
 
-		if param.Optional.Value {
-			continue
-		}
-
 		formItem := NewFormItem(param.Name, input.ScriptParam)
 		formItems = append(formItems, formItem)
 	}
@@ -165,19 +156,7 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 			continue
 		}
 
-		if !param.Optional.Value {
-			missing = append(missing, NewFormItem(name, param.ScriptParam))
-			continue
-		}
-
-		if param.Default.Value != nil {
-			value, err := param.GetValue()
-			if err != nil {
-				return
-			}
-			environ = append(environ, fmt.Sprintf("%s=%s", name, value))
-		}
-
+		missing = append(missing, NewFormItem(name, param.ScriptParam))
 	}
 
 	return environ, missing

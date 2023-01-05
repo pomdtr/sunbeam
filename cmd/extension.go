@@ -30,11 +30,11 @@ func NewCmdExtension() *cobra.Command {
 
 	extensionCommand.AddCommand(func() *cobra.Command {
 		return &cobra.Command{
-			Use:   "install <repository>",
+			Use:   "install <name> <repository>",
 			Short: "Install a sunbeam extension from a git repository",
-			Args:  cobra.ExactArgs(1),
+			Args:  cobra.ExactArgs(2),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if args[0] == "." {
+				if args[1] == "." {
 					wd, err := os.Getwd()
 					if err != nil {
 						return err
@@ -44,7 +44,7 @@ func NewCmdExtension() *cobra.Command {
 						return fmt.Errorf("current directory is not a sunbeam extension")
 					}
 
-					if err := app.Sunbeam.AddExtension(path.Base(wd), app.ExtensionConfig{
+					if err := app.Sunbeam.AddExtension(args[0], app.ExtensionConfig{
 						Root: wd,
 					}); err != nil {
 						return err
@@ -54,7 +54,7 @@ func NewCmdExtension() *cobra.Command {
 					return nil
 				}
 
-				repo, err := utils.ParseWithHost(args[0], "github.com")
+				repo, err := utils.ParseWithHost(args[1], "github.com")
 				if err != nil {
 					return err
 				}
@@ -100,7 +100,7 @@ func NewCmdExtension() *cobra.Command {
 					return err
 				}
 
-				if err := app.Sunbeam.AddExtension(manifest.Name, app.ExtensionConfig{
+				if err := app.Sunbeam.AddExtension(args[0], app.ExtensionConfig{
 					Remote: repo.Url(),
 					Root:   target,
 				}); err != nil {

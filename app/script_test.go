@@ -8,7 +8,7 @@ func TestRenderCommand(t *testing.T) {
 	}
 
 	expected := "ls -l ~"
-	command, err := s.Cmd(map[string]string{
+	command, err := s.Cmd(map[string]any{
 		"directory": "~",
 	})
 

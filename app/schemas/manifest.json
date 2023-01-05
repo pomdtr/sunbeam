@@ -3,17 +3,12 @@
     "$id": "http://github.com/sunbeamlauncher/sunbeam/manifest",
     "type": "object",
     "required": [
-        "name",
         "title",
         "version",
         "scripts"
     ],
     "additionalProperties": false,
     "properties": {
-        "name": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9-]+$"
-        },
         "preferences": {
             "type": "array",
             "items": {
@@ -198,9 +193,6 @@
                         "file",
                         "directory"
                     ]
-                },
-                "optional": {
-                    "type": "boolean"
                 },
                 "title": {
                     "type": "string"

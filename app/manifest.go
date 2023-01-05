@@ -67,6 +67,7 @@ type RootItem struct {
 }
 
 type ExtensionConfig struct {
+	Name   string `json:"name"`
 	Root   string `json:"root"`
 	Remote string `json:"remote,omitempty"`
 }
@@ -133,24 +134,24 @@ func init() {
 		log.Fatalf("could not read extension manifest: %v", err)
 	}
 
-	currentDir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("could not get working directory: %v", err)
-	}
+	// currentDir, err := os.Getwd()
+	// if err != nil {
+	// 	log.Fatalf("could not get working directory: %v", err)
+	// }
 
-	extensionRoots := make([]string, 0)
-	for currentDir != path.Dir(currentDir) {
-		extensionRoots = append(extensionRoots, currentDir)
-		currentDir = path.Dir(currentDir)
-	}
+	// extensionRoots := make([]string, 0)
+	// for currentDir != path.Dir(currentDir) {
+	// 	extensionRoots = append(extensionRoots, currentDir)
+	// 	currentDir = path.Dir(currentDir)
+	// }
 
-	for _, extensionConfig := range ExtensionConfigs {
-		extensionRoots = append(extensionRoots, extensionConfig.Root)
-	}
+	// for _, extensionConfig := range ExtensionConfigs {
+	// 	extensionRoots = append(extensionRoots, extensionConfig.Root)
+	// }
 
 	extensions := make(map[string]Extension)
-	for _, rootDir := range extensionRoots {
-		manifestPath := path.Join(rootDir, "sunbeam.yml")
+	for extensionName, extensionConfig := range ExtensionConfigs {
+		manifestPath := path.Join(extensionConfig.Root, "sunbeam.yml")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 			continue
 		}
@@ -179,12 +180,19 @@ func init() {
 			log.Println(fmt.Errorf("error parsing manifest %s: %w", manifestPath, err))
 		}
 
+		for key, rootItem := range extension.RootItems {
+			rootItem.Subtitle = extension.Title
+			rootItem.Extension = extensionName
+			extension.RootItems[key] = rootItem
+		}
+
 		extension.Url = url.URL{
 			Scheme: "file",
 			Path:   manifestPath,
 		}
+		extension.Name = extensionName
 
-		extensions[extension.Name] = extension
+		extensions[extensionName] = extension
 	}
 
 	Sunbeam = Api{
@@ -205,12 +213,6 @@ func ParseManifest(bytes []byte) (extension Extension, err error) {
 	for key, script := range extension.Scripts {
 		script.Name = key
 		extension.Scripts[key] = script
-	}
-
-	for key, rootItem := range extension.RootItems {
-		rootItem.Subtitle = extension.Title
-		rootItem.Extension = extension.Name
-		extension.RootItems[key] = rootItem
 	}
 
 	return extension, nil

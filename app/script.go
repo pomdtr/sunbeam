@@ -48,13 +48,9 @@ func (o *Optional[T]) UnmarshalYAML(value *yaml.Node) (err error) {
 type ScriptParam struct {
 	Name        string           `json:"name" yaml:"name"`
 	Type        string           `json:"type"`
-	Optional    Optional[bool]   `json:"optional"`
 	Title       string           `json:"title"`
 	Placeholder Optional[string] `json:"placeholder"`
-	Default     Optional[any]    `json:"defaultValue"`
-
-	TrueSubstitution  string `json:"trueSubstitution"`
-	FalseSubstitution string `json:"falseSubstitution"`
+	Default     Optional[any]    `json:"defaultValue" yaml:"defaultValue"`
 
 	Data []struct {
 		Title string `json:"title,omitempty"`
@@ -68,58 +64,35 @@ type ScriptInput struct {
 	ScriptParam
 }
 
-func (si ScriptInput) GetValue() (string, error) {
-	if si.Value == nil && !si.Optional.Value {
-		return "", fmt.Errorf("required value is empty")
+func (si ScriptInput) GetValue() (any, error) {
+	if si.Value == nil {
+		return "", fmt.Errorf("required value %s is empty", si.Name)
 	}
 
-	switch si.Type {
-	case "checkbox":
-		var value bool
-		if si.Value != nil {
-			if v, ok := si.Value.(bool); ok {
-				value = v
-			} else {
-				return "", fmt.Errorf("invalid value")
-			}
-		} else if si.Default.Value != nil {
-			if v, ok := si.Default.Value.(bool); ok {
-				value = v
-			} else {
-				return "", fmt.Errorf("invalid value")
-			}
+	var value string
+	if si.Value != nil {
+		if v, ok := si.Value.(string); ok {
+			value = v
+		} else {
+			return "", fmt.Errorf("invalid value")
 		}
-
-		if value {
-			return si.TrueSubstitution, nil
+	} else if si.Default.Value != nil {
+		if v, ok := si.Default.Value.(string); ok {
+			value = v
+		} else {
+			return "", fmt.Errorf("invalid value")
 		}
-		return si.FalseSubstitution, nil
-	default:
-		var value string
-		if si.Value != nil {
-			if v, ok := si.Value.(string); ok {
-				value = v
-			} else {
-				return "", fmt.Errorf("invalid value")
-			}
-		} else if si.Default.Value != nil {
-			if v, ok := si.Default.Value.(string); ok {
-				value = v
-			} else {
-				return "", fmt.Errorf("invalid value")
-			}
-		}
-
-		if si.Type == "file" || si.Type == "directory" {
-			if v, err := utils.ResolvePath(value); err == nil {
-				return shellescape.Quote(v), nil
-			} else {
-				return "", err
-			}
-		}
-
-		return shellescape.Quote(value), nil
 	}
+
+	if si.Type == "file" || si.Type == "directory" {
+		if v, err := utils.ResolvePath(value); err == nil {
+			return shellescape.Quote(v), nil
+		} else {
+			return "", err
+		}
+	}
+
+	return shellescape.Quote(value), nil
 }
 
 func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
@@ -140,7 +113,7 @@ func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
 	return json.Unmarshal(bytes, &si.Value)
 }
 
-func (s Script) Cmd(with map[string]string) (string, error) {
+func (s Script) Cmd(with map[string]any) (string, error) {
 	var err error
 
 	funcMap := template.FuncMap{}
@@ -148,7 +121,7 @@ func (s Script) Cmd(with map[string]string) (string, error) {
 	for sanitizedKey, value := range with {
 		value := value
 		sanitizedKey = strings.Replace(sanitizedKey, "-", "_", -1)
-		funcMap[sanitizedKey] = func() string {
+		funcMap[sanitizedKey] = func() any {
 			return value
 		}
 	}
