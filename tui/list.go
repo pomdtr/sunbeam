@@ -90,7 +90,7 @@ func (i ListItem) Render(width int, selected bool) string {
 
 	subtitle := fmt.Sprintf(" %s", i.Subtitle)
 	var blanks string
-	accessories := fmt.Sprintf(" %s", strings.Join(i.Accessories, " • "))
+	accessories := fmt.Sprintf(" %s", strings.Join(i.Accessories, " · "))
 
 	if width >= lipgloss.Width(title+subtitle+accessories) {
 		availableWidth := width - lipgloss.Width(title+subtitle+accessories)

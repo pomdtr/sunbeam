@@ -20,7 +20,6 @@ type Script struct {
 	Description string        `json:"description" yaml:"description"`
 	Preferences []ScriptParam `json:"preferences" yaml:"preferences"`
 	Mode        string        `json:"mode" yaml:"mode"`
-	Cwd         string        `json:"cwd" yaml:"cwd"`
 	Params      []ScriptParam `json:"params" yaml:"params"`
 	ShowPreview bool          `json:"showPreview" yaml:"showPreview"`
 }
@@ -81,13 +80,13 @@ func (si ScriptInput) GetValue() (string, error) {
 			if v, ok := si.Value.(bool); ok {
 				value = v
 			} else {
-				return "", fmt.Errorf("invalid value for checkbox")
+				return "", fmt.Errorf("invalid value")
 			}
 		} else if si.Default.Value != nil {
 			if v, ok := si.Default.Value.(bool); ok {
 				value = v
 			} else {
-				return "", fmt.Errorf("invalid value for checkbox")
+				return "", fmt.Errorf("invalid value")
 			}
 		}
 
@@ -101,21 +100,21 @@ func (si ScriptInput) GetValue() (string, error) {
 			if v, ok := si.Value.(string); ok {
 				value = v
 			} else {
-				return "", fmt.Errorf("invalid value for checkbox")
+				return "", fmt.Errorf("invalid value")
 			}
 		} else if si.Default.Value != nil {
 			if v, ok := si.Default.Value.(string); ok {
 				value = v
 			} else {
-				return "", fmt.Errorf("invalid value for checkbox")
+				return "", fmt.Errorf("invalid value")
 			}
 		}
 
 		if si.Type == "file" || si.Type == "directory" {
-			if v, err := utils.ResolvePath(value); err != nil {
-				return "", err
+			if v, err := utils.ResolvePath(value); err == nil {
+				return shellescape.Quote(v), nil
 			} else {
-				value = v
+				return "", err
 			}
 		}
 

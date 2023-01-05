@@ -20,7 +20,6 @@ type ScriptRunner struct {
 	extension    app.Extension
 	with         map[string]app.ScriptInput
 	environ      []string
-	dir          string
 	OnSuccessCmd tea.Cmd
 
 	list   *List
@@ -57,23 +56,10 @@ func NewScriptRunner(extension app.Extension, script app.Script, with map[string
 		mergedParams[scriptParam.Name] = merged
 	}
 
-	var directory string
-	switch script.Cwd {
-	case "homeDir":
-		directory, _ = os.UserHomeDir()
-	case "extensionDir":
-		directory = extension.Dir()
-	case "currentDir":
-		directory, _ = os.Getwd()
-	default:
-		directory = extension.Dir()
-	}
-
 	return &ScriptRunner{
 		extension: extension,
 		script:    script,
 		with:      mergedParams,
-		dir:       directory,
 	}
 }
 
@@ -102,7 +88,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 	if c.script.Mode == "command" {
 		return ExecCommandMsg{
 			Command:   commandString,
-			Directory: c.dir,
+			Directory: c.extension.Dir(),
 		}
 	}
 
@@ -111,7 +97,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		command.Stdin = strings.NewReader(c.list.Query())
 	}
 
-	command.Dir = c.dir
+	command.Dir = c.extension.Dir()
 	command.Env = os.Environ()
 	command.Env = append(command.Env, c.environ...)
 
@@ -301,7 +287,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 				for i, action := range scriptItem.Actions {
 					if action.Extension == "" {
 						action.Extension = c.extension.Name
-						action.Dir = c.dir
+						action.Dir = c.extension.Dir()
 					}
 					scriptItem.Actions[i] = action
 				}
