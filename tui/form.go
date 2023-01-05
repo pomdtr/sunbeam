@@ -298,7 +298,7 @@ func (dd *DropDown) Height() int {
 	if !dd.textinput.Focused() || dd.HasMatch() {
 		return 1
 	}
-	return 4
+	return 5
 }
 
 func (dd *DropDown) SetWidth(width int) {
@@ -319,7 +319,8 @@ func (dd DropDown) View() string {
 	if !dd.textinput.Focused() || dd.HasMatch() {
 		return textInputView
 	} else {
-		return lipgloss.JoinVertical(lipgloss.Left, textInputView, dd.filter.View())
+		separator := strings.Repeat("─", dd.filter.Width)
+		return lipgloss.JoinVertical(lipgloss.Left, textInputView, separator, dd.filter.View())
 	}
 }
 
