@@ -1,13 +1,14 @@
 package tui
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
@@ -15,7 +16,6 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/viper"
 	"github.com/sunbeamlauncher/sunbeam/app"
-	"github.com/sunbeamlauncher/sunbeam/frecency"
 	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
@@ -263,44 +263,37 @@ func toShellCommand(rootItem app.RootItem) string {
 	return strings.Join(args, " ")
 }
 
-func toSunbeamUrl(rootItem app.RootItem) string {
-	path := fmt.Sprintf("run/%s/%s", rootItem.Extension, rootItem.Script)
-	queryParams := make([]string, 0)
-	for param, value := range rootItem.With {
-		switch value := value.(type) {
-		case string:
-			value = (value)
-			queryParams = append(queryParams, fmt.Sprintf("%s=%s", param, url.QueryEscape(value)))
-		case bool:
-			if !value {
-				continue
-			}
-			queryParams = append(queryParams, param)
-		}
+func loadHistory(historyPath string) map[string]int64 {
+	history := make(map[string]int64)
+	data, err := os.ReadFile(historyPath)
+	if err != nil {
+		return history
 	}
-	query := strings.Join(queryParams, "&")
-	return fmt.Sprintf("sunbeam://%s?%s", path, query)
+
+	json.Unmarshal(data, &history)
+	return history
 }
 
 func NewRootList(rootItems ...app.RootItem) Container {
 
 	stateDir := path.Join(os.Getenv("HOME"), ".local", "state", "sunbeam")
-	frecencyPath := path.Join(stateDir, "frecency.json")
+	historyPath := path.Join(stateDir, "history.json")
 
-	var sorter *frecency.Sorter
-	if _, err := os.Stat(frecencyPath); err == nil {
-		sorter, err = frecency.Load(frecencyPath)
-		if err != nil {
-			log.Println(err)
-		}
-	} else {
-		sorter = frecency.NewSorter()
-	}
+	history := loadHistory(historyPath)
 
 	list := NewList("Sunbeam")
 
 	list.filter.Less = func(i, j FilterItem) bool {
-		return sorter.Score(i.ID(), list.Query()) > sorter.Score(j.ID(), list.Query())
+		iValue, ok := history[i.ID()]
+		if !ok {
+			iValue = 0
+		}
+		jValue, ok := history[j.ID()]
+		if !ok {
+			jValue = 0
+		}
+
+		return iValue > jValue
 	}
 
 	listItems := make([]ListItem, 0)
@@ -312,13 +305,12 @@ func NewRootList(rootItems ...app.RootItem) Container {
 			continue
 		}
 		with := make(map[string]app.ScriptInput)
-		itemDesktopUrl := toSunbeamUrl(rootItem)
 		itemShellCommand := toShellCommand(rootItem)
 		for key, value := range rootItem.With {
 			with[key] = app.ScriptInput{Value: value}
 		}
 		listItems = append(listItems, ListItem{
-			Id:       itemDesktopUrl,
+			Id:       itemShellCommand,
 			Title:    rootItem.Title,
 			Subtitle: rootItem.Subtitle,
 			Actions: []Action{
@@ -326,11 +318,14 @@ func NewRootList(rootItems ...app.RootItem) Container {
 					Title:    "Run Script",
 					Shortcut: "enter",
 					Cmd: func() tea.Msg {
-						sorter.Inc(itemDesktopUrl, list.Query())
+						history[itemShellCommand] = time.Now().Unix()
 						if _, err := os.Stat(stateDir); os.IsNotExist(err) {
 							os.MkdirAll(stateDir, 0755)
 						}
-						sorter.Save(frecencyPath)
+
+						data, _ := json.Marshal(history)
+						os.WriteFile(historyPath, data, 0644)
+
 						return RunScriptMsg{
 							Extension: rootItem.Extension,
 							Script:    rootItem.Script,
@@ -347,11 +342,6 @@ func NewRootList(rootItems ...app.RootItem) Container {
 					Title:    "Copy as Shell Command",
 					Shortcut: "ctrl+y",
 					Cmd:      NewCopyTextCmd(itemShellCommand),
-				},
-				{
-					Title:    "Copy as Sunbeam URL",
-					Shortcut: "ctrl+y",
-					Cmd:      NewCopyTextCmd(itemDesktopUrl),
 				},
 			},
 		})
