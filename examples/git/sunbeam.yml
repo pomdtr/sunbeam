@@ -1,0 +1,19 @@
+name: git-history
+version: "1.0"
+title: Git History
+requirements:
+  - homePage: https://github.com/kellyjonbrazil/jc
+    which: jc
+rootItems:
+  - script: git-history
+    title: Show Branch History
+    with:
+      root: .
+scripts:
+  git-history:
+    command: ./git-history.sh ${{ root }}
+    mode: filter
+    params:
+      - name: root
+        type: directory
+        title: Git Repository Root
