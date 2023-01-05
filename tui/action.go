@@ -51,7 +51,7 @@ type OpenMsg struct {
 	Target string
 }
 
-func NewReloadPageCmd(with map[string]app.ScriptInput) tea.Cmd {
+func NewReloadPageCmd(with map[string]app.ScriptInputWithValue) tea.Cmd {
 	return func() tea.Msg {
 		return ReloadPageMsg{
 			With: with,
@@ -60,10 +60,10 @@ func NewReloadPageCmd(with map[string]app.ScriptInput) tea.Cmd {
 }
 
 type ReloadPageMsg struct {
-	With map[string]app.ScriptInput
+	With map[string]app.ScriptInputWithValue
 }
 
-func NewRunScriptCmd(extension string, script string, with map[string]app.ScriptInput) tea.Cmd {
+func NewRunScriptCmd(extension string, script string, with map[string]app.ScriptInputWithValue) tea.Cmd {
 	return func() tea.Msg {
 		return RunScriptMsg{
 			Extension: extension,
@@ -76,7 +76,7 @@ func NewRunScriptCmd(extension string, script string, with map[string]app.Script
 type RunScriptMsg struct {
 	Extension string
 	Script    string
-	With      map[string]app.ScriptInput
+	With      map[string]app.ScriptInputWithValue
 	OnSuccess string
 }
 
@@ -239,7 +239,7 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "tab", "shift+tab":
-			if !al.Focused() && len(al.actions) > 1 {
+			if !al.Focused() {
 				return al, al.Focus()
 			} else if al.Focused() {
 				if msg.String() == "tab" {

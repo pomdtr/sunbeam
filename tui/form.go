@@ -33,7 +33,7 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormItem(name string, param app.ScriptParam) FormItem {
+func NewFormItem(name string, param app.ScriptInput) FormItem {
 	var input FormInput
 	if param.Placeholder.Value == "" {
 		param.Placeholder.Value = name
@@ -66,7 +66,7 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.ScriptParam) TextArea {
+func NewTextArea(formItem app.ScriptInput) TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
 	if defaultValue, ok := formItem.Default.Value.(string); ok {
@@ -105,7 +105,7 @@ type TextInput struct {
 	isPath      bool
 }
 
-func NewTextInput(formItem app.ScriptParam) TextInput {
+func NewTextInput(formItem app.ScriptInput) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	if defaultValue, ok := formItem.Default.Value.(string); ok {
@@ -159,7 +159,7 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(formItem app.ScriptParam) Checkbox {
+func NewCheckbox(formItem app.ScriptInput) Checkbox {
 	var defaultValue bool
 	defaultValue, ok := formItem.Default.Value.(bool)
 	if !ok {
@@ -255,7 +255,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem app.ScriptParam) DropDown {
+func NewDropDown(formItem app.ScriptInput) DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 

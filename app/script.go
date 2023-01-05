@@ -18,9 +18,9 @@ type Script struct {
 	Name        string
 	Command     string        `json:"command" yaml:"command"`
 	Description string        `json:"description" yaml:"description"`
-	Preferences []ScriptParam `json:"preferences" yaml:"preferences"`
+	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
 	Mode        string        `json:"mode" yaml:"mode"`
-	Params      []ScriptParam `json:"params" yaml:"params"`
+	Inputs      []ScriptInput `json:"inputs" yaml:"inputs"`
 	ShowPreview bool          `json:"showPreview" yaml:"showPreview"`
 }
 
@@ -45,7 +45,7 @@ func (o *Optional[T]) UnmarshalYAML(value *yaml.Node) (err error) {
 	return value.Decode(&o.Value)
 }
 
-type ScriptParam struct {
+type ScriptInput struct {
 	Name        string           `json:"name" yaml:"name"`
 	Type        string           `json:"type"`
 	Title       string           `json:"title"`
@@ -59,12 +59,12 @@ type ScriptParam struct {
 	Label string `json:"label"`
 }
 
-type ScriptInput struct {
+type ScriptInputWithValue struct {
 	Value any
-	ScriptParam
+	ScriptInput
 }
 
-func (si ScriptInput) GetValue() (any, error) {
+func (si ScriptInputWithValue) GetValue() (any, error) {
 	if si.Value == nil {
 		return "", fmt.Errorf("required value %s is empty", si.Name)
 	}
@@ -95,8 +95,8 @@ func (si ScriptInput) GetValue() (any, error) {
 	return shellescape.Quote(value), nil
 }
 
-func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
-	err = value.Decode(&si.ScriptParam)
+func (si *ScriptInputWithValue) UnmarshalYAML(value *yaml.Node) (err error) {
+	err = value.Decode(&si.ScriptInput)
 	if err == nil {
 		return
 	}
@@ -104,8 +104,8 @@ func (si *ScriptInput) UnmarshalYAML(value *yaml.Node) (err error) {
 	return value.Decode(&si.Value)
 }
 
-func (si *ScriptInput) UnmarshalJSON(bytes []byte) (err error) {
-	err = json.Unmarshal(bytes, &si.ScriptParam)
+func (si *ScriptInputWithValue) UnmarshalJSON(bytes []byte) (err error) {
+	err = json.Unmarshal(bytes, &si.ScriptInput)
 	if err == nil {
 		return
 	}
@@ -179,8 +179,8 @@ type ScriptAction struct {
 	Command   string `json:"command,omitempty" yaml:"command"`
 	Dir       string
 
-	OnSuccess string                 `json:"onSuccess,omitempty" yaml:"onSuccess"`
-	With      map[string]ScriptInput `json:"with,omitempty" yaml:"with"`
+	OnSuccess string                          `json:"onSuccess,omitempty" yaml:"onSuccess"`
+	With      map[string]ScriptInputWithValue `json:"with,omitempty" yaml:"with"`
 }
 
 //go:embed schemas/listitem.json

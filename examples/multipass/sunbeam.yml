@@ -4,10 +4,10 @@ requirements:
   - homePage: https://multipass.run
     which: multipass
 rootItems:
-  - script: manage-vms
+  - script: manageVMs
     title: Manage VMs
 scripts:
-  manage-vms:
+  manageVMs:
     mode: filter
     showPreview: true
     command: |

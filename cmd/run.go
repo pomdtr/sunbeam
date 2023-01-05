@@ -46,8 +46,8 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 			Use:   key,
 			Short: script.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				with := make(map[string]app.ScriptInput)
-				for _, param := range script.Params {
+				with := make(map[string]app.ScriptInputWithValue)
+				for _, param := range script.Inputs {
 					if !cmd.Flags().Changed(param.Name) {
 						continue
 					}
@@ -57,13 +57,13 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.ScriptInput{Value: value}
+						with[param.Name] = app.ScriptInputWithValue{Value: value}
 					default:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.ScriptInput{Value: value}
+						with[param.Name] = app.ScriptInputWithValue{Value: value}
 					}
 
 				}
@@ -78,7 +78,7 @@ func NewExtensionCommand(extension app.Extension) *cobra.Command {
 			},
 		}
 
-		for _, param := range script.Params {
+		for _, param := range script.Inputs {
 			switch param.Type {
 			case "checkbox":
 				if defaultValue, ok := param.Default.Value.(bool); ok {

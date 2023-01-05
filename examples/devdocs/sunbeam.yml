@@ -4,14 +4,14 @@ requirements:
   - which: curl
     homePage: https://curl.se
 rootItems:
-  - script: search-docsets
+  - script: searchDocsets
     title: Browse Docsets
-  - script: search-entries
+  - script: searchEntries
     title: Search Python 3.11 Documentation
     with:
       slug: python~3.11
 scripts:
-  search-docsets:
+  searchDocsets:
     command: |
       curl https://devdocs.io/docs/docs.json | sunbeam query '. | group_by(.name) | .[] |
       {
@@ -21,14 +21,14 @@ scripts:
           {
               type: "run-script",
               title: "Browse \(.release // "latest") entries",
-              script: "search-entries",
+              script: "searchEntries",
               with: { slug: .slug }
           }
         )
       }
       '
     mode: filter
-  search-entries:
+  searchEntries:
     command: |
       curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
         {
@@ -40,7 +40,7 @@ scripts:
         }
       '
     mode: filter
-    params:
+    inputs:
       - name: slug
         type: textfield
         title: Slug

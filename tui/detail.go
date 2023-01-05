@@ -50,9 +50,11 @@ func NewDetail(title string) *Detail {
 func (c *Detail) SetActions(actions ...Action) {
 	c.actionList.SetActions(actions...)
 
-	if len(actions) > 0 {
+	if len(actions) == 0 {
+		c.footer.SetBindings()
+	} else {
 		c.footer.SetBindings(
-			actions[0].Binding(),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}

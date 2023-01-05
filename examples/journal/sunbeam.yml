@@ -2,28 +2,28 @@ title: Journal
 version: "1.0"
 
 rootItems:
-  - script: list-entries
+  - script: listEntries
     title: List Entries
-  - script: write-entry
+  - script: writeEntry
     title: Write Entry
 scripts:
-  list-entries:
+  listEntries:
     command: ./list-entries.py
     mode: filter
-  write-entry:
+  writeEntry:
     command: ./write-entry.py --title ${{ title }} --content ${{ content }}
     mode: command
-    params:
+    inputs:
       - name: title
         type: textfield
         title: Title
       - name: content
         type: textfield
         title: Content
-  edit-entry:
+  editEntry:
     command: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     mode: command
-    params:
+    inputs:
       - name: uuid
         type: textfield
         title: UUID
@@ -33,10 +33,10 @@ scripts:
       - name: content
         type: textfield
         title: Content
-  delete-entry:
+  deleteEntry:
     command: ./delete-entry.py --uuid ${{ uuid }}
     mode: command
-    params:
+    inputs:
       - name: uuid
         type: textfield
         title: UUID

@@ -5,28 +5,28 @@ requirements:
     homePage: https://www.python.org
 rootItems:
   - title: Browse Root Directory
-    script: browse-files
+    script: browseFiles
     with:
       root: /
   - title: Browse Home Directory
-    script: browse-files
+    script: browseFiles
     with:
       root: "~"
   - title: Browse Custom Directory
-    script: browse-files
+    script: browseFiles
   - title: Browse Current Directory
-    script: browse-files
+    script: browseFiles
 preferences:
-  - name: show-hidden
+  - name: SHOW_HIDDEN
     type: checkbox
     title: Vibility
     label: "Show Hidden Files"
     defaultValue: false
 scripts:
-  browse-files:
-    command: ./file-browser.py --root ${{ root }} ${{ show_hidden }}
+  browseFiles:
+    command: ./file-browser.py --root ${{ root }}
     mode: filter
-    params:
+    inputs:
       - name: root
         type: directory
         title: Root Directory

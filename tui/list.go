@@ -201,13 +201,9 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 
 	if len(item.Actions) == 0 {
 		l.footer.SetBindings()
-	} else if len(item.Actions) == 1 {
-		l.footer.SetBindings(
-			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
-		)
 	} else {
 		l.footer.SetBindings(
-			key.NewBinding(key.WithKeys(item.Actions[0].Shortcut), key.WithHelp("↩", item.Actions[0].Title)),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", item.Actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}
@@ -257,7 +253,7 @@ func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
 			return c, nil
 		}
 
-		return c, NewReloadPageCmd(map[string]app.ScriptInput{
+		return c, NewReloadPageCmd(map[string]app.ScriptInputWithValue{
 			"query": {Value: msg.query},
 		})
 	case PreviewUpdateMsg:

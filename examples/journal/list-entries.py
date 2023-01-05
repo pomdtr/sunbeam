@@ -58,7 +58,7 @@ for uuid, entry in journal["entries"].items():
                     {
                         "type": "run-script",
                         "title": "New Entry",
-                        "script": "write-entry",
+                        "script": "writeEntry",
                         "onSuccess": "reload-page",
                         "silent": True,
                         "shortcut": "ctrl+n"
@@ -66,7 +66,7 @@ for uuid, entry in journal["entries"].items():
                     {
                         "type": "run-script",
                         "title": "Delete Entry",
-                        "script": "delete-entry",
+                        "script": "deleteEntry",
                         "onSuccess": "reload-page",
                         "silent": True,
                         "shortcut": "ctrl+d",
@@ -75,7 +75,7 @@ for uuid, entry in journal["entries"].items():
                     {
                         "type": "run-script",
                         "title": "Edit Entry",
-                        "script": "edit-entry",
+                        "script": "editEntry",
                         "silent": True,
                         "onSuccess": "reload-page",
                         "shortcut": "ctrl+e",

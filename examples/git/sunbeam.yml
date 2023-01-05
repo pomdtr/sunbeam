@@ -4,15 +4,15 @@ requirements:
   - homePage: https://github.com/kellyjonbrazil/jc
     which: jc
 rootItems:
-  - script: git-history
+  - script: gitHistory
     title: Show Branch History
     with:
       root: .
 scripts:
-  git-history:
+  gitHistory:
     command: ./git-history.sh ${{ root }}
     mode: filter
-    params:
+    inputs:
       - name: root
         type: directory
         title: Git Repository Root

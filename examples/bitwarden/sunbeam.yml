@@ -6,8 +6,8 @@ preferences:
     title: Bitwarden Token
 rootItems:
   - title: Search Passwords
-    script: list-passwords
+    script: listPassords
 scripts:
-  list-passwords:
+  listPassords:
     command: ./bitwarden.sh
     mode: filter

@@ -17,17 +17,17 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
             "\(.stargazers_count) *"
         ],
         actions: [
-            {type: "open", url: .html_url},
+            {type: "open", target: .html_url},
             {
                 type: "run-script",
-                script: "list-pull-requests",
+                script: "listPullRequests",
                 title: "List Pull Requests",
                 shortcut: "ctrl+p",
                 with: {repository: .full_name}
             },
             {
                 type: "run-script",
-                script: "view-readme",
+                script: "viewReadme",
                 title: "View Readme",
                 shortcut: "ctrl+r",
                 with: {repository: .full_name}

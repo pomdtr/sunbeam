@@ -18,7 +18,7 @@ type ScriptRunner struct {
 	currentView   string
 
 	extension    app.Extension
-	with         map[string]app.ScriptInput
+	with         map[string]app.ScriptInputWithValue
 	environ      []string
 	OnSuccessCmd tea.Cmd
 
@@ -29,12 +29,12 @@ type ScriptRunner struct {
 	script app.Script
 }
 
-func NewScriptRunner(extension app.Extension, script app.Script, with map[string]app.ScriptInput) *ScriptRunner {
-	mergedParams := make(map[string]app.ScriptInput)
+func NewScriptRunner(extension app.Extension, script app.Script, with map[string]app.ScriptInputWithValue) *ScriptRunner {
+	mergedParams := make(map[string]app.ScriptInputWithValue)
 
-	for _, scriptParam := range script.Params {
-		merged := app.ScriptInput{
-			ScriptParam: scriptParam,
+	for _, scriptParam := range script.Inputs {
+		merged := app.ScriptInputWithValue{
+			ScriptInput: scriptParam,
 		}
 
 		input, ok := with[scriptParam.Name]
@@ -110,28 +110,28 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 
 func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 	formItems := make([]FormItem, 0)
-	for _, param := range c.script.Params {
+	for _, param := range c.script.Inputs {
 		input := c.with[param.Name]
 		if input.Value != nil {
 			continue
 		}
 
-		formItem := NewFormItem(param.Name, input.ScriptParam)
+		formItem := NewFormItem(param.Name, input.ScriptInput)
 		formItems = append(formItems, formItem)
 	}
 
 	return formItems
 }
 
-func (c ScriptRunner) Preferences() map[string]app.ScriptInput {
-	preferences := make([]app.ScriptParam, 0, len(c.extension.Preferences)+len(c.script.Preferences))
+func (c ScriptRunner) Preferences() map[string]app.ScriptInputWithValue {
+	preferences := make([]app.ScriptInput, 0, len(c.extension.Preferences)+len(c.script.Preferences))
 	preferences = append(preferences, c.extension.Preferences...)
 	preferences = append(preferences, c.script.Preferences...)
 
-	preferenceMap := make(map[string]app.ScriptInput)
+	preferenceMap := make(map[string]app.ScriptInputWithValue)
 	for _, preference := range preferences {
-		preferenceMap[preference.Name] = app.ScriptInput{
-			ScriptParam: preference,
+		preferenceMap[preference.Name] = app.ScriptInputWithValue{
+			ScriptInput: preference,
 		}
 	}
 
@@ -156,7 +156,7 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 			continue
 		}
 
-		missing = append(missing, NewFormItem(name, param.ScriptParam))
+		missing = append(missing, NewFormItem(name, param.ScriptInput))
 	}
 
 	return environ, missing

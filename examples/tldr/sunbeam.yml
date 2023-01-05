@@ -13,7 +13,7 @@ scripts:
   list:
     mode: filter
     showPreview: true
-    params:
+    inputs:
       - name: platform
         type: textfield
         title: Platform
@@ -23,6 +23,6 @@ scripts:
         title: .,
         previewCmd: "tldr --raw --platform  ${{ platform }} \(.)",
         actions: [
-          {type: "open-url", target: "https://tldr.ostera.io/\(.)", title: "Open in Browser"}
+          {type: "open", target: "https://tldr.ostera.io/\(.)", title: "Open in Browser"}
         ]
       }'

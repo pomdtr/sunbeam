@@ -5,13 +5,13 @@ requirements:
     which: gh
 rootItems:
   - title: List Repositories
-    script: list-repositories
+    script: listRepositories
   - title: View sunbeam README
-    script: view-readme
+    script: viewReadme
     with:
       repository: sunbeamlauncher/sunbeam
 scripts:
-  view-readme:
+  viewReadme:
     mode: detail
     command: |
       gh api repos/${{repository}}/readme --jq '
@@ -28,22 +28,22 @@ scripts:
         ]
       }
       '
-    params:
+    inputs:
       - name: repository
         type: textfield
         title: Repository
-  list-repositories:
+  listRepositories:
     command: ./list-repos.sh ${{ owner }}
     mode: filter
     showPreview: true
-    params:
+    inputs:
       - name: owner
         type: textfield
         title: Owner
-  list-pull-requests:
+  listPullRequests:
     command: ./list-prs.sh ${{ repository }}
     mode: filter
-    params:
+    inputs:
       - name: repository
         type: textfield
         title: Repository

@@ -304,10 +304,10 @@ func NewRootList(rootItems ...app.RootItem) Container {
 			fmt.Fprintln(os.Stderr, "extension not found:", rootItem.Extension)
 			continue
 		}
-		with := make(map[string]app.ScriptInput)
+		with := make(map[string]app.ScriptInputWithValue)
 		itemShellCommand := toShellCommand(rootItem)
 		for key, value := range rootItem.With {
-			with[key] = app.ScriptInput{Value: value}
+			with[key] = app.ScriptInputWithValue{Value: value}
 		}
 		listItems = append(listItems, ListItem{
 			Id:       itemShellCommand,
