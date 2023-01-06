@@ -127,7 +127,7 @@ func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 			continue
 		}
 
-		formItem := NewFormItem(param.Name, input.ScriptInput)
+		formItem := NewFormItem(input.ScriptInput)
 		formItems = append(formItems, formItem)
 	}
 
@@ -167,7 +167,7 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 			continue
 		}
 
-		missing = append(missing, NewFormItem(name, param.ScriptInput))
+		missing = append(missing, NewFormItem(param.ScriptInput))
 	}
 
 	return environ, missing

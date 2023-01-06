@@ -33,10 +33,10 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormItem(name string, param app.ScriptInput) FormItem {
+func NewFormItem(param app.ScriptInput) FormItem {
 	var input FormInput
 	if param.Placeholder.Value == "" {
-		param.Placeholder.Value = name
+		param.Placeholder.Value = param.Name
 	}
 	switch param.Type {
 	case "textfield", "file", "directory", "password":
@@ -56,7 +56,7 @@ func NewFormItem(name string, param app.ScriptInput) FormItem {
 	}
 
 	return FormItem{
-		Id:        name,
+		Id:        param.Name,
 		Title:     param.Title,
 		FormInput: input,
 	}

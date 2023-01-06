@@ -34,7 +34,7 @@ func NewCmdExtension() *cobra.Command {
 			Short: "Install a sunbeam extension from a git repository",
 			Args:  cobra.ExactArgs(2),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if args[1] == "." {
+				if _, err := os.Stat(args[0]); err == nil {
 					wd, err := os.Getwd()
 					if err != nil {
 						return err
