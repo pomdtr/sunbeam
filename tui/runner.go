@@ -93,7 +93,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 	if c.script.Mode == "command" {
 		return ExecCommandMsg{
 			Command:   commandString,
-			Directory: c.extension.Dir(),
+			Directory: c.extension.Root,
 			Env:       c.environ,
 		}
 	}
@@ -103,7 +103,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		command.Stdin = strings.NewReader(c.list.Query())
 	}
 
-	command.Dir = c.extension.Dir()
+	command.Dir = c.extension.Root
 	command.Env = os.Environ()
 	command.Env = append(command.Env, c.environ...)
 
@@ -246,7 +246,7 @@ func (c *ScriptRunner) SetSize(width, height int) {
 	}
 }
 
-func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case CommandOutput:
 		switch c.script.Mode {
@@ -277,7 +277,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 				for i, action := range scriptItem.Actions {
 					if action.Extension == "" {
 						action.Extension = c.extension.Name
-						action.Dir = c.extension.Dir()
+						action.Dir = c.extension.Root
 					}
 					scriptItem.Actions[i] = action
 				}
@@ -350,7 +350,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	var container Container
+	var container Page
 
 	switch c.currentView {
 	case "list":

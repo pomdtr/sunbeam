@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -16,15 +15,15 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
-func NewCmdExtension() *cobra.Command {
+func NewCmdExtension(api app.Api) *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
 		Short:   "Manage sunbeam extensions",
 	}
 
-	extensionArgs := make([]string, 0, len(app.Sunbeam.Extensions))
-	for _, extension := range app.Sunbeam.Extensions {
+	extensionArgs := make([]string, 0, len(api.Extensions))
+	for _, extension := range api.Extensions {
 		extensionArgs = append(extensionArgs, extension.Name)
 	}
 
@@ -34,23 +33,27 @@ func NewCmdExtension() *cobra.Command {
 			Short: "Install a sunbeam extension from a git repository",
 			Args:  cobra.ExactArgs(2),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if _, err := os.Stat(args[0]); err == nil {
-					wd, err := os.Getwd()
+				extensionName := args[0]
+				extensionRoot := args[1]
+				if _, err := os.Stat(extensionRoot); err == nil {
+					extensionRoot, err = filepath.Abs(extensionRoot)
 					if err != nil {
-						return err
+						fmt.Fprintf(os.Stderr, "Failed to get absolute path for extension root: %s", err)
+						os.Exit(1)
 					}
 
-					if _, err = os.Stat(path.Join(wd, "sunbeam.yml")); os.IsNotExist(err) {
+					if _, err = os.Stat(path.Join(extensionRoot, "sunbeam.yml")); os.IsNotExist(err) {
 						return fmt.Errorf("current directory is not a sunbeam extension")
 					}
 
-					if err := app.Sunbeam.AddExtension(args[0], app.ExtensionConfig{
-						Root: wd,
-					}); err != nil {
-						return err
+					symlinkTarget := path.Join(api.ExtensionRoot, extensionName)
+
+					if err := os.Symlink(extensionRoot, symlinkTarget); err != nil {
+						fmt.Fprintln(os.Stderr, "Failed to create symlink", err)
+						os.Exit(1)
 					}
 
-					fmt.Printf("Installed extension %s", args[0])
+					fmt.Printf("Installed extension %s", extensionName)
 					return nil
 				}
 
@@ -74,11 +77,7 @@ func NewCmdExtension() *cobra.Command {
 					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", repo.Name)
 				}
 
-				manifestBytes, err := os.ReadFile(manifestPath)
-				if err != nil {
-					return fmt.Errorf("failed to read manifest for extension %s", repo.Name)
-				}
-				manifest, err := app.ParseManifest(manifestBytes)
+				manifest, err := app.ParseManifest(extensionName, manifestPath)
 				if err != nil {
 					return err
 				}
@@ -94,16 +93,9 @@ func NewCmdExtension() *cobra.Command {
 					}
 				}
 
-				target := path.Join(app.Sunbeam.ExtensionRoot, repo.Host, repo.Owner, repo.Name)
+				target := path.Join(api.ExtensionRoot, repo.Host, repo.Owner, repo.Name)
 				os.MkdirAll(path.Dir(target), 0755)
 				if err := os.Rename(tmpDir, target); err != nil {
-					return err
-				}
-
-				if err := app.Sunbeam.AddExtension(args[0], app.ExtensionConfig{
-					Remote: repo.Url(),
-					Root:   target,
-				}); err != nil {
 					return err
 				}
 
@@ -119,7 +111,19 @@ func NewCmdExtension() *cobra.Command {
 			ValidArgs: extensionArgs,
 			Short:     "Remove an installed extension",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				return app.Sunbeam.RemoveExtension(args[0])
+				extensionPath := path.Join(api.ExtensionRoot, args[0])
+				if _, err := os.Stat(extensionPath); os.IsNotExist(err) {
+					fmt.Fprintln(os.Stderr, "Extension not found")
+					os.Exit(1)
+				}
+
+				if err := os.RemoveAll(extensionPath); err != nil {
+					fmt.Fprintln(os.Stderr, "Failed to remove extension")
+					os.Exit(1)
+				}
+
+				fmt.Println("Removed extension", args[0])
+				return nil
 			},
 		}
 	}())
@@ -131,15 +135,13 @@ func NewCmdExtension() *cobra.Command {
 			Args:      cobra.ExactArgs(1),
 			ValidArgs: extensionArgs,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				extension, ok := app.Sunbeam.ExtensionConfigs[args[0]]
-				if extension.Remote == "" {
-					return fmt.Errorf("extension %s is not installed from a remote repository", args[0])
+				extensionDir := path.Join(api.ExtensionRoot, args[0])
+				if _, err := os.Stat(extensionDir); os.IsNotExist(err) {
+					fmt.Fprintln(os.Stderr, "Extension not found")
+					os.Exit(1)
 				}
 
-				if !ok {
-					return fmt.Errorf("extension %s not found", args[0])
-				}
-				gc := utils.NewGitClient(extension.Root)
+				gc := utils.NewGitClient(extensionDir)
 
 				currentVersion := gc.GetCurrentVersion()
 				latestVersion, err := gc.GetLatestVersion()
@@ -164,20 +166,9 @@ func NewCmdExtension() *cobra.Command {
 			Aliases: []string{"ls"},
 			Args:    cobra.NoArgs,
 			Run: func(cmd *cobra.Command, args []string) {
-				homedir, _ := os.UserHomeDir()
-
-				rows := make([][]string, 0, len(app.Sunbeam.Extensions))
-				for name, extension := range app.Sunbeam.ExtensionConfigs {
-					if extension.Remote != "" {
-						gc := utils.NewGitClient(extension.Root)
-						origin := gc.GetOrigin()
-						repo, _ := utils.ParseWithHost(origin, "github.com")
-						version := gc.GetCurrentVersion()
-						rows = append(rows, []string{name, repo.FullName(), version[:7]})
-					} else {
-						dir := strings.Replace(extension.Root, homedir, "~", 1)
-						rows = append(rows, []string{name, dir, ""})
-					}
+				rows := make([][]string, 0)
+				for _, extension := range api.Extensions {
+					rows = append(rows, []string{extension.Name})
 				}
 
 				writer := tablewriter.NewWriter(os.Stdout)
@@ -223,7 +214,7 @@ func NewCmdExtension() *cobra.Command {
 						Subtitle: repo.Description,
 					}
 
-					if _, err := os.Stat(filepath.Join(app.Sunbeam.ExtensionRoot, "github.com", repo.FullName)); err == nil {
+					if _, err := os.Stat(filepath.Join(api.ExtensionRoot, "github.com", repo.FullName)); err == nil {
 						item.Accessories = []string{
 							"Installed",
 						}

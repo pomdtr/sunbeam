@@ -448,7 +448,7 @@ func (c *Form) ScrollViewport() {
 	}
 }
 
-func (c Form) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

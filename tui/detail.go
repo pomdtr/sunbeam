@@ -119,7 +119,7 @@ func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
 	return d.header.SetIsLoading(isLoading)
 }
 
-func (c Detail) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {

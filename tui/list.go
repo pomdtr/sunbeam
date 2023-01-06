@@ -227,7 +227,7 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 	return cmd
 }
 
-func (c *List) Update(msg tea.Msg) (Container, tea.Cmd) {
+func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {

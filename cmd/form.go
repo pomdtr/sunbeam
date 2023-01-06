@@ -25,7 +25,7 @@ type FormExec struct {
 	*tui.Form
 }
 
-func (f FormExec) Update(msg tea.Msg) (tui.Container, tea.Cmd) {
+func (f FormExec) Update(msg tea.Msg) (tui.Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tui.SubmitMsg:
 		funcMap := template.FuncMap{}

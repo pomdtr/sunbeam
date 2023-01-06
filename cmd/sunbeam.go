@@ -1,13 +1,31 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+	"path"
+
+	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/tui"
 )
 
-func Execute(version string) (err error) {
+func Execute(version string) error {
+	extensionRoot := path.Join(xdg.DataHome, "sunbeam", "extensions")
+	if _, err := os.Stat(extensionRoot); os.IsNotExist(err) {
+		if err := os.MkdirAll(extensionRoot, 0755); err != nil {
+			return err
+		}
+	}
+
+	api := app.Api{}
+	err := api.LoadExtensions(extensionRoot)
+	if err != nil {
+		return err
+	}
+
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:     "sunbeam",
@@ -15,7 +33,7 @@ func Execute(version string) (err error) {
 		Version: version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			rootItems := make([]app.RootItem, 0)
-			for _, extension := range app.Sunbeam.Extensions {
+			for _, extension := range api.Extensions {
 				rootItems = append(rootItems, extension.RootItems...)
 			}
 
@@ -25,13 +43,21 @@ func Execute(version string) (err error) {
 			}
 
 			rootList := tui.NewRootList(rootItems...)
-			model := tui.NewModel(rootList)
+			model := tui.NewModel(rootList, api.Extensions...)
 			return tui.Draw(model)
 		},
 	}
 
+	rootCmd.AddGroup(&cobra.Group{
+		Title: "Core Commands",
+		ID:    "core",
+	}, &cobra.Group{
+		Title: "Extension Commands",
+		ID:    "extension",
+	})
+
 	// Core Commands
-	rootCmd.AddCommand(NewCmdExtension())
+	rootCmd.AddCommand(NewCmdExtension(api))
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdDetail())
 	rootCmd.AddCommand(NewCmdFilter())
@@ -43,5 +69,88 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdOpen())
 	rootCmd.AddCommand(NewCmdSQL())
 
+	// Extension Commands
+	for _, extension := range api.Extensions {
+		rootCmd.AddCommand(NewExtensionCommand(extension, api.Extensions))
+	}
+
 	return rootCmd.Execute()
+}
+
+func NewExtensionCommand(extension app.Extension, extensions []app.Extension) *cobra.Command {
+	extensionCmd := &cobra.Command{
+		Use:     extension.Name,
+		GroupID: "extension",
+		Short:   extension.Description,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			list := tui.NewRootList(extension.RootItems...)
+			root := tui.NewModel(list, extensions...)
+			err = tui.Draw(root)
+			if err != nil {
+				return fmt.Errorf("could not run extension: %w", err)
+			}
+
+			return nil
+		},
+	}
+
+	for key, script := range extension.Scripts {
+		script := script
+		scriptCmd := &cobra.Command{
+			Use:   key,
+			Short: script.Description,
+			RunE: func(cmd *cobra.Command, args []string) (err error) {
+				with := make(map[string]app.ScriptInputWithValue)
+				for _, param := range script.Inputs {
+					if !cmd.Flags().Changed(param.Name) {
+						continue
+					}
+					switch param.Type {
+					case "checkbox":
+						value, err := cmd.Flags().GetBool(param.Name)
+						if err != nil {
+							return err
+						}
+						with[param.Name] = app.ScriptInputWithValue{Value: value}
+					default:
+						value, err := cmd.Flags().GetString(param.Name)
+						if err != nil {
+							return err
+						}
+						with[param.Name] = app.ScriptInputWithValue{Value: value}
+					}
+
+				}
+
+				runner := tui.NewScriptRunner(extension, script, with)
+				model := tui.NewModel(runner, extensions...)
+				err = tui.Draw(model)
+				if err != nil {
+					return fmt.Errorf("could not run script: %w", err)
+				}
+				return nil
+			},
+		}
+
+		for _, param := range script.Inputs {
+			switch param.Type {
+			case "checkbox":
+				if defaultValue, ok := param.Default.Value.(bool); ok {
+					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Title)
+				} else {
+					scriptCmd.Flags().Bool(param.Name, false, param.Title)
+				}
+			default:
+				if defaultValue, ok := param.Default.Value.(string); ok {
+					scriptCmd.Flags().String(param.Name, defaultValue, param.Title)
+				} else {
+					scriptCmd.Flags().String(param.Name, "", param.Title)
+				}
+			}
+		}
+
+		extensionCmd.AddCommand(scriptCmd)
+	}
+
+	return extensionCmd
 }

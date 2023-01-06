@@ -14,7 +14,6 @@ import (
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/skratchdot/open-golang/open"
-	"github.com/spf13/viper"
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/utils"
 )
@@ -36,26 +35,26 @@ var Config SunbeamConfig = SunbeamConfig{
 	FullScreen:  true,
 }
 
-func init() {
-	viper.AddConfigPath(app.Sunbeam.ConfigRoot)
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.SetEnvPrefix("sunbeam")
-	viper.ReadInConfig()
-	viper.AutomaticEnv()
+// func init() {
+// 	viper.AddConfigPath(app.Sunbeam.ConfigRoot)
+// 	viper.SetConfigName("config")
+// 	viper.SetConfigType("yaml")
+// 	viper.SetEnvPrefix("sunbeam")
+// 	viper.ReadInConfig()
+// 	viper.AutomaticEnv()
 
-	viper.SetDefault("accentColor", "13")
-	viper.SetDefault("height", 0)
+// 	viper.SetDefault("accentColor", "13")
+// 	viper.SetDefault("height", 0)
 
-	err := viper.Unmarshal(&Config)
-	if err != nil {
-		log.Printf("unable to decode config into struct, %v", err)
-	}
-}
+// 	err := viper.Unmarshal(&Config)
+// 	if err != nil {
+// 		log.Printf("unable to decode config into struct, %v", err)
+// 	}
+// }
 
-type Container interface {
+type Page interface {
 	Init() tea.Cmd
-	Update(tea.Msg) (Container, tea.Cmd)
+	Update(tea.Msg) (Page, tea.Cmd)
 	View() string
 	SetSize(width, height int)
 }
@@ -65,13 +64,19 @@ type Model struct {
 	exitCmd       *exec.Cmd
 	exit          bool
 
-	pages []Container
+	pages        []Page
+	extensionMap map[string]app.Extension
 
 	hidden bool
 }
 
-func NewModel(rootPage Container) *Model {
-	return &Model{pages: []Container{rootPage}}
+func NewModel(rootPage Page, extensions ...app.Extension) *Model {
+	extensionMap := make(map[string]app.Extension)
+	for _, extension := range extensions {
+		extensionMap[extension.Name] = extension
+	}
+
+	return &Model{pages: []Page{rootPage}, extensionMap: extensionMap}
 }
 
 func (m *Model) Init() tea.Cmd {
@@ -103,7 +108,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Quit
 	case RunScriptMsg:
-		extension, ok := app.Sunbeam.Extensions[msg.Extension]
+		extension, ok := m.extensionMap[msg.Extension]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
@@ -228,16 +233,16 @@ func PopCmd() tea.Msg {
 }
 
 type pushMsg struct {
-	container Container
+	container Page
 }
 
-func NewPushCmd(c Container) tea.Cmd {
+func NewPushCmd(c Page) tea.Cmd {
 	return func() tea.Msg {
 		return pushMsg{c}
 	}
 }
 
-func (m *Model) Push(page Container) tea.Cmd {
+func (m *Model) Push(page Page) tea.Cmd {
 	page.SetSize(m.width, m.pageHeight())
 	m.pages = append(m.pages, page)
 	return page.Init()
@@ -277,8 +282,7 @@ func loadHistory(historyPath string) map[string]int64 {
 	return history
 }
 
-func NewRootList(rootItems ...app.RootItem) Container {
-
+func NewRootList(rootItems ...app.RootItem) Page {
 	stateDir := path.Join(os.Getenv("HOME"), ".local", "state", "sunbeam")
 	historyPath := path.Join(stateDir, "history.json")
 
@@ -302,11 +306,6 @@ func NewRootList(rootItems ...app.RootItem) Container {
 	listItems := make([]ListItem, 0)
 	for _, rootItem := range rootItems {
 		rootItem := rootItem
-		extension, ok := app.Sunbeam.Extensions[rootItem.Extension]
-		if !ok {
-			fmt.Fprintln(os.Stderr, "extension not found:", rootItem.Extension)
-			continue
-		}
 		with := make(map[string]app.ScriptInputWithValue)
 		itemShellCommand := toShellCommand(rootItem)
 		for key, value := range rootItem.With {
@@ -335,11 +334,6 @@ func NewRootList(rootItems ...app.RootItem) Container {
 							With:      with,
 						}
 					},
-				},
-				{
-					Title:    "Edit Script Manifest",
-					Shortcut: "ctrl+e",
-					Cmd:      NewEditCmd(extension.Url.Path),
 				},
 				{
 					Title:    "Copy as Shell Command",
