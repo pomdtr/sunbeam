@@ -50,7 +50,7 @@ func NewCmdExtension() *cobra.Command {
 						return err
 					}
 
-					fmt.Printf("Installed extension")
+					fmt.Printf("Installed extension %s", args[0])
 					return nil
 				}
 
@@ -107,7 +107,7 @@ func NewCmdExtension() *cobra.Command {
 					return err
 				}
 
-				fmt.Printf("Installed extension %s", repo.Name)
+				fmt.Printf("Installed extension %s", args[0])
 				return nil
 			},
 		}

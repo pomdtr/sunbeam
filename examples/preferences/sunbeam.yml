@@ -1,0 +1,18 @@
+title: Preferences
+version: "1.0"
+preferences:
+  - name: LAST_NAME
+    type: textfield
+    title: Last Name
+rootItems:
+  - script: googleSearch
+    title: Google Search
+scripts:
+  googleSearch:
+    mode: command
+    command: |
+      sunbeam open "https://www.google.com/search?q=$FIRST_NAME+$LAST_NAME"
+    preferences:
+      - name: FIRST_NAME
+        type: textfield
+        title: First Name

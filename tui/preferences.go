@@ -12,14 +12,27 @@ const keyringUser = "Sunbeam"
 const keyringService = "Sunbeam Preferences"
 
 type KeyStore struct {
-	store map[string]ScriptPreference
+	preferenceMap map[string]ScriptPreference
 }
 
-var keystore KeyStore
+func LoadKeyStore() (*KeyStore, error) {
+	var err error
+	keyringValue, err := keyring.Get(keyringService, keyringUser)
+	if errors.Is(err, keyring.ErrNotFound) {
+		keyringValue = "{}"
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to load keyring: %w", err)
+	}
 
-func init() {
-	keystore = KeyStore{}
-	keystore.Init()
+	preferenceMap := make(map[string]ScriptPreference)
+	err = json.Unmarshal([]byte(keyringValue), &preferenceMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse keyring: %w", err)
+	}
+
+	return &KeyStore{
+		preferenceMap: preferenceMap,
+	}, nil
 }
 
 func GetPreferenceId(extension string, script string, name string) string {
@@ -27,24 +40,6 @@ func GetPreferenceId(extension string, script string, name string) string {
 		return fmt.Sprintf("%s.%s.%s", extension, script, name)
 	}
 	return fmt.Sprintf("%s.%s", extension, name)
-}
-
-func (k *KeyStore) Init() error {
-	var err error
-	keyringValue, err := keyring.Get(keyringService, keyringUser)
-	if errors.Is(err, keyring.ErrNotFound) {
-		keyringValue = "{}"
-	} else if err != nil {
-		return err
-	}
-
-	preferenceMap := make(map[string]ScriptPreference)
-	err = json.Unmarshal([]byte(keyringValue), &preferenceMap)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type ScriptPreference struct {
@@ -55,16 +50,16 @@ type ScriptPreference struct {
 }
 
 func (k KeyStore) GetPreference(extension string, script string, name string) (ScriptPreference, bool) {
-	if k.store == nil {
+	if k.preferenceMap == nil {
 		return ScriptPreference{}, false
 	}
 	scriptId := GetPreferenceId(extension, script, name)
-	if preference, ok := k.store[scriptId]; ok {
+	if preference, ok := k.preferenceMap[scriptId]; ok {
 		return preference, true
 	}
 
 	extensionId := GetPreferenceId(extension, "", name)
-	if preference, ok := k.store[extensionId]; ok {
+	if preference, ok := k.preferenceMap[extensionId]; ok {
 		return preference, ok
 	}
 
@@ -73,10 +68,10 @@ func (k KeyStore) GetPreference(extension string, script string, name string) (S
 
 func (k *KeyStore) SetPreference(preferences ...ScriptPreference) error {
 	for _, preference := range preferences {
-		k.store[GetPreferenceId(preference.Extension, preference.Script, preference.Name)] = preference
+		k.preferenceMap[GetPreferenceId(preference.Extension, preference.Script, preference.Name)] = preference
 	}
 
-	preferencesJSON, err := json.Marshal(k.store)
+	preferencesJSON, err := json.Marshal(k.preferenceMap)
 	if err != nil {
 		return err
 	}

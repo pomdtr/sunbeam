@@ -130,6 +130,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ExecCommandMsg:
 		command := exec.Command("sh", "-c", msg.Command)
 		command.Dir = msg.Directory
+		command.Env = os.Environ()
+		command.Env = append(command.Env, msg.Env...)
+
 		if msg.OnSuccess == "" {
 			m.exitCmd = command
 			m.exit = true
@@ -392,6 +395,7 @@ func Draw(model *Model) (err error) {
 	if exitCmd := model.exitCmd; exitCmd != nil {
 		exitCmd.Stderr = os.Stderr
 		exitCmd.Stdout = os.Stdout
+		exitCmd.Stdin = os.Stdin
 
 		exitCmd.Run()
 	}

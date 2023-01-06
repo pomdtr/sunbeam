@@ -13,6 +13,16 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/app"
 )
 
+var keyStore *KeyStore
+
+func init() {
+	var err error
+	keyStore, err = LoadKeyStore()
+	if err != nil {
+		panic(err)
+	}
+}
+
 type ScriptRunner struct {
 	width, height int
 	currentView   string
@@ -84,6 +94,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		return ExecCommandMsg{
 			Command:   commandString,
 			Directory: c.extension.Dir(),
+			Env:       c.environ,
 		}
 	}
 
@@ -151,8 +162,8 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 			continue
 		}
 
-		if pref, ok := keystore.GetPreference(c.extension.Name, c.script.Name, name); ok {
-			environ = append(environ, fmt.Sprintf("%s=%s", name, pref))
+		if pref, ok := keyStore.GetPreference(c.extension.Name, c.script.Name, name); ok {
+			environ = append(environ, fmt.Sprintf("%s=%s", name, pref.Value))
 			continue
 		}
 
@@ -311,7 +322,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Container, tea.Cmd) {
 				preferences = append(preferences, preference)
 			}
 
-			err := keystore.SetPreference(preferences...)
+			err := keyStore.SetPreference(preferences...)
 			if err != nil {
 				return c, NewErrorCmd(err)
 			}

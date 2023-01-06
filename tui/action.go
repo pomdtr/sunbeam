@@ -103,6 +103,7 @@ type ExecCommandMsg struct {
 	Command   string
 	Directory string
 	OnSuccess string
+	Env       []string
 }
 
 func (msg ExecCommandMsg) OnSuccessCmd() tea.Cmd {
