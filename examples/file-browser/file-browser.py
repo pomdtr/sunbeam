@@ -21,7 +21,7 @@ for path in sorted(entries, key=lambda p: p.name):
         if path.is_file()
         else {
             "type": "run-script",
-            "script": "browse-files",
+            "script": "browseFiles",
             "title": "Browse Directory",
             "with": {"root": str(path.absolute()), "showHidden": args.show_hidden},
         }
