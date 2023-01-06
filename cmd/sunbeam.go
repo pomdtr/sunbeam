@@ -39,6 +39,7 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdExec())
 	rootCmd.AddCommand(NewCmdCopy())
+	rootCmd.AddCommand(NewCmdPaste())
 	rootCmd.AddCommand(NewCmdOpen())
 	rootCmd.AddCommand(NewCmdSQL())
 
