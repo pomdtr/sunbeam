@@ -62,7 +62,6 @@ func Execute(version string) error {
 	rootCmd.AddCommand(NewCmdExtension(api))
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun())
-	rootCmd.AddCommand(NewCmdExec())
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
 	rootCmd.AddCommand(NewCmdOpen())
