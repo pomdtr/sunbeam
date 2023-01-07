@@ -12,9 +12,10 @@ import (
 
 func NewCmdRun() *cobra.Command {
 	runCmd := &cobra.Command{
-		Use:   "run <extension-root>",
-		Short: "Run a extension from a directory",
-		Args:  cobra.ExactArgs(1),
+		Use:     "run <extension-root>",
+		Short:   "Run a extension from a directory",
+		GroupID: "core",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			extensionRoot := args[0]

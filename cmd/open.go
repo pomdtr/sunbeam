@@ -11,9 +11,10 @@ import (
 
 func NewCmdOpen() *cobra.Command {
 	return &cobra.Command{
-		Use:   "open",
-		Short: "Open file with default app",
-		Args:  cobra.MaximumNArgs(1),
+		Use:     "open",
+		Short:   "Open file with default app",
+		GroupID: "core",
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			var input string
 			if len(args) == 0 {

@@ -1,0 +1,6 @@
+[book]
+authors = ["pomdtr"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Sunbeam User Guide"

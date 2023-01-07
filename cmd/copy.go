@@ -10,8 +10,9 @@ import (
 
 func NewCmdCopy() *cobra.Command {
 	return &cobra.Command{
-		Use:   "copy",
-		Short: "Copy text from stdin",
+		Use:     "copy",
+		Short:   "Copy text from stdin",
+		GroupID: "core",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			content, err := io.ReadAll(os.Stdin)
 			if err != nil {

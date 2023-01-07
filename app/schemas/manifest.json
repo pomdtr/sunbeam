@@ -67,6 +67,9 @@
                     "title": {
                         "type": "string"
                     },
+                    "description": {
+                        "type": "string"
+                    },
                     "with": {
                         "type": "object",
                         "additionalProperties": false,

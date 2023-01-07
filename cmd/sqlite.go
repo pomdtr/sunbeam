@@ -11,9 +11,10 @@ import (
 
 func NewCmdSQL() *cobra.Command {
 	return &cobra.Command{
-		Use:   "sql <database> <query>",
-		Short: "Run a SQL query on a SQLite database",
-		Args:  cobra.ExactArgs(2),
+		Use:     "sql <database> <query>",
+		Short:   "Run a SQL query on a SQLite database",
+		GroupID: "core",
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			db, err := sql.Open("sqlite", args[0])
 			if err != nil {

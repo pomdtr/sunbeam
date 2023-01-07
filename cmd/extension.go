@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 
 	"github.com/olekukonko/tablewriter"
@@ -20,6 +21,7 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
 		Short:   "Manage sunbeam extensions",
+		GroupID: "core",
 	}
 
 	extensionArgs := make([]string, 0, len(api.Extensions))
@@ -28,13 +30,34 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 	}
 
 	extensionCommand.AddCommand(func() *cobra.Command {
-		return &cobra.Command{
-			Use:   "install <name> <root>",
-			Short: "Install a sunbeam extension from a git repository",
-			Args:  cobra.ExactArgs(2),
+		command := &cobra.Command{
+			Use:   "install <directory-or-url>",
+			Short: "Install a sunbeam extension from a local directory or a git repository",
+			Args:  cobra.ExactArgs(1),
+			PreRunE: func(cmd *cobra.Command, args []string) error {
+				extensionName, err := cmd.Flags().GetString("name")
+				if err != nil {
+					return err
+				}
+
+				re, err := regexp.Compile(`^[\w-]+$`)
+				if err != nil {
+					return err
+				}
+
+				if !re.MatchString(extensionName) {
+					return fmt.Errorf("extension name must be alphanumeric and contain only dashes and underscores")
+				}
+
+				return nil
+			},
 			RunE: func(cmd *cobra.Command, args []string) error {
-				extensionName := args[0]
-				extensionRoot := args[1]
+				extensionName, err := cmd.Flags().GetString("name")
+				if err != nil {
+					return err
+				}
+
+				extensionRoot := args[0]
 				if _, err := os.Stat(extensionRoot); err == nil {
 					extensionRoot, err = filepath.Abs(extensionRoot)
 					if err != nil {
@@ -53,11 +76,11 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 						os.Exit(1)
 					}
 
-					fmt.Printf("Installed extension %s", extensionName)
+					fmt.Println("Installed extension", extensionName)
 					return nil
 				}
 
-				repo, err := utils.ParseWithHost(args[1], "github.com")
+				repo, err := utils.ParseWithHost(extensionRoot, "github.com")
 				if err != nil {
 					return err
 				}
@@ -99,10 +122,15 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 					return err
 				}
 
-				fmt.Printf("Installed extension %s", args[0])
+				fmt.Printf("Installed extension %s", extensionName)
 				return nil
 			},
 		}
+
+		command.Flags().StringP("name", "n", "", "Extension name")
+		command.MarkFlagRequired("name")
+
+		return command
 	}())
 
 	extensionCommand.AddCommand(func() *cobra.Command {

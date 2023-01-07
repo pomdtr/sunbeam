@@ -9,9 +9,10 @@ import (
 
 func NewCmdExec() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exec <script>",
-		Args:  cobra.MinimumNArgs(1),
-		Short: "Exec a script",
+		Use:     "exec <script>",
+		Short:   "Exec a script",
+		GroupID: "core",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			i := interp.New(interp.Options{
 				Args:         args,

@@ -22,9 +22,10 @@ func NewCmdQuery() *cobra.Command {
 	}
 
 	queryCmd := &cobra.Command{
-		Use:   "query <query>",
-		Short: "Transform or generate JSON using a jq query",
-		Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+		Use:     "query <query>",
+		Short:   "Transform or generate JSON using a jq query",
+		GroupID: "core",
+		Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			vars := make([]string, 0)

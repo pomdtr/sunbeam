@@ -12,8 +12,9 @@ import (
 
 func NewCmdFilter() *cobra.Command {
 	return &cobra.Command{
-		Use:   "filter",
-		Short: "Show filter",
+		Use:     "filter",
+		Short:   "Show filter",
+		GroupID: "core",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			input, err := io.ReadAll(os.Stdin)
 			if err != nil {

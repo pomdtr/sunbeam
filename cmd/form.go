@@ -58,8 +58,9 @@ func (f FormExec) Update(msg tea.Msg) (tui.Page, tea.Cmd) {
 
 func NewCmdForm() *cobra.Command {
 	return &cobra.Command{
-		Use:   "form",
-		Short: "Show form view",
+		Use:     "form",
+		Short:   "Show form view",
+		GroupID: "core",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			input, err := io.ReadAll(os.Stdin)
 			if err != nil {

@@ -3,5 +3,5 @@
         "./app/schemas/manifest.json": [
             "sunbeam.yml"
         ],
-    }
+    },
 }

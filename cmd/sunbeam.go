@@ -7,6 +7,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/tui"
@@ -28,9 +29,10 @@ func Execute(version string) error {
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
-		Use:     "sunbeam",
-		Short:   "Command Line Launcher",
-		Version: version,
+		Use:          "sunbeam",
+		Short:        "Command Line Launcher",
+		SilenceUsage: true,
+		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			rootItems := make([]app.RootItem, 0)
 			for _, extension := range api.Extensions {
@@ -69,9 +71,33 @@ func Execute(version string) error {
 	rootCmd.AddCommand(NewCmdOpen())
 	rootCmd.AddCommand(NewCmdSQL())
 
-	// Extension Commands
-	for _, extension := range api.Extensions {
-		rootCmd.AddCommand(NewExtensionCommand(extension, api.Extensions))
+	rootCmd.AddCommand(func() *cobra.Command {
+		return &cobra.Command{
+			Use:    "generate-docs",
+			Args:   cobra.ExactArgs(1),
+			Hidden: true,
+			RunE: func(cmd *cobra.Command, args []string) error {
+				target := args[0]
+				if _, err := os.Stat(target); os.IsNotExist(err) {
+					if err := os.MkdirAll(target, 0755); err != nil {
+						return err
+					}
+				}
+				return doc.GenMarkdownTreeCustom(
+					rootCmd,
+					target,
+					func(s string) string { return "" },
+					func(s string) string { return fmt.Sprintf("./%s", s) },
+				)
+			},
+		}
+	}())
+
+	if os.Getenv("DISABLE_EXTENSIONS") == "" {
+		// Extension Commands
+		for _, extension := range api.Extensions {
+			rootCmd.AddCommand(NewExtensionCommand(extension, api.Extensions))
+		}
 	}
 
 	return rootCmd.Execute()
