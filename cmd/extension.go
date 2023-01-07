@@ -29,7 +29,7 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 
 	extensionCommand.AddCommand(func() *cobra.Command {
 		return &cobra.Command{
-			Use:   "install <name> <repository>",
+			Use:   "install <name> <root>",
 			Short: "Install a sunbeam extension from a git repository",
 			Args:  cobra.ExactArgs(2),
 			RunE: func(cmd *cobra.Command, args []string) error {
@@ -93,7 +93,7 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 					}
 				}
 
-				target := path.Join(api.ExtensionRoot, repo.Host, repo.Owner, repo.Name)
+				target := path.Join(api.ExtensionRoot, extensionName)
 				os.MkdirAll(path.Dir(target), 0755)
 				if err := os.Rename(tmpDir, target); err != nil {
 					return err
