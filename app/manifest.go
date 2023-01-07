@@ -21,6 +21,15 @@ type Api struct {
 	ExtensionRoot string
 }
 
+func (api *Api) IsExtensionInstalled(name string) bool {
+	extensionDir := path.Join(api.ExtensionRoot, name)
+
+	if _, err := os.Stat(extensionDir); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
 type RootItem struct {
 	Extension string
 	Script    string

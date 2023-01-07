@@ -49,6 +49,10 @@ func restPrefix(hostname string) string {
 	return fmt.Sprintf("https://api.%s/", hostname)
 }
 
+func normalizeHostname(h string) string {
+	return strings.ToLower(strings.TrimPrefix(h, "www."))
+}
+
 type RestClient struct {
 	client http.Client
 	host   string

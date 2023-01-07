@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/tui"
@@ -40,6 +42,17 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 					return err
 				}
 
+				if extensionName == "" {
+					return fmt.Errorf("extension name must be specified with --name")
+				}
+
+				invalidName := []string{"copy", "detail", "exec", "extension", "filter", "form", "open", "paste", "query", "run", "sql"}
+				for _, name := range invalidName {
+					if extensionName == name {
+						return fmt.Errorf("extension name %s is reserved", extensionName)
+					}
+				}
+
 				re, err := regexp.Compile(`^[\w-]+$`)
 				if err != nil {
 					return err
@@ -47,6 +60,10 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 
 				if !re.MatchString(extensionName) {
 					return fmt.Errorf("extension name must be alphanumeric and contain only dashes and underscores")
+				}
+
+				if api.IsExtensionInstalled(extensionName) {
+					return fmt.Errorf("extension %s is already installed", extensionName)
 				}
 
 				return nil
@@ -80,55 +97,42 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 					return nil
 				}
 
-				repo, err := utils.ParseWithHost(extensionRoot, "github.com")
-				if err != nil {
-					return err
-				}
-
 				tmpDir, err := os.MkdirTemp(os.TempDir(), "sunbeam")
 				if err != nil {
 					return err
 				}
 
-				err = utils.GitClone(repo.Url(), tmpDir)
+				err = utils.GitClone(extensionRoot, tmpDir)
 				if err != nil {
 					return err
 				}
 
 				manifestPath := path.Join(tmpDir, "sunbeam.yml")
 				if _, err = os.Stat(manifestPath); os.IsNotExist(err) {
-					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", repo.Name)
+					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", extensionName)
 				}
 
-				manifest, err := app.ParseManifest(extensionName, manifestPath)
+				extension, err := app.ParseManifest(extensionName, manifestPath)
 				if err != nil {
 					return err
 				}
 
-				if manifest.PostInstall != "" {
-					cmd := exec.Command("sh", "-c", manifest.PostInstall)
-					cmd.Dir = tmpDir
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
-					cmd.Stdin = os.Stdin
-					if err != nil {
-						return err
-					}
+				if err := PostInstallHook(extension); err != nil {
+					return err
 				}
 
 				target := path.Join(api.ExtensionRoot, extensionName)
 				os.MkdirAll(path.Dir(target), 0755)
-				if err := os.Rename(tmpDir, target); err != nil {
+				if err := copy.Copy(tmpDir, target); err != nil {
 					return err
 				}
 
-				fmt.Printf("Installed extension %s", extensionName)
+				fmt.Println("Installed extension", extensionName)
 				return nil
 			},
 		}
 
 		command.Flags().StringP("name", "n", "", "Extension name")
-		command.MarkFlagRequired("name")
 
 		return command
 	}())
@@ -164,9 +168,14 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 			ValidArgs: extensionArgs,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionDir := path.Join(api.ExtensionRoot, args[0])
-				if _, err := os.Stat(extensionDir); os.IsNotExist(err) {
+				fi, err := os.Lstat(extensionDir)
+				if os.IsNotExist(err) {
 					fmt.Fprintln(os.Stderr, "Extension not found")
 					os.Exit(1)
+				}
+
+				if IsLocalExtension(fi) {
+					return fmt.Errorf("cannot upgrade local extensions")
 				}
 
 				gc := utils.NewGitClient(extensionDir)
@@ -182,7 +191,25 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 					return nil
 				}
 
-				return gc.Pull()
+				if err := gc.Pull(); err != nil {
+					return err
+				}
+
+				manifestPath := path.Join(extensionDir, "sunbeam.yml")
+				if _, err = os.Stat(manifestPath); os.IsNotExist(err) {
+					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", args[0])
+				}
+
+				extension, err := app.ParseManifest(args[0], manifestPath)
+				if err != nil {
+					return fmt.Errorf("failed to parse manifest: %w", err)
+				}
+
+				if err := PostInstallHook(extension); err != nil {
+					return err
+				}
+
+				return nil
 			},
 		}
 	}())
@@ -283,4 +310,22 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 		return &command
 	}())
 	return extensionCommand
+}
+
+func IsLocalExtension(fi fs.FileInfo) bool {
+	// Check if root is a symlink
+	return fi.Mode()&os.ModeSymlink != 0
+}
+
+func PostInstallHook(extension app.Extension) error {
+	if extension.PostInstall == "" {
+		return nil
+	}
+	cmd := exec.Command("sh", "-c", extension.PostInstall)
+	cmd.Dir = extension.Root
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	return cmd.Run()
 }
