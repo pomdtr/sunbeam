@@ -1,6 +1,8 @@
 #!/bin/sh
 
-git -C "$1/.git" log | jc --git-log | sunbeam query '.[] | {
+set -eu
+
+git -C "$1" log | jc --git-log | sunbeam query '.[] | {
     title: (.message | split("\n") | .[0]),
     subtitle: .commit[:7],
     accessories: [.author, .date],

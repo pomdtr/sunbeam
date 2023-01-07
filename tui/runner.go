@@ -111,7 +111,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 	if err != nil {
 		var exitErr *exec.ExitError
 		if ok := errors.As(err, &exitErr); ok {
-			return fmt.Errorf("command failed with exit code %d, error: %s", exitErr.ExitCode(), exitErr.Stderr)
+			return fmt.Errorf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
 		}
 		return err
 	}

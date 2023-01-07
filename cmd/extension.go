@@ -127,6 +127,10 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 					return err
 				}
 
+				if err := os.RemoveAll(tmpDir); err != nil {
+					return err
+				}
+
 				fmt.Println("Installed extension", extensionName)
 				return nil
 			},

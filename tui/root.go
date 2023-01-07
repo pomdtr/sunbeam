@@ -62,7 +62,6 @@ type Page interface {
 type Model struct {
 	width, height int
 	exitCmd       *exec.Cmd
-	exit          bool
 
 	pages        []Page
 	extensionMap map[string]app.Extension
@@ -88,25 +87,33 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
-			m.exit = true
+			m.hidden = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case OpenMsg:
-		err := open.Run(msg.Target)
-		if err != nil {
-			return m, NewErrorCmd(err)
+		m.hidden = true
+		return m, func() tea.Msg {
+			err := open.Run(msg.Target)
+			if err != nil {
+				return err
+			}
+
+			return tea.Quit()
 		}
-		return m, tea.Quit
 
 	case CopyTextMsg:
-		err := clipboard.WriteAll(msg.Text)
-		if err != nil {
-			return m, NewErrorCmd(err)
+		m.hidden = true
+		return m, func() tea.Msg {
+			err := clipboard.WriteAll(msg.Text)
+			if err != nil {
+				return err
+			}
+
+			return tea.Quit()
 		}
-		return m, tea.Quit
 	case RunScriptMsg:
 		extension, ok := m.extensionMap[msg.Extension]
 		if !ok {
@@ -140,7 +147,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.OnSuccess == "" {
 			m.exitCmd = command
-			m.exit = true
+			m.hidden = true
 			return m, tea.Quit
 		}
 
@@ -171,7 +178,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case error:
-		log.Printf("error: %s", msg)
+		m.hidden = false
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())
 		detail.SetContent(msg.Error())

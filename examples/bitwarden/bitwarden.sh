@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 bw list items | sunbeam query '.[] | {
     title: .name,
     subtitle: .login.username,

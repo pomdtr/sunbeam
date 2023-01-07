@@ -1,9 +1,5 @@
 version: "1.0"
 title: Bitwarden
-preferences:
-  - type: textfield
-    name: BW_SESSION
-    title: Bitwarden Token
 rootItems:
   - title: Search Passwords
     script: listPassords
