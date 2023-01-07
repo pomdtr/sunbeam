@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-set -eu
+set -euo pipefail
 
 git -C "$1" log | jc --git-log | sunbeam query '.[] | {
     title: (.message | split("\n") | .[0]),
