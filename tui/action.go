@@ -134,7 +134,7 @@ func NewEditCmd(path string) tea.Cmd {
 func NewAction(scriptAction app.ScriptAction) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
-	case "copy":
+	case "copy-text":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
@@ -163,12 +163,12 @@ func NewAction(scriptAction app.ScriptAction) Action {
 		}
 	case "open":
 		if scriptAction.Title == "" {
-			scriptAction.Title = "Open File"
+			scriptAction.Title = "Open"
 		}
 		cmd = NewOpenCmd(scriptAction.Target)
 	case "edit":
 		if scriptAction.Title == "" {
-			scriptAction.Title = "Open in Text Editor"
+			scriptAction.Title = "Edit"
 		}
 		cmd = NewEditCmd(scriptAction.Target)
 	default:

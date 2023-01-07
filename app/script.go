@@ -166,21 +166,21 @@ func (li ScriptItem) PreviewCommand() *exec.Cmd {
 }
 
 type ScriptAction struct {
-	Title    string `json:"title" yaml:"title"`
-	Type     string `json:"type" yaml:"type"`
-	Shortcut string `json:"shortcut,omitempty" yaml:"shortcut"`
+	Title    string `json:"title"`
+	Type     string `json:"type"`
+	Shortcut string `json:"shortcut"`
 
-	Text string `json:"text,omitempty" yaml:"textfield"`
+	Text string `json:"text"`
 
-	Target string `json:"target,omitempty" yaml:"target"`
+	Target string `json:"target"`
 
-	Extension string `json:"extension,omitempty" yaml:"extension"`
-	Script    string `json:"script,omitempty" yaml:"script"`
-	Command   string `json:"command,omitempty" yaml:"command"`
+	Extension string `json:"extension"`
+	Script    string `json:"script"`
+	Command   string `json:"command"`
 	Dir       string
 
-	OnSuccess string                          `json:"onSuccess,omitempty" yaml:"onSuccess"`
-	With      map[string]ScriptInputWithValue `json:"with,omitempty" yaml:"with"`
+	OnSuccess string                          `json:"onSuccess"`
+	With      map[string]ScriptInputWithValue `json:"with"`
 }
 
 //go:embed schemas/listitem.json

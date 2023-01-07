@@ -58,7 +58,7 @@
                 "type": {
                     "type": "string",
                     "enum": [
-                        "copy",
+                        "copy-text",
                         "reload-page",
                         "open",
                         "run-script",
@@ -144,7 +144,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "copy"
+                                "const": "copy-text"
                             }
                         }
                     },

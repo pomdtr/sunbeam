@@ -7,6 +7,6 @@ git -C "$1" log | jc --git-log | sunbeam query '.[] | {
     subtitle: .commit[:7],
     accessories: [.author, .date],
     actions: [
-        { title: "Copy Commit Hash", text: .commit, type: "copy" }
+        { title: "Copy Commit Hash", text: .commit, type: "copy-text" }
     ]
 }'

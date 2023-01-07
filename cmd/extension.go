@@ -46,7 +46,7 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 					return fmt.Errorf("extension name must be specified with --name")
 				}
 
-				invalidName := []string{"copy", "detail", "exec", "extension", "filter", "form", "open", "paste", "query", "run", "sql"}
+				invalidName := []string{"clipboard", "extension", "open", "query", "run"}
 				for _, name := range invalidName {
 					if extensionName == name {
 						return fmt.Errorf("extension name %s is reserved", extensionName)

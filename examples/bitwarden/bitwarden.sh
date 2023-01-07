@@ -7,13 +7,13 @@ bw --nointeraction list items | sunbeam query '.[] | {
     subtitle: .login.username,
     actions: [
         {
-            type: "copy",
+            type: "copy-text",
             title: "Copy Password",
             shortcut: "enter",
             text: .login.password
         },
         {
-            type: "copy",
+            type: "copy-text",
             title: "Copy Login",
             shortcut: "ctrl+y",
             text: "\(.login)"

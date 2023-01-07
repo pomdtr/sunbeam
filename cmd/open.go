@@ -12,7 +12,7 @@ import (
 func NewCmdOpen() *cobra.Command {
 	return &cobra.Command{
 		Use:     "open",
-		Short:   "Open file with default app",
+		Short:   "Open file or url with default app",
 		GroupID: "core",
 		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

@@ -11,7 +11,7 @@ func main() {
 		Actions: []Action{
 			{
 				Title: "title",
-				Type:  "copy",
+				Type:  "copy-text",
 				Text:  "text",
 			},
 		},
