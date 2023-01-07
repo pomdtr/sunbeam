@@ -30,7 +30,7 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
-			extension, err := app.ParseManifest(".", manifestPath)
+			extension, err := app.ParseManifest(manifestPath, manifestPath)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "Failed to parse manifest:", err)
 				os.Exit(1)
