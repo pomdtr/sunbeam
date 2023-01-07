@@ -254,10 +254,8 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 				return al, nil
 			}
 
-			al.filter.FilterItems("")
-
 			if al.header.input.Value() != "" {
-				al.header.input.SetValue("")
+				al.Clear()
 				return al, nil
 			} else {
 				al.Blur()
@@ -271,12 +269,14 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 				return al, nil
 			}
 			listItem, _ := selectedItem.(ListItem)
+			al.Clear()
 			al.Blur()
 			return al, listItem.Actions[0].Cmd
 		}
 
 		for _, action := range al.actions {
 			if key.Matches(msg, action.Binding()) {
+				al.Clear()
 				al.Blur()
 				return al, action.Cmd
 			}
@@ -310,6 +310,11 @@ func (al ActionList) Focused() bool {
 
 func (al *ActionList) Focus() tea.Cmd {
 	return al.header.Focus()
+}
+
+func (al *ActionList) Clear() {
+	al.header.input.SetValue("")
+	al.filter.FilterItems("")
 }
 
 func (al *ActionList) Blur() {

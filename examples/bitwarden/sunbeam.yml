@@ -3,6 +3,10 @@ title: Bitwarden
 rootItems:
   - title: Search Passwords
     script: listPassords
+preferences:
+  - name: BW_SESSION
+    type: password
+    title: Session Token
 scripts:
   listPassords:
     command: ./bitwarden.sh

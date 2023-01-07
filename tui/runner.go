@@ -13,16 +13,6 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/app"
 )
 
-var keyStore *KeyStore
-
-func init() {
-	var err error
-	keyStore, err = LoadKeyStore()
-	if err != nil {
-		panic(err)
-	}
-}
-
 type ScriptRunner struct {
 	width, height int
 	currentView   string
@@ -157,8 +147,7 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 	}
 
 	for name, param := range c.Preferences() {
-		if pref, ok := envMap[name]; ok {
-			environ = append(environ, fmt.Sprintf("%s=%s", name, pref))
+		if _, ok := envMap[name]; ok {
 			continue
 		}
 

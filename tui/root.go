@@ -114,6 +114,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return tea.Quit()
 		}
+	case ShowPrefMsg:
+		extension, ok := m.extensionMap[msg.Extension]
+		if !ok {
+			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
+		}
+		script, ok := extension.Scripts[msg.Script]
+		if !ok {
+			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
+		}
+
+		pref := NewPreferenceForm(extension, script)
+
+		cmd := m.Push(pref)
+
+		return m, cmd
 	case RunScriptMsg:
 		extension, ok := m.extensionMap[msg.Extension]
 		if !ok {
@@ -194,6 +209,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
 
 	return m, cmd
+}
+
+type ShowPrefMsg struct {
+	Extension string
+	Script    string
 }
 
 func (m *Model) View() string {
@@ -339,6 +359,15 @@ func NewRootList(rootItems ...app.RootItem) Page {
 							Extension: rootItem.Extension,
 							Script:    rootItem.Script,
 							With:      with,
+						}
+					},
+				}, {
+					Title:    "Show Preferences",
+					Shortcut: "ctrl+p",
+					Cmd: func() tea.Msg {
+						return ShowPrefMsg{
+							Extension: rootItem.Extension,
+							Script:    rootItem.Script,
 						}
 					},
 				},
