@@ -64,6 +64,7 @@ func Execute(version string) error {
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdClipboard())
+	rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewCmdOpen())
 
 	rootCmd.AddCommand(func() *cobra.Command {
