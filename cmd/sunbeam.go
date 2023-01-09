@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
@@ -80,7 +81,12 @@ func Execute(version string) error {
 				return doc.GenMarkdownTreeCustom(
 					rootCmd,
 					target,
-					func(s string) string { return "" },
+					func(s string) string {
+						basename := path.Base(s)
+						stem := strings.TrimSuffix(basename, ".md")
+						title := strings.ReplaceAll(stem, "_", " ")
+						return fmt.Sprintf("---\ntitle: %s\nhide_title: true\n---\n\n", title)
+					},
 					func(s string) string { return fmt.Sprintf("./%s", s) },
 				)
 			},
