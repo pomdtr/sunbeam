@@ -12,7 +12,6 @@ rootItems:
       repository: sunbeamlauncher/sunbeam
 scripts:
   viewReadme:
-    mode: detail
     command: |
       gh api repos/${{repository}}/readme --jq '
       {
@@ -28,21 +27,28 @@ scripts:
         ]
       }
       '
+    onSuccess: push-page
+    page:
+      type: detail
     inputs:
       - name: repository
         type: textfield
         title: Repository
   listRepositories:
     command: ./list-repos.sh ${{ owner }}
-    mode: filter
-    showPreview: true
+    onSuccess: push-page
+    page:
+      type: list
+      showPreview: true
     inputs:
       - name: owner
         type: textfield
         title: Owner
   listPullRequests:
     command: ./list-prs.sh ${{ repository }}
-    mode: filter
+    onSuccess: push-page
+    page:
+      type: list
     inputs:
       - name: repository
         type: textfield

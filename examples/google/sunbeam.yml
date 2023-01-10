@@ -9,4 +9,7 @@ rootItems:
 scripts:
   search:
     command: ./google.mjs
-    mode: generator
+    onSuccess: push-page
+    page:
+      type: list
+      isGenerator: true

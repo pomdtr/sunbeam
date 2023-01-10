@@ -5,7 +5,6 @@ rootItems:
     title: Example form
 scripts:
   exampleForm:
-    mode: command
     command: |
       cat << EOF
       textfield: ${{ textfield }}

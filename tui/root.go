@@ -138,7 +138,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		runner := NewScriptRunner(extension, script, msg.With)
-		runner.OnSuccessCmd = msg.OnSuccessCmd()
+
+		if msg.OnSuccess != "" {
+			script.OnSuccess = msg.OnSuccess
+		}
 		cmd := m.Push(runner)
 		return m, cmd
 	case ExecCommandMsg:
@@ -153,21 +156,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-		m.hidden = true
-		return m, tea.ExecProcess(command, func(err error) tea.Msg {
+		return m, func() tea.Msg {
+			output, err := command.Output()
 			if err != nil {
-				return showMsg{
-					cmd: NewErrorCmd(err),
-				}
+				return err
 			}
 
-			return showMsg{
-				cmd: msg.OnSuccessCmd(),
-			}
-		})
-	case showMsg:
-		m.hidden = false
-		return m, msg.cmd
+			return msg.OnSuccessMsg(string(output))
+		}
 	case pushMsg:
 		m.hidden = false
 		cmd := m.Push(msg.container)
@@ -245,10 +241,6 @@ func (m *Model) pageHeight() int {
 }
 
 type popMsg struct{}
-
-type showMsg struct {
-	cmd tea.Cmd
-}
 
 func PopCmd() tea.Msg {
 	return popMsg{}

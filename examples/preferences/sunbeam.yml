@@ -9,9 +9,9 @@ rootItems:
     title: Google Search
 scripts:
   googleSearch:
-    mode: command
     command: |
-      sunbeam open "https://www.google.com/search?q=$FIRST_NAME+$LAST_NAME"
+      echo "https://www.google.com/search?q=$FIRST_NAME+$LAST_NAME"
+    onSuccess: open-url
     preferences:
       - name: FIRST_NAME
         type: textfield

@@ -10,4 +10,6 @@ preferences:
 scripts:
   listPassords:
     command: ./bitwarden.sh
-    mode: filter
+    onSuccess: push-page
+    page:
+      type: list

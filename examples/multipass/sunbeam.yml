@@ -8,8 +8,10 @@ rootItems:
     title: Manage VMs
 scripts:
   manageVMs:
-    mode: filter
-    showPreview: true
+    onSuccess: push-page
+    page:
+      type: list
+      showPreview: true
     command: |
       multipass list --format json | sunbeam query '.list[] |
       {
@@ -26,7 +28,6 @@ scripts:
             then
               [
                 {type: "exec-command", title: "Stop \(.name)", onSuccess: "reload-page", command: "multipass stop \(.name)"},
-                {type: "exec-command", title: "Open Shell", shortcut: "ctrl+s", command: "multipass shell \(.name)", onSuccess: "reload-page"}
               ]
             else
               [

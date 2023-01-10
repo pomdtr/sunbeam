@@ -17,10 +17,9 @@ type ScriptRunner struct {
 	width, height int
 	currentView   string
 
-	extension    app.Extension
-	with         map[string]app.ScriptInputWithValue
-	environ      []string
-	OnSuccessCmd tea.Cmd
+	extension app.Extension
+	with      map[string]app.ScriptInputWithValue
+	environ   []string
 
 	list   *List
 	detail *Detail
@@ -80,16 +79,17 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		return err
 	}
 
-	if c.script.Mode == "command" {
+	if c.script.OnSuccess != "push-page" {
 		return ExecCommandMsg{
 			Command:   commandString,
 			Directory: c.extension.Root,
 			Env:       c.environ,
+			OnSuccess: c.script.OnSuccess,
 		}
 	}
 
 	command := exec.Command("sh", "-c", commandString)
-	if c.script.Mode == "generator" {
+	if c.script.Page.Type == "generator" {
 		command.Stdin = strings.NewReader(c.list.Query())
 	}
 
@@ -97,7 +97,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 	command.Env = os.Environ()
 	command.Env = append(command.Env, c.environ...)
 
-	res, err := command.Output()
+	output, err := command.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
 		if ok := errors.As(err, &exitErr); ok {
@@ -106,7 +106,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		return err
 	}
 
-	return CommandOutput(string(res))
+	return CommandOutput(string(output))
 }
 
 func (c *ScriptRunner) CheckMissingParameters() []FormItem {
@@ -184,24 +184,15 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		return c.form.Init()
 	}
 
-	switch c.script.Mode {
-	case "filter", "generator":
-		c.currentView = "list"
-		if c.list != nil {
-			cmd := c.list.SetIsLoading(true)
+	if c.script.OnSuccess != "push-page" {
+		if c.form != nil {
+			cmd := c.form.SetIsLoading(true)
 			return tea.Batch(cmd, c.ScriptCmd)
 		}
-		c.list = NewList(c.extension.Title)
-		if c.script.Mode == "generator" {
-			c.list.Dynamic = true
-		}
-		if c.script.ShowPreview {
-			c.list.ShowPreview = true
-		}
-		c.list.SetSize(c.width, c.height)
-		cmd := c.list.SetIsLoading(true)
-		return tea.Batch(c.ScriptCmd, c.list.Init(), cmd)
-	case "detail":
+		return c.ScriptCmd
+	}
+
+	if c.script.Page.Type == "detail" {
 		c.currentView = "detail"
 		if c.detail != nil {
 			cmd := c.detail.SetIsLoading(true)
@@ -212,15 +203,29 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		c.detail.SetSize(c.width, c.height)
 		cmd := c.detail.SetIsLoading(true)
 		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
-	case "command":
-		if c.form != nil {
-			cmd := c.form.SetIsLoading(true)
+	}
+
+	if c.script.Page.Type == "list" {
+		c.currentView = "list"
+		if c.list != nil {
+			cmd := c.list.SetIsLoading(true)
 			return tea.Batch(cmd, c.ScriptCmd)
 		}
-		return c.ScriptCmd
-	default:
-		return NewErrorCmd(fmt.Errorf("unknown script mode: %s", c.script.Mode))
+		c.list = NewList(c.extension.Title)
+		if c.script.Page.IsGenerator {
+			c.list.Dynamic = true
+		}
+		if c.script.Page.ShowPreview {
+			c.list.ShowPreview = true
+		}
+
+		c.list.SetSize(c.width, c.height)
+
+		cmd := c.list.SetIsLoading(true)
+		return tea.Batch(c.ScriptCmd, c.list.Init(), cmd)
 	}
+
+	return NewErrorCmd(fmt.Errorf("unknown page type: %s", c.script.Page.Type))
 }
 
 func (c *ScriptRunner) SetSize(width, height int) {
@@ -238,7 +243,7 @@ func (c *ScriptRunner) SetSize(width, height int) {
 func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case CommandOutput:
-		switch c.script.Mode {
+		switch c.script.Page.Type {
 		case "detail":
 			var detail app.Detail
 			err := json.Unmarshal([]byte(msg), &detail)
@@ -251,7 +256,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.SetSize(c.width, c.height)
 
 			return c, cmd
-		case "filter", "generator":
+		case "list":
 			scriptItems, err := app.ParseListItems(string(msg))
 			if err != nil {
 				return c, NewErrorCmd(err)
@@ -277,8 +282,6 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			cmd := c.list.SetItems(listItems)
 			c.list.SetIsLoading(false)
 			return c, cmd
-		case "command":
-			return c, c.OnSuccessCmd
 		}
 	case SubmitMsg:
 		switch msg.Name {

@@ -27,7 +27,9 @@ scripts:
         )
       }
       '
-    mode: filter
+    onSuccess: push-page
+    page:
+      type: list
   searchEntries:
     command: |
       curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
@@ -39,7 +41,9 @@ scripts:
           ]
         }
       '
-    mode: filter
+    onSuccess: push-page
+    page:
+      type: list
     inputs:
       - name: slug
         type: textfield

@@ -25,7 +25,9 @@ preferences:
 scripts:
   browseFiles:
     command: ./file-browser.py --root ${{ root }}
-    mode: filter
+    onSuccess: push-page
+    page:
+      type: list
     inputs:
       - name: root
         type: directory

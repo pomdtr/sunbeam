@@ -12,7 +12,9 @@ rootItems:
 scripts:
   listIssues:
     command: ./jira.sh ${{ jql }}
-    mode: filter
+    onSuccess: push-page
+    page:
+      type: list
     inputs:
       - name: jql
         type: textfield

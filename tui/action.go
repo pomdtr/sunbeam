@@ -106,14 +106,24 @@ type ExecCommandMsg struct {
 	Env       []string
 }
 
-func (msg ExecCommandMsg) OnSuccessCmd() tea.Cmd {
+func (msg ExecCommandMsg) OnSuccessMsg(output string) tea.Msg {
 	switch msg.OnSuccess {
-	case "exit":
-		return tea.Quit
 	case "reload-page":
-		return NewReloadPageCmd(nil)
+		return ReloadPageMsg{}
+	case "copy-text":
+		return CopyTextMsg{
+			Text: output,
+		}
+	case "open-url":
+		return OpenMsg{
+			Target: strings.TrimSpace(output),
+		}
+	case "open-path":
+		return OpenMsg{
+			Target: strings.TrimSpace(output),
+		}
 	default:
-		return tea.Quit
+		return fmt.Errorf("unknown on-success action: %s", msg.OnSuccess)
 	}
 }
 

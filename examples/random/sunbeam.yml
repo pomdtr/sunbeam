@@ -6,4 +6,6 @@ rootItems:
 scripts:
   randomList:
     command: ./random_list.py
-    mode: filter
+    onSuccess: push-page
+    page:
+      type: list

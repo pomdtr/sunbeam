@@ -96,30 +96,6 @@
                 "^[a-zA-Z][a-zA-Z0-9-_]+$": {
                     "$ref": "#/$defs/script"
                 }
-            },
-            "not": {
-                "anyOf": [
-                    {
-                        "required": [
-                            "extension"
-                        ]
-                    },
-                    {
-                        "required": [
-                            "query"
-                        ]
-                    },
-                    {
-                        "required": [
-                            "completion"
-                        ]
-                    },
-                    {
-                        "required": [
-                            "help"
-                        ]
-                    }
-                ]
             }
         }
     },
@@ -127,20 +103,10 @@
         "script": {
             "type": "object",
             "required": [
-                "command",
-                "mode"
+                "command"
             ],
             "additionalProperties": false,
             "properties": {
-                "mode": {
-                    "type": "string",
-                    "enum": [
-                        "filter",
-                        "generator",
-                        "detail",
-                        "command"
-                    ]
-                },
                 "command": {
                     "type": "string"
                 },
@@ -159,12 +125,26 @@
                         "$ref": "#/$defs/input"
                     }
                 },
-                "showPreview": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "title": {
+                "onSuccess": {
                     "type": "string"
+                },
+                "page": {
+                    "type": "object",
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "showPreview": {
+                            "type": "boolean"
+                        },
+                        "isGenerator": {
+                            "type": "boolean"
+                        }
+                    }
                 },
                 "inputs": {
                     "type": "array",

@@ -11,8 +11,9 @@ rootItems:
       platform: linux
 scripts:
   list:
-    mode: filter
-    showPreview: true
+    page:
+      type: list
+    onSuccess: push-page
     inputs:
       - name: platform
         type: textfield

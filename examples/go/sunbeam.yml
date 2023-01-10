@@ -1,9 +1,0 @@
-title: Golang
-version: "1.0"
-rootItems:
-  - script: hello
-    title: Hello World
-scripts:
-  hello:
-    mode: detail
-    command: sunbeam exec main.go -i detail.go

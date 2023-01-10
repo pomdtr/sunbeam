@@ -14,18 +14,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type Page struct {
+	Type        string `json:"type"`
+	ShowPreview bool   `json:"showPreview"`
+	IsGenerator bool   `json:"isGenerator"`
+}
+
 type Script struct {
 	Name        string
 	Command     string        `json:"command" yaml:"command"`
 	Description string        `json:"description" yaml:"description"`
 	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
-	Mode        string        `json:"mode" yaml:"mode"`
 	Inputs      []ScriptInput `json:"inputs" yaml:"inputs"`
-	ShowPreview bool          `json:"showPreview" yaml:"showPreview"`
-}
+	Page        Page          `json:"page" yaml:"page"`
 
-func (s Script) IsPage() bool {
-	return s.Mode == "filter" || s.Mode == "generator" || s.Mode == "detail"
+	OnSuccess string `json:"onSuccess" yaml:"onSuccess"`
 }
 
 type Optional[T any] struct {

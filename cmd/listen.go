@@ -7,9 +7,9 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/server"
 )
 
-func NewCmdServe() *cobra.Command {
+func NewCmdListen() *cobra.Command {
 	command := cobra.Command{
-		Use:     "serve",
+		Use:     "listen",
 		GroupID: "core",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			host, err := cmd.Flags().GetString("host")

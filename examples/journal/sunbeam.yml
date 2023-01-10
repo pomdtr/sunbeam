@@ -9,10 +9,11 @@ rootItems:
 scripts:
   listEntries:
     command: ./list-entries.py
-    mode: filter
+    onSuccess: push-page
+    page:
+      type: list
   writeEntry:
     command: ./write-entry.py --title ${{ title }} --content ${{ content }}
-    mode: command
     inputs:
       - name: title
         type: textfield
@@ -22,7 +23,6 @@ scripts:
         title: Content
   editEntry:
     command: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
-    mode: command
     inputs:
       - name: uuid
         type: textfield
@@ -35,7 +35,6 @@ scripts:
         title: Content
   deleteEntry:
     command: ./delete-entry.py --uuid ${{ uuid }}
-    mode: command
     inputs:
       - name: uuid
         type: textfield
