@@ -79,12 +79,7 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 		return ws.WriteMessage(messageType, data)
 	}
 
-	var sunbeamPath string
-	if len(os.Args) == 0 {
-		sunbeamPath = "sunbeam"
-	} else {
-		sunbeamPath = os.Args[0]
-	}
+	sunbeamPath := os.Args[0]
 
 	command := exec.Command(sunbeamPath, arguments...)
 	command.Env = []string{
