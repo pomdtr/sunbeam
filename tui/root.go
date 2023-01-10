@@ -90,7 +90,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var command *exec.Cmd
 		switch runtime.GOOS {
 		case "linux":
-			command = exec.Command("systemd-run", "--scope", "--user", "xdg-open", msg.Target)
+			command = exec.Command("xdg-open", msg.Target)
 		case "darwin":
 			command = exec.Command("open", msg.Target)
 		}
