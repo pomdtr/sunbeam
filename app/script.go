@@ -175,7 +175,8 @@ type ScriptAction struct {
 
 	Text string `json:"text"`
 
-	Target string `json:"target"`
+	Url  string `json:"url"`
+	Path string `json:"path"`
 
 	Extension string `json:"extension"`
 	Script    string `json:"script"`

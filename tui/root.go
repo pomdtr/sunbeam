@@ -13,6 +13,7 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/pkg/browser"
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/utils"
 )
@@ -72,6 +73,10 @@ func (m Model) IsFullScreen() bool {
 	return m.config.Height == 0
 }
 
+func (m Model) IsRemote() bool {
+	return os.Getenv("SUNBEAM_SERVER") != ""
+}
+
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -83,10 +88,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
-	case OpenMsg:
-		m.hidden = true
+	case OpenUrlMsg:
+		if m.IsRemote() {
+			action, _ := json.Marshal(map[string]string{
+				"type": "open",
+				"url":  msg.Url,
+			})
 
-		err := utils.Open(msg.Target)
+			fmt.Fprintln(os.Stderr, string(action))
+			m.hidden = true
+			return m, tea.Quit
+		}
+		err := browser.OpenURL(msg.Url)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
@@ -94,6 +107,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case CopyTextMsg:
+		if m.IsRemote() {
+			action, _ := json.Marshal(map[string]string{
+				"type": "copy-text",
+				"text": msg.Text,
+			})
+
+			fmt.Fprintln(os.Stderr, string(action))
+			m.hidden = true
+			return m, tea.Quit
+		}
 		err := clipboard.WriteAll(msg.Text)
 		if err != nil {
 			return m, NewErrorCmd(fmt.Errorf("failed to copy text to clipboard: %s", err))

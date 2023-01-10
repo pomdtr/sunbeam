@@ -17,7 +17,7 @@ if not args.show_hidden:
 
 for path in sorted(entries, key=lambda p: p.name):
     primaryAction = (
-        {"type": "open", "target": str(path.absolute()), "title": "Open File"}
+        {"type": "open-path", "path": str(path.absolute()), "title": "Open File"}
         if path.is_file()
         else {
             "type": "run-script",

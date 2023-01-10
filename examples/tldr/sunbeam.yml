@@ -24,6 +24,6 @@ scripts:
         title: .,
         previewCmd: "tldr --raw --platform  ${{ platform }} \(.)",
         actions: [
-          {type: "open", target: "https://tldr.ostera.io/\(.)", title: "Open in Browser"}
+          {type: "open-url", url: "https://tldr.ostera.io/\(.)", title: "Open in Browser"}
         ]
       }'

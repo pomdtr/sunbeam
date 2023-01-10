@@ -318,7 +318,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 							},
 							{
 								Title: "Open in Browser",
-								Cmd:   tui.NewOpenCmd(repo.HtmlURL),
+								Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
 							},
 						}
 					} else {
@@ -329,7 +329,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 							},
 							{
 								Title: "Open in Browser",
-								Cmd:   tui.NewOpenCmd(repo.HtmlURL),
+								Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
 							},
 						}
 					}

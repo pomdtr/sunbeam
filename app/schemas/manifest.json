@@ -126,7 +126,13 @@
                     }
                 },
                 "onSuccess": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "push-page",
+                        "open-url",
+                        "copy-text",
+                        "open-path"
+                    ]
                 },
                 "page": {
                     "type": "object",

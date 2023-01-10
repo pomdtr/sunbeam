@@ -171,6 +171,10 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 			buf := make([]byte, 1024)
 			n, err := tty.Read(buf)
 			if err != nil {
+				if errBuf.Len() > 0 {
+					send(websocket.TextMessage, errBuf.Bytes())
+				}
+
 				log.Printf("error reading from pty: %v", err)
 				return
 			}

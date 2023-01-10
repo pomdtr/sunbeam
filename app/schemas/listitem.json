@@ -60,7 +60,8 @@
                     "enum": [
                         "copy-text",
                         "reload-page",
-                        "open",
+                        "open-url",
+                        "open-path",
                         "run-script",
                         "exec-command"
                     ]

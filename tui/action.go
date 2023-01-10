@@ -39,16 +39,16 @@ type CopyTextMsg struct {
 	Text string
 }
 
-func NewOpenCmd(path string) tea.Cmd {
+func NewOpenUrlCmd(Url string) tea.Cmd {
 	return func() tea.Msg {
-		return OpenMsg{
-			Target: path,
+		return OpenUrlMsg{
+			Url: Url,
 		}
 	}
 }
 
-type OpenMsg struct {
-	Target string
+type OpenUrlMsg struct {
+	Url string
 }
 
 func NewReloadPageCmd(with map[string]app.ScriptInputWithValue) tea.Cmd {
@@ -115,12 +115,12 @@ func (msg ExecCommandMsg) OnSuccessMsg(output string) tea.Msg {
 			Text: output,
 		}
 	case "open-url":
-		return OpenMsg{
-			Target: strings.TrimSpace(output),
+		return OpenUrlMsg{
+			Url: strings.TrimSpace(output),
 		}
 	case "open-path":
-		return OpenMsg{
-			Target: strings.TrimSpace(output),
+		return OpenUrlMsg{
+			Url: fmt.Sprintf("file://%s", strings.TrimSpace(output)),
 		}
 	default:
 		return fmt.Errorf("unknown on-success action: %s", msg.OnSuccess)
@@ -135,8 +135,7 @@ func NewEditCmd(path string) tea.Cmd {
 
 	return func() tea.Msg {
 		return ExecCommandMsg{
-			Command:   fmt.Sprintf("%s %s", editor, path),
-			OnSuccess: "reload-page",
+			Command: fmt.Sprintf("%s %s", editor, path),
 		}
 	}
 }
@@ -171,16 +170,21 @@ func NewAction(scriptAction app.ScriptAction) Action {
 				Directory: scriptAction.Dir,
 			}
 		}
-	case "open":
+	case "open-path":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open"
 		}
-		cmd = NewOpenCmd(scriptAction.Target)
+		cmd = NewOpenUrlCmd(fmt.Sprintf("file://%s", scriptAction.Path))
+	case "open-url":
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Open in Browser"
+		}
+		cmd = NewOpenUrlCmd(scriptAction.Url)
 	case "edit":
 		if scriptAction.Title == "" {
-			scriptAction.Title = "Edit"
+			scriptAction.Title = "Edit File"
 		}
-		cmd = NewEditCmd(scriptAction.Target)
+		cmd = NewEditCmd(scriptAction.Path)
 	default:
 		scriptAction.Title = "Unknown"
 		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))
