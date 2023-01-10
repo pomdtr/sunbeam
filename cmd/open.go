@@ -1,12 +1,8 @@
 package cmd
 
 import (
-	"io"
-	"os"
-	"strings"
-
-	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
+	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
 func NewCmdOpen() *cobra.Command {
@@ -14,20 +10,9 @@ func NewCmdOpen() *cobra.Command {
 		Use:     "open",
 		Short:   "Open file or url with default app",
 		GroupID: "core",
-		Args:    cobra.MaximumNArgs(1),
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			var input string
-			if len(args) == 0 {
-				bytes, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-				input = strings.Trim(string(bytes), "\n ")
-			} else {
-				input = args[0]
-			}
-
-			return open.Run(input)
+			return utils.Open(args[0])
 		},
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -87,17 +86,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case OpenMsg:
 		m.hidden = true
 
-		var command *exec.Cmd
-		switch runtime.GOOS {
-		case "linux":
-			command = exec.Command("xdg-open", msg.Target)
-		case "darwin":
-			command = exec.Command("open", msg.Target)
-		}
-
-		output, err := command.CombinedOutput()
+		err := utils.Open(msg.Target)
 		if err != nil {
-			return m, NewErrorCmd(fmt.Errorf("failed to open %s: %s", msg.Target, output))
+			return m, NewErrorCmd(err)
 		}
 
 		m.hidden = true
@@ -286,7 +277,7 @@ func (m *Model) Pop() {
 }
 
 func toShellCommand(rootItem app.RootItem) string {
-	args := []string{"sunbeam", "run", rootItem.Extension, rootItem.Script}
+	args := []string{"sunbeam", rootItem.Extension, rootItem.Script}
 	for param, value := range rootItem.With {
 		switch value := value.(type) {
 		case string:
