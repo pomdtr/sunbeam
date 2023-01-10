@@ -128,6 +128,7 @@ func (ti *TextInput) Height() int {
 
 func (ti *TextInput) SetWidth(width int) {
 	ti.Model.Width = width - 1
+	ti.Model.SetValue(ti.Model.Value())
 	placeholderPadding := utils.Max(0, width-len(ti.placeholder))
 	ti.Model.Placeholder = fmt.Sprintf("%s%s", ti.placeholder, strings.Repeat(" ", placeholderPadding))
 }
@@ -539,7 +540,7 @@ func (c *Form) View() string {
 			inputView = normalBorder.Render(inputView)
 		}
 
-		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Top, fmt.Sprintf("\n%s: ", styles.Bold.Render(item.Title)), inputView)
+		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, styles.Bold.Render(fmt.Sprintf("%s: ", item.Title)), inputView)
 		if lipgloss.Width(itemViews[i]) > maxWidth {
 			maxWidth = lipgloss.Width(itemViews[i])
 		}
