@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -85,25 +86,30 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case OpenMsg:
 		m.hidden = true
-		
-		_, err := exec.Command("systemd-run", "--scope", "--user", "xdg-open", msg.Target).CombinedOutput()
-		if err != nil {
-			return m, NewErrorCmd(err)
+
+		var command *exec.Cmd
+		switch runtime.GOOS {
+		case "linux":
+			command = exec.Command("systemd-run", "--scope", "--user", "xdg-open", msg.Target)
+		case "darwin":
+			command = exec.Command("open", msg.Target)
 		}
+
+		output, err := command.CombinedOutput()
+		if err != nil {
+			return m, NewErrorCmd(fmt.Errorf("failed to open %s: %s", msg.Target, output))
+		}
+
 		m.hidden = true
 		return m, tea.Quit
-
-
 	case CopyTextMsg:
-		m.hidden = true
-		return m, func() tea.Msg {
-			err := clipboard.WriteAll(msg.Text)
-			if err != nil {
-				return err
-			}
-
-			return tea.Quit()
+		err := clipboard.WriteAll(msg.Text)
+		if err != nil {
+			return m, NewErrorCmd(fmt.Errorf("failed to copy text to clipboard: %s", err))
 		}
+
+		m.hidden = true
+		return m, tea.Quit
 	case ShowPrefMsg:
 		extension, ok := m.extensionMap[msg.Extension]
 		if !ok {
