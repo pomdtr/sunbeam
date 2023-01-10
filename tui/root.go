@@ -13,7 +13,6 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/skratchdot/open-golang/open"
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/utils"
 )
@@ -86,14 +85,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case OpenMsg:
 		m.hidden = true
-		return m, func() tea.Msg {
-			err := open.Run(msg.Target)
-			if err != nil {
-				return err
-			}
-
-			return tea.Quit()
+		
+		_, err := exec.Command("systemd-run", "--scope", "--user", "xdg-open", msg.Target).CombinedOutput()
+		if err != nil {
+			return m, NewErrorCmd(err)
 		}
+		m.hidden = true
+		return m, tea.Quit
+
 
 	case CopyTextMsg:
 		m.hidden = true
