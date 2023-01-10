@@ -8,13 +8,36 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"github.com/spf13/viper"
 
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/tui"
 )
 
+func parseConfig(configRoot string) (*tui.Config, error) {
+	viper.AddConfigPath(configRoot)
+	viper.SetConfigName("config")
+	viper.SetConfigType("yml")
+	viper.SetEnvPrefix("sunbeam")
+	viper.ReadInConfig()
+	viper.AutomaticEnv()
+
+	var config tui.Config
+	err := viper.Unmarshal(&config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &config, err
+}
+
 func Execute(version string) (err error) {
 	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	config, err := parseConfig(path.Join(homeDir, ".config", "sunbeam"))
 	if err != nil {
 		return err
 	}
@@ -39,18 +62,7 @@ func Execute(version string) (err error) {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootItems := make([]app.RootItem, 0)
-			for _, extension := range api.Extensions {
-				rootItems = append(rootItems, extension.RootItems...)
-			}
-
-			for _, rootItem := range tui.Config.RootItems {
-				rootItem.Subtitle = "User"
-				rootItems = append(rootItems, rootItem)
-			}
-
-			rootList := tui.NewRootList(rootItems...)
-			model := tui.NewModel(rootList, api.Extensions...)
+			model := tui.NewModel(config, api.Extensions...)
 			return tui.Draw(model)
 		},
 	}
@@ -64,9 +76,9 @@ func Execute(version string) (err error) {
 	})
 
 	// Core Commands
-	rootCmd.AddCommand(NewCmdExtension(api))
+	rootCmd.AddCommand(NewCmdExtension(api, config))
 	rootCmd.AddCommand(NewCmdQuery())
-	rootCmd.AddCommand(NewCmdRun())
+	rootCmd.AddCommand(NewCmdRun(config))
 	rootCmd.AddCommand(NewCmdClipboard())
 	rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewCmdOpen())
@@ -101,21 +113,20 @@ func Execute(version string) (err error) {
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
 		for _, extension := range api.Extensions {
-			rootCmd.AddCommand(NewExtensionCommand(extension, api.Extensions))
+			rootCmd.AddCommand(NewExtensionCommand(extension, config, api.Extensions))
 		}
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(extension app.Extension, extensions []app.Extension) *cobra.Command {
+func NewExtensionCommand(extension app.Extension, config *tui.Config, extensions []app.Extension) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:     extension.Name,
 		GroupID: "extension",
 		Short:   extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			list := tui.NewRootList(extension.RootItems...)
-			root := tui.NewModel(list, extensions...)
+			root := tui.NewModel(config, extensions...)
 			err = tui.Draw(root)
 			if err != nil {
 				return fmt.Errorf("could not run extension: %w", err)
@@ -153,8 +164,10 @@ func NewExtensionCommand(extension app.Extension, extensions []app.Extension) *c
 
 				}
 
+				model := tui.NewModel(config, extensions...)
 				runner := tui.NewScriptRunner(extension, script, with)
-				model := tui.NewModel(runner, extensions...)
+				model.SetRoot(runner)
+
 				err = tui.Draw(model)
 				if err != nil {
 					return fmt.Errorf("could not run script: %w", err)

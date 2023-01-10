@@ -18,39 +18,11 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
-type SunbeamConfig struct {
-	Height      int
-	Width       int
-	FullScreen  bool
-	AccentColor string
-	CopyCommand string
+type Config struct {
+	Height int
 
 	RootItems []app.RootItem `yaml:"rootItems"`
 }
-
-var Config SunbeamConfig = SunbeamConfig{
-	Height:      0,
-	Width:       0,
-	AccentColor: "13",
-	FullScreen:  true,
-}
-
-// func init() {
-// 	viper.AddConfigPath(app.Sunbeam.ConfigRoot)
-// 	viper.SetConfigName("config")
-// 	viper.SetConfigType("yaml")
-// 	viper.SetEnvPrefix("sunbeam")
-// 	viper.ReadInConfig()
-// 	viper.AutomaticEnv()
-
-// 	viper.SetDefault("accentColor", "13")
-// 	viper.SetDefault("height", 0)
-
-// 	err := viper.Unmarshal(&Config)
-// 	if err != nil {
-// 		log.Printf("unable to decode config into struct, %v", err)
-// 	}
-// }
 
 type Page interface {
 	Init() tea.Cmd
@@ -63,23 +35,42 @@ type Model struct {
 	width, height int
 	exitCmd       *exec.Cmd
 
+	config       *Config
+	root         Page
 	pages        []Page
 	extensionMap map[string]app.Extension
 
 	hidden bool
 }
 
-func NewModel(rootPage Page, extensions ...app.Extension) *Model {
+func NewModel(config *Config, extensions ...app.Extension) *Model {
 	extensionMap := make(map[string]app.Extension)
+	rootItems := make([]app.RootItem, 0)
 	for _, extension := range extensions {
 		extensionMap[extension.Name] = extension
+		rootItems = append(rootItems, extension.RootItems...)
 	}
+	for _, rootItem := range config.RootItems {
+		if _, ok := extensionMap[rootItem.Extension]; !ok {
+			continue
+		}
+		rootItems = append(rootItems, rootItem)
+	}
+	rootList := NewRootList(rootItems...)
 
-	return &Model{pages: []Page{rootPage}, extensionMap: extensionMap}
+	return &Model{extensionMap: extensionMap, root: rootList, config: config}
+}
+
+func (m *Model) SetRoot(root Page) {
+	m.root = root
 }
 
 func (m *Model) Init() tea.Cmd {
-	return m.pages[0].Init()
+	return m.root.Init()
+}
+
+func (m Model) IsFullScreen() bool {
+	return m.config.Height == 0
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -186,7 +177,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.Push(msg.container)
 		return m, cmd
 	case popMsg:
-		if len(m.pages) == 1 {
+		if len(m.pages) == 0 {
 			return m, tea.Quit
 		} else {
 			m.Pop()
@@ -197,7 +188,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())
 		detail.SetContent(msg.Error())
-		m.pages[len(m.pages)-1] = detail
+
+		if len(m.pages) == 0 {
+			m.root = detail
+		} else {
+			m.pages[len(m.pages)-1] = detail
+		}
 
 		return m, detail.Init()
 	}
@@ -205,8 +201,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Update the current page
 	var cmd tea.Cmd
 
-	currentPageIdx := len(m.pages) - 1
-	m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
+	if len(m.pages) == 0 {
+		m.root, cmd = m.root.Update(msg)
+	} else {
+		currentPageIdx := len(m.pages) - 1
+		m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
+	}
 
 	return m, cmd
 }
@@ -221,29 +221,28 @@ func (m *Model) View() string {
 		return ""
 	}
 
-	var embedView string
 	if len(m.pages) > 0 {
 		currentPage := m.pages[len(m.pages)-1]
-		embedView = currentPage.View()
-	} else {
-		embedView = "No pages"
+		return currentPage.View()
 	}
 
-	return embedView
+	return m.root.View()
+
 }
 
 func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 
+	m.root.SetSize(width, m.pageHeight())
 	for _, page := range m.pages {
 		page.SetSize(m.width, m.pageHeight())
 	}
 }
 
 func (m *Model) pageHeight() int {
-	if Config.Height > 0 {
-		return utils.Min(Config.Height, m.height)
+	if m.config.Height > 0 {
+		return utils.Min(m.config.Height, m.height)
 	} else {
 		return m.height
 	}
@@ -409,7 +408,7 @@ func Draw(model *Model) (err error) {
 	}
 
 	var p *tea.Program
-	if Config.FullScreen {
+	if model.IsFullScreen() {
 		p = tea.NewProgram(model, tea.WithAltScreen())
 	} else {
 		p = tea.NewProgram(model)

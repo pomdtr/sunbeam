@@ -83,7 +83,7 @@ func (i ListItem) Render(width int, selected bool) string {
 	titleStyle := lipgloss.NewStyle().Bold(true)
 	if selected {
 		title = fmt.Sprintf("> %s", i.Title)
-		titleStyle = titleStyle.Foreground(lipgloss.Color(Config.AccentColor))
+		titleStyle = titleStyle.Foreground(lipgloss.Color("13"))
 	} else {
 		title = fmt.Sprintf("  %s", i.Title)
 	}

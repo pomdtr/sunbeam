@@ -10,7 +10,7 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/tui"
 )
 
-func NewCmdRun() *cobra.Command {
+func NewCmdRun(config *tui.Config) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:     "run <extension-root>",
 		Short:   "Run an extension from a directory",
@@ -36,8 +36,7 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
-			rootList := tui.NewRootList(extension.RootItems...)
-			model := tui.NewModel(rootList, extension)
+			model := tui.NewModel(config, extension)
 
 			return tui.Draw(model)
 		},

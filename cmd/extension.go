@@ -18,7 +18,7 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
-func NewCmdExtension(api app.Api) *cobra.Command {
+func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
@@ -339,9 +339,10 @@ func NewCmdExtension(api app.Api) *cobra.Command {
 
 				list := tui.NewList("Browse Extensions")
 				list.SetItems(extensionItems)
-				root := tui.NewModel(list)
+				model := tui.NewModel(config)
+				model.SetRoot(list)
 
-				return tui.Draw(root)
+				return tui.Draw(model)
 			},
 		}
 		return &command
