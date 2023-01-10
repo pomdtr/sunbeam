@@ -163,13 +163,17 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			}
 		}
 	case "exec-command":
-		cmd = func() tea.Msg {
-			return ExecCommandMsg{
-				Command:   scriptAction.Command,
-				OnSuccess: scriptAction.OnSuccess,
-				Directory: scriptAction.Dir,
-			}
-		}
+		cmd = tea.Sequence(
+			func() tea.Msg {
+				return IsLoadingMsg{}
+			},
+			func() tea.Msg {
+				return ExecCommandMsg{
+					Command:   scriptAction.Command,
+					OnSuccess: scriptAction.OnSuccess,
+					Directory: scriptAction.Dir,
+				}
+			})
 	case "open-path":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open"

@@ -111,20 +111,20 @@ func Execute(version string) (err error) {
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
 		for _, extension := range api.Extensions {
-			rootCmd.AddCommand(NewExtensionCommand(extension, config, api.Extensions))
+			rootCmd.AddCommand(NewExtensionCommand(extension, config))
 		}
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(extension app.Extension, config *tui.Config, extensions []app.Extension) *cobra.Command {
+func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:     extension.Name,
 		GroupID: "extension",
 		Short:   extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			root := tui.NewModel(config, extensions...)
+			root := tui.NewModel(config, extension)
 			err = tui.Draw(root)
 			if err != nil {
 				return fmt.Errorf("could not run extension: %w", err)
@@ -162,7 +162,7 @@ func NewExtensionCommand(extension app.Extension, config *tui.Config, extensions
 
 				}
 
-				model := tui.NewModel(config, extensions...)
+				model := tui.NewModel(config, extension)
 				runner := tui.NewScriptRunner(extension, script, with)
 				model.SetRoot(runner)
 

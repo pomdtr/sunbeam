@@ -40,7 +40,15 @@ func (h Header) Value() string {
 	return h.input.Value()
 }
 
+type IsLoadingMsg struct{}
+
 func (h Header) Update(msg tea.Msg) (Header, tea.Cmd) {
+	switch msg.(type) {
+	case IsLoadingMsg:
+		cmd := h.SetIsLoading(true)
+		return h, cmd
+	}
+
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
