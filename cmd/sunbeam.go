@@ -6,7 +6,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
@@ -14,8 +13,13 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/tui"
 )
 
-func Execute(version string) error {
-	extensionRoot := path.Join(xdg.DataHome, "sunbeam", "extensions")
+func Execute(version string) (err error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
 	if _, err := os.Stat(extensionRoot); os.IsNotExist(err) {
 		if err := os.MkdirAll(extensionRoot, 0755); err != nil {
 			return err
@@ -23,7 +27,7 @@ func Execute(version string) error {
 	}
 
 	api := app.Api{}
-	err := api.LoadExtensions(extensionRoot)
+	err = api.LoadExtensions(extensionRoot)
 	if err != nil {
 		return err
 	}
