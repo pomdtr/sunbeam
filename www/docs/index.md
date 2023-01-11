@@ -1,6 +1,22 @@
 # Introduction
 
-This is the documentation for the sunbeam launcher.
+## What is sunbeam?
 
-- For installation instructions, see [installation](./installation.md).
-- For a developer guide, see [developer guide](./developer-guide/creating-extensions.md).
+Sunbeam is a command line launcher, similar to spotlight, rofi or alfred.
+
+It allows you to build interactives UIs from simple scripts, and share them on the web.
+
+![A demo of the github extension](./assets/github.gif)
+
+## Why sunbeam?
+
+I love TUIs, but I spend way to much time effort them. I used a lot of application launchers, but all of them had some limitations.
+
+Sunbeam supports:
+
+- Running on all platforms (Windows, Linux, MacOS)
+- Extensions written in any language, as long as they can output JSON
+- Generating complex UIs compose of list, forms, details...
+- Running as an headless server on a remote machine
+
+Sunbeam can run from any terminal, but it also comes with an optional GUI for a launcher-like experience.

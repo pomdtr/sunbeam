@@ -17,7 +17,7 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
             "\(.stargazers_count) *"
         ],
         actions: [
-            {type: "open", target: .html_url},
+            {type: "open-url", url: .html_url},
             {
                 type: "run-script",
                 script: "listPullRequests",

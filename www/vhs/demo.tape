@@ -40,12 +40,7 @@
 #   Hide                            Hide the subsequent commands from the output
 #   Show                            Show the subsequent commands in the output
 
-Output demo.gif
-
-Set FontSize 32
-Set Width 1600
-Set Height 1200
-Set Framerate 24
+Output github.gif
 
 Type "Sunbeam generates TUIs from simple scripts written in any language!"
 Sleep 2s
@@ -55,31 +50,33 @@ Type sunbeam
 Sleep 2s
 Enter
 
+# Root View
 Sleep 2s
-Type owner
+Type repo
 Sleep 2s
 Enter
 
+# Repo Form
 Sleep 2s
-Type pomdtr
+Type sunbeamlauncher
 Sleep 2s
 Ctrl+S
 
-
+# Repo List
 Sleep 2s
 Type sunbeam
 
+# Action List
 Sleep 2s
 Tab
-
 Sleep 2s
 Type view
 Sleep 2s
 Enter
 
+# Detail View
 Sleep 2s
-Type jjj
+Ctrl+d
 Sleep 2s
-Enter
-
+Ctrl+d
 Sleep 2s
