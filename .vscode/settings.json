@@ -4,4 +4,7 @@
             "sunbeam.yml"
         ],
     },
+    "markdownlint.ignore": [
+        "www/docs/cmd/*.md"
+    ]
 }

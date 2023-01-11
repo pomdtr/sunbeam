@@ -3,6 +3,8 @@ repo_url: https://github.com/sunbeamlauncher/sunbeam
 site_description: Generate complex TUIs from simple scripts written in any language.
 repo_name: sunbeamlauncher/sunbeam
 site_dir: dist
+edit_uri: edit/main/www/docs/
+
 theme:
   name: material
   language: en
@@ -18,10 +20,17 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.instant
+    - content.action.edit
     - content.code.copy
+    - navigation.footer
+    - navigation.instant
+    - search.share
+    - search.suggest
 plugins:
   - search
+
+markdown_extensions:
+  - admonition
 
 nav:
   - Home: index.md

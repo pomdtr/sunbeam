@@ -2,6 +2,17 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Start Documentation Server",
+            "type": "process",
+            "command": "mkdocs",
+            "options": {
+                "cwd": "${workspaceFolder}/www"
+            },
+            "args": [
+                "serve",
+            ]
+        },
+        {
             "label": "Run headless dlv",
             "type": "process",
             "command": [
