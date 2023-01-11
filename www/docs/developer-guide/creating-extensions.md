@@ -1,4 +1,4 @@
-# Developer Guide
+# Creating Extensions
 
 ## Anatomy of a sunbeam extension
 

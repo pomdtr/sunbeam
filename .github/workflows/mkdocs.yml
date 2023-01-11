@@ -12,6 +12,6 @@ jobs:
         with:
           python-version: 3.x
       - run: pip install -r requirements.txt
-        working-directory: website
+        working-directory: www
       - run: mkdocs gh-deploy --force
-        working-directory: website
+        working-directory: www

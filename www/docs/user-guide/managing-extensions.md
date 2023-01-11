@@ -1,4 +1,4 @@
-# User Guide
+# Managing extensions
 
 This guide is intended to help you get started with Sunbeam.
 

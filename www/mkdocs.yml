@@ -1,0 +1,49 @@
+site_name: Sunbeam
+repo_url: https://github.com/sunbeamlauncher/sunbeam
+site_description: Generate complex TUIs from simple scripts written in any language.
+repo_name: sunbeamlauncher/sunbeam
+site_dir: dist
+theme:
+  name: material
+  language: en
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - content.code.copy
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - installation.md
+  - User Guide:
+      - user-guide/managing-extensions.md
+  - Developer Guide:
+      - developer-guide/creating-extensions.md
+  - Command Line Usage:
+      - cmd/sunbeam.md
+      - cmd/sunbeam_completion.md
+      - cmd/sunbeam_completion_bash.md
+      - cmd/sunbeam_completion_fish.md
+      - cmd/sunbeam_completion_powershell.md
+      - cmd/sunbeam_completion_zsh.md
+      - cmd/sunbeam_extension.md
+      - cmd/sunbeam_extension_browse.md
+      - cmd/sunbeam_extension_install.md
+      - cmd/sunbeam_extension_list.md
+      - cmd/sunbeam_extension_remove.md
+      - cmd/sunbeam_extension_rename.md
+      - cmd/sunbeam_extension_upgrade.md
+      - cmd/sunbeam_listen.md
+      - cmd/sunbeam_query.md
+      - cmd/sunbeam_run.md

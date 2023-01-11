@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 
 	"github.com/sunbeamlauncher/sunbeam/app"
@@ -80,33 +78,7 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(config))
 	rootCmd.AddCommand(NewCmdListen())
-
-	rootCmd.AddCommand(func() *cobra.Command {
-		return &cobra.Command{
-			Use:    "generate-docs",
-			Args:   cobra.ExactArgs(1),
-			Hidden: true,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				target := args[0]
-				if _, err := os.Stat(target); os.IsNotExist(err) {
-					if err := os.MkdirAll(target, 0755); err != nil {
-						return err
-					}
-				}
-				return doc.GenMarkdownTreeCustom(
-					rootCmd,
-					target,
-					func(s string) string {
-						basename := path.Base(s)
-						stem := strings.TrimSuffix(basename, ".md")
-						title := strings.ReplaceAll(stem, "_", " ")
-						return fmt.Sprintf("---\ntitle: %s\nhide_title: true\n---\n\n", title)
-					},
-					func(s string) string { return fmt.Sprintf("./%s", s) },
-				)
-			},
-		}
-	}())
+	rootCmd.AddCommand(NewCmdDocs())
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
