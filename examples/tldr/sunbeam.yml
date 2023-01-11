@@ -13,6 +13,7 @@ scripts:
   list:
     page:
       type: list
+      showPreview: true
     onSuccess: push-page
     inputs:
       - name: platform

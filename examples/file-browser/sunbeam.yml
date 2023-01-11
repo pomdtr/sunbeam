@@ -16,6 +16,8 @@ rootItems:
     script: browseFiles
   - title: Browse Current Directory
     script: browseFiles
+    with:
+      root: "."
 preferences:
   - name: SHOW_HIDDEN
     type: checkbox

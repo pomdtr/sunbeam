@@ -51,9 +51,11 @@ func NewModel(config *Config, extensions ...app.Extension) *Model {
 		rootItems = append(rootItems, extension.RootItems...)
 	}
 	for _, rootItem := range config.RootItems {
-		if _, ok := extensionMap[rootItem.Extension]; !ok {
+		extension, ok := extensionMap[rootItem.Extension]
+		if !ok {
 			continue
 		}
+		rootItem.Subtitle = extension.Title
 		rootItems = append(rootItems, rootItem)
 	}
 	rootList := NewRootList(rootItems...)

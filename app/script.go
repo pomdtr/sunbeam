@@ -16,8 +16,8 @@ import (
 
 type Page struct {
 	Type        string `json:"type"`
-	ShowPreview bool   `json:"showPreview"`
-	IsGenerator bool   `json:"isGenerator"`
+	ShowPreview bool   `json:"showPreview" yaml:"showPreview"`
+	IsGenerator bool   `json:"isGenerator" yaml:"isGenerator"`
 }
 
 type Script struct {
