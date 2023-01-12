@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -82,13 +83,18 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 	sunbeamPath := os.Args[0]
 
 	command := exec.Command(sunbeamPath, arguments...)
+	f, err := os.CreateTemp("", "sunbeam-command-*")
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+	defer f.Close()
+
 	command.Env = []string{
-		"SUNBEAM_SERVER=1",
+		fmt.Sprintf("SUNBEAM_COMMAND_OUTPUT=%s", f.Name()),
 	}
 	command.Env = append(command.Env, os.Environ()...)
-
-	var errBuf bytes.Buffer
-	command.Stderr = &errBuf
 
 	tty, err := pty.Start(command)
 
@@ -171,8 +177,15 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 			buf := make([]byte, 1024)
 			n, err := tty.Read(buf)
 			if err != nil {
-				if errBuf.Len() > 0 {
-					send(websocket.TextMessage, errBuf.Bytes())
+				buf := bytes.Buffer{}
+				_, err := buf.ReadFrom(f)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+
+				if buf.Len() > 0 {
+					send(websocket.TextMessage, buf.Bytes())
 				}
 
 				log.Printf("error reading from pty: %v", err)

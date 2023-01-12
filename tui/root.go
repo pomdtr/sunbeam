@@ -76,10 +76,6 @@ func (m Model) IsFullScreen() bool {
 	return m.config.Height == 0
 }
 
-func (m Model) IsRemote() bool {
-	return os.Getenv("SUNBEAM_SERVER") != ""
-}
-
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -92,13 +88,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case OpenUrlMsg:
-		if m.IsRemote() {
+		if commandPipe, ok := os.LookupEnv("SUNBEAM_COMMAND_OUTPUT"); ok {
 			action, _ := json.Marshal(map[string]string{
 				"type": "open",
 				"url":  msg.Url,
 			})
 
-			fmt.Fprintln(os.Stderr, string(action))
+			err := os.WriteFile(commandPipe, action, 0644)
+			if err != nil {
+				return m, NewErrorCmd(err)
+			}
+
 			m.hidden = true
 			return m, tea.Quit
 		}
@@ -110,13 +110,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case CopyTextMsg:
-		if m.IsRemote() {
+		if commandPipe, ok := os.LookupEnv("SUNBEAM_COMMAND_OUTPUT"); ok {
 			action, _ := json.Marshal(map[string]string{
 				"type": "copy-text",
 				"text": msg.Text,
 			})
 
-			fmt.Fprintln(os.Stderr, string(action))
+			err := os.WriteFile(commandPipe, action, 0644)
+			if err != nil {
+				return m, NewErrorCmd(err)
+			}
+
 			m.hidden = true
 			return m, tea.Quit
 		}
