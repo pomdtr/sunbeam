@@ -13,6 +13,7 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/utils"
@@ -419,6 +420,9 @@ func Draw(model *Model) (err error) {
 		}
 		tea.LogToFile(path.Join(logDir, "sunbeam.log"), "")
 	}
+
+	// Disable the background detection since we are only using ANSI colors
+	lipgloss.SetHasDarkBackground(true)
 
 	var p *tea.Program
 	if model.IsFullScreen() {
