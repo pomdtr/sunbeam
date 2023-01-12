@@ -17,7 +17,7 @@ eget sunbeamlauncher/sunbeam
 ### go install
 
 ```console
-go install github.com/pomdtr/sunbeam@latest
+go install github.com/sunbeamlauncher/sunbeam@latest
 ```
 
 ### manually
