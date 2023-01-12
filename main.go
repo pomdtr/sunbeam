@@ -6,7 +6,7 @@ import (
 	"github.com/sunbeamlauncher/sunbeam/cmd"
 )
 
-const version = "dev"
+var version = "dev"
 
 func main() {
 	err := cmd.Execute(version)
