@@ -325,7 +325,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 						item.Actions = []tui.Action{
 							{
 								Title: "Install Extension",
-								Cmd:   tui.NewExecCmd(fmt.Sprintf("sunbeam extension install %s", repo.HtmlURL)),
+								Cmd:   tui.NewExecCmd(fmt.Sprintf("sunbeam extension install %s --name %s", repo.HtmlURL, repo.Name)),
 							},
 							{
 								Title: "Open in Browser",
