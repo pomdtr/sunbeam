@@ -2,39 +2,62 @@ package tui
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"os"
+	"path"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/sunbeamlauncher/sunbeam/app"
-	"github.com/zalando/go-keyring"
 )
 
-const keyringUser = "Sunbeam"
-const keyringService = "Sunbeam Preferences"
-
 type KeyStore struct {
-	preferenceMap map[string]ScriptPreference
+	preferencePath string
+	preferenceMap  map[string]ScriptPreference
 }
 
-func LoadKeyStore() (*KeyStore, error) {
-	var err error
-	keyringValue, err := keyring.Get(keyringService, keyringUser)
-	if errors.Is(err, keyring.ErrNotFound) {
-		keyringValue = "{}"
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to load keyring: %w", err)
+func LoadKeyStore(preferencePath string) (*KeyStore, error) {
+	preferenceMap := make(map[string]ScriptPreference)
+	if _, err := os.Stat(preferencePath); os.IsNotExist(err) {
+		return &KeyStore{
+			preferencePath: preferencePath,
+			preferenceMap:  preferenceMap,
+		}, nil
 	}
 
-	preferenceMap := make(map[string]ScriptPreference)
-	err = json.Unmarshal([]byte(keyringValue), &preferenceMap)
+	preferenceBytes, err := os.ReadFile(preferencePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse keyring: %w", err)
+		return nil, fmt.Errorf("failed to read preferences: %w", err)
+	}
+	err = json.Unmarshal(preferenceBytes, &preferenceMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse preferences: %w", err)
 	}
 
 	return &KeyStore{
-		preferenceMap: preferenceMap,
+		preferencePath: preferencePath,
+		preferenceMap:  preferenceMap,
 	}, nil
+}
+
+func (k *KeyStore) Save() (err error) {
+	if os.Stat(path.Dir(k.preferencePath)); os.IsNotExist(err) {
+		err = os.MkdirAll(path.Dir(k.preferencePath), 0755)
+		if err != nil {
+			return fmt.Errorf("failed to create preferences directory: %w", err)
+		}
+	}
+
+	preferencesJSON, err := json.Marshal(k.preferenceMap)
+	if err != nil {
+		return fmt.Errorf("failed to marshal preferences: %w", err)
+	}
+
+	err = os.WriteFile(k.preferencePath, preferencesJSON, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write preferences: %w", err)
+	}
+
+	return nil
 }
 
 func GetPreferenceId(extension string, script string, name string) string {
@@ -73,19 +96,22 @@ func (k *KeyStore) SetPreference(preferences ...ScriptPreference) error {
 		k.preferenceMap[GetPreferenceId(preference.Extension, preference.Script, preference.Name)] = preference
 	}
 
-	preferencesJSON, err := json.Marshal(k.preferenceMap)
-	if err != nil {
-		return err
-	}
-
-	return keyring.Set(keyringService, keyringUser, string(preferencesJSON))
+	return keyStore.Save()
 }
 
 var keyStore *KeyStore
 
+// TODO: move this to the root model init function
 func init() {
 	var err error
-	keyStore, err = LoadKeyStore()
+
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	preferencePath := path.Join(homedir, ".config", "sunbeam", "preferences.json")
+	keyStore, err = LoadKeyStore(preferencePath)
 	if err != nil {
 		panic(err)
 	}
