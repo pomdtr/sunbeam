@@ -1,7 +1,7 @@
 package server
 
 import (
-	"bytes"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/creack/pty"
@@ -56,7 +57,6 @@ func extractArgs(r *http.Request) (arguments []string) {
 }
 
 func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
-
 	arguments := extractArgs(r)
 
 	upgrader := websocket.Upgrader{
@@ -80,24 +80,23 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 		return ws.WriteMessage(messageType, data)
 	}
 
-	sunbeamPath := os.Args[0]
-
-	command := exec.Command(sunbeamPath, arguments...)
-	f, err := os.CreateTemp("", "sunbeam-command-*")
+	pipe := "/tmp/sunbeam.pipe"
+	err = syscall.Mkfifo(pipe, 0666)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 	}
-	defer f.Close()
+	defer os.Remove(pipe)
 
+	sunbeamPath := os.Args[0]
+	command := exec.Command(sunbeamPath, arguments...)
 	command.Env = []string{
-		fmt.Sprintf("SUNBEAM_COMMAND_OUTPUT=%s", f.Name()),
+		fmt.Sprintf("SUNBEAM_REMOTE_PIPE=%s", pipe),
 	}
 	command.Env = append(command.Env, os.Environ()...)
 
 	tty, err := pty.Start(command)
-
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -105,7 +104,7 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	waiter := sync.WaitGroup{}
-	waiter.Add(3)
+	waiter.Add(4)
 
 	// this is a keep-alive loop that ensures connection does not hang-up itself
 	lastPongTime := time.Now()
@@ -168,6 +167,36 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	go func() {
+		var err error
+		defer waiter.Done()
+		defer ws.Close()
+
+		file, err := os.OpenFile(pipe, os.O_CREATE, os.ModeNamedPipe)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+		}
+		defer file.Close()
+
+		reader := bufio.NewReader(file)
+
+		for {
+			line, err := reader.ReadBytes('\n')
+			if err != nil {
+				log.Printf("error reading from pipe: %v", err)
+				return
+			}
+			log.Println(string(line))
+			err = send(websocket.TextMessage, line)
+			if err != nil {
+				log.Printf("error writing to websocket: %v", err)
+				return
+			}
+		}
+	}()
+
 	// this is a loop that reads from the pty and writes to the websocket
 	go func() {
 		defer waiter.Done()
@@ -177,17 +206,6 @@ func WebsocketHandle(w http.ResponseWriter, r *http.Request) {
 			buf := make([]byte, 1024)
 			n, err := tty.Read(buf)
 			if err != nil {
-				buf := bytes.Buffer{}
-				_, err := buf.ReadFrom(f)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				if buf.Len() > 0 {
-					send(websocket.TextMessage, buf.Bytes())
-				}
-
 				log.Printf("error reading from pty: %v", err)
 				return
 			}

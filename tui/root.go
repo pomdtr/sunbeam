@@ -8,12 +8,14 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	"github.com/pkg/browser"
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/utils"
@@ -40,8 +42,10 @@ type Model struct {
 	root         Page
 	pages        []Page
 	extensionMap map[string]app.Extension
+	actionChan   chan (map[string]string)
 
 	hidden bool
+	exit   bool
 }
 
 func NewModel(config *Config, extensions ...app.Extension) *Model {
@@ -64,6 +68,12 @@ func NewModel(config *Config, extensions ...app.Extension) *Model {
 	return &Model{extensionMap: extensionMap, root: rootList, config: config}
 }
 
+func (m *Model) Reset() {
+	m.pages = []Page{}
+	m.exitCmd = nil
+	m.hidden = false
+}
+
 func (m *Model) SetRoot(root Page) {
 	m.root = root
 }
@@ -82,21 +92,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			m.hidden = true
+			m.exit = true
+			return m, tea.Quit
+		case tea.KeyCtrlW:
+			m.hidden = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case OpenUrlMsg:
-		if commandPipe, ok := os.LookupEnv("SUNBEAM_COMMAND_OUTPUT"); ok {
-			action, _ := json.Marshal(map[string]string{
-				"type": "open",
-				"url":  msg.Url,
-			})
-
-			err := os.WriteFile(commandPipe, action, 0644)
-			if err != nil {
-				return m, NewErrorCmd(err)
+		if _, ok := os.LookupEnv("SUNBEAM_REMOTE_PIPE"); ok {
+			m.actionChan <- map[string]string{
+				"action": "open-url",
+				"url":    msg.Url,
 			}
 
 			m.hidden = true
@@ -110,15 +119,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case CopyTextMsg:
-		if commandPipe, ok := os.LookupEnv("SUNBEAM_COMMAND_OUTPUT"); ok {
-			action, _ := json.Marshal(map[string]string{
-				"type": "copy-text",
-				"text": msg.Text,
-			})
-
-			err := os.WriteFile(commandPipe, action, 0644)
-			if err != nil {
-				return m, NewErrorCmd(err)
+		if _, ok := os.LookupEnv("SUNBEAM_REMOTE_PIPE"); ok {
+			m.actionChan <- map[string]string{
+				"action": "copy-text",
+				"text":   msg.Text,
 			}
 
 			m.hidden = true
@@ -428,26 +432,73 @@ func Draw(model *Model) (err error) {
 	// Disable the background detection since we are only using ANSI colors
 	lipgloss.SetHasDarkBackground(true)
 
-	var p *tea.Program
-	if model.IsFullScreen() {
-		p = tea.NewProgram(model, tea.WithAltScreen())
-	} else {
-		p = tea.NewProgram(model)
+	pipeFile, isRemote := os.LookupEnv("SUNBEAM_REMOTE_PIPE")
+	if isRemote {
+		if _, err := os.Stat(pipeFile); os.IsNotExist(err) {
+			err := syscall.Mkfifo(pipeFile, 0666)
+			if err != nil {
+				return err
+			}
+			defer os.Remove(pipeFile)
+		}
+
+		f, err := os.OpenFile(pipeFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+		if err != nil {
+			return err
+		}
+
+		model.actionChan = make(chan map[string]string)
+
+		go func() {
+			jsonEncoder := json.NewEncoder(f)
+			for {
+				action := <-model.actionChan
+				err := jsonEncoder.Encode(action)
+
+				if err != nil {
+					log.Println(err)
+				}
+			}
+		}()
 	}
 
-	m, err := p.Run()
-	if err != nil {
-		return err
-	}
+	for {
+		var p *tea.Program
+		if model.IsFullScreen() {
+			p = tea.NewProgram(model, tea.WithAltScreen())
+		} else {
+			p = tea.NewProgram(model)
+		}
 
-	model = m.(*Model)
+		m, err := p.Run()
+		if err != nil {
+			return err
+		}
 
-	if exitCmd := model.exitCmd; exitCmd != nil {
-		exitCmd.Stderr = os.Stderr
-		exitCmd.Stdout = os.Stdout
-		exitCmd.Stdin = os.Stdin
+		model = m.(*Model)
 
-		exitCmd.Run()
+		if exitCmd := model.exitCmd; exitCmd != nil {
+			exitCmd.Stderr = os.Stderr
+			exitCmd.Stdout = os.Stdout
+			exitCmd.Stdin = os.Stdin
+
+			exitCmd.Run()
+		}
+
+		if !isRemote {
+			break
+		}
+
+		termenv.NewOutput(os.Stdout).ClearScreen()
+		if model.exit {
+			break
+		}
+
+		model.actionChan <- map[string]string{
+			"action": "hide",
+		}
+
+		model.Reset()
 	}
 
 	return nil
