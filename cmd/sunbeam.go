@@ -10,6 +10,7 @@ import (
 
 	"github.com/sunbeamlauncher/sunbeam/app"
 	"github.com/sunbeamlauncher/sunbeam/tui"
+	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
 )
 
 func parseConfig(configRoot string) (*tui.Config, error) {
@@ -79,6 +80,7 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdRun(config))
 	rootCmd.AddCommand(NewCmdListen())
 	rootCmd.AddCommand(NewCmdDocs())
+	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
