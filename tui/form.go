@@ -39,8 +39,12 @@ func NewFormItem(param app.ScriptInput) FormItem {
 		param.Placeholder.Value = param.Name
 	}
 	switch param.Type {
-	case "textfield", "file", "directory", "password":
+	case "textfield", "file", "directory":
 		ti := NewTextInput(param)
+		input = &ti
+	case "password":
+		ti := NewTextInput(param)
+		ti.SetHidden()
 		input = &ti
 	case "textarea":
 		ta := NewTextArea(param)
@@ -120,6 +124,10 @@ func NewTextInput(formItem app.ScriptInput) TextInput {
 		isPath:      formItem.Type == "file" || formItem.Type == "directory",
 		placeholder: placeholder.Value,
 	}
+}
+
+func (ti *TextInput) SetHidden() {
+	ti.EchoMode = textinput.EchoPassword
 }
 
 func (ti *TextInput) Height() int {
