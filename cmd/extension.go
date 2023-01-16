@@ -16,6 +16,7 @@ import (
 	"github.com/pomdtr/sunbeam/tui"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
@@ -347,6 +348,48 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 		}
 		return &command
 	}())
+
+	extensionCommand.AddCommand(
+		func() *cobra.Command {
+			return &cobra.Command{
+				Use:   "validate",
+				Short: "Validate a sunbeam extension",
+				Args:  cobra.ExactArgs(1),
+				RunE: func(cmd *cobra.Command, args []string) error {
+					extensionRoot := args[0]
+					if fi, err := os.Stat(extensionRoot); err != nil || !fi.IsDir() {
+						fmt.Fprintf(os.Stderr, "Directory %s does not exist\n", extensionRoot)
+						os.Exit(1)
+					}
+
+					manifestPath := filepath.Join(extensionRoot, "sunbeam.yml")
+					if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+						fmt.Fprintf(os.Stderr, "Directory %s is not a sunbeam extension\n", extensionRoot)
+						os.Exit(1)
+					}
+
+					manifestBytes, err := os.ReadFile(manifestPath)
+					if err != nil {
+						return fmt.Errorf("failed to read file: %w", err)
+					}
+
+					var m any
+					err = yaml.Unmarshal(manifestBytes, &m)
+					if err != nil {
+						return fmt.Errorf("failed to unmarshal manifest: %w", err)
+					}
+
+					err = app.ManifestSchema.Validate(m)
+					if err != nil {
+						return fmt.Errorf("%#v", err)
+					}
+
+					fmt.Println("Extension is valid")
+					return nil
+				},
+			}
+		}())
+
 	return extensionCommand
 }
 
