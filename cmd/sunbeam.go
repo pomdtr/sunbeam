@@ -78,7 +78,6 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdExtension(api, config))
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(config))
-	rootCmd.AddCommand(NewCmdListen())
 	rootCmd.AddCommand(NewCmdDocs())
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 
