@@ -5,6 +5,6 @@
         ],
     },
     "markdownlint.ignore": [
-        "www/docs/cmd/*.md"
+        "website/cmd/*.md"
     ]
 }

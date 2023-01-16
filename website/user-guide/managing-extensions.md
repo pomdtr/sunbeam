@@ -10,7 +10,7 @@ You can install an extension from a local directory or a git repository.
 
 Let's install the [file-browser](https://github.com/pomdtr/sunbeam-file-browser) extension from github:
 
-```console
+```shell
 sunbeam extension install --name file-browser https://github.com/pomdtr/sunbeam-file-browser
 ```
 
@@ -29,7 +29,7 @@ You can the paste the command in your terminal to go to the file browser.
 
 Feel free to create an alias for the command in you shell configuration file !
 
-```bash
+```shell
 alias downloads="sunbeam file-browser browse --root ~/Downloads"
 ```
 
@@ -41,13 +41,13 @@ The `sunbeam extension browse` command will an interactive UI to browse and inst
 
 You can upgrade an extension with the `sunbeam extension upgrade` command.
 
-```console
+```shell
 sunbeam extension upgrade file-browser
 ```
 
 If you want to upgrade all extensions, you can use the `--all` flag.
 
-```console
+```shell
 sunbeam extension upgrade --all
 ```
 
@@ -55,6 +55,6 @@ sunbeam extension upgrade --all
 
 You can remove an extension with the `sunbeam extension remove` command.
 
-```console
+```shell
 sunbeam extension remove file-browser
 ```
