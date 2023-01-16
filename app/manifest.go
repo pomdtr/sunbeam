@@ -3,7 +3,6 @@ package app
 import (
 	_ "embed"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -14,7 +13,7 @@ import (
 )
 
 //go:embed schemas/manifest.json
-var manifestSchema string
+var manifest string
 
 type Api struct {
 	Extensions    []Extension
@@ -63,16 +62,16 @@ func (r ExtensionRequirement) Check() bool {
 	return true
 }
 
-var schema *jsonschema.Schema
+var ManifestSchema *jsonschema.Schema
 
 func init() {
 	compiler := jsonschema.NewCompiler()
-	if err := compiler.AddResource("schema.json", strings.NewReader(manifestSchema)); err != nil {
+	if err := compiler.AddResource("manifest", strings.NewReader(manifest)); err != nil {
 		panic(err)
 	}
 
 	var err error
-	schema, err = compiler.Compile("schema.json")
+	ManifestSchema, err = compiler.Compile("manifest")
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +98,7 @@ func (api *Api) LoadExtensions(extensionRoot string) error {
 
 		extension, err := ParseManifest(extensionName, manifestPath)
 		if err != nil {
-			log.Println(fmt.Errorf("error parsing manifest %s: %w", manifestPath, err))
+			continue
 		}
 
 		extension.Root = extensionDir
@@ -122,9 +121,8 @@ func ParseManifest(extensionName string, manifestPath string) (extension Extensi
 		return extension, err
 	}
 
-	err = schema.Validate(m)
+	err = ManifestSchema.Validate(m)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%#v", err)
 		return extension, err
 	}
 

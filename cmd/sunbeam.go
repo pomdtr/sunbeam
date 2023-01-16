@@ -75,11 +75,12 @@ func Execute(version string) (err error) {
 	})
 
 	// Core Commands
+	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
+	rootCmd.AddCommand(NewCmdDocs())
 	rootCmd.AddCommand(NewCmdExtension(api, config))
+	rootCmd.AddCommand(NewCmdLint())
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(config))
-	rootCmd.AddCommand(NewCmdDocs())
-	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
