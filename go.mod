@@ -1,4 +1,4 @@
-module github.com/sunbeamlauncher/sunbeam
+module github.com/pomdtr/sunbeam
 
 go 1.19
 
@@ -6,8 +6,6 @@ require (
 	github.com/charmbracelet/bubbles v0.14.0
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0
-	github.com/creack/pty v1.1.18
-	github.com/gorilla/websocket v1.5.0
 	github.com/itchyny/gojq v0.12.11
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/otiai10/copy v1.9.0

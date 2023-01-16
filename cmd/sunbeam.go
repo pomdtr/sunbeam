@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/sunbeamlauncher/sunbeam/app"
-	"github.com/sunbeamlauncher/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/tui"
 	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
 )
 

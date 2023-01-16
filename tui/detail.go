@@ -9,8 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
-	"github.com/sunbeamlauncher/sunbeam/app"
-	"github.com/sunbeamlauncher/sunbeam/utils"
+	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Detail struct {

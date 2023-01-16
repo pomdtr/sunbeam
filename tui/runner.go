@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/sunbeamlauncher/sunbeam/app"
+	"github.com/pomdtr/sunbeam/app"
 )
 
 type ScriptRunner struct {

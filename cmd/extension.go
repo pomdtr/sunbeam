@@ -12,10 +12,10 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/otiai10/copy"
+	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
-	"github.com/sunbeamlauncher/sunbeam/app"
-	"github.com/sunbeamlauncher/sunbeam/tui"
-	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
 func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {

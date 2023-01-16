@@ -9,8 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/sunbeamlauncher/sunbeam/app"
-	"github.com/sunbeamlauncher/sunbeam/utils"
+	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 var debounceDuration = 300 * time.Millisecond

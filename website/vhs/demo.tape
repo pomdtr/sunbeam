@@ -58,7 +58,7 @@ Enter
 
 # Repo Form
 Sleep 2s
-Type sunbeamlauncher
+Type pomdtr
 Sleep 2s
 Ctrl+S
 

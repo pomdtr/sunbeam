@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/tui"
 	"github.com/spf13/cobra"
-	"github.com/sunbeamlauncher/sunbeam/app"
-	"github.com/sunbeamlauncher/sunbeam/tui"
 )
 
 func NewCmdRun(config *tui.Config) *cobra.Command {

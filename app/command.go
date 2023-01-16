@@ -9,8 +9,8 @@ import (
 	"text/template"
 
 	"github.com/alessio/shellescape"
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/santhosh-tekuri/jsonschema/v5"
-	"github.com/sunbeamlauncher/sunbeam/utils"
 	"gopkg.in/yaml.v3"
 )
 

@@ -6,10 +6,6 @@ requirements:
 rootItems:
   - title: List Repositories
     script: list-repos
-  - title: View sunbeam README
-    script: view-readme
-    with:
-      repository: sunbeamlauncher/sunbeam
 commands:
   view-readme:
     exec: |

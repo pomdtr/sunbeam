@@ -5,7 +5,7 @@
 ::: code-group
 
 ```sh [brew]
-brew install sunbeam
+brew install pomdtr/tap/sunbeam
 ```
 
 ```sh [eget]
@@ -13,10 +13,10 @@ eget pomdtr/sunbeam
 ```
 
 ```sh [go]
-go install github.com/sunbeamlauncher/sunbeam@latest
+go install github.com/pomdtr/sunbeam@latest
 ```
 
-Sunbeam is a single binary, you can also download it from the [releases page](https://github.com/sunbeamlauncher/sunbeam/releases/latest).
+Sunbeam is a single binary, you can also download it from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).
 
 ### Configuring shell completions
 
@@ -26,7 +26,7 @@ See the [completions page](../cmd/sunbeam_completion.md) for more information.
 
 ## GUI
 
-Packages for the sunbeam GUI are available for Windows, Linux and MacOS on the [releases page](https://github.com/sunbeamlauncher//sunbeam-gui/releases/latest).
+Packages for the sunbeam GUI are available for Windows, Linux and MacOS on the [releases page](https://github.com/pomdtr//sunbeam-gui/releases/latest).
 
 ::: info
 The GUI is not a wrapper around the CLI, it is a separate application that uses the sunbeam CLI to run commands.

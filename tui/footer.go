@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/sunbeamlauncher/sunbeam/utils"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Footer struct {

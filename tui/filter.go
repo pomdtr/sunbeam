@@ -6,8 +6,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
-	"github.com/sunbeamlauncher/sunbeam/utils"
 )
 
 type FilterItem interface {
