@@ -20,12 +20,17 @@ const themeConfig = {
   nav: [{ text: "Docs", link: "/guide/" }],
   sidebar: [
     {
-      text: "Guide",
+      text: "User Guide",
       items: [
         { text: "Introduction", link: "/guide/" },
         { text: "Installation", link: "/guide/installation" },
+        {
+          text: "Managing Extensions",
+          link: "/user-guide/managing-extensions",
+        },
       ],
     },
+
     {
       text: "Command Line Usage",
       collapsed: true,
