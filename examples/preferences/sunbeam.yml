@@ -7,9 +7,9 @@ preferences:
 rootItems:
   - script: googleSearch
     title: Google Search
-scripts:
+commands:
   googleSearch:
-    command: |
+    exec: |
       echo "https://www.google.com/search?q=$FIRST_NAME+$LAST_NAME"
     onSuccess: open-url
     preferences:

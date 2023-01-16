@@ -7,9 +7,9 @@ preferences:
   - name: BW_SESSION
     type: password
     title: Session Token
-scripts:
+commands:
   listPassords:
-    command: ./bitwarden.sh
+    exec: ./bitwarden.sh
     onSuccess: push-page
     page:
       type: list

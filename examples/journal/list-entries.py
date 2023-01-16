@@ -15,7 +15,7 @@ if len(journal["entries"]) == 0:
                 "preview": "Hit enter to create a new entry !",
                 "actions": [
                     {
-                        "type": "run-script",
+                        "type": "run-command",
                         "script": "write-entry",
                         "title": "Write Entry",
                         "silent": True,
@@ -56,7 +56,7 @@ for uuid, entry in journal["entries"].items():
                         "title": "Copy Message",
                     },
                     {
-                        "type": "run-script",
+                        "type": "run-command",
                         "title": "New Entry",
                         "script": "writeEntry",
                         "onSuccess": "reload-page",
@@ -64,7 +64,7 @@ for uuid, entry in journal["entries"].items():
                         "shortcut": "ctrl+n"
                     },
                     {
-                        "type": "run-script",
+                        "type": "run-command",
                         "title": "Delete Entry",
                         "script": "deleteEntry",
                         "onSuccess": "reload-page",
@@ -73,7 +73,7 @@ for uuid, entry in journal["entries"].items():
                         "with": {"uuid": uuid},
                     },
                     {
-                        "type": "run-script",
+                        "type": "run-command",
                         "title": "Edit Entry",
                         "script": "editEntry",
                         "silent": True,

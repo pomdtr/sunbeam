@@ -5,14 +5,14 @@ requirements:
     which: gh
 rootItems:
   - title: List Repositories
-    script: listRepositories
+    script: list-repos
   - title: View sunbeam README
-    script: viewReadme
+    script: view-readme
     with:
       repository: sunbeamlauncher/sunbeam
-scripts:
-  viewReadme:
-    command: |
+commands:
+  view-readme:
+    exec: |
       gh api repos/${{repository}}/readme --jq '
       {
         preview: (.content | @base64d),
@@ -34,8 +34,8 @@ scripts:
       - name: repository
         type: textfield
         title: Repository
-  listRepositories:
-    command: ./list-repos.sh ${{ owner }}
+  list-repos:
+    exec: ./list-repos.sh ${{ owner }}
     onSuccess: push-page
     page:
       type: list
@@ -44,8 +44,8 @@ scripts:
       - name: owner
         type: textfield
         title: Owner
-  listPullRequests:
-    command: ./list-prs.sh ${{ repository }}
+  list-prs:
+    exec: ./list-prs.sh ${{ repository }}
     onSuccess: push-page
     page:
       type: list

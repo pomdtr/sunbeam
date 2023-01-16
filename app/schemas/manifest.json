@@ -5,7 +5,7 @@
     "required": [
         "title",
         "version",
-        "scripts"
+        "commands"
     ],
     "additionalProperties": false,
     "properties": {
@@ -89,7 +89,7 @@
                 }
             }
         },
-        "scripts": {
+        "commands": {
             "type": "object",
             "additionalProperties": false,
             "patternProperties": {
@@ -103,11 +103,11 @@
         "script": {
             "type": "object",
             "required": [
-                "command"
+                "exec"
             ],
             "additionalProperties": false,
             "properties": {
-                "command": {
+                "exec": {
                     "type": "string"
                 },
                 "cwd": {

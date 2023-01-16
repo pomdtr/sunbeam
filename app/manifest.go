@@ -48,7 +48,7 @@ type Extension struct {
 
 	Requirements []ExtensionRequirement `json:"requirements" yaml:"requirements"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
-	Scripts      map[string]Script      `json:"scripts" yaml:"scripts"`
+	Commands     map[string]Command     `json:"commands" yaml:"commands"`
 }
 
 type ExtensionRequirement struct {
@@ -133,9 +133,9 @@ func ParseManifest(extensionName string, manifestPath string) (extension Extensi
 		return extension, err
 	}
 
-	for key, script := range extension.Scripts {
+	for key, script := range extension.Commands {
 		script.Name = key
-		extension.Scripts[key] = script
+		extension.Commands[key] = script
 	}
 
 	for key, rootItem := range extension.RootItems {

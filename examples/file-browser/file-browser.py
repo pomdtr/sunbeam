@@ -20,7 +20,7 @@ for path in sorted(entries, key=lambda p: p.name):
         {"type": "open-path", "path": str(path.absolute()), "title": "Open File"}
         if path.is_file()
         else {
-            "type": "run-script",
+            "type": "run-command",
             "script": "browseFiles",
             "title": "Browse Directory",
             "with": {"root": str(path.absolute()), "showHidden": args.show_hidden},

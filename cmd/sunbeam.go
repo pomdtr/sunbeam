@@ -108,7 +108,7 @@ func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Com
 		},
 	}
 
-	for key, script := range extension.Scripts {
+	for key, script := range extension.Commands {
 		script := script
 		scriptCmd := &cobra.Command{
 			Use:   key,

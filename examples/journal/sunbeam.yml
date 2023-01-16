@@ -6,14 +6,14 @@ rootItems:
     title: List Entries
   - script: writeEntry
     title: Write Entry
-scripts:
+commands:
   listEntries:
-    command: ./list-entries.py
+    exec: ./list-entries.py
     onSuccess: push-page
     page:
       type: list
   writeEntry:
-    command: ./write-entry.py --title ${{ title }} --content ${{ content }}
+    exec: ./write-entry.py --title ${{ title }} --content ${{ content }}
     inputs:
       - name: title
         type: textfield
@@ -22,7 +22,7 @@ scripts:
         type: textfield
         title: Content
   editEntry:
-    command: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
+    exec: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     inputs:
       - name: uuid
         type: textfield
@@ -34,7 +34,7 @@ scripts:
         type: textfield
         title: Content
   deleteEntry:
-    command: ./delete-entry.py --uuid ${{ uuid }}
+    exec: ./delete-entry.py --uuid ${{ uuid }}
     inputs:
       - name: uuid
         type: textfield

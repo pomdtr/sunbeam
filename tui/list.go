@@ -40,7 +40,7 @@ func ParseScriptItem(scriptItem app.ScriptItem) ListItem {
 		Id:       scriptItem.Id,
 		Title:    scriptItem.Title,
 		Subtitle: scriptItem.Subtitle,
-		Preview:  scriptItem.Preview,
+		Preview:  scriptItem.Preview.Text,
 		PreviewCmd: func() string {
 			cmd := scriptItem.PreviewCommand()
 			if cmd == nil {
@@ -92,14 +92,15 @@ func (i ListItem) Render(width int, selected bool) string {
 	var blanks string
 	accessories := fmt.Sprintf(" %s", strings.Join(i.Accessories, " · "))
 
+	// If the width is too small, we need to truncate the subtitle, accessories, or title (in that order)
 	if width >= lipgloss.Width(title+subtitle+accessories) {
 		availableWidth := width - lipgloss.Width(title+subtitle+accessories)
 		blanks = strings.Repeat(" ", availableWidth)
 	} else if width >= lipgloss.Width(title+accessories) {
 		subtitle = subtitle[:width-lipgloss.Width(title+accessories)]
-	} else if width >= lipgloss.Width(accessories) {
+	} else if width >= lipgloss.Width(title) {
 		subtitle = ""
-		title = title[:width-lipgloss.Width(accessories)]
+		accessories = accessories[:width-lipgloss.Width(title)]
 	} else {
 		accessories = ""
 		title = title[:utils.Min(len(title), width)]

@@ -24,10 +24,19 @@
             ]
         },
         "preview": {
-            "type": "string"
-        },
-        "previewCmd": {
-            "type": "string"
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "text": {
+                    "type": "string"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "with": {
+                    "type": "string"
+                }
+            }
         },
         "accessories": {
             "type": "array",
@@ -62,8 +71,7 @@
                         "reload-page",
                         "open-url",
                         "open-path",
-                        "run-script",
-                        "exec-command"
+                        "run-command"
                     ]
                 }
             },
@@ -72,7 +80,7 @@
                     "if": {
                         "properties": {
                             "type": {
-                                "const": "run-script"
+                                "const": "run-command"
                             }
                         }
                     },
@@ -109,33 +117,6 @@
                                 ]
                             },
                             "script": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "exec-command"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "title",
-                            "command"
-                        ],
-                        "properties": {
-                            "onSuccess": {
-                                "type": "string",
-                                "enum": [
-                                    "reload-page",
-                                    "exit"
-                                ]
-                            },
-                            "command": {
                                 "type": "string"
                             }
                         }

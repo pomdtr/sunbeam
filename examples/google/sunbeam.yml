@@ -6,9 +6,9 @@ version: "1.0"
 rootItems:
   - title: Google Suggestions
     script: search
-scripts:
+commands:
   search:
-    command: ./google.mjs
+    exec: ./google.mjs
     onSuccess: push-page
     page:
       type: list

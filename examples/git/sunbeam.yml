@@ -4,13 +4,13 @@ requirements:
   - homePage: https://github.com/kellyjonbrazil/jc
     which: jc
 rootItems:
-  - script: gitHistory
+  - script: history
     title: Show Branch History
     with:
       root: .
-scripts:
-  gitHistory:
-    command: ./git-history.sh ${{ root }}
+commands:
+  history:
+    exec: ./git-history.sh ${{ root }}
     onSuccess: push-page
     page:
       type: list

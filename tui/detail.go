@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -98,21 +97,11 @@ func (d *Detail) SetDetail(detail app.Detail) tea.Cmd {
 	}
 
 	d.SetActions(actions...)
-	d.content = detail.Preview
+	d.content = detail.Preview.Text
 	d.metadatas = detail.Metadatas
 	d.updateContent()
 
-	if detail.PreviewCmd == "" {
-		return nil
-	}
-	runPreviewCmd := func() tea.Msg {
-		output, err := exec.Command("sh", "-c", detail.PreviewCmd).Output()
-		if err != nil {
-			return err
-		}
-		return DetailMsg(output)
-	}
-	return tea.Batch(d.header.SetIsLoading(true), runPreviewCmd)
+	return nil
 }
 
 func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {

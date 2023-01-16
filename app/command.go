@@ -20,9 +20,9 @@ type Page struct {
 	IsGenerator bool   `json:"isGenerator" yaml:"isGenerator"`
 }
 
-type Script struct {
+type Command struct {
 	Name        string
-	Command     string        `json:"command" yaml:"command"`
+	Exec        string        `json:"exec" yaml:"exec"`
 	Description string        `json:"description" yaml:"description"`
 	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
 	Inputs      []ScriptInput `json:"inputs" yaml:"inputs"`
@@ -116,7 +116,7 @@ func (si *ScriptInputWithValue) UnmarshalJSON(bytes []byte) (err error) {
 	return json.Unmarshal(bytes, &si.Value)
 }
 
-func (s Script) Cmd(with map[string]any) (string, error) {
+func (s Command) Cmd(with map[string]any) (string, error) {
 	var err error
 
 	funcMap := template.FuncMap{}
@@ -129,7 +129,7 @@ func (s Script) Cmd(with map[string]any) (string, error) {
 		}
 	}
 
-	rendered, err := utils.RenderString(s.Command, funcMap)
+	rendered, err := utils.RenderString(s.Exec, funcMap)
 	if err != nil {
 		return "", err
 	}
@@ -142,9 +142,14 @@ type Detail struct {
 }
 
 type DetailData struct {
-	Preview    string           `json:"preview"`
-	PreviewCmd string           `json:"previewCmd"`
-	Metadatas  []ScriptMetadata `json:"metadatas"`
+	Preview   Preview          `json:"preview"`
+	Metadatas []ScriptMetadata `json:"metadatas"`
+}
+
+type Preview struct {
+	Text    string         `json:"text"`
+	Command string         `json:"command"`
+	With    map[string]any `json:"with"`
 }
 
 type ScriptMetadata struct {
@@ -162,10 +167,11 @@ type ScriptItem struct {
 }
 
 func (li ScriptItem) PreviewCommand() *exec.Cmd {
-	if li.PreviewCmd == "" {
-		return nil
-	}
-	return exec.Command("sh", "-c", li.PreviewCmd)
+	return nil
+	// if li.PreviewCmd == "" {
+	// 	return nil
+	// }
+	// return exec.Command("sh", "-c", li.PreviewCmd)
 }
 
 type ScriptAction struct {

@@ -25,10 +25,10 @@ type ScriptRunner struct {
 	detail *Detail
 	form   *Form
 
-	script app.Script
+	script app.Command
 }
 
-func NewScriptRunner(extension app.Extension, script app.Script, with map[string]app.ScriptInputWithValue) *ScriptRunner {
+func NewScriptRunner(extension app.Extension, script app.Command, with map[string]app.ScriptInputWithValue) *ScriptRunner {
 	mergedParams := make(map[string]app.ScriptInputWithValue)
 
 	for _, scriptParam := range script.Inputs {
@@ -81,7 +81,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 
 	if c.script.OnSuccess != "push-page" {
 		return ExecCommandMsg{
-			Command:   commandString,
+			Exec:      commandString,
 			Directory: c.extension.Root,
 			Env:       c.environ,
 			OnSuccess: c.script.OnSuccess,

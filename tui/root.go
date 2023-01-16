@@ -140,7 +140,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		script, ok := extension.Scripts[msg.Script]
+		script, ok := extension.Commands[msg.Script]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
@@ -166,7 +166,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		script, ok := extension.Scripts[msg.Script]
+		script, ok := extension.Commands[msg.Script]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
 		}
@@ -179,7 +179,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.Push(runner)
 		return m, cmd
 	case ExecCommandMsg:
-		command := exec.Command("sh", "-c", msg.Command)
+		command := exec.Command("sh", "-c", msg.Exec)
 		command.Dir = msg.Directory
 		command.Env = os.Environ()
 		command.Env = append(command.Env, msg.Env...)

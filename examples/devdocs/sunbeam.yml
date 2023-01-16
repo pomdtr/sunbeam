@@ -10,16 +10,16 @@ rootItems:
     title: Search Python 3.11 Documentation
     with:
       slug: python~3.11
-scripts:
+commands:
   searchDocsets:
-    command: |
+    exec: |
       curl https://devdocs.io/docs/docs.json | sunbeam query '. | group_by(.name) | .[] |
       {
         title: .[0].name,
         subtitle: (.[0].release // "latest"),
         actions: map(
           {
-              type: "run-script",
+              type: "run-command",
               title: "Browse \(.release // "latest") entries",
               script: "searchEntries",
               with: { slug: .slug }
@@ -31,7 +31,7 @@ scripts:
     page:
       type: list
   searchEntries:
-    command: |
+    exec: |
       curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
         {
           title: .name,

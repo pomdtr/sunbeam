@@ -4,15 +4,15 @@ requirements:
   - homePage: https://multipass.run
     which: multipass
 rootItems:
-  - script: manageVMs
-    title: Manage VMs
-scripts:
-  manageVMs:
+  - script: list-vms
+    title: List VMs
+commands:
+  list-vms:
     onSuccess: push-page
     page:
       type: list
       showPreview: true
-    command: |
+    exec: |
       multipass list --format json | sunbeam query '.list[] |
       {
         title: .name,
@@ -27,14 +27,32 @@ scripts:
               .state == "Running"
             then
               [
-                {type: "exec-command", title: "Stop \(.name)", onSuccess: "reload-page", command: "multipass stop \(.name)"},
-                {type: "exec-command", title: "Open Shell", shortcut: "ctrl+s", command: "multipass shell \(.name)"}
+                {type: "run-command", title: "Stop \(.name)", onSuccess: "reload-page", exec: "stop-vm", with: {vm: .name}},
+                {type: "run-command", title: "Open Shell", onSuccess: "reload-page", exec: "open-shell", with: {vm: .name}},
               ]
             else
               [
-                {type: "exec-command", title: "Start \(.name)", onSuccess: "reload-page", command: "multipass start \(.name)"}
+                {type: "run-command", title: "Start \(.name)", onSuccess: "reload-page", exec: "start-vm", with: {vm: .name}}
               ]
             end
           ),
       }
       '
+  open-shell:
+    exec: multipass shell ${{ vm }}
+    inputs:
+      - name: vm
+        type: textfield
+        title: VM Name
+  start-vm:
+    exec: multipass start ${{ vm }}
+    inputs:
+      - name: vm
+        type: textfield
+        title: VM Name
+  stop-vm:
+    exec: multipass stop ${{ vm }}
+    inputs:
+      - name: vm
+        type: textfield
+        title: VM Name

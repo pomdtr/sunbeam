@@ -9,7 +9,7 @@ rootItems:
     script: list
     with:
       platform: linux
-scripts:
+commands:
   list:
     page:
       type: list
@@ -19,12 +19,27 @@ scripts:
       - name: platform
         type: textfield
         title: Platform
-    command: |
-      tldr --list --platform ${{ platform }} | sunbeam query -R '{
+    exec: |
+      tldr --list --platform ${{ platform }} | sunbeam query --arg platform=${{ platform }} -R '{
         id: .,
         title: .,
-        previewCmd: "tldr --raw --platform  ${{ platform }} \(.)",
+        preview: {
+          exec: "view-page",
+          "with": {
+            platform: $platform,
+            page: .
+          }
+        },
         actions: [
           {type: "open-url", url: "https://tldr.ostera.io/\(.)", title: "Open in Browser"}
         ]
       }'
+  view-page:
+    exec: tldr --raw --platform ${{ platform }} ${{ page }}
+    inputs:
+      - name: platform
+        type: textfield
+        title: Platform
+      - name: page
+        type: textfield
+        title: Page

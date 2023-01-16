@@ -94,13 +94,13 @@ func (msg RunScriptMsg) OnSuccessCmd() tea.Cmd {
 func NewExecCmd(command string) tea.Cmd {
 	return func() tea.Msg {
 		return ExecCommandMsg{
-			Command: command,
+			Exec: command,
 		}
 	}
 }
 
 type ExecCommandMsg struct {
-	Command   string
+	Exec      string
 	Directory string
 	OnSuccess string
 	Env       []string
@@ -135,7 +135,7 @@ func NewEditCmd(path string) tea.Cmd {
 
 	return func() tea.Msg {
 		return ExecCommandMsg{
-			Command: fmt.Sprintf("%s %s", editor, path),
+			Exec: fmt.Sprintf("%s %s", editor, path),
 		}
 	}
 }
@@ -153,7 +153,7 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			scriptAction.Title = "Reload Script"
 		}
 		cmd = NewReloadPageCmd(scriptAction.With)
-	case "run-script":
+	case "run-command":
 		cmd = func() tea.Msg {
 			return RunScriptMsg{
 				Extension: scriptAction.Extension,
@@ -162,18 +162,6 @@ func NewAction(scriptAction app.ScriptAction) Action {
 				OnSuccess: scriptAction.OnSuccess,
 			}
 		}
-	case "exec-command":
-		cmd = tea.Sequence(
-			func() tea.Msg {
-				return IsLoadingMsg{}
-			},
-			func() tea.Msg {
-				return ExecCommandMsg{
-					Command:   scriptAction.Command,
-					OnSuccess: scriptAction.OnSuccess,
-					Directory: scriptAction.Dir,
-				}
-			})
 	case "open-path":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open"

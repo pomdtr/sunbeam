@@ -120,11 +120,11 @@ func init() {
 type PreferenceForm struct {
 	extension    app.Extension
 	onSuccessCmd tea.Cmd
-	script       app.Script
+	script       app.Command
 	*Form
 }
 
-func NewPreferenceForm(extension app.Extension, script app.Script) *PreferenceForm {
+func NewPreferenceForm(extension app.Extension, script app.Command) *PreferenceForm {
 	formitems := make([]FormItem, 0)
 	for _, preference := range extension.Preferences {
 		if prefValue, ok := keyStore.GetPreference(extension.Name, "", preference.Name); ok {

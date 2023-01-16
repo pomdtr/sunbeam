@@ -6,12 +6,12 @@ preferences:
     title: Jira Token
 rootItems:
   - title: List Issues
-    script: listIssues
+    script: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
-scripts:
-  listIssues:
-    command: ./jira.sh ${{ jql }}
+commands:
+  list-issues:
+    exec: ./jira.sh ${{ jql }}
     onSuccess: push-page
     page:
       type: list

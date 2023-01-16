@@ -3,9 +3,9 @@ version: "1.0"
 rootItems:
   - script: exampleForm
     title: Example form
-scripts:
+commands:
   exampleForm:
-    command: |
+    exec: |
       cat << EOF
       textfield: ${{ textfield }}
       EOF

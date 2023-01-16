@@ -3,7 +3,7 @@ title: Date Utils
 rootItems:
   - script: utc
     title: Copy UTC Timestamp
-scripts:
+commands:
   utc:
-    command: date +%Y-%m-%dT%H:%M:%SZ
+    exec: date +%Y-%m-%dT%H:%M:%SZ
     onSuccess: copy-text

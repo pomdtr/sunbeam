@@ -24,9 +24,9 @@ preferences:
     title: Vibility
     label: "Show Hidden Files"
     defaultValue: false
-scripts:
+commands:
   browseFiles:
-    command: ./file-browser.py --root ${{ root }}
+    exec: ./file-browser.py --root ${{ root }}
     onSuccess: push-page
     page:
       type: list
