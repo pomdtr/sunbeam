@@ -40,7 +40,7 @@ func LoadKeyStore(preferencePath string) (*KeyStore, error) {
 }
 
 func (k *KeyStore) Save() (err error) {
-	if os.Stat(path.Dir(k.preferencePath)); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Dir(k.preferencePath)); os.IsNotExist(err) {
 		err = os.MkdirAll(path.Dir(k.preferencePath), 0755)
 		if err != nil {
 			return fmt.Errorf("failed to create preferences directory: %w", err)
