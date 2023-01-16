@@ -1,9 +1,7 @@
 package tui
 
 import (
-	"errors"
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -37,26 +35,10 @@ func ParseScriptItem(scriptItem app.ScriptItem) ListItem {
 	}
 
 	return ListItem{
-		Id:       scriptItem.Id,
-		Title:    scriptItem.Title,
-		Subtitle: scriptItem.Subtitle,
-		Preview:  scriptItem.Preview.Text,
-		PreviewCmd: func() string {
-			cmd := scriptItem.PreviewCommand()
-			if cmd == nil {
-				return ""
-			}
-			out, err := cmd.Output()
-			if err != nil {
-				var exitErr *exec.ExitError
-				if errors.As(err, &exitErr) {
-					return string(exitErr.Stderr)
-				}
-				return err.Error()
-			}
-
-			return string(out)
-		},
+		Id:          scriptItem.Id,
+		Title:       scriptItem.Title,
+		Subtitle:    scriptItem.Subtitle,
+		Preview:     scriptItem.Preview,
 		Accessories: scriptItem.Accessories,
 		Actions:     actions,
 	}
@@ -190,10 +172,6 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 	return c.header.SetIsLoading(isLoading)
 }
 
-type PreviewUpdateMsg struct {
-	selectedItem ListItem
-}
-
 type PreviewContentMsg string
 
 func (l *List) updateActions(item ListItem) tea.Cmd {
@@ -211,19 +189,7 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 
 	var cmd tea.Cmd
 	if l.ShowPreview {
-		if item.Preview != "" {
-			l.setPreviewContent(item.Preview)
-		} else if item.PreviewCmd != nil {
-			if l.previewContent == "" {
-				cmd = func() tea.Msg {
-					return PreviewUpdateMsg{selectedItem: item}
-				}
-			} else {
-				cmd = tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {
-					return PreviewUpdateMsg{selectedItem: item}
-				})
-			}
-		}
+		l.setPreviewContent(item.Preview)
 	}
 	return cmd
 }
@@ -256,17 +222,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 		return c, NewReloadPageCmd(map[string]app.ScriptInputWithValue{
 			"query": {Value: msg.query},
-		})
-	case PreviewUpdateMsg:
-		if c.filter.Selection() == nil {
-			return c, nil
-		}
-		if msg.selectedItem.ID() != c.filter.Selection().ID() {
-			return c, nil
-		}
-		cmd := c.header.SetIsLoading(true)
-		return c, tea.Batch(cmd, func() tea.Msg {
-			return PreviewContentMsg(msg.selectedItem.PreviewCmd())
 		})
 	case PreviewContentMsg:
 		c.header.SetIsLoading(false)

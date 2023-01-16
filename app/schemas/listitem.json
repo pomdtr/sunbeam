@@ -24,19 +24,7 @@
             ]
         },
         "preview": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "text": {
-                    "type": "string"
-                },
-                "command": {
-                    "type": "string"
-                },
-                "with": {
-                    "type": "string"
-                }
-            }
+            "type": "string"
         },
         "accessories": {
             "type": "array",

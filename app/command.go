@@ -142,14 +142,8 @@ type Detail struct {
 }
 
 type DetailData struct {
-	Preview   Preview          `json:"preview"`
+	Preview   string           `json:"preview"`
 	Metadatas []ScriptMetadata `json:"metadatas"`
-}
-
-type Preview struct {
-	Text    string         `json:"text"`
-	Command string         `json:"command"`
-	With    map[string]any `json:"with"`
 }
 
 type ScriptMetadata struct {
@@ -168,10 +162,6 @@ type ScriptItem struct {
 
 func (li ScriptItem) PreviewCommand() *exec.Cmd {
 	return nil
-	// if li.PreviewCmd == "" {
-	// 	return nil
-	// }
-	// return exec.Command("sh", "-c", li.PreviewCmd)
 }
 
 type ScriptAction struct {
