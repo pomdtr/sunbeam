@@ -143,7 +143,7 @@ func (m Filter) itemHeight() int {
 }
 
 func (m *Filter) CursorUp() {
-	if m.cursor != 0 {
+	if m.cursor > 0 {
 		m.cursor = m.cursor - 1
 
 		if m.cursor < m.minIndex {
