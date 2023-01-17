@@ -58,7 +58,6 @@
                         "copy-text",
                         "reload-page",
                         "open-url",
-                        "open-path",
                         "run-command"
                     ]
                 }
@@ -75,7 +74,7 @@
                     "then": {
                         "required": [
                             "title",
-                            "script"
+                            "command"
                         ],
                         "properties": {
                             "with": {
@@ -104,7 +103,7 @@
                                     "exit"
                                 ]
                             },
-                            "script": {
+                            "command": {
                                 "type": "string"
                             }
                         }

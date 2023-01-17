@@ -2,13 +2,13 @@ version: "1.0"
 title: Bitwarden
 rootItems:
   - title: Search Passwords
-    script: listPassords
+    command: list-passwords
 preferences:
   - name: BW_SESSION
     type: password
     title: Session Token
 commands:
-  listPassords:
+  list-passwords:
     exec: ./bitwarden.sh
     onSuccess: push-page
     page:

@@ -2,18 +2,17 @@ title: TLDR Pages
 version: "1.0"
 rootItems:
   - title: "Search MacOS Pages"
-    script: list
+    command: list
     with:
       platform: osx
   - title: "Search Linux Pages"
-    script: list
+    command: list
     with:
       platform: linux
 commands:
   list:
     page:
       type: list
-      showPreview: true
     onSuccess: push-page
     inputs:
       - name: platform
@@ -23,19 +22,12 @@ commands:
       tldr --list --platform ${{ platform }} | sunbeam query --arg platform=${{ platform }} -R '{
         id: .,
         title: .,
-        preview: {
-          exec: "view-page",
-          "with": {
-            platform: $platform,
-            page: .
-          }
-        },
         actions: [
-          {type: "open-url", url: "https://tldr.ostera.io/\(.)", title: "Open in Browser"}
+          {type: "run-command", "command": "view-page", title: "View Page", with: {page: ., platform: $platform}}
         ]
       }'
   view-page:
-    exec: tldr --raw --platform ${{ platform }} ${{ page }}
+    exec: tldr --platform ${{ platform }} ${{ page }}
     inputs:
       - name: platform
         type: textfield

@@ -303,7 +303,7 @@ func (m *Model) Pop() {
 }
 
 func toShellCommand(rootItem app.RootItem) string {
-	args := []string{"sunbeam", rootItem.Extension, rootItem.Script}
+	args := []string{"sunbeam", rootItem.Extension, rootItem.Command}
 	for param, value := range rootItem.With {
 		switch value := value.(type) {
 		case string:
@@ -360,9 +360,10 @@ func NewRootList(rootItems ...app.RootItem) Page {
 			with[key] = app.ScriptInputWithValue{Value: value}
 		}
 		listItems = append(listItems, ListItem{
-			Id:       itemShellCommand,
-			Title:    rootItem.Title,
-			Subtitle: rootItem.Subtitle,
+			Id:          itemShellCommand,
+			Title:       rootItem.Title,
+			Subtitle:    rootItem.Subtitle,
+			Accessories: []string{"local"},
 			Actions: []Action{
 				{
 					Title:    "Run Script",
@@ -378,7 +379,7 @@ func NewRootList(rootItems ...app.RootItem) Page {
 
 						return RunScriptMsg{
 							Extension: rootItem.Extension,
-							Script:    rootItem.Script,
+							Script:    rootItem.Command,
 							With:      with,
 						}
 					},
@@ -388,7 +389,7 @@ func NewRootList(rootItems ...app.RootItem) Page {
 					Cmd: func() tea.Msg {
 						return ShowPrefMsg{
 							Extension: rootItem.Extension,
-							Script:    rootItem.Script,
+							Script:    rootItem.Command,
 						}
 					},
 				},

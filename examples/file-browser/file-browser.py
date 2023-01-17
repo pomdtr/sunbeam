@@ -10,18 +10,17 @@ parser.add_argument("--show-hidden", action="store_true")
 args = parser.parse_args()
 
 root: pathlib.Path = args.root
-
 entries = root.iterdir()
 if not args.show_hidden:
     entries = filter(lambda p: not p.name.startswith("."), entries)
 
 for path in sorted(entries, key=lambda p: p.name):
     primaryAction = (
-        {"type": "open-path", "path": str(path.absolute()), "title": "Open File"}
+        {"type": "open-url", "path": f"file://{path.absolute()}", "title": "Open File"}
         if path.is_file()
         else {
             "type": "run-command",
-            "script": "browseFiles",
+            "command": "browse-files",
             "title": "Browse Directory",
             "with": {"root": str(path.absolute()), "showHidden": args.show_hidden},
         }
@@ -39,6 +38,13 @@ for path in sorted(entries, key=lambda p: p.name):
                         "title": "Copy Path",
                         "shorcut": "ctrl+y",
                         "text": str(path.absolute()),
+                    },
+                    {
+                        "type": "run-command",
+                        "title": "Delete File",
+                        "shortcut": "ctrl+d",
+                        "command": "delete-file",
+                        "with": {"path": str(path.absolute())},
                     },
                     {
                         "type": "reload-page",

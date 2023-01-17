@@ -5,7 +5,7 @@ requirements:
     which: gh
 rootItems:
   - title: List Repositories
-    script: list-repos
+    command: list-repos
 commands:
   view-readme:
     exec: |

@@ -2,9 +2,9 @@ title: Random
 version: "1.0"
 rootItems:
   - title: Generate 5 random numbers
-    script: randomList
+    command: random-list
 commands:
-  randomList:
+  random-list:
     exec: ./random_list.py
     onSuccess: push-page
     page:

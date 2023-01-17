@@ -5,10 +5,10 @@ preferences:
     type: textfield
     title: Last Name
 rootItems:
-  - script: googleSearch
+  - command: google-search
     title: Google Search
 commands:
-  googleSearch:
+  google-search:
     exec: |
       echo "https://www.google.com/search?q=$FIRST_NAME+$LAST_NAME"
     onSuccess: open-url

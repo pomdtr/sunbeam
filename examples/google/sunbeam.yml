@@ -5,7 +5,7 @@ requirements:
 version: "1.0"
 rootItems:
   - title: Google Suggestions
-    script: search
+    command: search
 commands:
   search:
     exec: ./google.mjs

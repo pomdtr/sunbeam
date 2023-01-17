@@ -5,17 +5,17 @@ requirements:
     homePage: https://www.python.org
 rootItems:
   - title: Browse Root Directory
-    script: browseFiles
+    command: browse-files
     with:
       root: /
   - title: Browse Home Directory
-    script: browseFiles
+    command: browse-files
     with:
       root: "~"
   - title: Browse Custom Directory
-    script: browseFiles
+    command: browse-files
   - title: Browse Current Directory
-    script: browseFiles
+    command: browse-files
     with:
       root: "."
 preferences:
@@ -25,7 +25,7 @@ preferences:
     label: "Show Hidden Files"
     defaultValue: false
 commands:
-  browseFiles:
+  browse-files:
     exec: ./file-browser.py --root ${{ root }}
     onSuccess: push-page
     page:

@@ -6,7 +6,7 @@ preferences:
     title: Jira Token
 rootItems:
   - title: List Issues
-    script: list-issues
+    command: list-issues
     with:
       jql: assignee=currentUser() and status!=Closed
 commands:

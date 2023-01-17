@@ -271,7 +271,6 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				for i, action := range scriptItem.Actions {
 					if action.Extension == "" {
 						action.Extension = c.extension.Name
-						action.Dir = c.extension.Root
 					}
 					scriptItem.Actions[i] = action
 				}

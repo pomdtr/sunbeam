@@ -4,7 +4,7 @@ requirements:
   - homePage: https://multipass.run
     which: multipass
 rootItems:
-  - script: list-vms
+  - command: list-vms
     title: List VMs
 commands:
   list-vms:
@@ -12,32 +12,7 @@ commands:
     page:
       type: list
       showPreview: true
-    exec: |
-      multipass list --format json | sunbeam query '.list[] |
-      {
-        title: .name,
-        subtitle: .release,
-        accessories: [
-          .state
-        ],
-        previewCmd: "multipass info \(.name)",
-        actions:
-          (
-            if
-              .state == "Running"
-            then
-              [
-                {type: "run-command", title: "Stop \(.name)", onSuccess: "reload-page", exec: "stop-vm", with: {vm: .name}},
-                {type: "run-command", title: "Open Shell", onSuccess: "reload-page", exec: "open-shell", with: {vm: .name}},
-              ]
-            else
-              [
-                {type: "run-command", title: "Start \(.name)", onSuccess: "reload-page", exec: "start-vm", with: {vm: .name}}
-              ]
-            end
-          ),
-      }
-      '
+    exec: ./list-vms.sh
   open-shell:
     exec: multipass shell ${{ vm }}
     inputs:

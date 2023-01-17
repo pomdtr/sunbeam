@@ -118,10 +118,6 @@ func (msg ExecCommandMsg) OnSuccessMsg(output string) tea.Msg {
 		return OpenUrlMsg{
 			Url: strings.TrimSpace(output),
 		}
-	case "open-path":
-		return OpenUrlMsg{
-			Url: fmt.Sprintf("file://%s", strings.TrimSpace(output)),
-		}
 	default:
 		return fmt.Errorf("unknown on-success action: %s", msg.OnSuccess)
 	}
@@ -157,16 +153,11 @@ func NewAction(scriptAction app.ScriptAction) Action {
 		cmd = func() tea.Msg {
 			return RunScriptMsg{
 				Extension: scriptAction.Extension,
-				Script:    scriptAction.Script,
+				Script:    scriptAction.Command,
 				With:      scriptAction.With,
 				OnSuccess: scriptAction.OnSuccess,
 			}
 		}
-	case "open-path":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Open"
-		}
-		cmd = NewOpenUrlCmd(fmt.Sprintf("file://%s", scriptAction.Path))
 	case "open-url":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open in Browser"

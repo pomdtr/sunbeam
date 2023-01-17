@@ -15,18 +15,18 @@ import (
 )
 
 type Page struct {
-	Type        string `json:"type"`
-	ShowPreview bool   `json:"showPreview" yaml:"showPreview"`
-	IsGenerator bool   `json:"isGenerator" yaml:"isGenerator"`
+	Type        string
+	ShowPreview bool `json:"showPreview" yaml:"showPreview"`
+	IsGenerator bool `json:"isGenerator" yaml:"isGenerator"`
 }
 
 type Command struct {
 	Name        string
-	Exec        string        `json:"exec" yaml:"exec"`
-	Description string        `json:"description" yaml:"description"`
-	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
-	Inputs      []ScriptInput `json:"inputs" yaml:"inputs"`
-	Page        Page          `json:"page" yaml:"page"`
+	Exec        string
+	Description string
+	Preferences []ScriptInput
+	Inputs      []ScriptInput
+	Page        Page
 
 	OnSuccess string `json:"onSuccess" yaml:"onSuccess"`
 }
@@ -49,17 +49,17 @@ func (o *Optional[T]) UnmarshalYAML(value *yaml.Node) (err error) {
 }
 
 type ScriptInput struct {
-	Name        string           `json:"name" yaml:"name"`
-	Type        string           `json:"type"`
-	Title       string           `json:"title"`
-	Placeholder Optional[string] `json:"placeholder"`
-	Default     Optional[any]    `json:"defaultValue" yaml:"defaultValue"`
+	Name        string
+	Type        string
+	Title       string
+	Placeholder Optional[string]
+	Default     Optional[any]
 
 	Data []struct {
-		Title string `json:"title,omitempty"`
-		Value string `json:"value,omitempty"`
-	} `json:"data,omitempty"`
-	Label string `json:"label"`
+		Title string
+		Value string
+	}
+	Label string
 }
 
 type ScriptInputWithValue struct {
@@ -165,22 +165,20 @@ func (li ScriptItem) PreviewCommand() *exec.Cmd {
 }
 
 type ScriptAction struct {
-	Title    string `json:"title"`
-	Type     string `json:"type"`
-	Shortcut string `json:"shortcut"`
+	Title    string
+	Type     string
+	Shortcut string
 
-	Text string `json:"text"`
+	Text string
 
-	Url  string `json:"url"`
-	Path string `json:"path"`
+	Url  string
+	Path string
 
-	Extension string `json:"extension"`
-	Script    string `json:"script"`
-	Command   string `json:"command"`
-	Dir       string
+	Extension string
+	Command   string
 
-	OnSuccess string                          `json:"onSuccess"`
-	With      map[string]ScriptInputWithValue `json:"with"`
+	OnSuccess string `json:"onSuccess"`
+	With      map[string]ScriptInputWithValue
 }
 
 //go:embed schemas/listitem.json

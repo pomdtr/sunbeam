@@ -1,10 +1,10 @@
 title: Example Form
 version: "1.0"
 rootItems:
-  - script: exampleForm
+  - command: example-form
     title: Example form
 commands:
-  exampleForm:
+  example-form:
     exec: |
       cat << EOF
       textfield: ${{ textfield }}

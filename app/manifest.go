@@ -31,27 +31,27 @@ func (api *Api) IsExtensionInstalled(name string) bool {
 
 type RootItem struct {
 	Extension string
-	Script    string
+	Command   string
 	Title     string
 	Subtitle  string
 	With      map[string]any
 }
 
 type Extension struct {
-	Title       string        `json:"title" yaml:"title"`
-	Description string        `json:"description" yaml:"description"`
-	Name        string        `json:"name" yaml:"name"`
-	PostInstall string        `json:"postInstall" yaml:"postInstall"`
-	Root        string        `json:"root" yaml:"root"`
-	Preferences []ScriptInput `json:"preferences" yaml:"preferences"`
+	Title       string
+	Description string
+	Name        string
+	PostInstall string `json:"postInstall" yaml:"postInstall"`
+	Root        string
+	Preferences []ScriptInput
 
-	Requirements []ExtensionRequirement `json:"requirements" yaml:"requirements"`
-	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
-	Commands     map[string]Command     `json:"commands" yaml:"commands"`
+	Requirements []ExtensionRequirement
+	RootItems    []RootItem `json:"rootItems" yaml:"rootItems"`
+	Commands     map[string]Command
 }
 
 type ExtensionRequirement struct {
-	Which    string `json:"which" yaml:"which"`
+	Which    string
 	HomePage string `json:"homePage" yaml:"homePage"`
 }
 

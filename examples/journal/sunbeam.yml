@@ -2,17 +2,17 @@ title: Journal
 version: "1.0"
 
 rootItems:
-  - script: listEntries
+  - command: list-entries
     title: List Entries
-  - script: writeEntry
+  - command: write-entry
     title: Write Entry
 commands:
-  listEntries:
+  list-entries:
     exec: ./list-entries.py
     onSuccess: push-page
     page:
       type: list
-  writeEntry:
+  write-entry:
     exec: ./write-entry.py --title ${{ title }} --content ${{ content }}
     inputs:
       - name: title
@@ -21,7 +21,7 @@ commands:
       - name: content
         type: textfield
         title: Content
-  editEntry:
+  edit-entry:
     exec: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     inputs:
       - name: uuid
@@ -33,7 +33,7 @@ commands:
       - name: content
         type: textfield
         title: Content
-  deleteEntry:
+  delete-entry:
     exec: ./delete-entry.py --uuid ${{ uuid }}
     inputs:
       - name: uuid
