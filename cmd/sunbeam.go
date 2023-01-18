@@ -108,14 +108,14 @@ func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Com
 		},
 	}
 
-	for key, script := range extension.Commands {
-		script := script
+	for key, command := range extension.Commands {
+		command := command
 		scriptCmd := &cobra.Command{
 			Use:   key,
-			Short: script.Description,
+			Short: command.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(map[string]app.ScriptInputWithValue)
-				for _, param := range script.Inputs {
+				for _, param := range command.Inputs {
 					if !cmd.Flags().Changed(param.Name) {
 						continue
 					}
@@ -137,7 +137,7 @@ func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Com
 				}
 
 				model := tui.NewModel(config, extension)
-				runner := tui.NewScriptRunner(extension, script, with)
+				runner := tui.NewScriptRunner(extension, command, with)
 				model.SetRoot(runner)
 
 				err = tui.Draw(model)
@@ -148,7 +148,7 @@ func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Com
 			},
 		}
 
-		for _, param := range script.Inputs {
+		for _, param := range command.Inputs {
 			switch param.Type {
 			case "checkbox":
 				if defaultValue, ok := param.Default.Value.(bool); ok {

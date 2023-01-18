@@ -25,13 +25,13 @@ type ScriptRunner struct {
 	detail *Detail
 	form   *Form
 
-	script app.Command
+	command app.Command
 }
 
-func NewScriptRunner(extension app.Extension, script app.Command, with map[string]app.ScriptInputWithValue) *ScriptRunner {
+func NewScriptRunner(extension app.Extension, command app.Command, with map[string]app.ScriptInputWithValue) *ScriptRunner {
 	mergedParams := make(map[string]app.ScriptInputWithValue)
 
-	for _, scriptParam := range script.Inputs {
+	for _, scriptParam := range command.Inputs {
 		merged := app.ScriptInputWithValue{
 			ScriptInput: scriptParam,
 		}
@@ -52,7 +52,7 @@ func NewScriptRunner(extension app.Extension, script app.Command, with map[strin
 
 	return &ScriptRunner{
 		extension: extension,
-		script:    script,
+		command:   command,
 		with:      mergedParams,
 	}
 }
@@ -74,22 +74,22 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 		with[key] = value
 	}
 
-	commandString, err := c.script.Cmd(with)
+	commandString, err := c.command.Cmd(with)
 	if err != nil {
 		return err
 	}
 
-	if c.script.OnSuccess != "push-page" {
+	if c.command.OnSuccess != "push-page" {
 		return ExecCommandMsg{
 			Exec:      commandString,
 			Directory: c.extension.Root,
 			Env:       c.environ,
-			OnSuccess: c.script.OnSuccess,
+			OnSuccess: c.command.OnSuccess,
 		}
 	}
 
 	command := exec.Command("sh", "-c", commandString)
-	if c.script.Page.Type == "generator" {
+	if c.command.Page.Type == "generator" {
 		command.Stdin = strings.NewReader(c.list.Query())
 	}
 
@@ -111,7 +111,7 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 
 func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 	formItems := make([]FormItem, 0)
-	for _, param := range c.script.Inputs {
+	for _, param := range c.command.Inputs {
 		input := c.with[param.Name]
 		if input.Value != nil {
 			continue
@@ -125,9 +125,9 @@ func (c *ScriptRunner) CheckMissingParameters() []FormItem {
 }
 
 func (c ScriptRunner) Preferences() map[string]app.ScriptInputWithValue {
-	preferences := make([]app.ScriptInput, 0, len(c.extension.Preferences)+len(c.script.Preferences))
+	preferences := make([]app.ScriptInput, 0, len(c.extension.Preferences)+len(c.command.Preferences))
 	preferences = append(preferences, c.extension.Preferences...)
-	preferences = append(preferences, c.script.Preferences...)
+	preferences = append(preferences, c.command.Preferences...)
 
 	preferenceMap := make(map[string]app.ScriptInputWithValue)
 	for _, preference := range preferences {
@@ -151,7 +151,7 @@ func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem)
 			continue
 		}
 
-		if pref, ok := keyStore.GetPreference(c.extension.Name, c.script.Name, name); ok {
+		if pref, ok := keyStore.GetPreference(c.extension.Name, c.command.Name, name); ok {
 			environ = append(environ, fmt.Sprintf("%s=%s", name, pref.Value))
 			continue
 		}
@@ -184,7 +184,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		return c.form.Init()
 	}
 
-	if c.script.OnSuccess != "push-page" {
+	if c.command.OnSuccess != "push-page" {
 		if c.form != nil {
 			cmd := c.form.SetIsLoading(true)
 			return tea.Batch(cmd, c.ScriptCmd)
@@ -192,7 +192,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		return c.ScriptCmd
 	}
 
-	if c.script.Page.Type == "detail" {
+	if c.command.Page.Type == "detail" {
 		c.currentView = "detail"
 		if c.detail != nil {
 			cmd := c.detail.SetIsLoading(true)
@@ -205,17 +205,17 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
 	}
 
-	if c.script.Page.Type == "list" {
+	if c.command.Page.Type == "list" {
 		c.currentView = "list"
 		if c.list != nil {
 			cmd := c.list.SetIsLoading(true)
 			return tea.Batch(cmd, c.ScriptCmd)
 		}
 		c.list = NewList(c.extension.Title)
-		if c.script.Page.IsGenerator {
+		if c.command.Page.IsGenerator {
 			c.list.Dynamic = true
 		}
-		if c.script.Page.ShowPreview {
+		if c.command.Page.ShowPreview {
 			c.list.ShowPreview = true
 		}
 
@@ -225,7 +225,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 		return tea.Batch(c.ScriptCmd, c.list.Init(), cmd)
 	}
 
-	return NewErrorCmd(fmt.Errorf("unknown page type: %s", c.script.Page.Type))
+	return NewErrorCmd(fmt.Errorf("unknown page type: %s", c.command.Page.Type))
 }
 
 func (c *ScriptRunner) SetSize(width, height int) {
@@ -243,7 +243,7 @@ func (c *ScriptRunner) SetSize(width, height int) {
 func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case CommandOutput:
-		switch c.script.Page.Type {
+		switch c.command.Page.Type {
 		case "detail":
 			var detail app.Detail
 			err := json.Unmarshal([]byte(msg), &detail)
@@ -299,7 +299,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				preferences = append(preferences, preference)
 			}
 
-			for _, input := range c.script.Preferences {
+			for _, input := range c.command.Preferences {
 				value, ok := msg.Values[input.Name]
 				if !ok {
 					continue
@@ -308,7 +308,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					Name:      input.Name,
 					Value:     value,
 					Extension: c.extension.Name,
-					Script:    c.script.Name,
+					Command:   c.command.Name,
 				}
 				preferences = append(preferences, preference)
 			}

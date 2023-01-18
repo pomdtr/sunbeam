@@ -8,14 +8,12 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
@@ -42,7 +40,6 @@ type Model struct {
 	root         Page
 	pages        []Page
 	extensionMap map[string]app.Extension
-	actionChan   chan (map[string]string)
 
 	hidden bool
 	exit   bool
@@ -102,15 +99,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case OpenUrlMsg:
-		if _, ok := os.LookupEnv("SUNBEAM_REMOTE_PIPE"); ok {
-			m.actionChan <- map[string]string{
-				"action": "open-url",
-				"url":    msg.Url,
-			}
-
-			m.hidden = true
-			return m, tea.Quit
-		}
 		err := browser.OpenURL(msg.Url)
 		if err != nil {
 			return m, NewErrorCmd(err)
@@ -119,15 +107,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case CopyTextMsg:
-		if _, ok := os.LookupEnv("SUNBEAM_REMOTE_PIPE"); ok {
-			m.actionChan <- map[string]string{
-				"action": "copy-text",
-				"text":   msg.Text,
-			}
-
-			m.hidden = true
-			return m, tea.Quit
-		}
 		err := clipboard.WriteAll(msg.Text)
 		if err != nil {
 			return m, NewErrorCmd(fmt.Errorf("failed to copy text to clipboard: %s", err))
@@ -140,17 +119,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
 		}
-		script, ok := extension.Commands[msg.Script]
+		command, ok := extension.Commands[msg.Command]
 		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
+			return m, NewErrorCmd(fmt.Errorf("command %s not found", msg.Command))
 		}
 
-		pref := NewPreferenceForm(extension, script)
+		pref := NewPreferenceForm(extension, command)
 
 		cmd := m.Push(pref)
 
 		return m, cmd
-	case RunScriptMsg:
+	case RunCommandMsg:
 		extension, ok := m.extensionMap[msg.Extension]
 		if !ok {
 			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
@@ -166,9 +145,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		script, ok := extension.Commands[msg.Script]
+		script, ok := extension.Commands[msg.Command]
 		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("script %s not found", msg.Script))
+			return m, NewErrorCmd(fmt.Errorf("command %s not found", msg.Command))
 		}
 
 		runner := NewScriptRunner(extension, script, msg.With)
@@ -239,7 +218,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 type ShowPrefMsg struct {
 	Extension string
-	Script    string
+	Command   string
 }
 
 func (m *Model) View() string {
@@ -377,9 +356,9 @@ func NewRootList(rootItems ...app.RootItem) Page {
 						data, _ := json.Marshal(history)
 						os.WriteFile(historyPath, data, 0644)
 
-						return RunScriptMsg{
+						return RunCommandMsg{
 							Extension: rootItem.Extension,
-							Script:    rootItem.Command,
+							Command:   rootItem.Command,
 							With:      with,
 						}
 					},
@@ -389,7 +368,7 @@ func NewRootList(rootItems ...app.RootItem) Page {
 					Cmd: func() tea.Msg {
 						return ShowPrefMsg{
 							Extension: rootItem.Extension,
-							Script:    rootItem.Command,
+							Command:   rootItem.Command,
 						}
 					},
 				},
@@ -433,73 +412,26 @@ func Draw(model *Model) (err error) {
 	// Disable the background detection since we are only using ANSI colors
 	lipgloss.SetHasDarkBackground(true)
 
-	pipeFile, isRemote := os.LookupEnv("SUNBEAM_REMOTE_PIPE")
-	if isRemote {
-		if _, err := os.Stat(pipeFile); os.IsNotExist(err) {
-			err := syscall.Mkfifo(pipeFile, 0666)
-			if err != nil {
-				return err
-			}
-			defer os.Remove(pipeFile)
-		}
-
-		f, err := os.OpenFile(pipeFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
-		if err != nil {
-			return err
-		}
-
-		model.actionChan = make(chan map[string]string)
-
-		go func() {
-			jsonEncoder := json.NewEncoder(f)
-			for {
-				action := <-model.actionChan
-				err := jsonEncoder.Encode(action)
-
-				if err != nil {
-					log.Println(err)
-				}
-			}
-		}()
+	var p *tea.Program
+	if model.IsFullScreen() {
+		p = tea.NewProgram(model, tea.WithAltScreen())
+	} else {
+		p = tea.NewProgram(model)
 	}
 
-	for {
-		var p *tea.Program
-		if model.IsFullScreen() {
-			p = tea.NewProgram(model, tea.WithAltScreen())
-		} else {
-			p = tea.NewProgram(model)
-		}
+	m, err := p.Run()
+	if err != nil {
+		return err
+	}
 
-		m, err := p.Run()
-		if err != nil {
-			return err
-		}
+	model = m.(*Model)
 
-		model = m.(*Model)
+	if exitCmd := model.exitCmd; exitCmd != nil {
+		exitCmd.Stderr = os.Stderr
+		exitCmd.Stdout = os.Stdout
+		exitCmd.Stdin = os.Stdin
 
-		if exitCmd := model.exitCmd; exitCmd != nil {
-			exitCmd.Stderr = os.Stderr
-			exitCmd.Stdout = os.Stdout
-			exitCmd.Stdin = os.Stdin
-
-			exitCmd.Run()
-		}
-
-		if !isRemote {
-			break
-		}
-
-		termenv.NewOutput(os.Stdout).ClearScreen()
-		if model.exit {
-			break
-		}
-
-		model.actionChan <- map[string]string{
-			"action": "hide",
-		}
-
-		model.Reset()
+		exitCmd.Run()
 	}
 
 	return nil

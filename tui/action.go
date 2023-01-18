@@ -63,24 +63,24 @@ type ReloadPageMsg struct {
 	With map[string]app.ScriptInputWithValue
 }
 
-func NewRunScriptCmd(extension string, script string, with map[string]app.ScriptInputWithValue) tea.Cmd {
+func NewRunScriptCmd(extension string, command string, with map[string]app.ScriptInputWithValue) tea.Cmd {
 	return func() tea.Msg {
-		return RunScriptMsg{
+		return RunCommandMsg{
 			Extension: extension,
-			Script:    script,
+			Command:   command,
 			With:      with,
 		}
 	}
 }
 
-type RunScriptMsg struct {
+type RunCommandMsg struct {
 	Extension string
-	Script    string
+	Command   string
 	With      map[string]app.ScriptInputWithValue
 	OnSuccess string
 }
 
-func (msg RunScriptMsg) OnSuccessCmd() tea.Cmd {
+func (msg RunCommandMsg) OnSuccessCmd() tea.Cmd {
 	switch msg.OnSuccess {
 	case "exit":
 		return tea.Quit
@@ -151,9 +151,9 @@ func NewAction(scriptAction app.ScriptAction) Action {
 		cmd = NewReloadPageCmd(scriptAction.With)
 	case "run-command":
 		cmd = func() tea.Msg {
-			return RunScriptMsg{
+			return RunCommandMsg{
 				Extension: scriptAction.Extension,
-				Script:    scriptAction.Command,
+				Command:   scriptAction.Command,
 				With:      scriptAction.With,
 				OnSuccess: scriptAction.OnSuccess,
 			}

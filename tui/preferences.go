@@ -60,25 +60,25 @@ func (k *KeyStore) Save() (err error) {
 	return nil
 }
 
-func GetPreferenceId(extension string, script string, name string) string {
-	if script != "" {
-		return fmt.Sprintf("%s.%s.%s", extension, script, name)
+func GetPreferenceId(extension string, command string, name string) string {
+	if command != "" {
+		return fmt.Sprintf("%s.%s.%s", extension, command, name)
 	}
 	return fmt.Sprintf("%s.%s", extension, name)
 }
 
 type ScriptPreference struct {
-	Name      string `json:"name"`
-	Script    string `json:"script"`
-	Extension string `json:"extension"`
-	Value     any    `json:"value"`
+	Name      string
+	Command   string
+	Extension string
+	Value     any
 }
 
-func (k KeyStore) GetPreference(extension string, script string, name string) (ScriptPreference, bool) {
+func (k KeyStore) GetPreference(extension string, command string, name string) (ScriptPreference, bool) {
 	if k.preferenceMap == nil {
 		return ScriptPreference{}, false
 	}
-	scriptId := GetPreferenceId(extension, script, name)
+	scriptId := GetPreferenceId(extension, command, name)
 	if preference, ok := k.preferenceMap[scriptId]; ok {
 		return preference, true
 	}
@@ -93,7 +93,7 @@ func (k KeyStore) GetPreference(extension string, script string, name string) (S
 
 func (k *KeyStore) SetPreference(preferences ...ScriptPreference) error {
 	for _, preference := range preferences {
-		k.preferenceMap[GetPreferenceId(preference.Extension, preference.Script, preference.Name)] = preference
+		k.preferenceMap[GetPreferenceId(preference.Extension, preference.Command, preference.Name)] = preference
 	}
 
 	return keyStore.Save()
@@ -120,11 +120,11 @@ func init() {
 type PreferenceForm struct {
 	extension    app.Extension
 	onSuccessCmd tea.Cmd
-	script       app.Command
+	Command      app.Command
 	*Form
 }
 
-func NewPreferenceForm(extension app.Extension, script app.Command) *PreferenceForm {
+func NewPreferenceForm(extension app.Extension, command app.Command) *PreferenceForm {
 	formitems := make([]FormItem, 0)
 	for _, preference := range extension.Preferences {
 		if prefValue, ok := keyStore.GetPreference(extension.Name, "", preference.Name); ok {
@@ -134,8 +134,8 @@ func NewPreferenceForm(extension app.Extension, script app.Command) *PreferenceF
 		formitems = append(formitems, NewFormItem(preference))
 	}
 
-	for _, preference := range script.Preferences {
-		if prefValue, ok := keyStore.GetPreference(extension.Name, script.Name, preference.Name); ok {
+	for _, preference := range command.Preferences {
+		if prefValue, ok := keyStore.GetPreference(extension.Name, command.Name, preference.Name); ok {
 			preference.Default.Value = prefValue.Value
 		}
 
@@ -144,7 +144,7 @@ func NewPreferenceForm(extension app.Extension, script app.Command) *PreferenceF
 
 	return &PreferenceForm{
 		extension:    extension,
-		script:       script,
+		Command:      command,
 		Form:         NewForm(fmt.Sprintf("%s · Preferences", extension.Title), "Preferences", formitems),
 		onSuccessCmd: PopCmd,
 	}
@@ -167,7 +167,7 @@ func (p *PreferenceForm) Update(msg tea.Msg) (Page, tea.Cmd) {
 			preferences = append(preferences, preference)
 		}
 
-		for _, input := range p.script.Preferences {
+		for _, input := range p.Command.Preferences {
 			value, ok := msg.Values[input.Name]
 			if !ok {
 				continue
@@ -176,7 +176,7 @@ func (p *PreferenceForm) Update(msg tea.Msg) (Page, tea.Cmd) {
 				Name:      input.Name,
 				Value:     value,
 				Extension: p.extension.Name,
-				Script:    p.script.Name,
+				Command:   p.Command.Name,
 			}
 			preferences = append(preferences, preference)
 		}

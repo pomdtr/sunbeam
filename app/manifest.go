@@ -131,9 +131,9 @@ func ParseManifest(extensionName string, manifestPath string) (extension Extensi
 		return extension, err
 	}
 
-	for key, script := range extension.Commands {
-		script.Name = key
-		extension.Commands[key] = script
+	for key, command := range extension.Commands {
+		command.Name = key
+		extension.Commands[key] = command
 	}
 
 	for key, rootItem := range extension.RootItems {
