@@ -3,6 +3,6 @@
 set -e
 
 for filename in examples/*/sunbeam.yml; do
-  echo "Validating $filename"
-  sunbeam lint "$filename"
+  echo "Checking $filename..."
+  sunbeam check "$filename"
 done

@@ -9,10 +9,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewCmdLint() *cobra.Command {
+func NewCmdCheck() *cobra.Command {
 	return &cobra.Command{
-		Use:   "lint <manifest-path>",
-		Short: "Lint a sunbeam extension",
+		Use:   "check <manifest-path>",
+		Short: "Check if an extension manifest is valid",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			manifestPath := args[0]
@@ -33,6 +33,17 @@ func NewCmdLint() *cobra.Command {
 
 			if err = app.ManifestSchema.Validate(m); err != nil {
 				return fmt.Errorf("%#v", err)
+			}
+
+			var extension app.Extension
+			if err := yaml.Unmarshal(manifestBytes, &extension); err != nil {
+				return fmt.Errorf("failed to unmarshal manifest: %w", err)
+			}
+
+			for _, rootItem := range extension.RootItems {
+				if _, ok := extension.Commands[rootItem.Command]; !ok {
+					return fmt.Errorf("root item '%s' references unknown command '%s'", rootItem.Title, rootItem.Command)
+				}
 			}
 
 			fmt.Println("Extension is valid")
