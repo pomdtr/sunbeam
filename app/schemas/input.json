@@ -1,0 +1,105 @@
+{
+    "$schema": "http://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": [
+        "type"
+    ],
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": [
+                "textfield",
+                "password",
+                "textarea",
+                "dropdown",
+                "checkbox",
+                "file",
+                "directory"
+            ]
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "enum": [
+                            "textfield",
+                            "password",
+                            "textarea",
+                            "file",
+                            "directory"
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "additionalProperties": false,
+                "properties": {
+                    "placeholder": {
+                        "type": "string"
+                    },
+                    "default": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "dropdown"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "default": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "checkbox"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "label"
+                ],
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "default": {
+                        "type": "boolean"
+                    }
+                }
+            }
+        }
+    ]
+}

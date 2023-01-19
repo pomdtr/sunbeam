@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import json
+import json, sys
 from journal import load_journal
 from datetime import datetime
 
@@ -18,7 +18,6 @@ if len(journal["entries"]) == 0:
                         "type": "run-command",
                         "command": "write-entry",
                         "title": "Write Entry",
-                        "onSuccess": "reload-page"
                     }
                 ],
             }
@@ -26,11 +25,11 @@ if len(journal["entries"]) == 0:
     )
     exit()
 
-for uuid, entry in journal["entries"].items():
-    print(
-        json.dumps(
+json.dump(
+    {
+        "type": "list",
+        "items": [
             {
-                "id": uuid,
                 "title": entry["title"],
                 "preview": entry["content"],
                 "accessories": [
@@ -48,28 +47,25 @@ for uuid, entry in journal["entries"].items():
                         "type": "run-command",
                         "title": "New Entry",
                         "command": "write-entry",
-                        "onSuccess": "reload-page",
-                        "shortcut": "ctrl+n"
+                        "shortcut": "ctrl+n",
                     },
                     {
                         "type": "run-command",
                         "title": "Delete Entry",
                         "command": "delete-entry",
-                        "onSuccess": "reload-page",
                         "shortcut": "ctrl+d",
                         "with": {"uuid": uuid},
                     },
                     {
                         "type": "run-command",
                         "title": "Edit Entry",
-                        "command": "edit-entry",
-                        "onSuccess": "reload-page",
+                        "command": "edit-form",
                         "shortcut": "ctrl+e",
-                        "with": {
-                            "uuid": uuid
-                        },
+                        "with": {"uuid": uuid},
                     },
                 ],
             }
-        )
-    )
+            for uuid, entry in journal["entries"].items()
+        ],
+    }, sys.stdout
+)

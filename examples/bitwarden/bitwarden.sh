@@ -19,4 +19,7 @@ bw --nointeraction list items | sunbeam query '.[] | {
             text: "\(.login)"
         }
     ]
+}' | sunbeam query --slurp '{
+    type: "list",
+    items: .
 }'

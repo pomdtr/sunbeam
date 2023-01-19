@@ -9,4 +9,7 @@ git -C "$1" log | jc --git-log | sunbeam query '.[] | {
     actions: [
         { title: "Copy Commit Hash", text: .commit, type: "copy-text" }
     ]
+}' | sunbeam query --slurp '{
+    type: "list",
+    items: .
 }'

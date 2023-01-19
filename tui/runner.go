@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/app"
 )
 
@@ -22,6 +23,9 @@ type CommandRunner struct {
 
 	with    map[string]any
 	environ []string
+
+	header Header
+	footer Footer
 
 	list   *List
 	detail *Detail
@@ -44,6 +48,8 @@ func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[s
 	}
 
 	return &CommandRunner{
+		header:    NewHeader(),
+		footer:    NewFooter(extension.Title),
 		extension: extension,
 		command:   command,
 		with:      with,
@@ -54,20 +60,15 @@ func (c *CommandRunner) Init() tea.Cmd {
 	return c.Run()
 }
 
-type CommandOutput string
+type CommandOutput []byte
 
 func (c CommandRunner) ScriptCmd() tea.Msg {
-	commandInput := app.CommandInput{
-		Dir:  c.extension.Root,
+	commandInput := app.CommandParams{
 		With: c.with,
 		Env:  c.environ,
 	}
 
-	if c.command.Page != nil && c.command.Page.Type == "generator" {
-		commandInput.Stdin = c.list.Query()
-	}
-
-	cmd, err := c.command.Cmd(commandInput)
+	cmd, err := c.command.Cmd(commandInput, c.extension.Root)
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func (c CommandRunner) ScriptCmd() tea.Msg {
 		return err
 	}
 
-	return CommandOutput(string(output))
+	return CommandOutput(output)
 }
 
 func (c *CommandRunner) CheckMissingParameters() []FormItem {
@@ -160,52 +161,20 @@ func (c *CommandRunner) Run() tea.Cmd {
 		return c.form.Init()
 	}
 
-	if c.command.OnSuccess != "push-page" {
-		if c.form != nil {
-			cmd := c.form.SetIsLoading(true)
-			return tea.Batch(cmd, c.ScriptCmd)
-		}
-		return c.ScriptCmd
+	if c.form != nil {
+		cmd := c.form.SetIsLoading(true)
+		return tea.Batch(cmd, c.ScriptCmd)
 	}
 
-	if c.command.Page.Type == "detail" {
-		c.currentView = "detail"
-		if c.detail != nil {
-			cmd := c.detail.SetIsLoading(true)
-			return tea.Batch(cmd, c.ScriptCmd)
-		}
-
-		c.detail = NewDetail(c.extension.Title)
-		c.detail.SetSize(c.width, c.height)
-		cmd := c.detail.SetIsLoading(true)
-		return tea.Batch(c.ScriptCmd, cmd, c.detail.Init())
-	}
-
-	if c.command.Page.Type == "list" {
-		c.currentView = "list"
-		if c.list != nil {
-			cmd := c.list.SetIsLoading(true)
-			return tea.Batch(cmd, c.ScriptCmd)
-		}
-		c.list = NewList(c.extension.Title)
-		if c.command.Page.IsGenerator {
-			c.list.Dynamic = true
-		}
-		if c.command.Page.ShowPreview {
-			c.list.ShowPreview = true
-		}
-
-		c.list.SetSize(c.width, c.height)
-
-		cmd := c.list.SetIsLoading(true)
-		return tea.Batch(c.ScriptCmd, c.list.Init(), cmd)
-	}
-
-	return NewErrorCmd(fmt.Errorf("unknown page type: %s", c.command.Page.Type))
+	return c.ScriptCmd
 }
 
 func (c *CommandRunner) SetSize(width, height int) {
 	c.width, c.height = width, height
+
+	c.header.Width = width
+	c.footer.Width = width
+
 	switch c.currentView {
 	case "list":
 		c.list.SetSize(width, height)
@@ -218,30 +187,48 @@ func (c *CommandRunner) SetSize(width, height int) {
 
 func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			if c.currentView != "" {
+				break
+			}
+			return c, PopCmd
+		}
 	case CommandOutput:
 		switch c.command.OnSuccess {
 		case "push-page":
-			switch c.command.Page.Type {
+			var page app.Page
+			if page.Title == "" {
+				page.Title = c.extension.Title
+			}
+
+			var v any
+			if err := json.Unmarshal(msg, &v); err != nil {
+				return c, NewErrorCmd(err)
+			}
+
+			if err := app.PageSchema.Validate(v); err != nil {
+				return c, NewErrorCmd(err)
+			}
+
+			err := json.Unmarshal(msg, &page)
+			if err != nil {
+				return c, NewErrorCmd(err)
+			}
+
+			switch page.Type {
 			case "detail":
-				var detail app.Detail
-				err := json.Unmarshal([]byte(msg), &detail)
-				if err != nil {
-					return c, NewErrorCmd(err)
-				}
 
-				c.detail.SetIsLoading(false)
-				cmd := c.detail.SetDetail(detail)
-				c.SetSize(c.width, c.height)
+				c.currentView = "detail"
+				c.detail = NewDetail(page.Title)
+				c.detail.SetDetail(page.Detail)
+				c.detail.SetSize(c.width, c.height)
 
-				return c, cmd
+				return c, c.detail.Init()
 			case "list":
-				scriptItems, err := app.ParseListItems(string(msg))
-				if err != nil {
-					return c, NewErrorCmd(err)
-				}
-				listItems := make([]ListItem, len(scriptItems))
-
-				for i, scriptItem := range scriptItems {
+				listItems := make([]ListItem, len(page.List.Items))
+				for i, scriptItem := range page.List.Items {
 					if scriptItem.Id == "" {
 						scriptItem.Id = strconv.Itoa(i)
 					}
@@ -249,25 +236,33 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					listItems[i] = ParseScriptItem(scriptItem)
 				}
 
-				cmd := c.list.SetItems(listItems)
-				c.list.SetIsLoading(false)
-				return c, cmd
+				c.currentView = "list"
+				c.list = NewList(c.extension.Title)
+				c.list.SetItems(listItems)
+				c.list.SetSize(c.width, c.height)
+
+				return c, c.list.Init()
+			case "form":
+				formItems := make([]FormItem, len(page.Form.Inputs))
+				for i, input := range page.Form.Inputs {
+					formItems[i] = NewFormItem(input)
+				}
+
+				c.currentView = "form"
+				c.form = NewForm("command", c.extension.Title, formItems)
+				c.form.SetSize(c.width, c.height)
 			}
+
 		case "open-url":
 			return c, NewOpenUrlCmd(string(msg))
 		case "copy-text":
 			return c, NewCopyTextCmd(string(msg))
-		case "reload-page":
-			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
 		}
 
 	case RunCommandMsg:
 		command, ok := c.extension.Commands[msg.Command]
 		if !ok {
 			return c, NewErrorCmd(fmt.Errorf("command not found: %s", msg.Command))
-		}
-		if msg.OnSuccess != "" {
-			command.OnSuccess = msg.OnSuccess
 		}
 
 		return c, NewPushCmd(NewCommandRunner(c.extension, NamedCommand{
@@ -353,6 +348,9 @@ func (c *CommandRunner) View() string {
 	case "form":
 		return c.form.View()
 	default:
-		return ""
+		headerView := c.header.View()
+		footerView := c.footer.View()
+		padding := make([]string, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView))
+		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), strings.Join(padding, "\n"), c.footer.View())
 	}
 }

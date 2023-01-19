@@ -31,6 +31,7 @@ const items = res[1].map((suggestion) => ({
   ],
 }));
 
-for (const item of items) {
-  console.log(JSON.stringify(item));
-}
+console.log({
+  type: "list",
+  items,
+});

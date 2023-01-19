@@ -10,6 +10,3 @@ commands:
   search:
     exec: ./google.mjs
     onSuccess: push-page
-    page:
-      type: list
-      isGenerator: true

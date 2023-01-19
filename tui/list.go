@@ -25,7 +25,7 @@ type ListItem struct {
 	Actions     []Action
 }
 
-func ParseScriptItem(scriptItem app.ScriptItem) ListItem {
+func ParseScriptItem(scriptItem app.ListItem) ListItem {
 	actions := make([]Action, len(scriptItem.Actions))
 	for i, scriptAction := range scriptItem.Actions {
 		if i == 0 {

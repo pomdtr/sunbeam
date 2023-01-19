@@ -18,5 +18,8 @@ sunbeam query '.issues[] | {
     accessories: [
         "\(.fields.status.name)"
     ]
+}' | sunbeam query --slurp '{
+    type: "list",
+    items: .
 }'
 

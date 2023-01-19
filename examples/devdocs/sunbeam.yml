@@ -26,10 +26,8 @@ commands:
           }
         )
       }
-      '
+      ' | sunbeam --slurp { type: "list", "items": . }
     onSuccess: push-page
-    page:
-      type: list
   search-entries:
     exec: |
       curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
@@ -40,10 +38,8 @@ commands:
             {type: "open", target: "https://devdocs.io/${{ slug }}/\(.path)"}
           ]
         }
-      '
+      ' | sunbeam --slurp { type: "list", "items": . }
     onSuccess: push-page
-    page:
-      type: list
     inputs:
       - name: slug
         type: textfield

@@ -11,8 +11,6 @@ rootItems:
       platform: linux
 commands:
   list:
-    page:
-      type: list
     onSuccess: push-page
     inputs:
       - name: platform
@@ -20,12 +18,11 @@ commands:
         title: Platform
     exec: |
       tldr --list --platform ${{ platform }} | sunbeam query --arg platform=${{ platform }} -R '{
-        id: .,
         title: .,
         actions: [
           {type: "run-command", "command": "view-page", title: "View Page", with: {page: ., platform: $platform}}
         ]
-      }'
+      }' | sunbeam query --slurp '{ type: "list", items: . }'
   view-page:
     exec: tldr --platform ${{ platform }} ${{ page }}
     inputs:

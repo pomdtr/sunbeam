@@ -12,8 +12,6 @@ commands:
   history:
     exec: ./git-history.sh ${{ root }}
     onSuccess: push-page
-    page:
-      type: list
     inputs:
       - name: root
         type: directory

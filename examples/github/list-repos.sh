@@ -34,4 +34,7 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
             }
         ]
     }
-'
+' | sunbeam query --slurp '{
+    type: "list",
+    items: .
+}'

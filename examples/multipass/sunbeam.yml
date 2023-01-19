@@ -9,9 +9,6 @@ rootItems:
 commands:
   list-vms:
     onSuccess: push-page
-    page:
-      type: list
-      showPreview: true
     exec: ./list-vms.sh
   open-shell:
     exec: multipass shell ${{ vm }}

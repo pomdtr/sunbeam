@@ -10,8 +10,6 @@ commands:
   list-entries:
     exec: ./list-entries.py
     onSuccess: push-page
-    page:
-      type: list
   write-entry:
     exec: ./write-entry.py --title ${{ title }} --content ${{ content }}
     inputs:

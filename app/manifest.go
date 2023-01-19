@@ -1,19 +1,19 @@
 package app
 
 import (
+	"embed"
 	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed schemas/manifest.json
-var manifest string
+//go:embed schemas
+var embedFs embed.FS
 
 type Api struct {
 	Extensions    map[string]Extension
@@ -61,15 +61,34 @@ func (r ExtensionRequirement) Check() bool {
 }
 
 var ManifestSchema *jsonschema.Schema
+var PageSchema *jsonschema.Schema
 
 func init() {
-	compiler := jsonschema.NewCompiler()
-	if err := compiler.AddResource("manifest", strings.NewReader(manifest)); err != nil {
+	var err error
+
+	manifest, err := embedFs.Open("schemas/manifest.json")
+	if err != nil {
+		panic(err)
+	}
+	page, err := embedFs.Open("schemas/page.json")
+	if err != nil {
 		panic(err)
 	}
 
-	var err error
+	compiler := jsonschema.NewCompiler()
+	if err = compiler.AddResource("manifest", manifest); err != nil {
+		panic(err)
+	}
+	if err = compiler.AddResource("page", page); err != nil {
+		panic(err)
+	}
+
 	ManifestSchema, err = compiler.Compile("manifest")
+	if err != nil {
+		panic(err)
+	}
+
+	PageSchema, err = compiler.Compile("page")
 	if err != nil {
 		panic(err)
 	}

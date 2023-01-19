@@ -24,8 +24,6 @@ commands:
       }
       '
     onSuccess: push-page
-    page:
-      type: detail
     inputs:
       - name: repository
         type: textfield
@@ -33,9 +31,6 @@ commands:
   list-repos:
     exec: ./list-repos.sh ${{ owner }}
     onSuccess: push-page
-    page:
-      type: list
-      showPreview: true
     inputs:
       - name: owner
         type: textfield
@@ -43,8 +38,6 @@ commands:
   list-prs:
     exec: ./list-prs.sh ${{ repository }}
     onSuccess: push-page
-    page:
-      type: list
     inputs:
       - name: repository
         type: textfield

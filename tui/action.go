@@ -76,20 +76,8 @@ type PushPageMsg struct {
 }
 
 type RunCommandMsg struct {
-	Command   string
-	With      map[string]any
-	OnSuccess string
-}
-
-func (msg RunCommandMsg) OnSuccessCmd() tea.Cmd {
-	switch msg.OnSuccess {
-	case "exit":
-		return tea.Quit
-	case "reload-page":
-		return tea.Sequence(PopCmd, NewReloadPageCmd(nil))
-	default:
-		return tea.Quit
-	}
+	Command string
+	With    map[string]any
 }
 
 func NewAction(scriptAction app.ScriptAction) Action {
@@ -102,15 +90,14 @@ func NewAction(scriptAction app.ScriptAction) Action {
 		cmd = NewCopyTextCmd(scriptAction.Text)
 	case "reload-page":
 		if scriptAction.Title == "" {
-			scriptAction.Title = "Reload Script"
+			scriptAction.Title = "Reload Page"
 		}
 		cmd = NewReloadPageCmd(scriptAction.With)
 	case "run-command":
 		cmd = func() tea.Msg {
 			return RunCommandMsg{
-				Command:   scriptAction.Command,
-				With:      scriptAction.With,
-				OnSuccess: scriptAction.OnSuccess,
+				Command: scriptAction.Command,
+				With:    scriptAction.With,
 			}
 		}
 	case "open-url":

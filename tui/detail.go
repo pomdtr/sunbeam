@@ -17,7 +17,7 @@ type Detail struct {
 	header       Header
 	Style        lipgloss.Style
 	content      string
-	metadatas    []app.ScriptMetadata
+	metadatas    []app.Metadata
 	mainViewport viewport.Model
 	sideViewport viewport.Model
 	actionList   ActionList
