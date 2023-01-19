@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/olekukonko/tablewriter"
 	"github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/app"
@@ -27,25 +28,17 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 	}
 
 	extensionArgs := make([]string, 0, len(api.Extensions))
-	for _, extension := range api.Extensions {
-		extensionArgs = append(extensionArgs, extension.Name)
+	for name := range api.Extensions {
+		extensionArgs = append(extensionArgs, name)
 	}
 
 	extensionCommand.AddCommand(func() *cobra.Command {
-		command := &cobra.Command{
-			Use:   "install <directory-or-url>",
+		return &cobra.Command{
+			Use:   "install <name> <directory-or-url>",
 			Short: "Install a sunbeam extension from a local directory or a git repository",
-			Args:  cobra.ExactArgs(1),
+			Args:  cobra.ExactArgs(2),
 			PreRunE: func(cmd *cobra.Command, args []string) error {
-				extensionName, err := cmd.Flags().GetString("name")
-				if err != nil {
-					return err
-				}
-
-				if extensionName == "" {
-					return fmt.Errorf("extension name must be specified with --name")
-				}
-
+				extensionName := args[0]
 				invalidName := []string{"clipboard", "extension", "open", "query", "run"}
 				for _, name := range invalidName {
 					if extensionName == name {
@@ -69,12 +62,8 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 				return nil
 			},
 			RunE: func(cmd *cobra.Command, args []string) error {
-				extensionName, err := cmd.Flags().GetString("name")
-				if err != nil {
-					return err
-				}
-
-				extensionRoot := args[0]
+				extensionName := args[0]
+				extensionRoot := args[1]
 				if _, err := os.Stat(extensionRoot); err == nil {
 					extensionRoot, err = filepath.Abs(extensionRoot)
 					if err != nil {
@@ -112,7 +101,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", extensionName)
 				}
 
-				extension, err := app.ParseManifest(extensionName, manifestPath)
+				extension, err := app.ParseManifest(manifestPath)
 				if err != nil {
 					return err
 				}
@@ -135,10 +124,6 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 				return nil
 			},
 		}
-
-		command.Flags().StringP("name", "n", "", "Extension name")
-
-		return command
 	}())
 
 	extensionCommand.AddCommand(func() *cobra.Command {
@@ -233,7 +218,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", args[0])
 				}
 
-				extension, err := app.ParseManifest(args[0], manifestPath)
+				extension, err := app.ParseManifest(manifestPath)
 				if err != nil {
 					return fmt.Errorf("failed to parse manifest: %w", err)
 				}
@@ -259,8 +244,8 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 			Args:    cobra.NoArgs,
 			Run: func(cmd *cobra.Command, args []string) {
 				rows := make([][]string, 0)
-				for _, extension := range api.Extensions {
-					rows = append(rows, []string{extension.Name})
+				for name := range api.Extensions {
+					rows = append(rows, []string{name})
 				}
 
 				writer := tablewriter.NewWriter(os.Stdout)
@@ -314,7 +299,10 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 						item.Actions = []tui.Action{
 							{
 								Title: "Remove Extension",
-								Cmd:   tui.NewExecCmd(fmt.Sprintf("sunbeam extension remove %s", repo.Name)),
+								Cmd: func() tea.Msg {
+									exec.Command("sunbeam", "extension", "remove", repo.FullName).Run()
+									return tea.Quit()
+								},
 							},
 							{
 								Title: "Open in Browser",
@@ -325,7 +313,10 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 						item.Actions = []tui.Action{
 							{
 								Title: "Install Extension",
-								Cmd:   tui.NewExecCmd(fmt.Sprintf("sunbeam extension install %s --name %s", repo.HtmlURL, repo.Name)),
+								Cmd: func() tea.Msg {
+									exec.Command("sunbeam", "extension", "install", repo.FullName)
+									return tea.Quit()
+								},
 							},
 							{
 								Title: "Open in Browser",
@@ -339,10 +330,10 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 
 				list := tui.NewList("Browse Extensions")
 				list.SetItems(extensionItems)
-				model := tui.NewModel(config)
+				model := tui.NewModel(list)
 				model.SetRoot(list)
 
-				return tui.Draw(model)
+				return tui.Draw(model, true)
 			},
 		}
 		return &command

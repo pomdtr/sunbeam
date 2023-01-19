@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pomdtr/sunbeam/app"
 )
 
 type KeyStore struct {
@@ -99,9 +96,9 @@ func (k *KeyStore) SetPreference(preferences ...ScriptPreference) error {
 	return keyStore.Save()
 }
 
+// TODO: Remove this
 var keyStore *KeyStore
 
-// TODO: move this to the root model init function
 func init() {
 	var err error
 
@@ -115,82 +112,4 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-}
-
-type PreferenceForm struct {
-	extension    app.Extension
-	onSuccessCmd tea.Cmd
-	Command      app.Command
-	*Form
-}
-
-func NewPreferenceForm(extension app.Extension, command app.Command) *PreferenceForm {
-	formitems := make([]FormItem, 0)
-	for _, preference := range extension.Preferences {
-		if prefValue, ok := keyStore.GetPreference(extension.Name, "", preference.Name); ok {
-			preference.Default.Value = prefValue.Value
-		}
-
-		formitems = append(formitems, NewFormItem(preference))
-	}
-
-	for _, preference := range command.Preferences {
-		if prefValue, ok := keyStore.GetPreference(extension.Name, command.Name, preference.Name); ok {
-			preference.Default.Value = prefValue.Value
-		}
-
-		formitems = append(formitems, NewFormItem(preference))
-	}
-
-	return &PreferenceForm{
-		extension:    extension,
-		Command:      command,
-		Form:         NewForm(fmt.Sprintf("%s · Preferences", extension.Title), "Preferences", formitems),
-		onSuccessCmd: PopCmd,
-	}
-}
-
-func (p *PreferenceForm) Update(msg tea.Msg) (Page, tea.Cmd) {
-	switch msg := msg.(type) {
-	case SubmitMsg:
-		preferences := make([]ScriptPreference, 0)
-		for _, input := range p.extension.Preferences {
-			value, ok := msg.Values[input.Name]
-			if !ok {
-				continue
-			}
-			preference := ScriptPreference{
-				Name:      input.Name,
-				Value:     value,
-				Extension: p.extension.Name,
-			}
-			preferences = append(preferences, preference)
-		}
-
-		for _, input := range p.Command.Preferences {
-			value, ok := msg.Values[input.Name]
-			if !ok {
-				continue
-			}
-			preference := ScriptPreference{
-				Name:      input.Name,
-				Value:     value,
-				Extension: p.extension.Name,
-				Command:   p.Command.Name,
-			}
-			preferences = append(preferences, preference)
-		}
-
-		err := keyStore.SetPreference(preferences...)
-		if err != nil {
-			return p, NewErrorCmd(err)
-		}
-
-		return p, p.onSuccessCmd
-	}
-
-	page, cmd := p.Form.Update(msg)
-	p.Form = page.(*Form)
-
-	return p, cmd
 }

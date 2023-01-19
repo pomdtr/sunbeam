@@ -61,8 +61,9 @@ func Execute(version string) (err error) {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			model := tui.NewModel(config, api.Extensions...)
-			return tui.Draw(model)
+			rootList := tui.NewRootList(api.Extensions, config.RootItems...)
+			model := tui.NewModel(rootList)
+			return tui.Draw(model, true)
 		},
 	}
 
@@ -78,28 +79,30 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	rootCmd.AddCommand(NewCmdDocs())
 	rootCmd.AddCommand(NewCmdExtension(api, config))
+	rootCmd.AddCommand(NewCmdServe(api))
 	rootCmd.AddCommand(NewCmdCheck())
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(config))
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
-		for _, extension := range api.Extensions {
-			rootCmd.AddCommand(NewExtensionCommand(extension, config))
+		for name, extension := range api.Extensions {
+			rootCmd.AddCommand(NewExtensionCommand(name, extension, config))
 		}
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Command {
+func NewExtensionCommand(name string, extension app.Extension, config *tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
-		Use:     extension.Name,
+		Use:     name,
 		GroupID: "extension",
 		Short:   extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			root := tui.NewModel(config, extension)
-			err = tui.Draw(root)
+			rootList := tui.NewRootList(map[string]app.Extension{name: extension}, config.RootItems...)
+			model := tui.NewModel(rootList)
+			err = tui.Draw(model, true)
 			if err != nil {
 				return fmt.Errorf("could not run extension: %w", err)
 			}
@@ -108,13 +111,14 @@ func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Com
 		},
 	}
 
-	for key, command := range extension.Commands {
+	for commandName, command := range extension.Commands {
+		commandName := commandName
 		command := command
 		scriptCmd := &cobra.Command{
-			Use:   key,
+			Use:   commandName,
 			Short: command.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				with := make(map[string]app.ScriptInputWithValue)
+				with := make(map[string]any)
 				for _, param := range command.Inputs {
 					if !cmd.Flags().Changed(param.Name) {
 						continue
@@ -125,22 +129,31 @@ func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Com
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.ScriptInputWithValue{Value: value}
+						with[param.Name] = value
 					default:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.ScriptInputWithValue{Value: value}
+						with[param.Name] = value
 					}
 
 				}
+				runner := tui.NewCommandRunner(
+					tui.NamedExtension{
+						Name:      name,
+						Extension: extension,
+					},
+					tui.NamedCommand{
+						Name:    commandName,
+						Command: command,
+					},
+					with,
+				)
 
-				model := tui.NewModel(config, extension)
-				runner := tui.NewScriptRunner(extension, command, with)
-				model.SetRoot(runner)
+				model := tui.NewModel(runner)
 
-				err = tui.Draw(model)
+				err = tui.Draw(model, true)
 				if err != nil {
 					return fmt.Errorf("could not run script: %w", err)
 				}
@@ -151,13 +164,13 @@ func NewExtensionCommand(extension app.Extension, config *tui.Config) *cobra.Com
 		for _, param := range command.Inputs {
 			switch param.Type {
 			case "checkbox":
-				if defaultValue, ok := param.Default.Value.(bool); ok {
+				if defaultValue, ok := param.Default.(bool); ok {
 					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Title)
 				} else {
 					scriptCmd.Flags().Bool(param.Name, false, param.Title)
 				}
 			default:
-				if defaultValue, ok := param.Default.Value.(string); ok {
+				if defaultValue, ok := param.Default.(string); ok {
 					scriptCmd.Flags().String(param.Name, defaultValue, param.Title)
 				} else {
 					scriptCmd.Flags().String(param.Name, "", param.Title)

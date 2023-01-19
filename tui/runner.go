@@ -13,91 +13,70 @@ import (
 	"github.com/pomdtr/sunbeam/app"
 )
 
-type ScriptRunner struct {
+type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	extension app.Extension
-	with      map[string]app.ScriptInputWithValue
-	environ   []string
+	extension NamedExtension
+	command   NamedCommand
+
+	with    map[string]any
+	environ []string
 
 	list   *List
 	detail *Detail
 	form   *Form
-
-	command app.Command
 }
 
-func NewScriptRunner(extension app.Extension, command app.Command, with map[string]app.ScriptInputWithValue) *ScriptRunner {
-	mergedParams := make(map[string]app.ScriptInputWithValue)
+type NamedExtension struct {
+	app.Extension
+	Name string
+}
 
-	for _, scriptParam := range command.Inputs {
-		merged := app.ScriptInputWithValue{
-			ScriptInput: scriptParam,
-		}
+type NamedCommand struct {
+	app.Command
+	Name string
+}
 
-		input, ok := with[scriptParam.Name]
-		if ok {
-			if input.Value != nil {
-				merged.Value = input.Value
-			} else {
-				if input.Default.Defined {
-					merged.Default.Value = input.Default.Value
-				}
-			}
-		}
-
-		mergedParams[scriptParam.Name] = merged
+func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[string]any) *CommandRunner {
+	if with == nil {
+		with = map[string]any{}
 	}
 
-	return &ScriptRunner{
+	return &CommandRunner{
 		extension: extension,
 		command:   command,
-		with:      mergedParams,
+		with:      with,
 	}
 }
 
-func (c *ScriptRunner) Init() tea.Cmd {
+func (c *CommandRunner) Init() tea.Cmd {
 	return c.Run()
 }
 
 type CommandOutput string
 
-func (c ScriptRunner) ScriptCmd() tea.Msg {
-	with := make(map[string]any)
-
-	for key, param := range c.with {
-		value, err := param.GetValue()
-		if err != nil {
-			return err
-		}
-		with[key] = value
+func (c CommandRunner) ScriptCmd() tea.Msg {
+	commandInput := app.CommandInput{
+		Dir:  c.extension.Root,
+		With: c.with,
+		Env:  c.environ,
 	}
 
-	commandString, err := c.command.Cmd(with)
+	if c.command.Page != nil && c.command.Page.Type == "generator" {
+		commandInput.Stdin = c.list.Query()
+	}
+
+	cmd, err := c.command.Cmd(commandInput)
 	if err != nil {
 		return err
 	}
 
-	if c.command.OnSuccess != "push-page" {
-		return ExecCommandMsg{
-			Exec:      commandString,
-			Directory: c.extension.Root,
-			Env:       c.environ,
-			OnSuccess: c.command.OnSuccess,
-		}
+	if c.command.OnSuccess == "" {
+		return ExecMsg{cmd}
 	}
 
-	command := exec.Command("sh", "-c", commandString)
-	if c.command.Page.Type == "generator" {
-		command.Stdin = strings.NewReader(c.list.Query())
-	}
-
-	command.Dir = c.extension.Root
-	command.Env = os.Environ()
-	command.Env = append(command.Env, c.environ...)
-
-	output, err := command.Output()
+	output, err := cmd.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
 		if ok := errors.As(err, &exitErr); ok {
@@ -109,61 +88,59 @@ func (c ScriptRunner) ScriptCmd() tea.Msg {
 	return CommandOutput(string(output))
 }
 
-func (c *ScriptRunner) CheckMissingParameters() []FormItem {
+func (c *CommandRunner) CheckMissingParameters() []FormItem {
 	formItems := make([]FormItem, 0)
-	for _, param := range c.command.Inputs {
-		input := c.with[param.Name]
-		if input.Value != nil {
+	for _, input := range c.command.Inputs {
+		if _, ok := c.with[input.Name]; ok {
 			continue
 		}
-
-		formItem := NewFormItem(input.ScriptInput)
+		formItem := NewFormItem(input)
 		formItems = append(formItems, formItem)
 	}
 
 	return formItems
 }
 
-func (c ScriptRunner) Preferences() map[string]app.ScriptInputWithValue {
-	preferences := make([]app.ScriptInput, 0, len(c.extension.Preferences)+len(c.command.Preferences))
+func (c CommandRunner) Preferences() map[string]app.FormInput {
+	preferences := make([]app.FormInput, 0, len(c.extension.Preferences)+len(c.command.Preferences))
 	preferences = append(preferences, c.extension.Preferences...)
 	preferences = append(preferences, c.command.Preferences...)
 
-	preferenceMap := make(map[string]app.ScriptInputWithValue)
+	preferenceMap := make(map[string]app.FormInput)
 	for _, preference := range preferences {
-		preferenceMap[preference.Name] = app.ScriptInputWithValue{
-			ScriptInput: preference,
-		}
+		preferenceMap[preference.Name] = preference
 	}
 
 	return preferenceMap
 }
 
-func (c *ScriptRunner) checkPreferences() (environ []string, missing []FormItem) {
+func (c *CommandRunner) checkMissingPreferences() ([]string, []FormItem) {
 	envMap := make(map[string]struct{})
 	for _, env := range os.Environ() {
 		pair := strings.SplitN(env, "=", 2)
 		envMap[pair[0]] = struct{}{}
 	}
 
+	environ := make([]string, 0)
+	missing := make([]FormItem, 0)
 	for name, param := range c.Preferences() {
+		// Skip if already set in environment
 		if _, ok := envMap[name]; ok {
 			continue
 		}
 
 		if pref, ok := keyStore.GetPreference(c.extension.Name, c.command.Name, name); ok {
 			environ = append(environ, fmt.Sprintf("%s=%s", name, pref.Value))
-			continue
+		} else {
+			missing = append(missing, NewFormItem(param))
 		}
-
-		missing = append(missing, NewFormItem(param.ScriptInput))
 	}
 
 	return environ, missing
 }
 
-func (c *ScriptRunner) Run() tea.Cmd {
-	environ, missing := c.checkPreferences()
+func (c *CommandRunner) Run() tea.Cmd {
+	environ, missing := c.checkMissingPreferences()
 	if len(missing) > 0 {
 		c.currentView = "form"
 		title := fmt.Sprintf("%s · Preferences", c.extension.Title)
@@ -174,7 +151,6 @@ func (c *ScriptRunner) Run() tea.Cmd {
 	c.environ = environ
 
 	formItems := c.CheckMissingParameters()
-
 	if len(formItems) > 0 {
 		c.currentView = "form"
 
@@ -228,7 +204,7 @@ func (c *ScriptRunner) Run() tea.Cmd {
 	return NewErrorCmd(fmt.Errorf("unknown page type: %s", c.command.Page.Type))
 }
 
-func (c *ScriptRunner) SetSize(width, height int) {
+func (c *CommandRunner) SetSize(width, height int) {
 	c.width, c.height = width, height
 	switch c.currentView {
 	case "list":
@@ -240,48 +216,65 @@ func (c *ScriptRunner) SetSize(width, height int) {
 	}
 }
 
-func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case CommandOutput:
-		switch c.command.Page.Type {
-		case "detail":
-			var detail app.Detail
-			err := json.Unmarshal([]byte(msg), &detail)
-			if err != nil {
-				return c, NewErrorCmd(err)
-			}
-
-			c.detail.SetIsLoading(false)
-			cmd := c.detail.SetDetail(detail)
-			c.SetSize(c.width, c.height)
-
-			return c, cmd
-		case "list":
-			scriptItems, err := app.ParseListItems(string(msg))
-			if err != nil {
-				return c, NewErrorCmd(err)
-			}
-			listItems := make([]ListItem, len(scriptItems))
-
-			for i, scriptItem := range scriptItems {
-				if scriptItem.Id == "" {
-					scriptItem.Id = strconv.Itoa(i)
+		switch c.command.OnSuccess {
+		case "push-page":
+			switch c.command.Page.Type {
+			case "detail":
+				var detail app.Detail
+				err := json.Unmarshal([]byte(msg), &detail)
+				if err != nil {
+					return c, NewErrorCmd(err)
 				}
 
-				for i, action := range scriptItem.Actions {
-					if action.Extension == "" {
-						action.Extension = c.extension.Name
+				c.detail.SetIsLoading(false)
+				cmd := c.detail.SetDetail(detail)
+				c.SetSize(c.width, c.height)
+
+				return c, cmd
+			case "list":
+				scriptItems, err := app.ParseListItems(string(msg))
+				if err != nil {
+					return c, NewErrorCmd(err)
+				}
+				listItems := make([]ListItem, len(scriptItems))
+
+				for i, scriptItem := range scriptItems {
+					if scriptItem.Id == "" {
+						scriptItem.Id = strconv.Itoa(i)
 					}
-					scriptItem.Actions[i] = action
+
+					listItems[i] = ParseScriptItem(scriptItem)
 				}
 
-				listItems[i] = ParseScriptItem(scriptItem)
+				cmd := c.list.SetItems(listItems)
+				c.list.SetIsLoading(false)
+				return c, cmd
 			}
-
-			cmd := c.list.SetItems(listItems)
-			c.list.SetIsLoading(false)
-			return c, cmd
+		case "open-url":
+			return c, NewOpenUrlCmd(string(msg))
+		case "copy-text":
+			return c, NewCopyTextCmd(string(msg))
+		case "reload-page":
+			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
 		}
+
+	case RunCommandMsg:
+		command, ok := c.extension.Commands[msg.Command]
+		if !ok {
+			return c, NewErrorCmd(fmt.Errorf("command not found: %s", msg.Command))
+		}
+		if msg.OnSuccess != "" {
+			command.OnSuccess = msg.OnSuccess
+		}
+
+		return c, NewPushCmd(NewCommandRunner(c.extension, NamedCommand{
+			Name:    msg.Command,
+			Command: command,
+		}, msg.With))
+
 	case SubmitMsg:
 		switch msg.Name {
 		case "preferences":
@@ -321,13 +314,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, c.Run()
 		case "params":
 			for key, value := range msg.Values {
-				param, ok := c.with[key]
-				if !ok {
-					return c, NewErrorCmd(fmt.Errorf("unknown param: %s", key))
-				}
-
-				param.Value = value
-				c.with[key] = param
+				c.with[key] = value
 			}
 			return c, c.Run()
 		}
@@ -357,7 +344,7 @@ func (c *ScriptRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return c, cmd
 }
 
-func (c *ScriptRunner) View() string {
+func (c *CommandRunner) View() string {
 	switch c.currentView {
 	case "list":
 		return c.list.View()

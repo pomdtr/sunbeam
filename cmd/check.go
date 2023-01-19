@@ -11,9 +11,10 @@ import (
 
 func NewCmdCheck() *cobra.Command {
 	return &cobra.Command{
-		Use:   "check <manifest-path>",
-		Short: "Check if an extension manifest is valid",
-		Args:  cobra.ExactArgs(1),
+		Use:     "check <manifest-path>",
+		Short:   "Check if an extension manifest is valid",
+		GroupID: "core",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			manifestPath := args[0]
 			if _, err := os.Stat(manifestPath); os.IsNotExist(err) {

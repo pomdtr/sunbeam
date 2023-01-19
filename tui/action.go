@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -51,7 +50,7 @@ type OpenUrlMsg struct {
 	Url string
 }
 
-func NewReloadPageCmd(with map[string]app.ScriptInputWithValue) tea.Cmd {
+func NewReloadPageCmd(with map[string]any) tea.Cmd {
 	return func() tea.Msg {
 		return ReloadPageMsg{
 			With: with,
@@ -60,23 +59,25 @@ func NewReloadPageCmd(with map[string]app.ScriptInputWithValue) tea.Cmd {
 }
 
 type ReloadPageMsg struct {
-	With map[string]app.ScriptInputWithValue
+	With map[string]any
 }
 
-func NewRunScriptCmd(extension string, command string, with map[string]app.ScriptInputWithValue) tea.Cmd {
+func RunCommandCmd(command string, with map[string]any) tea.Cmd {
 	return func() tea.Msg {
 		return RunCommandMsg{
-			Extension: extension,
-			Command:   command,
-			With:      with,
+			Command: command,
+			With:    with,
 		}
 	}
 }
 
+type PushPageMsg struct {
+	Page Page
+}
+
 type RunCommandMsg struct {
-	Extension string
 	Command   string
-	With      map[string]app.ScriptInputWithValue
+	With      map[string]any
 	OnSuccess string
 }
 
@@ -88,51 +89,6 @@ func (msg RunCommandMsg) OnSuccessCmd() tea.Cmd {
 		return tea.Sequence(PopCmd, NewReloadPageCmd(nil))
 	default:
 		return tea.Quit
-	}
-}
-
-func NewExecCmd(command string) tea.Cmd {
-	return func() tea.Msg {
-		return ExecCommandMsg{
-			Exec: command,
-		}
-	}
-}
-
-type ExecCommandMsg struct {
-	Exec      string
-	Directory string
-	OnSuccess string
-	Env       []string
-}
-
-func (msg ExecCommandMsg) OnSuccessMsg(output string) tea.Msg {
-	switch msg.OnSuccess {
-	case "reload-page":
-		return ReloadPageMsg{}
-	case "copy-text":
-		return CopyTextMsg{
-			Text: output,
-		}
-	case "open-url":
-		return OpenUrlMsg{
-			Url: strings.TrimSpace(output),
-		}
-	default:
-		return fmt.Errorf("unknown on-success action: %s", msg.OnSuccess)
-	}
-}
-
-func NewEditCmd(path string) tea.Cmd {
-	editor := os.Getenv("EDITOR")
-	if editor == "" {
-		editor = "vi"
-	}
-
-	return func() tea.Msg {
-		return ExecCommandMsg{
-			Exec: fmt.Sprintf("%s %s", editor, path),
-		}
 	}
 }
 
@@ -152,7 +108,6 @@ func NewAction(scriptAction app.ScriptAction) Action {
 	case "run-command":
 		cmd = func() tea.Msg {
 			return RunCommandMsg{
-				Extension: scriptAction.Extension,
 				Command:   scriptAction.Command,
 				With:      scriptAction.With,
 				OnSuccess: scriptAction.OnSuccess,
@@ -163,11 +118,6 @@ func NewAction(scriptAction app.ScriptAction) Action {
 			scriptAction.Title = "Open in Browser"
 		}
 		cmd = NewOpenUrlCmd(scriptAction.Url)
-	case "edit":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Edit File"
-		}
-		cmd = NewEditCmd(scriptAction.Path)
 	default:
 		scriptAction.Title = "Unknown"
 		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))

@@ -30,15 +30,18 @@ func NewCmdRun(config *tui.Config) *cobra.Command {
 				os.Exit(1)
 			}
 
-			extension, err := app.ParseManifest(manifestPath, manifestPath)
+			extension, err := app.ParseManifest(manifestPath)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "Failed to parse manifest:", err)
 				os.Exit(1)
 			}
 
-			model := tui.NewModel(config, extension)
+			rootList := tui.NewRootList(map[string]app.Extension{
+				extensionRoot: extension,
+			})
+			model := tui.NewModel(rootList)
 
-			return tui.Draw(model)
+			return tui.Draw(model, true)
 		},
 	}
 

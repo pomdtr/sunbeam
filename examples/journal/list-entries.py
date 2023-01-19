@@ -16,20 +16,9 @@ if len(journal["entries"]) == 0:
                 "actions": [
                     {
                         "type": "run-command",
-                        "script": "write-entry",
+                        "command": "write-entry",
                         "title": "Write Entry",
-                        "silent": True,
-                        "onSuccess": "reload-page",
-                        "with": {
-                            "title": {
-                                "type": "textfield",
-                                "title": "Title",
-                            },
-                            "content": {
-                                "type": "textfield",
-                                "title": "Content",
-                            },
-                        },
+                        "onSuccess": "reload-page"
                     }
                 ],
             }
@@ -58,41 +47,26 @@ for uuid, entry in journal["entries"].items():
                     {
                         "type": "run-command",
                         "title": "New Entry",
-                        "script": "writeEntry",
+                        "command": "write-entry",
                         "onSuccess": "reload-page",
-                        "silent": True,
                         "shortcut": "ctrl+n"
                     },
                     {
                         "type": "run-command",
                         "title": "Delete Entry",
-                        "script": "deleteEntry",
+                        "command": "delete-entry",
                         "onSuccess": "reload-page",
-                        "silent": True,
                         "shortcut": "ctrl+d",
                         "with": {"uuid": uuid},
                     },
                     {
                         "type": "run-command",
                         "title": "Edit Entry",
-                        "script": "editEntry",
-                        "silent": True,
+                        "command": "edit-entry",
                         "onSuccess": "reload-page",
                         "shortcut": "ctrl+e",
                         "with": {
-                            "uuid": uuid,
-                            "title": {
-                                "type": "textfield",
-                                "title": "Title",
-                                "required": True,
-                                "default": entry["title"],
-                            },
-                            "content": {
-                                "type": "textarea",
-                                "required": True,
-                                "title": "Content",
-                                "default": entry["content"],
-                            },
+                            "uuid": uuid
                         },
                     },
                 ],

@@ -33,10 +33,10 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormItem(param app.ScriptInput) FormItem {
+func NewFormItem(param app.FormInput) FormItem {
 	var input FormInput
-	if param.Placeholder.Value == "" {
-		param.Placeholder.Value = param.Name
+	if param.Placeholder == "" {
+		param.Placeholder = param.Name
 	}
 	switch param.Type {
 	case "textfield", "file", "directory":
@@ -70,14 +70,14 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.ScriptInput) TextArea {
+func NewTextArea(formItem app.FormInput) TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
-	if defaultValue, ok := formItem.Default.Value.(string); ok {
+	if defaultValue, ok := formItem.Default.(string); ok {
 		ta.SetValue(defaultValue)
 	}
 
-	ta.Placeholder = formItem.Placeholder.Value
+	ta.Placeholder = formItem.Placeholder
 	ta.SetHeight(5)
 
 	return TextArea{
@@ -109,10 +109,10 @@ type TextInput struct {
 	isPath      bool
 }
 
-func NewTextInput(formItem app.ScriptInput) TextInput {
+func NewTextInput(formItem app.FormInput) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	if defaultValue, ok := formItem.Default.Value.(string); ok {
+	if defaultValue, ok := formItem.Default.(string); ok {
 		ti.SetValue(defaultValue)
 	}
 
@@ -122,7 +122,7 @@ func NewTextInput(formItem app.ScriptInput) TextInput {
 	return TextInput{
 		Model:       ti,
 		isPath:      formItem.Type == "file" || formItem.Type == "directory",
-		placeholder: placeholder.Value,
+		placeholder: placeholder,
 	}
 }
 
@@ -168,9 +168,9 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(formItem app.ScriptInput) Checkbox {
+func NewCheckbox(formItem app.FormInput) Checkbox {
 	var defaultValue bool
-	defaultValue, ok := formItem.Default.Value.(bool)
+	defaultValue, ok := formItem.Default.(bool)
 	if !ok {
 		defaultValue = false
 	}
@@ -238,7 +238,6 @@ func (cb *Checkbox) Toggle() {
 
 type DropDownItem struct {
 	id    string
-	title string
 	value string
 }
 
@@ -248,13 +247,13 @@ func (d DropDownItem) ID() string {
 
 func (d DropDownItem) Render(width int, selected bool) string {
 	if selected {
-		return fmt.Sprintf("* %s", d.title)
+		return fmt.Sprintf("* %s", d.value)
 	}
-	return fmt.Sprintf("  %s", d.title)
+	return fmt.Sprintf("  %s", d.value)
 }
 
 func (d DropDownItem) FilterValue() string {
-	return d.title
+	return d.value
 }
 
 type DropDown struct {
@@ -264,16 +263,15 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem app.ScriptInput) DropDown {
+func NewDropDown(formItem app.FormInput) DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 
-	choices := make([]FilterItem, len(formItem.Data))
-	for i, formItem := range formItem.Data {
+	choices := make([]FilterItem, len(formItem.Choices))
+	for i, formItem := range formItem.Choices {
 		item := DropDownItem{
 			id:    strconv.Itoa(i),
-			title: formItem.Title,
-			value: formItem.Value,
+			value: formItem,
 		}
 
 		choices[i] = item
@@ -284,7 +282,7 @@ func NewDropDown(formItem app.ScriptInput) DropDown {
 	ti.Prompt = ""
 
 	ti.PlaceholderStyle = styles.Faint
-	ti.Placeholder = formItem.Placeholder.Value
+	ti.Placeholder = formItem.Placeholder
 
 	dropdown.textinput = ti
 
@@ -300,7 +298,7 @@ func NewDropDown(formItem app.ScriptInput) DropDown {
 }
 
 func (dd DropDown) HasMatch() bool {
-	return dd.selection.id != "" && dd.selection.title == dd.textinput.Value()
+	return dd.selection.id != "" && dd.selection.value == dd.textinput.Value()
 }
 
 func (dd *DropDown) Height() int {
@@ -353,8 +351,8 @@ func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 			dropDownItem := selection.(DropDownItem)
 
 			d.selection = dropDownItem
-			d.textinput.SetValue(dropDownItem.title)
-			d.filter.FilterItems(dropDownItem.title)
+			d.textinput.SetValue(dropDownItem.value)
+			d.filter.FilterItems(dropDownItem.value)
 			d.textinput.CursorEnd()
 
 			return d, nil

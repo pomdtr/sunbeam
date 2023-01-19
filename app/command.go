@@ -3,125 +3,56 @@ package app
 import (
 	_ "embed"
 	"encoding/json"
-	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"text/template"
 
-	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/santhosh-tekuri/jsonschema/v5"
-	"gopkg.in/yaml.v3"
 )
 
 type Page struct {
-	Type        string
-	ShowPreview bool `json:"showPreview" yaml:"showPreview"`
-	IsGenerator bool `json:"isGenerator" yaml:"isGenerator"`
+	Type        string `json:"type"`
+	ShowPreview bool   `json:"showPreview,omitempty" yaml:"showPreview"`
+	IsGenerator bool   `json:"isGenerator,omitempty" yaml:"isGenerator"`
 }
 
 type Command struct {
-	Name        string
-	Exec        string
-	Description string
-	Preferences []ScriptInput
-	Inputs      []ScriptInput
-	Page        Page
+	Exec        string      `json:"exec,omitempty"`
+	Url         string      `json:"url"`
+	Description string      `json:"description,omitempty"`
+	Preferences []FormInput `json:"preferences,omitempty"`
+	Inputs      []FormInput `json:"inputs,omitempty"`
+	Page        *Page       `json:"page,omitempty"`
 
-	OnSuccess string `json:"onSuccess" yaml:"onSuccess"`
+	OnSuccess string `json:"onSuccess,omitempty" yaml:"onSuccess"`
 }
 
-type Optional[T any] struct {
-	Defined bool
-	Value   T
+type FormInput struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Title       string `json:"title"`
+	Placeholder string `json:"placeholder,omitempty"`
+	Default     any    `json:"default,omitempty"`
+
+	Choices []string
+	Label   string `json:"label,omitempty"`
 }
 
-// UnmarshalJSON is implemented by deferring to the wrapped type (T).
-// It will be called only if the value is defined in the JSON payload.
-func (o *Optional[T]) UnmarshalJSON(data []byte) error {
-	o.Defined = true
-	return json.Unmarshal(data, &o.Value)
+type CommandInput struct {
+	Dir   string
+	Stdin string
+	Env   []string
+	With  map[string]any
 }
 
-func (o *Optional[T]) UnmarshalYAML(value *yaml.Node) (err error) {
-	o.Defined = true
-	return value.Decode(&o.Value)
-}
-
-type ScriptInput struct {
-	Name        string
-	Type        string
-	Title       string
-	Placeholder Optional[string]
-	Default     Optional[any]
-
-	Data []struct {
-		Title string
-		Value string
-	}
-	Label string
-}
-
-type ScriptInputWithValue struct {
-	Value any
-	ScriptInput
-}
-
-func (si ScriptInputWithValue) GetValue() (any, error) {
-	if si.Value == nil {
-		return "", fmt.Errorf("required value %s is empty", si.Name)
-	}
-
-	var value string
-	if si.Value != nil {
-		if v, ok := si.Value.(string); ok {
-			value = v
-		} else {
-			return "", fmt.Errorf("invalid value")
-		}
-	} else if si.Default.Value != nil {
-		if v, ok := si.Default.Value.(string); ok {
-			value = v
-		} else {
-			return "", fmt.Errorf("invalid value")
-		}
-	}
-
-	if si.Type == "file" || si.Type == "directory" {
-		if v, err := utils.ResolvePath(value); err == nil {
-			return shellescape.Quote(v), nil
-		} else {
-			return "", err
-		}
-	}
-
-	return shellescape.Quote(value), nil
-}
-
-func (si *ScriptInputWithValue) UnmarshalYAML(value *yaml.Node) (err error) {
-	err = value.Decode(&si.ScriptInput)
-	if err == nil {
-		return
-	}
-
-	return value.Decode(&si.Value)
-}
-
-func (si *ScriptInputWithValue) UnmarshalJSON(bytes []byte) (err error) {
-	err = json.Unmarshal(bytes, &si.ScriptInput)
-	if err == nil {
-		return
-	}
-
-	return json.Unmarshal(bytes, &si.Value)
-}
-
-func (s Command) Cmd(with map[string]any) (string, error) {
+func (c Command) Cmd(input CommandInput) (*exec.Cmd, error) {
 	var err error
 
 	funcMap := template.FuncMap{}
 
-	for sanitizedKey, value := range with {
+	for sanitizedKey, value := range input.With {
 		value := value
 		sanitizedKey = strings.Replace(sanitizedKey, "-", "_", -1)
 		funcMap[sanitizedKey] = func() any {
@@ -129,11 +60,22 @@ func (s Command) Cmd(with map[string]any) (string, error) {
 		}
 	}
 
-	rendered, err := utils.RenderString(s.Exec, funcMap)
+	rendered, err := utils.RenderString(c.Exec, funcMap)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return rendered, nil
+
+	cmd := exec.Command("sh", "-c", rendered)
+	cmd.Env = append(cmd.Env, os.Environ()...)
+	cmd.Env = append(cmd.Env, input.Env...)
+
+	cmd.Dir = input.Dir
+
+	if input.Stdin != "" {
+		cmd.Stdin = strings.NewReader(input.Stdin)
+	}
+
+	return cmd, nil
 }
 
 type Detail struct {
@@ -174,11 +116,10 @@ type ScriptAction struct {
 	Url  string
 	Path string
 
-	Extension string
-	Command   string
+	Command string
 
 	OnSuccess string `json:"onSuccess"`
-	With      map[string]ScriptInputWithValue
+	With      map[string]any
 }
 
 //go:embed schemas/listitem.json

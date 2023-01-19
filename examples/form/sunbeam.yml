@@ -27,12 +27,9 @@ commands:
         type: dropdown
         title: Dropdown
         data:
-          - title: "Option 1"
-            value: "option1"
-          - title: "Option 2"
-            value: "option2"
-          - title: "Option 3"
-            value: "option3"
+          - option1
+          - option2
+          - option3
       - name: file
         type: file
         title: File

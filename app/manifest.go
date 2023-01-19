@@ -16,7 +16,7 @@ import (
 var manifest string
 
 type Api struct {
-	Extensions    []Extension
+	Extensions    map[string]Extension
 	ExtensionRoot string
 }
 
@@ -30,24 +30,22 @@ func (api *Api) IsExtensionInstalled(name string) bool {
 }
 
 type RootItem struct {
-	Extension string
-	Command   string
-	Title     string
-	Subtitle  string
-	With      map[string]any
+	Extension string         `json:"extension,omitempty"`
+	Command   string         `json:"command"`
+	Title     string         `json:"title"`
+	With      map[string]any `json:"with,omitempty"`
 }
 
 type Extension struct {
-	Title       string
-	Description string
-	Name        string
-	PostInstall string `json:"postInstall" yaml:"postInstall"`
-	Root        string
-	Preferences []ScriptInput
+	Title       string      `json:"title" yaml:"title"`
+	Description string      `json:"description,omitempty" yaml:"description"`
+	PostInstall string      `json:"postInstall,omitempty" yaml:"postInstall"`
+	Root        string      `json:"root,omitempty" yaml:"root"`
+	Preferences []FormInput `json:"preferences,omitempty"`
 
-	Requirements []ExtensionRequirement
-	RootItems    []RootItem `json:"rootItems" yaml:"rootItems"`
-	Commands     map[string]Command
+	Requirements []ExtensionRequirement `json:"requirements,omitempty"`
+	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
+	Commands     map[string]Command     `json:"commands"`
 }
 
 type ExtensionRequirement struct {
@@ -79,6 +77,7 @@ func init() {
 
 func (api *Api) LoadExtensions(extensionRoot string) error {
 	api.ExtensionRoot = extensionRoot
+	api.Extensions = make(map[string]Extension)
 	entries, err := os.ReadDir(extensionRoot)
 	if err != nil {
 		return fmt.Errorf("failed to read extension root: %w", err)
@@ -90,25 +89,24 @@ func (api *Api) LoadExtensions(extensionRoot string) error {
 			continue
 		}
 
-		extensionName := entry.Name()
 		manifestPath := path.Join(extensionDir, "sunbeam.yml")
 		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
 			continue
 		}
 
-		extension, err := ParseManifest(extensionName, manifestPath)
+		extension, err := ParseManifest(manifestPath)
 		if err != nil {
 			continue
 		}
 
 		extension.Root = extensionDir
-		api.Extensions = append(api.Extensions, extension)
+		api.Extensions[entry.Name()] = extension
 	}
 
 	return nil
 }
 
-func ParseManifest(extensionName string, manifestPath string) (extension Extension, err error) {
+func ParseManifest(manifestPath string) (extension Extension, err error) {
 	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
 		return extension, err
@@ -131,19 +129,6 @@ func ParseManifest(extensionName string, manifestPath string) (extension Extensi
 		return extension, err
 	}
 
-	for key, command := range extension.Commands {
-		command.Name = key
-		extension.Commands[key] = command
-	}
-
-	for key, rootItem := range extension.RootItems {
-		rootItem.Subtitle = extension.Title
-		rootItem.Extension = extensionName
-		extension.RootItems[key] = rootItem
-	}
-
-	extension.Name = extensionName
 	extension.Root = path.Dir(manifestPath)
-
 	return extension, nil
 }

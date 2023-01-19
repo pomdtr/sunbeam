@@ -16,12 +16,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Config struct {
-	Height int
-
 	RootItems []app.RootItem `yaml:"rootItems"`
 }
 
@@ -36,39 +33,15 @@ type Model struct {
 	width, height int
 	exitCmd       *exec.Cmd
 
-	config       *Config
-	root         Page
-	pages        []Page
-	extensionMap map[string]app.Extension
+	root  Page
+	pages []Page
 
 	hidden bool
 	exit   bool
 }
 
-func NewModel(config *Config, extensions ...app.Extension) *Model {
-	extensionMap := make(map[string]app.Extension)
-	rootItems := make([]app.RootItem, 0)
-	for _, extension := range extensions {
-		extensionMap[extension.Name] = extension
-		rootItems = append(rootItems, extension.RootItems...)
-	}
-	for _, rootItem := range config.RootItems {
-		extension, ok := extensionMap[rootItem.Extension]
-		if !ok {
-			continue
-		}
-		rootItem.Subtitle = extension.Title
-		rootItems = append(rootItems, rootItem)
-	}
-	rootList := NewRootList(rootItems...)
-
-	return &Model{extensionMap: extensionMap, root: rootList, config: config}
-}
-
-func (m *Model) Reset() {
-	m.pages = []Page{}
-	m.exitCmd = nil
-	m.hidden = false
+func NewModel(root Page) *Model {
+	return &Model{root: root}
 }
 
 func (m *Model) SetRoot(root Page) {
@@ -80,7 +53,7 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m Model) IsFullScreen() bool {
-	return m.config.Height == 0
+	return true
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -90,9 +63,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC:
 			m.hidden = true
 			m.exit = true
-			return m, tea.Quit
-		case tea.KeyCtrlW:
-			m.hidden = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
@@ -114,71 +84,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.hidden = true
 		return m, tea.Quit
-	case ShowPrefMsg:
-		extension, ok := m.extensionMap[msg.Extension]
-		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
-		}
-		command, ok := extension.Commands[msg.Command]
-		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("command %s not found", msg.Command))
-		}
-
-		pref := NewPreferenceForm(extension, command)
-
-		cmd := m.Push(pref)
-
+	case PushPageMsg:
+		cmd := m.Push(msg.Page)
 		return m, cmd
-	case RunCommandMsg:
-		extension, ok := m.extensionMap[msg.Extension]
-		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("extension %s not found", msg.Extension))
-		}
-
-		if len(extension.Requirements) > 0 {
-			for _, requirement := range extension.Requirements {
-				if !requirement.Check() {
-					container := NewDetail("Requirement not met")
-					container.content = fmt.Sprintf("requirement %s not met.\nHomepage: %s", requirement.Which, requirement.HomePage)
-					return m, NewPushCmd(container)
-				}
-			}
-		}
-
-		script, ok := extension.Commands[msg.Command]
-		if !ok {
-			return m, NewErrorCmd(fmt.Errorf("command %s not found", msg.Command))
-		}
-
-		runner := NewScriptRunner(extension, script, msg.With)
-
-		if msg.OnSuccess != "" {
-			script.OnSuccess = msg.OnSuccess
-		}
-		cmd := m.Push(runner)
-		return m, cmd
-	case ExecCommandMsg:
-		command := exec.Command("sh", "-c", msg.Exec)
-		command.Dir = msg.Directory
-		command.Env = os.Environ()
-		command.Env = append(command.Env, msg.Env...)
-
-		if msg.OnSuccess == "" {
-			m.exitCmd = command
-			m.hidden = true
-			return m, tea.Quit
-		}
-
-		return m, func() tea.Msg {
-			output, err := command.Output()
-			if err != nil {
-				return err
-			}
-
-			return msg.OnSuccessMsg(string(output))
-		}
 	case pushMsg:
-		m.hidden = false
 		cmd := m.Push(msg.container)
 		return m, cmd
 	case popMsg:
@@ -188,8 +97,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Pop()
 			return m, nil
 		}
+	case ExecMsg:
+		m.exitCmd = msg.cmd
+		m.hidden = true
+		return m, tea.Quit
 	case error:
-		m.hidden = false
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())
 		detail.SetContent(msg.Error())
@@ -214,11 +126,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, cmd
-}
-
-type ShowPrefMsg struct {
-	Extension string
-	Command   string
 }
 
 func (m *Model) View() string {
@@ -246,11 +153,10 @@ func (m *Model) SetSize(width, height int) {
 }
 
 func (m *Model) pageHeight() int {
-	if m.config.Height > 0 {
-		return utils.Min(m.config.Height, m.height)
-	} else {
-		return m.height
-	}
+	// if m.config.Height > 0 {
+	// 	return utils.Min(m.config.Height, m.height)
+	// }
+	return m.height
 }
 
 type popMsg struct{}
@@ -267,6 +173,14 @@ func NewPushCmd(c Page) tea.Cmd {
 	return func() tea.Msg {
 		return pushMsg{c}
 	}
+}
+
+type ExecMsg struct {
+	cmd *exec.Cmd
+}
+
+func NewExecCmd(cmd *exec.Cmd) tea.Msg {
+	return ExecMsg{cmd}
 }
 
 func (m *Model) Push(page Page) tea.Cmd {
@@ -309,14 +223,11 @@ func loadHistory(historyPath string) map[string]int64 {
 	return history
 }
 
-func NewRootList(rootItems ...app.RootItem) Page {
+func NewRootList(extensionMap map[string]app.Extension, additionalItems ...app.RootItem) Page {
 	stateDir := path.Join(os.Getenv("HOME"), ".local", "state", "sunbeam")
 	historyPath := path.Join(stateDir, "history.json")
-
 	history := loadHistory(historyPath)
-
 	list := NewList("Sunbeam")
-
 	list.filter.Less = func(i, j FilterItem) bool {
 		iValue, ok := history[i.ID()]
 		if !ok {
@@ -330,24 +241,36 @@ func NewRootList(rootItems ...app.RootItem) Page {
 		return iValue > jValue
 	}
 
+	rootItems := make([]app.RootItem, 0)
+	for extensionName, extension := range extensionMap {
+		for _, rootItem := range extension.RootItems {
+			rootItem.Extension = extensionName
+			rootItems = append(rootItems, rootItem)
+		}
+	}
+
+	for _, item := range additionalItems {
+		if _, ok := extensionMap[item.Extension]; !ok {
+			continue
+		}
+		rootItems = append(rootItems, item)
+	}
+
 	listItems := make([]ListItem, 0)
 	for _, rootItem := range rootItems {
 		rootItem := rootItem
-		with := make(map[string]app.ScriptInputWithValue)
 		itemShellCommand := toShellCommand(rootItem)
-		for key, value := range rootItem.With {
-			with[key] = app.ScriptInputWithValue{Value: value}
-		}
 		listItems = append(listItems, ListItem{
 			Id:          itemShellCommand,
 			Title:       rootItem.Title,
-			Subtitle:    rootItem.Subtitle,
 			Accessories: []string{"local"},
 			Actions: []Action{
 				{
-					Title:    "Run Script",
+					Title:    "Run Command",
 					Shortcut: "enter",
 					Cmd: func() tea.Msg {
+						extension := extensionMap[rootItem.Extension]
+
 						history[itemShellCommand] = time.Now().Unix()
 						if _, err := os.Stat(stateDir); os.IsNotExist(err) {
 							os.MkdirAll(stateDir, 0755)
@@ -356,20 +279,20 @@ func NewRootList(rootItems ...app.RootItem) Page {
 						data, _ := json.Marshal(history)
 						os.WriteFile(historyPath, data, 0644)
 
-						return RunCommandMsg{
-							Extension: rootItem.Extension,
-							Command:   rootItem.Command,
-							With:      with,
+						return PushPageMsg{
+							Page: NewCommandRunner(
+								NamedExtension{
+									Name:      rootItem.Extension,
+									Extension: extension,
+								},
+								NamedCommand{
+									Name:    rootItem.Command,
+									Command: extension.Commands[rootItem.Command],
+								},
+								rootItem.With,
+							),
 						}
-					},
-				}, {
-					Title:    "Show Preferences",
-					Shortcut: "ctrl+p",
-					Cmd: func() tea.Msg {
-						return ShowPrefMsg{
-							Extension: rootItem.Extension,
-							Command:   rootItem.Command,
-						}
+
 					},
 				},
 				{
@@ -386,7 +309,7 @@ func NewRootList(rootItems ...app.RootItem) Page {
 	return list
 }
 
-func Draw(model *Model) (err error) {
+func Draw(model *Model, fullscreen bool) (err error) {
 	// Log to a file
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
 		f, err := tea.LogToFile(env, "debug")

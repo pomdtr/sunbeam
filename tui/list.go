@@ -220,8 +220,8 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, nil
 		}
 
-		return c, NewReloadPageCmd(map[string]app.ScriptInputWithValue{
-			"query": {Value: msg.query},
+		return c, NewReloadPageCmd(map[string]any{
+			"query": msg.query,
 		})
 	case PreviewContentMsg:
 		c.header.SetIsLoading(false)

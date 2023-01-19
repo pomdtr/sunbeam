@@ -137,6 +137,9 @@
                         "showPreview": {
                             "type": "boolean"
                         },
+                        "previewCmd": {
+                            "type": "string"
+                        },
                         "isGenerator": {
                             "type": "boolean"
                         }
@@ -204,7 +207,7 @@
                             "placeholder": {
                                 "type": "string"
                             },
-                            "defaultValue": {
+                            "default": {
                                 "type": "string"
                             }
                         }
@@ -229,22 +232,10 @@
                             "data": {
                                 "type": "array",
                                 "items": {
-                                    "type": "object",
-                                    "required": [
-                                        "title",
-                                        "value"
-                                    ],
-                                    "properties": {
-                                        "title": {
-                                            "type": "string"
-                                        },
-                                        "value": {
-                                            "type": "string"
-                                        }
-                                    }
+                                    "type": "string"
                                 }
                             },
-                            "defaultValue": {
+                            "default": {
                                 "type": "string"
                             }
                         }
@@ -269,7 +260,7 @@
                             "label": {
                                 "type": "string"
                             },
-                            "defaultValue": {
+                            "default": {
                                 "type": "boolean"
                             }
                         }
