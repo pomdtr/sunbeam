@@ -86,7 +86,7 @@ const themeConfig = {
   sidebar,
   socialLinks: [{ icon: "github", link: "https://github.com/pomdtr/sunbeam" }],
   editLink: {
-    pattern: "https://github.com/pomdtr/sunbeam/edit/main/website/:path",
+    pattern: "https://github.com/pomdtr/sunbeam/edit/main/website/src/:path",
     text: "Edit this page on GitHub",
   },
 };
