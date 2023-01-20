@@ -4,7 +4,7 @@ import url from "url";
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
-const cmdDir = path.join(__dirname, "..", "cmd");
+const cmdDir = path.join(__dirname, "..", "src", "cmd");
 const cmdItems = fs.readdirSync(cmdDir).map((filename) => {
   const { name } = path.parse(filename);
   return {
@@ -101,6 +101,7 @@ const config = {
     "Generate complex UIs from simple scripts written in any language.",
   base: "/sunbeam/",
   cleanUrls: "without-subfolders",
+  srcDir: "./src",
   themeConfig,
 };
 
