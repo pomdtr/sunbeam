@@ -20,6 +20,6 @@ sunbeam query '.issues[] | {
     ]
 }' | sunbeam query --slurp '{
     type: "list",
-    items: .
+    list: {items: .}
 }'
 

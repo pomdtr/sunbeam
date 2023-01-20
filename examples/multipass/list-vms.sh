@@ -26,5 +26,5 @@ multipass list --format json | sunbeam query '.list[] |
 }
 ' | sunbeam query --slurp '{
     type: "list",
-    items: .
+    list: {items: .}
 }'

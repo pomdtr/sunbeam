@@ -33,5 +33,7 @@ const items = res[1].map((suggestion) => ({
 
 console.log({
   type: "list",
-  items,
+  list: {
+    items,
+  },
 });

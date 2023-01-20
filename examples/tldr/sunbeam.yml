@@ -22,7 +22,7 @@ commands:
         actions: [
           {type: "run-command", "command": "view-page", title: "View Page", with: {page: ., platform: $platform}}
         ]
-      }' | sunbeam query --slurp '{ type: "list", items: . }'
+      }' | sunbeam query --slurp '{ type: "list", list: {items: .} }'
   view-page:
     exec: tldr --platform ${{ platform }} ${{ page }}
     inputs:

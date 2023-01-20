@@ -11,5 +11,5 @@ git -C "$1" log | jc --git-log | sunbeam query '.[] | {
     ]
 }' | sunbeam query --slurp '{
     type: "list",
-    items: .
+    list: {items: .}
 }'

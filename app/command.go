@@ -66,24 +66,24 @@ func (c Command) Cmd(params CommandParams, dir string) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
+type Page struct {
+	Type   string `json:"type"`
+	Title  string `json:"title"`
+	Detail Detail `json:"detail"`
+	Form   Form   `json:"form"`
+	List   List   `json:"list"`
+}
+
 type Detail struct {
 	Preview   string     `json:"preview"`
 	Metadatas []Metadata `json:"metadatas"`
 
-	Actions []ScriptAction `json:"actions"`
+	Actions []Action `json:"actions"`
 }
 
 type Metadata struct {
 	Title string `json:"title"`
 	Value string `json:"value"`
-}
-
-type Page struct {
-	Type  string `json:"type"`
-	Title string `json:"title"`
-	Form
-	List
-	Detail
 }
 
 type Form struct {
@@ -95,24 +95,25 @@ type Form struct {
 }
 
 type List struct {
+	EmptyText   string     `json:"emptyText"`
 	ShowPreview bool       `json:"showPreview,omitempty" yaml:"showPreview"`
 	Items       []ListItem `json:"items"`
 }
 
 type ListItem struct {
-	Id          string         `json:"id"`
-	Title       string         `json:"title"`
-	Subtitle    string         `json:"subtitle"`
-	Preview     string         `json:"preview"`
-	Accessories []string       `json:"accessories"`
-	Actions     []ScriptAction `json:"actions"`
+	Id          string   `json:"id"`
+	Title       string   `json:"title"`
+	Subtitle    string   `json:"subtitle"`
+	Preview     string   `json:"preview"`
+	Accessories []string `json:"accessories"`
+	Actions     []Action `json:"actions"`
 }
 
 func (li ListItem) PreviewCommand() *exec.Cmd {
 	return nil
 }
 
-type ScriptAction struct {
+type Action struct {
 	Title    string
 	Type     string
 	Shortcut string

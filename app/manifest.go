@@ -2,7 +2,6 @@ package app
 
 import (
 	"embed"
-	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"

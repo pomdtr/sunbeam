@@ -21,5 +21,7 @@ bw --nointeraction list items | sunbeam query '.[] | {
     ]
 }' | sunbeam query --slurp '{
     type: "list",
-    items: .
+    list: {
+        items: .
+    }
 }'

@@ -26,7 +26,7 @@ commands:
           }
         )
       }
-      ' | sunbeam --slurp { type: "list", "items": . }
+      ' | sunbeam --slurp { type: "list", list: {items: .} }
     onSuccess: push-page
   search-entries:
     exec: |
@@ -38,7 +38,7 @@ commands:
             {type: "open", target: "https://devdocs.io/${{ slug }}/\(.path)"}
           ]
         }
-      ' | sunbeam --slurp { type: "list", "items": . }
+      ' | sunbeam --slurp { type: "list", list: {items: .} }
     onSuccess: push-page
     inputs:
       - name: slug

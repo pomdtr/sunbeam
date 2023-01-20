@@ -10,9 +10,8 @@ fi
 
 gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
     {
-        id: (.id | tostring),
         title: .name,
-        preview: (.description // "No description"),
+        subtitle: (.description // ""),
         accessories: [
             "\(.stargazers_count) *"
         ],
@@ -36,5 +35,7 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
     }
 ' | sunbeam query --slurp '{
     type: "list",
-    items: .
+    list: {
+        items: .
+    }
 }'

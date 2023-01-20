@@ -11,5 +11,3 @@ commands:
   list-passwords:
     exec: ./bitwarden.sh
     onSuccess: push-page
-    page:
-      type: list

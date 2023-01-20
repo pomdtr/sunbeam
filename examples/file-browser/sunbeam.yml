@@ -28,8 +28,6 @@ commands:
   browse-files:
     exec: ./file-browser.py --root ${{ root }}
     onSuccess: push-page
-    page:
-      type: list
     inputs:
       - name: root
         type: directory

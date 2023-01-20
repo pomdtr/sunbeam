@@ -23,8 +23,9 @@ type Filter struct {
 	Background    lipgloss.TerminalColor
 	Less          func(i, j FilterItem) bool
 
-	choices  []FilterItem
-	filtered []FilterItem
+	emptyText string
+	items     []FilterItem
+	filtered  []FilterItem
 
 	DrawLines bool
 	cursor    int
@@ -47,25 +48,25 @@ func (f Filter) Selection() FilterItem {
 }
 
 func (f *Filter) SetItems(items []FilterItem) {
-	f.choices = items
+	f.items = items
 }
 
 func (f *Filter) FilterItems(query string) {
 	f.Query = query
-	values := make([]string, len(f.choices))
-	for i, choice := range f.choices {
+	values := make([]string, len(f.items))
+	for i, choice := range f.items {
 		values[i] = choice.FilterValue()
 	}
 	// If the search field is empty, let's not display the matches
 	// (none), but rather display all possible choices.
 	var filtered []FilterItem
 	if query == "" {
-		filtered = f.choices
+		filtered = f.items
 	} else {
 		matches := fuzzy.Find(query, values)
 		filtered = make([]FilterItem, len(matches))
 		for i, match := range matches {
-			filtered[i] = f.choices[match.Index]
+			filtered[i] = f.items[match.Index]
 		}
 	}
 
@@ -108,8 +109,8 @@ func (m Filter) View() string {
 
 	if filteredView == "" {
 		var emptyMessage string
-		if len(m.choices) == 0 {
-			emptyMessage = ""
+		if len(m.items) == 0 {
+			emptyMessage = m.emptyText
 		} else {
 			emptyMessage = "No matches"
 		}

@@ -80,7 +80,7 @@ type RunCommandMsg struct {
 	With    map[string]any
 }
 
-func NewAction(scriptAction app.ScriptAction) Action {
+func NewAction(scriptAction app.Action) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
 	case "copy-text":

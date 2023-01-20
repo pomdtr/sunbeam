@@ -282,10 +282,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		switch c.command.OnSuccess {
 		case "push-page":
 			var page app.Page
-			if page.Title == "" {
-				page.Title = c.extension.Title
-			}
-
 			var v any
 			if err := json.Unmarshal(msg, &v); err != nil {
 				return c, NewErrorCmd(err)
@@ -300,9 +296,12 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, NewErrorCmd(err)
 			}
 
+			if page.Title == "" {
+				page.Title = c.extension.Title
+			}
+
 			switch page.Type {
 			case "detail":
-
 				c.currentView = "detail"
 				c.detail = NewDetail(page.Title)
 				c.detail.SetDetail(page.Detail)
@@ -320,7 +319,8 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				c.currentView = "list"
-				c.list = NewList(c.extension.Title)
+				c.list = NewList(page.Title)
+				c.list.filter.emptyText = page.List.EmptyText
 				c.list.SetItems(listItems)
 				c.list.SetSize(c.width, c.height)
 
@@ -332,17 +332,17 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				c.currentView = "form"
-				c.form = NewForm("command", c.extension.Title, formItems, func(values map[string]any) tea.Cmd {
+				c.form = NewForm("command", page.Title, formItems, func(values map[string]any) tea.Cmd {
 					with := make(map[string]any)
 					for key, value := range values {
 						with[key] = value
 					}
 
-					for key, value := range page.Target.With {
+					for key, value := range page.Form.Target.With {
 						with[key] = value
 					}
 
-					return NewRunCommandCmd(page.Target.Command, with)
+					return NewRunCommandCmd(page.Form.Target.Command, with)
 				})
 				c.form.SetSize(c.width, c.height)
 

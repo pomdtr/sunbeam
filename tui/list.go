@@ -20,7 +20,6 @@ type ListItem struct {
 	Title       string
 	Subtitle    string
 	Preview     string
-	PreviewCmd  func() string
 	Accessories []string
 	Actions     []Action
 }
@@ -130,7 +129,7 @@ func NewList(title string) *List {
 }
 
 func (c *List) Init() tea.Cmd {
-	if len(c.filter.choices) > 0 {
+	if len(c.filter.items) > 0 {
 		return tea.Batch(c.FilterItems(c.Query()), c.header.Focus())
 	}
 	return c.header.Focus()
