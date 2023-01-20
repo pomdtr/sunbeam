@@ -1,9 +1,12 @@
 package tui
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -66,6 +69,37 @@ func (c CommandRunner) ScriptCmd() tea.Msg {
 	commandInput := app.CommandParams{
 		With: c.with,
 		Env:  c.environ,
+	}
+
+	if c.command.Url != "" {
+		payload, err := json.Marshal(commandInput)
+		if err != nil {
+			return err
+		}
+
+		res, err := http.Post(c.command.Url, "application/json", bytes.NewReader(payload))
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("command failed with status code %d", res.StatusCode)
+		}
+
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+
+		if c.command.OnSuccess == "" {
+			cmd := exec.Command("cat")
+			cmd.Stdin = bytes.NewReader(body)
+
+			return ExecMsg{cmd}
+		}
+
+		return CommandOutput(body)
 	}
 
 	cmd, err := c.command.Cmd(commandInput, c.extension.Root)
@@ -140,12 +174,61 @@ func (c *CommandRunner) checkMissingPreferences() ([]string, []FormItem) {
 	return environ, missing
 }
 
+func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
+	switch c.currentView {
+	case "list":
+		return c.list.SetIsLoading(isLoading)
+	case "detail":
+		return c.detail.SetIsLoading(isLoading)
+	case "form":
+		return c.form.SetIsLoading(isLoading)
+	default:
+		return c.header.SetIsLoading(isLoading)
+	}
+}
+
 func (c *CommandRunner) Run() tea.Cmd {
 	environ, missing := c.checkMissingPreferences()
 	if len(missing) > 0 {
 		c.currentView = "form"
 		title := fmt.Sprintf("%s · Preferences", c.extension.Title)
-		c.form = NewForm("preferences", title, missing)
+		c.form = NewForm("preferences", title, missing, func(values map[string]any) tea.Cmd {
+			preferences := make([]ScriptPreference, 0)
+			for _, input := range c.extension.Preferences {
+				value, ok := values[input.Name]
+				if !ok {
+					continue
+				}
+				preference := ScriptPreference{
+					Name:      input.Name,
+					Value:     value,
+					Extension: c.extension.Name,
+				}
+				preferences = append(preferences, preference)
+			}
+
+			for _, input := range c.command.Preferences {
+				value, ok := values[input.Name]
+				if !ok {
+					continue
+				}
+				preference := ScriptPreference{
+					Name:      input.Name,
+					Value:     value,
+					Extension: c.extension.Name,
+					Command:   c.command.Name,
+				}
+				preferences = append(preferences, preference)
+			}
+
+			err := keyStore.SetPreference(preferences...)
+			if err != nil {
+				return NewErrorCmd(err)
+			}
+
+			return c.Run()
+		})
+
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
@@ -156,17 +239,17 @@ func (c *CommandRunner) Run() tea.Cmd {
 		c.currentView = "form"
 
 		title := fmt.Sprintf("%s · Params", c.extension.Title)
-		c.form = NewForm("params", title, formItems)
+		c.form = NewForm("params", title, formItems, func(values map[string]any) tea.Cmd {
+			for key, value := range values {
+				c.with[key] = value
+			}
+			return c.Run()
+		})
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
 
-	if c.form != nil {
-		cmd := c.form.SetIsLoading(true)
-		return tea.Batch(cmd, c.ScriptCmd)
-	}
-
-	return c.ScriptCmd
+	return tea.Sequence(c.SetIsloading(true), c.ScriptCmd)
 }
 
 func (c *CommandRunner) SetSize(width, height int) {
@@ -249,8 +332,21 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				c.currentView = "form"
-				c.form = NewForm("command", c.extension.Title, formItems)
+				c.form = NewForm("command", c.extension.Title, formItems, func(values map[string]any) tea.Cmd {
+					with := make(map[string]any)
+					for key, value := range values {
+						with[key] = value
+					}
+
+					for key, value := range page.Target.With {
+						with[key] = value
+					}
+
+					return NewRunCommandCmd(page.Target.Command, with)
+				})
 				c.form.SetSize(c.width, c.height)
+
+				return c, c.form.Init()
 			}
 
 		case "open-url":
@@ -269,50 +365,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			Name:    msg.Command,
 			Command: command,
 		}, msg.With))
-
-	case SubmitMsg:
-		switch msg.Name {
-		case "preferences":
-			preferences := make([]ScriptPreference, 0)
-			for _, input := range c.extension.Preferences {
-				value, ok := msg.Values[input.Name]
-				if !ok {
-					continue
-				}
-				preference := ScriptPreference{
-					Name:      input.Name,
-					Value:     value,
-					Extension: c.extension.Name,
-				}
-				preferences = append(preferences, preference)
-			}
-
-			for _, input := range c.command.Preferences {
-				value, ok := msg.Values[input.Name]
-				if !ok {
-					continue
-				}
-				preference := ScriptPreference{
-					Name:      input.Name,
-					Value:     value,
-					Extension: c.extension.Name,
-					Command:   c.command.Name,
-				}
-				preferences = append(preferences, preference)
-			}
-
-			err := keyStore.SetPreference(preferences...)
-			if err != nil {
-				return c, NewErrorCmd(err)
-			}
-
-			return c, c.Run()
-		case "params":
-			for key, value := range msg.Values {
-				c.with[key] = value
-			}
-			return c, c.Run()
-		}
 
 	case ReloadPageMsg:
 		for key, value := range msg.With {
@@ -335,6 +387,8 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case "form":
 		container, cmd = c.form.Update(msg)
 		c.form, _ = container.(*Form)
+	default:
+		c.header, cmd = c.header.Update(msg)
 	}
 	return c, cmd
 }

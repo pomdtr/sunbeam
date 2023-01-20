@@ -384,9 +384,10 @@ func (d *DropDown) Blur() {
 }
 
 type Form struct {
-	Name  string
-	items []FormItem
-	width int
+	Name       string
+	items      []FormItem
+	submitFunc func(map[string]any) tea.Cmd
+	width      int
 
 	header       Header
 	footer       Footer
@@ -396,12 +397,7 @@ type Form struct {
 	focusIndex int
 }
 
-type SubmitMsg struct {
-	Name   string
-	Values map[string]any
-}
-
-func NewForm(name string, title string, items []FormItem) *Form {
+func NewForm(name string, title string, items []FormItem, submitFunc func(map[string]any) tea.Cmd) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
@@ -411,11 +407,12 @@ func NewForm(name string, title string, items []FormItem) *Form {
 	)
 
 	return &Form{
-		header:   header,
-		Name:     name,
-		footer:   footer,
-		viewport: viewport,
-		items:    items,
+		header:     header,
+		Name:       name,
+		submitFunc: submitFunc,
+		footer:     footer,
+		viewport:   viewport,
+		items:      items,
 	}
 }
 
@@ -499,15 +496,22 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			for _, input := range c.items {
 				values[input.Id] = input.Value()
 			}
-			return &c, func() tea.Msg {
-				return SubmitMsg{Name: c.Name, Values: values}
-			}
+			return &c, c.submitFunc(values)
 		}
 	}
 
-	cmd := c.updateInputs(msg)
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
 
-	return &c, cmd
+	if cmd = c.updateInputs(msg); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	if c.header, cmd = c.header.Update(msg); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	return &c, tea.Sequence(cmds...)
 }
 
 func (c Form) updateInputs(msg tea.Msg) tea.Cmd {

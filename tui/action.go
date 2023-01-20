@@ -62,7 +62,7 @@ type ReloadPageMsg struct {
 	With map[string]any
 }
 
-func RunCommandCmd(command string, with map[string]any) tea.Cmd {
+func NewRunCommandCmd(command string, with map[string]any) tea.Cmd {
 	return func() tea.Msg {
 		return RunCommandMsg{
 			Command: command,
