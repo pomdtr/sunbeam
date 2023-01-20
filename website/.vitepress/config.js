@@ -81,6 +81,8 @@ const sidebar = [
  */
 const themeConfig = {
   nav: [{ text: "Docs", link: "/user-guide/" }],
+  logo: "/logo.svg",
+  outline: [2, 3],
   sidebar,
   socialLinks: [{ icon: "github", link: "https://github.com/pomdtr/sunbeam" }],
   editLink: {

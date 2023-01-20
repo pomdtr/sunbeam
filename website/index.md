@@ -5,6 +5,9 @@ hero:
   name: Sunbeam
   text: Universal Launcher
   tagline: Create fancy UIs from simple scripts written in any language.
+  image:
+    src: /logo.svg
+    alt: Sunbeam Logo
   actions:
     - theme: brand
       text: Get Started
