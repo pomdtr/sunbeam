@@ -1,0 +1,11 @@
+rootItems:
+  - title: Browse Developper Directory
+    command: browse-files
+    extension: file-browser
+    with:
+      root: ~/Developer
+  - title: List my Repositories
+    command: list-repos
+    extension: github
+    with:
+      owner: pomdtr

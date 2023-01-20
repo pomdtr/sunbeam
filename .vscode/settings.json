@@ -1,6 +1,6 @@
 {
     "yaml.schemas": {
-        "./app/schemas/manifest.json": [
+        "./app/schemas/extension.json": [
             "sunbeam.yml"
         ],
     },

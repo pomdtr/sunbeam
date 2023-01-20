@@ -1,6 +1,6 @@
 {
-    "$schema": "http://json-schema.org/draft/2020-12/schema",
-    "$id": "http://github.com/pomdtr/sunbeam/manifest",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://pomdtr.github.io/sunbeam/schemas/extension.json",
     "type": "object",
     "required": [
         "title",

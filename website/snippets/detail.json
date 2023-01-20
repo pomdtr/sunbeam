@@ -1,0 +1,7 @@
+{
+    "type": "detail",
+    "title": "Detail",
+    "preview": {
+        "command": "detail"
+    }
+}

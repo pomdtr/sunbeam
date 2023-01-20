@@ -1,0 +1,20 @@
+{
+    "type": "list", // The type of the snippet
+    "items": [
+        {
+            "title": "Home",
+            "preview": {
+                "command": "home",
+                "with": {
+                    "text": "Home"
+                }
+            },
+            "actions": [
+                {
+                    "type": "open-url",
+                    "url": "https://www.google.com"
+                }
+            ]
+        }
+    ]
+}

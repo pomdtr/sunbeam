@@ -1,0 +1,137 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://pomdtr.github.io/sunbeam/schemas/extension.json",
+    "type": "object",
+    "required": [
+        "title",
+        "version",
+        "commands"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "preferences": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/input"
+            }
+        },
+        "postInstall": {
+            "type": "string"
+        },
+        "requirements": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "homePage",
+                    "which"
+                ],
+                "properties": {
+                    "homePage": {
+                        "type": "string"
+                    },
+                    "which": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "title": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string",
+            "const": "1.0"
+        },
+        "description": {
+            "type": "string"
+        },
+        "author": {
+            "type": "string"
+        },
+        "rootItems": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "command",
+                    "title"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "pattern": "^[a-zA-Z][a-zA-Z0-9-_]+$"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "with": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "patternProperties": {
+                            "^[a-zA-Z][a-zA-Z0-9-_]+$": {
+                                "anyOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "commands": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+                "^[a-zA-Z][a-zA-Z0-9-_]+$": {
+                    "$ref": "#/$defs/command"
+                }
+            }
+        }
+    },
+    "$defs": {
+        "command": {
+            "type": "object",
+            "required": [
+                "exec"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "exec": {
+                    "type": "string"
+                },
+                "preferences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/input"
+                    }
+                },
+                "onSuccess": {
+                    "type": "string",
+                    "enum": [
+                        "push-page",
+                        "open-url",
+                        "copy-text"
+                    ]
+                },
+                "inputs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/input"
+                    }
+                }
+            }
+        },
+        "input": {}
+    }
+}

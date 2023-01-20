@@ -65,7 +65,7 @@ var PageSchema *jsonschema.Schema
 func init() {
 	var err error
 
-	manifest, err := embedFs.Open("schemas/manifest.json")
+	manifest, err := embedFs.Open("schemas/extension.json")
 	if err != nil {
 		panic(err)
 	}

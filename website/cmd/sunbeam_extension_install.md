@@ -3,14 +3,13 @@
 Install a sunbeam extension from a local directory or a git repository
 
 ```
-sunbeam extension install <directory-or-url> [flags]
+sunbeam extension install <name> <directory-or-url> [flags]
 ```
 
 ## Options
 
 ```
-  -h, --help          help for install
-  -n, --name string   Extension name
+  -h, --help   help for install
 ```
 
 ## See also
