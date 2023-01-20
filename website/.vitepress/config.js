@@ -96,6 +96,7 @@ const themeConfig = {
  */
 const config = {
   title: "Sunbeam",
+  head: [["link", { rel: "icon", href: "/sunbeam/logo.svg" }]],
   description:
     "Generate complex UIs from simple scripts written in any language.",
   base: "/sunbeam/",
