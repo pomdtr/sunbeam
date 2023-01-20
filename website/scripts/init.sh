@@ -2,7 +2,7 @@
 set -e
 
 DIRNAME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-DOCS_DIR="$DIRNAME/.."
+DOCS_DIR="$DIRNAME/../src"
 ROOT_DIR="$DIRNAME/../.."
 
 function build_cobra_pages() {
@@ -25,7 +25,7 @@ function build_cobra_pages() {
 }
 
 function copy_json_schemas() {
-	SCHEMAS_DIR="$DIRNAME/../public/schemas"
+	SCHEMAS_DIR="$DOCS_DIR/public/schemas"
 	rm -rf "$SCHEMAS_DIR"
 	mkdir -p "$SCHEMAS_DIR"
 	cp -r "$ROOT_DIR"/app/schemas/* "$SCHEMAS_DIR"

@@ -4,7 +4,7 @@ A sunbeam extension is a directory containing a `sunbeam.yml` manifest file.
 
 Let's create a file browser extension:
 
-```text
+```
 file-browser/
 ├── file-browser.py
 └── sunbeam.yml
