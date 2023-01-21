@@ -59,7 +59,7 @@ func (r ExtensionRequirement) Check() bool {
 	return true
 }
 
-var ManifestSchema *jsonschema.Schema
+var ExtensionSchema *jsonschema.Schema
 var PageSchema *jsonschema.Schema
 
 func init() {
@@ -75,14 +75,14 @@ func init() {
 	}
 
 	compiler := jsonschema.NewCompiler()
-	if err = compiler.AddResource("manifest", manifest); err != nil {
+	if err = compiler.AddResource("extension", manifest); err != nil {
 		panic(err)
 	}
 	if err = compiler.AddResource("page", page); err != nil {
 		panic(err)
 	}
 
-	ManifestSchema, err = compiler.Compile("manifest")
+	ExtensionSchema, err = compiler.Compile("extension")
 	if err != nil {
 		panic(err)
 	}
@@ -137,7 +137,7 @@ func ParseManifest(manifestPath string) (extension Extension, err error) {
 		return extension, err
 	}
 
-	err = ManifestSchema.Validate(m)
+	err = ExtensionSchema.Validate(m)
 	if err != nil {
 		return extension, err
 	}

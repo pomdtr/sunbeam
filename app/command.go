@@ -67,10 +67,10 @@ func (c Command) Cmd(params CommandParams, dir string) (*exec.Cmd, error) {
 }
 
 type Page struct {
-	Type   string `json:"type"`
-	Title  string `json:"title"`
+	Type  string `json:"type"`
+	Title string `json:"title"`
+
 	Detail Detail `json:"detail"`
-	Form   Form   `json:"form"`
 	List   List   `json:"list"`
 }
 
@@ -84,14 +84,6 @@ type Detail struct {
 type Metadata struct {
 	Title string `json:"title"`
 	Value string `json:"value"`
-}
-
-type Form struct {
-	Inputs []FormInput `json:"inputs"`
-	Target struct {
-		Command string         `json:"command"`
-		With    map[string]any `json:"with"`
-	}
 }
 
 type List struct {

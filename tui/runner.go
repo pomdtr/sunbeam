@@ -325,30 +325,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.list.SetSize(c.width, c.height)
 
 				return c, c.list.Init()
-			case "form":
-				formItems := make([]FormItem, len(page.Form.Inputs))
-				for i, input := range page.Form.Inputs {
-					formItems[i] = NewFormItem(input)
-				}
-
-				c.currentView = "form"
-				c.form = NewForm("command", page.Title, formItems, func(values map[string]any) tea.Cmd {
-					with := make(map[string]any)
-					for key, value := range values {
-						with[key] = value
-					}
-
-					for key, value := range page.Form.Target.With {
-						with[key] = value
-					}
-
-					return NewRunCommandCmd(page.Form.Target.Command, with)
-				})
-				c.form.SetSize(c.width, c.height)
-
-				return c, c.form.Init()
 			}
-
 		case "open-url":
 			return c, NewOpenUrlCmd(string(msg))
 		case "copy-text":

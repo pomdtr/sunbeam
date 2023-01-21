@@ -51,10 +51,6 @@ const sidebar = [
             text: "Detail",
             link: "/developer-guide/pages/detail",
           },
-          {
-            text: "Form",
-            link: "/developer-guide/pages/form",
-          },
         ],
       },
       {

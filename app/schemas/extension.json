@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://pomdtr.github.io/sunbeam/schemas/extension.json",
+    "$id": "https://pomdtr.github.io/sunbeam/schemas/extension",
     "type": "object",
     "required": [
         "title",
@@ -100,6 +100,137 @@
         }
     },
     "$defs": {
+        "input": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "textfield",
+                        "password",
+                        "textarea",
+                        "dropdown",
+                        "checkbox",
+                        "file",
+                        "directory"
+                    ]
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "enum": [
+                                    "textfield",
+                                    "password",
+                                    "textarea",
+                                    "file",
+                                    "directory"
+                                ]
+                            }
+                        }
+                    },
+                    "then": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "dropdown"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "data"
+                        ],
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "default": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "checkbox"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "label"
+                        ],
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "label": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
         "command": {
             "type": "object",
             "required": [
@@ -131,7 +262,6 @@
                     }
                 }
             }
-        },
-        "input": {}
+        }
     }
 }

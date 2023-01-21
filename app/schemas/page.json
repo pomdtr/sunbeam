@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft-07/schema#",
-    "$id": "https://pomdtr.github.io/sunbeam/schemas/page.json",
+    "$id": "https://pomdtr.github.io/sunbeam/schemas/page",
     "type": "object",
     "required": [
         "type"
@@ -13,8 +13,7 @@
             "type": "string",
             "enum": [
                 "list",
-                "detail",
-                "form"
+                "detail"
             ]
         }
     },
@@ -86,61 +85,6 @@
                     }
                 }
             }
-        },
-        {
-            "if": {
-                "required": [
-                    "type"
-                ],
-                "properties": {
-                    "type": {
-                        "const": "form"
-                    }
-                }
-            },
-            "then": {
-                "required": [
-                    "form"
-                ],
-                "properties": {
-                    "form": {
-                        "inputs": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            }
-                        },
-                        "target": {
-                            "type": "object",
-                            "additionalProperties": false,
-                            "required": [
-                                "command"
-                            ],
-                            "properties": {
-                                "command": {
-                                    "type": "string"
-                                },
-                                "with": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "patternProperties": {
-                                        "^[a-zA-Z_][a-zA-Z0-9_]+$": {
-                                            "anyOf": [
-                                                {
-                                                    "type": "string"
-                                                },
-                                                {
-                                                    "type": "boolean"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     ],
     "$defs": {
@@ -192,7 +136,6 @@
                     "enum": [
                         "copy-text",
                         "reload-page",
-                        "submit-form",
                         "open-url",
                         "run-command"
                     ]

@@ -1,3 +1,4 @@
 {
-    "fenced-code-language": false
+    "fenced-code-language": false,
+    "line-length": false
 }
