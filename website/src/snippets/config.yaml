@@ -1,5 +1,5 @@
 rootItems:
-  - title: Browse Developper Directory
+  - title: Browse Developer Directory
     command: browse-files
     extension: file-browser
     with:
