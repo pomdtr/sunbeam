@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/pomdtr/sunbeam/app"
@@ -10,11 +12,14 @@ import (
 )
 
 func NewCmdCheck() *cobra.Command {
-	return &cobra.Command{
-		Use:     "check <manifest-path>",
-		Short:   "Check if an extension manifest is valid",
+	checkCmd := cobra.Command{
+		Use:     "check",
 		GroupID: "core",
 		Args:    cobra.ExactArgs(1),
+	}
+
+	checkCmd.AddCommand(&cobra.Command{
+		Use: "manifest <manifest-path>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			manifestPath := args[0]
 			if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
@@ -32,7 +37,7 @@ func NewCmdCheck() *cobra.Command {
 				return fmt.Errorf("failed to unmarshal manifest: %w", err)
 			}
 
-			if err = app.ManifestSchema.Validate(m); err != nil {
+			if err = app.ExtensionSchema.Validate(m); err != nil {
 				return fmt.Errorf("%#v", err)
 			}
 
@@ -50,5 +55,109 @@ func NewCmdCheck() *cobra.Command {
 			fmt.Println("Extension is valid")
 			return nil
 		},
-	}
+	})
+
+	checkCmd.AddCommand(func() *cobra.Command {
+		command := cobra.Command{
+			Use: "page",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				bytes, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+
+				var m any
+				if err = yaml.Unmarshal(bytes, &m); err != nil {
+					return fmt.Errorf("failed to unmarshal manifest: %w", err)
+				}
+
+				if err = app.PageSchema.Validate(m); err != nil {
+					return fmt.Errorf("%#v", err)
+				}
+
+				var page app.Page
+				if err := json.Unmarshal(bytes, &page); err != nil {
+					return err
+				}
+
+				if cmd.Flags().Changed("manifest") {
+					manifestPath, err := cmd.Flags().GetString("manifest")
+					if err != nil {
+						return err
+					}
+
+					if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+						return err
+					}
+
+					manifest, err := os.ReadFile(manifestPath)
+					if err != nil {
+						return err
+					}
+
+					var extension app.Extension
+					if err := yaml.Unmarshal(manifest, &extension); err != nil {
+						return err
+					}
+
+					switch page.Type {
+					case "detail":
+						for _, action := range page.Detail.Actions {
+							if action.Type != "run-command" {
+								continue
+							}
+
+							command, ok := extension.Commands[action.Command]
+							if !ok {
+								return fmt.Errorf("command %s is not defined in manifest", action.Command)
+							}
+
+							commandInputMap := make(map[string]struct{})
+							for _, input := range command.Inputs {
+								commandInputMap[input.Name] = struct{}{}
+							}
+
+							for key := range action.With {
+								if _, ok := commandInputMap[key]; !ok {
+									return fmt.Errorf("input %s is not defined for command %s", key, action.Command)
+								}
+							}
+						}
+					case "list":
+						for _, listitem := range page.List.Items {
+							for _, action := range listitem.Actions {
+								if action.Type != "run-command" {
+									continue
+								}
+
+								command, ok := extension.Commands[action.Command]
+								if !ok {
+									return fmt.Errorf("command %s is not defined in manifest", action.Command)
+								}
+
+								commandInputMap := make(map[string]struct{})
+								for _, input := range command.Inputs {
+									commandInputMap[input.Name] = struct{}{}
+								}
+
+								for key := range action.With {
+									if _, ok := commandInputMap[key]; !ok {
+										return fmt.Errorf("input %s is not defined for command %s", key, action.Command)
+									}
+								}
+							}
+						}
+					}
+				}
+
+				fmt.Println("Page is valid")
+				return nil
+			},
+		}
+
+		command.Flags().String("manifest", "", "Path to the manifest file")
+		return &command
+	}())
+
+	return &checkCmd
 }
