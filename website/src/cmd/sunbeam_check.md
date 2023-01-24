@@ -1,10 +1,6 @@
 # sunbeam check
 
-Check if an extension manifest is valid
 
-```
-sunbeam check <manifest-path> [flags]
-```
 
 ## Options
 
@@ -15,4 +11,6 @@ sunbeam check <manifest-path> [flags]
 ## See also
 
 * [sunbeam](./sunbeam.md)	 - Command Line Launcher
+* [sunbeam check manifest](./sunbeam_check_manifest.md)	 - 
+* [sunbeam check page](./sunbeam_check_page.md)	 - 
 

@@ -13,8 +13,7 @@
             "type": "string",
             "enum": [
                 "list",
-                "detail",
-                "form"
+                "detail"
             ]
         }
     },
@@ -31,24 +30,33 @@
                 }
             },
             "then": {
+                "type": "object",
                 "required": [
-                    "list"
+                    "items"
                 ],
+                "additionalProperties": false,
                 "properties": {
-                    "list": {
-                        "type": "object",
-                        "required": [
-                            "items"
-                        ],
-                        "additionalProperties": false,
-                        "properties": {
-                            "items": {
+                    "type": {
+                        "const": "list"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "showPreview": {
+                        "type": "boolean"
+                    },
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
                                 "type": "array",
                                 "items": {
                                     "$ref": "#/$defs/listitem"
                                 }
                             }
-                        }
+                        ]
                     }
                 }
             }
@@ -65,78 +73,22 @@
                 }
             },
             "then": {
-                "required": [
-                    "detail"
-                ],
+                "type": "object",
+                "additionalProperties": false,
                 "properties": {
-                    "details": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                            "preview": {
-                                "$ref": "#/$defs/preview"
-                            },
-                            "actions": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/$defs/action"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "if": {
-                "required": [
-                    "type"
-                ],
-                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "preview": {
+                        "$ref": "#/$defs/preview"
+                    },
                     "type": {
-                        "const": "form"
-                    }
-                }
-            },
-            "then": {
-                "required": [
-                    "form"
-                ],
-                "properties": {
-                    "form": {
-                        "inputs": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            }
-                        },
-                        "target": {
-                            "type": "object",
-                            "additionalProperties": false,
-                            "required": [
-                                "command"
-                            ],
-                            "properties": {
-                                "command": {
-                                    "type": "string"
-                                },
-                                "with": {
-                                    "type": "object",
-                                    "additionalProperties": false,
-                                    "patternProperties": {
-                                        "^[a-zA-Z_][a-zA-Z0-9_]+$": {
-                                            "anyOf": [
-                                                {
-                                                    "type": "string"
-                                                },
-                                                {
-                                                    "type": "boolean"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            }
+                        "const": "detail"
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/$defs/action"
                         }
                     }
                 }
@@ -192,7 +144,6 @@
                     "enum": [
                         "copy-text",
                         "reload-page",
-                        "submit-form",
                         "open-url",
                         "run-command"
                     ]
@@ -236,6 +187,9 @@
                                 }
                             },
                             "command": {
+                                "type": "string"
+                            },
+                            "onSuccess": {
                                 "type": "string"
                             }
                         }

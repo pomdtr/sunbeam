@@ -9,7 +9,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "flexsearch": "^0.7.31",
+    "markdown-it": "^13.0.1",
     "vitepress": "^1.0.0-alpha.36",
-    "vue": "^3.2.45"
+    "vitepress-plugin-search": "^1.0.4-alpha.18",
+    "vue": "^3.2.45",
+    "zx": "^7.1.1"
   }
 }

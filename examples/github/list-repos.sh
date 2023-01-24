@@ -9,6 +9,7 @@ else
     ENDPOINT=/user/repos?sort=updated
 fi
 
+# shellcheck disable=SC2016
 gh api "$ENDPOINT" --jq '.[] |
     {
         title: .name,
@@ -32,8 +33,9 @@ gh api "$ENDPOINT" --jq '.[] |
             }
         ]
     }
-' | sunbeam query --slurp '{
+' | sunbeam query --arg "repo=$1" --slurp '{
     type: "list",
+    title: "List \($repo) Repositories",
     showPreview: true,
     items: .
 }'

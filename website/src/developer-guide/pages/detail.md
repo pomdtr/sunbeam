@@ -1,3 +1,0 @@
-# Detail
-
-<<< @/snippets/detail.json

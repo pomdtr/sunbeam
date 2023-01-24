@@ -1,5 +1,6 @@
 {
     "type": "list", // The type of the snippet
+    "showPreview": true,
     "items": [
         {
             "title": "Home",

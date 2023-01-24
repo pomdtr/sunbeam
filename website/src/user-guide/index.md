@@ -11,6 +11,7 @@ It allows you to build interactives UIs from simple scripts, and share them as g
 ## Why sunbeam?
 
 I love TUIs, but I spent way to much time writing them.
+
 I used a lot of application launchers, but all of them had some limitations.
 
 Sunbeam supports:

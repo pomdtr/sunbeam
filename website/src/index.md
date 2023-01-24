@@ -18,9 +18,9 @@ hero:
 
 features:
   - title: Supports all platforms
-    details: Sunbeam can run on Windows, Linux and MacOS. You can either run it from a terminal, or use the GUI.
-  - title: Intuitive API, powerful UIs
-    details: Sunbeam extensions are composed of a succession of forms, lists, details... But you don't have to write any HTML or CSS.
+    details: Sunbeam can run on Windows, Linux and MacOS. Since it's run in a terminal, it can also be used in a remote server.
+  - title: An intuitive api inspired by Raycast
+    details: A sunbeam app is composed of a succession of forms, lists, details... But you don't have to write any HTML or CSS.
   - title: A flexible extension system based on git
     details: Extensions can be written in any language, as long as they can output JSON. Any repository can be installed as an extension.
   - title: Runs as a headless server

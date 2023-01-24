@@ -44,12 +44,16 @@ const sidebar = [
         link: "/developer-guide/extension-manifest",
       },
       {
-        text: "Pages",
+        text: "Reference",
         items: [
-          { text: "List", link: "/developer-guide/pages/list" },
+          { text: "Page", link: "/developer-guide/reference/page.md" },
           {
-            text: "Detail",
-            link: "/developer-guide/pages/detail",
+            text: "Actions",
+            link: "/developer-guide/reference/actions.md",
+          },
+          {
+            text: "Inputs",
+            link: "/developer-guide/reference/inputs.md",
           },
         ],
       },
@@ -84,6 +88,11 @@ const themeConfig = {
   editLink: {
     pattern: "https://github.com/pomdtr/sunbeam/edit/main/website/src/:path",
     text: "Edit this page on GitHub",
+  },
+  algolia: {
+    appId: "OGGDU8PMQA",
+    apiKey: "fd31a6a190c9dd3907611922cb46759c",
+    indexName: "sunbeam",
   },
 };
 

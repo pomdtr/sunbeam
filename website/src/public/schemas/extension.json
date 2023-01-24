@@ -9,11 +9,8 @@
     ],
     "additionalProperties": false,
     "properties": {
-        "preferences": {
-            "type": "array",
-            "items": {
-                "$ref": "#/$defs/input"
-            }
+        "rootUrl": {
+            "type": "string"
         },
         "postInstall": {
             "type": "string"
@@ -77,6 +74,9 @@
                             "^[a-zA-Z][a-zA-Z0-9-_]+$": {
                                 "anyOf": [
                                     {
+                                        "$comment": "./input.json"
+                                    },
+                                    {
                                         "type": "string"
                                     },
                                     {
@@ -102,19 +102,10 @@
     "$defs": {
         "command": {
             "type": "object",
-            "required": [
-                "exec"
-            ],
             "additionalProperties": false,
             "properties": {
                 "exec": {
                     "type": "string"
-                },
-                "preferences": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/input"
-                    }
                 },
                 "onSuccess": {
                     "type": "string",
@@ -124,14 +115,37 @@
                         "copy-text"
                     ]
                 },
-                "inputs": {
+                "params": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/input"
+                        "type": "object",
+                        "required": [
+                            "name",
+                            "type"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "enum": [
+                                    "string",
+                                    "boolean",
+                                    "file",
+                                    "directory"
+                                ]
+                            },
+                            "enum": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             }
-        },
-        "input": {}
+        }
     }
 }
