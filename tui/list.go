@@ -129,7 +129,6 @@ func NewList(title string) *List {
 
 func (c *List) Init() tea.Cmd {
 	if len(c.filter.items) > 0 {
-		c.updateSelection()
 		return tea.Batch(c.header.Focus(), func() tea.Msg {
 			return SelectionChangeMsg{c.filter.items[0].ID()}
 		})
@@ -152,6 +151,15 @@ func (c *List) SetSize(width, height int) {
 	}
 }
 
+func (c List) Selection() *ListItem {
+	if c.filter.Selection() == nil {
+		return nil
+	}
+	item := c.filter.Selection().(ListItem)
+
+	return &item
+}
+
 func (c *List) SetItems(items []ListItem) tea.Cmd {
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
@@ -160,6 +168,9 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 
 	c.filter.SetItems(filterItems)
 	c.filter.FilterItems(c.Query())
+	if c.Selection() != nil {
+		c.updateSelection(c.filter)
+	}
 	return nil
 }
 
@@ -169,19 +180,20 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 
 type PreviewContentMsg string
 
-func (l *List) updateSelection() {
-	if l.filter.Selection() == nil {
+func (l *List) updateSelection(filter Filter) {
+	if filter.Selection() == nil {
 		l.actions.SetActions()
 		l.footer.SetBindings()
 		l.viewport.SetContent("")
 		return
 	}
 
-	item := l.filter.Selection().(ListItem)
+	item := filter.Selection().(ListItem)
 
 	l.actions.SetTitle(item.Title)
 	l.actions.SetActions(item.Actions...)
 	if item.Preview != "" {
+		l.viewport.SetYOffset(0)
 		l.viewport.SetContent(item.Preview)
 	}
 
@@ -196,6 +208,22 @@ func (l *List) updateSelection() {
 }
 
 func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
+
+	c.actions, cmd = c.actions.Update(msg)
+	cmds = append(cmds, cmd)
+
+	if c.actions.Focused() {
+		return c, tea.Batch(cmds...)
+	}
+
+	header, cmd := c.header.Update(msg)
+	cmds = append(cmds, cmd)
+
+	filter, cmd := c.filter.Update(msg)
+	cmds = append(cmds, cmd)
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -203,10 +231,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if c.actions.Focused() {
 				break
 			} else if c.header.input.Value() != "" {
-				c.header.input.SetValue("")
-				c.filter.FilterItems("")
-				c.updateSelection()
-				return c, nil
+				header.input.SetValue("")
+				filter.FilterItems("")
+				c.updateSelection(filter)
 			} else {
 				return c, PopCmd
 			}
@@ -250,25 +277,10 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	case PreviewContentMsg:
 		c.header.SetIsLoading(false)
+		c.viewport.SetYOffset(0)
 		c.viewport.SetContent(string(msg))
 		return c, nil
 	}
-
-	var cmd tea.Cmd
-	var cmds []tea.Cmd
-
-	c.actions, cmd = c.actions.Update(msg)
-	cmds = append(cmds, cmd)
-
-	if c.actions.Focused() {
-		return c, tea.Batch(cmds...)
-	}
-
-	header, cmd := c.header.Update(msg)
-	cmds = append(cmds, cmd)
-
-	filter, cmd := c.filter.Update(msg)
-	cmds = append(cmds, cmd)
 
 	if header.Value() != c.header.Value() {
 		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
@@ -282,11 +294,12 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
 			return SelectionChangeMsg{SelectionId: filter.Selection().ID()}
 		}))
+		c.updateSelection(filter)
 	}
 
 	c.header = header
 	c.filter = filter
-	c.updateSelection()
+	c.updateSelection(c.filter)
 
 	return c, tea.Batch(cmds...)
 }
