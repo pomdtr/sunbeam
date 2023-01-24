@@ -43,10 +43,17 @@
                         "type": "boolean"
                     },
                     "items": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/$defs/listitem"
-                        }
+                        "anyOf": [
+                            {
+                                "type": "null"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/listitem"
+                                }
+                            }
+                        ]
                     }
                 }
             }
