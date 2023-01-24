@@ -190,29 +190,24 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 				return al, nil
 			}
 
-			al.Clear()
 			if al.header.input.Value() != "" {
-				return al, nil
+				al.Clear()
+			} else {
+				al.Blur()
 			}
 
-			al.Blur()
 			return al, nil
-
 		case "enter":
 			selectedItem := al.filter.Selection()
 			if selectedItem == nil {
 				return al, nil
 			}
 			listItem, _ := selectedItem.(ListItem)
-			al.Clear()
-			al.Blur()
 			return al, listItem.Actions[0].Cmd
 		}
 
 		for _, action := range al.actions {
 			if key.Matches(msg, action.Binding()) {
-				al.Clear()
-				al.Blur()
 				return al, action.Cmd
 			}
 		}
@@ -254,6 +249,7 @@ func (al *ActionList) Clear() {
 }
 
 func (al *ActionList) Blur() {
+	al.Clear()
 	al.header.input.Blur()
 }
 

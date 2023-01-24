@@ -262,10 +262,12 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 							return ""
 						}
 
-						cmd, err := command.Cmd(app.CommandParams{
+						params := app.CommandParams{
 							With: page.Detail.Preview.With,
 							Env:  c.environ,
-						}, c.extension.Root.Path)
+						}
+
+						cmd, err := command.Cmd(params, c.extension.Root.Path)
 						if err != nil {
 							return err.Error()
 						}
@@ -303,10 +305,40 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 								return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
 							}
 
-							cmd, err := command.Cmd(app.CommandParams{
+							params := app.CommandParams{
 								With: scriptItem.Preview.With,
 								Env:  c.environ,
-							}, c.extension.Root.Path)
+							}
+							if c.extension.Root.Scheme != "file" {
+								payload, err := json.Marshal(params)
+								if err != nil {
+									return fmt.Sprintf("failed to marshal command params: %v", err)
+								}
+
+								commandUrl := url.URL{
+									Scheme: c.extension.Root.Scheme,
+									Host:   c.extension.Root.Host,
+									Path:   path.Join(c.extension.Root.Path, scriptItem.Preview.Command),
+								}
+								res, err := http.Post(commandUrl.String(), "application/json", bytes.NewReader(payload))
+								if err != nil {
+									return fmt.Sprintf("failed to execute command: %v", err)
+								}
+								defer res.Body.Close()
+
+								if res.StatusCode != http.StatusOK {
+									return fmt.Sprintf("failed to execute command: %s", res.Status)
+								}
+
+								body, err := io.ReadAll(res.Body)
+								if err != nil {
+									return fmt.Sprintf("failed to read command output: %v", err)
+								}
+
+								return string(body)
+							}
+
+							cmd, err := command.Cmd(params, c.extension.Root.Path)
 							if err != nil {
 								return err.Error()
 							}
@@ -366,6 +398,8 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			command.OnSuccess = msg.OnSuccess
 		}
 
+		c.Clear()
+
 		return c, NewPushCmd(NewCommandRunner(c.extension, NamedCommand{
 			Name:    msg.Command,
 			Command: command,
@@ -396,6 +430,15 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		c.header, cmd = c.header.Update(msg)
 	}
 	return c, cmd
+}
+
+func (c *CommandRunner) Clear() {
+	switch c.currentView {
+	case "list":
+		c.list.actions.Blur()
+	case "detail":
+		c.detail.actions.Blur()
+	}
 }
 
 func (c *CommandRunner) View() string {

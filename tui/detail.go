@@ -11,7 +11,7 @@ type Detail struct {
 	header         Header
 	Style          lipgloss.Style
 	viewport       viewport.Model
-	actionList     ActionList
+	actions        ActionList
 	PreviewCommand func() string
 	footer         Footer
 }
@@ -28,17 +28,17 @@ func NewDetail(title string) *Detail {
 	header := NewHeader()
 
 	d := Detail{
-		viewport:   viewport,
-		header:     header,
-		actionList: actionList,
-		footer:     footer,
+		viewport: viewport,
+		header:   header,
+		actions:  actionList,
+		footer:   footer,
 	}
 
 	return &d
 }
 
 func (c *Detail) SetActions(actions ...Action) {
-	c.actionList.SetActions(actions...)
+	c.actions.SetActions(actions...)
 
 	if len(actions) == 0 {
 		c.footer.SetBindings()
@@ -77,7 +77,7 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return &c, tea.Quit
 			}
 		case tea.KeyEscape:
-			if c.actionList.Focused() {
+			if c.actions.Focused() {
 				break
 			}
 			return &c, PopCmd
@@ -93,7 +93,7 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	c.viewport, cmd = c.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
-	c.actionList, cmd = c.actionList.Update(msg)
+	c.actions, cmd = c.actions.Update(msg)
 	cmds = append(cmds, cmd)
 
 	c.header, cmd = c.header.Update(msg)
@@ -105,7 +105,7 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 func (c *Detail) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
-	c.actionList.SetSize(width, height)
+	c.actions.SetSize(width, height)
 
 	viewportHeight := height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 
@@ -114,8 +114,8 @@ func (c *Detail) SetSize(width, height int) {
 }
 
 func (c *Detail) View() string {
-	if c.actionList.Focused() {
-		return c.actionList.View()
+	if c.actions.Focused() {
+		return c.actions.View()
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
