@@ -14,12 +14,12 @@ multipass list --format json | sunbeam query '.list[] |
           .state == "Running"
         then
           [
-            {type: "run-command", title: "Stop \(.name)", command: "stop-vm", with: {vm: .name}},
+            {type: "run-command", title: "Stop \(.name)", command: "stop-vm", onSuccess: "reload-page", with: {vm: .name}},
             {type: "run-command", title: "Open Shell", command: "open-shell", with: {vm: .name}}
           ]
         else
           [
-            {type: "run-command", title: "Start \(.name)", command: "start-vm", with: {vm: .name}}
+            {type: "run-command", title: "Start \(.name)", command: "start-vm", onSuccess: "reload-page", with: {vm: .name}}
           ]
         end
       ),
