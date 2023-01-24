@@ -11,11 +11,11 @@ rootItems:
         type: textfield
         title: Owner
 commands:
-  commands:
-    exec: ./view-readme.sh
+  view-readme:
+    exec: ./view-readme.sh ${{ repository }}
     onSuccess: push-page
     params:
-      - name: owner
+      - name: repository
         type: string
   list-repos:
     exec: ./list-repos.sh ${{ owner }}
