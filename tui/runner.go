@@ -265,6 +265,10 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 						output, err := cmd.Output()
 						if err != nil {
+							var exitErr *exec.ExitError
+							if ok := errors.As(err, &exitErr); ok {
+								return fmt.Sprintf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
+							}
 							return err.Error()
 						}
 
@@ -301,6 +305,10 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 							output, err := cmd.Output()
 							if err != nil {
+								var exitErr *exec.ExitError
+								if ok := errors.As(err, &exitErr); ok {
+									return fmt.Sprintf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
+								}
 								return err.Error()
 							}
 
