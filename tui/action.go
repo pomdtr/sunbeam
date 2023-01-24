@@ -96,7 +96,6 @@ func NewAction(scriptAction app.Action) Action {
 		cmd = NewReloadPageCmd(scriptAction.With)
 	case "run-command":
 		cmd = func() tea.Msg {
-
 			return RunCommandMsg{
 				Command:   scriptAction.Command,
 				With:      scriptAction.With,
@@ -191,13 +190,12 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 				return al, nil
 			}
 
+			al.Clear()
 			if al.header.input.Value() != "" {
-				al.Clear()
 				return al, nil
-			} else {
-				al.Blur()
 			}
 
+			al.Blur()
 			return al, nil
 
 		case "enter":
@@ -252,6 +250,7 @@ func (al *ActionList) Focus() tea.Cmd {
 func (al *ActionList) Clear() {
 	al.header.input.SetValue("")
 	al.filter.FilterItems("")
+	al.filter.cursor = 0
 }
 
 func (al *ActionList) Blur() {
