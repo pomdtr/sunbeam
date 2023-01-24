@@ -17,6 +17,7 @@ commands:
     exec: ./list-vms.sh
   open-shell:
     exec: multipass shell ${{ vm }}
+    interactive: true
     params:
       - name: vm
         type: string

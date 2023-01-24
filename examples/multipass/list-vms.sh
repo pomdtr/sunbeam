@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -euo pipefail
 
 multipass list --format json | sunbeam query '.list[] |
 {
@@ -21,7 +22,7 @@ multipass list --format json | sunbeam query '.list[] |
         then
           [
             {type: "run-command", title: "Stop \(.name)", command: "stop-vm", onSuccess: "reload-page", with: {vm: .name}},
-            {type: "run-command", title: "Open Shell", command: "open-shell", with: {vm: .name}}
+            {type: "run-command", shortcut: "ctrl+s", title: "Open Shell", command: "open-shell", onSuccess: "reload-page", with: {vm: .name}}
           ]
         else
           [

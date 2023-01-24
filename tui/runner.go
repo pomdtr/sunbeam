@@ -66,7 +66,7 @@ func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[s
 	return &runner
 }
 func (c *CommandRunner) Init() tea.Cmd {
-	return c.Run()
+	return tea.Sequence(c.SetIsloading(true), c.Run())
 }
 
 type CommandOutput []byte
@@ -99,10 +99,6 @@ func (c *CommandRunner) Run() tea.Cmd {
 		return c.form.Init()
 	}
 
-	return tea.Sequence(c.SetIsloading(true), c.Cmd)
-}
-
-func (c CommandRunner) Cmd() tea.Msg {
 	params := make(map[string]any)
 	for name, input := range c.with {
 		if input.Value == nil {
@@ -112,7 +108,7 @@ func (c CommandRunner) Cmd() tea.Msg {
 	}
 
 	if err := c.command.CheckMissingParams(params); err != nil {
-		return err
+		return NewErrorCmd(err)
 	}
 
 	commandInput := app.CommandParams{
@@ -121,7 +117,44 @@ func (c CommandRunner) Cmd() tea.Msg {
 	}
 
 	if c.extension.Root.Scheme != "file" {
-		payload, err := json.Marshal(commandInput)
+		if c.command.Interactive {
+			return NewErrorCmd(fmt.Errorf("interactive commands are not supported for remote extensions"))
+		}
+
+		return c.RemoteRun(commandInput)
+	}
+
+	cmd, err := c.command.Cmd(commandInput, c.extension.Root.Path)
+	if err != nil {
+		return NewErrorCmd(err)
+	}
+
+	if c.command.Interactive {
+		return tea.ExecProcess(cmd, func(err error) tea.Msg {
+			if err != nil {
+				return err
+			}
+			return CommandOutput([]byte{})
+		})
+	}
+
+	return func() tea.Msg {
+		output, err := cmd.Output()
+		if err != nil {
+			var exitErr *exec.ExitError
+			if ok := errors.As(err, &exitErr); ok {
+				return fmt.Errorf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
+			}
+			return err
+		}
+
+		return CommandOutput(output)
+	}
+}
+
+func (c CommandRunner) RemoteRun(commandParams app.CommandParams) tea.Cmd {
+	return func() tea.Msg {
+		payload, err := json.Marshal(commandParams)
 		if err != nil {
 			return err
 		}
@@ -146,35 +179,8 @@ func (c CommandRunner) Cmd() tea.Msg {
 			return err
 		}
 
-		if c.command.OnSuccess == "" {
-			cmd := exec.Command("cat")
-			cmd.Stdin = bytes.NewReader(body)
-
-			return ExecMsg{cmd}
-		}
-
 		return CommandOutput(body)
 	}
-
-	cmd, err := c.command.Cmd(commandInput, c.extension.Root.Path)
-	if err != nil {
-		return err
-	}
-
-	if c.command.OnSuccess == "" {
-		return ExecMsg{cmd}
-	}
-
-	output, err := cmd.Output()
-	if err != nil {
-		var exitErr *exec.ExitError
-		if ok := errors.As(err, &exitErr); ok {
-			return fmt.Errorf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
-		}
-		return err
-	}
-
-	return CommandOutput(output)
 }
 
 func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
@@ -376,6 +382,8 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, NewCopyTextCmd(string(msg))
 		case "reload-page":
 			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
+		default:
+			return c, tea.Quit
 		}
 
 	case SubmitFormMsg:
@@ -387,7 +395,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 		c.currentView = "loading"
 
-		return c, tea.Sequence(c.SetIsloading(true), c.Cmd)
+		return c, tea.Sequence(c.SetIsloading(true), c.Run())
 
 	case RunCommandMsg:
 		command, ok := c.extension.Commands[msg.Command]
@@ -410,7 +418,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.with[key] = value
 		}
 
-		return c, c.Cmd
+		return c, tea.Sequence(c.SetIsloading(true), c.Run())
 	}
 
 	var cmd tea.Cmd

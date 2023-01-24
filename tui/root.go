@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 	"time"
 
@@ -30,7 +29,6 @@ type Page interface {
 
 type Model struct {
 	width, height int
-	exitCmd       *exec.Cmd
 
 	root  Page
 	pages []Page
@@ -94,10 +92,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Pop()
 			return m, nil
 		}
-	case ExecMsg:
-		m.exitCmd = msg.cmd
-		m.hidden = true
-		return m, tea.Quit
 	case error:
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())
@@ -170,14 +164,6 @@ func NewPushCmd(c Page) tea.Cmd {
 	return func() tea.Msg {
 		return pushMsg{c}
 	}
-}
-
-type ExecMsg struct {
-	cmd *exec.Cmd
-}
-
-func NewExecCmd(cmd *exec.Cmd) tea.Msg {
-	return ExecMsg{cmd}
 }
 
 func (m *Model) Push(page Page) tea.Cmd {
@@ -328,22 +314,9 @@ func Draw(model *Model, fullscreen bool) (err error) {
 		p = tea.NewProgram(model)
 	}
 
-	m, err := p.Run()
+	_, err = p.Run()
 	if err != nil {
 		return err
-	}
-
-	model, ok := m.(*Model)
-	if !ok {
-		return fmt.Errorf("could not convert model to *Model")
-	}
-
-	if exitCmd := model.exitCmd; exitCmd != nil {
-		exitCmd.Stderr = os.Stderr
-		exitCmd.Stdout = os.Stdout
-		exitCmd.Stdin = os.Stdin
-
-		exitCmd.Run()
 	}
 
 	return nil

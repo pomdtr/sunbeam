@@ -107,6 +107,9 @@
                 "exec": {
                     "type": "string"
                 },
+                "interactive": {
+                    "type": "boolean"
+                },
                 "onSuccess": {
                     "type": "string",
                     "enum": [
