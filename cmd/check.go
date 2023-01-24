@@ -113,8 +113,8 @@ func NewCmdCheck() *cobra.Command {
 							}
 
 							commandInputMap := make(map[string]struct{})
-							for _, input := range command.Inputs {
-								commandInputMap[input.Name] = struct{}{}
+							for _, param := range command.Params {
+								commandInputMap[param.Name] = struct{}{}
 							}
 
 							for key := range action.With {
@@ -136,8 +136,8 @@ func NewCmdCheck() *cobra.Command {
 								}
 
 								commandInputMap := make(map[string]struct{})
-								for _, input := range command.Inputs {
-									commandInputMap[input.Name] = struct{}{}
+								for _, param := range command.Params {
+									commandInputMap[param.Name] = struct{}{}
 								}
 
 								for key := range action.With {

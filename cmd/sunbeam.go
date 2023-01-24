@@ -6,29 +6,12 @@ import (
 	"path"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
 	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
 )
-
-func parseConfig(configRoot string) (*tui.Config, error) {
-	viper.AddConfigPath(configRoot)
-	viper.SetConfigName("config")
-	viper.SetConfigType("yml")
-	viper.SetEnvPrefix("sunbeam")
-	viper.ReadInConfig()
-	viper.AutomaticEnv()
-
-	var config tui.Config
-	err := viper.Unmarshal(&config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &config, err
-}
 
 func Execute(version string) (err error) {
 	homeDir, err := os.UserHomeDir()
@@ -36,9 +19,16 @@ func Execute(version string) (err error) {
 		return err
 	}
 
-	config, err := parseConfig(path.Join(homeDir, ".config", "sunbeam"))
-	if err != nil {
-		return err
+	var config tui.Config
+	configPath := path.Join(homeDir, ".config", "sunbeam", "config.yml")
+	if _, err := os.Stat(configPath); err == nil {
+		bytes, err := os.ReadFile(configPath)
+		if err != nil {
+			return fmt.Errorf("failed to read config file: %w", err)
+		}
+		if err := yaml.Unmarshal(bytes, &config); err != nil {
+			return fmt.Errorf("failed to parse config file: %w", err)
+		}
 	}
 
 	extensionRoot := path.Join(homeDir, ".local", "share", "sunbeam", "extensions")
@@ -78,16 +68,16 @@ func Execute(version string) (err error) {
 	// Core Commands
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	rootCmd.AddCommand(NewCmdDocs())
-	rootCmd.AddCommand(NewCmdExtension(api, config))
+	rootCmd.AddCommand(NewCmdExtension(api, &config))
 	rootCmd.AddCommand(NewCmdServe(api))
 	rootCmd.AddCommand(NewCmdCheck())
 	rootCmd.AddCommand(NewCmdQuery())
-	rootCmd.AddCommand(NewCmdRun(config))
+	rootCmd.AddCommand(NewCmdRun(&config))
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
 		for name, extension := range api.Extensions {
-			rootCmd.AddCommand(NewExtensionCommand(name, extension, config))
+			rootCmd.AddCommand(NewExtensionCommand(name, extension, &config))
 		}
 	}
 
@@ -118,24 +108,21 @@ func NewExtensionCommand(name string, extension app.Extension, config *tui.Confi
 			Use:   commandName,
 			Short: command.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				with := make(map[string]any)
-				for _, param := range command.Inputs {
-					if !cmd.Flags().Changed(param.Name) {
-						continue
-					}
+				with := make(map[string]app.CommandInput)
+				for _, param := range command.Params {
 					switch param.Type {
-					case "checkbox":
+					case "boolean":
 						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
 							return err
 						}
-						with[param.Name] = value
+						with[param.Name] = app.CommandInput{Value: value}
 					default:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
-						with[param.Name] = value
+						with[param.Name] = app.CommandInput{Value: value}
 					}
 
 				}
@@ -149,6 +136,7 @@ func NewExtensionCommand(name string, extension app.Extension, config *tui.Confi
 						Command: command,
 					},
 					with,
+					config.Env[commandName],
 				)
 
 				model := tui.NewModel(runner)
@@ -161,20 +149,38 @@ func NewExtensionCommand(name string, extension app.Extension, config *tui.Confi
 			},
 		}
 
-		for _, param := range command.Inputs {
+		for _, param := range command.Params {
 			switch param.Type {
-			case "checkbox":
-				if defaultValue, ok := param.Default.(bool); ok {
-					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Title)
+			case "boolean":
+				if param.Default != nil {
+					defaultValue := param.Default.(bool)
+					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Description)
 				} else {
-					scriptCmd.Flags().Bool(param.Name, false, param.Title)
+					scriptCmd.Flags().Bool(param.Name, false, param.Description)
+					scriptCmd.MarkFlagRequired(param.Name)
 				}
 			default:
-				if defaultValue, ok := param.Default.(string); ok {
-					scriptCmd.Flags().String(param.Name, defaultValue, param.Title)
+				if param.Default != nil {
+					defaultValue := param.Default.(string)
+					scriptCmd.Flags().String(param.Name, defaultValue, param.Description)
 				} else {
-					scriptCmd.Flags().String(param.Name, "", param.Title)
+					scriptCmd.Flags().String(param.Name, "", param.Description)
+					scriptCmd.MarkFlagRequired(param.Name)
 				}
+			}
+
+			if len(param.Enum) > 0 {
+				scriptCmd.RegisterFlagCompletionFunc(param.Name, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+					return param.Enum, cobra.ShellCompDirectiveNoFileComp
+				})
+			}
+
+			if param.Type == "file" {
+				scriptCmd.MarkFlagFilename(param.Name)
+			}
+
+			if param.Type == "directory" {
+				scriptCmd.MarkFlagDirname(param.Name)
 			}
 		}
 

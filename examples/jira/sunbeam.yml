@@ -1,9 +1,5 @@
 version: "1.0"
 title: Jira
-preferences:
-  - type: textfield
-    name: JIRA_TOKEN
-    title: Jira Token
 rootItems:
   - title: List Issues
     command: list-issues
@@ -13,7 +9,6 @@ commands:
   list-issues:
     exec: ./jira.sh ${{ jql }}
     onSuccess: push-page
-    inputs:
+    params:
       - name: jql
-        type: textfield
-        title: JQL
+        type: string

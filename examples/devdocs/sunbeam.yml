@@ -40,7 +40,6 @@ commands:
         }
       ' | sunbeam --slurp { type: "list", list: {items: .} }
     onSuccess: push-page
-    inputs:
+    params:
       - name: slug
-        type: textfield
-        title: Slug
+        type: string

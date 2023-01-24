@@ -17,7 +17,7 @@ type Header struct {
 }
 
 func NewHeader() Header {
-	ti := textinput.NewModel()
+	ti := textinput.New()
 	ti.Prompt = ""
 	ti.Placeholder = ""
 	ti.PlaceholderStyle = styles.Faint.Copy()

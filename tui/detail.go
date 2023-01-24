@@ -97,7 +97,7 @@ func (d *Detail) SetDetail(detail app.Detail) tea.Cmd {
 	}
 
 	d.SetActions(actions...)
-	d.content = detail.Preview
+	d.content = detail.Preview.Text
 	d.metadatas = detail.Metadatas
 	d.updateContent()
 

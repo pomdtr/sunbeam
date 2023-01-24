@@ -18,6 +18,11 @@ if len(journal["entries"]) == 0:
                         "type": "run-command",
                         "command": "write-entry",
                         "title": "Write Entry",
+                        "onSuccess": "reload-page",
+                        "with": {
+                            "title": {"type": "textfield", "title": "Title"},
+                            "content": {"type": "textarea", "title": "Content"},
+                        },
                     }
                 ],
             }
@@ -28,47 +33,64 @@ if len(journal["entries"]) == 0:
 json.dump(
     {
         "type": "list",
-        "list": {
-            "items": [
-                {
-                    "title": entry["title"],
-                    "preview": entry["content"],
-                    "accessories": [
-                        datetime.utcfromtimestamp(entry["timestamp"]).strftime(
-                            "%Y-%m-%d %H:%M:%S"
-                        )
-                    ],
-                    "actions": [
-                        {
-                            "type": "copy-text",
-                            "text": entry["content"],
-                            "title": "Copy Message",
+        "items": [
+            {
+                "title": entry["title"],
+                "preview": entry["content"],
+                "accessories": [
+                    datetime.utcfromtimestamp(entry["timestamp"]).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                ],
+                "actions": [
+                    {
+                        "type": "copy-text",
+                        "text": entry["content"],
+                        "title": "Copy Message",
+                    },
+                    {
+                        "type": "run-command",
+                        "title": "New Entry",
+                        "command": "write-entry",
+                        "onSuccess": "reload-page",
+                        "shortcut": "ctrl+n",
+                        "with": {
+                            "title": {"type": "textfield", "title": "Title"},
+                            "content": {"type": "textarea", "title": "Content"},
+                        }
+                    },
+                    {
+                        "type": "run-command",
+                        "title": "Delete Entry",
+                        "command": "delete-entry",
+                        "onSuccess": "reload-page",
+                        "shortcut": "ctrl+d",
+                        "with": {"uuid": uuid},
+                    },
+                    {
+                        "type": "run-command",
+                        "title": "Edit Entry",
+                        "command": "edit-entry",
+                        "shortcut": "ctrl+e",
+                        "onSuccess": "reload-page",
+                        "with": {
+                            "uuid": uuid,
+                            "title": {
+                                "type": "textfield",
+                                "title": "Title",
+                                "default": entry["title"],
+                            },
+                            "content": {
+                                "type": "textarea",
+                                "title": "Content",
+                                "default": entry["content"],
+                            },
                         },
-                        {
-                            "type": "run-command",
-                            "title": "New Entry",
-                            "command": "write-entry",
-                            "shortcut": "ctrl+n",
-                        },
-                        {
-                            "type": "run-command",
-                            "title": "Delete Entry",
-                            "command": "delete-entry",
-                            "shortcut": "ctrl+d",
-                            "with": {"uuid": uuid},
-                        },
-                        {
-                            "type": "run-command",
-                            "title": "Edit Entry",
-                            "command": "edit-form",
-                            "shortcut": "ctrl+e",
-                            "with": {"uuid": uuid},
-                        },
-                    ],
-                }
-                for uuid, entry in journal["entries"].items()
-            ],
-        },
+                    },
+                ],
+            }
+            for uuid, entry in journal["entries"].items()
+        ],
     },
     sys.stdout,
 )

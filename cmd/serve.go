@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/server"
@@ -9,16 +9,23 @@ import (
 )
 
 func NewCmdServe(api app.Api) *cobra.Command {
-	return &cobra.Command{
+	cmd := cobra.Command{
 		Use:     "serve",
 		GroupID: "core",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			server := server.NewServer(api.Extensions, ":8080")
+			host, _ := cmd.Flags().GetString("host")
+			port, _ := cmd.Flags().GetInt("port")
 
-			log.Println("Listening on :8080")
+			server := server.NewServer(api.Extensions, fmt.Sprintf("%s:%d", host, port))
+
 			err := server.ListenAndServe()
 
 			return err
 		},
 	}
+
+	cmd.Flags().StringP("host", "H", "localhost", "host to listen on")
+	cmd.Flags().IntP("port", "p", 8080, "port to listen on")
+
+	return &cmd
 }

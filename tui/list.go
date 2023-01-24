@@ -13,7 +13,7 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-var debounceDuration = 300 * time.Millisecond
+const debounceDuration = 300 * time.Millisecond
 
 type ListItem struct {
 	Id          string
@@ -113,10 +113,8 @@ func NewList(title string) *List {
 	header := NewHeader()
 
 	viewport := viewport.New(0, 0)
-
 	filter := NewFilter()
 	filter.DrawLines = true
-
 	footer := NewFooter(title)
 
 	return &List{
@@ -214,14 +212,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.viewport.LineUp(1)
 			return c, nil
 		}
-	case updateQueryMsg:
-		if msg.query != c.Query() {
-			return c, nil
-		}
-
-		return c, NewReloadPageCmd(map[string]any{
-			"query": msg.query,
-		})
 	case PreviewContentMsg:
 		c.header.SetIsLoading(false)
 		c.setPreviewContent(string(msg))
@@ -241,15 +231,11 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	header, cmd := c.header.Update(msg)
 	cmds = append(cmds, cmd)
 	if header.Value() != c.header.Value() {
-		if c.Dynamic {
-			cmd = tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {
-				return updateQueryMsg{query: header.Value()}
-			})
-			cmds = append(cmds, cmd)
-		} else {
-			cmd = c.FilterItems(header.Value())
-			cmds = append(cmds, cmd)
-		}
+		cmd = c.FilterItems(header.Value())
+		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
+			return UpdateQueryMsg{Query: header.Value()}
+		}))
+		cmds = append(cmds, cmd)
 	}
 	c.header = header
 
@@ -261,8 +247,15 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		c.footer.SetBindings()
 		c.setPreviewContent("")
 	} else if c.filter.Selection() == nil || c.filter.Selection().ID() != filter.Selection().ID() {
+		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
+			return SelectionChangeMsg{SelectionId: filter.Selection().ID()}
+		}))
 		selection := filter.Selection().(ListItem)
 		cmd = c.updateActions(selection)
+
+		if c.ShowPreview {
+			c.viewport.SetContent(selection.Preview)
+		}
 		cmds = append(cmds, cmd)
 	}
 	c.filter = filter
@@ -270,8 +263,12 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-type updateQueryMsg struct {
-	query string
+type SelectionChangeMsg struct {
+	SelectionId string
+}
+
+type UpdateQueryMsg struct {
+	Query string
 }
 
 func (c *List) FilterItems(query string) tea.Cmd {

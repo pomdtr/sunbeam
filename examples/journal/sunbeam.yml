@@ -6,34 +6,35 @@ rootItems:
     title: List Entries
   - command: write-entry
     title: Write Entry
+    with:
+      title:
+        type: textfield
+        title: Title
+      content:
+        type: textarea
+        title: Content
 commands:
   list-entries:
     exec: ./list-entries.py
     onSuccess: push-page
   write-entry:
     exec: ./write-entry.py --title ${{ title }} --content ${{ content }}
-    inputs:
+    params:
       - name: title
-        type: textfield
-        title: Title
+        type: string
       - name: content
-        type: textfield
-        title: Content
+        type: string
   edit-entry:
     exec: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
-    inputs:
+    params:
       - name: uuid
-        type: textfield
-        title: UUID
+        type: string
       - name: title
-        type: textfield
-        title: Title
+        type: string
       - name: content
-        type: textfield
-        title: Content
+        type: string
   delete-entry:
     exec: ./delete-entry.py --uuid ${{ uuid }}
-    inputs:
+    params:
       - name: uuid
-        type: textfield
-        title: UUID
+        type: string

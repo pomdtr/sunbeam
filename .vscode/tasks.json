@@ -2,10 +2,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "open simple browser",
-            "command": "${input:openSimpleBrowser}"
-        },
-        {
             "label": "Run headless dlv",
             "type": "process",
             "command": [
@@ -31,14 +27,6 @@
                     "endsPattern": "^Got a connection, launched process"
                 }
             }
-        }
-    ],
-    "inputs": [
-        {
-            "id": "openSimpleBrowser",
-            "type": "command",
-            "command": "simpleBrowser.api.open",
-            "args": "http://localhost:5173/"
         }
     ]
 }

@@ -5,6 +5,7 @@
         ],
     },
     "markdownlint.ignore": [
-        "website/docs/cmd/*.md"
-    ]
+        "website/src/cmd/*.md"
+    ],
+    "browse-lite.startUrl": "http://localhost:5173/sunbeam/",
 }

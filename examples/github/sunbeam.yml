@@ -6,39 +6,26 @@ requirements:
 rootItems:
   - title: List Repositories
     command: list-repos
-commands:
-  view-readme:
-    exec: |
-      gh api repos/${{repository}}/readme --jq '
-      {
-        preview: (.content | @base64d),
-        metadatas: [
-          {
-            title: "Repository",
-            value: "${{repository}}"
-          }
-        ],
-        actions: [
-          { type: "open-url", title: "Open in Browser", url: .html_url }
-        ]
-      }
-      '
-    onSuccess: push-page
-    inputs:
-      - name: repository
+    with:
+      owner:
         type: textfield
-        title: Repository
+        title: Owner
+commands:
+  commands:
+    exec: ./view-readme.sh
+    onSuccess: push-page
+    params:
+      - name: owner
+        type: string
   list-repos:
     exec: ./list-repos.sh ${{ owner }}
     onSuccess: push-page
-    inputs:
+    params:
       - name: owner
-        type: textfield
-        title: Owner
+        type: string
   list-prs:
     exec: ./list-prs.sh ${{ repository }}
     onSuccess: push-page
-    inputs:
+    params:
       - name: repository
-        type: textfield
-        title: Repository
+        type: string

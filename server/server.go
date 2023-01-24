@@ -6,9 +6,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pomdtr/sunbeam/app"
+	"gopkg.in/yaml.v3"
 )
 
 func NewServer(extensions map[string]app.Extension, addr string) *http.Server {
@@ -16,6 +17,10 @@ func NewServer(extensions map[string]app.Extension, addr string) *http.Server {
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "Sunbeam server is running")
+	})
 
 	r.Get("/extensions", func(w http.ResponseWriter, r *http.Request) {
 		extensionNames := make([]string, 0, len(extensions))
@@ -31,10 +36,11 @@ func NewServer(extensions map[string]app.Extension, addr string) *http.Server {
 
 		extension.PostInstall = ""
 		extension.Requirements = nil
+		extension.Root = ""
 
 		for name, command := range extension.Commands {
 			command.Exec = ""
-			command.Url = fmt.Sprintf("/run/%s/%s", extensionName, name)
+			command.Url = fmt.Sprintf("%s/run/%s/%s", addr, extensionName, name)
 			extension.Commands[name] = command
 		}
 
@@ -44,7 +50,7 @@ func NewServer(extensions map[string]app.Extension, addr string) *http.Server {
 			return
 		}
 
-		json.NewEncoder(w).Encode(extension)
+		yaml.NewEncoder(w).Encode(extension)
 	})
 
 	r.Post("/extensions/{extension}/{command}", func(w http.ResponseWriter, r *http.Request) {

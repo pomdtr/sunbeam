@@ -39,8 +39,8 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 			Args:  cobra.ExactArgs(2),
 			PreRunE: func(cmd *cobra.Command, args []string) error {
 				extensionName := args[0]
-				invalidName := []string{"clipboard", "extension", "open", "query", "run"}
-				for _, name := range invalidName {
+				invalidNames := []string{"extension", "check", "query", "run", "serve"}
+				for _, name := range invalidNames {
 					if extensionName == name {
 						return fmt.Errorf("extension name %s is reserved", extensionName)
 					}
@@ -55,15 +55,16 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 					return fmt.Errorf("extension name must be alphanumeric and contain only dashes and underscores")
 				}
 
-				if api.IsExtensionInstalled(extensionName) {
-					return fmt.Errorf("extension %s is already installed", extensionName)
-				}
-
 				return nil
 			},
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionName := args[0]
 				extensionRoot := args[1]
+				targetDir := path.Join(api.ExtensionRoot, extensionName)
+				if _, err := os.Stat(targetDir); err == nil {
+					return fmt.Errorf("extension %s is already installed at %s", extensionName, targetDir)
+				}
+
 				if _, err := os.Stat(extensionRoot); err == nil {
 					extensionRoot, err = filepath.Abs(extensionRoot)
 					if err != nil {
@@ -110,9 +111,8 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 					return err
 				}
 
-				target := path.Join(api.ExtensionRoot, extensionName)
-				os.MkdirAll(path.Dir(target), 0755)
-				if err := copy.Copy(tmpDir, target); err != nil {
+				os.MkdirAll(path.Dir(targetDir), 0755)
+				if err := copy.Copy(tmpDir, targetDir); err != nil {
 					return err
 				}
 

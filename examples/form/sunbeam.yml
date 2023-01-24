@@ -1,38 +1,48 @@
-title: Example Form
+title: Forms
 version: "1.0"
 rootItems:
-  - command: example-form
-    title: Example form
+  - command: form
+    title: Example Form
+    with:
+      textfield:
+        title: Textfield
+        type: textfield
+      password:
+        title: Password
+        type: password
+      textarea:
+        title: Textarea
+        type: textarea
+      checkbox:
+        title: Checkbox
+        label: Check me
+        type: checkbox
+      dropdown:
+        title: Dropdown
+        type: dropdown
+        choices:
+          - one
+          - two
+          - three
+
 commands:
-  example-form:
+  form:
     exec: |
       cat << EOF
       textfield: ${{ textfield }}
+      password: ${{ password }}
+      textarea: ${{ textarea }}
+      checkbox: ${{ checkbox }}
+      dropdown: ${{ dropdown }}
       EOF
-    inputs:
+    params:
       - name: textfield
-        type: textfield
-        title: Textfield
+        type: string
       - name: password
-        type: password
-        title: Password
-      - name: checkbox
-        type: checkbox
-        title: Checkbox
-        label: "Label"
+        type: string
       - name: textarea
-        type: textarea
-        title: Textarea
+        type: string
+      - name: checkbox
+        type: boolean
       - name: dropdown
-        type: dropdown
-        title: Dropdown
-        data:
-          - option1
-          - option2
-          - option3
-      - name: file
-        type: file
-        title: File
-      - name: directory
-        type: directory
-        title: Directory
+        type: string

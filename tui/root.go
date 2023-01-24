@@ -7,10 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 	"time"
 
-	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -20,6 +18,7 @@ import (
 
 type Config struct {
 	RootItems []app.RootItem `yaml:"rootItems"`
+	Env       map[string][]string
 }
 
 type Page interface {
@@ -50,10 +49,6 @@ func (m *Model) SetRoot(root Page) {
 
 func (m *Model) Init() tea.Cmd {
 	return m.root.Init()
-}
-
-func (m Model) IsFullScreen() bool {
-	return true
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -195,23 +190,6 @@ func (m *Model) Pop() {
 	}
 }
 
-func toShellCommand(rootItem app.RootItem) string {
-	args := []string{"sunbeam", rootItem.Extension, rootItem.Command}
-	for param, value := range rootItem.With {
-		switch value := value.(type) {
-		case string:
-			value = shellescape.Quote(value)
-			args = append(args, fmt.Sprintf("--%s=%s", param, value))
-		case bool:
-			if !value {
-				continue
-			}
-			args = append(args, fmt.Sprintf("--%s", param))
-		}
-	}
-	return strings.Join(args, " ")
-}
-
 func loadHistory(historyPath string) map[string]int64 {
 	history := make(map[string]int64)
 	data, err := os.ReadFile(historyPath)
@@ -221,6 +199,11 @@ func loadHistory(historyPath string) map[string]int64 {
 
 	json.Unmarshal(data, &history)
 	return history
+}
+
+type RootItemWithID struct {
+	app.RootItem
+	id string
 }
 
 func NewRootList(extensionMap map[string]app.Extension, additionalItems ...app.RootItem) Page {
@@ -241,37 +224,42 @@ func NewRootList(extensionMap map[string]app.Extension, additionalItems ...app.R
 		return iValue > jValue
 	}
 
-	rootItems := make([]app.RootItem, 0)
+	rootItems := make([]RootItemWithID, 0)
 	for extensionName, extension := range extensionMap {
-		for _, rootItem := range extension.RootItems {
+		for idx, rootItem := range extension.RootItems {
 			rootItem.Extension = extensionName
-			rootItems = append(rootItems, rootItem)
+			rootItems = append(rootItems, RootItemWithID{
+				RootItem: rootItem,
+				id:       fmt.Sprintf("%s:%d", extensionName, idx),
+			})
 		}
 	}
 
-	for _, item := range additionalItems {
+	for idx, item := range additionalItems {
 		if _, ok := extensionMap[item.Extension]; !ok {
 			continue
 		}
-		rootItems = append(rootItems, item)
+		rootItems = append(rootItems, RootItemWithID{
+			RootItem: item,
+			id:       fmt.Sprintf("config:%d", idx),
+		})
 	}
 
 	listItems := make([]ListItem, 0)
 	for _, rootItem := range rootItems {
 		rootItem := rootItem
-		itemShellCommand := toShellCommand(rootItem)
+		extension := extensionMap[rootItem.Extension]
 		listItems = append(listItems, ListItem{
-			Id:          itemShellCommand,
+			Id:          rootItem.id,
 			Title:       rootItem.Title,
-			Accessories: []string{"local"},
+			Subtitle:    extension.Title,
+			Accessories: []string{rootItem.Extension},
 			Actions: []Action{
 				{
 					Title:    "Run Command",
 					Shortcut: "enter",
 					Cmd: func() tea.Msg {
-						extension := extensionMap[rootItem.Extension]
-
-						history[itemShellCommand] = time.Now().Unix()
+						history[rootItem.id] = time.Now().Unix()
 						if _, err := os.Stat(stateDir); os.IsNotExist(err) {
 							os.MkdirAll(stateDir, 0755)
 						}
@@ -290,15 +278,11 @@ func NewRootList(extensionMap map[string]app.Extension, additionalItems ...app.R
 									Command: extension.Commands[rootItem.Command],
 								},
 								rootItem.With,
+								[]string{},
 							),
 						}
 
 					},
-				},
-				{
-					Title:    "Copy as Shell Command",
-					Shortcut: "ctrl+y",
-					Cmd:      NewCopyTextCmd(itemShellCommand),
 				},
 			},
 		})
@@ -336,7 +320,7 @@ func Draw(model *Model, fullscreen bool) (err error) {
 	lipgloss.SetHasDarkBackground(true)
 
 	var p *tea.Program
-	if model.IsFullScreen() {
+	if fullscreen {
 		p = tea.NewProgram(model, tea.WithAltScreen())
 	} else {
 		p = tea.NewProgram(model)
@@ -347,7 +331,10 @@ func Draw(model *Model, fullscreen bool) (err error) {
 		return err
 	}
 
-	model = m.(*Model)
+	model, ok := m.(*Model)
+	if !ok {
+		return fmt.Errorf("could not convert model to *Model")
+	}
 
 	if exitCmd := model.exitCmd; exitCmd != nil {
 		exitCmd.Stderr = os.Stderr

@@ -33,11 +33,8 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormItem(param app.FormInput) FormItem {
+func NewFormItem(name string, param app.FormItem) FormItem {
 	var input FormInput
-	if param.Placeholder == "" {
-		param.Placeholder = param.Name
-	}
 	switch param.Type {
 	case "textfield", "file", "directory":
 		ti := NewTextInput(param)
@@ -60,7 +57,7 @@ func NewFormItem(param app.FormInput) FormItem {
 	}
 
 	return FormItem{
-		Id:        param.Name,
+		Id:        name,
 		Title:     param.Title,
 		FormInput: input,
 	}
@@ -70,7 +67,7 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.FormInput) TextArea {
+func NewTextArea(formItem app.FormItem) TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
 	if defaultValue, ok := formItem.Default.(string); ok {
@@ -109,7 +106,7 @@ type TextInput struct {
 	isPath      bool
 }
 
-func NewTextInput(formItem app.FormInput) TextInput {
+func NewTextInput(formItem app.FormItem) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	if defaultValue, ok := formItem.Default.(string); ok {
@@ -168,7 +165,7 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(formItem app.FormInput) Checkbox {
+func NewCheckbox(formItem app.FormItem) Checkbox {
 	var defaultValue bool
 	defaultValue, ok := formItem.Default.(bool)
 	if !ok {
@@ -263,7 +260,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem app.FormInput) DropDown {
+func NewDropDown(formItem app.FormItem) DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 
@@ -384,10 +381,8 @@ func (d *DropDown) Blur() {
 }
 
 type Form struct {
-	Name       string
-	items      []FormItem
-	submitFunc func(map[string]any) tea.Cmd
-	width      int
+	items []FormItem
+	width int
 
 	header       Header
 	footer       Footer
@@ -397,7 +392,7 @@ type Form struct {
 	focusIndex int
 }
 
-func NewForm(name string, title string, items []FormItem, submitFunc func(map[string]any) tea.Cmd) *Form {
+func NewForm(title string, items []FormItem) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
@@ -407,12 +402,10 @@ func NewForm(name string, title string, items []FormItem, submitFunc func(map[st
 	)
 
 	return &Form{
-		header:     header,
-		Name:       name,
-		submitFunc: submitFunc,
-		footer:     footer,
-		viewport:   viewport,
-		items:      items,
+		header:   header,
+		footer:   footer,
+		viewport: viewport,
+		items:    items,
 	}
 }
 
@@ -453,7 +446,6 @@ func (c *Form) ScrollViewport() {
 }
 
 func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
-	// Handle character input and blinking
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -496,7 +488,9 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			for _, input := range c.items {
 				values[input.Id] = input.Value()
 			}
-			return &c, c.submitFunc(values)
+			return &c, func() tea.Msg {
+				return SubmitFormMsg{Values: values}
+			}
 		}
 	}
 
@@ -511,7 +505,7 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
-	return &c, tea.Sequence(cmds...)
+	return &c, tea.Batch(cmds...)
 }
 
 func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
@@ -524,6 +518,10 @@ func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 	}
 
 	return tea.Batch(cmds...)
+}
+
+type SubmitFormMsg struct {
+	Values map[string]any
 }
 
 func (c *Form) SetSize(width, height int) {

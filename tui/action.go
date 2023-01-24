@@ -50,7 +50,7 @@ type OpenUrlMsg struct {
 	Url string
 }
 
-func NewReloadPageCmd(with map[string]any) tea.Cmd {
+func NewReloadPageCmd(with map[string]app.CommandInput) tea.Cmd {
 	return func() tea.Msg {
 		return ReloadPageMsg{
 			With: with,
@@ -59,10 +59,10 @@ func NewReloadPageCmd(with map[string]any) tea.Cmd {
 }
 
 type ReloadPageMsg struct {
-	With map[string]any
+	With map[string]app.CommandInput
 }
 
-func NewRunCommandCmd(command string, with map[string]any) tea.Cmd {
+func NewRunCommandCmd(command string, with map[string]app.CommandInput) tea.Cmd {
 	return func() tea.Msg {
 		return RunCommandMsg{
 			Command: command,
@@ -76,8 +76,9 @@ type PushPageMsg struct {
 }
 
 type RunCommandMsg struct {
-	Command string
-	With    map[string]any
+	Command   string
+	With      map[string]app.CommandInput
+	OnSuccess string
 }
 
 func NewAction(scriptAction app.Action) Action {
@@ -95,9 +96,11 @@ func NewAction(scriptAction app.Action) Action {
 		cmd = NewReloadPageCmd(scriptAction.With)
 	case "run-command":
 		cmd = func() tea.Msg {
+
 			return RunCommandMsg{
-				Command: scriptAction.Command,
-				With:    scriptAction.With,
+				Command:   scriptAction.Command,
+				With:      scriptAction.With,
+				OnSuccess: scriptAction.OnSuccess,
 			}
 		}
 	case "open-url":

@@ -12,19 +12,16 @@ commands:
     exec: ./list-vms.sh
   open-shell:
     exec: multipass shell ${{ vm }}
-    inputs:
+    params:
       - name: vm
-        type: textfield
-        title: VM Name
+        type: string
   start-vm:
     exec: multipass start ${{ vm }}
-    inputs:
+    params:
       - name: vm
-        type: textfield
-        title: VM Name
+        type: string
   stop-vm:
     exec: multipass stop ${{ vm }}
-    inputs:
+    params:
       - name: vm
-        type: textfield
-        title: VM Name
+        type: string

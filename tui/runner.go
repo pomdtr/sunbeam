@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type CommandRunner struct {
@@ -24,7 +24,7 @@ type CommandRunner struct {
 	extension NamedExtension
 	command   NamedCommand
 
-	with    map[string]any
+	with    map[string]app.CommandInput
 	environ []string
 
 	header Header
@@ -45,29 +45,76 @@ type NamedCommand struct {
 	Name string
 }
 
-func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[string]any) *CommandRunner {
-	if with == nil {
-		with = map[string]any{}
+func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[string]app.CommandInput, environ []string) *CommandRunner {
+	runner := CommandRunner{
+		header:      NewHeader(),
+		footer:      NewFooter(extension.Title),
+		extension:   extension,
+		currentView: "loading",
+		command:     command,
+		environ:     environ,
 	}
 
-	return &CommandRunner{
-		header:    NewHeader(),
-		footer:    NewFooter(extension.Title),
-		extension: extension,
-		command:   command,
-		with:      with,
+	// Copy the map to avoid modifying the original
+	runner.with = make(map[string]app.CommandInput)
+	for name, input := range with {
+		runner.with[name] = input
 	}
+
+	return &runner
 }
-
 func (c *CommandRunner) Init() tea.Cmd {
 	return c.Run()
 }
 
 type CommandOutput []byte
 
-func (c CommandRunner) ScriptCmd() tea.Msg {
+func (c *CommandRunner) Run() tea.Cmd {
+	formitems := make([]FormItem, 0)
+	for _, param := range c.command.Params {
+		input, ok := c.with[param.Name]
+		if !ok {
+			if param.Default != nil {
+				continue
+			} else {
+				return NewErrorCmd(errors.New("missing required parameter: " + param.Name))
+			}
+		}
+
+		if input.Value != nil {
+			continue
+		}
+
+		formitems = append(formitems, NewFormItem(param.Name, input.FormItem))
+	}
+
+	// Show form if some parameters are set as input
+	if len(formitems) > 0 {
+		c.currentView = "form"
+		c.form = NewForm(c.extension.Title, formitems)
+
+		c.form.SetSize(c.width, c.height)
+		return c.form.Init()
+	}
+
+	return tea.Sequence(c.SetIsloading(true), c.Cmd)
+}
+
+func (c CommandRunner) Cmd() tea.Msg {
+	params := make(map[string]any)
+	for name, input := range c.with {
+		if input.Value == nil {
+			continue
+		}
+		params[name] = input.Value
+	}
+
+	if err := c.command.CheckMissingParams(params); err != nil {
+		return err
+	}
+
 	commandInput := app.CommandParams{
-		With: c.with,
+		With: params,
 		Env:  c.environ,
 	}
 
@@ -123,57 +170,6 @@ func (c CommandRunner) ScriptCmd() tea.Msg {
 	return CommandOutput(output)
 }
 
-func (c *CommandRunner) CheckMissingParameters() []FormItem {
-	formItems := make([]FormItem, 0)
-	for _, input := range c.command.Inputs {
-		if _, ok := c.with[input.Name]; ok {
-			continue
-		}
-		formItem := NewFormItem(input)
-		formItems = append(formItems, formItem)
-	}
-
-	return formItems
-}
-
-func (c CommandRunner) Preferences() map[string]app.FormInput {
-	preferences := make([]app.FormInput, 0, len(c.extension.Preferences)+len(c.command.Preferences))
-	preferences = append(preferences, c.extension.Preferences...)
-	preferences = append(preferences, c.command.Preferences...)
-
-	preferenceMap := make(map[string]app.FormInput)
-	for _, preference := range preferences {
-		preferenceMap[preference.Name] = preference
-	}
-
-	return preferenceMap
-}
-
-func (c *CommandRunner) checkMissingPreferences() ([]string, []FormItem) {
-	envMap := make(map[string]struct{})
-	for _, env := range os.Environ() {
-		pair := strings.SplitN(env, "=", 2)
-		envMap[pair[0]] = struct{}{}
-	}
-
-	environ := make([]string, 0)
-	missing := make([]FormItem, 0)
-	for name, param := range c.Preferences() {
-		// Skip if already set in environment
-		if _, ok := envMap[name]; ok {
-			continue
-		}
-
-		if pref, ok := keyStore.GetPreference(c.extension.Name, c.command.Name, name); ok {
-			environ = append(environ, fmt.Sprintf("%s=%s", name, pref.Value))
-		} else {
-			missing = append(missing, NewFormItem(param))
-		}
-	}
-
-	return environ, missing
-}
-
 func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
 	switch c.currentView {
 	case "list":
@@ -182,74 +178,11 @@ func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
 		return c.detail.SetIsLoading(isLoading)
 	case "form":
 		return c.form.SetIsLoading(isLoading)
-	default:
+	case "loading":
 		return c.header.SetIsLoading(isLoading)
+	default:
+		return nil
 	}
-}
-
-func (c *CommandRunner) Run() tea.Cmd {
-	environ, missing := c.checkMissingPreferences()
-	if len(missing) > 0 {
-		c.currentView = "form"
-		title := fmt.Sprintf("%s · Preferences", c.extension.Title)
-		c.form = NewForm("preferences", title, missing, func(values map[string]any) tea.Cmd {
-			preferences := make([]ScriptPreference, 0)
-			for _, input := range c.extension.Preferences {
-				value, ok := values[input.Name]
-				if !ok {
-					continue
-				}
-				preference := ScriptPreference{
-					Name:      input.Name,
-					Value:     value,
-					Extension: c.extension.Name,
-				}
-				preferences = append(preferences, preference)
-			}
-
-			for _, input := range c.command.Preferences {
-				value, ok := values[input.Name]
-				if !ok {
-					continue
-				}
-				preference := ScriptPreference{
-					Name:      input.Name,
-					Value:     value,
-					Extension: c.extension.Name,
-					Command:   c.command.Name,
-				}
-				preferences = append(preferences, preference)
-			}
-
-			err := keyStore.SetPreference(preferences...)
-			if err != nil {
-				return NewErrorCmd(err)
-			}
-
-			return c.Run()
-		})
-
-		c.form.SetSize(c.width, c.height)
-		return c.form.Init()
-	}
-	c.environ = environ
-
-	formItems := c.CheckMissingParameters()
-	if len(formItems) > 0 {
-		c.currentView = "form"
-
-		title := fmt.Sprintf("%s · Params", c.extension.Title)
-		c.form = NewForm("params", title, formItems, func(values map[string]any) tea.Cmd {
-			for key, value := range values {
-				c.with[key] = value
-			}
-			return c.Run()
-		})
-		c.form.SetSize(c.width, c.height)
-		return c.form.Init()
-	}
-
-	return tea.Sequence(c.SetIsloading(true), c.ScriptCmd)
 }
 
 func (c *CommandRunner) SetSize(width, height int) {
@@ -273,7 +206,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if c.currentView != "" {
+			if c.currentView != "loading" {
 				break
 			}
 			return c, PopCmd
@@ -321,6 +254,10 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.currentView = "list"
 				c.list = NewList(page.Title)
 				c.list.filter.emptyText = page.List.EmptyText
+				if page.List.ShowPreview {
+					c.list.ShowPreview = true
+				}
+
 				c.list.SetItems(listItems)
 				c.list.SetSize(c.width, c.height)
 
@@ -330,6 +267,47 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, NewOpenUrlCmd(string(msg))
 		case "copy-text":
 			return c, NewCopyTextCmd(string(msg))
+		case "reload-page":
+			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
+		}
+
+	case SubmitFormMsg:
+		for key, value := range msg.Values {
+			c.with[key] = app.CommandInput{
+				Value: value,
+			}
+		}
+
+		c.currentView = "loading"
+
+		return c, tea.Sequence(c.SetIsloading(true), c.Cmd)
+
+	case UpdateQueryMsg:
+		if c.currentView != "list" {
+			return c, nil
+		}
+
+		if c.list.Query() != msg.Query {
+			return c, nil
+		}
+
+		return c, NewReloadPageCmd(nil)
+	case SelectionChangeMsg:
+		if c.currentView != "list" {
+			return c, nil
+		}
+
+		if c.list.filter.Selection() == nil {
+			return c, nil
+		}
+
+		if msg.SelectionId != c.list.filter.Selection().ID() {
+			return c, nil
+		}
+
+		return c, func() tea.Msg {
+			// Run the command, set the list viewport
+			return PreviewContentMsg("Loading...")
 		}
 
 	case RunCommandMsg:
@@ -337,18 +315,21 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		if !ok {
 			return c, NewErrorCmd(fmt.Errorf("command not found: %s", msg.Command))
 		}
+		if msg.OnSuccess != "" {
+			command.OnSuccess = msg.OnSuccess
+		}
 
 		return c, NewPushCmd(NewCommandRunner(c.extension, NamedCommand{
 			Name:    msg.Command,
 			Command: command,
-		}, msg.With))
+		}, msg.With, []string{}))
 
 	case ReloadPageMsg:
 		for key, value := range msg.With {
 			c.with[key] = value
 		}
 
-		return c, c.Run()
+		return c, c.Cmd
 	}
 
 	var cmd tea.Cmd
@@ -378,10 +359,12 @@ func (c *CommandRunner) View() string {
 		return c.detail.View()
 	case "form":
 		return c.form.View()
-	default:
+	case "loading":
 		headerView := c.header.View()
 		footerView := c.footer.View()
-		padding := make([]string, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView))
+		padding := make([]string, utils.Max(0, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView)))
 		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), strings.Join(padding, "\n"), c.footer.View())
+	default:
+		return c.header.View()
 	}
 }

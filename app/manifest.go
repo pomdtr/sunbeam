@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
+	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 	"gopkg.in/yaml.v3"
 )
 
@@ -29,20 +30,21 @@ func (api *Api) IsExtensionInstalled(name string) bool {
 }
 
 type RootItem struct {
-	Extension string         `json:"extension,omitempty"`
-	Command   string         `json:"command"`
-	Title     string         `json:"title"`
-	With      map[string]any `json:"with,omitempty"`
+	Extension string `json:",omitempty" yaml:",omitempty"`
+	Command   string
+	Title     string
+	With      map[string]CommandInput `json:",omitempty" yaml:",omitempty"`
 }
 
 type Extension struct {
-	Title       string      `json:"title" yaml:"title"`
-	Description string      `json:"description,omitempty" yaml:"description"`
-	PostInstall string      `json:"postInstall,omitempty" yaml:"postInstall"`
-	Root        string      `json:"root,omitempty" yaml:"root"`
-	Preferences []FormInput `json:"preferences,omitempty"`
+	Version     string `json:"version" yaml:"version"`
+	Title       string `json:"title" yaml:"title"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	PostInstall string `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
+	Root        string `json:"root,omitempty" yaml:"root,omitempty"`
+	// Preferences []Preference `json:"preferences,omitempty"`
 
-	Requirements []ExtensionRequirement `json:"requirements,omitempty"`
+	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
 	Commands     map[string]Command     `json:"commands"`
 }
@@ -65,29 +67,30 @@ var PageSchema *jsonschema.Schema
 func init() {
 	var err error
 
+	compiler := jsonschema.NewCompiler()
+
 	manifest, err := embedFs.Open("schemas/extension.json")
 	if err != nil {
 		panic(err)
 	}
+	if err = compiler.AddResource("https://pomdtr.github.io/sunbeam/schemas/extension.json", manifest); err != nil {
+		panic(err)
+	}
+
 	page, err := embedFs.Open("schemas/page.json")
 	if err != nil {
 		panic(err)
 	}
-
-	compiler := jsonschema.NewCompiler()
-	if err = compiler.AddResource("extension", manifest); err != nil {
-		panic(err)
-	}
-	if err = compiler.AddResource("page", page); err != nil {
+	if err = compiler.AddResource("https://pomdtr.github.io/sunbeam/schemas/page.json", page); err != nil {
 		panic(err)
 	}
 
-	ExtensionSchema, err = compiler.Compile("extension")
+	ExtensionSchema, err = compiler.Compile("https://pomdtr.github.io/sunbeam/schemas/extension.json")
 	if err != nil {
 		panic(err)
 	}
 
-	PageSchema, err = compiler.Compile("page")
+	PageSchema, err = compiler.Compile("https://pomdtr.github.io/sunbeam/schemas/page.json")
 	if err != nil {
 		panic(err)
 	}
@@ -117,7 +120,10 @@ func (api *Api) LoadExtensions(extensionRoot string) error {
 			continue
 		}
 
-		extension.Root = extensionDir
+		if extension.Root == "" {
+			extension.Root = extensionDir
+		}
+
 		api.Extensions[entry.Name()] = extension
 	}
 
@@ -147,6 +153,5 @@ func ParseManifest(manifestPath string) (extension Extension, err error) {
 		return extension, err
 	}
 
-	extension.Root = path.Dir(manifestPath)
 	return extension, nil
 }

@@ -2,13 +2,14 @@
 
 set -eo pipefail
 
+# shellcheck disable=SC2125
 if [ -n "$1" ]; then
-    ENDPOINT=/users/$1/repos
+    ENDPOINT=/users/$1/repos?sort=updated
 else
-    ENDPOINT=/user/repos
+    ENDPOINT=/user/repos?sort=updated
 fi
 
-gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
+gh api "$ENDPOINT" --jq '.[] |
     {
         title: .name,
         subtitle: (.description // ""),
@@ -35,7 +36,5 @@ gh api "$ENDPOINT" --paginate --cache 3h --jq '.[] |
     }
 ' | sunbeam query --slurp '{
     type: "list",
-    list: {
-        items: .
-    }
+    items: .
 }'

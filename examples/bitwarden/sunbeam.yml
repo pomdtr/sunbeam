@@ -3,10 +3,6 @@ title: Bitwarden
 rootItems:
   - title: Search Passwords
     command: list-passwords
-preferences:
-  - name: BW_SESSION
-    type: password
-    title: Session Token
 commands:
   list-passwords:
     exec: ./bitwarden.sh

@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft-07/schema#",
-    "$id": "https://pomdtr.github.io/sunbeam/schemas/page",
+    "$id": "https://pomdtr.github.io/sunbeam/schemas/page.json",
     "type": "object",
     "required": [
         "type"
@@ -30,23 +30,19 @@
                 }
             },
             "then": {
+                "type": "object",
                 "required": [
-                    "list"
+                    "items"
                 ],
+                "additionalProperties": false,
                 "properties": {
-                    "list": {
-                        "type": "object",
-                        "required": [
-                            "items"
-                        ],
-                        "additionalProperties": false,
-                        "properties": {
-                            "items": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/$defs/listitem"
-                                }
-                            }
+                    "type": {
+                        "const": "list"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/$defs/listitem"
                         }
                     }
                 }
@@ -64,23 +60,19 @@
                 }
             },
             "then": {
-                "required": [
-                    "detail"
-                ],
+                "type": "object",
+                "additionalProperties": false,
                 "properties": {
-                    "details": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                            "preview": {
-                                "$ref": "#/$defs/preview"
-                            },
-                            "actions": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/$defs/action"
-                                }
-                            }
+                    "preview": {
+                        "$ref": "#/$defs/preview"
+                    },
+                    "type": {
+                        "const": "detail"
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/$defs/action"
                         }
                     }
                 }
@@ -179,6 +171,9 @@
                                 }
                             },
                             "command": {
+                                "type": "string"
+                            },
+                            "onSuccess": {
                                 "type": "string"
                             }
                         }

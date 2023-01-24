@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://pomdtr.github.io/sunbeam/schemas/extension",
+    "$id": "https://pomdtr.github.io/sunbeam/schemas/extension.json",
     "type": "object",
     "required": [
         "title",
@@ -9,12 +9,6 @@
     ],
     "additionalProperties": false,
     "properties": {
-        "preferences": {
-            "type": "array",
-            "items": {
-                "$ref": "#/$defs/input"
-            }
-        },
         "postInstall": {
             "type": "string"
         },
@@ -77,6 +71,9 @@
                             "^[a-zA-Z][a-zA-Z0-9-_]+$": {
                                 "anyOf": [
                                     {
+                                        "$comment": "./input.json"
+                                    },
+                                    {
                                         "type": "string"
                                     },
                                     {
@@ -100,152 +97,12 @@
         }
     },
     "$defs": {
-        "input": {
-            "type": "object",
-            "required": [
-                "type"
-            ],
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "textfield",
-                        "password",
-                        "textarea",
-                        "dropdown",
-                        "checkbox",
-                        "file",
-                        "directory"
-                    ]
-                }
-            },
-            "allOf": [
-                {
-                    "if": {
-                        "required": [
-                            "type"
-                        ],
-                        "properties": {
-                            "type": {
-                                "enum": [
-                                    "textfield",
-                                    "password",
-                                    "textarea",
-                                    "file",
-                                    "directory"
-                                ]
-                            }
-                        }
-                    },
-                    "then": {
-                        "additionalProperties": false,
-                        "properties": {
-                            "type": {
-                                "type": "string"
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "title": {
-                                "type": "string"
-                            },
-                            "placeholder": {
-                                "type": "string"
-                            },
-                            "default": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "required": [
-                            "type"
-                        ],
-                        "properties": {
-                            "type": {
-                                "const": "dropdown"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "data"
-                        ],
-                        "properties": {
-                            "type": {
-                                "type": "string"
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "title": {
-                                "type": "string"
-                            },
-                            "data": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
-                            "default": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "required": [
-                            "type"
-                        ],
-                        "properties": {
-                            "type": {
-                                "const": "checkbox"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "label"
-                        ],
-                        "properties": {
-                            "type": {
-                                "type": "string"
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "title": {
-                                "type": "string"
-                            },
-                            "label": {
-                                "type": "string"
-                            },
-                            "default": {
-                                "type": "boolean"
-                            }
-                        }
-                    }
-                }
-            ]
-        },
         "command": {
             "type": "object",
-            "required": [
-                "exec"
-            ],
             "additionalProperties": false,
             "properties": {
                 "exec": {
                     "type": "string"
-                },
-                "preferences": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/input"
-                    }
                 },
                 "onSuccess": {
                     "type": "string",
@@ -255,10 +112,37 @@
                         "copy-text"
                     ]
                 },
-                "inputs": {
+                "url": {
+                    "type": "string"
+                },
+                "params": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/input"
+                        "type": "object",
+                        "required": [
+                            "name",
+                            "type"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "enum": [
+                                    "string",
+                                    "boolean",
+                                    "file",
+                                    "directory"
+                                ]
+                            },
+                            "enum": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 }
             }

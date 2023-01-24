@@ -3,6 +3,6 @@
 set -e
 
 for filename in examples/*/sunbeam.yml; do
-  echo "Checking $filename..."
-  sunbeam check "$filename"
+  echo "Checking $filename"
+  sunbeam check manifest "$filename"
 done
