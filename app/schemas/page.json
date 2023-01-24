@@ -39,6 +39,9 @@
                     "type": {
                         "const": "list"
                     },
+                    "showPreview": {
+                        "type": "boolean"
+                    },
                     "items": {
                         "type": "array",
                         "items": {
@@ -65,12 +68,6 @@
                 "properties": {
                     "preview": {
                         "$ref": "#/$defs/preview"
-                    },
-                    "metadatas": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
                     },
                     "type": {
                         "const": "detail"

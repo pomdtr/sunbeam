@@ -12,18 +12,26 @@ rootItems:
 commands:
   list:
     onSuccess: push-page
-    params:
-      - name: platform
-        type: string
     exec: |
       tldr --list --platform ${{ platform }} | sunbeam query --arg platform=${{ platform }} -R '{
         title: .,
+        preview: {
+          command: "view-page",
+          with: {page: ., platform: $platform}
+        },
         actions: [
           {type: "run-command", "command": "view-page", title: "View Page", with: {page: ., platform: $platform}}
         ]
-      }' | sunbeam query --slurp '{ type: "list", items: . }'
+      }' | sunbeam query --slurp '{ type: "list", showPreview: true, items: . }'
+    params:
+      - name: platform
+        type: string
+        enum:
+          - linux
+          - osx
+          - windows
   view-page:
-    exec: tldr --platform ${{ platform }} ${{ page }}
+    exec: tldr --color always --platform ${{ platform }} ${{ page }}
     params:
       - name: platform
         type: string

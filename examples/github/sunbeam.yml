@@ -3,6 +3,8 @@ title: GitHub
 requirements:
   - homePage: https://cli.github.com
     which: gh
+  - which: glow
+    homePage: https://github.com/charmbracelet/glow
 rootItems:
   - title: List Repositories
     command: list-repos
@@ -12,10 +14,15 @@ rootItems:
         title: Owner
 commands:
   view-readme:
-    exec: ./view-readme.sh ${{ repository }}
     onSuccess: push-page
+    exec: ./view-readme.sh ${{ repository }}
     params:
       - name: repository
+        type: string
+  repo-info:
+    exec: glow --style auto ${{ url }}
+    params:
+      - name: url
         type: string
   list-repos:
     exec: ./list-repos.sh ${{ owner }}

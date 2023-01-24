@@ -12,7 +12,12 @@ fi
 gh api "$ENDPOINT" --jq '.[] |
     {
         title: .name,
-        subtitle: (.description // ""),
+        preview: {
+            command: "repo-info",
+            with: {
+                url: .html_url
+            }
+        },
         accessories: [
             "\(.stargazers_count) *"
         ],
@@ -24,17 +29,11 @@ gh api "$ENDPOINT" --jq '.[] |
                 title: "List Pull Requests",
                 shortcut: "ctrl+p",
                 with: {repository: .full_name}
-            },
-            {
-                type: "run-command",
-                command: "view-readme",
-                title: "View Readme",
-                shortcut: "ctrl+r",
-                with: {repository: .full_name}
             }
         ]
     }
 ' | sunbeam query --slurp '{
     type: "list",
+    showPreview: true,
     items: .
 }'

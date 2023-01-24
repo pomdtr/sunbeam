@@ -33,6 +33,7 @@ if len(journal["entries"]) == 0:
 json.dump(
     {
         "type": "list",
+        "showPreview": True,
         "items": [
             {
                 "title": entry["title"],
@@ -57,7 +58,7 @@ json.dump(
                         "with": {
                             "title": {"type": "textfield", "title": "Title"},
                             "content": {"type": "textarea", "title": "Content"},
-                        }
+                        },
                     },
                     {
                         "type": "run-command",

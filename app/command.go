@@ -161,15 +161,8 @@ type Page struct {
 }
 
 type Detail struct {
-	Preview   Preview    `json:"preview"`
-	Metadatas []Metadata `json:"metadatas"`
-
+	Preview Preview  `json:"preview"`
 	Actions []Action `json:"actions"`
-}
-
-type Metadata struct {
-	Title string `json:"title"`
-	Value string `json:"value"`
 }
 
 type List struct {
@@ -208,7 +201,7 @@ type ListItem struct {
 	Id          string   `json:"id"`
 	Title       string   `json:"title"`
 	Subtitle    string   `json:"subtitle"`
-	Preview     string   `json:"preview"`
+	Preview     Preview  `json:"preview"`
 	Accessories []string `json:"accessories"`
 	Actions     []Action `json:"actions"`
 }

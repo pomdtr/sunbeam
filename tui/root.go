@@ -99,7 +99,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case error:
 		detail := NewDetail("Error")
 		detail.SetSize(m.width, m.pageHeight())
-		detail.SetContent(msg.Error())
+		detail.viewport.SetContent(msg.Error())
 
 		if len(m.pages) == 0 {
 			m.root = detail

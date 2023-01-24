@@ -237,18 +237,78 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			case "detail":
 				c.currentView = "detail"
 				c.detail = NewDetail(page.Title)
-				c.detail.SetDetail(page.Detail)
+
+				actions := make([]Action, len(page.Detail.Actions))
+				for i, scriptAction := range page.Detail.Actions {
+					actions[i] = NewAction(scriptAction)
+				}
+				c.detail.SetActions(actions...)
+
+				if page.Detail.Preview.Text != "" {
+					c.detail.viewport.SetContent(page.Detail.Preview.Text)
+				}
+
+				if page.Detail.Preview.Command != "" {
+					c.detail.PreviewCommand = func() string {
+						command, ok := c.extension.Commands[page.Detail.Preview.Command]
+						if !ok {
+							return ""
+						}
+
+						cmd, err := command.Cmd(app.CommandParams{
+							With: page.Detail.Preview.With,
+							Env:  c.environ,
+						}, c.extension.Root)
+						if err != nil {
+							return err.Error()
+						}
+
+						output, err := cmd.Output()
+						if err != nil {
+							return err.Error()
+						}
+
+						return string(output)
+					}
+				}
 				c.detail.SetSize(c.width, c.height)
 
 				return c, c.detail.Init()
 			case "list":
 				listItems := make([]ListItem, len(page.List.Items))
 				for i, scriptItem := range page.List.Items {
+					scriptItem := scriptItem
+
 					if scriptItem.Id == "" {
 						scriptItem.Id = strconv.Itoa(i)
 					}
 
-					listItems[i] = ParseScriptItem(scriptItem)
+					listItem := ParseScriptItem(scriptItem)
+					if scriptItem.Preview.Command != "" {
+						listItem.PreviewCmd = func() string {
+							command, ok := c.extension.Commands[scriptItem.Preview.Command]
+							if !ok {
+								return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
+							}
+
+							cmd, err := command.Cmd(app.CommandParams{
+								With: scriptItem.Preview.With,
+								Env:  c.environ,
+							}, c.extension.Root)
+							if err != nil {
+								return err.Error()
+							}
+
+							output, err := cmd.Output()
+							if err != nil {
+								return err.Error()
+							}
+
+							return string(output)
+						}
+					}
+
+					listItems[i] = listItem
 				}
 
 				c.currentView = "list"
@@ -281,34 +341,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		c.currentView = "loading"
 
 		return c, tea.Sequence(c.SetIsloading(true), c.Cmd)
-
-	case UpdateQueryMsg:
-		if c.currentView != "list" {
-			return c, nil
-		}
-
-		if c.list.Query() != msg.Query {
-			return c, nil
-		}
-
-		return c, NewReloadPageCmd(nil)
-	case SelectionChangeMsg:
-		if c.currentView != "list" {
-			return c, nil
-		}
-
-		if c.list.filter.Selection() == nil {
-			return c, nil
-		}
-
-		if msg.SelectionId != c.list.filter.Selection().ID() {
-			return c, nil
-		}
-
-		return c, func() tea.Msg {
-			// Run the command, set the list viewport
-			return PreviewContentMsg("Loading...")
-		}
 
 	case RunCommandMsg:
 		command, ok := c.extension.Commands[msg.Command]

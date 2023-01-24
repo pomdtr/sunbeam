@@ -20,6 +20,7 @@ type ListItem struct {
 	Title       string
 	Subtitle    string
 	Preview     string
+	PreviewCmd  func() string
 	Accessories []string
 	Actions     []Action
 }
@@ -37,7 +38,7 @@ func ParseScriptItem(scriptItem app.ListItem) ListItem {
 		Id:          scriptItem.Id,
 		Title:       scriptItem.Title,
 		Subtitle:    scriptItem.Subtitle,
-		Preview:     scriptItem.Preview,
+		Preview:     scriptItem.Preview.Text,
 		Accessories: scriptItem.Accessories,
 		Actions:     actions,
 	}
@@ -99,12 +100,11 @@ type List struct {
 	footer  Footer
 	actions ActionList
 
-	Dynamic     bool
+	IsGenerator bool
 	ShowPreview bool
 
-	previewContent string
-	filter         Filter
-	viewport       viewport.Model
+	filter   Filter
+	viewport viewport.Model
 }
 
 func NewList(title string) *List {
@@ -113,6 +113,7 @@ func NewList(title string) *List {
 	header := NewHeader()
 
 	viewport := viewport.New(0, 0)
+	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
 	filter := NewFilter()
 	filter.DrawLines = true
 	footer := NewFooter(title)
@@ -128,7 +129,10 @@ func NewList(title string) *List {
 
 func (c *List) Init() tea.Cmd {
 	if len(c.filter.items) > 0 {
-		return tea.Batch(c.FilterItems(c.Query()), c.header.Focus())
+		c.updateSelection()
+		return tea.Batch(c.header.Focus(), func() tea.Msg {
+			return SelectionChangeMsg{c.filter.items[0].ID()}
+		})
 	}
 	return c.header.Focus()
 }
@@ -143,16 +147,9 @@ func (c *List) SetSize(width, height int) {
 		c.filter.SetSize(listWidth, availableHeight)
 		c.viewport.Width = width - listWidth
 		c.viewport.Height = availableHeight
-		c.setPreviewContent(c.previewContent)
 	} else {
 		c.filter.SetSize(width, availableHeight)
 	}
-}
-
-func (l *List) setPreviewContent(content string) {
-	l.previewContent = content
-	content = lipgloss.NewStyle().Padding(0, 1).Width(l.viewport.Width - 2).Render(content)
-	l.viewport.SetContent(content)
 }
 
 func (c *List) SetItems(items []ListItem) tea.Cmd {
@@ -162,7 +159,8 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 	}
 
 	c.filter.SetItems(filterItems)
-	return c.FilterItems(c.Query())
+	c.filter.FilterItems(c.Query())
+	return nil
 }
 
 func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
@@ -171,9 +169,21 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 
 type PreviewContentMsg string
 
-func (l *List) updateActions(item ListItem) tea.Cmd {
+func (l *List) updateSelection() {
+	if l.filter.Selection() == nil {
+		l.actions.SetActions()
+		l.footer.SetBindings()
+		l.viewport.SetContent("")
+		return
+	}
+
+	item := l.filter.Selection().(ListItem)
+
 	l.actions.SetTitle(item.Title)
 	l.actions.SetActions(item.Actions...)
+	if item.Preview != "" {
+		l.viewport.SetContent(item.Preview)
+	}
 
 	if len(item.Actions) == 0 {
 		l.footer.SetBindings()
@@ -183,12 +193,6 @@ func (l *List) updateActions(item ListItem) tea.Cmd {
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}
-
-	var cmd tea.Cmd
-	if l.ShowPreview {
-		l.setPreviewContent(item.Preview)
-	}
-	return cmd
 }
 
 func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -200,8 +204,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			} else if c.header.input.Value() != "" {
 				c.header.input.SetValue("")
-				cmd := c.FilterItems("")
-				return c, cmd
+				c.filter.FilterItems("")
+				c.updateSelection()
+				return c, nil
 			} else {
 				return c, PopCmd
 			}
@@ -212,9 +217,40 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.viewport.LineUp(1)
 			return c, nil
 		}
+	case UpdateQueryMsg:
+		if !c.IsGenerator {
+			return c, nil
+		}
+		if c.Query() != msg.Query {
+			return c, nil
+		}
+
+		return c, NewReloadPageCmd(nil)
+	case SelectionChangeMsg:
+		if !c.ShowPreview {
+			return c, nil
+		}
+
+		if c.filter.Selection() == nil {
+			return c, nil
+		}
+
+		if msg.SelectionId != c.filter.Selection().ID() {
+			return c, nil
+		}
+
+		item := c.filter.Selection().(ListItem)
+		if item.PreviewCmd == nil {
+			return c, nil
+		}
+
+		return c, tea.Sequence(c.header.SetIsLoading(true), func() tea.Msg {
+			return PreviewContentMsg(item.PreviewCmd())
+		})
+
 	case PreviewContentMsg:
 		c.header.SetIsLoading(false)
-		c.setPreviewContent(string(msg))
+		c.viewport.SetContent(string(msg))
 		return c, nil
 	}
 
@@ -230,35 +266,27 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	header, cmd := c.header.Update(msg)
 	cmds = append(cmds, cmd)
-	if header.Value() != c.header.Value() {
-		cmd = c.FilterItems(header.Value())
-		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
-			return UpdateQueryMsg{Query: header.Value()}
-		}))
-		cmds = append(cmds, cmd)
-	}
-	c.header = header
 
 	filter, cmd := c.filter.Update(msg)
 	cmds = append(cmds, cmd)
-	if filter.Selection() == nil {
-		c.actions.SetTitle("")
-		c.actions.SetActions()
-		c.footer.SetBindings()
-		c.setPreviewContent("")
-	} else if c.filter.Selection() == nil || c.filter.Selection().ID() != filter.Selection().ID() {
+
+	if header.Value() != c.header.Value() {
+		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
+			return UpdateQueryMsg{Query: header.Value()}
+		}))
+		filter.FilterItems(header.Value())
+	}
+
+	cmds = append(cmds, cmd)
+	if c.filter.Selection() != nil && filter.Selection() != nil && filter.Selection().ID() != c.filter.Selection().ID() {
 		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
 			return SelectionChangeMsg{SelectionId: filter.Selection().ID()}
 		}))
-		selection := filter.Selection().(ListItem)
-		cmd = c.updateActions(selection)
-
-		if c.ShowPreview {
-			c.viewport.SetContent(selection.Preview)
-		}
-		cmds = append(cmds, cmd)
 	}
+
+	c.header = header
 	c.filter = filter
+	c.updateSelection()
 
 	return c, tea.Batch(cmds...)
 }
@@ -269,14 +297,6 @@ type SelectionChangeMsg struct {
 
 type UpdateQueryMsg struct {
 	Query string
-}
-
-func (c *List) FilterItems(query string) tea.Cmd {
-	c.filter.FilterItems(query)
-	if c.filter.Selection() != nil {
-		return c.updateActions(c.filter.Selection().(ListItem))
-	}
-	return nil
 }
 
 func (c List) View() string {

@@ -5,6 +5,12 @@ multipass list --format json | sunbeam query '.list[] |
 {
     title: .name,
     subtitle: .release,
+    preview: {
+      command: "vm-info",
+      with: {
+        vm: .name
+      }
+    },
     accessories: [
       .state
     ],
@@ -26,5 +32,6 @@ multipass list --format json | sunbeam query '.list[] |
 }
 ' | sunbeam query --slurp '{
     type: "list",
+    showPreview: true,
     items: .
 }'

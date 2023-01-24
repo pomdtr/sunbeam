@@ -1,32 +1,24 @@
 package tui
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/wordwrap"
-	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Detail struct {
-	header       Header
-	Style        lipgloss.Style
-	content      string
-	metadatas    []app.Metadata
-	mainViewport viewport.Model
-	sideViewport viewport.Model
-	actionList   ActionList
-	footer       Footer
+	header         Header
+	Style          lipgloss.Style
+	viewport       viewport.Model
+	actionList     ActionList
+	PreviewCommand func() string
+	footer         Footer
 }
 
 func NewDetail(title string) *Detail {
-	mainViewport := viewport.New(0, 0)
-	sideViewport := viewport.New(0, 0)
+	viewport := viewport.New(0, 0)
+	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
 
 	footer := NewFooter(title)
 
@@ -36,11 +28,10 @@ func NewDetail(title string) *Detail {
 	header := NewHeader()
 
 	d := Detail{
-		mainViewport: mainViewport,
-		sideViewport: sideViewport,
-		header:       header,
-		actionList:   actionList,
-		footer:       footer,
+		viewport:   viewport,
+		header:     header,
+		actionList: actionList,
+		footer:     footer,
 	}
 
 	return &d
@@ -60,49 +51,17 @@ func (c *Detail) SetActions(actions ...Action) {
 }
 
 func (d *Detail) Init() tea.Cmd {
-	return nil
-}
-
-func (d *Detail) updateContent() {
-	mainContent := wordwrap.String(d.content, utils.Max(0, d.mainViewport.Width-2))
-	mainContent = lipgloss.NewStyle().Padding(0, 1).Width(d.mainViewport.Width).Render(mainContent)
-	d.mainViewport.SetContent(mainContent)
-
-	items := make([]string, 0)
-	maxWidth := utils.Max(d.sideViewport.Width-2, 0)
-	for _, metadata := range d.metadatas {
-		items = append(items, fmt.Sprintf(
-			"%s\n%s",
-			styles.Faint.MaxWidth(maxWidth).Render(metadata.Title),
-			lipgloss.NewStyle().MaxWidth(maxWidth).Render(metadata.Value),
-		))
+	if d.PreviewCommand != nil {
+		return tea.Sequence(d.SetIsLoading(true), func() tea.Msg {
+			content := d.PreviewCommand()
+			return PreviewContentMsg(content)
+		})
 	}
 
-	sideContent := strings.Join(items, "\n\n")
-	sideContent = lipgloss.NewStyle().Padding(0, 1).Width(maxWidth).Render(sideContent)
-	d.sideViewport.SetContent(sideContent)
+	return nil
 }
 
 type DetailMsg string
-
-func (d *Detail) SetContent(content string) {
-	d.content = content
-	d.updateContent()
-}
-
-func (d *Detail) SetDetail(detail app.Detail) tea.Cmd {
-	actions := make([]Action, len(detail.Actions))
-	for i, action := range detail.Actions {
-		actions[i] = NewAction(action)
-	}
-
-	d.SetActions(actions...)
-	d.content = detail.Preview.Text
-	d.metadatas = detail.Metadatas
-	d.updateContent()
-
-	return nil
-}
 
 func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
 	return d.header.SetIsLoading(isLoading)
@@ -122,18 +81,16 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 			return &c, PopCmd
-		case tea.KeyShiftDown:
-			c.sideViewport.LineDown(1)
-			return &c, nil
-		case tea.KeyShiftUp:
-			c.sideViewport.LineUp(1)
-			return &c, nil
+
 		}
+	case PreviewContentMsg:
+		c.SetIsLoading(false)
+		c.viewport.SetContent(string(msg))
 	}
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
-	c.mainViewport, cmd = c.mainViewport.Update(msg)
+	c.viewport, cmd = c.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
 	c.actionList, cmd = c.actionList.Update(msg)
@@ -145,30 +102,15 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return &c, tea.Batch(cmds...)
 }
 
-func (c Detail) SideBarVisible() bool {
-	return len(c.metadatas) > 0
-}
-
 func (c *Detail) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
 	c.actionList.SetSize(width, height)
 
 	viewportHeight := height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
-	if c.SideBarVisible() {
-		metadataWidth := width / 3
 
-		c.mainViewport.Width = width - metadataWidth - 1
-		c.mainViewport.Height = viewportHeight
-
-		c.sideViewport.Width = metadataWidth
-		c.sideViewport.Height = viewportHeight
-	} else {
-		c.mainViewport.Width = width
-		c.mainViewport.Height = viewportHeight
-	}
-
-	c.updateContent()
+	c.viewport.Width = width
+	c.viewport.Height = viewportHeight
 }
 
 func (c *Detail) View() string {
@@ -176,20 +118,5 @@ func (c *Detail) View() string {
 		return c.actionList.View()
 	}
 
-	if c.SideBarVisible() {
-		var separatorChars = make([]string, c.mainViewport.Height)
-		for i := 0; i < c.mainViewport.Height; i++ {
-			separatorChars[i] = "│"
-		}
-		separator := strings.Join(separatorChars, "\n")
-
-		view := lipgloss.JoinHorizontal(lipgloss.Top,
-			c.mainViewport.View(),
-			separator,
-			c.sideViewport.View(),
-		)
-
-		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), view, c.footer.View())
-	}
-	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.mainViewport.View(), c.footer.View())
+	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
 }

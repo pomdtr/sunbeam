@@ -8,13 +8,12 @@ REPO=$1
 gh api "repos/$REPO/readme" | sunbeam query --arg REPO="$REPO" '
 {
   type: "detail",
-  preview: (.content | @base64d),
-  metadatas: [
-    {
-      title: "Repository",
-      value: $REPO
+  preview: {
+    command: "repo-info",
+    with: {
+      url: "https://github.com/\($REPO)"
     }
-  ],
+  },
   actions: [
     { type: "open-url", title: "Open in Browser", url: .html_url }
   ]

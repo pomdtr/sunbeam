@@ -7,6 +7,11 @@ rootItems:
   - command: list-vms
     title: List VMs
 commands:
+  vm-info:
+    exec: multipass info ${{ vm }}
+    params:
+      - name: vm
+        type: string
   list-vms:
     onSuccess: push-page
     exec: ./list-vms.sh
