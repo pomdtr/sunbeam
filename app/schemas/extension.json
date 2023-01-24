@@ -9,6 +9,9 @@
     ],
     "additionalProperties": false,
     "properties": {
+        "rootUrl": {
+            "type": "string"
+        },
         "postInstall": {
             "type": "string"
         },
@@ -111,9 +114,6 @@
                         "open-url",
                         "copy-text"
                     ]
-                },
-                "url": {
-                    "type": "string"
                 },
                 "params": {
                     "type": "array",

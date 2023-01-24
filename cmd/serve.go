@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/server"
@@ -18,6 +19,7 @@ func NewCmdServe(api app.Api) *cobra.Command {
 
 			server := server.NewServer(api.Extensions, fmt.Sprintf("%s:%d", host, port))
 
+			log.Printf("Listening on %s:%d", host, port)
 			err := server.ListenAndServe()
 
 			return err

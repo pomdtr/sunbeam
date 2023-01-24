@@ -211,13 +211,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	c.actions, cmd = c.actions.Update(msg)
-	cmds = append(cmds, cmd)
-
-	if c.actions.Focused() {
-		return c, tea.Batch(cmds...)
-	}
-
 	header, cmd := c.header.Update(msg)
 	cmds = append(cmds, cmd)
 
@@ -282,6 +275,13 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, nil
 	}
 
+	c.actions, cmd = c.actions.Update(msg)
+	cmds = append(cmds, cmd)
+
+	if c.actions.Focused() {
+		return c, tea.Batch(cmds...)
+	}
+
 	if header.Value() != c.header.Value() {
 		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
 			return UpdateQueryMsg{Query: header.Value()}
@@ -289,7 +289,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		filter.FilterItems(header.Value())
 	}
 
-	cmds = append(cmds, cmd)
 	if c.filter.Selection() != nil && filter.Selection() != nil && filter.Selection().ID() != c.filter.Selection().ID() {
 		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
 			return SelectionChangeMsg{SelectionId: filter.Selection().ID()}

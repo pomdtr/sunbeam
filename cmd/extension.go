@@ -352,7 +352,7 @@ func PostInstallHook(extension app.Extension) error {
 		return nil
 	}
 	cmd := exec.Command("sh", "-c", extension.PostInstall)
-	cmd.Dir = extension.Root
+	cmd.Dir = extension.Root.Path
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

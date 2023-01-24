@@ -3,6 +3,7 @@ package app
 import (
 	"embed"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -37,11 +38,12 @@ type RootItem struct {
 }
 
 type Extension struct {
-	Version     string `json:"version" yaml:"version"`
-	Title       string `json:"title" yaml:"title"`
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	PostInstall string `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
-	Root        string `json:"root,omitempty" yaml:"root,omitempty"`
+	Version     string   `json:"version" yaml:"version"`
+	Title       string   `json:"title" yaml:"title"`
+	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
+	PostInstall string   `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
+	RootUrl     string   `json:"rootUrl,omitempty" yaml:"rootUrl,omitempty"`
+	Root        *url.URL `json:"-" yaml:"-"`
 	// Preferences []Preference `json:"preferences,omitempty"`
 
 	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
@@ -120,8 +122,17 @@ func (api *Api) LoadExtensions(extensionRoot string) error {
 			continue
 		}
 
-		if extension.Root == "" {
-			extension.Root = extensionDir
+		if extension.RootUrl != "" {
+			root, err := url.Parse(extension.RootUrl)
+			if err != nil {
+				continue
+			}
+			extension.Root = root
+		} else {
+			extension.Root = &url.URL{
+				Scheme: "file",
+				Path:   extensionDir,
+			}
 		}
 
 		api.Extensions[entry.Name()] = extension

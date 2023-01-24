@@ -533,6 +533,8 @@ func (c *Form) SetSize(width, height int) {
 		input.SetWidth(width / 2)
 	}
 	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+
+	c.ScrollViewport()
 }
 
 func (c *Form) View() string {

@@ -36,11 +36,10 @@ func NewServer(extensions map[string]app.Extension, addr string) *http.Server {
 
 		extension.PostInstall = ""
 		extension.Requirements = nil
-		extension.Root = ""
+		extension.Root = nil
 
 		for name, command := range extension.Commands {
 			command.Exec = ""
-			command.Url = fmt.Sprintf("%s/run/%s/%s", addr, extensionName, name)
 			extension.Commands[name] = command
 		}
 
@@ -78,7 +77,7 @@ func NewServer(extensions map[string]app.Extension, addr string) *http.Server {
 			return
 		}
 
-		cmd, err := command.Cmd(input, extension.Root)
+		cmd, err := command.Cmd(input, extension.Root.Path)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Error running command: %s", err)))
@@ -92,7 +91,12 @@ func NewServer(extensions map[string]app.Extension, addr string) *http.Server {
 			return
 		}
 
-		w.Write(output)
+		_, err = w.Write(output)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error writing response: %s", err)))
+			return
+		}
 	})
 
 	return &http.Server{

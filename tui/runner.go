@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 
@@ -118,13 +120,18 @@ func (c CommandRunner) Cmd() tea.Msg {
 		Env:  c.environ,
 	}
 
-	if c.command.Url != "" {
+	if c.extension.Root.Scheme != "file" {
 		payload, err := json.Marshal(commandInput)
 		if err != nil {
 			return err
 		}
 
-		res, err := http.Post(c.command.Url, "application/json", bytes.NewReader(payload))
+		commandUrl := url.URL{
+			Scheme: c.extension.Root.Scheme,
+			Host:   c.extension.Root.Host,
+			Path:   path.Join(c.extension.Root.Path, c.command.Name),
+		}
+		res, err := http.Post(commandUrl.String(), "application/json", bytes.NewReader(payload))
 		if err != nil {
 			return err
 		}
@@ -149,7 +156,7 @@ func (c CommandRunner) Cmd() tea.Msg {
 		return CommandOutput(body)
 	}
 
-	cmd, err := c.command.Cmd(commandInput, c.extension.Root)
+	cmd, err := c.command.Cmd(commandInput, c.extension.Root.Path)
 	if err != nil {
 		return err
 	}
@@ -258,7 +265,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						cmd, err := command.Cmd(app.CommandParams{
 							With: page.Detail.Preview.With,
 							Env:  c.environ,
-						}, c.extension.Root)
+						}, c.extension.Root.Path)
 						if err != nil {
 							return err.Error()
 						}
@@ -279,6 +286,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return c, c.detail.Init()
 			case "list":
+				c.currentView = "list"
 				listItems := make([]ListItem, len(page.List.Items))
 				for i, scriptItem := range page.List.Items {
 					scriptItem := scriptItem
@@ -298,7 +306,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 							cmd, err := command.Cmd(app.CommandParams{
 								With: scriptItem.Preview.With,
 								Env:  c.environ,
-							}, c.extension.Root)
+							}, c.extension.Root.Path)
 							if err != nil {
 								return err.Error()
 							}
@@ -319,7 +327,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					listItems[i] = listItem
 				}
 
-				c.currentView = "list"
 				c.list = NewList(page.Title)
 				c.list.filter.emptyText = page.List.EmptyText
 				if page.List.ShowPreview {
@@ -405,6 +412,6 @@ func (c *CommandRunner) View() string {
 		padding := make([]string, utils.Max(0, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView)))
 		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), strings.Join(padding, "\n"), c.footer.View())
 	default:
-		return c.header.View()
+		return ""
 	}
 }
