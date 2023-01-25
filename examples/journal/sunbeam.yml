@@ -15,17 +15,17 @@ rootItems:
         title: Content
 commands:
   list-entries:
-    exec: ./list-entries.py
+    exec: python3 journal.py list
     onSuccess: push-page
-  write-entry:
-    exec: ./write-entry.py --title ${{ title }} --content ${{ content }}
+  new-entry:
+    exec: python3 journal.py new --title ${{ title }} --content ${{ content }}
     params:
       - name: title
         type: string
       - name: content
         type: string
   edit-entry:
-    exec: ./edit-entry.py --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
+    exec: python3 journal.py edit --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     params:
       - name: uuid
         type: string
@@ -33,8 +33,11 @@ commands:
         type: string
       - name: content
         type: string
+  edit-journal:
+    exec: vi journal.json
+    interactive: true
   delete-entry:
-    exec: ./delete-entry.py --uuid ${{ uuid }}
+    exec: python3 journal.py delete --uuid ${{ uuid }}
     params:
       - name: uuid
         type: string
