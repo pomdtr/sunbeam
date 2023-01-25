@@ -44,7 +44,7 @@ type Extension struct {
 	PostInstall string   `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
 	RootUrl     string   `json:"rootUrl,omitempty" yaml:"rootUrl,omitempty"`
 	Root        *url.URL `json:"-" yaml:"-"`
-	// Preferences []Preference `json:"preferences,omitempty"`
+	Env         []string `json:"env,omitempty" yaml:"env,omitempty"`
 
 	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`

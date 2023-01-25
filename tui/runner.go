@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"path"
 	"strconv"
@@ -26,8 +27,7 @@ type CommandRunner struct {
 	extension NamedExtension
 	command   NamedCommand
 
-	with    map[string]app.CommandInput
-	environ []string
+	with map[string]app.CommandInput
 
 	header Header
 	footer Footer
@@ -47,14 +47,27 @@ type NamedCommand struct {
 	Name string
 }
 
-func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[string]app.CommandInput, environ []string) *CommandRunner {
+func (c CommandRunner) CheckEnv() error {
+	requiredEnv := make([]string, 0, len(c.command.Env)+len(c.extension.Env))
+	requiredEnv = append(requiredEnv, c.command.Env...)
+	requiredEnv = append(requiredEnv, c.extension.Env...)
+
+	for _, env := range requiredEnv {
+		if _, ok := os.LookupEnv(env); !ok {
+			return fmt.Errorf("missing env variable: %s", env)
+		}
+	}
+
+	return nil
+}
+
+func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[string]app.CommandInput) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter(extension.Title),
 		extension:   extension,
 		currentView: "loading",
 		command:     command,
-		environ:     environ,
 	}
 
 	// Copy the map to avoid modifying the original
@@ -107,13 +120,16 @@ func (c *CommandRunner) Run() tea.Cmd {
 		params[name] = input.Value
 	}
 
+	if err := c.CheckEnv(); err != nil {
+		return NewErrorCmd(err)
+	}
+
 	if err := c.command.CheckMissingParams(params); err != nil {
 		return NewErrorCmd(err)
 	}
 
 	commandInput := app.CommandParams{
 		With: params,
-		Env:  c.environ,
 	}
 
 	if c.extension.Root.Scheme != "file" {
@@ -270,7 +286,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 						params := app.CommandParams{
 							With: page.Detail.Preview.With,
-							Env:  c.environ,
 						}
 
 						cmd, err := command.Cmd(params, c.extension.Root.Path)
@@ -313,7 +328,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 							params := app.CommandParams{
 								With: scriptItem.Preview.With,
-								Env:  c.environ,
 							}
 							if c.extension.Root.Scheme != "file" {
 								payload, err := json.Marshal(params)
@@ -411,7 +425,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, NewPushCmd(NewCommandRunner(c.extension, NamedCommand{
 			Name:    msg.Command,
 			Command: command,
-		}, msg.With, []string{}))
+		}, msg.With))
 
 	case ReloadPageMsg:
 		for key, value := range msg.With {

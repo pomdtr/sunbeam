@@ -136,7 +136,6 @@ func NewExtensionCommand(name string, extension app.Extension, config *tui.Confi
 						Command: command,
 					},
 					with,
-					config.Env[commandName],
 				)
 
 				model := tui.NewModel(runner)

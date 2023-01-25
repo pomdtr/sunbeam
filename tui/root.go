@@ -17,7 +17,6 @@ import (
 
 type Config struct {
 	RootItems []app.RootItem `yaml:"rootItems"`
-	Env       map[string][]string
 }
 
 type Page interface {
@@ -266,7 +265,6 @@ func NewRootList(extensionMap map[string]app.Extension, additionalItems ...app.R
 									Command: extension.Commands[rootItem.Command],
 								},
 								rootItem.With,
-								[]string{},
 							),
 						}
 

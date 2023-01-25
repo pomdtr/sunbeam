@@ -42,6 +42,9 @@
                     "title": {
                         "type": "string"
                     },
+                    "isGenerator": {
+                        "type": "boolean"
+                    },
                     "showPreview": {
                         "type": "boolean"
                     },

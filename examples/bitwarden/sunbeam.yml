@@ -1,5 +1,7 @@
 version: "1.0"
 title: Bitwarden
+env:
+  - BW_SESSION
 rootItems:
   - title: Search Passwords
     command: list-passwords

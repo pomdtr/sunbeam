@@ -20,6 +20,7 @@ type Command struct {
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Params      []Param `json:"params,omitempty" yaml:"params,omitempty"`
 	OnSuccess   string  `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
+	Env         []string
 }
 
 type CommandInput struct {
