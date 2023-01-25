@@ -9,12 +9,14 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
 	"gopkg.in/yaml.v3"
 )
 
 type Command struct {
 	Exec        string  `json:"exec,omitempty" yaml:"exec,omitempty"`
+	Interactive bool    `json:"interactive,omitempty" yaml:"interactive,omitempty"`
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Params      []Param `json:"params,omitempty" yaml:"params,omitempty"`
 	OnSuccess   string  `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
@@ -130,6 +132,10 @@ func (c Command) Cmd(params CommandParams, dir string) (*exec.Cmd, error) {
 		value := value
 		sanitizedKey = strings.Replace(sanitizedKey, "-", "_", -1)
 		funcMap[sanitizedKey] = func() any {
+			if value, ok := value.(string); ok {
+				return shellescape.Quote(value)
+			}
+
 			return value
 		}
 	}
