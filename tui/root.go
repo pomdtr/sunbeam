@@ -214,22 +214,22 @@ func NewRootList(extensionMap map[string]app.Extension, additionalItems ...app.R
 
 	rootItems := make([]RootItemWithID, 0)
 	for extensionName, extension := range extensionMap {
-		for idx, rootItem := range extension.RootItems {
+		for _, rootItem := range extension.RootItems {
 			rootItem.Extension = extensionName
 			rootItems = append(rootItems, RootItemWithID{
 				RootItem: rootItem,
-				id:       fmt.Sprintf("%s:%d", extensionName, idx),
+				id:       fmt.Sprintf("%s:%s", extensionName, rootItem.Title),
 			})
 		}
 	}
 
-	for idx, item := range additionalItems {
+	for _, item := range additionalItems {
 		if _, ok := extensionMap[item.Extension]; !ok {
 			continue
 		}
 		rootItems = append(rootItems, RootItemWithID{
 			RootItem: item,
-			id:       fmt.Sprintf("config:%d", idx),
+			id:       fmt.Sprintf("config:%s", item.Title),
 		})
 	}
 
