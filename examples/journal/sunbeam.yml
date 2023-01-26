@@ -33,9 +33,6 @@ commands:
         type: string
       - name: content
         type: string
-  edit-journal:
-    exec: vi journal.json
-    interactive: true
   delete-entry:
     exec: python3 journal.py delete --uuid ${{ uuid }}
     params:

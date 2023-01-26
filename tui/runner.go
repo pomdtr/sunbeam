@@ -16,6 +16,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/joho/godotenv"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 )
@@ -47,20 +48,6 @@ type NamedCommand struct {
 	Name string
 }
 
-func (c CommandRunner) CheckEnv() error {
-	requiredEnv := make([]string, 0, len(c.command.Env)+len(c.extension.Env))
-	requiredEnv = append(requiredEnv, c.command.Env...)
-	requiredEnv = append(requiredEnv, c.extension.Env...)
-
-	for _, env := range requiredEnv {
-		if _, ok := os.LookupEnv(env); !ok {
-			return fmt.Errorf("missing env variable: %s", env)
-		}
-	}
-
-	return nil
-}
-
 func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[string]app.CommandInput) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
@@ -79,7 +66,7 @@ func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[s
 	return &runner
 }
 func (c *CommandRunner) Init() tea.Cmd {
-	return tea.Sequence(c.SetIsloading(true), c.Run())
+	return tea.Batch(c.SetIsloading(true), c.Run())
 }
 
 type CommandOutput []byte
@@ -106,8 +93,36 @@ func (c *CommandRunner) Run() tea.Cmd {
 	// Show form if some parameters are set as input
 	if len(formitems) > 0 {
 		c.currentView = "form"
-		c.form = NewForm(c.extension.Title, formitems)
+		c.form = NewForm("params", c.extension.Title, formitems)
 
+		c.form.SetSize(c.width, c.height)
+		return c.form.Init()
+	}
+
+	dotenv := path.Join(c.extension.Root.Path, ".env")
+	environ, err := godotenv.Read(dotenv)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return NewErrorCmd(err)
+	}
+
+	formitems = make([]FormItem, 0)
+	for _, env := range c.extension.Preferences {
+		// Skip if the env is already set in the .env file
+		if _, ok := environ[env.Env]; ok {
+			continue
+		}
+
+		// Skip if the env is already set in the environment
+		if _, ok := os.LookupEnv(env.Env); ok {
+			continue
+		}
+
+		formitems = append(formitems, NewFormItem(env.Env, env.Input))
+	}
+
+	if len(formitems) > 0 {
+		c.currentView = "form"
+		c.form = NewForm("preferences", c.extension.Title, formitems)
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
@@ -120,16 +135,13 @@ func (c *CommandRunner) Run() tea.Cmd {
 		params[name] = input.Value
 	}
 
-	if err := c.CheckEnv(); err != nil {
-		return NewErrorCmd(err)
-	}
-
 	if err := c.command.CheckMissingParams(params); err != nil {
 		return NewErrorCmd(err)
 	}
 
-	commandInput := app.CommandParams{
+	commandInput := app.CommandPayload{
 		With: params,
+		Env:  environ,
 	}
 
 	if c.extension.Root.Scheme != "file" {
@@ -168,7 +180,7 @@ func (c *CommandRunner) Run() tea.Cmd {
 	}
 }
 
-func (c CommandRunner) RemoteRun(commandParams app.CommandParams) tea.Cmd {
+func (c CommandRunner) RemoteRun(commandParams app.CommandPayload) tea.Cmd {
 	return func() tea.Msg {
 		payload, err := json.Marshal(commandParams)
 		if err != nil {
@@ -230,6 +242,13 @@ func (c *CommandRunner) SetSize(width, height int) {
 	}
 }
 
+func (c *CommandRunner) Reset() {
+	c.currentView = "loading"
+	c.list = nil
+	c.detail = nil
+	c.form = nil
+}
+
 func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -273,89 +292,17 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 				c.detail.SetActions(actions...)
 
-				if page.Detail.Preview.Text != "" {
+				if page.Detail.Preview != nil {
 					c.detail.viewport.SetContent(page.Detail.Preview.Text)
-				}
-
-				if page.Detail.Preview.Command != "" {
-					c.detail.PreviewCommand = func() string {
-						command, ok := c.extension.Commands[page.Detail.Preview.Command]
-						if !ok {
-							return ""
-						}
-
-						params := app.CommandParams{
-							With: page.Detail.Preview.With,
-						}
-
-						cmd, err := command.Cmd(params, c.extension.Root.Path)
-						if err != nil {
-							return err.Error()
-						}
-
-						output, err := cmd.Output()
-						if err != nil {
-							var exitErr *exec.ExitError
-							if ok := errors.As(err, &exitErr); ok {
-								return fmt.Sprintf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
-							}
-							return err.Error()
-						}
-
-						return string(output)
-					}
-				}
-				c.detail.SetSize(c.width, c.height)
-
-				return c, c.detail.Init()
-			case "list":
-				c.currentView = "list"
-				listItems := make([]ListItem, len(page.List.Items))
-				for i, scriptItem := range page.List.Items {
-					scriptItem := scriptItem
-
-					if scriptItem.Id == "" {
-						scriptItem.Id = strconv.Itoa(i)
-					}
-
-					listItem := ParseScriptItem(scriptItem)
-					if scriptItem.Preview.Command != "" {
-						listItem.PreviewCmd = func() string {
-							command, ok := c.extension.Commands[scriptItem.Preview.Command]
+					if page.Detail.Preview.Command != "" {
+						c.detail.PreviewCommand = func() string {
+							command, ok := c.extension.Commands[page.Detail.Preview.Command]
 							if !ok {
-								return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
+								return ""
 							}
 
-							params := app.CommandParams{
-								With: scriptItem.Preview.With,
-							}
-							if c.extension.Root.Scheme != "file" {
-								payload, err := json.Marshal(params)
-								if err != nil {
-									return fmt.Sprintf("failed to marshal command params: %v", err)
-								}
-
-								commandUrl := url.URL{
-									Scheme: c.extension.Root.Scheme,
-									Host:   c.extension.Root.Host,
-									Path:   path.Join(c.extension.Root.Path, scriptItem.Preview.Command),
-								}
-								res, err := http.Post(commandUrl.String(), "application/json", bytes.NewReader(payload))
-								if err != nil {
-									return fmt.Sprintf("failed to execute command: %v", err)
-								}
-								defer res.Body.Close()
-
-								if res.StatusCode != http.StatusOK {
-									return fmt.Sprintf("failed to execute command: %s", res.Status)
-								}
-
-								body, err := io.ReadAll(res.Body)
-								if err != nil {
-									return fmt.Sprintf("failed to read command output: %v", err)
-								}
-
-								return string(body)
+							params := app.CommandPayload{
+								With: page.Detail.Preview.With,
 							}
 
 							cmd, err := command.Cmd(params, c.extension.Root.Path)
@@ -375,12 +322,85 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 							return string(output)
 						}
 					}
+				}
 
+				c.detail.SetSize(c.width, c.height)
+
+				return c, c.detail.Init()
+			case "list":
+				c.currentView = "list"
+				listItems := make([]ListItem, len(page.List.Items))
+				for i, scriptItem := range page.List.Items {
+					scriptItem := scriptItem
+
+					if scriptItem.Id == "" {
+						scriptItem.Id = strconv.Itoa(i)
+					}
+
+					listItem := ParseScriptItem(scriptItem)
+					if scriptItem.Preview != nil {
+						listItem.Preview = scriptItem.Preview.Text
+						if scriptItem.Preview.Command != "" {
+							listItem.PreviewCmd = func() string {
+								command, ok := c.extension.Commands[scriptItem.Preview.Command]
+								if !ok {
+									return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
+								}
+
+								params := app.CommandPayload{
+									With: scriptItem.Preview.With,
+								}
+								if c.extension.Root.Scheme != "file" {
+									payload, err := json.Marshal(params)
+									if err != nil {
+										return fmt.Sprintf("failed to marshal command params: %v", err)
+									}
+
+									commandUrl := url.URL{
+										Scheme: c.extension.Root.Scheme,
+										Host:   c.extension.Root.Host,
+										Path:   path.Join(c.extension.Root.Path, scriptItem.Preview.Command),
+									}
+									res, err := http.Post(commandUrl.String(), "application/json", bytes.NewReader(payload))
+									if err != nil {
+										return fmt.Sprintf("failed to execute command: %v", err)
+									}
+									defer res.Body.Close()
+
+									if res.StatusCode != http.StatusOK {
+										return fmt.Sprintf("failed to execute command: %s", res.Status)
+									}
+
+									body, err := io.ReadAll(res.Body)
+									if err != nil {
+										return fmt.Sprintf("failed to read command output: %v", err)
+									}
+
+									return string(body)
+								}
+
+								cmd, err := command.Cmd(params, c.extension.Root.Path)
+								if err != nil {
+									return err.Error()
+								}
+
+								output, err := cmd.Output()
+								if err != nil {
+									var exitErr *exec.ExitError
+									if ok := errors.As(err, &exitErr); ok {
+										return fmt.Sprintf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
+									}
+									return err.Error()
+								}
+
+								return string(output)
+							}
+						}
+					}
 					listItems[i] = listItem
 				}
 
 				c.list = NewList(page.Title)
-				c.list.filter.emptyText = page.List.EmptyText
 				if page.List.ShowPreview {
 					c.list.ShowPreview = true
 				}
@@ -401,16 +421,49 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 	case SubmitFormMsg:
-		for key, value := range msg.Values {
-			c.with[key] = app.CommandInput{
-				Value: value,
+		switch msg.Id {
+		case "params":
+			for key, value := range msg.Values {
+				c.with[key] = app.CommandInput{
+					Value: value,
+				}
 			}
+
+			c.currentView = "loading"
+
+			return c, tea.Sequence(c.SetIsloading(true), c.Run())
+		case "preferences":
+			dotenv := path.Join(c.extension.Root.Path, ".env")
+			environ := make(map[string]string)
+			if _, err := os.Stat(dotenv); err == nil {
+				environ, err = godotenv.Read(dotenv)
+				if err != nil {
+					return c, NewErrorCmd(err)
+				}
+			}
+
+			for key, value := range msg.Values {
+				switch value := value.(type) {
+				case string:
+					environ[key] = value
+				case bool:
+					if value {
+						environ[key] = "1"
+					} else {
+						environ[key] = "0"
+					}
+				default:
+					return c, NewErrorCmd(fmt.Errorf("unsupported preference type: %T", value))
+				}
+			}
+
+			err := godotenv.Write(environ, dotenv)
+			if err != nil {
+				return c, NewErrorCmd(err)
+			}
+
+			return c, tea.Sequence(c.SetIsloading(true), c.Run())
 		}
-
-		c.currentView = "loading"
-
-		return c, tea.Sequence(c.SetIsloading(true), c.Run())
-
 	case RunCommandMsg:
 		command, ok := c.extension.Commands[msg.Command]
 		if !ok {
@@ -420,7 +473,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			command.OnSuccess = msg.OnSuccess
 		}
 
-		c.Clear()
+		c.Reset()
 
 		return c, NewPushCmd(NewCommandRunner(c.extension, NamedCommand{
 			Name:    msg.Command,

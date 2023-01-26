@@ -20,7 +20,6 @@ type Command struct {
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Params      []Param `json:"params,omitempty" yaml:"params,omitempty"`
 	OnSuccess   string  `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
-	Env         []string
 }
 
 type CommandInput struct {
@@ -79,11 +78,6 @@ func (i CommandInput) MarshalYAML() (interface{}, error) {
 	return i.FormItem, nil
 }
 
-type Preference struct {
-	Env   string   `json:"env"`
-	Input FormItem `json:"input"`
-}
-
 type Param struct {
 	Name        string   `json:"name"`
 	Type        string   `json:"type"`
@@ -103,9 +97,9 @@ type FormItem struct {
 	Label   string   `json:"label,omitempty" yaml:"label,omitempty"`
 }
 
-type CommandParams struct {
+type CommandPayload struct {
 	Input string
-	Env   []string
+	Env   map[string]string
 	With  map[string]any
 }
 
@@ -119,25 +113,47 @@ func (c Command) CheckMissingParams(with map[string]any) error {
 	return nil
 }
 
-func (c Command) Cmd(params CommandParams, dir string) (*exec.Cmd, error) {
+func (c Command) Cmd(payload CommandPayload, dir string) (*exec.Cmd, error) {
 	var err error
 
-	err = c.CheckMissingParams(params.With)
-	if err != nil {
-		return nil, err
-	}
-
 	funcMap := template.FuncMap{}
+	for _, spec := range c.Params {
+		input, ok := payload.With[spec.Name]
+		if !ok {
+			return nil, fmt.Errorf("param %s was not provided", spec.Name)
+		}
 
-	for sanitizedKey, value := range params.With {
-		value := value
-		sanitizedKey = strings.Replace(sanitizedKey, "-", "_", -1)
-		funcMap[sanitizedKey] = func() any {
-			if value, ok := value.(string); ok {
-				return shellescape.Quote(value)
+		sanitizedKey := strings.Replace(spec.Name, "-", "_", -1)
+		switch spec.Type {
+		case "string":
+			value, ok := input.(string)
+			if !ok {
+				return nil, fmt.Errorf("%s type was not bool", spec.Name)
 			}
 
-			return value
+			funcMap[sanitizedKey] = func() string { return shellescape.Quote(value) }
+		case "file", "directory":
+			value, ok := input.(string)
+			if !ok {
+				return nil, fmt.Errorf("%s type was not bool", spec.Name)
+			}
+
+			if strings.HasPrefix(value, "~") {
+				homedir, err := os.UserHomeDir()
+				if err != nil {
+					return nil, err
+				}
+				value = strings.Replace(value, "~", homedir, 1)
+			}
+
+			funcMap[sanitizedKey] = func() string { return shellescape.Quote(value) }
+		case "boolean":
+			value, ok := input.(bool)
+			if !ok {
+				return nil, fmt.Errorf("%s type was not bool", spec.Name)
+			}
+
+			funcMap[sanitizedKey] = func() bool { return value }
 		}
 	}
 
@@ -148,12 +164,13 @@ func (c Command) Cmd(params CommandParams, dir string) (*exec.Cmd, error) {
 
 	cmd := exec.Command("sh", "-c", rendered)
 	cmd.Dir = dir
-	cmd.Env = append(cmd.Env, os.Environ()...)
-	cmd.Env = append(cmd.Env, params.Env...)
 
-	if params.Input != "" {
-		cmd.Stdin = strings.NewReader(params.Input)
+	cmd.Env = append(cmd.Env, os.Environ()...)
+	for key, env := range payload.Env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, env))
 	}
+
+	cmd.Stdin = strings.NewReader(payload.Input)
 
 	return cmd, nil
 }
@@ -167,12 +184,11 @@ type Page struct {
 }
 
 type Detail struct {
-	Preview Preview  `json:"preview"`
-	Actions []Action `json:"actions"`
+	Preview *Preview `json:"preview,omitempty"`
+	Actions []Action `json:"actions,omitempty"`
 }
 
 type List struct {
-	EmptyText   string     `json:"emptyText"`
 	ShowPreview bool       `json:"showPreview,omitempty" yaml:"showPreview"`
 	Items       []ListItem `json:"items"`
 }
@@ -207,22 +223,22 @@ type ListItem struct {
 	Id          string   `json:"id"`
 	Title       string   `json:"title"`
 	Subtitle    string   `json:"subtitle"`
-	Preview     Preview  `json:"preview"`
-	Accessories []string `json:"accessories"`
+	Preview     *Preview `json:"preview,omitempty"`
+	Accessories []string `json:"accessories,omitempty"`
 	Actions     []Action `json:"actions"`
 }
 
 type Action struct {
-	Title    string
-	Type     string
-	Shortcut string
+	Title    string `json:"title"`
+	Type     string `json:"type"`
+	Shortcut string `json:"shortcut,omitempty"`
 
-	Text string
+	Text string `json:"text,omitempty"`
 
-	Url  string
-	Path string
+	Url  string `json:"url,omitempty"`
+	Path string `json:"path,omitempty"`
 
-	Command   string
-	With      map[string]CommandInput
-	OnSuccess string
+	Command   string                  `json:"command,omitempty"`
+	With      map[string]CommandInput `json:"with,omitempty"`
+	OnSuccess string                  `json:"onSuccess,omitempty"`
 }

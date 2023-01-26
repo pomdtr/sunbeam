@@ -4,6 +4,7 @@ import argparse
 import uuid
 import json
 from datetime import datetime
+import subprocess
 
 
 class JournalEntry(TypedDict):
@@ -20,15 +21,16 @@ dirname = pathlib.Path(__file__).parent.absolute()
 
 
 def load_journal() -> Journal:
-    with open(dirname / "journal.json") as f:
-        journal: Journal = json.load(f)
-
-    return journal
+    res = subprocess.run(
+        ["sunbeam", "kv", "get", "journal"], text=True, capture_output=True
+    )
+    if res.returncode != 0:
+        return {"entries": {}}
+    return json.loads(res.stdout)
 
 
 def save_journal(journal: Journal) -> None:
-    with open(dirname / "journal.json", "w") as f:
-        json.dump(journal, f, indent=4)
+    subprocess.run(["sunbeam", "kv", "set", "journal", json.dumps(journal)], check=True)
 
 
 def list_entries(journal: Journal):
@@ -49,12 +51,6 @@ def list_entries(journal: Journal):
                         "type": "copy-text",
                         "text": entry["content"],
                         "title": "Copy Message",
-                    },
-                    {
-                        "type": "run-command",
-                        "title": "Edit Journal",
-                        "command": "edit-journal",
-                        "onSuccess": "reload-page",
                     },
                     {
                         "type": "run-command",
@@ -97,12 +93,16 @@ def list_entries(journal: Journal):
                     },
                 ],
             }
-            for uuid, entry in journal["entries"].items()
+            for uuid, entry in sorted(
+                journal["entries"].items(),
+                key=lambda x: x[1]["timestamp"],
+                reverse=True,
+            )
         ],
     }
 
 
-if __name__ == "__main__":
+def build_parser():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="command")
     commands.add_parser("list")
@@ -119,6 +119,11 @@ if __name__ == "__main__":
     new_parser.add_argument("--title", required=True)
     new_parser.add_argument("--content", required=True)
 
+    return parser
+
+
+if __name__ == "__main__":
+    parser = build_parser()
     args = parser.parse_args()
 
     journal = load_journal()

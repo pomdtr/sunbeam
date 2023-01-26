@@ -75,3 +75,6 @@ dist/
 # Python Cache
 *.pyc
 go.work
+
+db.json
+.env

@@ -73,6 +73,7 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdCheck())
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(&config))
+	rootCmd.AddCommand(NewCmdKv())
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands

@@ -9,6 +9,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/itchyny/gojq v0.12.11
+	github.com/joho/godotenv v1.4.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/otiai10/copy v1.9.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
@@ -16,6 +17,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/withfig/autocomplete-tools/integrations/cobra v1.2.1
 	gopkg.in/yaml.v3 v3.0.1
+	tailscale.com v1.36.0
 )
 
 require (
@@ -23,7 +25,6 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
-	github.com/kr/pretty v0.3.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

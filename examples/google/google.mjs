@@ -18,8 +18,7 @@ const items = res[1].map((suggestion) => ({
   title: suggestion,
   actions: [
     {
-      type: "open",
-      shortcut: "enter",
+      type: "open-url",
       url: `https://www.google.com/search?q=${encodeURIComponent(suggestion)}`,
     },
     {
@@ -31,9 +30,10 @@ const items = res[1].map((suggestion) => ({
   ],
 }));
 
-console.log({
-  type: "list",
-  list: {
+console.log(
+  JSON.stringify({
+    type: "list",
+    isGenerator: true,
     items,
-  },
-});
+  })
+);

@@ -1,7 +1,8 @@
 version: "1.0"
 title: Bitwarden
-env:
-  - BW_SESSION
+requirements:
+  - homePage: https://bitwarden.com/help/cli/
+    which: bw
 rootItems:
   - title: Search Passwords
     command: list-passwords
@@ -9,3 +10,12 @@ commands:
   list-passwords:
     exec: ./bitwarden.sh
     onSuccess: push-page
+  lock-vault:
+    exec: |
+      bw lock
+      sunbeam kv delete session
+  unlock-vault:
+    exec: ./unlock.sh ${{ password }}
+    params:
+      - name: password
+        type: string

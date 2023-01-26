@@ -38,7 +38,6 @@ func ParseScriptItem(scriptItem app.ListItem) ListItem {
 		Id:          scriptItem.Id,
 		Title:       scriptItem.Title,
 		Subtitle:    scriptItem.Subtitle,
-		Preview:     scriptItem.Preview.Text,
 		Accessories: scriptItem.Accessories,
 		Actions:     actions,
 	}

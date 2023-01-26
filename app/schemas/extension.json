@@ -15,10 +15,18 @@
         "postInstall": {
             "type": "string"
         },
-        "env": {
+        "preferences": {
             "type": "array",
             "items": {
-                "type": "string"
+                "type": "object",
+                "properties": {
+                    "env": {
+                        "type": "string"
+                    },
+                    "input": {
+                        "type": "object"
+                    }
+                }
             }
         },
         "requirements": {
@@ -66,12 +74,6 @@
                     "command": {
                         "type": "string",
                         "pattern": "^[a-zA-Z][a-zA-Z0-9-_]+$"
-                    },
-                    "env": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
                     },
                     "title": {
                         "type": "string"

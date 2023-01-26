@@ -3,6 +3,13 @@ title: File Browser
 requirements:
   - which: python3
     homePage: https://www.python.org
+preferences:
+  - env: SHOW_HIDDEN_FILES
+    input:
+      type: checkbox
+      title: visibility
+      label: Show Hidden Files
+      default: false
 rootItems:
   - title: Browse Root Directory
     command: browse-files

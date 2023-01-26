@@ -23,9 +23,8 @@ type Filter struct {
 	Background    lipgloss.TerminalColor
 	Less          func(i, j FilterItem) bool
 
-	emptyText string
-	items     []FilterItem
-	filtered  []FilterItem
+	items    []FilterItem
+	filtered []FilterItem
 
 	DrawLines bool
 	cursor    int
@@ -105,19 +104,12 @@ func (m Filter) View() string {
 			availableHeight--
 		}
 	}
-	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)
 
-	if filteredView == "" {
-		var emptyMessage string
-		if len(m.items) == 0 {
-			emptyMessage = m.emptyText
-		} else {
-			emptyMessage = "No matches"
-		}
-
-		return styles.Faint.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(emptyMessage)
+	if len(rows) == 0 {
+		return styles.Faint.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render("No matches")
 	}
 
+	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)
 	filteredView = lipgloss.NewStyle().Padding(0, 1).Render(filteredView)
 	return lipgloss.Place(m.Width, m.Height, lipgloss.Top, lipgloss.Left, filteredView)
 }

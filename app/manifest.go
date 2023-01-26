@@ -38,17 +38,22 @@ type RootItem struct {
 }
 
 type Extension struct {
-	Version     string   `json:"version" yaml:"version"`
-	Title       string   `json:"title" yaml:"title"`
-	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
-	PostInstall string   `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
-	RootUrl     string   `json:"rootUrl,omitempty" yaml:"rootUrl,omitempty"`
-	Root        *url.URL `json:"-" yaml:"-"`
-	Env         []string `json:"env,omitempty" yaml:"env,omitempty"`
+	Version     string       `json:"version" yaml:"version"`
+	Title       string       `json:"title" yaml:"title"`
+	Description string       `json:"description,omitempty" yaml:"description,omitempty"`
+	PostInstall string       `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
+	RootUrl     string       `json:"rootUrl,omitempty" yaml:"rootUrl,omitempty"`
+	Root        *url.URL     `json:"-" yaml:"-"`
+	Preferences []Preference `json:"preferences,omitempty" yaml:"preferences,omitempty"`
 
 	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
 	Commands     map[string]Command     `json:"commands"`
+}
+
+type Preference struct {
+	Env   string   `json:"env" yaml:"env"`
+	Input FormItem `json:"input" yaml:"input"`
 }
 
 type ExtensionRequirement struct {

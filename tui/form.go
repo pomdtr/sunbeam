@@ -381,6 +381,7 @@ func (d *DropDown) Blur() {
 }
 
 type Form struct {
+	id    string
 	items []FormItem
 	width int
 
@@ -392,7 +393,7 @@ type Form struct {
 	focusIndex int
 }
 
-func NewForm(title string, items []FormItem) *Form {
+func NewForm(id string, title string, items []FormItem) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
@@ -402,6 +403,7 @@ func NewForm(title string, items []FormItem) *Form {
 	)
 
 	return &Form{
+		id:       id,
 		header:   header,
 		footer:   footer,
 		viewport: viewport,
@@ -415,7 +417,7 @@ func (c *Form) SetIsLoading(isLoading bool) tea.Cmd {
 
 func (c Form) Init() tea.Cmd {
 	if len(c.items) == 0 {
-		return nil
+		return NewErrorCmd(fmt.Errorf("form %s has no items", c.id))
 	}
 	return c.items[0].Focus()
 }
@@ -489,7 +491,7 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 				values[input.Id] = input.Value()
 			}
 			return &c, func() tea.Msg {
-				return SubmitFormMsg{Values: values}
+				return SubmitFormMsg{Id: c.id, Values: values}
 			}
 		}
 	}
@@ -521,6 +523,7 @@ func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 }
 
 type SubmitFormMsg struct {
+	Id     string
 	Values map[string]any
 }
 
