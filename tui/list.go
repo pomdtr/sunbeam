@@ -100,12 +100,16 @@ type List struct {
 	footer  Footer
 	actions ActionList
 
-	IsGenerator bool
-	ShowPreview bool
+	GenerateItems bool
+	ShowPreview   bool
 
 	filter         Filter
 	viewport       viewport.Model
 	previewContent string
+}
+
+func (c *List) SetTitle(title string) {
+	c.footer.title = title
 }
 
 func NewList(title string) *List {
@@ -243,7 +247,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, nil
 		}
 	case UpdateQueryMsg:
-		if !c.IsGenerator {
+		if !c.GenerateItems {
 			return c, nil
 		}
 		if c.Query() != msg.Query {

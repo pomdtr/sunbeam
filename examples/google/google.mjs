@@ -4,7 +4,9 @@ const query = await stdin();
 if (!query) {
   console.log(
     JSON.stringify({
-      title: "Please enter a query",
+      type: "list",
+      generateItems: true,
+      items: [],
     })
   );
   process.exit();
@@ -33,7 +35,7 @@ const items = res[1].map((suggestion) => ({
 console.log(
   JSON.stringify({
     type: "list",
-    isGenerator: true,
+    generateItems: true,
     items,
   })
 );

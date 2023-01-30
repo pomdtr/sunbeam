@@ -125,9 +125,14 @@ func (c *CommandRunner) Run() tea.Cmd {
 	}
 
 	return func() tea.Msg {
+		var input string
+		if c.list != nil {
+			input = c.list.Query()
+		}
 		output, err := c.command.Run(app.CommandPayload{
-			With: params,
-			Env:  environ,
+			Stdin: input,
+			With:  params,
+			Env:   environ,
 		}, c.extension.Root)
 		if err != nil {
 			return NewErrorCmd(err)
@@ -136,37 +141,6 @@ func (c *CommandRunner) Run() tea.Cmd {
 		return CommandOutput(output)
 	}
 }
-
-// func (c CommandRunner) RemoteRun(commandParams app.CommandPayload) tea.Cmd {
-// 	return func() tea.Msg {
-// 		payload, err := json.Marshal(commandParams)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		commandUrl := url.URL{
-// 			Scheme: c.extension.Root.Scheme,
-// 			Host:   c.extension.Root.Host,
-// 			Path:   path.Join(c.extension.Root.Path, c.command.Name),
-// 		}
-// 		res, err := http.Post(commandUrl.String(), "application/json", bytes.NewReader(payload))
-// 		if err != nil {
-// 			return err
-// 		}
-// 		defer res.Body.Close()
-
-// 		if res.StatusCode != http.StatusOK {
-// 			return fmt.Errorf("command failed with status code %d", res.StatusCode)
-// 		}
-
-// 		body, err := io.ReadAll(res.Body)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		return CommandOutput(body)
-// 	}
-// }
 
 func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
 	switch c.currentView {
@@ -217,6 +191,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, PopCmd
 		}
 	case CommandOutput:
+		c.SetIsloading(false)
 		switch c.command.OnSuccess {
 		case "push-page":
 			var page app.Page
@@ -323,13 +298,21 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					listItems[i] = listItem
 				}
 
-				c.list = NewList(page.Title)
+				if c.list == nil {
+					c.list = NewList(page.Title)
+					c.list.SetSize(c.width, c.height)
+				} else {
+					c.list.SetTitle(page.Title)
+				}
+
 				if page.List.ShowPreview {
 					c.list.ShowPreview = true
 				}
+				if page.List.GenerateItems {
+					c.list.GenerateItems = true
+				}
 
 				c.list.SetItems(listItems)
-				c.list.SetSize(c.width, c.height)
 
 				return c, c.list.Init()
 			}
@@ -402,8 +385,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		for key, value := range msg.With {
 			c.with[key] = value
 		}
-
-		c.Reset()
 
 		return c, tea.Sequence(c.SetIsloading(true), c.Run())
 	}

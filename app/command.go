@@ -232,8 +232,9 @@ type Detail struct {
 }
 
 type List struct {
-	ShowPreview bool       `json:"showPreview,omitempty" yaml:"showPreview"`
-	Items       []ListItem `json:"items"`
+	ShowPreview   bool       `json:"showPreview,omitempty" yaml:"showPreview"`
+	GenerateItems bool       `json:"generateItems,omitempty" yaml:"generateItems"`
+	Items         []ListItem `json:"items"`
 }
 
 type Preview struct {

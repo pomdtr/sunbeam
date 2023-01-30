@@ -42,7 +42,7 @@
                     "title": {
                         "type": "string"
                     },
-                    "isGenerator": {
+                    "generateItems": {
                         "type": "boolean"
                     },
                     "showPreview": {
