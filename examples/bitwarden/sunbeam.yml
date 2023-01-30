@@ -1,5 +1,10 @@
 version: "1.0"
 title: Bitwarden
+preferences:
+  - env: BW_SESSION
+    input:
+      type: textfield
+      title: Bitwarden Session
 requirements:
   - homePage: https://bitwarden.com/help/cli/
     which: bw

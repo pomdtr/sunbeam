@@ -11,7 +11,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/itchyny/gojq v0.12.11
 	github.com/joho/godotenv v1.4.0
-	github.com/olekukonko/tablewriter v0.0.5
 	github.com/otiai10/copy v1.9.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1

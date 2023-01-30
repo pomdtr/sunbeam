@@ -1,5 +1,6 @@
 version: "1.0"
 title: Git History
+description: View the history of a git repository
 requirements:
   - homePage: https://github.com/kellyjonbrazil/jc
     which: jc

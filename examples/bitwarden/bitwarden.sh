@@ -2,30 +2,6 @@
 
 set -euo pipefail
 
-BW_SESSION=$(sunbeam kv get session || true)
-
-if ! bw unlock --check --session "$BW_SESSION" &>/dev/null; then
-    sunbeam query -n '{
-        type: "detail",
-        preview: "Vault is locked",
-        actions: [
-            {
-                type: "run-command",
-                title: "Unlock Vault",
-                command: "unlock-vault",
-                onSuccess: "reload-page",
-                with: {
-                    password: {
-                        type: "password",
-                        title: "Master Password"
-                    }
-                }
-            }
-        ]
-    }'
-    exit 0
-fi
-
 bw --nointeraction list items --session "$BW_SESSION" | sunbeam query '.[] | {
     title: .name,
     subtitle: .login.username,

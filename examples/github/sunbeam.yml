@@ -1,5 +1,6 @@
 version: "1.0"
 title: GitHub
+description: View GitHub repositories and pull requests
 requirements:
   - homePage: https://cli.github.com
     which: gh

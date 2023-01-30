@@ -8,18 +8,14 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strconv"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/olekukonko/tablewriter"
 	"github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/tui"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdExtension(extensionRoot string, config *tui.Config) *cobra.Command {
+func NewCmdExtension(extensionRoot string, extensions map[string]app.Extension) *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
@@ -27,14 +23,9 @@ func NewCmdExtension(extensionRoot string, config *tui.Config) *cobra.Command {
 		GroupID: "core",
 	}
 
-	entries, err := os.ReadDir(extensionRoot)
-	if err != nil {
-		return nil
-	}
-
-	extensionArgs := make([]string, 0)
-	for _, entry := range entries {
-		extensionArgs = append(extensionArgs, entry.Name())
+	extensionArgs := make([]string, 0, len(extensions))
+	for name := range extensions {
+		extensionArgs = append(extensionArgs, name)
 	}
 
 	extensionCommand.AddCommand(func() *cobra.Command {
@@ -248,80 +239,11 @@ func NewCmdExtension(extensionRoot string, config *tui.Config) *cobra.Command {
 			Aliases: []string{"ls"},
 			Args:    cobra.NoArgs,
 			Run: func(cmd *cobra.Command, args []string) {
-				rows := make([][]string, 0)
-				for _, name := range extensionArgs {
-					rows = append(rows, []string{name})
+				for name := range extensions {
+					fmt.Println(name)
 				}
-
-				writer := tablewriter.NewWriter(os.Stdout)
-				writer.SetBorder(false)
-				writer.SetColumnSeparator(" ")
-				writer.AppendBulk(rows)
-				writer.Render()
 			},
 		}
-	}())
-
-	extensionCommand.AddCommand(func() *cobra.Command {
-		command := cobra.Command{
-			Use:   "browse",
-			Short: "Enter a UI for browsing and installing extensions",
-			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				client := utils.NewGHClient("github.com")
-				if err != nil {
-					return err
-				}
-				res := struct {
-					Items []struct {
-						Name  string
-						Owner struct {
-							Login string
-						}
-						FullName    string `json:"full_name"`
-						Description string
-						HtmlURL     string `json:"html_url"`
-					}
-				}{}
-
-				err = client.Get("search/repositories?q=topic:sunbeam-extension", &res)
-				if err != nil {
-					return err
-				}
-
-				extensionItems := make([]tui.ListItem, len(res.Items))
-				for i, repo := range res.Items {
-					item := tui.ListItem{
-						Id:       strconv.Itoa(i),
-						Title:    fmt.Sprintf("%s/%s", repo.Owner.Login, repo.Name),
-						Subtitle: repo.Description,
-					}
-
-					item.Actions = []tui.Action{
-						{
-							Title: "Install Extension",
-							Cmd: func() tea.Msg {
-								exec.Command("sunbeam", "extension", "install", repo.FullName)
-								return tea.Quit()
-							},
-						},
-						{
-							Title: "Open in Browser",
-							Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
-						},
-					}
-
-					extensionItems[i] = item
-				}
-
-				list := tui.NewList("Browse Extensions")
-				list.SetItems(extensionItems)
-				model := tui.NewModel(list)
-				model.SetRoot(list)
-
-				return tui.Draw(model)
-			},
-		}
-		return &command
 	}())
 
 	return extensionCommand
