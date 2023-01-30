@@ -9,6 +9,18 @@
     ],
     "additionalProperties": false,
     "properties": {
+        "platforms": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "enum": [
+                    "mac",
+                    "linux",
+                    "windows"
+                ]
+            }
+        },
         "rootUrl": {
             "type": "string"
         },
@@ -19,6 +31,10 @@
             "type": "array",
             "items": {
                 "type": "object",
+                "required": [
+                    "env",
+                    "input"
+                ],
                 "properties": {
                     "env": {
                         "type": "string"
@@ -104,12 +120,10 @@
             }
         },
         "commands": {
-            "type": "object",
+            "type": "array",
             "additionalProperties": false,
-            "patternProperties": {
-                "^[a-zA-Z][a-zA-Z0-9-_]+$": {
-                    "$ref": "#/$defs/command"
-                }
+            "items": {
+                "$ref": "#/$defs/command"
             }
         }
     },
@@ -117,12 +131,15 @@
         "command": {
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "name"
+            ],
             "properties": {
-                "exec": {
+                "name": {
                     "type": "string"
                 },
-                "interactive": {
-                    "type": "boolean"
+                "exec": {
+                    "type": "string"
                 },
                 "onSuccess": {
                     "type": "string",

@@ -22,7 +22,7 @@ multipass list --format json | sunbeam query '.list[] |
         then
           [
             {type: "run-command", title: "Stop \(.name)", command: "stop-vm", onSuccess: "reload-page", with: {vm: .name}},
-            {type: "run-command", shortcut: "ctrl+s", title: "Open Shell", command: "open-shell", onSuccess: "reload-page", with: {vm: .name}}
+            {type: "copy-text", shortcut: "ctrl+s", title: "Copy Attach Command", command: "open-shell", text: "multipass shell \(.name)"}
           ]
         else
           [

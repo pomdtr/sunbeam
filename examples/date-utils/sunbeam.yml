@@ -4,6 +4,6 @@ rootItems:
   - command: utc
     title: Copy UTC Timestamp
 commands:
-  utc:
+  - name: utc
     exec: date +%Y-%m-%dT%H:%M:%SZ
     onSuccess: copy-text

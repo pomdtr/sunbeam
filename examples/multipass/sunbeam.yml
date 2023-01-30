@@ -7,26 +7,25 @@ rootItems:
   - command: list-vms
     title: List VMs
 commands:
-  vm-info:
+  - name: vm-info
     exec: multipass info ${{ vm }}
     params:
       - name: vm
         type: string
-  list-vms:
+  - name: list-vms
     onSuccess: push-page
     exec: ./list-vms.sh
-  open-shell:
+  - name: open-shell
     exec: multipass shell ${{ vm }}
-    interactive: true
     params:
       - name: vm
         type: string
-  start-vm:
+  - name: start-vm
     exec: multipass start ${{ vm }}
     params:
       - name: vm
         type: string
-  stop-vm:
+  - name: stop-vm
     exec: multipass stop ${{ vm }}
     params:
       - name: vm

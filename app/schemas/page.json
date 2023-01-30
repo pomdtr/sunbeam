@@ -82,7 +82,7 @@
                     "title": {
                         "type": "string"
                     },
-                    "preview": {
+                    "content": {
                         "$ref": "#/$defs/preview"
                     },
                     "type": {
@@ -254,15 +254,15 @@
         "preview": {
             "oneOf": [
                 {
-                    "type": "string"
-                },
-                {
                     "type": "object",
-                    "required": [
-                        "command"
-                    ],
                     "additionalProperties": false,
                     "properties": {
+                        "text": {
+                            "type": "string"
+                        },
+                        "language": {
+                            "type": "string"
+                        },
                         "command": {
                             "type": "string"
                         },

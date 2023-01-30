@@ -203,11 +203,14 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 				return al, nil
 			}
 			listItem, _ := selectedItem.(ListItem)
+			al.Blur()
 			return al, listItem.Actions[0].Cmd
 		}
 
+		// TODO: Move this to the runner
 		for _, action := range al.actions {
 			if key.Matches(msg, action.Binding()) {
+				al.Blur()
 				return al, action.Cmd
 			}
 		}

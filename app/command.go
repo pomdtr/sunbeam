@@ -1,11 +1,16 @@
 package app
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"text/template"
 
@@ -15,8 +20,8 @@ import (
 )
 
 type Command struct {
+	Name        string  `json:"name"`
 	Exec        string  `json:"exec,omitempty" yaml:"exec,omitempty"`
-	Interactive bool    `json:"interactive,omitempty" yaml:"interactive,omitempty"`
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Params      []Param `json:"params,omitempty" yaml:"params,omitempty"`
 	OnSuccess   string  `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
@@ -98,9 +103,9 @@ type FormItem struct {
 }
 
 type CommandPayload struct {
-	Input string
 	Env   map[string]string
 	With  map[string]any
+	Stdin string
 }
 
 func (c Command) CheckMissingParams(with map[string]any) error {
@@ -113,7 +118,7 @@ func (c Command) CheckMissingParams(with map[string]any) error {
 	return nil
 }
 
-func (c Command) Cmd(payload CommandPayload, dir string) (*exec.Cmd, error) {
+func (c Command) Run(payload CommandPayload, root *url.URL) ([]byte, error) {
 	var err error
 
 	funcMap := template.FuncMap{}
@@ -157,22 +162,60 @@ func (c Command) Cmd(payload CommandPayload, dir string) (*exec.Cmd, error) {
 		}
 	}
 
+	if root.Scheme != "file" {
+		payload, err := json.Marshal(payload)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal command params: %v", err)
+		}
+
+		url := url.URL{
+			Scheme: root.Scheme,
+			Host:   root.Host,
+			Path:   path.Join(root.Path, "commands", c.Name),
+		}
+
+		res, err := http.Post(url.String(), "application/json", bytes.NewReader(payload))
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute command: %v", err)
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to execute command: %s", res.Status)
+		}
+
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read command output: %v", err)
+		}
+
+		return body, nil
+	}
+
 	rendered, err := utils.RenderString(c.Exec, funcMap)
 	if err != nil {
 		return nil, err
 	}
 
 	cmd := exec.Command("sh", "-c", rendered)
-	cmd.Dir = dir
+	cmd.Dir = root.Path
+	cmd.Stdin = strings.NewReader(payload.Stdin)
 
 	cmd.Env = append(cmd.Env, os.Environ()...)
 	for key, env := range payload.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, env))
 	}
 
-	cmd.Stdin = strings.NewReader(payload.Input)
+	output, err := cmd.Output()
+	if err != nil {
+		err, ok := err.(*exec.ExitError)
+		if !ok {
+			return nil, err
+		}
+		return nil, fmt.Errorf("%s: %s", err, err.Stderr)
+	}
 
-	return cmd, nil
+	return output, nil
 }
 
 type Page struct {
@@ -184,7 +227,7 @@ type Page struct {
 }
 
 type Detail struct {
-	Preview *Preview `json:"preview,omitempty"`
+	Content Preview  `json:"content"`
 	Actions []Action `json:"actions,omitempty"`
 }
 
@@ -194,29 +237,10 @@ type List struct {
 }
 
 type Preview struct {
-	Text string `json:"text"`
-	PreviewCommand
-}
-
-type PreviewCommand struct {
-	Command string         `json:"command"`
-	With    map[string]any `json:"with"`
-}
-
-func (p *Preview) UnmarshalJSON(b []byte) error {
-	var s string
-	if err := json.Unmarshal(b, &s); err == nil {
-		p.Text = s
-		return nil
-	}
-
-	var cmd PreviewCommand
-	if err := json.Unmarshal(b, &cmd); err == nil {
-		p.PreviewCommand = cmd
-		return nil
-	}
-
-	return fmt.Errorf("invalid preview: %s", b)
+	Text     string         `json:"text"`
+	Language string         `json:"language,omitempty"`
+	Command  string         `json:"command,omitempty"`
+	With     map[string]any `json:"with,omitempty"`
 }
 
 type ListItem struct {

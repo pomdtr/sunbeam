@@ -4,7 +4,7 @@ requirements:
   - which: python3
     homePage: https://www.python.org
 preferences:
-  - env: SHOW_HIDDEN_FILES
+  - env: SHOW_HIDDEN
     input:
       type: checkbox
       title: visibility
@@ -30,7 +30,7 @@ rootItems:
     with:
       root: "."
 commands:
-  browse-files:
+  - name: browse-files
     exec: ./file-browser.py --root ${{ root }}
     onSuccess: push-page
     params:

@@ -1,22 +1,10 @@
 package utils
 
 import (
-	"encoding/json"
 	"os"
 	"path"
 	"strings"
 )
-
-func ReadJson(filepath string, v interface{}) error {
-	file, err := os.Open(filepath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-	return decoder.Decode(v)
-}
 
 func ResolvePath(filepath string) (string, error) {
 	if strings.HasPrefix(filepath, "~") {
@@ -39,6 +27,8 @@ func ResolvePath(filepath string) (string, error) {
 
 }
 
-func IsRoot(filepath string) bool {
-	return path.Dir(filepath) == filepath
+func FileExists(filepath string) bool {
+	_, err := os.Stat(filepath)
+
+	return !os.IsNotExist(err)
 }

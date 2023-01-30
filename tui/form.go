@@ -103,7 +103,6 @@ func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 type TextInput struct {
 	textinput.Model
 	placeholder string
-	isPath      bool
 }
 
 func NewTextInput(formItem app.FormItem) TextInput {
@@ -118,7 +117,6 @@ func NewTextInput(formItem app.FormItem) TextInput {
 
 	return TextInput{
 		Model:       ti,
-		isPath:      formItem.Type == "file" || formItem.Type == "directory",
 		placeholder: placeholder,
 	}
 }
@@ -139,10 +137,6 @@ func (ti *TextInput) SetWidth(width int) {
 }
 
 func (ti *TextInput) Value() any {
-	if ti.isPath {
-		value, _ := utils.ResolvePath(ti.Model.Value())
-		return value
-	}
 	return ti.Model.Value()
 }
 
@@ -482,6 +476,7 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.items[i].Blur()
 			}
 
+			c.renderInputs()
 			c.ScrollViewport()
 
 			return &c, tea.Batch(cmds...)
@@ -502,12 +497,42 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 	if cmd = c.updateInputs(msg); cmd != nil {
 		cmds = append(cmds, cmd)
 	}
+	c.renderInputs()
 
 	if c.header, cmd = c.header.Update(msg); cmd != nil {
 		cmds = append(cmds, cmd)
 	}
 
 	return &c, tea.Batch(cmds...)
+}
+
+func (c *Form) renderInputs() {
+	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(lipgloss.Color("13"))
+	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
+	itemViews := make([]string, len(c.items))
+	maxWidth := 0
+	for i, item := range c.items {
+		var inputView = lipgloss.NewStyle().Padding(0, 1).Render(item.FormInput.View())
+		if i == c.focusIndex {
+			inputView = selectedBorder.Render(inputView)
+		} else {
+			inputView = normalBorder.Render(inputView)
+		}
+
+		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, styles.Bold.Render(fmt.Sprintf("%s: ", item.Title)), inputView)
+		if lipgloss.Width(itemViews[i]) > maxWidth {
+			maxWidth = lipgloss.Width(itemViews[i])
+		}
+	}
+
+	for i := range itemViews {
+		itemViews[i] = lipgloss.NewStyle().Width(maxWidth).Align(lipgloss.Right).Render(itemViews[i])
+	}
+
+	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
+	formView = lipgloss.NewStyle().Width(c.footer.Width).Align(lipgloss.Center).Render(formView)
+
+	c.viewport.SetContent(formView)
 }
 
 func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
@@ -537,36 +562,10 @@ func (c *Form) SetSize(width, height int) {
 	}
 	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 
+	c.renderInputs()
 	c.ScrollViewport()
 }
 
 func (c *Form) View() string {
-	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(lipgloss.Color("13"))
-	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
-	itemViews := make([]string, len(c.items))
-	maxWidth := 0
-	for i, item := range c.items {
-		var inputView = lipgloss.NewStyle().Padding(0, 1).Render(item.FormInput.View())
-		if i == c.focusIndex {
-			inputView = selectedBorder.Render(inputView)
-		} else {
-			inputView = normalBorder.Render(inputView)
-		}
-
-		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, styles.Bold.Render(fmt.Sprintf("%s: ", item.Title)), inputView)
-		if lipgloss.Width(itemViews[i]) > maxWidth {
-			maxWidth = lipgloss.Width(itemViews[i])
-		}
-	}
-
-	for i := range itemViews {
-		itemViews[i] = lipgloss.NewStyle().Width(maxWidth).Align(lipgloss.Right).Render(itemViews[i])
-	}
-
-	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	formView = lipgloss.NewStyle().Width(c.footer.Width).Align(lipgloss.Center).Render(formView)
-
-	c.viewport.SetContent(formView)
-
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
 }

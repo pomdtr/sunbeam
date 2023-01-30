@@ -5,21 +5,22 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
+	"github.com/muesli/reflow/wrap"
 )
 
 type Detail struct {
-	header         Header
-	Style          lipgloss.Style
-	viewport       viewport.Model
-	actions        ActionList
-	PreviewCommand func() string
-	footer         Footer
+	header     Header
+	Style      lipgloss.Style
+	viewport   viewport.Model
+	actions    ActionList
+	content    string
+	ready      bool
+	ContentCmd func() string
+	footer     Footer
 }
 
-func NewDetail(title string) *Detail {
-	viewport := viewport.New(0, 0)
-	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
-
+func NewDetail(title string, contentCmd func() string) *Detail {
 	footer := NewFooter(title)
 
 	actionList := NewActionList()
@@ -28,10 +29,10 @@ func NewDetail(title string) *Detail {
 	header := NewHeader()
 
 	d := Detail{
-		viewport: viewport,
-		header:   header,
-		actions:  actionList,
-		footer:   footer,
+		header:     header,
+		actions:    actionList,
+		ContentCmd: contentCmd,
+		footer:     footer,
 	}
 
 	return &d
@@ -51,14 +52,10 @@ func (c *Detail) SetActions(actions ...Action) {
 }
 
 func (d *Detail) Init() tea.Cmd {
-	if d.PreviewCommand != nil {
-		return tea.Sequence(d.SetIsLoading(true), func() tea.Msg {
-			content := d.PreviewCommand()
-			return PreviewContentMsg(content)
-		})
+	return func() tea.Msg {
+		content := d.ContentCmd()
+		return PreviewContentMsg(content)
 	}
-
-	return nil
 }
 
 type DetailMsg string
@@ -84,8 +81,8 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 		}
 	case PreviewContentMsg:
-		c.SetIsLoading(false)
-		c.viewport.SetContent(string(msg))
+		c.content = string(msg)
+		c.RefreshPreview()
 	}
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
@@ -102,18 +99,34 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return &c, tea.Batch(cmds...)
 }
 
+func (c *Detail) RefreshPreview() {
+	content := wrap.String(wordwrap.String(c.content, c.viewport.Width-2), c.viewport.Width-2)
+	c.viewport.SetContent(content)
+}
+
 func (c *Detail) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
 	c.actions.SetSize(width, height)
 
 	viewportHeight := height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+	if !c.ready {
+		c.ready = true
+		c.viewport = viewport.New(width, viewportHeight)
+		c.viewport.Style = lipgloss.NewStyle().Padding(0, 1)
+	} else {
+		c.viewport.Width = width
+		c.viewport.Height = viewportHeight
+	}
 
-	c.viewport.Width = width
-	c.viewport.Height = viewportHeight
+	c.RefreshPreview()
 }
 
 func (c *Detail) View() string {
+	if !c.ready {
+		return ""
+	}
+
 	if c.actions.Focused() {
 		return c.actions.View()
 	}

@@ -9,7 +9,7 @@ rootItems:
     with:
       root: .
 commands:
-  history:
+  - name: history
     exec: ./git-history.sh ${{ root }}
     onSuccess: push-page
     params:

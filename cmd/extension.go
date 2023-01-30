@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
+func NewCmdExtension(extensionRoot string, config *tui.Config) *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
@@ -27,9 +27,14 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 		GroupID: "core",
 	}
 
-	extensionArgs := make([]string, 0, len(api.Extensions))
-	for name := range api.Extensions {
-		extensionArgs = append(extensionArgs, name)
+	entries, err := os.ReadDir(extensionRoot)
+	if err != nil {
+		return nil
+	}
+
+	extensionArgs := make([]string, 0)
+	for _, entry := range entries {
+		extensionArgs = append(extensionArgs, entry.Name())
 	}
 
 	extensionCommand.AddCommand(func() *cobra.Command {
@@ -60,7 +65,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionName := args[0]
 				extensionRoot := args[1]
-				targetDir := path.Join(api.ExtensionRoot, extensionName)
+				targetDir := path.Join(extensionRoot, extensionName)
 				if _, err := os.Stat(targetDir); err == nil {
 					return fmt.Errorf("extension %s is already installed at %s", extensionName, targetDir)
 				}
@@ -76,7 +81,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 						return fmt.Errorf("current directory is not a sunbeam extension")
 					}
 
-					symlinkTarget := path.Join(api.ExtensionRoot, extensionName)
+					symlinkTarget := path.Join(extensionRoot, extensionName)
 
 					if err := os.Symlink(extensionRoot, symlinkTarget); err != nil {
 						fmt.Fprintln(os.Stderr, "Failed to create symlink", err)
@@ -132,7 +137,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 			ValidArgs: extensionArgs,
 			Short:     "Remove an installed extension",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				extensionPath := path.Join(api.ExtensionRoot, args[0])
+				extensionPath := path.Join(extensionRoot, args[0])
 				if _, err := os.Stat(extensionPath); os.IsNotExist(err) {
 					fmt.Fprintln(os.Stderr, "Extension not found")
 					os.Exit(1)
@@ -155,16 +160,16 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 			Short: "Rename an installed extension",
 			Args:  cobra.ExactArgs(2),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if !api.IsExtensionInstalled(args[0]) {
+				oldPath := path.Join(extensionRoot, args[0])
+				if !utils.FileExists(oldPath) {
 					return fmt.Errorf("extension %s is not installed", args[0])
 				}
 
-				if api.IsExtensionInstalled(args[1]) {
+				newPath := path.Join(extensionRoot, args[1])
+				if utils.FileExists(newPath) {
 					return fmt.Errorf("extension %s is already installed", args[1])
 				}
 
-				oldPath := path.Join(api.ExtensionRoot, args[0])
-				newPath := path.Join(api.ExtensionRoot, args[1])
 				if err := copy.Copy(oldPath, newPath); err != nil {
 					return fmt.Errorf("failed to rename extension: %s", err)
 				}
@@ -185,7 +190,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 			Args:      cobra.ExactArgs(1),
 			ValidArgs: extensionArgs,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				extensionDir := path.Join(api.ExtensionRoot, args[0])
+				extensionDir := path.Join(extensionRoot, args[0])
 				fi, err := os.Lstat(extensionDir)
 				if os.IsNotExist(err) {
 					fmt.Fprintln(os.Stderr, "Extension not found")
@@ -244,7 +249,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 			Args:    cobra.NoArgs,
 			Run: func(cmd *cobra.Command, args []string) {
 				rows := make([][]string, 0)
-				for name := range api.Extensions {
+				for _, name := range extensionArgs {
 					rows = append(rows, []string{name})
 				}
 
@@ -291,38 +296,18 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 						Subtitle: repo.Description,
 					}
 
-					if _, err := os.Stat(filepath.Join(api.ExtensionRoot, "github.com", repo.FullName)); err == nil {
-						item.Accessories = []string{
-							"Installed",
-						}
-
-						item.Actions = []tui.Action{
-							{
-								Title: "Remove Extension",
-								Cmd: func() tea.Msg {
-									exec.Command("sunbeam", "extension", "remove", repo.FullName).Run()
-									return tea.Quit()
-								},
+					item.Actions = []tui.Action{
+						{
+							Title: "Install Extension",
+							Cmd: func() tea.Msg {
+								exec.Command("sunbeam", "extension", "install", repo.FullName)
+								return tea.Quit()
 							},
-							{
-								Title: "Open in Browser",
-								Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
-							},
-						}
-					} else {
-						item.Actions = []tui.Action{
-							{
-								Title: "Install Extension",
-								Cmd: func() tea.Msg {
-									exec.Command("sunbeam", "extension", "install", repo.FullName)
-									return tea.Quit()
-								},
-							},
-							{
-								Title: "Open in Browser",
-								Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
-							},
-						}
+						},
+						{
+							Title: "Open in Browser",
+							Cmd:   tui.NewOpenUrlCmd(repo.HtmlURL),
+						},
 					}
 
 					extensionItems[i] = item
@@ -333,7 +318,7 @@ func NewCmdExtension(api app.Api, config *tui.Config) *cobra.Command {
 				model := tui.NewModel(list)
 				model.SetRoot(list)
 
-				return tui.Draw(model, true)
+				return tui.Draw(model)
 			},
 		}
 		return &command

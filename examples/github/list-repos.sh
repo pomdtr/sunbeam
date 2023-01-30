@@ -13,17 +13,19 @@ fi
 gh api "$ENDPOINT" --jq '.[] |
     {
         title: .name,
-        preview: {
-            command: "repo-info",
-            with: {
-                url: .html_url
-            }
-        },
+        subtitle: .description,
         accessories: [
             "\(.stargazers_count) *"
         ],
         actions: [
             {type: "open-url", url: .html_url},
+            {
+                type: "run-command",
+                command: "view-readme",
+                title: "View README",
+                shortcut: "ctrl+r",
+                with: {repository: .full_name}
+            },
             {
                 type: "run-command",
                 command: "list-prs",
@@ -36,6 +38,5 @@ gh api "$ENDPOINT" --jq '.[] |
 ' | sunbeam query --arg "repo=$1" --slurp '{
     type: "list",
     title: "List \($repo) Repositories",
-    showPreview: true,
     items: .
 }'

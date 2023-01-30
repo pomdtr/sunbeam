@@ -12,7 +12,7 @@ args = parser.parse_args()
 
 root: pathlib.Path = args.root
 entries = root.iterdir()
-if os.getenv("SHOW_HIDDEN_FILES") == "1":
+if os.getenv("SHOW_HIDDEN") != "1":
     entries = filter(lambda p: not p.name.startswith("."), entries)
 
 json.dump(

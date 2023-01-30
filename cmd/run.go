@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/pomdtr/sunbeam/app"
@@ -41,11 +42,11 @@ func NewCmdRun(config *tui.Config) *cobra.Command {
 			}
 
 			rootList := tui.NewRootList(map[string]app.Extension{
-				extensionRoot: extension,
+				path.Base(extensionRoot): extension,
 			})
 			model := tui.NewModel(rootList)
 
-			return tui.Draw(model, true)
+			return tui.Draw(model)
 		},
 	}
 

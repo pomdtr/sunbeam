@@ -7,14 +7,14 @@ rootItems:
   - title: Search Passwords
     command: list-passwords
 commands:
-  list-passwords:
+  - name: list-passwords
     exec: ./bitwarden.sh
     onSuccess: push-page
-  lock-vault:
+  - name: lock-vault
     exec: |
       bw lock
       sunbeam kv delete session
-  unlock-vault:
+  - name: unlock-vault
     exec: ./unlock.sh ${{ password }}
     params:
       - name: password

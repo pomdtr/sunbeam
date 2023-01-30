@@ -4,7 +4,7 @@ version: "1.0"
 rootItems:
   - command: list-entries
     title: List Entries
-  - command: write-entry
+  - command: new-entry
     title: Write Entry
     with:
       title:
@@ -14,17 +14,17 @@ rootItems:
         type: textarea
         title: Content
 commands:
-  list-entries:
+  - name: list-entries
     exec: python3 journal.py list
     onSuccess: push-page
-  new-entry:
+  - name: new-entry
     exec: python3 journal.py new --title ${{ title }} --content ${{ content }}
     params:
       - name: title
         type: string
       - name: content
         type: string
-  edit-entry:
+  - name: edit-entry
     exec: python3 journal.py edit --uuid ${{ uuid }} --title ${{ title }} --content ${{ content }}
     params:
       - name: uuid
@@ -33,7 +33,7 @@ commands:
         type: string
       - name: content
         type: string
-  delete-entry:
+  - name: delete-entry
     exec: python3 journal.py delete --uuid ${{ uuid }}
     params:
       - name: uuid

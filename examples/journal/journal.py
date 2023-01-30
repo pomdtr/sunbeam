@@ -40,7 +40,9 @@ def list_entries(journal: Journal):
         "items": [
             {
                 "title": entry["title"],
-                "preview": entry["content"],
+                "preview": {
+                    "text": entry["content"],
+                },
                 "accessories": [
                     datetime.utcfromtimestamp(entry["timestamp"]).strftime(
                         "%Y-%m-%d %H:%M:%S"

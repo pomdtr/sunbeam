@@ -38,8 +38,7 @@ func Execute(version string) (err error) {
 		}
 	}
 
-	api := app.Api{}
-	err = api.LoadExtensions(extensionRoot)
+	extensions, err := app.LoadExtensions(extensionRoot)
 	if err != nil {
 		return err
 	}
@@ -51,9 +50,9 @@ func Execute(version string) (err error) {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(api.Extensions, config.RootItems...)
+			rootList := tui.NewRootList(extensions, config.RootItems...)
 			model := tui.NewModel(rootList)
-			return tui.Draw(model, true)
+			return tui.Draw(model)
 		},
 	}
 
@@ -68,8 +67,8 @@ func Execute(version string) (err error) {
 	// Core Commands
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	rootCmd.AddCommand(NewCmdDocs())
-	rootCmd.AddCommand(NewCmdExtension(api, &config))
-	rootCmd.AddCommand(NewCmdServe(api))
+	rootCmd.AddCommand(NewCmdExtension(extensionRoot, &config))
+	rootCmd.AddCommand(NewCmdServe(extensions))
 	rootCmd.AddCommand(NewCmdCheck())
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(&config))
@@ -77,7 +76,7 @@ func Execute(version string) (err error) {
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
-		for name, extension := range api.Extensions {
+		for name, extension := range extensions {
 			rootCmd.AddCommand(NewExtensionCommand(name, extension, &config))
 		}
 	}
@@ -93,7 +92,7 @@ func NewExtensionCommand(name string, extension app.Extension, config *tui.Confi
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			rootList := tui.NewRootList(map[string]app.Extension{name: extension}, config.RootItems...)
 			model := tui.NewModel(rootList)
-			err = tui.Draw(model, true)
+			err = tui.Draw(model)
 			if err != nil {
 				return fmt.Errorf("could not run extension: %w", err)
 			}
@@ -102,11 +101,10 @@ func NewExtensionCommand(name string, extension app.Extension, config *tui.Confi
 		},
 	}
 
-	for commandName, command := range extension.Commands {
-		commandName := commandName
+	for _, command := range extension.Commands {
 		command := command
 		scriptCmd := &cobra.Command{
-			Use:   commandName,
+			Use:   command.Name,
 			Short: command.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(map[string]app.CommandInput)
@@ -128,20 +126,14 @@ func NewExtensionCommand(name string, extension app.Extension, config *tui.Confi
 
 				}
 				runner := tui.NewCommandRunner(
-					tui.NamedExtension{
-						Name:      name,
-						Extension: extension,
-					},
-					tui.NamedCommand{
-						Name:    commandName,
-						Command: command,
-					},
+					extension,
+					command,
 					with,
 				)
 
 				model := tui.NewModel(runner)
 
-				err = tui.Draw(model, true)
+				err = tui.Draw(model)
 				if err != nil {
 					return fmt.Errorf("could not run script: %w", err)
 				}

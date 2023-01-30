@@ -1,15 +1,10 @@
 package tui
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -25,8 +20,8 @@ type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	extension NamedExtension
-	command   NamedCommand
+	extension app.Extension
+	command   app.Command
 
 	with map[string]app.CommandInput
 
@@ -38,17 +33,7 @@ type CommandRunner struct {
 	form   *Form
 }
 
-type NamedExtension struct {
-	app.Extension
-	Name string
-}
-
-type NamedCommand struct {
-	app.Command
-	Name string
-}
-
-func NewCommandRunner(extension NamedExtension, command NamedCommand, with map[string]app.CommandInput) *CommandRunner {
+func NewCommandRunner(extension app.Extension, command app.Command, with map[string]app.CommandInput) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter(extension.Title),
@@ -106,18 +91,18 @@ func (c *CommandRunner) Run() tea.Cmd {
 	}
 
 	formitems = make([]FormItem, 0)
-	for _, env := range c.extension.Preferences {
+	for _, pref := range c.extension.Preferences {
 		// Skip if the env is already set in the .env file
-		if _, ok := environ[env.Env]; ok {
+		if _, ok := environ[pref.Env]; ok {
 			continue
 		}
 
 		// Skip if the env is already set in the environment
-		if _, ok := os.LookupEnv(env.Env); ok {
+		if _, ok := os.LookupEnv(pref.Env); ok {
 			continue
 		}
 
-		formitems = append(formitems, NewFormItem(env.Env, env.Input))
+		formitems = append(formitems, NewFormItem(pref.Env, pref.Input))
 	}
 
 	if len(formitems) > 0 {
@@ -139,77 +124,49 @@ func (c *CommandRunner) Run() tea.Cmd {
 		return NewErrorCmd(err)
 	}
 
-	commandInput := app.CommandPayload{
-		With: params,
-		Env:  environ,
-	}
-
-	if c.extension.Root.Scheme != "file" {
-		if c.command.Interactive {
-			return NewErrorCmd(fmt.Errorf("interactive commands are not supported for remote extensions"))
-		}
-
-		return c.RemoteRun(commandInput)
-	}
-
-	cmd, err := c.command.Cmd(commandInput, c.extension.Root.Path)
-	if err != nil {
-		return NewErrorCmd(err)
-	}
-
-	if c.command.Interactive {
-		return tea.ExecProcess(cmd, func(err error) tea.Msg {
-			if err != nil {
-				return err
-			}
-			return CommandOutput([]byte{})
-		})
-	}
-
 	return func() tea.Msg {
-		output, err := cmd.Output()
+		output, err := c.command.Run(app.CommandPayload{
+			With: params,
+			Env:  environ,
+		}, c.extension.Root)
 		if err != nil {
-			var exitErr *exec.ExitError
-			if ok := errors.As(err, &exitErr); ok {
-				return fmt.Errorf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
-			}
-			return err
+			return NewErrorCmd(err)
 		}
 
 		return CommandOutput(output)
 	}
 }
 
-func (c CommandRunner) RemoteRun(commandParams app.CommandPayload) tea.Cmd {
-	return func() tea.Msg {
-		payload, err := json.Marshal(commandParams)
-		if err != nil {
-			return err
-		}
+// func (c CommandRunner) RemoteRun(commandParams app.CommandPayload) tea.Cmd {
+// 	return func() tea.Msg {
+// 		payload, err := json.Marshal(commandParams)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		commandUrl := url.URL{
-			Scheme: c.extension.Root.Scheme,
-			Host:   c.extension.Root.Host,
-			Path:   path.Join(c.extension.Root.Path, c.command.Name),
-		}
-		res, err := http.Post(commandUrl.String(), "application/json", bytes.NewReader(payload))
-		if err != nil {
-			return err
-		}
-		defer res.Body.Close()
+// 		commandUrl := url.URL{
+// 			Scheme: c.extension.Root.Scheme,
+// 			Host:   c.extension.Root.Host,
+// 			Path:   path.Join(c.extension.Root.Path, c.command.Name),
+// 		}
+// 		res, err := http.Post(commandUrl.String(), "application/json", bytes.NewReader(payload))
+// 		if err != nil {
+// 			return err
+// 		}
+// 		defer res.Body.Close()
 
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("command failed with status code %d", res.StatusCode)
-		}
+// 		if res.StatusCode != http.StatusOK {
+// 			return fmt.Errorf("command failed with status code %d", res.StatusCode)
+// 		}
 
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
+// 		body, err := io.ReadAll(res.Body)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		return CommandOutput(body)
-	}
-}
+// 		return CommandOutput(body)
+// 	}
+// }
 
 func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
 	switch c.currentView {
@@ -284,46 +241,37 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			switch page.Type {
 			case "detail":
 				c.currentView = "detail"
-				c.detail = NewDetail(page.Title)
+				c.detail = NewDetail(page.Title, func() string {
+					if page.Detail.Content.Text != "" {
+						content, err := utils.HighlightString(page.Detail.Content.Text, page.Detail.Content.Language)
+						if err != nil {
+							return err.Error()
+						}
+						return content
+					}
+
+					command, ok := c.extension.GetCommand(page.Detail.Content.Command)
+					if !ok {
+						return ""
+					}
+
+					params := app.CommandPayload{
+						With: page.Detail.Content.With,
+					}
+
+					output, err := command.Run(params, c.extension.Root)
+					if err != nil {
+						return err.Error()
+					}
+
+					return string(output)
+				})
 
 				actions := make([]Action, len(page.Detail.Actions))
 				for i, scriptAction := range page.Detail.Actions {
 					actions[i] = NewAction(scriptAction)
 				}
 				c.detail.SetActions(actions...)
-
-				if page.Detail.Preview != nil {
-					c.detail.viewport.SetContent(page.Detail.Preview.Text)
-					if page.Detail.Preview.Command != "" {
-						c.detail.PreviewCommand = func() string {
-							command, ok := c.extension.Commands[page.Detail.Preview.Command]
-							if !ok {
-								return ""
-							}
-
-							params := app.CommandPayload{
-								With: page.Detail.Preview.With,
-							}
-
-							cmd, err := command.Cmd(params, c.extension.Root.Path)
-							if err != nil {
-								return err.Error()
-							}
-
-							output, err := cmd.Output()
-							if err != nil {
-								var exitErr *exec.ExitError
-								if ok := errors.As(err, &exitErr); ok {
-									return fmt.Sprintf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
-								}
-								return err.Error()
-							}
-
-							return string(output)
-						}
-					}
-				}
-
 				c.detail.SetSize(c.width, c.height)
 
 				return c, c.detail.Init()
@@ -339,62 +287,37 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 					listItem := ParseScriptItem(scriptItem)
 					if scriptItem.Preview != nil {
-						listItem.Preview = scriptItem.Preview.Text
-						if scriptItem.Preview.Command != "" {
-							listItem.PreviewCmd = func() string {
-								command, ok := c.extension.Commands[scriptItem.Preview.Command]
-								if !ok {
-									return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
-								}
+						listItem.PreviewCmd = func() string {
+							if scriptItem.Preview.Command == "" {
+								preview, err := utils.HighlightString(scriptItem.Preview.Text, scriptItem.Preview.Language)
 
-								params := app.CommandPayload{
-									With: scriptItem.Preview.With,
-								}
-								if c.extension.Root.Scheme != "file" {
-									payload, err := json.Marshal(params)
-									if err != nil {
-										return fmt.Sprintf("failed to marshal command params: %v", err)
-									}
-
-									commandUrl := url.URL{
-										Scheme: c.extension.Root.Scheme,
-										Host:   c.extension.Root.Host,
-										Path:   path.Join(c.extension.Root.Path, scriptItem.Preview.Command),
-									}
-									res, err := http.Post(commandUrl.String(), "application/json", bytes.NewReader(payload))
-									if err != nil {
-										return fmt.Sprintf("failed to execute command: %v", err)
-									}
-									defer res.Body.Close()
-
-									if res.StatusCode != http.StatusOK {
-										return fmt.Sprintf("failed to execute command: %s", res.Status)
-									}
-
-									body, err := io.ReadAll(res.Body)
-									if err != nil {
-										return fmt.Sprintf("failed to read command output: %v", err)
-									}
-
-									return string(body)
-								}
-
-								cmd, err := command.Cmd(params, c.extension.Root.Path)
 								if err != nil {
 									return err.Error()
 								}
-
-								output, err := cmd.Output()
-								if err != nil {
-									var exitErr *exec.ExitError
-									if ok := errors.As(err, &exitErr); ok {
-										return fmt.Sprintf("command failed with exit code %d, error:\n%s", exitErr.ExitCode(), exitErr.Stderr)
-									}
-									return err.Error()
-								}
-
-								return string(output)
+								return preview
 							}
+
+							command, ok := c.extension.GetCommand(scriptItem.Preview.Command)
+							if !ok {
+								return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
+							}
+
+							params := app.CommandPayload{
+								With: scriptItem.Preview.With,
+							}
+
+							output, err := command.Run(params, c.extension.Root)
+							if err != nil {
+								return err.Error()
+							}
+
+							preview, err := utils.HighlightString(string(output), scriptItem.Preview.Language)
+							if err != nil {
+								return err.Error()
+							}
+
+							return preview
+
 						}
 					}
 					listItems[i] = listItem
@@ -465,7 +388,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, tea.Sequence(c.SetIsloading(true), c.Run())
 		}
 	case RunCommandMsg:
-		command, ok := c.extension.Commands[msg.Command]
+		command, ok := c.extension.GetCommand(msg.Command)
 		if !ok {
 			return c, NewErrorCmd(fmt.Errorf("command not found: %s", msg.Command))
 		}
@@ -473,17 +396,14 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			command.OnSuccess = msg.OnSuccess
 		}
 
-		c.Reset()
-
-		return c, NewPushCmd(NewCommandRunner(c.extension, NamedCommand{
-			Name:    msg.Command,
-			Command: command,
-		}, msg.With))
+		return c, NewPushCmd(NewCommandRunner(c.extension, command, msg.With))
 
 	case ReloadPageMsg:
 		for key, value := range msg.With {
 			c.with[key] = value
 		}
+
+		c.Reset()
 
 		return c, tea.Sequence(c.SetIsloading(true), c.Run())
 	}
@@ -505,15 +425,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		c.header, cmd = c.header.Update(msg)
 	}
 	return c, cmd
-}
-
-func (c *CommandRunner) Clear() {
-	switch c.currentView {
-	case "list":
-		c.list.actions.Blur()
-	case "detail":
-		c.detail.actions.Blur()
-	}
 }
 
 func (c *CommandRunner) View() string {

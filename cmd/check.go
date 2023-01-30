@@ -47,7 +47,7 @@ func NewCmdCheck() *cobra.Command {
 			}
 
 			for _, rootItem := range extension.RootItems {
-				if _, ok := extension.Commands[rootItem.Command]; !ok {
+				if _, ok := extension.GetCommand(rootItem.Command); !ok {
 					return fmt.Errorf("root item '%s' references unknown command '%s'", rootItem.Title, rootItem.Command)
 				}
 			}
@@ -107,7 +107,7 @@ func NewCmdCheck() *cobra.Command {
 								continue
 							}
 
-							command, ok := extension.Commands[action.Command]
+							command, ok := extension.GetCommand(action.Command)
 							if !ok {
 								return fmt.Errorf("command %s is not defined in manifest", action.Command)
 							}
@@ -130,7 +130,7 @@ func NewCmdCheck() *cobra.Command {
 									continue
 								}
 
-								command, ok := extension.Commands[action.Command]
+								command, ok := extension.GetCommand(action.Command)
 								if !ok {
 									return fmt.Errorf("command %s is not defined in manifest", action.Command)
 								}

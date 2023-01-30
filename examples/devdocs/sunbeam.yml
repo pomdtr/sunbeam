@@ -11,7 +11,7 @@ rootItems:
     with:
       slug: python~3.11
 commands:
-  search-docsets:
+  - name: search-docsets
     exec: |
       curl https://devdocs.io/docs/docs.json | sunbeam query '. | group_by(.name) | .[] |
       {
@@ -28,7 +28,7 @@ commands:
       }
       ' | sunbeam --slurp { type: "list", list: {items: .} }
     onSuccess: push-page
-  search-entries:
+  - name: search-entries
     exec: |
       curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
         {

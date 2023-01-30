@@ -1,18 +1,18 @@
 package tui
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path"
-	"time"
+	"strconv"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Config struct {
@@ -28,12 +28,13 @@ type Page interface {
 
 type Model struct {
 	width, height int
+	MaxHeight     int
+	Padding       int
 
 	root  Page
 	pages []Page
 
 	hidden bool
-	exit   bool
 }
 
 func NewModel(root Page) *Model {
@@ -56,7 +57,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fmt.Sprintln("Escape")
 		case tea.KeyCtrlC:
 			m.hidden = true
-			m.exit = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
@@ -86,15 +86,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case popMsg:
 		if len(m.pages) == 0 {
+			m.hidden = true
 			return m, tea.Quit
 		} else {
 			m.Pop()
 			return m, nil
 		}
 	case error:
-		detail := NewDetail("Error")
-		detail.SetSize(m.width, m.pageHeight())
-		detail.viewport.SetContent(msg.Error())
+		detail := NewDetail("Error", msg.Error)
+		detail.SetSize(m.pageWidth(), m.pageHeight())
 
 		if len(m.pages) == 0 {
 			m.root = detail
@@ -123,12 +123,20 @@ func (m *Model) View() string {
 		return ""
 	}
 
+	var pageView string
+
 	if len(m.pages) > 0 {
 		currentPage := m.pages[len(m.pages)-1]
-		return currentPage.View()
+		pageView = currentPage.View()
+	} else {
+		pageView = m.root.View()
 	}
 
-	return m.root.View()
+	if m.MaxHeight > 0 {
+		return lipgloss.NewStyle().Padding(m.Padding).Render(pageView)
+	}
+
+	return pageView
 
 }
 
@@ -136,17 +144,21 @@ func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 
-	m.root.SetSize(width, m.pageHeight())
+	m.root.SetSize(m.pageWidth(), m.pageHeight())
 	for _, page := range m.pages {
-		page.SetSize(m.width, m.pageHeight())
+		page.SetSize(m.pageWidth(), m.pageHeight())
 	}
 }
 
+func (m *Model) pageWidth() int {
+	return m.width - 2*m.Padding
+}
+
 func (m *Model) pageHeight() int {
-	// if m.config.Height > 0 {
-	// 	return utils.Min(m.config.Height, m.height)
-	// }
-	return m.height
+	if m.MaxHeight > 0 {
+		return utils.Min(m.MaxHeight, m.height) - 2*m.Padding
+	}
+	return m.height - 2*m.Padding
 }
 
 type popMsg struct{}
@@ -166,7 +178,7 @@ func NewPushCmd(c Page) tea.Cmd {
 }
 
 func (m *Model) Push(page Page) tea.Cmd {
-	page.SetSize(m.width, m.pageHeight())
+	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
 	return page.Init()
 }
@@ -177,67 +189,50 @@ func (m *Model) Pop() {
 	}
 }
 
-func loadHistory(historyPath string) map[string]int64 {
-	history := make(map[string]int64)
-	data, err := os.ReadFile(historyPath)
-	if err != nil {
-		return history
-	}
-
-	json.Unmarshal(data, &history)
-	return history
+type RootList struct {
+	extensions map[string]app.Extension
+	rootItems  []app.RootItem
+	list       *List
 }
 
-type RootItemWithID struct {
-	app.RootItem
-	id string
-}
-
-func NewRootList(extensionMap map[string]app.Extension, additionalItems ...app.RootItem) Page {
-	stateDir := path.Join(os.Getenv("HOME"), ".local", "state", "sunbeam")
-	historyPath := path.Join(stateDir, "history.json")
-	history := loadHistory(historyPath)
-	list := NewList("Sunbeam")
-	list.filter.Less = func(i, j FilterItem) bool {
-		iValue, ok := history[i.ID()]
-		if !ok {
-			iValue = 0
-		}
-		jValue, ok := history[j.ID()]
-		if !ok {
-			jValue = 0
-		}
-
-		return iValue > jValue
-	}
-
-	rootItems := make([]RootItemWithID, 0)
-	for extensionName, extension := range extensionMap {
+func NewRootList(extensions map[string]app.Extension, additionalRootItems ...app.RootItem) *RootList {
+	rootItems := make([]app.RootItem, 0)
+	for name, extension := range extensions {
 		for _, rootItem := range extension.RootItems {
-			rootItem.Extension = extensionName
-			rootItems = append(rootItems, RootItemWithID{
-				RootItem: rootItem,
-				id:       fmt.Sprintf("%s:%s", extensionName, rootItem.Title),
-			})
+			rootItem.Extension = name
+			rootItems = append(rootItems, rootItem)
 		}
 	}
 
-	for _, item := range additionalItems {
-		if _, ok := extensionMap[item.Extension]; !ok {
+	for _, rootItem := range additionalRootItems {
+		if _, ok := extensions[rootItem.Extension]; !ok {
 			continue
 		}
-		rootItems = append(rootItems, RootItemWithID{
-			RootItem: item,
-			id:       fmt.Sprintf("config:%s", item.Title),
-		})
+		rootItems = append(rootItems, rootItem)
 	}
 
+	return &RootList{
+		extensions: extensions,
+		rootItems:  rootItems,
+		list:       NewList("Sunbeam"),
+	}
+}
+
+func (rl RootList) Init() tea.Cmd {
+	return tea.Batch(rl.list.Init(), rl.RefreshItem)
+}
+
+func (rl RootList) RefreshItem() tea.Msg {
 	listItems := make([]ListItem, 0)
-	for _, rootItem := range rootItems {
+	for _, rootItem := range rl.rootItems {
 		rootItem := rootItem
-		extension := extensionMap[rootItem.Extension]
+		extension := rl.extensions[rootItem.Extension]
+		command, ok := extension.GetCommand(rootItem.Command)
+		if !ok {
+			return nil
+		}
 		listItems = append(listItems, ListItem{
-			Id:          rootItem.id,
+			Id:          fmt.Sprintf("%s-%s", rootItem.Extension, rootItem.Command),
 			Title:       rootItem.Title,
 			Subtitle:    extension.Title,
 			Accessories: []string{rootItem.Extension},
@@ -246,40 +241,45 @@ func NewRootList(extensionMap map[string]app.Extension, additionalItems ...app.R
 					Title:    "Run Command",
 					Shortcut: "enter",
 					Cmd: func() tea.Msg {
-						history[rootItem.id] = time.Now().Unix()
-						if _, err := os.Stat(stateDir); os.IsNotExist(err) {
-							os.MkdirAll(stateDir, 0755)
-						}
-
-						data, _ := json.Marshal(history)
-						os.WriteFile(historyPath, data, 0644)
-
 						return PushPageMsg{
 							Page: NewCommandRunner(
-								NamedExtension{
-									Name:      rootItem.Extension,
-									Extension: extension,
-								},
-								NamedCommand{
-									Name:    rootItem.Command,
-									Command: extension.Commands[rootItem.Command],
-								},
+								extension,
+								command,
 								rootItem.With,
 							),
 						}
-
 					},
 				},
 			},
 		})
 	}
 
-	list.SetItems(listItems)
-
-	return list
+	return listItems
 }
 
-func Draw(model *Model, fullscreen bool) (err error) {
+func (rl RootList) SetSize(width int, height int) {
+	rl.list.SetSize(width, height)
+}
+
+func (rl RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
+	switch msg := msg.(type) {
+	case []ListItem:
+		rl.list.SetItems(msg)
+	}
+
+	var cmd tea.Cmd
+	page, cmd := rl.list.Update(msg)
+
+	rl.list = page.(*List)
+
+	return rl, cmd
+}
+
+func (rl RootList) View() string {
+	return rl.list.View()
+}
+
+func Draw(model *Model) (err error) {
 	// Log to a file
 	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
 		f, err := tea.LogToFile(env, "debug")
@@ -306,10 +306,27 @@ func Draw(model *Model, fullscreen bool) (err error) {
 	lipgloss.SetHasDarkBackground(true)
 
 	var p *tea.Program
-	if fullscreen {
-		p = tea.NewProgram(model, tea.WithAltScreen())
+
+	padding, ok := os.LookupEnv("SUNBEAM_PADDING")
+	if ok || padding != "" {
+		padding, err := strconv.Atoi(padding)
+		if err != nil {
+			return fmt.Errorf("could not parse SUNBEAM_PADDING: %w", err)
+		}
+		model.Padding = padding
+	}
+
+	height, ok := os.LookupEnv("SUNBEAM_HEIGHT")
+	if !ok || height == "" {
+		p = tea.NewProgram(model, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	} else {
-		p = tea.NewProgram(model)
+		height, err := strconv.Atoi(height)
+		if err != nil {
+			return fmt.Errorf("could not parse SUNBEAM_HEIGHT: %w", err)
+		}
+
+		model.MaxHeight = height
+		p = tea.NewProgram(model, tea.WithOutput(os.Stderr))
 	}
 
 	_, err = p.Run()

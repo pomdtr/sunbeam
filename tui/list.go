@@ -9,6 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
+	"github.com/muesli/reflow/wrap"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 )
@@ -19,7 +21,6 @@ type ListItem struct {
 	Id          string
 	Title       string
 	Subtitle    string
-	Preview     string
 	PreviewCmd  func() string
 	Accessories []string
 	Actions     []Action
@@ -102,8 +103,9 @@ type List struct {
 	IsGenerator bool
 	ShowPreview bool
 
-	filter   Filter
-	viewport viewport.Model
+	filter         Filter
+	viewport       viewport.Model
+	previewContent string
 }
 
 func NewList(title string) *List {
@@ -135,6 +137,13 @@ func (c *List) Init() tea.Cmd {
 	return c.header.Focus()
 }
 
+func (c *List) RefreshPreview() {
+	previewWidth := c.viewport.Width - 3
+	previewContent := wrap.String(wordwrap.String(c.previewContent, previewWidth), previewWidth)
+
+	c.viewport.SetContent(previewContent)
+}
+
 func (c *List) SetSize(width, height int) {
 	availableHeight := utils.Max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
 	c.footer.Width = width
@@ -145,6 +154,7 @@ func (c *List) SetSize(width, height int) {
 		c.filter.SetSize(listWidth, availableHeight)
 		c.viewport.Width = width - listWidth
 		c.viewport.Height = availableHeight
+		c.RefreshPreview()
 	} else {
 		c.filter.SetSize(width, availableHeight)
 	}
@@ -183,7 +193,7 @@ func (l *List) updateSelection(filter Filter) {
 	if filter.Selection() == nil {
 		l.actions.SetActions()
 		l.footer.SetBindings()
-		l.viewport.SetContent("")
+		l.previewContent = ""
 		return
 	}
 
@@ -191,10 +201,6 @@ func (l *List) updateSelection(filter Filter) {
 
 	l.actions.SetTitle(item.Title)
 	l.actions.SetActions(item.Actions...)
-	if item.Preview != "" {
-		l.viewport.SetYOffset(0)
-		l.viewport.SetContent(item.Preview)
-	}
 
 	if len(item.Actions) == 0 {
 		l.footer.SetBindings()
@@ -263,14 +269,13 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, nil
 		}
 
-		return c, tea.Sequence(c.header.SetIsLoading(true), func() tea.Msg {
+		return c, func() tea.Msg {
 			return PreviewContentMsg(item.PreviewCmd())
-		})
+		}
 
 	case PreviewContentMsg:
-		c.header.SetIsLoading(false)
-		c.viewport.SetYOffset(0)
-		c.viewport.SetContent(string(msg))
+		c.previewContent = string(msg)
+		c.RefreshPreview()
 		return c, nil
 	}
 

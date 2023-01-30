@@ -26,7 +26,7 @@ rootItems:
           - three
 
 commands:
-  form:
+  - name: form
     exec: |
       cat << EOF
       textfield: ${{ textfield }}

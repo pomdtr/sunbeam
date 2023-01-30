@@ -7,6 +7,6 @@ rootItems:
   - title: Google Suggestions
     command: search
 commands:
-  search:
+  - name: search
     exec: ./google.mjs
     onSuccess: push-page

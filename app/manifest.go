@@ -16,20 +16,6 @@ import (
 //go:embed schemas
 var embedFs embed.FS
 
-type Api struct {
-	Extensions    map[string]Extension
-	ExtensionRoot string
-}
-
-func (api *Api) IsExtensionInstalled(name string) bool {
-	extensionDir := path.Join(api.ExtensionRoot, name)
-
-	if _, err := os.Stat(extensionDir); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
 type RootItem struct {
 	Extension string `json:",omitempty" yaml:",omitempty"`
 	Command   string
@@ -41,19 +27,28 @@ type Extension struct {
 	Version     string       `json:"version" yaml:"version"`
 	Title       string       `json:"title" yaml:"title"`
 	Description string       `json:"description,omitempty" yaml:"description,omitempty"`
+	Platform    []string     `json:"platform,omitempty" yaml:"platform,omitempty"`
 	PostInstall string       `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
-	RootUrl     string       `json:"rootUrl,omitempty" yaml:"rootUrl,omitempty"`
 	Root        *url.URL     `json:"-" yaml:"-"`
 	Preferences []Preference `json:"preferences,omitempty" yaml:"preferences,omitempty"`
 
 	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
-	Commands     map[string]Command     `json:"commands"`
+	Commands     []Command              `json:"commands"`
 }
 
 type Preference struct {
-	Env   string   `json:"env" yaml:"env"`
-	Input FormItem `json:"input" yaml:"input"`
+	Env   string
+	Input FormItem
+}
+
+func (e Extension) GetCommand(name string) (Command, bool) {
+	for _, command := range e.Commands {
+		if command.Name == name {
+			return command, true
+		}
+	}
+	return Command{}, false
 }
 
 type ExtensionRequirement struct {
@@ -103,14 +98,13 @@ func init() {
 	}
 }
 
-func (api *Api) LoadExtensions(extensionRoot string) error {
-	api.ExtensionRoot = extensionRoot
-	api.Extensions = make(map[string]Extension)
+func LoadExtensions(extensionRoot string) (map[string]Extension, error) {
 	entries, err := os.ReadDir(extensionRoot)
 	if err != nil {
-		return fmt.Errorf("failed to read extension root: %w", err)
+		return nil, fmt.Errorf("failed to read extension root: %w", err)
 	}
 
+	extensions := make(map[string]Extension)
 	for _, entry := range entries {
 		extensionDir := path.Join(extensionRoot, entry.Name())
 		if fi, err := os.Stat(extensionDir); err != nil || !fi.IsDir() {
@@ -127,23 +121,15 @@ func (api *Api) LoadExtensions(extensionRoot string) error {
 			continue
 		}
 
-		if extension.RootUrl != "" {
-			root, err := url.Parse(extension.RootUrl)
-			if err != nil {
-				continue
-			}
-			extension.Root = root
-		} else {
-			extension.Root = &url.URL{
-				Scheme: "file",
-				Path:   extensionDir,
-			}
+		extension.Root = &url.URL{
+			Scheme: "file",
+			Path:   extensionDir,
 		}
 
-		api.Extensions[entry.Name()] = extension
+		extensions[entry.Name()] = extension
 	}
 
-	return nil
+	return extensions, nil
 }
 
 func ParseManifest(manifestPath string) (extension Extension, err error) {

@@ -10,7 +10,7 @@ rootItems:
     with:
       platform: linux
 commands:
-  list:
+  - name: list
     onSuccess: push-page
     exec: |
       tldr --list --platform ${{ platform }} | sunbeam query --arg platform=${{ platform }} -R '{
@@ -20,7 +20,7 @@ commands:
           with: {page: ., platform: $platform}
         },
         actions: [
-          {type: "run-command", "command": "view-page", title: "View Page", with: {page: ., platform: $platform}}
+          {type: "run-command", "command": "view-page", title: "Copy Page", with: {page: ., platform: $platform}}
         ]
       }' | sunbeam query --slurp '{ type: "list", showPreview: true, items: . }'
     params:
@@ -30,7 +30,7 @@ commands:
           - linux
           - osx
           - windows
-  view-page:
+  - name: view-page
     exec: tldr --color always --platform ${{ platform }} ${{ page }}
     params:
       - name: platform
