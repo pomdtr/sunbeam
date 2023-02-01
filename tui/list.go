@@ -294,7 +294,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
 			return UpdateQueryMsg{Query: header.Value()}
 		}))
-		filter.FilterItems(header.Value())
+		if !c.GenerateItems {
+			filter.FilterItems(header.Value())
+		}
 	}
 
 	if c.filter.Selection() != nil && filter.Selection() != nil && filter.Selection().ID() != c.filter.Selection().ID() {
