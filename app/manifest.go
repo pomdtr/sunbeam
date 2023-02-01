@@ -24,21 +24,21 @@ type RootItem struct {
 }
 
 type Extension struct {
-	Version     string       `json:"version" yaml:"version"`
-	Title       string       `json:"title" yaml:"title"`
-	Description string       `json:"description,omitempty" yaml:"description,omitempty"`
-	Platform    []string     `json:"platform,omitempty" yaml:"platform,omitempty"`
-	PostInstall string       `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
-	Root        *url.URL     `json:"-" yaml:"-"`
-	Preferences []Preference `json:"preferences,omitempty" yaml:"preferences,omitempty"`
+	Version     string   `json:"version" yaml:"version"`
+	Title       string   `json:"title" yaml:"title"`
+	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
+	Platform    []string `json:"platform,omitempty" yaml:"platform,omitempty"`
+	PostInstall string   `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
+	Root        *url.URL `json:"-" yaml:"-"`
+	Env         []Env    `json:"env,omitempty" yaml:"env,omitempty"`
 
 	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
 	Commands     []Command              `json:"commands"`
 }
 
-type Preference struct {
-	Env   string
+type Env struct {
+	Name  string
 	Input FormItem
 }
 

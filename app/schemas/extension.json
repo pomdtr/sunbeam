@@ -27,16 +27,16 @@
         "postInstall": {
             "type": "string"
         },
-        "preferences": {
+        "env": {
             "type": "array",
             "items": {
                 "type": "object",
                 "required": [
-                    "env",
+                    "name",
                     "input"
                 ],
                 "properties": {
-                    "env": {
+                    "name": {
                         "type": "string"
                     },
                     "input": {

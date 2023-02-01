@@ -1,7 +1,7 @@
 version: "1.0"
 title: Bitwarden
-preferences:
-  - env: BW_SESSION
+env:
+  - name: SESSION_TOKEN
     input:
       type: textfield
       title: Bitwarden Session
@@ -15,12 +15,3 @@ commands:
   - name: list-passwords
     exec: ./bitwarden.sh
     onSuccess: push-page
-  - name: lock-vault
-    exec: |
-      bw lock
-      sunbeam kv delete session
-  - name: unlock-vault
-    exec: ./unlock.sh ${{ password }}
-    params:
-      - name: password
-        type: string

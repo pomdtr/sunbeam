@@ -91,18 +91,18 @@ func (c *CommandRunner) Run() tea.Cmd {
 	}
 
 	formitems = make([]FormItem, 0)
-	for _, pref := range c.extension.Preferences {
+	for _, pref := range c.extension.Env {
 		// Skip if the env is already set in the .env file
-		if _, ok := environ[pref.Env]; ok {
+		if _, ok := environ[pref.Name]; ok {
 			continue
 		}
 
 		// Skip if the env is already set in the environment
-		if _, ok := os.LookupEnv(pref.Env); ok {
+		if _, ok := os.LookupEnv(pref.Name); ok {
 			continue
 		}
 
-		formitems = append(formitems, NewFormItem(pref.Env, pref.Input))
+		formitems = append(formitems, NewFormItem(pref.Name, pref.Input))
 	}
 
 	if len(formitems) > 0 {

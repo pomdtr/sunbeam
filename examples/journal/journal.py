@@ -4,7 +4,6 @@ import argparse
 import uuid
 import json
 from datetime import datetime
-import subprocess
 
 
 class JournalEntry(TypedDict):
@@ -21,16 +20,16 @@ dirname = pathlib.Path(__file__).parent.absolute()
 
 
 def load_journal() -> Journal:
-    res = subprocess.run(
-        ["sunbeam", "kv", "get", "journal"], text=True, capture_output=True
-    )
-    if res.returncode != 0:
+    if not (dirname / "journal.json").exists():
         return {"entries": {}}
-    return json.loads(res.stdout)
+
+    with open(dirname / "journal.json") as f:
+        return json.load(f)
 
 
 def save_journal(journal: Journal) -> None:
-    subprocess.run(["sunbeam", "kv", "set", "journal", json.dumps(journal)], check=True)
+    with open(dirname / "journal.json", "w") as f:
+        json.dump(journal, f)
 
 
 def list_entries(journal: Journal):
