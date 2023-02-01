@@ -262,7 +262,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 					listItem := ParseScriptItem(scriptItem)
 					if scriptItem.Preview != nil {
-						listItem.PreviewCmd = func() string {
+						listItem.PreviewFunc = func() string {
 							if scriptItem.Preview.Command == "" {
 								preview, err := utils.HighlightString(scriptItem.Preview.Text, scriptItem.Preview.Language)
 
@@ -300,7 +300,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				if c.list == nil {
 					c.list = NewList(page.Title)
-					c.list.SetSize(c.width, c.height)
 				} else {
 					c.list.SetTitle(page.Title)
 				}
@@ -314,6 +313,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				c.list.SetItems(listItems)
 
+				c.list.SetSize(c.width, c.height)
 				return c, c.list.Init()
 			}
 		case "open-url":
@@ -323,7 +323,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case "reload-page":
 			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
 		default:
-			return c, tea.Quit
+			return c, ExitCmd
 		}
 
 	case SubmitFormMsg:

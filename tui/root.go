@@ -92,6 +92,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Pop()
 			return m, nil
 		}
+	case exitMsg:
+		m.hidden = true
+		return m, tea.Quit
 	case error:
 		detail := NewDetail("Error", msg.Error)
 		detail.SetSize(m.pageWidth(), m.pageHeight())
@@ -256,6 +259,10 @@ func (rl RootList) RefreshItem() tea.Msg {
 
 	return listItems
 }
+
+type exitMsg struct{}
+
+func ExitCmd() tea.Msg { return exitMsg{} }
 
 func (rl RootList) SetSize(width int, height int) {
 	rl.list.SetSize(width, height)

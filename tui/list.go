@@ -21,7 +21,7 @@ type ListItem struct {
 	Id          string
 	Title       string
 	Subtitle    string
-	PreviewCmd  func() string
+	PreviewFunc func() string
 	Accessories []string
 	Actions     []Action
 }
@@ -154,7 +154,7 @@ func (c *List) SetSize(width, height int) {
 	c.header.Width = width
 	c.actions.SetSize(width, height)
 	if c.ShowPreview {
-		listWidth := width / 3
+		listWidth := width/3 - 1 // take separator into account
 		c.filter.SetSize(listWidth, availableHeight)
 		c.viewport.Width = width - listWidth
 		c.viewport.Height = availableHeight
@@ -269,12 +269,12 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		item := c.filter.Selection().(ListItem)
-		if item.PreviewCmd == nil {
+		if item.PreviewFunc == nil {
 			return c, nil
 		}
 
 		return c, func() tea.Msg {
-			return PreviewContentMsg(item.PreviewCmd())
+			return PreviewContentMsg(item.PreviewFunc())
 		}
 
 	case PreviewContentMsg:
