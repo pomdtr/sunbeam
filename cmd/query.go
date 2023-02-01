@@ -16,6 +16,7 @@ func NewCmdQuery() *cobra.Command {
 	var jqFlags struct {
 		NullInput bool
 		RawInput  bool
+		RawOutput bool
 		Slurp     bool
 		Arg       []string
 		ArgJSON   []string
@@ -125,6 +126,10 @@ func NewCmdQuery() *cobra.Command {
 					if err, ok := v.(error); ok {
 						return err
 					}
+					if jqFlags.RawOutput {
+						fmt.Println(v)
+						continue
+					}
 					err := encoder.Encode(v)
 					if err != nil {
 						return err
@@ -137,6 +142,7 @@ func NewCmdQuery() *cobra.Command {
 
 	queryCmd.Flags().BoolVarP(&jqFlags.NullInput, "null-input", "n", false, "use null as input value")
 	queryCmd.Flags().BoolVarP(&jqFlags.RawInput, "raw-input", "R", false, "read input as raw strings")
+	queryCmd.Flags().BoolVarP(&jqFlags.RawOutput, "raw-output", "r", false, "output raw strings, not JSON texts")
 	queryCmd.Flags().BoolVarP(&jqFlags.Slurp, "slurp", "s", false, "read all inputs into an array")
 	queryCmd.Flags().StringArrayVar(&jqFlags.Arg, "arg", []string{}, "add string variable in the form of name=value")
 	queryCmd.Flags().StringArrayVar(&jqFlags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
