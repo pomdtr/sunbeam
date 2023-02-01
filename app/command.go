@@ -118,9 +118,7 @@ func (c Command) CheckMissingParams(with map[string]any) error {
 	return nil
 }
 
-func (c Command) Run(payload CommandPayload, root *url.URL) ([]byte, error) {
-	var err error
-
+func (c Command) Cmd(payload CommandPayload, dir string) (*exec.Cmd, error) {
 	funcMap := template.FuncMap{}
 	for _, spec := range c.Params {
 		input, ok := payload.With[spec.Name]
@@ -162,6 +160,27 @@ func (c Command) Run(payload CommandPayload, root *url.URL) ([]byte, error) {
 		}
 	}
 
+	rendered, err := utils.RenderString(c.Exec, funcMap)
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := exec.Command("sh", "-c", rendered)
+
+	cmd.Dir = dir
+	cmd.Stdin = strings.NewReader(payload.Stdin)
+
+	cmd.Env = append(cmd.Env, os.Environ()...)
+	for key, env := range payload.Env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, env))
+	}
+
+	return cmd, nil
+}
+
+func (c Command) Run(payload CommandPayload, root *url.URL) ([]byte, error) {
+	var err error
+
 	if root.Scheme != "file" {
 		payload, err := json.Marshal(payload)
 		if err != nil {
@@ -192,18 +211,9 @@ func (c Command) Run(payload CommandPayload, root *url.URL) ([]byte, error) {
 		return body, nil
 	}
 
-	rendered, err := utils.RenderString(c.Exec, funcMap)
+	cmd, err := c.Cmd(payload, root.Path)
 	if err != nil {
 		return nil, err
-	}
-
-	cmd := exec.Command("sh", "-c", rendered)
-	cmd.Dir = root.Path
-	cmd.Stdin = strings.NewReader(payload.Stdin)
-
-	cmd.Env = append(cmd.Env, os.Environ()...)
-	for key, env := range payload.Env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, env))
 	}
 
 	output, err := cmd.Output()

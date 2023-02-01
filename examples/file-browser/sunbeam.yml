@@ -3,8 +3,8 @@ title: File Browser
 requirements:
   - which: python3
     homePage: https://www.python.org
-env:
-  - name: SHOW_HIDDEN
+preferences:
+  - env: SHOW_HIDDEN
     input:
       type: checkbox
       title: visibility

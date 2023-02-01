@@ -3,8 +3,8 @@ title: GitHub
 requirements:
   - homePage: https://cli.github.com
     which: gh
-env:
-  - name: GITHUB_TOKEN
+preferences:
+  - env: GITHUB_TOKEN
     input:
       type: textfield
       title: GitHub Personal Access Token

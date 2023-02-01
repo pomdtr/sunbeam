@@ -1,7 +1,7 @@
 version: "1.0"
 title: Bitwarden
-env:
-  - name: SESSION_TOKEN
+preferences:
+  - env: BW_SESSION
     input:
       type: textfield
       title: Bitwarden Session
@@ -11,6 +11,8 @@ requirements:
 rootItems:
   - title: Search Passwords
     command: list-passwords
+  - title: Edit Passwords
+    command: vi
 commands:
   - name: list-passwords
     exec: ./bitwarden.sh

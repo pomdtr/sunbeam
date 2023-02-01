@@ -27,17 +27,23 @@
         "postInstall": {
             "type": "string"
         },
-        "env": {
+        "preferences": {
             "type": "array",
             "items": {
                 "type": "object",
                 "required": [
-                    "name",
+                    "env",
                     "input"
                 ],
                 "properties": {
-                    "name": {
+                    "env": {
                         "type": "string"
+                    },
+                    "commands": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "input": {
                         "type": "object"
@@ -137,6 +143,9 @@
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "env": {
+                    "type": "object"
                 },
                 "exec": {
                     "type": "string"

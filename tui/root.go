@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"strconv"
 
@@ -30,6 +31,7 @@ type Model struct {
 	width, height int
 	MaxHeight     int
 	Padding       int
+	exitCommand   *exec.Cmd
 
 	root  Page
 	pages []Page
@@ -95,6 +97,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case exitMsg:
 		m.hidden = true
 		return m, tea.Quit
+	case *exec.Cmd:
+		m.hidden = true
+		m.exitCommand = msg
+		return m, tea.Quit
 	case error:
 		detail := NewDetail("Error", msg.Error)
 		detail.SetSize(m.pageWidth(), m.pageHeight())
@@ -140,7 +146,6 @@ func (m *Model) View() string {
 	}
 
 	return pageView
-
 }
 
 func (m *Model) SetSize(width, height int) {
@@ -336,10 +341,23 @@ func Draw(model *Model) (err error) {
 		p = tea.NewProgram(model, tea.WithOutput(os.Stderr))
 	}
 
-	_, err = p.Run()
+	m, err := p.Run()
 	if err != nil {
 		return err
 	}
 
-	return nil
+	model, ok = m.(*Model)
+	if !ok {
+		return fmt.Errorf("could not convert model to *Model")
+	}
+
+	if model.exitCommand == nil {
+		return nil
+	}
+
+	model.exitCommand.Stdin = os.Stdin
+	model.exitCommand.Stdout = os.Stdout
+	model.exitCommand.Stderr = os.Stderr
+
+	return model.exitCommand.Run()
 }

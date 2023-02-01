@@ -91,18 +91,18 @@ func (c *CommandRunner) Run() tea.Cmd {
 	}
 
 	formitems = make([]FormItem, 0)
-	for _, pref := range c.extension.Env {
+	for _, pref := range c.extension.Preferences {
 		// Skip if the env is already set in the .env file
-		if _, ok := environ[pref.Name]; ok {
+		if _, ok := environ[pref.Env]; ok {
 			continue
 		}
 
 		// Skip if the env is already set in the environment
-		if _, ok := os.LookupEnv(pref.Name); ok {
+		if _, ok := os.LookupEnv(pref.Env); ok {
 			continue
 		}
 
-		formitems = append(formitems, NewFormItem(pref.Name, pref.Input))
+		formitems = append(formitems, NewFormItem(pref.Env, pref.Input))
 	}
 
 	if len(formitems) > 0 {
@@ -124,18 +124,26 @@ func (c *CommandRunner) Run() tea.Cmd {
 		return NewErrorCmd(err)
 	}
 
-	return func() tea.Msg {
-		var input string
-		if c.list != nil {
-			input = c.list.Query()
-		}
-		output, err := c.command.Run(app.CommandPayload{
-			Stdin: input,
-			With:  params,
-			Env:   environ,
-		}, c.extension.Root)
+	payload := app.CommandPayload{
+		With: params,
+		Env:  environ,
+	}
+
+	if c.command.OnSuccess == "" && c.extension.Root.Scheme == "file" {
+		cmd, err := c.command.Cmd(payload, c.extension.Root.Path)
 		if err != nil {
 			return NewErrorCmd(err)
+		}
+
+		return func() tea.Msg {
+			return cmd
+		}
+	}
+
+	return func() tea.Msg {
+		output, err := c.command.Run(payload, c.extension.Root)
+		if err != nil {
+			return err
 		}
 
 		return CommandOutput(output)
