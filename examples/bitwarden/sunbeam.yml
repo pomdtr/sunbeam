@@ -11,8 +11,6 @@ requirements:
 rootItems:
   - title: Search Passwords
     command: list-passwords
-  - title: Edit Passwords
-    command: vi
 commands:
   - name: list-passwords
     exec: ./bitwarden.sh
