@@ -10,7 +10,6 @@ import (
 
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/tui"
-	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
 )
 
 func Execute(version string) (err error) {
@@ -65,13 +64,13 @@ func Execute(version string) (err error) {
 	})
 
 	// Core Commands
-	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	rootCmd.AddCommand(NewCmdDocs())
 	rootCmd.AddCommand(NewCmdExtension(extensionRoot, extensions))
 	rootCmd.AddCommand(NewCmdServe(extensions))
 	rootCmd.AddCommand(NewCmdCheck())
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(&config))
+	rootCmd.AddCommand(NewCmdHttp())
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
