@@ -34,8 +34,8 @@ type httpOptions struct {
 func NewCmdHttp() *cobra.Command {
 	var optionSet httpOptions
 	cmd := cobra.Command{
-		Use:   "http",
-		Short: "HTTP utilities",
+		Use:   "http [METHOD] URL [REQUEST_ITEM ...]",
+		Short: "User-friendly curl replacement inspired by HTTPie",
 		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
 
 			if !optionSet.IgnoreStdin && !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -113,7 +113,7 @@ func NewCmdHttp() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&optionSet.InputOptions.JSON, "json", "j", false, "data items are serialized as JSON (default)")
 	cmd.Flags().BoolVarP(&optionSet.InputOptions.Form, "form", "f", false, "data items are serialized as form fields")
-	cmd.Flags().StringVarP(&optionSet.Print, "print", "p", "\000", "specifies what the output should contain (HBhb)")
+	cmd.Flags().StringVarP(&optionSet.Print, "print", "p", "", "specifies what the output should contain (HBhb)")
 	cmd.Flags().BoolVarP(&optionSet.Verbose, "verbose", "v", false, "print the request as well as the response. shortcut for --print=HBhb")
 	cmd.Flags().BoolVarP(&optionSet.Headers, "headers", "H", false, "print only the request headers. shortcut for --print=h")
 	cmd.Flags().BoolVarP(&optionSet.Body, "body", "b", false, "print only response body. shourtcut for --print=b")
@@ -133,10 +133,8 @@ func NewCmdHttp() *cobra.Command {
 
 }
 
-func parsePrintFlag(
-	options *httpOptions,
-) error {
-	if options.Print == "\000" { // --print is not specified
+func parsePrintFlag(options *httpOptions) error {
+	if options.Print == "" {
 		if options.Headers {
 			options.OutputOptions.PrintResponseHeader = true
 		} else if options.Body {
