@@ -204,7 +204,7 @@ type RootList struct {
 
 func NewRootList(extensions ...*app.Extension) *RootList {
 	return &RootList{
-		list:       NewList("Subeam"),
+		list:       NewList("Sunbeam"),
 		extensions: extensions,
 	}
 }
