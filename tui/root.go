@@ -203,8 +203,16 @@ type RootList struct {
 }
 
 func NewRootList(extensions ...*app.Extension) *RootList {
+	list := NewList("Sunbeam")
+	list.defaultActions = []Action{
+		{
+			Title:    "Reload",
+			Shortcut: "ctrl+r",
+			Cmd:      NewReloadPageCmd(nil),
+		},
+	}
 	return &RootList{
-		list:       NewList("Sunbeam"),
+		list:       list,
 		extensions: extensions,
 	}
 }
