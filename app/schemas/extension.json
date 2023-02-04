@@ -28,26 +28,10 @@
             "type": "string"
         },
         "preferences": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "env",
-                    "input"
-                ],
-                "properties": {
-                    "env": {
-                        "type": "string"
-                    },
-                    "commands": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "input": {
-                        "type": "object"
-                    }
+            "type": "object",
+            "patternProperties": {
+                ".+": {
+                    "type": "object"
                 }
             }
         },
@@ -134,6 +118,33 @@
         }
     },
     "$defs": {
+        "arg": {
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "enum": [
+                        "string",
+                        "boolean",
+                        "file",
+                        "directory"
+                    ]
+                },
+                "enum": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "command": {
             "type": "object",
             "additionalProperties": false,
@@ -145,7 +156,10 @@
                     "type": "string"
                 },
                 "env": {
-                    "type": "object"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/arg"
+                    }
                 },
                 "exec": {
                     "type": "string"
@@ -161,31 +175,7 @@
                 "params": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "required": [
-                            "name",
-                            "type"
-                        ],
-                        "additionalProperties": false,
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "type": {
-                                "enum": [
-                                    "string",
-                                    "boolean",
-                                    "file",
-                                    "directory"
-                                ]
-                            },
-                            "enum": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/$defs/arg"
                     }
                 }
             }

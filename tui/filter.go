@@ -106,7 +106,13 @@ func (m Filter) View() string {
 	}
 
 	if len(rows) == 0 {
-		return styles.Faint.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render("No matches")
+		var emptyText string
+		if len(m.items) == 0 {
+			emptyText = "No items"
+		} else {
+			emptyText = "No matches"
+		}
+		return styles.Faint.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(emptyText)
 	}
 
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)

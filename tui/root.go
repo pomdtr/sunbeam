@@ -31,7 +31,7 @@ type Model struct {
 	width, height int
 	MaxHeight     int
 	Padding       int
-	exitCommand   *exec.Cmd
+	exitCmd       *exec.Cmd
 
 	root  Page
 	pages []Page
@@ -94,12 +94,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Pop()
 			return m, nil
 		}
-	case exitMsg:
+	case exit:
 		m.hidden = true
 		return m, tea.Quit
 	case *exec.Cmd:
 		m.hidden = true
-		m.exitCommand = msg
+		m.exitCmd = msg
 		return m, tea.Quit
 	case error:
 		detail := NewDetail("Error", msg.Error)
@@ -198,31 +198,14 @@ func (m *Model) Pop() {
 }
 
 type RootList struct {
-	extensions map[string]app.Extension
-	rootItems  []app.RootItem
 	list       *List
+	extensions []*app.Extension
 }
 
-func NewRootList(extensions map[string]app.Extension, additionalRootItems ...app.RootItem) *RootList {
-	rootItems := make([]app.RootItem, 0)
-	for name, extension := range extensions {
-		for _, rootItem := range extension.RootItems {
-			rootItem.Extension = name
-			rootItems = append(rootItems, rootItem)
-		}
-	}
-
-	for _, rootItem := range additionalRootItems {
-		if _, ok := extensions[rootItem.Extension]; !ok {
-			continue
-		}
-		rootItems = append(rootItems, rootItem)
-	}
-
+func NewRootList(extensions ...*app.Extension) *RootList {
 	return &RootList{
+		list:       NewList("Subeam"),
 		extensions: extensions,
-		rootItems:  rootItems,
-		list:       NewList("Sunbeam"),
 	}
 }
 
@@ -232,42 +215,51 @@ func (rl RootList) Init() tea.Cmd {
 
 func (rl RootList) RefreshItem() tea.Msg {
 	listItems := make([]ListItem, 0)
-	for _, rootItem := range rl.rootItems {
-		rootItem := rootItem
-		extension := rl.extensions[rootItem.Extension]
-		command, ok := extension.GetCommand(rootItem.Command)
-		if !ok {
-			return nil
+	for extensionName, extension := range rl.extensions {
+		extension, err := app.LoadExtension(extension.Root)
+		if err != nil {
+			return fmt.Errorf("failed to load extension: %s", err)
 		}
-		listItems = append(listItems, ListItem{
-			Id:          fmt.Sprintf("%s-%s", rootItem.Extension, rootItem.Command),
-			Title:       rootItem.Title,
-			Subtitle:    extension.Title,
-			Accessories: []string{rootItem.Extension},
-			Actions: []Action{
-				{
-					Title:    "Run Command",
-					Shortcut: "enter",
-					Cmd: func() tea.Msg {
-						return PushPageMsg{
-							Page: NewCommandRunner(
-								extension,
-								command,
-								rootItem.With,
-							),
-						}
+
+		for _, rootItem := range extension.RootItems {
+			rootItem := rootItem
+			listItems = append(listItems, ListItem{
+				Id:          fmt.Sprintf("%s-%s", rootItem.Extension, rootItem.Command),
+				Title:       rootItem.Title,
+				Subtitle:    extension.Title,
+				Accessories: []string{rootItem.Extension},
+				Actions: []Action{
+					{
+						Title:    "Run Command",
+						Shortcut: "enter",
+						Cmd: func() tea.Msg {
+							command, ok := extension.GetCommand(rootItem.Command)
+							if !ok {
+								return nil
+							}
+							return PushPageMsg{
+								Page: NewCommandRunner(
+									extension,
+									command,
+									rootItem.With,
+								),
+							}
+						},
 					},
 				},
-			},
-		})
+			})
+		}
+
+		rl.extensions[extensionName] = extension
 	}
 
 	return listItems
 }
 
-type exitMsg struct{}
+type exit struct {
+}
 
-func ExitCmd() tea.Msg { return exitMsg{} }
+func Exit() tea.Msg { return exit{} }
 
 func (rl RootList) SetSize(width int, height int) {
 	rl.list.SetSize(width, height)
@@ -277,6 +269,8 @@ func (rl RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case []ListItem:
 		rl.list.SetItems(msg)
+	case ReloadPageMsg:
+		return rl, rl.RefreshItem
 	}
 
 	var cmd tea.Cmd
@@ -351,13 +345,13 @@ func Draw(model *Model) (err error) {
 		return fmt.Errorf("could not convert model to *Model")
 	}
 
-	if model.exitCommand == nil {
-		return nil
+	if model.exitCmd != nil {
+		model.exitCmd.Stdin = os.Stdin
+		model.exitCmd.Stdout = os.Stdout
+		model.exitCmd.Stderr = os.Stderr
+
+		return model.exitCmd.Run()
 	}
 
-	model.exitCommand.Stdin = os.Stdin
-	model.exitCommand.Stdout = os.Stdout
-	model.exitCommand.Stderr = os.Stderr
-
-	return model.exitCommand.Run()
+	return nil
 }

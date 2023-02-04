@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdExtension(extensionRoot string, extensions map[string]app.Extension) *cobra.Command {
+func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},
@@ -23,9 +23,9 @@ func NewCmdExtension(extensionRoot string, extensions map[string]app.Extension) 
 		GroupID: "core",
 	}
 
-	extensionArgs := make([]string, 0, len(extensions))
-	for name := range extensions {
-		extensionArgs = append(extensionArgs, name)
+	extensionNames := make([]string, len(extensions))
+	for i, extension := range extensions {
+		extensionNames[i] = extension.Name()
 	}
 
 	extensionCommand.AddCommand(func() *cobra.Command {
@@ -64,8 +64,7 @@ func NewCmdExtension(extensionRoot string, extensions map[string]app.Extension) 
 				if _, err := os.Stat(extensionRoot); err == nil {
 					extensionRoot, err = filepath.Abs(extensionRoot)
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "Failed to get absolute path for extension root: %s", err)
-						os.Exit(1)
+						return fmt.Errorf("failed to get absolute path for extension root: %s", err)
 					}
 
 					if _, err = os.Stat(path.Join(extensionRoot, "sunbeam.yml")); os.IsNotExist(err) {
@@ -75,8 +74,7 @@ func NewCmdExtension(extensionRoot string, extensions map[string]app.Extension) 
 					symlinkTarget := path.Join(extensionRoot, extensionName)
 
 					if err := os.Symlink(extensionRoot, symlinkTarget); err != nil {
-						fmt.Fprintln(os.Stderr, "Failed to create symlink", err)
-						os.Exit(1)
+						return fmt.Errorf("failed to create symlink: %s", err)
 					}
 
 					fmt.Println("Installed extension", extensionName)
@@ -125,18 +123,16 @@ func NewCmdExtension(extensionRoot string, extensions map[string]app.Extension) 
 	extensionCommand.AddCommand(func() *cobra.Command {
 		return &cobra.Command{
 			Use:       "remove",
-			ValidArgs: extensionArgs,
+			ValidArgs: extensionNames,
 			Short:     "Remove an installed extension",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionPath := path.Join(extensionRoot, args[0])
 				if _, err := os.Stat(extensionPath); os.IsNotExist(err) {
-					fmt.Fprintln(os.Stderr, "Extension not found")
-					os.Exit(1)
+					return fmt.Errorf("extension not found: %s", extensionPath)
 				}
 
 				if err := os.RemoveAll(extensionPath); err != nil {
-					fmt.Fprintln(os.Stderr, "Failed to remove extension")
-					os.Exit(1)
+					return fmt.Errorf("failed to remove extension: %s", err)
 				}
 
 				fmt.Println("Removed extension", args[0])
@@ -179,13 +175,12 @@ func NewCmdExtension(extensionRoot string, extensions map[string]app.Extension) 
 			Use:       "upgrade",
 			Short:     "Upgrade installed extension",
 			Args:      cobra.ExactArgs(1),
-			ValidArgs: extensionArgs,
+			ValidArgs: extensionNames,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionDir := path.Join(extensionRoot, args[0])
 				fi, err := os.Lstat(extensionDir)
 				if os.IsNotExist(err) {
-					fmt.Fprintln(os.Stderr, "Extension not found")
-					os.Exit(1)
+					return fmt.Errorf("extension not found: %s", args[0])
 				}
 
 				if IsLocalExtension(fi) {
@@ -239,7 +234,7 @@ func NewCmdExtension(extensionRoot string, extensions map[string]app.Extension) 
 			Aliases: []string{"ls"},
 			Args:    cobra.NoArgs,
 			Run: func(cmd *cobra.Command, args []string) {
-				for name := range extensions {
+				for name := range extensionNames {
 					fmt.Println(name)
 				}
 			},
@@ -259,7 +254,7 @@ func PostInstallHook(extension app.Extension) error {
 		return nil
 	}
 	cmd := exec.Command("sh", "-c", extension.PostInstall)
-	cmd.Dir = extension.Root.Path
+	cmd.Dir = extension.Root
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

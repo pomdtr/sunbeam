@@ -37,10 +37,10 @@ func NewCmdHttp() *cobra.Command {
 		Use:   "http [METHOD] URL [REQUEST_ITEM ...]",
 		Short: "User-friendly curl replacement inspired by HTTPie",
 		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
-
-			if !optionSet.IgnoreStdin && !isatty.IsTerminal(os.Stdin.Fd()) {
-				optionSet.InputOptions.ReadStdin = true
-			}
+			// if !optionSet.IgnoreStdin && !isatty.IsTerminal(os.Stdin.Fd()) {
+			// 	panic("stdin is not tty")
+			// }
+			optionSet.InputOptions.ReadStdin = false
 
 			err = parsePrintFlag(&optionSet)
 			if err != nil {

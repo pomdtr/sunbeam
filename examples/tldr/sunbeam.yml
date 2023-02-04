@@ -20,7 +20,7 @@ commands:
           with: {page: ., platform: $platform}
         },
         actions: [
-          {type: "run-command", "command": "view-page", title: "Copy Page", with: {page: ., platform: $platform}}
+          {type: "run-command", "command": "view-page", title: "View Page", with: {page: ., platform: $platform}}
         ]
       }' | sunbeam query --slurp '{ type: "list", showPreview: true, items: . }'
     params:

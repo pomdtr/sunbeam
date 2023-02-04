@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Run headless dlv",
+            "label": "Run app",
             "type": "process",
             "command": [
                 "dlv",
@@ -14,6 +14,11 @@
                 "--api-version=2",
                 "${workspaceFolder}/main.go"
             ],
+            "options": {
+                "env": {
+                    "SUNBEAM_HEIGHT": "0"
+                }
+            },
             "isBackground": true,
             "problemMatcher": {
                 "owner": "go",

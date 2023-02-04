@@ -96,9 +96,10 @@ func (i ListItem) Render(width int, selected bool) string {
 }
 
 type List struct {
-	header  Header
-	footer  Footer
-	actions ActionList
+	header         Header
+	footer         Footer
+	actions        ActionList
+	defaultActions []Action
 
 	GenerateItems bool
 	ShowPreview   bool
@@ -142,7 +143,7 @@ func (c *List) Init() tea.Cmd {
 }
 
 func (c *List) RefreshPreview() {
-	previewWidth := c.viewport.Width - 3
+	previewWidth := c.viewport.Width - 2 // take padding into account
 	previewContent := wrap.String(wordwrap.String(c.previewContent, previewWidth), previewWidth)
 
 	c.viewport.SetContent(previewContent)
@@ -181,9 +182,8 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 
 	c.filter.SetItems(filterItems)
 	c.filter.FilterItems(c.Query())
-	if c.Selection() != nil {
-		c.updateSelection(c.filter)
-	}
+
+	c.updateSelection(c.filter)
 	return nil
 }
 
@@ -194,23 +194,23 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 type PreviewContentMsg string
 
 func (l *List) updateSelection(filter Filter) {
+	actions := make([]Action, 0)
 	if filter.Selection() == nil {
-		l.actions.SetActions()
-		l.footer.SetBindings()
 		l.previewContent = ""
-		return
+		actions = append(actions, l.defaultActions...)
+	} else {
+		item := filter.Selection().(ListItem)
+		l.actions.SetTitle(item.Title)
+		actions = append(actions, item.Actions...)
+		actions = append(actions, l.defaultActions...)
 	}
 
-	item := filter.Selection().(ListItem)
-
-	l.actions.SetTitle(item.Title)
-	l.actions.SetActions(item.Actions...)
-
-	if len(item.Actions) == 0 {
+	l.actions.SetActions(actions...)
+	if len(actions) == 0 {
 		l.footer.SetBindings()
 	} else {
 		l.footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", item.Actions[0].Title)),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}

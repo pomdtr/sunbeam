@@ -23,8 +23,7 @@ func NewCmdCheck() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			manifestPath := args[0]
 			if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
-				fmt.Fprintf(os.Stderr, "File %s does not exist\n", manifestPath)
-				os.Exit(1)
+				return fmt.Errorf("file %s does not exist", manifestPath)
 			}
 
 			manifestBytes, err := os.ReadFile(manifestPath)
@@ -102,7 +101,7 @@ func NewCmdCheck() *cobra.Command {
 
 					switch page.Type {
 					case "detail":
-						for _, action := range page.Detail.Actions {
+						for _, action := range page.Actions {
 							if action.Type != "run-command" {
 								continue
 							}

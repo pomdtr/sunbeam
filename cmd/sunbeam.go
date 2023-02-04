@@ -49,7 +49,7 @@ func Execute(version string) (err error) {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(extensions, config.RootItems...)
+			rootList := tui.NewRootList(extensions...)
 			model := tui.NewModel(rootList)
 			return tui.Draw(model)
 		},
@@ -74,21 +74,21 @@ func Execute(version string) (err error) {
 
 	if os.Getenv("DISABLE_EXTENSIONS") == "" {
 		// Extension Commands
-		for name, extension := range extensions {
-			rootCmd.AddCommand(NewExtensionCommand(name, extension, &config))
+		for _, extension := range extensions {
+			rootCmd.AddCommand(NewExtensionCommand(extension, &config))
 		}
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(name string, extension app.Extension, config *tui.Config) *cobra.Command {
+func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
-		Use:     name,
+		Use:     extension.Name(),
 		GroupID: "extension",
 		Short:   extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(map[string]app.Extension{name: extension}, config.RootItems...)
+			rootList := tui.NewRootList(extension)
 			model := tui.NewModel(rootList)
 			err = tui.Draw(model)
 			if err != nil {

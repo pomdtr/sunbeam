@@ -38,6 +38,13 @@ json.dump(
                         }
                     ),
                     {
+                        "type": "run-command",
+                        "title": "Edit",
+                        "shortcut": "ctrl+e",
+                        "command": "edit-file",
+                        "with": {"file": str(path.absolute())},
+                    },
+                    {
                         "type": "copy-text",
                         "title": "Copy Path",
                         "shorcut": "ctrl+y",

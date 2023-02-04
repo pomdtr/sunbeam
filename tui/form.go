@@ -33,7 +33,7 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormItem(name string, param app.FormItem) FormItem {
+func NewFormItem(name string, param *app.FormItem) FormItem {
 	var input FormInput
 	switch param.Type {
 	case "textfield", "file", "directory":
@@ -47,10 +47,10 @@ func NewFormItem(name string, param app.FormItem) FormItem {
 		ta := NewTextArea(param)
 		input = &ta
 	case "dropdown":
-		dd := NewDropDown(param)
+		dd := NewDropDown(*param)
 		input = &dd
 	case "checkbox":
-		cb := NewCheckbox(param)
+		cb := NewCheckbox(*param)
 		input = &cb
 	default:
 		return FormItem{}
@@ -67,7 +67,7 @@ type TextArea struct {
 	textarea.Model
 }
 
-func NewTextArea(formItem app.FormItem) TextArea {
+func NewTextArea(formItem *app.FormItem) TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
 	if defaultValue, ok := formItem.Default.(string); ok {
@@ -105,7 +105,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem app.FormItem) TextInput {
+func NewTextInput(formItem *app.FormItem) TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	if defaultValue, ok := formItem.Default.(string); ok {

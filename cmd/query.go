@@ -56,13 +56,11 @@ func NewCmdQuery() *cobra.Command {
 
 			query, err := gojq.Parse(args[0])
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return fmt.Errorf("could not parse query: %w", err)
 			}
 			code, err := gojq.Compile(query, gojq.WithVariables(vars))
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return fmt.Errorf("could not compile query: %w", err)
 			}
 
 			var inputFile *os.File

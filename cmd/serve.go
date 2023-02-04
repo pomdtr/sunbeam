@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdServe(extensions map[string]app.Extension) *cobra.Command {
+func NewCmdServe(extensions []*app.Extension) *cobra.Command {
 	cmd := cobra.Command{
 		Use:     "serve",
 		GroupID: "core",
@@ -20,9 +20,7 @@ func NewCmdServe(extensions map[string]app.Extension) *cobra.Command {
 			server := server.NewServer(extensions, fmt.Sprintf("%s:%d", host, port))
 
 			log.Printf("Listening on %s:%d", host, port)
-			err := server.ListenAndServe()
-
-			return err
+			return server.ListenAndServe()
 		},
 	}
 

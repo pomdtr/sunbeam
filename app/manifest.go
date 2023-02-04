@@ -3,7 +3,6 @@ package app
 import (
 	"embed"
 	"fmt"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -17,29 +16,28 @@ import (
 var embedFs embed.FS
 
 type RootItem struct {
-	Extension string `json:",omitempty" yaml:",omitempty"`
-	Command   string
-	Title     string
-	With      map[string]CommandInput `json:",omitempty" yaml:",omitempty"`
+	Extension string                  `json:"extension,omitempty" yaml:"extension,omitempty"`
+	Command   string                  `json:"command,omitempty" yaml:"command,omitempty"`
+	Title     string                  `json:"title,omitempty" yaml:"title,omitempty"`
+	With      map[string]CommandInput `json:"with,omitempty" yaml:"with,omitempty"`
 }
 
 type Extension struct {
-	Version     string       `json:"version" yaml:"version"`
-	Title       string       `json:"title" yaml:"title"`
-	Description string       `json:"description,omitempty" yaml:"description,omitempty"`
-	Platform    []string     `json:"platform,omitempty" yaml:"platform,omitempty"`
-	PostInstall string       `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
-	Root        *url.URL     `json:"-" yaml:"-"`
-	Preferences []Preference `json:"preferences,omitempty" yaml:"preferences,omitempty"`
+	Version     string               `json:"version" yaml:"version"`
+	Title       string               `json:"title" yaml:"title"`
+	Description string               `json:"description,omitempty" yaml:"description,omitempty"`
+	Platform    []string             `json:"platform,omitempty" yaml:"platform,omitempty"`
+	PostInstall string               `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
+	Root        string               `json:"-" yaml:"-"`
+	Preferences map[string]*FormItem `json:"preferences,omitempty" yaml:"preferences,omitempty"`
 
 	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
 	Commands     []Command              `json:"commands"`
 }
 
-type Preference struct {
-	Env   string
-	Input FormItem
+func (e Extension) Name() string {
+	return path.Base(e.Root)
 }
 
 func (e Extension) GetCommand(name string) (Command, bool) {
@@ -98,38 +96,44 @@ func init() {
 	}
 }
 
-func LoadExtensions(extensionRoot string) (map[string]Extension, error) {
+func LoadExtensions(extensionRoot string) ([]*Extension, error) {
 	entries, err := os.ReadDir(extensionRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read extension root: %w", err)
 	}
 
-	extensions := make(map[string]Extension)
+	extensions := make([]*Extension, 0)
 	for _, entry := range entries {
 		extensionDir := path.Join(extensionRoot, entry.Name())
 		if fi, err := os.Stat(extensionDir); err != nil || !fi.IsDir() {
 			continue
 		}
 
-		manifestPath := path.Join(extensionDir, "sunbeam.yml")
-		if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
-			continue
-		}
-
-		extension, err := ParseManifest(manifestPath)
+		extension, err := LoadExtension(extensionDir)
 		if err != nil {
 			continue
 		}
 
-		extension.Root = &url.URL{
-			Scheme: "file",
-			Path:   extensionDir,
-		}
-
-		extensions[entry.Name()] = extension
+		extensions = append(extensions, extension)
 	}
 
 	return extensions, nil
+}
+
+func LoadExtension(extensionDir string) (*Extension, error) {
+	manifestPath := path.Join(extensionDir, "sunbeam.yml")
+	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("extension manifest not found: %w", err)
+	}
+
+	extension, err := ParseManifest(manifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse extension manifest: %w", err)
+	}
+	extension.Root = extensionDir
+
+	return &extension, nil
+
 }
 
 func ParseManifest(manifestPath string) (extension Extension, err error) {

@@ -4,12 +4,11 @@ requirements:
   - which: python3
     homePage: https://www.python.org
 preferences:
-  - env: SHOW_HIDDEN
-    input:
-      type: checkbox
-      title: visibility
-      label: Show Hidden Files
-      default: false
+  SHOW_HIDDEN:
+    type: checkbox
+    title: Visibility
+    label: Show Hidden Files
+    default: false
 rootItems:
   - title: Browse Root Directory
     command: browse-files
@@ -36,3 +35,8 @@ commands:
     params:
       - name: root
         type: directory
+  - name: edit-file
+    exec: ls -l
+    params:
+      - name: file
+        type: file

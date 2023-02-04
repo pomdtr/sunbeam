@@ -1,22 +1,18 @@
 package app
 
 import (
-	"bytes"
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"text/template"
 
-	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/utils"
 	"gopkg.in/yaml.v3"
+	"mvdan.cc/sh/v3/shell"
+	"mvdan.cc/sh/v3/syntax"
 )
 
 type Command struct {
@@ -24,12 +20,17 @@ type Command struct {
 	Exec        string  `json:"exec,omitempty" yaml:"exec,omitempty"`
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Params      []Param `json:"params,omitempty" yaml:"params,omitempty"`
+	Env         []Env   `json:"env,omitempty" yaml:"env,omitempty"`
 	OnSuccess   string  `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
 
+type Env struct {
+	Name string `json:"name"`
+}
+
 type CommandInput struct {
-	Value    any
-	FormItem FormItem
+	Value    any `json:"value,omitempty" yaml:"value,omitempty"`
+	FormItem *FormItem
 }
 
 func (i *CommandInput) UnmarshalJSON(b []byte) error {
@@ -47,7 +48,7 @@ func (i *CommandInput) UnmarshalJSON(b []byte) error {
 
 	var input FormItem
 	if err := json.Unmarshal(b, &input); err == nil {
-		i.FormItem = input
+		i.FormItem = &input
 		return nil
 	}
 
@@ -69,7 +70,7 @@ func (i *CommandInput) UnmarshalYAML(node *yaml.Node) error {
 
 	var input FormItem
 	if err := node.Decode(&input); err == nil {
-		i.FormItem = input
+		i.FormItem = &input
 		return nil
 	}
 
@@ -83,6 +84,13 @@ func (i CommandInput) MarshalYAML() (interface{}, error) {
 	return i.FormItem, nil
 }
 
+func (i CommandInput) MarshalJSON() ([]byte, error) {
+	if i.Value != nil {
+		return json.Marshal(i.Value)
+	}
+	return json.Marshal(i.FormItem)
+}
+
 type Param struct {
 	Name        string   `json:"name"`
 	Type        string   `json:"type"`
@@ -93,19 +101,13 @@ type Param struct {
 }
 
 type FormItem struct {
-	Type        string
-	Title       string `json:",omitempty" yaml:",omitempty"`
-	Placeholder string `json:",omitempty" yaml:",omitempty"`
-	Default     any    `json:",omitempty" yaml:",omitempty"`
+	Type        string `json:"type"`
+	Title       string `json:"title,omitempty"`
+	Placeholder string `json:"placeholder,omitempty"`
+	Default     any    `json:"default,omitempty"`
 
-	Choices []string `json:",omitempty" yaml:",omitempty"`
-	Label   string   `json:"label,omitempty" yaml:"label,omitempty"`
-}
-
-type CommandPayload struct {
-	Env   map[string]string
-	With  map[string]any
-	Stdin string
+	Choices []string `json:"choices,omitempty"`
+	Label   string   `json:"label,omitempty"`
 }
 
 func (c Command) CheckMissingParams(with map[string]any) error {
@@ -118,10 +120,10 @@ func (c Command) CheckMissingParams(with map[string]any) error {
 	return nil
 }
 
-func (c Command) Cmd(payload CommandPayload, dir string) (*exec.Cmd, error) {
+func (c Command) Cmd(params map[string]any, environ map[string]string, dir string) (*exec.Cmd, error) {
 	funcMap := template.FuncMap{}
 	for _, spec := range c.Params {
-		input, ok := payload.With[spec.Name]
+		input, ok := params[spec.Name]
 		if !ok {
 			return nil, fmt.Errorf("param %s was not provided", spec.Name)
 		}
@@ -134,7 +136,7 @@ func (c Command) Cmd(payload CommandPayload, dir string) (*exec.Cmd, error) {
 				return nil, fmt.Errorf("%s type was not bool", spec.Name)
 			}
 
-			funcMap[sanitizedKey] = func() string { return shellescape.Quote(value) }
+			funcMap[sanitizedKey] = func() (string, error) { return syntax.Quote(value, syntax.LangPOSIX) }
 		case "file", "directory":
 			value, ok := input.(string)
 			if !ok {
@@ -149,7 +151,7 @@ func (c Command) Cmd(payload CommandPayload, dir string) (*exec.Cmd, error) {
 				value = strings.Replace(value, "~", homedir, 1)
 			}
 
-			funcMap[sanitizedKey] = func() string { return shellescape.Quote(value) }
+			funcMap[sanitizedKey] = func() (string, error) { return syntax.Quote(value, syntax.LangPOSIX) }
 		case "boolean":
 			value, ok := input.(bool)
 			if !ok {
@@ -165,80 +167,43 @@ func (c Command) Cmd(payload CommandPayload, dir string) (*exec.Cmd, error) {
 		return nil, err
 	}
 
-	cmd := exec.Command("sh", "-c", rendered)
+	args, err := shell.Fields(rendered, func(s string) string {
+		if env, ok := environ[s]; ok {
+			return env
+		}
 
+		if env, ok := os.LookupEnv(s); ok {
+			return env
+		}
+
+		return ""
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = dir
-	cmd.Stdin = strings.NewReader(payload.Stdin)
 
 	cmd.Env = append(cmd.Env, os.Environ()...)
-	for key, env := range payload.Env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, env))
+	for k, v := range environ {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	return cmd, nil
 }
 
-func (c Command) Run(payload CommandPayload, root *url.URL) ([]byte, error) {
-	var err error
-
-	if root.Scheme != "file" {
-		payload, err := json.Marshal(payload)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal command params: %v", err)
-		}
-
-		url := url.URL{
-			Scheme: root.Scheme,
-			Host:   root.Host,
-			Path:   path.Join(root.Path, "commands", c.Name),
-		}
-
-		res, err := http.Post(url.String(), "application/json", bytes.NewReader(payload))
-		if err != nil {
-			return nil, fmt.Errorf("failed to execute command: %v", err)
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("failed to execute command: %s", res.Status)
-		}
-
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read command output: %v", err)
-		}
-
-		return body, nil
-	}
-
-	cmd, err := c.Cmd(payload, root.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	output, err := cmd.Output()
-	if err != nil {
-		err, ok := err.(*exec.ExitError)
-		if !ok {
-			return nil, err
-		}
-		return nil, fmt.Errorf("%s: %s", err, err.Stderr)
-	}
-
-	return output, nil
-}
-
 type Page struct {
-	Type  string `json:"type"`
-	Title string `json:"title"`
+	Type    string   `json:"type"`
+	Title   string   `json:"title"`
+	Actions []Action `json:"actions,omitempty"`
 
-	Detail
-	List
+	*Detail
+	*List
 }
 
 type Detail struct {
-	Content Preview  `json:"content"`
-	Actions []Action `json:"actions,omitempty"`
+	Content Preview `json:"content,omitempty"`
 }
 
 type List struct {
@@ -248,7 +213,7 @@ type List struct {
 }
 
 type Preview struct {
-	Text     string         `json:"text"`
+	Text     string         `json:"text,omitempty"`
 	Language string         `json:"language,omitempty"`
 	Command  string         `json:"command,omitempty"`
 	With     map[string]any `json:"with,omitempty"`

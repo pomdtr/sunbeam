@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -20,7 +21,7 @@ type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	extension app.Extension
+	extension *app.Extension
 	command   app.Command
 
 	with map[string]app.CommandInput
@@ -33,7 +34,7 @@ type CommandRunner struct {
 	form   *Form
 }
 
-func NewCommandRunner(extension app.Extension, command app.Command, with map[string]app.CommandInput) *CommandRunner {
+func NewCommandRunner(extension *app.Extension, command app.Command, with map[string]app.CommandInput) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter(extension.Title),
@@ -56,16 +57,32 @@ func (c *CommandRunner) Init() tea.Cmd {
 
 type CommandOutput []byte
 
-func (c *CommandRunner) Run() tea.Cmd {
+func (c *CommandRunner) CheckEnv(environ map[string]string) []FormItem {
+	formitems := make([]FormItem, 0)
+	for _, env := range c.command.Env {
+		// Skip if the env is already set in the .env file
+		if _, ok := environ[env.Name]; ok {
+			continue
+		}
+
+		// Skip if the env is already set in the environment
+		if _, ok := os.LookupEnv(env.Name); ok {
+			continue
+		}
+
+		input := c.extension.Preferences[env.Name]
+		formitems = append(formitems, NewFormItem(env.Name, input))
+	}
+
+	return formitems
+}
+
+func (c *CommandRunner) CheckParams() []FormItem {
 	formitems := make([]FormItem, 0)
 	for _, param := range c.command.Params {
 		input, ok := c.with[param.Name]
 		if !ok {
-			if param.Default != nil {
-				continue
-			} else {
-				return NewErrorCmd(errors.New("missing required parameter: " + param.Name))
-			}
+			continue
 		}
 
 		if input.Value != nil {
@@ -75,39 +92,28 @@ func (c *CommandRunner) Run() tea.Cmd {
 		formitems = append(formitems, NewFormItem(param.Name, input.FormItem))
 	}
 
-	// Show form if some parameters are set as input
-	if len(formitems) > 0 {
-		c.currentView = "form"
-		c.form = NewForm("params", c.extension.Title, formitems)
+	return formitems
+}
 
-		c.form.SetSize(c.width, c.height)
-		return c.form.Init()
-	}
-
-	dotenv := path.Join(c.extension.Root.Path, ".env")
+func (c *CommandRunner) Run() tea.Cmd {
+	dotenv := path.Join(c.extension.Root, ".env")
 	environ, err := godotenv.Read(dotenv)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return NewErrorCmd(err)
 	}
 
-	formitems = make([]FormItem, 0)
-	for _, pref := range c.extension.Preferences {
-		// Skip if the env is already set in the .env file
-		if _, ok := environ[pref.Env]; ok {
-			continue
-		}
-
-		// Skip if the env is already set in the environment
-		if _, ok := os.LookupEnv(pref.Env); ok {
-			continue
-		}
-
-		formitems = append(formitems, NewFormItem(pref.Env, pref.Input))
+	if formItems := c.CheckEnv(environ); len(formItems) > 0 {
+		c.currentView = "form"
+		c.form = NewForm("preferences", c.extension.Title, formItems)
+		c.form.SetSize(c.width, c.height)
+		return c.form.Init()
 	}
 
-	if len(formitems) > 0 {
+	// Show form if some parameters are set as input
+	if formItems := c.CheckParams(); len(formItems) > 0 {
 		c.currentView = "form"
-		c.form = NewForm("preferences", c.extension.Title, formitems)
+		c.form = NewForm("params", c.extension.Title, formItems)
+
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
@@ -124,26 +130,26 @@ func (c *CommandRunner) Run() tea.Cmd {
 		return NewErrorCmd(err)
 	}
 
-	payload := app.CommandPayload{
-		With: params,
-		Env:  environ,
+	cmd, err := c.command.Cmd(params, environ, c.extension.Root)
+	if err != nil {
+		return NewErrorCmd(err)
 	}
 
-	if c.command.OnSuccess == "" && c.extension.Root.Scheme == "file" {
-		cmd, err := c.command.Cmd(payload, c.extension.Root.Path)
-		if err != nil {
-			return NewErrorCmd(err)
-		}
-
+	if c.command.OnSuccess == "" {
 		return func() tea.Msg {
 			return cmd
 		}
 	}
 
 	return func() tea.Msg {
-		output, err := c.command.Run(payload, c.extension.Root)
+		output, err := cmd.Output()
 		if err != nil {
-			return err
+			exitError, ok := err.(*exec.ExitError)
+			if !ok {
+				return err
+			}
+
+			return fmt.Errorf("%s", exitError.Stderr)
 		}
 
 		return CommandOutput(output)
@@ -238,11 +244,12 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return ""
 					}
 
-					params := app.CommandPayload{
-						With: page.Detail.Content.With,
+					cmd, err := command.Cmd(page.Detail.Content.With, nil, c.extension.Root)
+					if err != nil {
+						return err.Error()
 					}
 
-					output, err := command.Run(params, c.extension.Root)
+					output, err := cmd.Output()
 					if err != nil {
 						return err.Error()
 					}
@@ -250,8 +257,8 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return string(output)
 				})
 
-				actions := make([]Action, len(page.Detail.Actions))
-				for i, scriptAction := range page.Detail.Actions {
+				actions := make([]Action, len(page.Actions))
+				for i, scriptAction := range page.Actions {
 					actions[i] = NewAction(scriptAction)
 				}
 				c.detail.SetActions(actions...)
@@ -260,6 +267,25 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.detail.Init()
 			case "list":
 				c.currentView = "list"
+
+				if c.list == nil {
+					c.list = NewList(page.Title)
+				} else {
+					c.list.SetTitle(page.Title)
+				}
+
+				c.list.defaultActions = make([]Action, len(page.Actions))
+				for i, action := range page.Actions {
+					c.list.defaultActions[i] = NewAction(action)
+				}
+
+				if page.List.ShowPreview {
+					c.list.ShowPreview = true
+				}
+				if page.List.GenerateItems {
+					c.list.GenerateItems = true
+				}
+
 				listItems := make([]ListItem, len(page.List.Items))
 				for i, scriptItem := range page.List.Items {
 					scriptItem := scriptItem
@@ -267,7 +293,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					if scriptItem.Id == "" {
 						scriptItem.Id = strconv.Itoa(i)
 					}
-
 					listItem := ParseScriptItem(scriptItem)
 					if scriptItem.Preview != nil {
 						listItem.PreviewFunc = func() string {
@@ -285,11 +310,12 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 								return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
 							}
 
-							params := app.CommandPayload{
-								With: scriptItem.Preview.With,
+							cmd, err := command.Cmd(scriptItem.Preview.With, nil, c.extension.Root)
+							if err != nil {
+								return err.Error()
 							}
 
-							output, err := command.Run(params, c.extension.Root)
+							output, err := cmd.Output()
 							if err != nil {
 								return err.Error()
 							}
@@ -305,20 +331,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 					listItems[i] = listItem
 				}
-
-				if c.list == nil {
-					c.list = NewList(page.Title)
-				} else {
-					c.list.SetTitle(page.Title)
-				}
-
-				if page.List.ShowPreview {
-					c.list.ShowPreview = true
-				}
-				if page.List.GenerateItems {
-					c.list.GenerateItems = true
-				}
-
 				c.list.SetItems(listItems)
 
 				c.list.SetSize(c.width, c.height)
@@ -331,7 +343,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case "reload-page":
 			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
 		default:
-			return c, ExitCmd
+			return c, Exit
 		}
 
 	case SubmitFormMsg:
@@ -347,7 +359,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return c, tea.Sequence(c.SetIsloading(true), c.Run())
 		case "preferences":
-			dotenv := path.Join(c.extension.Root.Path, ".env")
+			dotenv := path.Join(c.extension.Root, ".env")
 			environ := make(map[string]string)
 			if _, err := os.Stat(dotenv); err == nil {
 				environ, err = godotenv.Read(dotenv)

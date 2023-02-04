@@ -36,6 +36,19 @@ def list_entries(journal: Journal):
     return {
         "type": "list",
         "showPreview": True,
+        "actions": [
+            {
+                "type": "run-command",
+                "title": "New Entry",
+                "command": "new-entry",
+                "onSuccess": "reload-page",
+                "shortcut": "ctrl+n",
+                "with": {
+                    "title": {"type": "textfield", "title": "Title"},
+                    "content": {"type": "textarea", "title": "Content"},
+                },
+            },
+        ],
         "items": [
             {
                 "title": entry["title"],
@@ -52,17 +65,6 @@ def list_entries(journal: Journal):
                         "type": "copy-text",
                         "text": entry["content"],
                         "title": "Copy Message",
-                    },
-                    {
-                        "type": "run-command",
-                        "title": "New Entry",
-                        "command": "new-entry",
-                        "onSuccess": "reload-page",
-                        "shortcut": "ctrl+n",
-                        "with": {
-                            "title": {"type": "textfield", "title": "Title"},
-                            "content": {"type": "textarea", "title": "Content"},
-                        },
                     },
                     {
                         "type": "run-command",

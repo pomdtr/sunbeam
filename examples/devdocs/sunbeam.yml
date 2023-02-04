@@ -1,8 +1,5 @@
 title: DevDocs
 version: "1.0"
-requirements:
-  - which: curl
-    homePage: https://curl.se
 rootItems:
   - command: search-docsets
     title: Browse Docsets
@@ -13,7 +10,7 @@ rootItems:
 commands:
   - name: search-docsets
     exec: |
-      curl https://devdocs.io/docs/docs.json | sunbeam query '. | group_by(.name) | .[] |
+      sunbeam http https://devdocs.io/docs/docs.json | sunbeam query '. | group_by(.name) | .[] |
       {
         title: .[0].name,
         subtitle: (.[0].release // "latest"),
@@ -30,7 +27,7 @@ commands:
     onSuccess: push-page
   - name: search-entries
     exec: |
-      curl https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
+      sunbeam http https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
         {
           title: .name,
           subtitle: .type,
