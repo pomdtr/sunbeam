@@ -27,7 +27,7 @@
         "postInstall": {
             "type": "string"
         },
-        "preferences": {
+        "dotenv": {
             "type": "object",
             "patternProperties": {
                 ".+": {

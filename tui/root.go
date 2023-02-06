@@ -331,7 +331,7 @@ func Draw(model *Model) (err error) {
 	}
 
 	height, ok := os.LookupEnv("SUNBEAM_HEIGHT")
-	if !ok || height == "" {
+	if !ok || height == "" || height == "0" {
 		p = tea.NewProgram(model, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	} else {
 		height, err := strconv.Atoi(height)

@@ -293,9 +293,6 @@ func (dd DropDown) HasMatch() bool {
 }
 
 func (dd *DropDown) Height() int {
-	if !dd.textinput.Focused() || dd.HasMatch() {
-		return 1
-	}
 	return 5
 }
 
