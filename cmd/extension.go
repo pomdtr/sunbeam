@@ -35,12 +35,6 @@ func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.C
 			Args:  cobra.ExactArgs(2),
 			PreRunE: func(cmd *cobra.Command, args []string) error {
 				extensionName := args[0]
-				invalidNames := []string{"extension", "check", "query", "run", "serve"}
-				for _, name := range invalidNames {
-					if extensionName == name {
-						return fmt.Errorf("extension name %s is reserved", extensionName)
-					}
-				}
 
 				re, err := regexp.Compile(`^[\w-]+$`)
 				if err != nil {
@@ -55,25 +49,25 @@ func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.C
 			},
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionName := args[0]
-				extensionRoot := args[1]
-				targetDir := path.Join(extensionRoot, extensionName)
+				extensionDir := args[1]
+				targetDir := path.Join(extensionDir, extensionName)
 				if _, err := os.Stat(targetDir); err == nil {
 					return fmt.Errorf("extension %s is already installed at %s", extensionName, targetDir)
 				}
 
-				if _, err := os.Stat(extensionRoot); err == nil {
-					extensionRoot, err = filepath.Abs(extensionRoot)
+				if _, err := os.Stat(extensionDir); err == nil {
+					extensionDir, err = filepath.Abs(extensionDir)
 					if err != nil {
 						return fmt.Errorf("failed to get absolute path for extension root: %s", err)
 					}
 
-					if _, err = os.Stat(path.Join(extensionRoot, "sunbeam.yml")); os.IsNotExist(err) {
+					if _, err = os.Stat(path.Join(extensionDir, "sunbeam.yml")); os.IsNotExist(err) {
 						return fmt.Errorf("current directory is not a sunbeam extension")
 					}
 
 					symlinkTarget := path.Join(extensionRoot, extensionName)
 
-					if err := os.Symlink(extensionRoot, symlinkTarget); err != nil {
+					if err := os.Symlink(extensionDir, symlinkTarget); err != nil {
 						return fmt.Errorf("failed to create symlink: %s", err)
 					}
 
@@ -86,7 +80,7 @@ func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.C
 					return err
 				}
 
-				err = utils.GitClone(extensionRoot, tmpDir)
+				err = utils.GitClone(extensionDir, tmpDir)
 				if err != nil {
 					return err
 				}

@@ -1,43 +1,34 @@
 title: TLDR Pages
 version: "1.0"
+requirements:
+  - homePage: https://tldr.sh/
+    which: tldr
+env:
+  PLATFORM:
+    type: dropdown
+    title: Platform
+    choices:
+      - linux
+      - osx
+      - windows
 rootItems:
-  - title: "Search MacOS Pages"
-    command: list
-    with:
-      platform: osx
-  - title: "Search Linux Pages"
-    command: list
-    with:
-      platform: linux
+  - command: list
+    title: List Pages
 commands:
   - name: list
     onSuccess: push-page
-    exec: |
-      tldr --list --platform ${{ platform }} | sunbeam query --arg platform=${{ platform }} -R '{
-        title: .,
-        preview: {
-          command: "view-page",
-          with: {page: ., platform: $platform}
-        },
-        actions: [
-          {type: "run-command", "command": "view-page", title: "View Page", with: {page: ., platform: $platform}}
-        ]
-      }' | sunbeam query --slurp '{ type: "list", showPreview: true, items: . }'
+    exec: ./list-pages.sh ${{ platform }}
     params:
       - name: platform
+        env: PLATFORM
         type: string
-        enum:
-          - linux
-          - osx
-          - windows
+  - name: update
+    exec: tldr --update
   - name: view-page
     exec: tldr --color always --platform ${{ platform }} ${{ page }}
     params:
       - name: platform
+        env: PLATFORM
         type: string
-        enum:
-          - linux
-          - osx
-          - windows
       - name: page
         type: string
