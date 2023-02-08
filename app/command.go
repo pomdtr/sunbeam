@@ -16,11 +16,12 @@ import (
 )
 
 type Command struct {
-	Name        string  `json:"name"`
-	Exec        string  `json:"exec,omitempty" yaml:"exec,omitempty"`
-	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
-	Params      []Param `json:"params,omitempty" yaml:"params,omitempty"`
-	OnSuccess   string  `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
+	Name        string            `json:"name"`
+	Exec        string            `json:"exec,omitempty" yaml:"exec,omitempty"`
+	Env         map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
+	Params      []Param           `json:"params,omitempty" yaml:"params,omitempty"`
+	OnSuccess   string            `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
 
 type Env struct {
@@ -204,6 +205,10 @@ func (c Command) Cmd(args map[string]any, dir string) (*exec.Cmd, error) {
 		if param.Env != "" {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", param.Env, args[param.Name]))
 		}
+	}
+
+	for key, value := range c.Env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
 
 	cmd.Dir = dir

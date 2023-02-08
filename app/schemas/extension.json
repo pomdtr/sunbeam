@@ -150,6 +150,14 @@
                 "name": {
                     "type": "string"
                 },
+                "env": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^\\w+$": {
+                            "type": "string"
+                        }
+                    }
+                },
                 "exec": {
                     "type": "string"
                 },

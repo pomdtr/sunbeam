@@ -338,7 +338,16 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				if param.Env != "" {
-					environ[param.Env] = fmt.Sprintf("%v", value)
+					switch value := value.(type) {
+					case bool:
+						environ[param.Env] = strconv.FormatBool(value)
+					case string:
+						environ[param.Env] = value
+					default:
+						return c, NewErrorCmd(fmt.Errorf("invalid value type for param %s", param.Name))
+					}
+
+					continue
 				}
 
 				arg := c.with[param.Name]
