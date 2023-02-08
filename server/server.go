@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/pomdtr/sunbeam/app"
+	"gopkg.in/yaml.v3"
 )
 
 func NewServer(extensions []*app.Extension, addr string) *http.Server {
@@ -46,18 +49,12 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 
 		commands := make([]app.Command, len(extension.Commands))
 		for i, command := range extension.Commands {
-			command.Exec = buildExec(command)
-			command.Params = append(command.Params, app.Param{
-				Name: "sunbeam-remote",
-				Type: "string",
-				Env:  "SUNBEAM_REMOTE",
-			})
+			command.Exec = buildExec(command, extractUrl(r))
 			commands[i] = command
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		// TODO: return a page with only commands from the extension
-		json.NewEncoder(w).Encode(app.Extension{
+		w.Header().Set("Content-Type", "application/yaml")
+		yaml.NewEncoder(w).Encode(app.Extension{
 			Version:     extension.Version,
 			Title:       extension.Title,
 			Description: extension.Description,
@@ -119,8 +116,29 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 	}
 }
 
-func buildExec(command app.Command) string {
-	args := []string{"sunbeam", "http", "--ignore-stdin", "POST", "{{ sunbeam_remote }}"}
+func extractUrl(r *http.Request) *url.URL {
+	extensionUrl := url.URL{
+		Path: r.URL.Path,
+	}
+
+	if r.TLS != nil {
+		extensionUrl.Scheme = "https"
+	} else {
+		extensionUrl.Scheme = "http"
+	}
+
+	extensionUrl.Host = r.Host
+
+	return &extensionUrl
+}
+
+func buildExec(command app.Command, extensionUrl *url.URL) string {
+	commandUrl := url.URL{
+		Scheme: extensionUrl.Scheme,
+		Host:   extensionUrl.Host,
+		Path:   path.Join(extensionUrl.Path, command.Name),
+	}
+	args := []string{"sunbeam", "http", "--ignore-stdin", "POST", commandUrl.String()}
 
 	for _, param := range command.Params {
 		args = append(args, fmt.Sprintf("%s={{%s}}", param.Name, param.Name))
