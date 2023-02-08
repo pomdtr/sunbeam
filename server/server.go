@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -45,7 +46,12 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 
 		commands := make([]app.Command, len(extension.Commands))
 		for i, command := range extension.Commands {
-			command.Exec = ""
+			command.Exec = buildExec(command)
+			command.Params = append(command.Params, app.Param{
+				Name: "sunbeam-remote",
+				Type: "string",
+				Env:  "SUNBEAM_REMOTE",
+			})
 			commands[i] = command
 		}
 
@@ -53,6 +59,7 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 		// TODO: return a page with only commands from the extension
 		json.NewEncoder(w).Encode(app.Extension{
 			Version:     extension.Version,
+			Title:       extension.Title,
 			Description: extension.Description,
 			RootItems:   extension.RootItems,
 			Commands:    commands,
@@ -110,4 +117,14 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 		Addr:    addr,
 		Handler: r,
 	}
+}
+
+func buildExec(command app.Command) string {
+	args := []string{"sunbeam", "http", "--ignore-stdin", "POST", "{{ sunbeam_remote }}"}
+
+	for _, param := range command.Params {
+		args = append(args, fmt.Sprintf("%s={{%s}}", param.Name, param.Name))
+	}
+
+	return strings.Join(args, " ")
 }
