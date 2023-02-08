@@ -474,7 +474,9 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			c.renderInputs()
-			c.ScrollViewport()
+			if c.viewport.Height > 0 {
+				c.ScrollViewport()
+			}
 
 			return &c, tea.Batch(cmds...)
 		case tea.KeyCtrlS:
@@ -560,7 +562,9 @@ func (c *Form) SetSize(width, height int) {
 	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 
 	c.renderInputs()
-	c.ScrollViewport()
+	if c.viewport.Height > 0 {
+		c.ScrollViewport()
+	}
 }
 
 func (c *Form) View() string {
