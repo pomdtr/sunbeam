@@ -71,6 +71,10 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdRun(&config))
 	rootCmd.AddCommand(NewCmdHttp())
 
+	for _, extension := range extensions {
+		rootCmd.AddCommand(NewExtensionCommand(extension, &config))
+	}
+
 	return rootCmd.Execute()
 }
 
@@ -99,6 +103,10 @@ func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Co
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
 				with := make(map[string]app.Arg)
 				for _, param := range command.Params {
+					if !cmd.Flags().Changed(param.Name) {
+						continue
+					}
+
 					switch param.Type {
 					case "boolean":
 						value, err := cmd.Flags().GetBool(param.Name)
@@ -139,7 +147,6 @@ func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Co
 					scriptCmd.Flags().Bool(param.Name, defaultValue, param.Description)
 				} else {
 					scriptCmd.Flags().Bool(param.Name, false, param.Description)
-					scriptCmd.MarkFlagRequired(param.Name)
 				}
 			default:
 				if param.Default != nil {
@@ -147,7 +154,6 @@ func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Co
 					scriptCmd.Flags().String(param.Name, defaultValue, param.Description)
 				} else {
 					scriptCmd.Flags().String(param.Name, "", param.Description)
-					scriptCmd.MarkFlagRequired(param.Name)
 				}
 			}
 
