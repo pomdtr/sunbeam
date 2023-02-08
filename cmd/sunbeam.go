@@ -64,20 +64,12 @@ func Execute(version string) (err error) {
 	})
 
 	// Core Commands
-	rootCmd.AddCommand(NewCmdDocs())
 	rootCmd.AddCommand(NewCmdExtension(extensionRoot, extensions))
 	rootCmd.AddCommand(NewCmdServe(extensions))
 	rootCmd.AddCommand(NewCmdCheck())
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdRun(&config))
 	rootCmd.AddCommand(NewCmdHttp())
-
-	if os.Getenv("DISABLE_EXTENSIONS") == "" {
-		// Extension Commands
-		for _, extension := range extensions {
-			rootCmd.AddCommand(NewExtensionCommand(extension, &config))
-		}
-	}
 
 	return rootCmd.Execute()
 }

@@ -6,7 +6,7 @@
             "title": "Home",
             "preview": {
                 "command": "home",
-                "with": {
+                "inputs": {
                     "text": "Home"
                 }
             },

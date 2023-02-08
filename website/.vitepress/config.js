@@ -1,18 +1,3 @@
-import path from "path";
-import fs from "fs";
-import url from "url";
-
-const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
-
-const cmdDir = path.join(__dirname, "..", "src", "cmd");
-const cmdItems = fs.readdirSync(cmdDir).map((filename) => {
-  const { name } = path.parse(filename);
-  return {
-    text: name.replaceAll("_", " "),
-    link: `/cmd/${name}`,
-  };
-});
-
 /**
  * @type {import('vitepress').DefaultTheme.Sidebar}
  */
@@ -67,12 +52,6 @@ const sidebar = [
         ],
       },
     ],
-  },
-  {
-    text: "Command Line Usage",
-    collapsed: true,
-    collapsible: true,
-    items: cmdItems,
   },
 ];
 

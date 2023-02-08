@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",
-    "build": "./scripts/init.sh && vitepress build",
+    "build": "vitepress build",
     "preview": "vitepress preview"
   },
   "author": "",

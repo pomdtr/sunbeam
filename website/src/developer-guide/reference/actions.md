@@ -29,7 +29,7 @@
     "type": "run-command", // required
     "title": "Run Command", // required
     "shortcut": "ctrl+r", // optional
-    "with": { // Parameters to pass to the command
+    "inputs": { // Parameters to pass to the command
         "key": "value", // pass a fixed value
         "name": { // show a form input to the user
             "type": "textfield",
@@ -47,7 +47,7 @@
     "type": "reload-page", // required
     "title": "Reload Page", // optional, defaults to "Reload Page"
     "shortcut": "ctrl+r", // optional
-    "with": {
+    "inputs": {
         "key": "value", // override a parameter when reloading the page
     }
 }

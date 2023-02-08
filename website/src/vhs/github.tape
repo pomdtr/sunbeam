@@ -76,7 +76,5 @@ Enter
 
 # Detail View
 Sleep 2s
-Ctrl+d
-Sleep 2s
-Ctrl+d
+Type jjjjjj
 Sleep 2s

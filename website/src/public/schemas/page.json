@@ -167,7 +167,7 @@
                             "command"
                         ],
                         "properties": {
-                            "with": {
+                            "inputs": {
                                 "type": "object",
                                 "additionalProperties": false,
                                 "patternProperties": {
@@ -263,7 +263,7 @@
                         "command": {
                             "type": "string"
                         },
-                        "with": {
+                        "inputs": {
                             "type": "object",
                             "additionalProperties": false,
                             "patternProperties": {

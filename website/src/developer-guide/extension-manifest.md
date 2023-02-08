@@ -29,7 +29,7 @@ commands:
   browse-files:
     exec: ./file-browser.py --root ${{ root }}
     onSuccess: push-page
-    params:
+    inputs:
       - name: root
         type: directory
 ```
