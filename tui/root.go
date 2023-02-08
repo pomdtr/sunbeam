@@ -141,11 +141,7 @@ func (m *Model) View() string {
 		pageView = m.root.View()
 	}
 
-	if m.MaxHeight > 0 {
-		return lipgloss.NewStyle().Padding(m.Padding).Render(pageView)
-	}
-
-	return pageView
+	return lipgloss.NewStyle().Padding(m.Padding).Render(pageView)
 }
 
 func (m *Model) SetSize(width, height int) {
@@ -315,9 +311,6 @@ func Draw(model *Model) (err error) {
 		}
 		tea.LogToFile(path.Join(logDir, "sunbeam.log"), "")
 	}
-
-	// Disable the background detection since we are only using ANSI colors
-	lipgloss.SetHasDarkBackground(true)
 
 	var p *tea.Program
 
