@@ -7,7 +7,7 @@ rootItems:
       jql: assignee=currentUser() and status!=Closed
 commands:
   - name: list-issues
-    exec: ./jira.sh ${{ jql }}
+    exec: ./jira.sh {{ jql }}
     onSuccess: push-page
     params:
       - name: jql

@@ -29,11 +29,11 @@ commands:
   - name: form
     exec: |
       cat << EOF
-      textfield: ${{ textfield }}
-      password: ${{ password }}
-      textarea: ${{ textarea }}
-      checkbox: ${{ checkbox }}
-      dropdown: ${{ dropdown }}
+      textfield: {{ textfield }}
+      password: {{ password }}
+      textarea: {{ textarea }}
+      checkbox: {{ checkbox }}
+      dropdown: {{ dropdown }}
       EOF
     params:
       - name: textfield

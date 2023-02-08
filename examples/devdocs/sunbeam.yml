@@ -21,7 +21,7 @@ commands:
     exec: ./search-docsets.sh
     onSuccess: push-page
   - name: search-entries
-    exec: ./search-entries.sh ${{ slug }}
+    exec: ./search-entries.sh {{ slug }}
     onSuccess: push-page
     params:
       - name: slug

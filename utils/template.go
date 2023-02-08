@@ -9,7 +9,7 @@ import (
 )
 
 func RenderString(templateString string, funcMap template.FuncMap) (string, error) {
-	t, err := template.New("").Funcs(funcMap).Delims("${{", "}}").Parse(templateString)
+	t, err := template.New("").Funcs(funcMap).Delims("{{", "}}").Parse(templateString)
 
 	if err != nil {
 		return "", err
