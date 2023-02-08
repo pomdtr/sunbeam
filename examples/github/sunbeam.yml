@@ -6,10 +6,6 @@ requirements:
 rootItems:
   - title: List Repositories
     command: list-repos
-    with:
-      owner:
-        type: textfield
-        title: Owner
 commands:
   - name: view-readme
     onSuccess: push-page
@@ -23,6 +19,10 @@ commands:
     params:
       - name: owner
         type: string
+        input:
+          type: textfield
+          title: Owner
+          placeholder: "Your GitHub username"
   - name: list-prs
     exec: ./list-prs.sh ${{ repository }}
     onSuccess: push-page

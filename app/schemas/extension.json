@@ -21,19 +21,14 @@
                 ]
             }
         },
+        "params": {
+            "type": "array"
+        },
         "rootUrl": {
             "type": "string"
         },
         "postInstall": {
             "type": "string"
-        },
-        "dotenv": {
-            "type": "object",
-            "patternProperties": {
-                ".+": {
-                    "type": "object"
-                }
-            }
         },
         "requirements": {
             "type": "array",
@@ -118,7 +113,7 @@
         }
     },
     "$defs": {
-        "arg": {
+        "param": {
             "type": "object",
             "required": [
                 "name",
@@ -129,6 +124,12 @@
                 "name": {
                     "type": "string"
                 },
+                "env": {
+                    "type": "string"
+                },
+                "input": {
+                    "type": "object"
+                },
                 "type": {
                     "enum": [
                         "string",
@@ -136,12 +137,6 @@
                         "file",
                         "directory"
                     ]
-                },
-                "enum": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -154,12 +149,6 @@
             "properties": {
                 "name": {
                     "type": "string"
-                },
-                "env": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/arg"
-                    }
                 },
                 "exec": {
                     "type": "string"
@@ -175,7 +164,7 @@
                 "params": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/arg"
+                        "$ref": "#/$defs/param"
                     }
                 }
             }

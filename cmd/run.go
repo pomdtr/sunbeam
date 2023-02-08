@@ -98,9 +98,5 @@ func buildExec(command app.Command, extensionUrl string) string {
 		args = append(args, fmt.Sprintf("%s=${{%s}}", param.Name, param.Name))
 	}
 
-	for _, env := range command.Env {
-		args = append(args, fmt.Sprintf(`"X-Sunbeam-Env:%s=$%s"`, env.Name, env.Name))
-	}
-
 	return strings.Join(args, " ")
 }

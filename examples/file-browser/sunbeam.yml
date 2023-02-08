@@ -3,12 +3,6 @@ title: File Browser
 requirements:
   - which: python3
     homePage: https://www.python.org
-preferences:
-  SHOW_HIDDEN:
-    type: checkbox
-    title: Visibility
-    label: Show Hidden Files
-    default: false
 rootItems:
   - title: Browse Root Directory
     command: browse-files
@@ -35,6 +29,9 @@ commands:
     params:
       - name: root
         type: directory
+      - name: show-hidden
+        env: SHOW_HIDDEN
+        type: boolean
   - name: edit-file
     exec: ls -l
     params:

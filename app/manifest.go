@@ -16,20 +16,19 @@ import (
 var embedFs embed.FS
 
 type RootItem struct {
-	Extension string                  `json:"extension,omitempty" yaml:"extension,omitempty"`
-	Command   string                  `json:"command,omitempty" yaml:"command,omitempty"`
-	Title     string                  `json:"title,omitempty" yaml:"title,omitempty"`
-	With      map[string]CommandInput `json:"with,omitempty" yaml:"with,omitempty"`
+	Extension string         `json:"extension,omitempty" yaml:"extension,omitempty"`
+	Command   string         `json:"command,omitempty" yaml:"command,omitempty"`
+	Title     string         `json:"title,omitempty" yaml:"title,omitempty"`
+	With      map[string]Arg `json:"with,omitempty" yaml:"with,omitempty"`
 }
 
 type Extension struct {
-	Version     string               `json:"version" yaml:"version"`
-	Title       string               `json:"title" yaml:"title"`
-	Description string               `json:"description,omitempty" yaml:"description,omitempty"`
-	Platform    []string             `json:"platform,omitempty" yaml:"platform,omitempty"`
-	PostInstall string               `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
-	Root        string               `json:"-" yaml:"-"`
-	Preferences map[string]*FormItem `json:"preferences,omitempty" yaml:"preferences,omitempty"`
+	Version     string   `json:"version" yaml:"version"`
+	Title       string   `json:"title" yaml:"title"`
+	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
+	Platform    []string `json:"platform,omitempty" yaml:"platform,omitempty"`
+	PostInstall string   `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
+	Root        string   `json:"-" yaml:"-"`
 
 	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`

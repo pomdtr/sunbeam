@@ -2,7 +2,6 @@ package tui
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -24,7 +23,7 @@ type CommandRunner struct {
 	extension *app.Extension
 	command   app.Command
 
-	with map[string]app.CommandInput
+	with map[string]app.Arg
 
 	header Header
 	footer Footer
@@ -34,7 +33,7 @@ type CommandRunner struct {
 	form   *Form
 }
 
-func NewCommandRunner(extension *app.Extension, command app.Command, with map[string]app.CommandInput) *CommandRunner {
+func NewCommandRunner(extension *app.Extension, command app.Command, with map[string]app.Arg) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter(extension.Title),
@@ -44,9 +43,9 @@ func NewCommandRunner(extension *app.Extension, command app.Command, with map[st
 	}
 
 	// Copy the map to avoid modifying the original
-	runner.with = make(map[string]app.CommandInput)
-	for name, input := range with {
-		runner.with[name] = input
+	runner.with = make(map[string]app.Arg)
+	for name, arg := range with {
+		runner.with[name] = arg
 	}
 
 	return &runner
@@ -57,80 +56,63 @@ func (c *CommandRunner) Init() tea.Cmd {
 
 type CommandOutput []byte
 
-func (c *CommandRunner) CheckEnv(environ map[string]string) []FormItem {
+func (c *CommandRunner) CheckArgs() (map[string]any, []FormItem) {
+	args := make(map[string]any)
 	formitems := make([]FormItem, 0)
-	for _, env := range c.command.Env {
-		// Skip if the env is already set in the .env file
-		if _, ok := environ[env.Name]; ok {
+	environ := c.LoadEnv()
+	for _, param := range c.command.Params {
+		arg, ok := c.with[param.Name]
+		if !ok {
+			if env, ok := os.LookupEnv(param.Env); ok {
+				args[param.Name] = env
+				continue
+			}
+
+			if env, ok := environ[param.Env]; ok {
+				args[param.Name] = env
+				continue
+			}
+
+			formitems = append(formitems, NewFormItem(param.Name, param.FormItem()))
 			continue
 		}
 
-		// Skip if the env is already set in the environment
-		if _, ok := os.LookupEnv(env.Name); ok {
+		if arg.Value != nil {
+			args[param.Name] = fmt.Sprintf("%v", arg.Value)
 			continue
 		}
 
-		input := c.extension.Preferences[env.Name]
-		formitems = append(formitems, NewFormItem(env.Name, input))
+		formitems = append(formitems, NewFormItem(param.Name, arg.Input))
 	}
-
-	return formitems
+	return args, formitems
 }
 
-func (c *CommandRunner) CheckParams() []FormItem {
-	formitems := make([]FormItem, 0)
-	for _, param := range c.command.Params {
-		input, ok := c.with[param.Name]
-		if !ok {
-			continue
-		}
-
-		if input.Value != nil {
-			continue
-		}
-
-		formitems = append(formitems, NewFormItem(param.Name, input.FormItem))
+func (c *CommandRunner) LoadEnv() map[string]string {
+	dotenvPath := path.Join(c.extension.Root, ".env")
+	if _, err := os.Stat(dotenvPath); os.IsNotExist(err) {
+		return map[string]string{}
 	}
 
-	return formitems
+	environ, err := godotenv.Read(dotenvPath)
+	if err != nil {
+		return map[string]string{}
+	}
+
+	return environ
 }
 
 func (c *CommandRunner) Run() tea.Cmd {
-	dotenv := path.Join(c.extension.Root, ".env")
-	environ, err := godotenv.Read(dotenv)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return NewErrorCmd(err)
-	}
-
-	if formItems := c.CheckEnv(environ); len(formItems) > 0 {
-		c.currentView = "form"
-		c.form = NewForm("preferences", c.extension.Title, formItems)
-		c.form.SetSize(c.width, c.height)
-		return c.form.Init()
-	}
-
 	// Show form if some parameters are set as input
-	if formItems := c.CheckParams(); len(formItems) > 0 {
+	args, formItems := c.CheckArgs()
+	if len(formItems) > 0 {
 		c.currentView = "form"
-		c.form = NewForm("params", c.extension.Title, formItems)
+		c.form = NewForm("args", c.extension.Title, formItems)
 
 		c.form.SetSize(c.width, c.height)
 		return c.form.Init()
 	}
 
-	params := make(map[string]any)
-	for name, input := range c.with {
-		if input.Value == nil {
-			continue
-		}
-		params[name] = input.Value
-	}
-
-	if err := c.command.CheckMissingParams(params); err != nil {
-		return NewErrorCmd(err)
-	}
-
-	cmd, err := c.command.Cmd(params, environ, c.extension.Root)
+	cmd, err := c.command.Cmd(args, c.extension.Root)
 	if err != nil {
 		return NewErrorCmd(err)
 	}
@@ -241,10 +223,10 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 					command, ok := c.extension.GetCommand(page.Detail.Content.Command)
 					if !ok {
-						return ""
+						return fmt.Sprintf("Command %s not found", page.Detail.Content.Command)
 					}
 
-					cmd, err := command.Cmd(page.Detail.Content.With, nil, c.extension.Root)
+					cmd, err := command.Cmd(page.Detail.Content.With, c.extension.Root)
 					if err != nil {
 						return err.Error()
 					}
@@ -310,7 +292,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 								return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
 							}
 
-							cmd, err := command.Cmd(scriptItem.Preview.With, nil, c.extension.Root)
+							cmd, err := command.Cmd(scriptItem.Preview.With, c.extension.Root)
 							if err != nil {
 								return err.Error()
 							}
@@ -326,7 +308,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 							}
 
 							return preview
-
 						}
 					}
 					listItems[i] = listItem
@@ -348,45 +329,29 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	case SubmitFormMsg:
 		switch msg.Id {
-		case "params":
-			for key, value := range msg.Values {
-				c.with[key] = app.CommandInput{
-					Value: value,
+		case "args":
+			environ := c.LoadEnv()
+			for _, param := range c.command.Params {
+				value, ok := msg.Values[param.Name]
+				if !ok {
+					continue
 				}
+
+				if param.Env != "" {
+					environ[param.Env] = fmt.Sprintf("%v", value)
+				}
+
+				arg := c.with[param.Name]
+				arg.Value = value
+				c.with[param.Name] = arg
+			}
+
+			dotenvPath := path.Join(c.extension.Root, ".env")
+			if err := godotenv.Write(environ, dotenvPath); err != nil {
+				return c, NewErrorCmd(err)
 			}
 
 			c.currentView = "loading"
-
-			return c, tea.Sequence(c.SetIsloading(true), c.Run())
-		case "preferences":
-			dotenv := path.Join(c.extension.Root, ".env")
-			environ := make(map[string]string)
-			if _, err := os.Stat(dotenv); err == nil {
-				environ, err = godotenv.Read(dotenv)
-				if err != nil {
-					return c, NewErrorCmd(err)
-				}
-			}
-
-			for key, value := range msg.Values {
-				switch value := value.(type) {
-				case string:
-					environ[key] = value
-				case bool:
-					if value {
-						environ[key] = "1"
-					} else {
-						environ[key] = "0"
-					}
-				default:
-					return c, NewErrorCmd(fmt.Errorf("unsupported preference type: %T", value))
-				}
-			}
-
-			err := godotenv.Write(environ, dotenv)
-			if err != nil {
-				return c, NewErrorCmd(err)
-			}
 
 			return c, tea.Sequence(c.SetIsloading(true), c.Run())
 		}

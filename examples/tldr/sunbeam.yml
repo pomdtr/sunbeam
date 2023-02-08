@@ -3,17 +3,11 @@ version: "1.0"
 requirements:
   - homePage: https://tldr.sh/
     which: tldr
-env:
-  PLATFORM:
-    type: dropdown
-    title: Platform
-    choices:
-      - linux
-      - osx
-      - windows
 rootItems:
   - command: list
-    title: List Pages
+    title: List MacOS Pages
+    with:
+      platform: macos
 commands:
   - name: list
     onSuccess: push-page
@@ -28,7 +22,6 @@ commands:
     exec: tldr --color always --platform ${{ platform }} ${{ page }}
     params:
       - name: platform
-        env: PLATFORM
         type: string
       - name: page
         type: string

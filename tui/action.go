@@ -50,7 +50,7 @@ type OpenUrlMsg struct {
 	Url string
 }
 
-func NewReloadPageCmd(with map[string]app.CommandInput) tea.Cmd {
+func NewReloadPageCmd(with map[string]app.Arg) tea.Cmd {
 	return func() tea.Msg {
 		return ReloadPageMsg{
 			With: with,
@@ -59,10 +59,10 @@ func NewReloadPageCmd(with map[string]app.CommandInput) tea.Cmd {
 }
 
 type ReloadPageMsg struct {
-	With map[string]app.CommandInput
+	With map[string]app.Arg
 }
 
-func NewRunCommandCmd(command string, with map[string]app.CommandInput) tea.Cmd {
+func NewRunCommandCmd(command string, with map[string]app.Arg) tea.Cmd {
 	return func() tea.Msg {
 		return RunCommandMsg{
 			Command: command,
@@ -77,7 +77,7 @@ type PushPageMsg struct {
 
 type RunCommandMsg struct {
 	Command   string
-	With      map[string]app.CommandInput
+	With      map[string]app.Arg
 	OnSuccess string
 }
 

@@ -105,7 +105,7 @@ func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Co
 			Use:   command.Name,
 			Short: command.Description,
 			RunE: func(cmd *cobra.Command, args []string) (err error) {
-				with := make(map[string]app.CommandInput)
+				with := make(map[string]app.Arg)
 				for _, param := range command.Params {
 					switch param.Type {
 					case "boolean":
@@ -113,13 +113,13 @@ func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Co
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.CommandInput{Value: value}
+						with[param.Name] = app.Arg{Value: value}
 					default:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
-						with[param.Name] = app.CommandInput{Value: value}
+						with[param.Name] = app.Arg{Value: value}
 					}
 
 				}
@@ -157,12 +157,6 @@ func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Co
 					scriptCmd.Flags().String(param.Name, "", param.Description)
 					scriptCmd.MarkFlagRequired(param.Name)
 				}
-			}
-
-			if len(param.Enum) > 0 {
-				scriptCmd.RegisterFlagCompletionFunc(param.Name, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-					return param.Enum, cobra.ShellCompDirectiveNoFileComp
-				})
 			}
 
 			if param.Type == "file" {

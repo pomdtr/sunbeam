@@ -1,9 +1,5 @@
 version: "1.0"
 title: Bitwarden
-preferences:
-  BW_SESSION:
-    type: textfield
-    title: Bitwarden Session
 requirements:
   - homePage: https://bitwarden.com/help/cli/
     which: bw
@@ -12,8 +8,13 @@ rootItems:
     command: list-passwords
 commands:
   - name: list-passwords
-    env:
-      - name: BW_SESSION
-        type: string
     exec: ./bitwarden.sh
     onSuccess: push-page
+    params:
+      - name: session
+        type: string
+        env: BW_SESSION
+        input:
+          type: textfield
+          title: Session
+          placeholder: "Your Bitwarden session"

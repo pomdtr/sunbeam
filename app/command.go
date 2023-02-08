@@ -20,7 +20,6 @@ type Command struct {
 	Exec        string  `json:"exec,omitempty" yaml:"exec,omitempty"`
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Params      []Param `json:"params,omitempty" yaml:"params,omitempty"`
-	Env         []Env   `json:"env,omitempty" yaml:"env,omitempty"`
 	OnSuccess   string  `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
 
@@ -28,12 +27,12 @@ type Env struct {
 	Name string `json:"name"`
 }
 
-type CommandInput struct {
-	Value    any `json:"value,omitempty" yaml:"value,omitempty"`
-	FormItem *FormItem
+type Arg struct {
+	Value any
+	Input *FormItem
 }
 
-func (i *CommandInput) UnmarshalJSON(b []byte) error {
+func (i *Arg) UnmarshalJSON(b []byte) error {
 	var s string
 	if err := json.Unmarshal(b, &s); err == nil {
 		i.Value = s
@@ -48,14 +47,14 @@ func (i *CommandInput) UnmarshalJSON(b []byte) error {
 
 	var input FormItem
 	if err := json.Unmarshal(b, &input); err == nil {
-		i.FormItem = &input
+		i.Input = &input
 		return nil
 	}
 
 	return fmt.Errorf("invalid input: %s", b)
 }
 
-func (i *CommandInput) UnmarshalYAML(node *yaml.Node) error {
+func (i *Arg) UnmarshalYAML(node *yaml.Node) error {
 	var s string
 	if err := node.Decode(&s); err == nil {
 		i.Value = s
@@ -70,34 +69,57 @@ func (i *CommandInput) UnmarshalYAML(node *yaml.Node) error {
 
 	var input FormItem
 	if err := node.Decode(&input); err == nil {
-		i.FormItem = &input
+		i.Input = &input
 		return nil
 	}
 
 	return fmt.Errorf("invalid input: %s", node.Value)
 }
 
-func (i CommandInput) MarshalYAML() (interface{}, error) {
+func (i Arg) MarshalYAML() (interface{}, error) {
 	if i.Value != nil {
 		return i.Value, nil
 	}
-	return i.FormItem, nil
+	return i.Input, nil
 }
 
-func (i CommandInput) MarshalJSON() ([]byte, error) {
+func (i Arg) MarshalJSON() ([]byte, error) {
 	if i.Value != nil {
 		return json.Marshal(i.Value)
 	}
-	return json.Marshal(i.FormItem)
+	return json.Marshal(i.Input)
 }
 
 type Param struct {
-	Name        string   `json:"name"`
-	Type        string   `json:"type"`
-	Default     any      `json:"default,omitempty" yaml:"default,omitempty"`
-	Description string   `json:",omitempty" yaml:",omitempty"`
-	Pattern     string   `json:",omitempty" yaml:",omitempty"`
-	Enum        []string `json:",omitempty" yaml:",omitempty"`
+	Name        string    `json:"name"`
+	Env         string    `json:"env,omitempty" yaml:"env,omitempty"`
+	Input       *FormItem `json:"input,omitempty" yaml:"input,omitempty"`
+	Type        string    `json:"type"`
+	Default     any       `json:"default,omitempty" yaml:"default,omitempty"`
+	Description string    `json:",omitempty" yaml:",omitempty"`
+}
+
+func (p Param) FormItem() *FormItem {
+	if p.Input != nil {
+		return p.Input
+	}
+
+	switch p.Type {
+	case "string", "file", "directory":
+		return &FormItem{
+			Type:        "textfield",
+			Title:       p.Name,
+			Placeholder: p.Description,
+		}
+	case "bool":
+		return &FormItem{
+			Type:  "checkbox",
+			Title: p.Name,
+			Label: p.Description,
+		}
+	default:
+		return nil
+	}
 }
 
 type FormItem struct {
@@ -120,10 +142,14 @@ func (c Command) CheckMissingParams(with map[string]any) error {
 	return nil
 }
 
-func (c Command) Cmd(params map[string]any, environ map[string]string, dir string) (*exec.Cmd, error) {
+func (c Command) Cmd(args map[string]any, dir string) (*exec.Cmd, error) {
+	if err := c.CheckMissingParams(args); err != nil {
+		return nil, err
+	}
+
 	funcMap := template.FuncMap{}
 	for _, spec := range c.Params {
-		input, ok := params[spec.Name]
+		input, ok := args[spec.Name]
 		if !ok {
 			return nil, fmt.Errorf("param %s was not provided", spec.Name)
 		}
@@ -167,28 +193,20 @@ func (c Command) Cmd(params map[string]any, environ map[string]string, dir strin
 		return nil, err
 	}
 
-	args, err := shell.Fields(rendered, func(s string) string {
-		if env, ok := environ[s]; ok {
-			return env
-		}
-
-		if env, ok := os.LookupEnv(s); ok {
-			return env
-		}
-
-		return ""
-	})
+	fields, err := shell.Fields(rendered, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Dir = dir
-
-	cmd.Env = append(cmd.Env, os.Environ()...)
-	for k, v := range environ {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	cmd := exec.Command(fields[0], fields[1:]...)
+	cmd.Env = os.Environ()
+	for _, param := range c.Params {
+		if param.Env != "" {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", param.Env, args[param.Name]))
+		}
 	}
+
+	cmd.Dir = dir
 
 	return cmd, nil
 }
@@ -238,7 +256,7 @@ type Action struct {
 	Url  string `json:"url,omitempty"`
 	Path string `json:"path,omitempty"`
 
-	Command   string                  `json:"command,omitempty"`
-	With      map[string]CommandInput `json:"with,omitempty"`
-	OnSuccess string                  `json:"onSuccess,omitempty"`
+	Command   string         `json:"command,omitempty"`
+	With      map[string]Arg `json:"with,omitempty"`
+	OnSuccess string         `json:"onSuccess,omitempty"`
 }

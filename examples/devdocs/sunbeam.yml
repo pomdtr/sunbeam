@@ -1,5 +1,14 @@
 title: DevDocs
 version: "1.0"
+params:
+  - &token
+    name: token
+    env: GITHUB_TOKEN
+    type: string
+    input:
+      type: textfield
+      title: Token
+      placeholder: "Your Github token"
 rootItems:
   - command: search-docsets
     title: Browse Docsets
@@ -9,34 +18,15 @@ rootItems:
       slug: python~3.11
 commands:
   - name: search-docsets
-    exec: |
-      sunbeam http https://devdocs.io/docs/docs.json | sunbeam query '. | group_by(.name) | .[] |
-      {
-        title: .[0].name,
-        subtitle: (.[0].release // "latest"),
-        actions: map(
-          {
-              type: "run-command",
-              title: "Browse \(.release // "latest") entries",
-              script: "search-entries",
-              with: { slug: .slug }
-          }
-        )
-      }
-      ' | sunbeam --slurp { type: "list", list: {items: .} }
+    exec: ./search-docsets.sh
     onSuccess: push-page
   - name: search-entries
-    exec: |
-      sunbeam http https://devdocs.io/docs/${{ slug }}/index.json | sunbeam query '.entries[] |
-        {
-          title: .name,
-          subtitle: .type,
-          actions: [
-            {type: "open", target: "https://devdocs.io/${{ slug }}/\(.path)"}
-          ]
-        }
-      ' | sunbeam --slurp { type: "list", list: {items: .} }
+    exec: ./search-entries.sh ${{ slug }}
     onSuccess: push-page
     params:
       - name: slug
         type: string
+        input:
+          type: textfield
+          title: Slug
+      - *token
