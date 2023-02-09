@@ -336,6 +336,9 @@ func Draw(model *Model) (err error) {
 		p = tea.NewProgram(model, tea.WithOutput(os.Stderr))
 	}
 
+	// Background detection before we start the program
+	lipgloss.SetHasDarkBackground(lipgloss.HasDarkBackground())
+
 	m, err := p.Run()
 	if err != nil {
 		return err
