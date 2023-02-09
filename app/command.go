@@ -206,8 +206,8 @@ func (c Command) Cmd(payload CmdPayload) (*exec.Cmd, error) {
 		"param": func(name string) any {
 			return paramMap[name]
 		},
-		"query": func() string {
-			return payload.Query
+		"query": func() (string, error) {
+			return syntax.Quote(payload.Query, syntax.LangPOSIX)
 		},
 	})
 	if err != nil {

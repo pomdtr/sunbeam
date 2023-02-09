@@ -5,7 +5,9 @@ const query = argv._[0];
 let items = [];
 if (query) {
   const res = await fetch(
-    `https://www.google.com/complete/search?client=chrome&q=${query}}`
+    `https://www.google.com/complete/search?client=chrome&q=${encodeURIComponent(
+      query
+    )}}`
   ).then((res) => res.json());
 
   items = res[1].map((suggestion) => ({
