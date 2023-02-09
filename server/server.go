@@ -53,7 +53,7 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 			commands[i] = command
 		}
 
-		w.Header().Set("Content-Type", "application/yaml")
+		w.Header().Set("Content-Type", "text/yaml")
 		yaml.NewEncoder(w).Encode(app.Extension{
 			Version:     extension.Version,
 			Title:       extension.Title,
@@ -64,8 +64,8 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 	})
 
 	r.Post("/{extension}/{command}", func(w http.ResponseWriter, r *http.Request) {
-		var params map[string]any
-		err := json.NewDecoder(r.Body).Decode(&params)
+		var args map[string]any
+		err := json.NewDecoder(r.Body).Decode(&args)
 		if err != nil && err != io.EOF {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Error decoding input params: %s", err)))
@@ -88,7 +88,13 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 			return
 		}
 
-		cmd, err := command.Cmd(params, extension.Root)
+		query := r.Header.Get("X-Sunbeam-Query")
+
+		cmd, err := command.Cmd(app.CmdPayload{
+			Args:  args,
+			Dir:   extension.Root,
+			Query: query,
+		})
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Error running command: %s", err)))
@@ -138,7 +144,7 @@ func buildExec(command app.Command, extensionUrl *url.URL) string {
 		Host:   extensionUrl.Host,
 		Path:   path.Join(extensionUrl.Path, command.Name),
 	}
-	args := []string{"sunbeam", "http", "--ignore-stdin", "POST", commandUrl.String()}
+	args := []string{"sunbeam", "http", "--ignore-stdin", "POST", commandUrl.String(), "X-Sunbeam-Query:{{ query }}"}
 
 	for _, param := range command.Params {
 		args = append(args, fmt.Sprintf("%s={{%s}}", param.Name, param.Name))

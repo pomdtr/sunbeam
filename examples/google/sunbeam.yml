@@ -8,5 +8,5 @@ rootItems:
     command: search
 commands:
   - name: search
-    exec: ./google.mjs
+    exec: ./google.mjs {{ query }}
     onSuccess: push-page

@@ -39,6 +39,9 @@
                     "type": {
                         "const": "list"
                     },
+                    "emptyMessage": {
+                        "type": "string"
+                    },
                     "actions": {
                         "type": "array",
                         "items": {

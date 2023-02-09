@@ -8,7 +8,7 @@ rootItems:
     title: List VMs
 commands:
   - name: vm-info
-    exec: multipass info {{ vm }}
+    exec: multipass info {{ param "vm" }}
     params:
       - name: vm
         type: string
@@ -16,17 +16,17 @@ commands:
     onSuccess: push-page
     exec: ./list-vms.sh
   - name: open-shell
-    exec: multipass shell {{ vm }}
+    exec: multipass shell {{ param "vm" }}
     params:
       - name: vm
         type: string
   - name: start-vm
-    exec: multipass start {{ vm }}
+    exec: multipass start {{ param "vm" }}
     params:
       - name: vm
         type: string
   - name: stop-vm
-    exec: multipass stop {{ vm }}
+    exec: multipass stop {{ param "vm" }}
     params:
       - name: vm
         type: string

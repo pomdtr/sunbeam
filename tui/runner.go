@@ -112,7 +112,16 @@ func (c *CommandRunner) Run() tea.Cmd {
 		return c.form.Init()
 	}
 
-	cmd, err := c.command.Cmd(args, c.extension.Root)
+	payload := app.CmdPayload{
+		Args: args,
+		Dir:  c.extension.Root,
+	}
+
+	if c.currentView == "list" {
+		payload.Query = c.list.Query()
+	}
+
+	cmd, err := c.command.Cmd(payload)
 	if err != nil {
 		return NewErrorCmd(err)
 	}
@@ -226,7 +235,10 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return fmt.Sprintf("Command %s not found", page.Detail.Content.Command)
 					}
 
-					cmd, err := command.Cmd(page.Detail.Content.With, c.extension.Root)
+					cmd, err := command.Cmd(app.CmdPayload{
+						Args: page.Detail.Content.With,
+						Dir:  c.extension.Root,
+					})
 					if err != nil {
 						return err.Error()
 					}
@@ -255,6 +267,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				} else {
 					c.list.SetTitle(page.Title)
 				}
+				c.list.SetEmptyMessage(page.List.EmptyMessage)
 
 				c.list.defaultActions = make([]Action, len(page.Actions))
 				for i, action := range page.Actions {
@@ -292,7 +305,10 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 								return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
 							}
 
-							cmd, err := command.Cmd(scriptItem.Preview.With, c.extension.Root)
+							cmd, err := command.Cmd(app.CmdPayload{
+								Args: scriptItem.Preview.With,
+								Dir:  c.extension.Root,
+							})
 							if err != nil {
 								return err.Error()
 							}

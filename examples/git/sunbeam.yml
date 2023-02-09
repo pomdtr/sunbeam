@@ -11,7 +11,7 @@ rootItems:
       root: .
 commands:
   - name: history
-    exec: ./git-history.sh {{ root }}
+    exec: ./git-history.sh {{ param "root" }}
     onSuccess: push-page
     params:
       - name: root

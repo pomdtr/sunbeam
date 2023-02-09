@@ -9,12 +9,12 @@ rootItems:
 commands:
   - name: view-readme
     onSuccess: push-page
-    exec: ./view-readme.sh {{ repository }}
+    exec: ./view-readme.sh {{ param "repository" }}
     params:
       - name: repository
         type: string
   - name: list-repos
-    exec: ./list-repos.sh {{ owner }}
+    exec: ./list-repos.sh {{ param "owner" }}
     onSuccess: push-page
     params:
       - name: owner
@@ -24,7 +24,7 @@ commands:
           title: Owner
           placeholder: "Your GitHub username"
   - name: list-prs
-    exec: ./list-prs.sh {{ repository }}
+    exec: ./list-prs.sh {{ param "repository" }}
     onSuccess: push-page
     params:
       - name: repository

@@ -19,8 +19,8 @@ type FilterItem interface {
 type Filter struct {
 	minIndex      int
 	Width, Height int
+	EmptyMessage  string
 	Query         string
-	Background    lipgloss.TerminalColor
 	Less          func(i, j FilterItem) bool
 
 	items    []FilterItem
@@ -31,7 +31,9 @@ type Filter struct {
 }
 
 func NewFilter() Filter {
-	return Filter{}
+	return Filter{
+		EmptyMessage: "No items",
+	}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -106,13 +108,7 @@ func (m Filter) View() string {
 	}
 
 	if len(rows) == 0 {
-		var emptyText string
-		if len(m.items) == 0 {
-			emptyText = "No items"
-		} else {
-			emptyText = "No matches"
-		}
-		return styles.Faint.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(emptyText)
+		return styles.Faint.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(m.EmptyMessage)
 	}
 
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)

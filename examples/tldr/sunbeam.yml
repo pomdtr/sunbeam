@@ -8,19 +8,28 @@ rootItems:
     title: List MacOS Pages
     with:
       platform: macos
+params:
+  - &platform
+    name: platform
+    type: string
+    input:
+      type: dropdown
+      title: Platform
+      choices:
+        - linux
+        - macos
+        - windows
 commands:
   - name: list
     onSuccess: push-page
-    exec: ./list-pages.sh {{ platform }}
+    exec: ./list-pages.sh {{ param "platform" }}
     params:
-      - name: platform
-        type: string
+      - *platform
   - name: update
     exec: tldr --update
   - name: view-page
-    exec: tldr --color always --platform {{ platform }} {{ page }}
+    exec: tldr --color always --platform {{ param "platform") }} {{ param "page" }}
     params:
-      - name: platform
-        type: string
+      - *platform
       - name: page
         type: string

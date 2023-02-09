@@ -239,7 +239,7 @@ func (rl RootList) RefreshItem() tea.Msg {
 						Cmd: func() tea.Msg {
 							command, ok := extension.GetCommand(rootItem.Command)
 							if !ok {
-								return nil
+								return fmt.Errorf("command %s not found", rootItem.Command)
 							}
 							return PushPageMsg{
 								Page: NewCommandRunner(

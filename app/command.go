@@ -124,13 +124,13 @@ func (p Param) FormItem() *FormItem {
 }
 
 type FormItem struct {
-	Type        string `json:"type"`
-	Title       string `json:"title,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     any    `json:"default,omitempty"`
+	Type        string `json:"type" yaml:"type"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Placeholder string `json:"placeholder,omitempty" yaml:"placeholder,omitempty"`
+	Default     any    `json:"default,omitempty" yaml:"default,omitempty"`
 
-	Choices []string `json:"choices,omitempty"`
-	Label   string   `json:"label,omitempty"`
+	Choices []string `json:"choices,omitempty" yaml:"choices,omitempty"`
+	Label   string   `json:"label,omitempty" yaml:"label,omitempty"`
 }
 
 func (c Command) CheckMissingParams(with map[string]any) error {
@@ -143,31 +143,40 @@ func (c Command) CheckMissingParams(with map[string]any) error {
 	return nil
 }
 
-func (c Command) Cmd(args map[string]any, dir string) (*exec.Cmd, error) {
-	if err := c.CheckMissingParams(args); err != nil {
+type CmdPayload struct {
+	Args  map[string]any
+	Dir   string
+	Query string
+}
+
+func (c Command) Cmd(payload CmdPayload) (*exec.Cmd, error) {
+	if err := c.CheckMissingParams(payload.Args); err != nil {
 		return nil, err
 	}
 
-	funcMap := template.FuncMap{}
-	for _, spec := range c.Params {
-		input, ok := args[spec.Name]
+	paramMap := make(map[string]any)
+	for _, param := range c.Params {
+		input, ok := payload.Args[param.Name]
 		if !ok {
-			return nil, fmt.Errorf("param %s was not provided", spec.Name)
+			return nil, fmt.Errorf("param %s was not provided", param.Name)
 		}
 
-		sanitizedKey := strings.Replace(spec.Name, "-", "_", -1)
-		switch spec.Type {
+		switch param.Type {
 		case "string":
 			value, ok := input.(string)
 			if !ok {
-				return nil, fmt.Errorf("%s type was not bool", spec.Name)
+				return nil, fmt.Errorf("%s type was not bool", param.Name)
 			}
 
-			funcMap[sanitizedKey] = func() (string, error) { return syntax.Quote(value, syntax.LangPOSIX) }
+			value, err := syntax.Quote(value, syntax.LangPOSIX)
+			if err != nil {
+				return nil, err
+			}
+			paramMap[param.Name] = value
 		case "file", "directory":
 			value, ok := input.(string)
 			if !ok {
-				return nil, fmt.Errorf("%s type was not bool", spec.Name)
+				return nil, fmt.Errorf("%s type was not bool", param.Name)
 			}
 
 			if strings.HasPrefix(value, "~") {
@@ -178,18 +187,29 @@ func (c Command) Cmd(args map[string]any, dir string) (*exec.Cmd, error) {
 				value = strings.Replace(value, "~", homedir, 1)
 			}
 
-			funcMap[sanitizedKey] = func() (string, error) { return syntax.Quote(value, syntax.LangPOSIX) }
+			value, err := syntax.Quote(value, syntax.LangPOSIX)
+			if err != nil {
+				return nil, err
+			}
+			paramMap[param.Name] = value
 		case "boolean":
 			value, ok := input.(bool)
 			if !ok {
-				return nil, fmt.Errorf("%s type was not bool", spec.Name)
+				return nil, fmt.Errorf("%s type was not bool", param.Name)
 			}
 
-			funcMap[sanitizedKey] = func() bool { return value }
+			paramMap[param.Name] = value
 		}
 	}
 
-	rendered, err := utils.RenderString(c.Exec, funcMap)
+	rendered, err := utils.RenderString(c.Exec, template.FuncMap{
+		"param": func(name string) any {
+			return paramMap[name]
+		},
+		"query": func() string {
+			return payload.Query
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +223,7 @@ func (c Command) Cmd(args map[string]any, dir string) (*exec.Cmd, error) {
 	cmd.Env = os.Environ()
 	for _, param := range c.Params {
 		if param.Env != "" {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", param.Env, args[param.Name]))
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", param.Env, payload.Args[param.Name]))
 		}
 	}
 
@@ -211,7 +231,7 @@ func (c Command) Cmd(args map[string]any, dir string) (*exec.Cmd, error) {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
 
-	cmd.Dir = dir
+	cmd.Dir = payload.Dir
 
 	return cmd, nil
 }
@@ -233,6 +253,7 @@ type List struct {
 	ShowPreview   bool       `json:"showPreview,omitempty" yaml:"showPreview"`
 	GenerateItems bool       `json:"generateItems,omitempty" yaml:"generateItems"`
 	Items         []ListItem `json:"items"`
+	EmptyMessage  string     `json:"emptyMessage,omitempty" yaml:"emptyMessage"`
 }
 
 type Preview struct {
