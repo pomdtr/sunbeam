@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"text/template"
 
 	"github.com/pomdtr/sunbeam/utils"
@@ -20,12 +19,9 @@ type Command struct {
 	Exec        string            `json:"exec,omitempty" yaml:"exec,omitempty"`
 	Env         map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
+	Preferences []Preference      `json:"preferences,omitempty" yaml:"preferences,omitempty"`
 	Params      []Param           `json:"params,omitempty" yaml:"params,omitempty"`
 	OnSuccess   string            `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
-}
-
-type Env struct {
-	Name string `json:"name"`
 }
 
 type Arg struct {
@@ -93,7 +89,6 @@ func (i Arg) MarshalJSON() ([]byte, error) {
 
 type Param struct {
 	Name        string    `json:"name"`
-	Env         string    `json:"env,omitempty" yaml:"env,omitempty"`
 	Input       *FormItem `json:"input,omitempty" yaml:"input,omitempty"`
 	Type        string    `json:"type"`
 	Default     any       `json:"default,omitempty" yaml:"default,omitempty"`
@@ -144,72 +139,57 @@ func (c Command) CheckMissingParams(with map[string]any) error {
 }
 
 type CmdPayload struct {
-	Args  map[string]any
-	Dir   string
-	Query string
+	Params map[string]any    `json:"params"`
+	Prefs  map[string]any    `json:"prefs"`
+	Env    map[string]string `json:"env"`
+	Query  string            `json:"query"`
 }
 
-func (c Command) Cmd(payload CmdPayload) (*exec.Cmd, error) {
-	if err := c.CheckMissingParams(payload.Args); err != nil {
+func (c Command) Cmd(payload CmdPayload, dir string) (*exec.Cmd, error) {
+	if err := c.CheckMissingParams(payload.Params); err != nil {
 		return nil, err
 	}
 
-	paramMap := make(map[string]any)
-	for _, param := range c.Params {
-		input, ok := payload.Args[param.Name]
-		if !ok {
-			return nil, fmt.Errorf("param %s was not provided", param.Name)
-		}
-
-		switch param.Type {
-		case "string":
-			value, ok := input.(string)
+	funcMap := template.FuncMap{
+		"param": func(name string) (any, error) {
+			param, ok := payload.Params[name]
 			if !ok {
-				return nil, fmt.Errorf("%s type was not bool", param.Name)
+				return nil, fmt.Errorf("missing param: %s", name)
 			}
-
-			value, err := syntax.Quote(value, syntax.LangPOSIX)
-			if err != nil {
-				return nil, err
+			if param, ok := param.(string); ok {
+				return syntax.Quote(param, syntax.LangPOSIX)
 			}
-			paramMap[param.Name] = value
-		case "file", "directory":
-			value, ok := input.(string)
-			if !ok {
-				return nil, fmt.Errorf("%s type was not bool", param.Name)
-			}
-
-			if strings.HasPrefix(value, "~") {
-				homedir, err := os.UserHomeDir()
-				if err != nil {
-					return nil, err
-				}
-				value = strings.Replace(value, "~", homedir, 1)
-			}
-
-			value, err := syntax.Quote(value, syntax.LangPOSIX)
-			if err != nil {
-				return nil, err
-			}
-			paramMap[param.Name] = value
-		case "boolean":
-			value, ok := input.(bool)
-			if !ok {
-				return nil, fmt.Errorf("%s type was not bool", param.Name)
-			}
-
-			paramMap[param.Name] = value
-		}
-	}
-
-	rendered, err := utils.RenderString(c.Exec, template.FuncMap{
-		"param": func(name string) any {
-			return paramMap[name]
+			return param, nil
 		},
 		"query": func() (string, error) {
 			return syntax.Quote(payload.Query, syntax.LangPOSIX)
 		},
-	})
+		"pref": func(name string) (any, error) {
+			pref, ok := payload.Prefs[name]
+			if !ok {
+				return nil, fmt.Errorf("missing pref: %s", name)
+			}
+			if pref, ok := pref.(string); ok {
+				return syntax.Quote(pref, syntax.LangPOSIX)
+			}
+			return pref, nil
+		},
+		"payload": func() (string, error) {
+			payload := payload
+			bytes, err := json.Marshal(payload)
+			if err != nil {
+				return "", err
+			}
+
+			value, err := syntax.Quote(string(bytes), syntax.LangPOSIX)
+			if err != nil {
+				return "", err
+			}
+
+			return value, nil
+		},
+	}
+	rendered, err := utils.RenderString(c.Exec, funcMap)
 	if err != nil {
 		return nil, err
 	}
@@ -221,17 +201,20 @@ func (c Command) Cmd(payload CmdPayload) (*exec.Cmd, error) {
 
 	cmd := exec.Command(fields[0], fields[1:]...)
 	cmd.Env = os.Environ()
-	for _, param := range c.Params {
-		if param.Env != "" {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", param.Env, payload.Args[param.Name]))
-		}
-	}
 
-	for key, value := range c.Env {
+	for key, value := range payload.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
 
-	cmd.Dir = payload.Dir
+	for key, value := range c.Env {
+		value, err := utils.RenderString(value, funcMap)
+		if err != nil {
+			return nil, fmt.Errorf("failed to render env %s: %w", key, err)
+		}
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	cmd.Dir = dir
 
 	return cmd, nil
 }

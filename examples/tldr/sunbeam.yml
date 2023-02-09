@@ -3,33 +3,26 @@ version: "1.0"
 requirements:
   - homePage: https://tldr.sh/
     which: tldr
+  - which: bash
+    homePage: https://www.gnu.org/software/bash/
 rootItems:
   - command: list
     title: List MacOS Pages
     with:
       platform: macos
-params:
-  - &platform
-    name: platform
-    type: string
-    input:
-      type: dropdown
-      title: Platform
-      choices:
-        - linux
-        - macos
-        - windows
 commands:
   - name: list
     onSuccess: push-page
-    exec: ./list-pages.sh {{ param "platform" }}
+    exec: bash list-pages.sh {{ param "platform" }}
     params:
-      - *platform
+      - name: platform
+        type: string
   - name: update
     exec: tldr --update
   - name: view-page
-    exec: tldr --color always --platform {{ param "platform") }} {{ param "page" }}
+    exec: tldr --color always --platform {{ param "platform" }} {{ param "page" }}
     params:
-      - *platform
       - name: page
+        type: string
+      - name: platform
         type: string

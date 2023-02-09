@@ -9,7 +9,6 @@ require (
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/go-chi/chi v1.5.4
 	github.com/itchyny/gojq v0.12.11
-	github.com/joho/godotenv v1.5.1
 	github.com/nojima/httpie-go v0.7.0
 	github.com/otiai10/copy v1.9.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8

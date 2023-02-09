@@ -3,16 +3,17 @@ package cmd
 import (
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"regexp"
 
 	"github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.Command {
@@ -29,13 +30,16 @@ func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.C
 	}
 
 	extensionCommand.AddCommand(func() *cobra.Command {
-		return &cobra.Command{
-			Use:   "install <name> <directory-or-url>",
+		cmd := cobra.Command{
+			Use:   "install <name> ",
 			Short: "Install a sunbeam extension from a local directory or a git repository",
-			Args:  cobra.ExactArgs(2),
+			Args:  cobra.ExactArgs(1),
 			PreRunE: func(cmd *cobra.Command, args []string) error {
-				extensionName := args[0]
+				if !cmd.Flags().Changed("dir") && !cmd.Flags().Changed("git") && !cmd.Flags().Changed("url") {
+					return fmt.Errorf("must specify one of --dir, --git, or --url")
+				}
 
+				extensionName := args[0]
 				re, err := regexp.Compile(`^[\w-]+$`)
 				if err != nil {
 					return err
@@ -49,69 +53,38 @@ func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.C
 			},
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionName := args[0]
-				extensionDir := args[1]
-				targetDir := path.Join(extensionDir, extensionName)
-				if _, err := os.Stat(targetDir); err == nil {
-					return fmt.Errorf("extension %s is already installed at %s", extensionName, targetDir)
-				}
+				targetDir := path.Join(extensionRoot, extensionName)
 
-				if _, err := os.Stat(extensionDir); err == nil {
-					extensionDir, err = filepath.Abs(extensionDir)
-					if err != nil {
-						return fmt.Errorf("failed to get absolute path for extension root: %s", err)
+				if cmd.Flags().Changed("dir") {
+					dir, _ := cmd.Flags().GetString("dir")
+					if err := installFromDir(dir, targetDir); err != nil {
+						return err
 					}
-
-					if _, err = os.Stat(path.Join(extensionDir, "sunbeam.yml")); os.IsNotExist(err) {
-						return fmt.Errorf("current directory is not a sunbeam extension")
+				} else if cmd.Flags().Changed("git") {
+					git, _ := cmd.Flags().GetString("git")
+					if err := installFromGit(git, targetDir); err != nil {
+						return err
 					}
-
-					symlinkTarget := path.Join(extensionRoot, extensionName)
-
-					if err := os.Symlink(extensionDir, symlinkTarget); err != nil {
-						return fmt.Errorf("failed to create symlink: %s", err)
+				} else if cmd.Flags().Changed("url") {
+					url, _ := cmd.Flags().GetString("url")
+					if err := installFromURL(url, targetDir); err != nil {
+						return err
 					}
-
-					fmt.Println("Installed extension", extensionName)
-					return nil
+				} else {
+					return fmt.Errorf("must specify one of --dir, --git, or --url")
 				}
 
-				tmpDir, err := os.MkdirTemp(os.TempDir(), "sunbeam")
-				if err != nil {
-					return err
-				}
-
-				err = utils.GitClone(extensionDir, tmpDir)
-				if err != nil {
-					return err
-				}
-
-				manifestPath := path.Join(tmpDir, "sunbeam.yml")
-				if _, err = os.Stat(manifestPath); os.IsNotExist(err) {
-					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", extensionName)
-				}
-
-				extension, err := app.ParseManifest(manifestPath)
-				if err != nil {
-					return err
-				}
-
-				if err := PostInstallHook(extension); err != nil {
-					return err
-				}
-
-				os.MkdirAll(path.Dir(targetDir), 0755)
-				if err := copy.Copy(tmpDir, targetDir); err != nil {
-					return err
-				}
-
-				if err := os.RemoveAll(tmpDir); err != nil {
-					return err
-				}
-
-				fmt.Println("Installed extension", extensionName)
+				fmt.Printf("Installed extension %s", extensionName)
 				return nil
 			},
 		}
+
+		cmd.Flags().String("dir", "", "Directory to install extension from")
+		cmd.Flags().String("git", "", "Git repository to install extension from")
+		cmd.Flags().String("url", "", "URL to install extension from")
+		cmd.MarkFlagsMutuallyExclusive("dir", "git", "url")
+
+		return &cmd
 	}())
 
 	extensionCommand.AddCommand(func() *cobra.Command {
@@ -236,6 +209,89 @@ func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.C
 	}())
 
 	return extensionCommand
+}
+
+func installFromDir(extensionDir string, targetDir string) error {
+	if _, err := os.Stat(path.Join(extensionDir, "sunbeam.yml")); os.IsNotExist(err) {
+		return fmt.Errorf("current directory is not a sunbeam extension")
+	}
+
+	if err := os.Symlink(extensionDir, targetDir); err != nil {
+		return fmt.Errorf("failed to create symlink: %s", err)
+	}
+
+	return nil
+}
+
+func installFromGit(repository string, targetDir string) error {
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "sunbeam")
+	if err != nil {
+		return err
+	}
+
+	err = utils.GitClone(repository, tmpDir)
+	if err != nil {
+		return err
+	}
+
+	manifestPath := path.Join(tmpDir, "sunbeam.yml")
+	if _, err = os.Stat(manifestPath); os.IsNotExist(err) {
+		return err
+	}
+
+	extension, err := app.ParseManifest(manifestPath)
+	if err != nil {
+		return err
+	}
+
+	if err := PostInstallHook(extension); err != nil {
+		return err
+	}
+
+	os.MkdirAll(path.Dir(targetDir), 0755)
+	if err := copy.Copy(tmpDir, targetDir); err != nil {
+		return err
+	}
+
+	if err := os.RemoveAll(tmpDir); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func installFromURL(url string, targetDir string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to download extension: %s", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download extension: %s", resp.Status)
+	}
+
+	defer resp.Body.Close()
+
+	var extension app.Extension
+	if err := yaml.NewDecoder(resp.Body).Decode(&extension); err != nil {
+		return fmt.Errorf("failed to parse extension manifest: %s", err)
+	}
+
+	if err := os.Mkdir(targetDir, 0755); err != nil {
+		return fmt.Errorf("failed to create extension directory: %s", err)
+	}
+
+	manifestPath := path.Join(targetDir, "sunbeam.yml")
+	f, err := os.Create(manifestPath)
+	if err != nil {
+		return fmt.Errorf("failed to create extension manifest: %s", err)
+	}
+
+	if err := yaml.NewEncoder(f).Encode(extension); err != nil {
+		return fmt.Errorf("failed to write extension manifest: %s", err)
+	}
+
+	return nil
 }
 
 func IsLocalExtension(fi fs.FileInfo) bool {

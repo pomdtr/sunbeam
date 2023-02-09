@@ -19,7 +19,7 @@ func NewCmdServe(extensions []*app.Extension) *cobra.Command {
 
 			server := server.NewServer(extensions, fmt.Sprintf("%s:%d", host, port))
 
-			log.Printf("Listening on %s:%d", host, port)
+			log.Printf("Listening on http://%s:%d", host, port)
 			return server.ListenAndServe()
 		},
 	}

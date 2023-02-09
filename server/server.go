@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -16,9 +15,9 @@ import (
 )
 
 func NewServer(extensions []*app.Extension, addr string) *http.Server {
-	extensionMap := make(map[string]*app.Extension)
+	extensionMap := make(map[string]app.Extension)
 	for _, extension := range extensions {
-		extensionMap[extension.Name()] = extension
+		extensionMap[extension.Name()] = *extension
 	}
 
 	r := chi.NewRouter()
@@ -49,13 +48,14 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 
 		commands := make([]app.Command, len(extension.Commands))
 		for i, command := range extension.Commands {
-			command.Exec = buildExec(command, extractUrl(r))
+			command.Exec = buildExec(command, extension, extractUrl(r))
 			commands[i] = command
 		}
 
 		w.Header().Set("Content-Type", "text/yaml")
 		yaml.NewEncoder(w).Encode(app.Extension{
 			Version:     extension.Version,
+			Preferences: extension.Preferences,
 			Title:       extension.Title,
 			Description: extension.Description,
 			RootItems:   extension.RootItems,
@@ -64,14 +64,6 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 	})
 
 	r.Post("/{extension}/{command}", func(w http.ResponseWriter, r *http.Request) {
-		var args map[string]any
-		err := json.NewDecoder(r.Body).Decode(&args)
-		if err != nil && err != io.EOF {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Error decoding input params: %s", err)))
-			return
-		}
-
 		extensionName := chi.URLParam(r, "extension")
 		extension, ok := extensionMap[extensionName]
 		if !ok {
@@ -88,13 +80,14 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 			return
 		}
 
-		query := r.Header.Get("X-Sunbeam-Query")
+		var payload app.CmdPayload
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error decoding payload: %s", err)))
+			return
+		}
 
-		cmd, err := command.Cmd(app.CmdPayload{
-			Args:  args,
-			Dir:   extension.Root,
-			Query: query,
-		})
+		cmd, err := command.Cmd(payload, extension.Root)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Error running command: %s", err)))
@@ -138,17 +131,12 @@ func extractUrl(r *http.Request) *url.URL {
 	return &extensionUrl
 }
 
-func buildExec(command app.Command, extensionUrl *url.URL) string {
+func buildExec(command app.Command, extension app.Extension, extensionUrl *url.URL) string {
 	commandUrl := url.URL{
 		Scheme: extensionUrl.Scheme,
 		Host:   extensionUrl.Host,
 		Path:   path.Join(extensionUrl.Path, command.Name),
 	}
-	args := []string{"sunbeam", "http", "--ignore-stdin", "POST", commandUrl.String(), "X-Sunbeam-Query:{{ query }}"}
-
-	for _, param := range command.Params {
-		args = append(args, fmt.Sprintf("%s={{%s}}", param.Name, param.Name))
-	}
-
+	args := []string{"curl", "-X", "POST", "-H", "Content-Type:application/json", commandUrl.String(), "-d", "{{ payload }}"}
 	return strings.Join(args, " ")
 }

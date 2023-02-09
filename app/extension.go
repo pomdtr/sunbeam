@@ -32,7 +32,13 @@ type Extension struct {
 
 	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
+	Preferences  []Preference           `json:"preferences,omitempty" yaml:"preferences,omitempty"`
 	Commands     []Command              `json:"commands"`
+}
+
+type Preference struct {
+	Param `yaml:",inline"`
+	Env   string `json:"env,omitempty" yaml:"env,omitempty"`
 }
 
 func (e Extension) Name() string {
@@ -53,7 +59,7 @@ type ExtensionRequirement struct {
 	HomePage string `json:"homePage" yaml:"homePage"`
 }
 
-func (r ExtensionRequirement) Check() bool {
+func (r ExtensionRequirement) CheckRequirements() bool {
 	if _, err := exec.LookPath(r.Which); err != nil {
 		return false
 	}

@@ -18,6 +18,8 @@ func Execute(version string) (err error) {
 		return err
 	}
 
+	keystore, err := tui.LoadKeyStore(path.Join(homeDir, ".config", "sunbeam", "preferences.json"))
+
 	var config tui.Config
 	configPath := path.Join(homeDir, ".config", "sunbeam", "config.yml")
 	if _, err := os.Stat(configPath); err == nil {
@@ -49,7 +51,7 @@ func Execute(version string) (err error) {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(extensions...)
+			rootList := tui.NewRootList(keystore, extensions...)
 			model := tui.NewModel(rootList)
 			return tui.Draw(model)
 		},
@@ -68,23 +70,23 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdServe(extensions))
 	rootCmd.AddCommand(NewCmdCheck())
 	rootCmd.AddCommand(NewCmdQuery())
-	rootCmd.AddCommand(NewCmdRun(&config))
+	rootCmd.AddCommand(NewCmdRun(keystore, &config))
 	rootCmd.AddCommand(NewCmdHttp())
 
 	for _, extension := range extensions {
-		rootCmd.AddCommand(NewExtensionCommand(extension, &config))
+		rootCmd.AddCommand(NewExtensionCommand(extension, keystore, &config))
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Command {
+func NewExtensionCommand(extension *app.Extension, keystore *tui.KeyStore, config *tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:     extension.Name(),
 		GroupID: "extension",
 		Short:   extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(extension)
+			rootList := tui.NewRootList(keystore, extension)
 			model := tui.NewModel(rootList)
 			err = tui.Draw(model)
 			if err != nil {
@@ -126,6 +128,7 @@ func NewExtensionCommand(extension *app.Extension, config *tui.Config) *cobra.Co
 				runner := tui.NewCommandRunner(
 					extension,
 					command,
+					keystore,
 					with,
 				)
 

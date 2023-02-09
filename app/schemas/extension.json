@@ -21,8 +21,11 @@
                 ]
             }
         },
-        "params": {
-            "type": "array"
+        "preferences": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/param"
+            }
         },
         "rootUrl": {
             "type": "string"
@@ -119,26 +122,38 @@
                 "name",
                 "type"
             ],
-            "additionalProperties": false,
             "properties": {
                 "name": {
                     "type": "string"
                 },
-                "env": {
-                    "type": "string"
-                },
-                "input": {
-                    "type": "object"
-                },
                 "type": {
+                    "type": "string",
                     "enum": [
                         "string",
                         "boolean",
                         "file",
-                        "directory"
+                        "folder"
                     ]
+                },
+                "input": {
+                    "type": "object"
                 }
             }
+        },
+        "preference": {
+            "allOf": [
+                {
+                    "$ref": "#/$defs/param"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "env": {
+                            "type": "string"
+                        }
+                    }
+                }
+            ]
         },
         "command": {
             "type": "object",
@@ -156,6 +171,12 @@
                         "^\\w+$": {
                             "type": "string"
                         }
+                    }
+                },
+                "preferences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/preference"
                     }
                 },
                 "exec": {

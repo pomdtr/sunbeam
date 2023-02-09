@@ -57,59 +57,28 @@ func (k *KeyStore) Save() (err error) {
 	return nil
 }
 
-func GetPreferenceId(extension string, command string, name string) string {
-	if command != "" {
-		return fmt.Sprintf("%s.%s.%s", extension, command, name)
-	}
-	return fmt.Sprintf("%s.%s", extension, name)
-}
-
 type ScriptPreference struct {
-	Name      string
-	Command   string
-	Extension string
-	Value     any
+	Name    string
+	Command string
+	Value   any
 }
 
-func (k KeyStore) GetPreference(extension string, command string, name string) (ScriptPreference, bool) {
-	if k.preferenceMap == nil {
-		return ScriptPreference{}, false
-	}
-	scriptId := GetPreferenceId(extension, command, name)
-	if preference, ok := k.preferenceMap[scriptId]; ok {
-		return preference, true
+func (k KeyStore) GetPreference(extension string, command string, name string) (any, bool) {
+	for _, preference := range k.preferenceMap {
+		if preference.Command == command && preference.Name == name {
+			return preference.Value, true
+		}
 	}
 
-	extensionId := GetPreferenceId(extension, "", name)
-	if preference, ok := k.preferenceMap[extensionId]; ok {
-		return preference, ok
+	for _, preference := range k.preferenceMap {
+		if preference.Command == "" && preference.Name == name {
+			return preference.Value, true
+		}
 	}
 
-	return ScriptPreference{}, false
+	return nil, false
 }
 
-func (k *KeyStore) SetPreference(preferences ...ScriptPreference) error {
-	for _, preference := range preferences {
-		k.preferenceMap[GetPreferenceId(preference.Extension, preference.Command, preference.Name)] = preference
-	}
-
-	return keyStore.Save()
-}
-
-// TODO: Remove this
-var keyStore *KeyStore
-
-func init() {
-	var err error
-
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-
-	preferencePath := path.Join(homedir, ".config", "sunbeam", "preferences.json")
-	keyStore, err = LoadKeyStore(preferencePath)
-	if err != nil {
-		panic(err)
-	}
+func (k *KeyStore) SetPreference(extensionName string, pref ScriptPreference) {
+	k.preferenceMap[extensionName] = pref
 }
