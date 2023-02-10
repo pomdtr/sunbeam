@@ -9,11 +9,11 @@ import (
 
 type KeyStore struct {
 	preferencePath string
-	preferenceMap  map[string]ScriptPreference
+	preferenceMap  map[string]any
 }
 
 func LoadKeyStore(preferencePath string) (*KeyStore, error) {
-	preferenceMap := make(map[string]ScriptPreference)
+	preferenceMap := make(map[string]any)
 	if _, err := os.Stat(preferencePath); os.IsNotExist(err) {
 		return &KeyStore{
 			preferencePath: preferencePath,
@@ -64,21 +64,27 @@ type ScriptPreference struct {
 }
 
 func (k KeyStore) GetPreference(extension string, command string, name string) (any, bool) {
-	for _, preference := range k.preferenceMap {
-		if preference.Command == command && preference.Name == name {
-			return preference.Value, true
-		}
+	preferenceId := k.PreferenceId(extension, command, name)
+	if value, ok := k.preferenceMap[preferenceId]; ok {
+		return value, true
 	}
 
-	for _, preference := range k.preferenceMap {
-		if preference.Command == "" && preference.Name == name {
-			return preference.Value, true
-		}
+	preferenceId = k.PreferenceId(extension, "", name)
+	if value, ok := k.preferenceMap[preferenceId]; ok {
+		return value, true
 	}
 
 	return nil, false
 }
 
-func (k *KeyStore) SetPreference(extensionName string, pref ScriptPreference) {
-	k.preferenceMap[extensionName] = pref
+func (k *KeyStore) PreferenceId(extension string, command string, name string) string {
+	if command == "" {
+		return fmt.Sprintf("%s.%s", extension, name)
+	}
+	return fmt.Sprintf("%s.%s.%s", extension, command, name)
+}
+
+func (k *KeyStore) SetPreference(extensionName string, commandName string, name string, value any) {
+	preferenceId := k.PreferenceId(extensionName, commandName, name)
+	k.preferenceMap[preferenceId] = value
 }

@@ -399,14 +399,23 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return c, tea.Sequence(c.SetIsloading(true), c.Run())
 		case "prefs":
-			for key, value := range msg.Values {
-				c.keystore.SetPreference(c.extension.Name(), ScriptPreference{
-					Name:    key,
-					Command: c.command.Name,
-					Value:   value,
-				})
+			for _, pref := range c.extension.Preferences {
+				value, ok := msg.Values[pref.Name]
+				if !ok {
+					continue
+				}
+				c.keystore.SetPreference(c.extension.Name(), "", pref.Name, value)
+			}
+
+			for _, pref := range c.command.Preferences {
+				value, ok := msg.Values[pref.Name]
+				if !ok {
+					continue
+				}
+				c.keystore.SetPreference(c.extension.Name(), c.command.Name, pref.Name, value)
 			}
 			err := c.keystore.Save()
+
 			if err != nil {
 				return c, NewErrorCmd(err)
 			}
