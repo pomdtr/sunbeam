@@ -2,6 +2,7 @@ title: WebCrate
 version: "1.0"
 requirements:
   - which: bash
+  - which: curl
 preferences:
   - name: host
     type: string
