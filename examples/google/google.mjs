@@ -22,7 +22,6 @@ if (query) {
       {
         type: "copy-text",
         title: "Copy Suggestion",
-        shortcut: "ctrl+y",
         text: suggestion,
       },
     ],

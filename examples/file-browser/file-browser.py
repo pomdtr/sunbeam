@@ -40,7 +40,6 @@ json.dump(
                     {
                         "type": "run-command",
                         "title": "Edit",
-                        "shortcut": "ctrl+e",
                         "command": "edit-file",
                         "with": {"file": str(path.absolute())},
                     },
@@ -53,7 +52,6 @@ json.dump(
                     {
                         "type": "run-command",
                         "title": "Delete File",
-                        "shortcut": "ctrl+d",
                         "command": "delete-file",
                         "with": {"path": str(path.absolute())},
                     },

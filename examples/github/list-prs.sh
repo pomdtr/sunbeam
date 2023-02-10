@@ -18,7 +18,7 @@ gh pr list --repo "$REPO" --json author,title,url,number | sunbeam query '.[] |
     ],
     actions: [
         {type: "open-url", title: "Open in Browser", url: .url},
-        {type: "copy-text", shortcut: "ctrl+y", text: .url}
+        {type: "copy-text", text: .url}
     ]
 }
 ' | sunbeam query --slurp '{

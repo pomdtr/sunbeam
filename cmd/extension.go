@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 
 	"github.com/otiai10/copy"
@@ -57,6 +58,11 @@ func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.C
 
 				if cmd.Flags().Changed("dir") {
 					dir, _ := cmd.Flags().GetString("dir")
+					dir, err := filepath.Abs(dir)
+					if err != nil {
+						return fmt.Errorf("failed to get absolute path of directory: %w", err)
+					}
+
 					if err := installFromDir(dir, targetDir); err != nil {
 						return err
 					}

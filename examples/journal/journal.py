@@ -42,7 +42,6 @@ def list_entries(journal: Journal):
                 "title": "New Entry",
                 "command": "new-entry",
                 "onSuccess": "reload-page",
-                "shortcut": "ctrl+n",
                 "with": {
                     "title": {"type": "textfield", "title": "Title"},
                     "content": {"type": "textarea", "title": "Content"},
@@ -71,14 +70,12 @@ def list_entries(journal: Journal):
                         "title": "Delete Entry",
                         "command": "delete-entry",
                         "onSuccess": "reload-page",
-                        "shortcut": "ctrl+d",
                         "with": {"uuid": uuid},
                     },
                     {
                         "type": "run-command",
                         "title": "Edit Entry",
                         "command": "edit-entry",
-                        "shortcut": "ctrl+e",
                         "onSuccess": "reload-page",
                         "with": {
                             "uuid": uuid,

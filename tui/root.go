@@ -203,9 +203,8 @@ func NewRootList(keystore *KeyStore, extensions ...*app.Extension) *RootList {
 	list := NewList("Sunbeam")
 	list.defaultActions = []Action{
 		{
-			Title:    "Reload",
-			Shortcut: "ctrl+r",
-			Cmd:      NewReloadPageCmd(nil),
+			Title: "Reload",
+			Cmd:   NewReloadPageCmd(nil),
 		},
 	}
 	return &RootList{
@@ -236,8 +235,7 @@ func (rl RootList) RefreshItem() tea.Msg {
 				Accessories: []string{rootItem.Extension},
 				Actions: []Action{
 					{
-						Title:    "Run Command",
-						Shortcut: "enter",
+						Title: "Run Command",
 						Cmd: func() tea.Msg {
 							command, ok := extension.GetCommand(rootItem.Command)
 							if !ok {
@@ -275,6 +273,16 @@ func (rl RootList) SetSize(width int, height int) {
 func (rl RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case []ListItem:
+		if len(msg) == 0 {
+			rl.list.SetEmptyMessage("No extension found. Hit 'enter' to open the documentation and learn how to install extensions.")
+			rl.list.defaultActions = []Action{
+				{
+					Title: "Open Documentation",
+					Cmd:   NewOpenUrlCmd("https://pomdtr.github.io/sunbeam/user-guide/managing-extensions"),
+				},
+			}
+		}
+
 		rl.list.SetItems(msg)
 	case ReloadPageMsg:
 		return rl, rl.RefreshItem

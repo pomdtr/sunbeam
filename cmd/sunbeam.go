@@ -19,6 +19,9 @@ func Execute(version string) (err error) {
 	}
 
 	keystore, err := tui.LoadKeyStore(path.Join(homeDir, ".config", "sunbeam", "preferences.json"))
+	if err != nil {
+		return fmt.Errorf("failed to load keystore: %w", err)
+	}
 
 	var config tui.Config
 	configPath := path.Join(homeDir, ".config", "sunbeam", "config.yml")

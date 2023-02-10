@@ -23,14 +23,12 @@ gh api "$ENDPOINT" --jq '.[] |
                 type: "run-command",
                 command: "view-readme",
                 title: "View README",
-                shortcut: "ctrl+r",
                 with: {repository: .full_name}
             },
             {
                 type: "run-command",
                 command: "list-prs",
                 title: "List Pull Requests",
-                shortcut: "ctrl+p",
                 with: {repository: .full_name}
             }
         ]

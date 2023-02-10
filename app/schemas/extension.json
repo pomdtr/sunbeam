@@ -39,7 +39,6 @@
                 "type": "object",
                 "additionalProperties": false,
                 "required": [
-                    "homePage",
                     "which"
                 ],
                 "properties": {

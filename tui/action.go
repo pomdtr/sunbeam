@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,19 +10,8 @@ import (
 )
 
 type Action struct {
-	Cmd      tea.Cmd
-	Shortcut string
-	Title    string
-}
-
-func (a Action) Binding() key.Binding {
-	prettyKey := strings.ReplaceAll(a.Shortcut, "ctrl", "⌃")
-	prettyKey = strings.ReplaceAll(prettyKey, "alt", "⌥")
-	prettyKey = strings.ReplaceAll(prettyKey, "shift", "⇧")
-	prettyKey = strings.ReplaceAll(prettyKey, "cmd", "⌘")
-	prettyKey = strings.ReplaceAll(prettyKey, "enter", "↩")
-
-	return key.NewBinding(key.WithKeys(a.Shortcut), key.WithHelp(prettyKey, a.Title))
+	Cmd   tea.Cmd
+	Title string
 }
 
 func NewCopyTextCmd(text string) tea.Cmd {
@@ -113,9 +101,8 @@ func NewAction(scriptAction app.Action) Action {
 	}
 
 	return Action{
-		Cmd:      cmd,
-		Title:    scriptAction.Title,
-		Shortcut: scriptAction.Shortcut,
+		Cmd:   cmd,
+		Title: scriptAction.Title,
 	}
 }
 
@@ -162,9 +149,8 @@ func (al *ActionList) SetActions(actions ...Action) {
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
 		filterItems[i] = ListItem{
-			Title:    action.Title,
-			Subtitle: action.Shortcut,
-			Actions:  []Action{action},
+			Title:   action.Title,
+			Actions: []Action{action},
 		}
 	}
 	al.filter.SetItems(filterItems)
@@ -205,14 +191,6 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			listItem, _ := selectedItem.(ListItem)
 			al.Blur()
 			return al, listItem.Actions[0].Cmd
-		}
-
-		// TODO: Move this to the runner
-		for _, action := range al.actions {
-			if key.Matches(msg, action.Binding()) {
-				al.Blur()
-				return al, action.Cmd
-			}
 		}
 	}
 

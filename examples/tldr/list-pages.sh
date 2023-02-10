@@ -19,7 +19,6 @@ tldr --list --platform="$1" | sunbeam query --arg platform="$1" -R '{
       {
         title: "Refresh Pages",
         type: "run-command",
-        shortcut: "ctlr+r",
         command: "update",
         onSuccess: "reload-page"
       }

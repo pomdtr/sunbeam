@@ -29,9 +29,6 @@ type ListItem struct {
 func ParseScriptItem(scriptItem app.ListItem) ListItem {
 	actions := make([]Action, len(scriptItem.Actions))
 	for i, scriptAction := range scriptItem.Actions {
-		if i == 0 {
-			scriptAction.Shortcut = "enter"
-		}
 		actions[i] = NewAction(scriptAction)
 	}
 

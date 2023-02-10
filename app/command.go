@@ -256,9 +256,8 @@ type ListItem struct {
 }
 
 type Action struct {
-	Title    string `json:"title"`
-	Type     string `json:"type"`
-	Shortcut string `json:"shortcut,omitempty"`
+	Title string `json:"title"`
+	Type  string `json:"type"`
 
 	Text string `json:"text,omitempty"`
 
