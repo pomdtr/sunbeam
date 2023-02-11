@@ -23,7 +23,7 @@ func Execute(version string) (err error) {
 		return fmt.Errorf("failed to load keystore: %w", err)
 	}
 
-	history, err := tui.LoadHistory(path.Join(homeDir, ".config", "sunbeam", "history.json"))
+	history, err := tui.LoadHistory(path.Join(homeDir, ".local", "share", "sunbeam", "history.json"))
 	if err != nil {
 		fmt.Println(err)
 		return fmt.Errorf("failed to load history: %w", err)
