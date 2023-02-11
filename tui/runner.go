@@ -180,7 +180,7 @@ func (c *CommandRunner) Run() tea.Cmd {
 				return err
 			}
 
-			return fmt.Errorf("%s", exitError.Stderr)
+			return fmt.Errorf("error running command %s: %s", cmd.String(), exitError.Stderr)
 		}
 
 		return CommandOutput(output)
