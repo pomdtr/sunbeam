@@ -8,11 +8,12 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--root", required=True, type=pathlib.Path)
+parser.add_argument("--show-hidden", action="store_true")
 args = parser.parse_args()
 
 root: pathlib.Path = args.root
 entries = root.iterdir()
-if os.getenv("SHOW_HIDDEN") != "1":
+if not args.show_hidden:
     entries = filter(lambda p: not p.name.startswith("."), entries)
 
 json.dump(
