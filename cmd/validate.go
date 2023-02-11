@@ -11,14 +11,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewCmdCheck() *cobra.Command {
-	checkCmd := cobra.Command{
-		Use:     "check",
+func NewCmdValidate() *cobra.Command {
+	validateCmd := cobra.Command{
+		Use:     "validate",
 		GroupID: "core",
 		Args:    cobra.ExactArgs(1),
 	}
 
-	checkCmd.AddCommand(&cobra.Command{
+	validateCmd.AddCommand(&cobra.Command{
 		Use: "manifest <manifest-path>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			manifestPath := args[0]
@@ -56,7 +56,7 @@ func NewCmdCheck() *cobra.Command {
 		},
 	})
 
-	checkCmd.AddCommand(func() *cobra.Command {
+	validateCmd.AddCommand(func() *cobra.Command {
 		command := cobra.Command{
 			Use: "page",
 			RunE: func(cmd *cobra.Command, args []string) error {
@@ -158,5 +158,5 @@ func NewCmdCheck() *cobra.Command {
 		return &command
 	}())
 
-	return &checkCmd
+	return &validateCmd
 }
