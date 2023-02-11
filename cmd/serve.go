@@ -12,6 +12,7 @@ import (
 func NewCmdServe(extensions []*app.Extension) *cobra.Command {
 	cmd := cobra.Command{
 		Use:     "serve",
+		Short:   "Start the Sunbeam server",
 		GroupID: "core",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			host, _ := cmd.Flags().GetString("host")
