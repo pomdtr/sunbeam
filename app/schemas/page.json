@@ -58,17 +58,10 @@
                         "type": "boolean"
                     },
                     "items": {
-                        "anyOf": [
-                            {
-                                "type": "null"
-                            },
-                            {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/$defs/listitem"
-                                }
-                            }
-                        ]
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/$defs/listitem"
+                        }
                     }
                 }
             }
