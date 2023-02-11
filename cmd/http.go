@@ -34,8 +34,9 @@ type httpOptions struct {
 func NewCmdHttp() *cobra.Command {
 	var optionSet httpOptions
 	cmd := cobra.Command{
-		Use:   "http [METHOD] URL [REQUEST_ITEM ...]",
-		Short: "User-friendly curl replacement inspired by HTTPie",
+		Use:     "http [METHOD] URL [REQUEST_ITEM ...]",
+		Short:   "User-friendly curl replacement inspired by HTTPie",
+		GroupID: "core",
 		PreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// if !optionSet.IgnoreStdin && !isatty.IsTerminal(os.Stdin.Fd()) {
 			// 	panic("stdin is not tty")
