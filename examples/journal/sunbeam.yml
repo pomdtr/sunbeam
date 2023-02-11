@@ -18,14 +18,14 @@ commands:
     exec: python3 journal.py list
     onSuccess: push-page
   - name: new-entry
-    exec: python3 journal.py new --title {{ param "title") }} --content {{ param("content" }}
+    exec: python3 journal.py new --title {{ param "title" }} --content {{ param "content" }}
     params:
       - name: title
         type: string
       - name: content
         type: string
   - name: edit-entry
-    exec: python3 journal.py edit --uuid {{ param "uuid") }} --title {{ param("title") }} --content {{ param "content" }}
+    exec: python3 journal.py edit --uuid {{ param "uuid" }} --title {{ param "title" }} --content {{ param "content" }}
     params:
       - name: uuid
         type: string
