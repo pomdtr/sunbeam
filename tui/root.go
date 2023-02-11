@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"sort"
 	"strconv"
 
 	"github.com/atotto/clipboard"
@@ -195,11 +196,12 @@ func (m *Model) Pop() {
 
 type RootList struct {
 	list       *List
+	history    *History
 	keystore   *KeyStore
 	extensions []*app.Extension
 }
 
-func NewRootList(keystore *KeyStore, extensions ...*app.Extension) *RootList {
+func NewRootList(keystore *KeyStore, history *History, extensions ...*app.Extension) *RootList {
 	list := NewList("Sunbeam")
 	list.defaultActions = []Action{
 		{
@@ -209,6 +211,7 @@ func NewRootList(keystore *KeyStore, extensions ...*app.Extension) *RootList {
 	}
 	return &RootList{
 		list:       list,
+		history:    history,
 		keystore:   keystore,
 		extensions: extensions,
 	}
@@ -220,7 +223,7 @@ func (rl RootList) Init() tea.Cmd {
 
 func (rl RootList) RefreshItem() tea.Msg {
 	listItems := make([]ListItem, 0)
-	for extensionName, extension := range rl.extensions {
+	for i, extension := range rl.extensions {
 		extension, err := app.LoadExtension(extension.Root)
 		if err != nil {
 			return fmt.Errorf("failed to load extension: %s", err)
@@ -228,8 +231,9 @@ func (rl RootList) RefreshItem() tea.Msg {
 
 		for _, rootItem := range extension.RootItems {
 			rootItem := rootItem
+			rootItemId := fmt.Sprintf("%s-%s", extension.Name(), rootItem.Title)
 			listItems = append(listItems, ListItem{
-				Id:          fmt.Sprintf("%s-%s", rootItem.Extension, rootItem.Command),
+				Id:          rootItemId,
 				Title:       rootItem.Title,
 				Subtitle:    extension.Title,
 				Accessories: []string{rootItem.Extension},
@@ -237,6 +241,11 @@ func (rl RootList) RefreshItem() tea.Msg {
 					{
 						Title: "Run Command",
 						Cmd: func() tea.Msg {
+							rl.history.Add(rootItemId)
+							err := rl.history.Save()
+							if err != nil {
+								return fmt.Errorf("failed to save history: %s", err)
+							}
 							command, ok := extension.GetCommand(rootItem.Command)
 							if !ok {
 								return fmt.Errorf("command %s not found", rootItem.Command)
@@ -255,7 +264,7 @@ func (rl RootList) RefreshItem() tea.Msg {
 			})
 		}
 
-		rl.extensions[extensionName] = extension
+		rl.extensions[i] = extension
 	}
 
 	return listItems
@@ -282,6 +291,10 @@ func (rl RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				},
 			}
 		}
+
+		sort.SliceStable(msg, func(i, j int) bool {
+			return rl.history.Get(msg[i].Id) > rl.history.Get(msg[j].Id)
+		})
 
 		rl.list.SetItems(msg)
 	case ReloadPageMsg:

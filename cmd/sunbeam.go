@@ -23,6 +23,12 @@ func Execute(version string) (err error) {
 		return fmt.Errorf("failed to load keystore: %w", err)
 	}
 
+	history, err := tui.LoadHistory(path.Join(homeDir, ".config", "sunbeam", "history.json"))
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("failed to load history: %w", err)
+	}
+
 	var config tui.Config
 	configPath := path.Join(homeDir, ".config", "sunbeam", "config.yml")
 	if _, err := os.Stat(configPath); err == nil {
@@ -54,7 +60,7 @@ func Execute(version string) (err error) {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(keystore, extensions...)
+			rootList := tui.NewRootList(keystore, history, extensions...)
 			model := tui.NewModel(rootList)
 			return tui.Draw(model)
 		},
@@ -71,25 +77,25 @@ func Execute(version string) (err error) {
 	// Core Commands
 	rootCmd.AddCommand(NewCmdExtension(extensionRoot, extensions))
 	rootCmd.AddCommand(NewCmdServe(extensions))
-	rootCmd.AddCommand(NewCmdCheck())
+	rootCmd.AddCommand(NewCmdValidate())
 	rootCmd.AddCommand(NewCmdQuery())
-	rootCmd.AddCommand(NewCmdRun(keystore, &config))
+	rootCmd.AddCommand(NewCmdRun(keystore, history, &config))
 	rootCmd.AddCommand(NewCmdHttp())
 
 	for _, extension := range extensions {
-		rootCmd.AddCommand(NewExtensionCommand(extension, keystore, &config))
+		rootCmd.AddCommand(NewExtensionCommand(extension, keystore, history, &config))
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(extension *app.Extension, keystore *tui.KeyStore, config *tui.Config) *cobra.Command {
+func NewExtensionCommand(extension *app.Extension, keystore *tui.KeyStore, history *tui.History, config *tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:     extension.Name(),
 		GroupID: "extension",
 		Short:   extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(keystore, extension)
+			rootList := tui.NewRootList(keystore, history, extension)
 			model := tui.NewModel(rootList)
 			err = tui.Draw(model)
 			if err != nil {
