@@ -3,28 +3,6 @@ version: "1.0"
 rootItems:
   - command: form
     title: Example Form
-    with:
-      textfield:
-        title: Textfield
-        type: textfield
-      password:
-        title: Password
-        type: password
-      textarea:
-        title: Textarea
-        type: textarea
-      checkbox:
-        title: Checkbox
-        label: Check me
-        type: checkbox
-      dropdown:
-        title: Dropdown
-        type: dropdown
-        choices:
-          - one
-          - two
-          - three
-
 commands:
   - name: form
     exec: |
@@ -38,11 +16,31 @@ commands:
     params:
       - name: textfield
         type: string
+        input:
+          title: Textfield
+          type: textfield
       - name: password
         type: string
+        input:
+          title: Password
+          type: password
       - name: textarea
         type: string
+        input:
+          title: Textarea
+          type: textarea
       - name: checkbox
         type: boolean
+        input:
+          title: Checkbox
+          label: Check me
+          type: checkbox
       - name: dropdown
         type: string
+        input:
+          title: Dropdown
+          type: dropdown
+          choices:
+            - one
+            - two
+            - three

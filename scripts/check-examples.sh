@@ -4,5 +4,5 @@ set -e
 
 for filename in examples/*/sunbeam.yml; do
   echo "Checking $filename"
-  sunbeam check manifest "$filename"
+  sunbeam validate manifest "$filename"
 done

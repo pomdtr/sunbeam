@@ -6,13 +6,6 @@ rootItems:
     title: List Entries
   - command: new-entry
     title: Write Entry
-    with:
-      title:
-        type: textfield
-        title: Title
-      content:
-        type: textarea
-        title: Content
 commands:
   - name: list-entries
     exec: python3 journal.py list

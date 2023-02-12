@@ -250,12 +250,17 @@ func (rl RootList) RefreshItem() tea.Msg {
 							if !ok {
 								return fmt.Errorf("command %s not found", rootItem.Command)
 							}
+							with := make(map[string]app.Arg)
+							for key, arg := range rootItem.With {
+								with[key] = app.Arg{Value: arg}
+							}
+
 							return PushPageMsg{
 								Page: NewCommandRunner(
 									extension,
 									command,
 									rl.keystore,
-									rootItem.With,
+									with,
 								),
 							}
 						},

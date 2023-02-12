@@ -14,10 +14,6 @@ rootItems:
       root: "~"
   - title: Browse Custom Directory
     command: browse-files
-    with:
-      root:
-        type: textfield
-        title: Root Directory
   - title: Browse Current Directory
     command: browse-files
     with:

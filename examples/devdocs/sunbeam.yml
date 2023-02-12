@@ -1,8 +1,7 @@
 title: DevDocs
 version: "1.0"
-params:
-  - &token
-    name: token
+preferences:
+  - name: token
     env: GITHUB_TOKEN
     type: string
     input:
@@ -29,4 +28,3 @@ commands:
         input:
           type: textfield
           title: Slug
-      - *token

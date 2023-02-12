@@ -19,7 +19,7 @@ type RootItem struct {
 	Extension string         `json:"extension,omitempty" yaml:"extension,omitempty"`
 	Command   string         `json:"command,omitempty" yaml:"command,omitempty"`
 	Title     string         `json:"title,omitempty" yaml:"title,omitempty"`
-	With      map[string]Arg `json:"with,omitempty" yaml:"with,omitempty"`
+	With      map[string]any `json:"with,omitempty" yaml:"with,omitempty"`
 }
 
 type Extension struct {
