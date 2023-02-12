@@ -1,9 +1,6 @@
 # Installation
 
 ```sh
-# Homebrew (macOS and Linux)
-brew install pomdtr/tap/sunbeam
-
 # go install (macOS, Linux and Windows)
 go install github.com/pomdtr/sunbeam@latest
 ```
