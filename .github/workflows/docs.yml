@@ -1,27 +1,30 @@
-name: docs
+name: github pages
+
 on:
   push:
     branches:
       - main
+  pull_request:
+
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - run: npm ci
-        working-directory: website
+      - uses: actions/checkout@v2
 
-      - name: Build
-        run: npm run build
-        working-directory: website
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: "latest"
+
+      - run: mdbook build
+        working-directory: docs
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: website/.vitepress/dist
+          publish_dir: ./docs/book

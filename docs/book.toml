@@ -1,0 +1,10 @@
+[book]
+title = "Sunbeam Documentation"
+description = "Generate complex TUIs from simple scripts written in any language."
+authors = ["Achille Lacoin"]
+language = "en"
+
+[output.html]
+site-url = "/sunbeam/"
+git-repository-url = "https://github.com/pomdtr/sunbeam"
+edit-url-template = "https://github.com/pomdtr/sunbeam/edit/main/docs/{path}"

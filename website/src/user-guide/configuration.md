@@ -1,3 +1,0 @@
-# Configuration
-
-<<< @/snippets/config.yaml

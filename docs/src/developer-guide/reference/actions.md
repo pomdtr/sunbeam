@@ -6,7 +6,6 @@
 {
     "type": "copy-to-clipboard", // required
     "title": "Copy to clipboard", // optional, defaults to "Copy to Clipboard"
-    "shortcut": "ctrl+c", // optional
     "text": "Hello World" // required
 }
 ```
@@ -17,7 +16,6 @@
 {
     "type": "open-url", // required
     "title": "Open Google", // optional, defaults to "Open Url"
-    "shortcut": "ctrl+g", // optional
     "url": "https://www.google.com" // required
 }
 ```
@@ -28,7 +26,6 @@
 {
     "type": "run-command", // required
     "title": "Run Command", // required
-    "shortcut": "ctrl+r", // optional
     "inputs": { // Parameters to pass to the command
         "key": "value", // pass a fixed value
         "name": { // show a form input to the user
@@ -46,7 +43,6 @@
 {
     "type": "reload-page", // required
     "title": "Reload Page", // optional, defaults to "Reload Page"
-    "shortcut": "ctrl+r", // optional
     "inputs": {
         "key": "value", // override a parameter when reloading the page
     }

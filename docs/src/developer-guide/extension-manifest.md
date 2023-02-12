@@ -27,7 +27,7 @@ rootItems:
       root: "."
 commands:
   browse-files:
-    exec: ./file-browser.py --root ${{ root }}
+    exec: ./file-browser.py --root {{ root }}
     onSuccess: push-page
     inputs:
       - name: root

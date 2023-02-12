@@ -11,7 +11,7 @@ You can install an extension from a local directory or a git repository.
 Let's install the [file-browser](https://github.com/pomdtr/sunbeam-file-browser) extension from github:
 
 ```shell
-sunbeam extension install --name file-browser https://github.com/pomdtr/sunbeam-file-browser
+sunbeam extension install file-browser --git https://github.com/pomdtr/sunbeam-file-browser
 ```
 
 ## Run the extension commands
@@ -32,10 +32,6 @@ Feel free to create an alias for the command in you shell configuration file !
 ```shell
 alias downloads="sunbeam file-browser browse --root ~/Downloads"
 ```
-
-## Browse all available extensions
-
-The `sunbeam extension browse` command will an interactive UI to browse and install extensions.
 
 ## Upgrading extensions
 

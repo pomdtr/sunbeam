@@ -1,20 +1,12 @@
 # Installation
 
-::: code-group
-
-```sh [brew]
+```sh
+# Homebrew (macOS and Linux)
 brew install pomdtr/tap/sunbeam
-```
 
-```sh [eget]
-eget pomdtr/sunbeam
-```
-
-```sh [go]
+# go install (macOS, Linux and Windows)
 go install github.com/pomdtr/sunbeam@latest
 ```
-
-:::
 
 Sunbeam is a single binary, you can also download it from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).
 
@@ -22,18 +14,13 @@ Sunbeam is a single binary, you can also download it from the [releases page](ht
 
 Shell completions are available for bash, zsh and fish. To enable them, checkout the `sunbeam completion` command.
 
-:::code-group
-
-```sh [bash]
+```sh
+# bash
 source <(sunbeam completion bash)
-```
 
-```sh [zsh]
+# zsh
 source <(sunbeam completion zsh); compdef _sunbeam sunbeam
-```
 
-```sh [fish]
+# fish
 sunbeam completion fish | source
 ```
-
-:::
