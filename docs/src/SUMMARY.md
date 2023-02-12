@@ -4,5 +4,3 @@
 
 - [Installation](./user-guide/installation.md)
 - [Managing Extensions](./user-guide/managing-extensions.md)
-
-# Developer Guide

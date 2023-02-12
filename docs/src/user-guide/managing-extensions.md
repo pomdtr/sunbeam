@@ -20,18 +20,8 @@ Once the extension is installed, it becomes available trough the `sunbeam` comma
 
 If you run `sunbeam`, you will see multiple new items available in the root view:
 
-You can also run `sunbeam file-browser` to only see the items provided by the `file-browser` extension.
-
-If you want to go the file browser direcly, select a root item and press `Tab` to show secondary actions,
-then select `Copy as Shell Command`.
-
-You can the paste the command in your terminal to go to the file browser.
-
-Feel free to create an alias for the command in you shell configuration file !
-
-```shell
-alias downloads="sunbeam file-browser browse --root ~/Downloads"
-```
+You can also run `sunbeam file-browser` to only see the items provided by the `file-browser` extension,
+or `sunbeam file-browser:list --root ~` to list the files in your home directory.
 
 ## Upgrading extensions
 
