@@ -21,4 +21,4 @@ Sunbeam supports:
 - Generating complex UIs compose of list, forms, details...
 - Running as an headless server on a remote machine
 
-Sunbeam can run from any terminal, but it also comes with an optional GUI for a launcher-like experience.
+Sunbeam can run from any terminal, but the plan is also to allow existing guis to be wired to sunbeam (ex: raycast extension).
