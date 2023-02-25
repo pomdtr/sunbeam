@@ -30,9 +30,9 @@ type Extension struct {
 	PostInstall string   `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
 	Root        string   `json:"-" yaml:"-"`
 
-	Requirements []ExtensionRequirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
-	RootItems    []RootItem             `json:"rootItems" yaml:"rootItems"`
-	Commands     []Command              `json:"commands"`
+	Requirements []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
+	RootItems    []RootItem    `json:"rootItems" yaml:"rootItems"`
+	Commands     []Command     `json:"commands"`
 }
 
 type Preference struct {
@@ -53,12 +53,12 @@ func (e Extension) GetCommand(name string) (Command, bool) {
 	return Command{}, false
 }
 
-type ExtensionRequirement struct {
+type Requirement struct {
 	Which    string
 	HomePage string `json:"homePage" yaml:"homePage"`
 }
 
-func (r ExtensionRequirement) CheckRequirements() bool {
+func (r Requirement) CheckRequirements() bool {
 	if _, err := exec.LookPath(r.Which); err != nil {
 		return false
 	}
@@ -100,13 +100,13 @@ func init() {
 	}
 }
 
-func LoadExtensions(extensionRoot string) ([]*Extension, error) {
+func LoadExtensions(extensionRoot string) ([]Extension, error) {
 	entries, err := os.ReadDir(extensionRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read extension root: %w", err)
 	}
 
-	extensions := make([]*Extension, 0)
+	extensions := make([]Extension, 0)
 	for _, entry := range entries {
 		extensionDir := path.Join(extensionRoot, entry.Name())
 		if fi, err := os.Stat(extensionDir); err != nil || !fi.IsDir() {
@@ -124,19 +124,19 @@ func LoadExtensions(extensionRoot string) ([]*Extension, error) {
 	return extensions, nil
 }
 
-func LoadExtension(extensionDir string) (*Extension, error) {
+func LoadExtension(extensionDir string) (Extension, error) {
 	manifestPath := path.Join(extensionDir, "sunbeam.yml")
 	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("extension manifest not found: %w", err)
+		return Extension{}, fmt.Errorf("extension manifest not found: %w", err)
 	}
 
 	extension, err := ParseManifest(manifestPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse extension manifest: %w", err)
+		return Extension{}, fmt.Errorf("failed to parse extension manifest: %w", err)
 	}
 	extension.Root = extensionDir
 
-	return &extension, nil
+	return extension, nil
 
 }
 

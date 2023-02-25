@@ -17,7 +17,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewCmdExtension(extensionRoot string, extensions []*app.Extension) *cobra.Command {
+func NewCmdExtension(extensionRoot string, extensions []app.Extension) *cobra.Command {
 	extensionCommand := &cobra.Command{
 		Use:     "extension",
 		Aliases: []string{"extensions", "ext"},

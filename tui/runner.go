@@ -20,7 +20,7 @@ type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	extension *app.Extension
+	extension app.Extension
 	command   app.Command
 
 	with map[string]app.Arg
@@ -33,7 +33,7 @@ type CommandRunner struct {
 	form   *Form
 }
 
-func NewCommandRunner(extension *app.Extension, command app.Command, with map[string]app.Arg) *CommandRunner {
+func NewCommandRunner(extension app.Extension, command app.Command, with map[string]app.Arg) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter(extension.Title),

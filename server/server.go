@@ -14,10 +14,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewServer(extensions []*app.Extension, addr string) *http.Server {
+func NewServer(extensions []app.Extension, addr string) *http.Server {
 	extensionMap := make(map[string]app.Extension)
 	for _, extension := range extensions {
-		extensionMap[extension.Name()] = *extension
+		extensionMap[extension.Name()] = extension
 	}
 
 	r := chi.NewRouter()
@@ -57,8 +57,14 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 			Version:     extension.Version,
 			Title:       extension.Title,
 			Description: extension.Description,
-			RootItems:   extension.RootItems,
-			Commands:    commands,
+			Requirements: []app.Requirement{
+				{
+					Which:    "curl",
+					HomePage: "https://curl.se/",
+				},
+			},
+			RootItems: extension.RootItems,
+			Commands:  commands,
 		})
 	})
 

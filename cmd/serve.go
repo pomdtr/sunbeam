@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdServe(extensions []*app.Extension) *cobra.Command {
+func NewCmdServe(extensions []app.Extension) *cobra.Command {
 	cmd := cobra.Command{
 		Use:     "serve",
 		Short:   "Start the Sunbeam server",
