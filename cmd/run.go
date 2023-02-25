@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -13,11 +12,8 @@ import (
 func NewCmdRun(config *tui.Config) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:     "run <extension-root>",
-		Short:   "Run an extension from a directory",
+		Short:   "Run commands from an extension in the current directory",
 		GroupID: "core",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("no extension in current directory")
-		},
 	}
 
 	cwd, err := os.Getwd()
@@ -33,20 +29,6 @@ func NewCmdRun(config *tui.Config) *cobra.Command {
 	extension, err := app.ParseManifest(manifestPath)
 	if err != nil {
 		return runCmd
-	}
-
-	runCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		extensionRoot := args[0]
-
-		extension.Root = extensionRoot
-		if err != nil {
-			return fmt.Errorf("failed to parse manifest: %s", err)
-		}
-
-		rootList := tui.NewRootList(nil, extension)
-		model := tui.NewModel(rootList)
-
-		return tui.Draw(model)
 	}
 
 	for _, command := range extension.Commands {

@@ -236,9 +236,7 @@ func (rl RootList) RefreshItem() tea.Msg {
 				{
 					Title: "Run Command",
 					Cmd: func() tea.Msg {
-						if rl.history != nil {
-							rl.history.Add(rootItemId)
-						}
+						rl.history.Add(rootItemId)
 						err := rl.history.Save()
 						if err != nil {
 							return fmt.Errorf("failed to save history: %s", err)
@@ -329,11 +327,9 @@ func (rl RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		}
 
-		if rl.history != nil {
-			sort.SliceStable(msg, func(i, j int) bool {
-				return rl.history.Get(msg[i].Id) > rl.history.Get(msg[j].Id)
-			})
-		}
+		sort.SliceStable(msg, func(i, j int) bool {
+			return rl.history.Get(msg[i].Id) > rl.history.Get(msg[j].Id)
+		})
 
 		rl.list.SetItems(msg)
 	case ReloadPageMsg:
