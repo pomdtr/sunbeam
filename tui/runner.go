@@ -93,15 +93,37 @@ func (c *CommandRunner) Run() tea.Cmd {
 	environ := make(map[string]string)
 	if c.extension.Dotenv != "" {
 		dotenvPath := path.Join(c.extension.Root, c.extension.Dotenv)
-		if _, err := os.Stat(dotenvPath); err == nil {
-			env, err := godotenv.Read(dotenvPath)
-			if err != nil {
+		if _, err := os.Stat(dotenvPath); os.IsNotExist(err) {
+			templatePath := path.Join(c.extension.Root, c.extension.Dotenv+".template")
+			if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+				return NewErrorCmd(fmt.Errorf("dotenv file %s does not exist, and no template was provided", c.extension.Dotenv))
+			}
+
+			// Copy template to .env
+			if err := utils.CopyFile(templatePath, dotenvPath); err != nil {
 				return NewErrorCmd(err)
 			}
 
-			for k, v := range env {
-				environ[k] = v
+			editor, ok := os.LookupEnv("EDITOR")
+			if !ok {
+				editor = "vi"
 			}
+
+			return tea.ExecProcess(exec.Command(editor, dotenvPath), func(err error) tea.Msg {
+				if err != nil {
+					return err
+				}
+
+				return ReloadPageMsg{}
+			})
+		}
+		env, err := godotenv.Read(dotenvPath)
+		if err != nil {
+			return NewErrorCmd(err)
+		}
+
+		for k, v := range env {
+			environ[k] = v
 		}
 	}
 

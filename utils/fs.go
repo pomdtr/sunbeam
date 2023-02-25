@@ -6,6 +6,15 @@ import (
 	"strings"
 )
 
+func CopyFile(src string, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(dst, data, 0644)
+}
+
 func ResolvePath(filepath string) (string, error) {
 	if strings.HasPrefix(filepath, "~") {
 		homeDir, err := os.UserHomeDir()
