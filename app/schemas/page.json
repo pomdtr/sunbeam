@@ -39,13 +39,21 @@
                     "type": {
                         "const": "list"
                     },
-                    "emptyMessage": {
-                        "type": "string"
-                    },
-                    "actions": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/$defs/action"
+                    "emptyView": {
+                        "type": "object",
+                        "required": [
+                            "content"
+                        ],
+                        "properties": {
+                            "content": {
+                                "type": "string"
+                            },
+                            "actions": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/action"
+                                }
+                            }
                         }
                     },
                     "title": {

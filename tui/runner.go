@@ -293,7 +293,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				} else {
 					c.list.SetTitle(page.Title)
 				}
-				c.list.SetEmptyMessage(page.List.EmptyMessage)
+				c.list.SetEmptyMessage(page.List.EmptyView.Text)
 
 				c.list.defaultActions = make([]Action, len(page.Actions))
 				for i, action := range page.Actions {
