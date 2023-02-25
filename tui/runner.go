@@ -91,14 +91,11 @@ func (c *CommandRunner) CheckParams() (map[string]any, []FormItem, error) {
 
 func (c *CommandRunner) Run() tea.Cmd {
 	environ := make(map[string]string)
-	if c.extension.Dotenv != "" {
-		dotenvPath := path.Join(c.extension.Root, c.extension.Dotenv)
-		if _, err := os.Stat(dotenvPath); os.IsNotExist(err) {
-			templatePath := path.Join(c.extension.Root, c.extension.Dotenv+".template")
-			if _, err := os.Stat(templatePath); os.IsNotExist(err) {
-				return NewErrorCmd(fmt.Errorf("dotenv file %s does not exist, and no template was provided", c.extension.Dotenv))
-			}
+	dotenvPath := path.Join(c.extension.Root, ".env")
 
+	if _, err := os.Stat(dotenvPath); os.IsNotExist(err) {
+		templatePath := path.Join(c.extension.Root, dotenvPath+".template")
+		if _, err := os.Stat(templatePath); err == nil {
 			// Copy template to .env
 			if err := utils.CopyFile(templatePath, dotenvPath); err != nil {
 				return NewErrorCmd(err)
@@ -117,13 +114,14 @@ func (c *CommandRunner) Run() tea.Cmd {
 				return ReloadPageMsg{}
 			})
 		}
-		env, err := godotenv.Read(dotenvPath)
+	} else {
+		dotenv, err := godotenv.Read(dotenvPath)
 		if err != nil {
 			return NewErrorCmd(err)
 		}
 
-		for k, v := range env {
-			environ[k] = v
+		for key, value := range dotenv {
+			environ[key] = value
 		}
 	}
 

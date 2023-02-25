@@ -25,7 +25,6 @@ type RootItem struct {
 type Extension struct {
 	Version     string   `json:"version" yaml:"version"`
 	Title       string   `json:"title" yaml:"title"`
-	Dotenv      string   `json:"dotenv,omitempty" yaml:"dotenv,omitempty"`
 	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
 	Platform    []string `json:"platform,omitempty" yaml:"platform,omitempty"`
 	PostInstall string   `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`

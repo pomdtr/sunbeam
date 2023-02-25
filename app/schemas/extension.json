@@ -21,9 +21,6 @@
                 ]
             }
         },
-        "dotenv": {
-            "type": "string"
-        },
         "rootUrl": {
             "type": "string"
         },

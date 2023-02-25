@@ -1,6 +1,5 @@
 version: "1.0"
 title: Bitwarden
-dotenv: .env
 requirements:
   - homePage: https://bitwarden.com/help/cli/
     which: bw

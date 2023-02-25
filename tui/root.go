@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 
@@ -230,39 +231,61 @@ func (rl RootList) RefreshItem() tea.Msg {
 		for _, rootItem := range extension.RootItems {
 			rootItem := rootItem
 			rootItemId := fmt.Sprintf("%s-%s", extension.Name(), rootItem.Title)
+
+			actions := []Action{
+				{
+					Title: "Run Command",
+					Cmd: func() tea.Msg {
+						rl.history.Add(rootItemId)
+						err := rl.history.Save()
+						if err != nil {
+							return fmt.Errorf("failed to save history: %s", err)
+						}
+						command, ok := extension.GetCommand(rootItem.Command)
+						if !ok {
+							return fmt.Errorf("command %s not found", rootItem.Command)
+						}
+						with := make(map[string]app.Arg)
+						for key, arg := range rootItem.With {
+							with[key] = app.Arg{Value: arg}
+						}
+
+						return PushPageMsg{
+							Page: NewCommandRunner(
+								extension,
+								command,
+								with,
+							),
+						}
+					},
+				},
+			}
+
+			dotenvPath := filepath.Join(extension.Root, ".env")
+			if _, err := os.Stat(dotenvPath); err == nil {
+				editor, ok := os.LookupEnv("EDITOR")
+				if !ok {
+					editor = "vi"
+				}
+
+				actions = append(actions, Action{
+					Title: "Edit Command Environment",
+					Cmd: tea.ExecProcess(exec.Command(editor, dotenvPath), func(err error) tea.Msg {
+						if err != nil {
+							return err
+						}
+
+						return nil
+					}),
+				})
+			}
+
 			listItems = append(listItems, ListItem{
 				Id:          rootItemId,
 				Title:       rootItem.Title,
 				Subtitle:    extension.Title,
 				Accessories: []string{rootItem.Extension},
-				Actions: []Action{
-					{
-						Title: "Run Command",
-						Cmd: func() tea.Msg {
-							rl.history.Add(rootItemId)
-							err := rl.history.Save()
-							if err != nil {
-								return fmt.Errorf("failed to save history: %s", err)
-							}
-							command, ok := extension.GetCommand(rootItem.Command)
-							if !ok {
-								return fmt.Errorf("command %s not found", rootItem.Command)
-							}
-							with := make(map[string]app.Arg)
-							for key, arg := range rootItem.With {
-								with[key] = app.Arg{Value: arg}
-							}
-
-							return PushPageMsg{
-								Page: NewCommandRunner(
-									extension,
-									command,
-									with,
-								),
-							}
-						},
-					},
-				},
+				Actions:     actions,
 			})
 		}
 
