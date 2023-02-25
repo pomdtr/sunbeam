@@ -33,7 +33,7 @@ gh api "$ENDPOINT" --jq '.[] |
             }
         ]
     }
-' | sunbeam query --arg "repo=$1" --slurp '{
+' | jq --arg "repo=$1" --slurp '{
     type: "list",
     title: "List \($repo) Repositories",
     items: .

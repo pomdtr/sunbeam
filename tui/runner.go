@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/joho/godotenv"
 	"github.com/pomdtr/sunbeam/app"
 	"github.com/pomdtr/sunbeam/utils"
 )
@@ -19,7 +21,6 @@ type CommandRunner struct {
 	currentView   string
 
 	extension *app.Extension
-	keystore  *KeyStore
 	command   app.Command
 
 	with map[string]app.Arg
@@ -32,12 +33,11 @@ type CommandRunner struct {
 	form   *Form
 }
 
-func NewCommandRunner(extension *app.Extension, command app.Command, keystore *KeyStore, with map[string]app.Arg) *CommandRunner {
+func NewCommandRunner(extension *app.Extension, command app.Command, with map[string]app.Arg) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter(extension.Title),
 		extension:   extension,
-		keystore:    keystore,
 		currentView: "loading",
 		command:     command,
 	}
@@ -89,55 +89,23 @@ func (c *CommandRunner) CheckParams() (map[string]any, []FormItem, error) {
 	return values, formitems, nil
 }
 
-func (c *CommandRunner) Preferences() []app.Preference {
-	prefs := make([]app.Preference, 0, len(c.extension.Preferences)+len(c.command.Preferences))
-
-	prefs = append(prefs, c.extension.Preferences...)
-	prefs = append(prefs, c.command.Preferences...)
-
-	return prefs
-}
-
-func (c *CommandRunner) CheckPrefs() (map[string]any, map[string]string, []FormItem, error) {
-	values := make(map[string]any)
+func (c *CommandRunner) Run() tea.Cmd {
 	environ := make(map[string]string)
-	formitems := make([]FormItem, 0)
-
-	for _, pref := range c.Preferences() {
-		if env, ok := os.LookupEnv(pref.Env); ok {
-			values[pref.Name] = env
-			continue
-		}
-
-		if value, ok := c.keystore.GetPreference(c.extension.Name(), c.command.Name, pref.Name); ok {
-			if pref.Env != "" {
-				environ[pref.Env] = fmt.Sprintf("%v", value)
+	if c.extension.Dotenv != "" {
+		dotenvPath := path.Join(c.extension.Root, c.extension.Dotenv)
+		if _, err := os.Stat(dotenvPath); err == nil {
+			env, err := godotenv.Read(dotenvPath)
+			if err != nil {
+				return NewErrorCmd(err)
 			}
 
-			values[pref.Name] = value
-			continue
+			for k, v := range env {
+				environ[k] = v
+			}
 		}
-
-		formitems = append(formitems, NewFormItem(pref.Name, pref.FormItem()))
 	}
 
-	return values, environ, formitems, nil
-}
-
-func (c *CommandRunner) Run() tea.Cmd {
 	// Show form if some parameters are set as input
-	prefs, environ, formItems, err := c.CheckPrefs()
-	if err != nil {
-		return NewErrorCmd(err)
-	}
-	if len(formItems) > 0 {
-		c.currentView = "form"
-		c.form = NewForm("prefs", c.extension.Title, formItems)
-
-		c.form.SetSize(c.width, c.height)
-		return c.form.Init()
-	}
-
 	args, formItems, err := c.CheckParams()
 	if err != nil {
 		return NewErrorCmd(err)
@@ -154,7 +122,6 @@ func (c *CommandRunner) Run() tea.Cmd {
 	payload := app.CmdPayload{
 		Params: args,
 		Env:    environ,
-		Prefs:  prefs,
 	}
 
 	if c.currentView == "list" {
@@ -398,28 +365,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.currentView = "loading"
 
 			return c, tea.Sequence(c.SetIsloading(true), c.Run())
-		case "prefs":
-			for _, pref := range c.extension.Preferences {
-				value, ok := msg.Values[pref.Name]
-				if !ok {
-					continue
-				}
-				c.keystore.SetPreference(c.extension.Name(), "", pref.Name, value)
-			}
-
-			for _, pref := range c.command.Preferences {
-				value, ok := msg.Values[pref.Name]
-				if !ok {
-					continue
-				}
-				c.keystore.SetPreference(c.extension.Name(), c.command.Name, pref.Name, value)
-			}
-			err := c.keystore.Save()
-
-			if err != nil {
-				return c, NewErrorCmd(err)
-			}
-			return c, tea.Sequence(c.SetIsloading(true), c.Run())
 		}
 
 	case RunCommandMsg:
@@ -431,7 +376,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			command.OnSuccess = msg.OnSuccess
 		}
 
-		return c, NewPushCmd(NewCommandRunner(c.extension, command, c.keystore, msg.With))
+		return c, NewPushCmd(NewCommandRunner(c.extension, command, msg.With))
 
 	case ReloadPageMsg:
 		for key, value := range msg.With {

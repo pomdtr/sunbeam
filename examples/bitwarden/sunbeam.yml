@@ -3,14 +3,6 @@ title: Bitwarden
 requirements:
   - homePage: https://bitwarden.com/help/cli/
     which: bw
-preferences:
-  - name: session
-    env: BW_SESSION
-    type: string
-    input:
-      type: textfield
-      title: Bitwarden Session
-      placeholder: "Your Bitwarden session"
 rootItems:
   - title: Search Passwords
     command: list-passwords

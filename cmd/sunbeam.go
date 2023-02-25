@@ -18,11 +18,6 @@ func Execute(version string) (err error) {
 		return err
 	}
 
-	keystore, err := tui.LoadKeyStore(path.Join(homeDir, ".config", "sunbeam", "preferences.json"))
-	if err != nil {
-		return fmt.Errorf("failed to load keystore: %w", err)
-	}
-
 	history, err := tui.LoadHistory(path.Join(homeDir, ".local", "share", "sunbeam", "history.json"))
 	if err != nil {
 		fmt.Println(err)
@@ -60,7 +55,7 @@ func Execute(version string) (err error) {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(keystore, history, extensions...)
+			rootList := tui.NewRootList(history, extensions...)
 			model := tui.NewModel(rootList)
 			return tui.Draw(model)
 		},
@@ -78,24 +73,22 @@ func Execute(version string) (err error) {
 	rootCmd.AddCommand(NewCmdExtension(extensionRoot, extensions))
 	rootCmd.AddCommand(NewCmdServe(extensions))
 	rootCmd.AddCommand(NewCmdValidate())
-	rootCmd.AddCommand(NewCmdQuery())
-	rootCmd.AddCommand(NewCmdRun(keystore, history, &config))
-	rootCmd.AddCommand(NewCmdHttp())
+	rootCmd.AddCommand(NewCmdRun(history, &config))
 
 	for _, extension := range extensions {
-		rootCmd.AddCommand(NewExtensionCommand(extension, keystore, history, &config))
+		rootCmd.AddCommand(NewExtensionCommand(extension, history, &config))
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionCommand(extension *app.Extension, keystore *tui.KeyStore, history *tui.History, config *tui.Config) *cobra.Command {
+func NewExtensionCommand(extension *app.Extension, history *tui.History, config *tui.Config) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:     extension.Name(),
 		GroupID: "extension",
 		Short:   extension.Description,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			rootList := tui.NewRootList(keystore, history, extension)
+			rootList := tui.NewRootList(history, extension)
 			model := tui.NewModel(rootList)
 			err = tui.Draw(model)
 			if err != nil {
@@ -137,7 +130,6 @@ func NewExtensionCommand(extension *app.Extension, keystore *tui.KeyStore, histo
 				runner := tui.NewCommandRunner(
 					extension,
 					command,
-					keystore,
 					with,
 				)
 

@@ -3,21 +3,6 @@ version: "1.0"
 requirements:
   - which: bash
   - which: curl
-preferences:
-  - name: host
-    type: string
-    env: WEBCRATE_URL
-    input:
-      type: textfield
-      title: Host
-      placeholder: "WebCrate Url"
-  - name: key
-    type: string
-    env: WEBCRATE_API_KEY
-    input:
-      type: password
-      title: API Token
-      placeholder: "WebCrate API token"
 rootItems:
   - command: list-links
     title: List Links

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-sunbeam http https://devdocs.io/docs/docs.json | sunbeam query '.[] |
+curl https://devdocs.io/docs/docs.json | jq '.[] |
   {
     title: .name,
     subtitle: (.release // "latest"),
@@ -15,4 +15,4 @@ sunbeam http https://devdocs.io/docs/docs.json | sunbeam query '.[] |
       }
     ]
   }
-' | sunbeam query --slurp '{ type: "list", items: . }'
+' | jq --slurp '{ type: "list", items: . }'

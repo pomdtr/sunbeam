@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-multipass list --format json | sunbeam query '.list[] |
+multipass list --format json | jq '.list[] |
 {
     title: .name,
     subtitle: .release,
@@ -31,7 +31,7 @@ multipass list --format json | sunbeam query '.list[] |
         end
       ),
 }
-' | sunbeam query --slurp '{
+' | jq --slurp '{
     type: "list",
     showPreview: true,
     items: .

@@ -7,7 +7,7 @@ if ! bw unlock --check --session "$BW_SESSION" >/dev/null 2>&1; then
     exit 1
 fi
 
-bw --nointeraction list items --session "$BW_SESSION" | sunbeam query '.[] | {
+bw --nointeraction list items --session "$BW_SESSION" | jq '.[] | {
     title: .name,
     subtitle: .login.username,
     actions: [
@@ -28,7 +28,7 @@ bw --nointeraction list items --session "$BW_SESSION" | sunbeam query '.[] | {
             "command": "lock-vault"
         }
     ]
-}' | sunbeam query --slurp '{
+}' | jq --slurp '{
     type: "list",
     items: .
 }'

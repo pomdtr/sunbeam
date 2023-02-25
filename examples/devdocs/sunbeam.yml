@@ -1,13 +1,5 @@
 title: DevDocs
 version: "1.0"
-preferences:
-  - name: token
-    env: GITHUB_TOKEN
-    type: string
-    input:
-      type: textfield
-      title: Token
-      placeholder: "Your Github token"
 rootItems:
   - command: search-docsets
     title: Browse Docsets

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # shellcheck disable=SC2016
-tldr --list --platform="$1" | sunbeam query --arg platform="$1" -R '{
+tldr --list --platform="$1" | jq --arg platform="$1" -R '{
     title: .,
     preview: {
       command: "view-page",
@@ -12,7 +12,7 @@ tldr --list --platform="$1" | sunbeam query --arg platform="$1" -R '{
     actions: [
       {type: "run-command", "command": "view-page", title: "View Page", with: {page: ., platform: $platform}}
     ]
-}' | sunbeam query --slurp '
+}' | jq --slurp '
   {
     type: "list",
     actions: [

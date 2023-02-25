@@ -21,11 +21,8 @@
                 ]
             }
         },
-        "preferences": {
-            "type": "array",
-            "items": {
-                "$ref": "#/$defs/param"
-            }
+        "dotenv": {
+            "type": "string"
         },
         "rootUrl": {
             "type": "string"
@@ -136,21 +133,6 @@
                 }
             }
         },
-        "preference": {
-            "allOf": [
-                {
-                    "$ref": "#/$defs/param"
-                },
-                {
-                    "type": "object",
-                    "properties": {
-                        "env": {
-                            "type": "string"
-                        }
-                    }
-                }
-            ]
-        },
         "command": {
             "type": "object",
             "additionalProperties": false,
@@ -167,12 +149,6 @@
                         "^\\w+$": {
                             "type": "string"
                         }
-                    }
-                },
-                "preferences": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/preference"
                     }
                 },
                 "exec": {

@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdRun(keystore *tui.KeyStore, history *tui.History, config *tui.Config) *cobra.Command {
+func NewCmdRun(history *tui.History, config *tui.Config) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:     "run <extension-root>",
 		Short:   "Run an extension from a directory",
@@ -34,7 +34,7 @@ func NewCmdRun(keystore *tui.KeyStore, history *tui.History, config *tui.Config)
 				return fmt.Errorf("failed to parse manifest: %s", err)
 			}
 
-			rootList := tui.NewRootList(keystore, history, &extension)
+			rootList := tui.NewRootList(history, &extension)
 			model := tui.NewModel(rootList)
 
 			return tui.Draw(model)

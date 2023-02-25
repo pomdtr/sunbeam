@@ -18,16 +18,9 @@ rootItems:
     command: browse-files
     with:
       root: "."
-preferences:
-  - name: show-hidden
-    type: boolean
-    input:
-      type: checkbox
-      title: Visibility
-      label: Show Hidden Files
 commands:
   - name: browse-files
-    exec: ./file-browser.py --root {{ param "root" }} {{ if pref "show-hidden" }}--show-hidden{{ end }}
+    exec: ./file-browser.py --root {{ param "root" }}
     onSuccess: push-page
     params:
       - name: root

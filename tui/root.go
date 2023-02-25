@@ -197,11 +197,10 @@ func (m *Model) Pop() {
 type RootList struct {
 	list       *List
 	history    *History
-	keystore   *KeyStore
 	extensions []*app.Extension
 }
 
-func NewRootList(keystore *KeyStore, history *History, extensions ...*app.Extension) *RootList {
+func NewRootList(history *History, extensions ...*app.Extension) *RootList {
 	list := NewList("Sunbeam")
 	list.defaultActions = []Action{
 		{
@@ -212,7 +211,6 @@ func NewRootList(keystore *KeyStore, history *History, extensions ...*app.Extens
 	return &RootList{
 		list:       list,
 		history:    history,
-		keystore:   keystore,
 		extensions: extensions,
 	}
 }
@@ -259,7 +257,6 @@ func (rl RootList) RefreshItem() tea.Msg {
 								Page: NewCommandRunner(
 									extension,
 									command,
-									rl.keystore,
 									with,
 								),
 							}

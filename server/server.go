@@ -55,7 +55,6 @@ func NewServer(extensions []*app.Extension, addr string) *http.Server {
 		w.Header().Set("Content-Type", "text/yaml")
 		yaml.NewEncoder(w).Encode(app.Extension{
 			Version:     extension.Version,
-			Preferences: extension.Preferences,
 			Title:       extension.Title,
 			Description: extension.Description,
 			RootItems:   extension.RootItems,

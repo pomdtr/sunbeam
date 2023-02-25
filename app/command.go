@@ -19,7 +19,6 @@ type Command struct {
 	Exec        string            `json:"exec,omitempty" yaml:"exec,omitempty"`
 	Env         map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
-	Preferences []Preference      `json:"preferences,omitempty" yaml:"preferences,omitempty"`
 	Params      []Param           `json:"params,omitempty" yaml:"params,omitempty"`
 	OnSuccess   string            `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
@@ -140,7 +139,6 @@ func (c Command) CheckMissingParams(with map[string]any) error {
 
 type CmdPayload struct {
 	Params map[string]any    `json:"params"`
-	Prefs  map[string]any    `json:"prefs"`
 	Env    map[string]string `json:"env"`
 	Query  string            `json:"query"`
 }
@@ -163,16 +161,6 @@ func (c Command) Cmd(payload CmdPayload, dir string) (*exec.Cmd, error) {
 		},
 		"query": func() (string, error) {
 			return syntax.Quote(payload.Query, syntax.LangPOSIX)
-		},
-		"pref": func(name string) (any, error) {
-			pref, ok := payload.Prefs[name]
-			if !ok {
-				return nil, fmt.Errorf("missing pref: %s", name)
-			}
-			if pref, ok := pref.(string); ok {
-				return syntax.Quote(pref, syntax.LangPOSIX)
-			}
-			return pref, nil
 		},
 		"payload": func() (string, error) {
 			payload := payload
