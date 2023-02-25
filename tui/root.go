@@ -262,23 +262,33 @@ func (rl RootList) RefreshItem() tea.Msg {
 			}
 
 			dotenvPath := filepath.Join(extension.Root, ".env")
-			if _, err := os.Stat(dotenvPath); err == nil {
-				editor, ok := os.LookupEnv("EDITOR")
-				if !ok {
-					editor = "vi"
+			editCmd := tea.ExecProcess(exec.Command("vi", dotenvPath), func(err error) tea.Msg {
+				if err != nil {
+					return err
 				}
 
-				actions = append(actions, Action{
-					Title: "Edit Command Environment",
-					Cmd: tea.ExecProcess(exec.Command(editor, dotenvPath), func(err error) tea.Msg {
-						if err != nil {
-							return err
-						}
+				return nil
+			})
 
+			actions = append(actions, Action{
+				Title: "Edit Command Environment",
+				Cmd: tea.Sequence(func() tea.Msg {
+					if _, err := os.Stat(dotenvPath); err == nil {
 						return nil
-					}),
-				})
-			}
+					}
+
+					templatePath := filepath.Join(extension.Root, ".env.template")
+					if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+						return nil
+					}
+
+					if err := utils.CopyFile(templatePath, dotenvPath); err != nil {
+						return err
+					}
+
+					return nil
+				}, editCmd),
+			})
 
 			listItems = append(listItems, ListItem{
 				Id:          rootItemId,
