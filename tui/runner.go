@@ -295,11 +295,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 				c.list.SetEmptyMessage(page.List.EmptyView.Text)
 
-				c.list.defaultActions = make([]Action, len(page.Actions))
-				for i, action := range page.Actions {
-					c.list.defaultActions[i] = NewAction(action)
-				}
-
 				if page.List.ShowPreview {
 					c.list.ShowPreview = true
 				}

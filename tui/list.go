@@ -93,10 +93,9 @@ func (i ListItem) Render(width int, selected bool) string {
 }
 
 type List struct {
-	header         Header
-	footer         Footer
-	actions        ActionList
-	defaultActions []Action
+	header  Header
+	footer  Footer
+	actions ActionList
 
 	GenerateItems bool
 	ShowPreview   bool
@@ -198,12 +197,10 @@ func (l *List) updateSelection(filter Filter) {
 	actions := make([]Action, 0)
 	if filter.Selection() == nil {
 		l.previewContent = ""
-		actions = append(actions, l.defaultActions...)
 	} else {
 		item := filter.Selection().(ListItem)
 		l.actions.SetTitle(item.Title)
 		actions = append(actions, item.Actions...)
-		actions = append(actions, l.defaultActions...)
 	}
 
 	l.actions.SetActions(actions...)
