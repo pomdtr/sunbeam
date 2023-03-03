@@ -24,9 +24,6 @@
         "rootUrl": {
             "type": "string"
         },
-        "postInstall": {
-            "type": "string"
-        },
         "requirements": {
             "type": "array",
             "items": {

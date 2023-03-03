@@ -16,7 +16,8 @@
             ],
             "options": {
                 "env": {
-                    "SUNBEAM_HEIGHT": "0"
+                    "SUNBEAM_HEIGHT": "0",
+                    "EDITOR": "vim",
                 }
             },
             "isBackground": true,

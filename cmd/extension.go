@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -182,13 +181,8 @@ func NewCmdExtension(extensionRoot string, extensions []app.Extension) *cobra.Co
 					return fmt.Errorf("extension %s does not have a sunbeam.yml manifest", args[0])
 				}
 
-				extension, err := app.ParseManifest(manifestPath)
-				if err != nil {
+				if _, err := app.ParseManifest(manifestPath); err != nil {
 					return fmt.Errorf("failed to parse manifest: %w", err)
-				}
-
-				if err := PostInstallHook(extension); err != nil {
-					return err
 				}
 
 				return nil
@@ -245,12 +239,7 @@ func installFromGit(repository string, targetDir string) error {
 		return err
 	}
 
-	extension, err := app.ParseManifest(manifestPath)
-	if err != nil {
-		return err
-	}
-
-	if err := PostInstallHook(extension); err != nil {
+	if _, err := app.ParseManifest(manifestPath); err != nil {
 		return err
 	}
 
@@ -303,17 +292,4 @@ func installFromURL(url string, targetDir string) error {
 func IsLocalExtension(fi fs.FileInfo) bool {
 	// Check if root is a symlink
 	return fi.Mode()&os.ModeSymlink != 0
-}
-
-func PostInstallHook(extension app.Extension) error {
-	if extension.PostInstall == "" {
-		return nil
-	}
-	cmd := exec.Command("sh", "-c", extension.PostInstall)
-	cmd.Dir = extension.Root
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	return cmd.Run()
 }

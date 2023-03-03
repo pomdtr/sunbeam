@@ -27,7 +27,6 @@ type Extension struct {
 	Title       string   `json:"title" yaml:"title"`
 	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
 	Platform    []string `json:"platform,omitempty" yaml:"platform,omitempty"`
-	PostInstall string   `json:"postInstall,omitempty" yaml:"postInstall,omitempty"`
 	Root        string   `json:"-" yaml:"-"`
 
 	Requirements []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
