@@ -2,4 +2,4 @@
 
 # User Guide
 
-- [Installation](./user-guide/installation.md)
+- [Installation](./installation.md)

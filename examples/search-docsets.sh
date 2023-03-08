@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 set -euo pipefail
 
 if [ $# -eq 1 ]; then
