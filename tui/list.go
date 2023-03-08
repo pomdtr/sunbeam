@@ -105,10 +105,6 @@ type List struct {
 	previewContent string
 }
 
-func (c *List) SetEmptyMessage(msg string) {
-	c.filter.EmptyMessage = msg
-}
-
 func (c *List) SetTitle(title string) {
 	c.footer.title = title
 }

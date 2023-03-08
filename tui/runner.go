@@ -158,7 +158,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			} else {
 				c.list.SetTitle(res.Title)
 			}
-			c.list.SetEmptyMessage(res.List.EmptyView.Text)
 
 			if res.List.ShowPreview {
 				c.list.ShowPreview = true

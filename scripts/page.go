@@ -38,33 +38,29 @@ type Response struct {
 }
 
 type Detail struct {
-	Content Preview  `json:"content,omitempty"`
-	Actions []Action `json:"actions,omitempty"`
+	Content Preview  `json:"content"`
+	Actions []Action `json:"actions"`
 }
 
 type List struct {
-	ShowPreview   bool       `json:"showPreview,omitempty" yaml:"showPreview"`
-	GenerateItems bool       `json:"generateItems,omitempty" yaml:"generateItems"`
+	ShowPreview   bool       `json:"showPreview"`
+	GenerateItems bool       `json:"generateItems"`
 	Items         []ListItem `json:"items"`
-	EmptyView     struct {
-		Text    string   `json:"text"`
-		Actions []Action `json:"actions"`
-	} `json:"emptyView,omitempty" yaml:"emptyView"`
 }
 
 type Preview struct {
-	Text     string   `json:"text,omitempty"`
-	Language string   `json:"language,omitempty"`
-	Command  string   `json:"command,omitempty"`
-	Args     []string `json:"args,omitempty"`
+	Text     string   `json:"text"`
+	Language string   `json:"language"`
+	Command  string   `json:"command"`
+	Args     []string `json:"args"`
 }
 
 type ListItem struct {
 	Id          string   `json:"id"`
 	Title       string   `json:"title"`
 	Subtitle    string   `json:"subtitle"`
-	Preview     *Preview `json:"preview,omitempty"`
-	Accessories []string `json:"accessories,omitempty"`
+	Preview     *Preview `json:"preview"`
+	Accessories []string `json:"accessories"`
 	Actions     []Action `json:"actions"`
 }
 
@@ -72,10 +68,12 @@ type Action struct {
 	Title string `json:"title"`
 	Type  string `json:"type"`
 
-	Target string `json:"target,omitempty"`
+	Shortcut string `json:"shortcut"`
 
-	Text string `json:"text,omitempty"`
+	Target string `json:"target"`
 
-	Command string   `json:"command,omitempty"`
-	Args    []string `json:"args,omitempty"`
+	Text string `json:"text"`
+
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
 }

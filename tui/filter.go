@@ -19,7 +19,6 @@ type FilterItem interface {
 type Filter struct {
 	minIndex      int
 	Width, Height int
-	EmptyMessage  string
 	Query         string
 	Less          func(i, j FilterItem) bool
 
@@ -31,9 +30,7 @@ type Filter struct {
 }
 
 func NewFilter() Filter {
-	return Filter{
-		EmptyMessage: "No items",
-	}
+	return Filter{}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -108,7 +105,7 @@ func (m Filter) View() string {
 	}
 
 	if len(rows) == 0 {
-		return lipgloss.NewStyle().Faint(true).Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(m.EmptyMessage)
+		return lipgloss.NewStyle().Faint(true).Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render("No results")
 	}
 
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)

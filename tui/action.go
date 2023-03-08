@@ -11,8 +11,9 @@ import (
 )
 
 type Action struct {
-	Cmd   tea.Cmd
-	Title string
+	Cmd      tea.Cmd
+	Title    string
+	Shortcut string
 }
 
 func NewCopyCmd(text string) tea.Cmd {
@@ -82,8 +83,9 @@ func NewAction(scriptAction scripts.Action) Action {
 	}
 
 	return Action{
-		Cmd:   cmd,
-		Title: scriptAction.Title,
+		Cmd:      cmd,
+		Shortcut: scriptAction.Shortcut,
+		Title:    scriptAction.Title,
 	}
 }
 
@@ -129,9 +131,13 @@ func (al *ActionList) SetActions(actions ...Action) {
 	al.actions = actions
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
+		if i == 0 {
+			action.Shortcut = "↩"
+		}
 		filterItems[i] = ListItem{
-			Title:   action.Title,
-			Actions: []Action{action},
+			Title:    action.Title,
+			Subtitle: action.Shortcut,
+			Actions:  []Action{action},
 		}
 	}
 	al.filter.SetItems(filterItems)
@@ -172,6 +178,13 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			listItem, _ := selectedItem.(ListItem)
 			al.Blur()
 			return al, listItem.Actions[0].Cmd
+		default:
+			for _, action := range al.actions {
+				if action.Shortcut == msg.String() {
+					al.Blur()
+					return al, action.Cmd
+				}
+			}
 		}
 	}
 
