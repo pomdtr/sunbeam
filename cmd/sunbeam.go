@@ -66,9 +66,9 @@ You will need to provide a compatible script as the first argument to you use su
 		},
 	}
 
-	rootCmd.Flags().IntP("padding", "p", lookupInt("SUNBEAM_PADDING", 0), "Padding around the window")
-	rootCmd.Flags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "Maximum height of the window")
-	rootCmd.Flags().Bool("check", false, "Check if the script is valid")
+	rootCmd.Flags().IntP("padding", "p", lookupInt("SUNBEAM_PADDING", 0), "padding around the window")
+	rootCmd.Flags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "maximum height of the window")
+	rootCmd.Flags().Bool("check", false, "check if the script is valid")
 
 	return rootCmd.Execute()
 }
