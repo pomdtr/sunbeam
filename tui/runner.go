@@ -176,7 +176,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				listItem := ParseScriptItem(scriptItem)
 				if scriptItem.Preview != nil {
 					listItem.PreviewFunc = func() string {
-						if scriptItem.Preview.Text == "" {
+						if scriptItem.Preview.Text != "" {
 							return scriptItem.Preview.Text
 						}
 
