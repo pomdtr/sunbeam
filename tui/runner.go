@@ -3,49 +3,36 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
-	"path"
 	"strconv"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/joho/godotenv"
-	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/utils"
+	"github.com/pomdtr/sunbeam/tui/script"
 )
 
 type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	extension app.Extension
-	command   app.Command
-
-	with map[string]app.Arg
+	command string
+	args    []string
 
 	header Header
 	footer Footer
 
 	list   *List
 	detail *Detail
-	form   *Form
 }
 
-func NewCommandRunner(extension app.Extension, command app.Command, with map[string]app.Arg) *CommandRunner {
+func NewCommandRunner(command string, args []string) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
-		footer:      NewFooter(extension.Title),
-		extension:   extension,
+		footer:      NewFooter("Sunbeam"),
 		currentView: "loading",
 		command:     command,
-	}
-
-	// Copy the map to avoid modifying the original
-	runner.with = make(map[string]app.Arg)
-	for name, arg := range with {
-		runner.with[name] = arg
+		args:        args,
 	}
 
 	return &runner
@@ -56,107 +43,11 @@ func (c *CommandRunner) Init() tea.Cmd {
 
 type CommandOutput []byte
 
-func (c *CommandRunner) CheckParams() (map[string]any, []FormItem, error) {
-	values := make(map[string]any)
-	formitems := make([]FormItem, 0)
-	for _, param := range c.command.Params {
-		arg, ok := c.with[param.Name]
-		if !ok {
-			formitems = append(formitems, NewFormItem(param.Name, param.FormItem()))
-			continue
-		}
-
-		if arg.Value != nil {
-			if param.Type == "file" || param.Type == "directory" {
-				value, ok := arg.Value.(string)
-				if !ok {
-					return nil, nil, fmt.Errorf("invalid value for param %s", param.Name)
-				}
-				value, err := utils.ResolvePath(value)
-				if err != nil {
-					return nil, nil, err
-				}
-				values[param.Name] = value
-			} else {
-				values[param.Name] = arg.Value
-			}
-
-			continue
-		}
-
-		formitems = append(formitems, NewFormItem(param.Name, arg.Input))
-	}
-	return values, formitems, nil
-}
-
 func (c *CommandRunner) Run() tea.Cmd {
-	environ := make(map[string]string)
-	dotenvPath := path.Join(c.extension.Root, ".env")
-
-	if _, err := os.Stat(dotenvPath); os.IsNotExist(err) {
-		templatePath := path.Join(c.extension.Root, dotenvPath+".template")
-		if _, err := os.Stat(templatePath); err == nil {
-			// Copy template to .env
-			if err := utils.CopyFile(templatePath, dotenvPath); err != nil {
-				return NewErrorCmd(err)
-			}
-
-			editor, ok := os.LookupEnv("EDITOR")
-			if !ok {
-				editor = "vi"
-			}
-
-			return tea.ExecProcess(exec.Command(editor, dotenvPath), func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				return ReloadPageMsg{}
-			})
-		}
-	} else {
-		dotenv, err := godotenv.Read(dotenvPath)
-		if err != nil {
-			return NewErrorCmd(err)
-		}
-
-		for key, value := range dotenv {
-			environ[key] = value
-		}
-	}
-
-	// Show form if some parameters are set as input
-	args, formItems, err := c.CheckParams()
-	if err != nil {
-		return NewErrorCmd(err)
-	}
-
-	if len(formItems) > 0 {
-		c.currentView = "form"
-		c.form = NewForm("params", c.extension.Title, formItems)
-
-		c.form.SetSize(c.width, c.height)
-		return c.form.Init()
-	}
-
-	payload := app.CmdPayload{
-		Params: args,
-		Env:    environ,
-	}
+	cmd := exec.Command(c.command, c.args...)
 
 	if c.currentView == "list" {
-		payload.Query = c.list.Query()
-	}
-
-	cmd, err := c.command.Cmd(payload, c.extension.Root)
-	if err != nil {
-		return NewErrorCmd(err)
-	}
-
-	if c.command.OnSuccess == "" {
-		return func() tea.Msg {
-			return cmd
-		}
+		cmd.Stdin = strings.NewReader(c.list.Query())
 	}
 
 	return func() tea.Msg {
@@ -180,8 +71,6 @@ func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
 		return c.list.SetIsLoading(isLoading)
 	case "detail":
 		return c.detail.SetIsLoading(isLoading)
-	case "form":
-		return c.form.SetIsLoading(isLoading)
 	case "loading":
 		return c.header.SetIsLoading(isLoading)
 	default:
@@ -200,16 +89,7 @@ func (c *CommandRunner) SetSize(width, height int) {
 		c.list.SetSize(width, height)
 	case "detail":
 		c.detail.SetSize(width, height)
-	case "form":
-		c.form.SetSize(width, height)
 	}
-}
-
-func (c *CommandRunner) Reset() {
-	c.currentView = "loading"
-	c.list = nil
-	c.detail = nil
-	c.form = nil
 }
 
 func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -224,180 +104,99 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case CommandOutput:
 		c.SetIsloading(false)
-		switch c.command.OnSuccess {
-		case "push-page":
-			var page app.Page
-			var v any
-			if err := json.Unmarshal(msg, &v); err != nil {
-				return c, NewErrorCmd(err)
+		var res script.Response
+		var v any
+		if err := json.Unmarshal(msg, &v); err != nil {
+			return c, NewErrorCmd(err)
+		}
+
+		if err := script.Schema.Validate(v); err != nil {
+			return c, NewErrorCmd(err)
+		}
+
+		err := json.Unmarshal(msg, &res)
+		if err != nil {
+			return c, NewErrorCmd(err)
+		}
+
+		if res.Title == "" {
+			res.Title = "Sunbeam"
+		}
+
+		switch res.Type {
+		case "detail":
+			c.currentView = "detail"
+			c.detail = NewDetail(res.Title, func() string {
+				if res.Detail.Content.Text != "" {
+					return res.Detail.Content.Text
+				}
+
+				cmd := exec.Command(res.Detail.Content.Command, res.Detail.Content.Args...)
+
+				output, err := cmd.Output()
+				if err != nil {
+					return err.Error()
+				}
+
+				return string(output)
+			})
+
+			actions := make([]Action, len(res.Actions))
+			for i, scriptAction := range res.Actions {
+				actions[i] = NewAction(scriptAction)
+			}
+			c.detail.SetActions(actions...)
+			c.detail.SetSize(c.width, c.height)
+
+			return c, c.detail.Init()
+		case "list":
+			c.currentView = "list"
+
+			if c.list == nil {
+				c.list = NewList(res.Title)
+			} else {
+				c.list.SetTitle(res.Title)
+			}
+			c.list.SetEmptyMessage(res.List.EmptyView.Text)
+
+			if res.List.ShowPreview {
+				c.list.ShowPreview = true
+			}
+			if res.List.GenerateItems {
+				c.list.GenerateItems = true
 			}
 
-			if err := app.PageSchema.Validate(v); err != nil {
-				return c, NewErrorCmd(err)
-			}
+			listItems := make([]ListItem, len(res.List.Items))
+			for i, scriptItem := range res.List.Items {
+				scriptItem := scriptItem
 
-			err := json.Unmarshal(msg, &page)
-			if err != nil {
-				return c, NewErrorCmd(err)
-			}
+				if scriptItem.Id == "" {
+					scriptItem.Id = strconv.Itoa(i)
+				}
+				listItem := ParseScriptItem(scriptItem)
+				if scriptItem.Preview != nil {
+					listItem.PreviewFunc = func() string {
+						if scriptItem.Preview.Text == "" {
+							return scriptItem.Preview.Text
+						}
 
-			if page.Title == "" {
-				page.Title = c.extension.Title
-			}
-
-			switch page.Type {
-			case "detail":
-				c.currentView = "detail"
-				c.detail = NewDetail(page.Title, func() string {
-					if page.Detail.Content.Text != "" {
-						content, err := utils.HighlightString(page.Detail.Content.Text, page.Detail.Content.Language)
+						cmd := exec.Command(scriptItem.Preview.Command, scriptItem.Preview.Args...)
+						output, err := cmd.Output()
 						if err != nil {
 							return err.Error()
 						}
-						return content
+						return string(output)
 					}
-
-					command, ok := c.extension.GetCommand(page.Detail.Content.Command)
-					if !ok {
-						return fmt.Sprintf("Command %s not found", page.Detail.Content.Command)
-					}
-
-					cmd, err := command.Cmd(app.CmdPayload{
-						Params: page.Detail.Content.With,
-					}, c.extension.Root)
-					if err != nil {
-						return err.Error()
-					}
-
-					output, err := cmd.Output()
-					if err != nil {
-						return err.Error()
-					}
-
-					return string(output)
-				})
-
-				actions := make([]Action, len(page.Actions))
-				for i, scriptAction := range page.Actions {
-					actions[i] = NewAction(scriptAction)
 				}
-				c.detail.SetActions(actions...)
-				c.detail.SetSize(c.width, c.height)
-
-				return c, c.detail.Init()
-			case "list":
-				c.currentView = "list"
-
-				if c.list == nil {
-					c.list = NewList(page.Title)
-				} else {
-					c.list.SetTitle(page.Title)
-				}
-				c.list.SetEmptyMessage(page.List.EmptyView.Text)
-
-				if page.List.ShowPreview {
-					c.list.ShowPreview = true
-				}
-				if page.List.GenerateItems {
-					c.list.GenerateItems = true
-				}
-
-				listItems := make([]ListItem, len(page.List.Items))
-				for i, scriptItem := range page.List.Items {
-					scriptItem := scriptItem
-
-					if scriptItem.Id == "" {
-						scriptItem.Id = strconv.Itoa(i)
-					}
-					listItem := ParseScriptItem(scriptItem)
-					if scriptItem.Preview != nil {
-						listItem.PreviewFunc = func() string {
-							if scriptItem.Preview.Command == "" {
-								preview, err := utils.HighlightString(scriptItem.Preview.Text, scriptItem.Preview.Language)
-
-								if err != nil {
-									return err.Error()
-								}
-								return preview
-							}
-
-							command, ok := c.extension.GetCommand(scriptItem.Preview.Command)
-							if !ok {
-								return fmt.Sprintf("command %s not found", scriptItem.Preview.Command)
-							}
-
-							cmd, err := command.Cmd(app.CmdPayload{
-								Params: scriptItem.Preview.With,
-							}, c.extension.Root)
-							if err != nil {
-								return err.Error()
-							}
-
-							output, err := cmd.Output()
-							if err != nil {
-								return err.Error()
-							}
-
-							preview, err := utils.HighlightString(string(output), scriptItem.Preview.Language)
-							if err != nil {
-								return err.Error()
-							}
-
-							return preview
-						}
-					}
-					listItems[i] = listItem
-				}
-				c.list.SetItems(listItems)
-
-				c.list.SetSize(c.width, c.height)
-				return c, c.list.Init()
+				listItems[i] = listItem
 			}
-		case "open-url":
-			return c, NewOpenUrlCmd(string(msg))
-		case "copy-text":
-			return c, NewCopyTextCmd(string(msg))
-		case "reload-page":
-			return c, tea.Sequence(PopCmd, NewReloadPageCmd(nil))
-		default:
-			return c, Exit
+			c.list.SetItems(listItems)
+
+			c.list.SetSize(c.width, c.height)
+			return c, c.list.Init()
 		}
-
-	case SubmitFormMsg:
-		switch msg.Id {
-		case "params":
-			for _, param := range c.command.Params {
-				value, ok := msg.Values[param.Name]
-				if !ok {
-					continue
-				}
-
-				arg := c.with[param.Name]
-				arg.Value = value
-				c.with[param.Name] = arg
-			}
-
-			c.currentView = "loading"
-
-			return c, tea.Sequence(c.SetIsloading(true), c.Run())
-		}
-
-	case RunCommandMsg:
-		command, ok := c.extension.GetCommand(msg.Command)
-		if !ok {
-			return c, NewErrorCmd(fmt.Errorf("command not found: %s", msg.Command))
-		}
-		if msg.OnSuccess != "" {
-			command.OnSuccess = msg.OnSuccess
-		}
-
-		return c, NewPushCmd(NewCommandRunner(c.extension, command, msg.With))
 
 	case ReloadPageMsg:
-		for key, value := range msg.With {
-			c.with[key] = value
-		}
-
 		return c, tea.Sequence(c.SetIsloading(true), c.Run())
 	}
 
@@ -411,9 +210,6 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case "detail":
 		container, cmd = c.detail.Update(msg)
 		c.detail, _ = container.(*Detail)
-	case "form":
-		container, cmd = c.form.Update(msg)
-		c.form, _ = container.(*Form)
 	default:
 		c.header, cmd = c.header.Update(msg)
 	}
@@ -426,12 +222,10 @@ func (c *CommandRunner) View() string {
 		return c.list.View()
 	case "detail":
 		return c.detail.View()
-	case "form":
-		return c.form.View()
 	case "loading":
 		headerView := c.header.View()
 		footerView := c.footer.View()
-		padding := make([]string, utils.Max(0, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView)))
+		padding := make([]string, Max(0, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView)))
 		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), strings.Join(padding, "\n"), c.footer.View())
 	default:
 		return ""

@@ -6,21 +6,13 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
-	"sort"
 	"strconv"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
-	"github.com/pomdtr/sunbeam/app"
-	"github.com/pomdtr/sunbeam/utils"
 )
-
-type Config struct {
-	RootItems []app.RootItem `yaml:"rootItems"`
-}
 
 type Page interface {
 	Init() tea.Cmd
@@ -66,8 +58,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
-	case OpenUrlMsg:
-		err := browser.OpenURL(msg.Url)
+	case OpenMsg:
+		err := browser.OpenURL(msg.Target)
 		if err != nil {
 			return m, NewErrorCmd(err)
 		}
@@ -162,7 +154,7 @@ func (m *Model) pageWidth() int {
 
 func (m *Model) pageHeight() int {
 	if m.MaxHeight > 0 {
-		return utils.Min(m.MaxHeight, m.height) - 2*m.Padding
+		return Min(m.MaxHeight, m.height) - 2*m.Padding
 	}
 	return m.height - 2*m.Padding
 }
@@ -177,9 +169,9 @@ type pushMsg struct {
 	container Page
 }
 
-func NewPushCmd(c Page) tea.Cmd {
+func NewPushCmd(page Page) tea.Cmd {
 	return func() tea.Msg {
-		return pushMsg{c}
+		return pushMsg{page}
 	}
 }
 
@@ -195,158 +187,10 @@ func (m *Model) Pop() {
 	}
 }
 
-type RootList struct {
-	list       *List
-	history    *History
-	extensions []app.Extension
-}
-
-func NewRootList(history *History, extensions ...app.Extension) *RootList {
-	list := NewList("Sunbeam")
-	list.defaultActions = []Action{
-		{
-			Title: "Reload",
-			Cmd:   NewReloadPageCmd(nil),
-		},
-	}
-	return &RootList{
-		list:       list,
-		history:    history,
-		extensions: extensions,
-	}
-}
-
-func (rl RootList) Init() tea.Cmd {
-	return tea.Batch(rl.list.Init(), rl.RefreshItem)
-}
-
-func (rl RootList) RefreshItem() tea.Msg {
-	listItems := make([]ListItem, 0)
-	for i, extension := range rl.extensions {
-		extension, err := app.LoadExtension(extension.Root)
-		if err != nil {
-			return fmt.Errorf("failed to load extension: %s", err)
-		}
-
-		for _, rootItem := range extension.RootItems {
-			rootItem := rootItem
-			rootItemId := fmt.Sprintf("%s-%s", extension.Name(), rootItem.Title)
-
-			actions := []Action{
-				{
-					Title: "Run Command",
-					Cmd: func() tea.Msg {
-						rl.history.Add(rootItemId)
-						err := rl.history.Save()
-						if err != nil {
-							return fmt.Errorf("failed to save history: %s", err)
-						}
-						command, ok := extension.GetCommand(rootItem.Command)
-						if !ok {
-							return fmt.Errorf("command %s not found", rootItem.Command)
-						}
-						with := make(map[string]app.Arg)
-						for key, arg := range rootItem.With {
-							with[key] = app.Arg{Value: arg}
-						}
-
-						return PushPageMsg{
-							Page: NewCommandRunner(
-								extension,
-								command,
-								with,
-							),
-						}
-					},
-				},
-			}
-
-			dotenvPath := filepath.Join(extension.Root, ".env")
-			editCmd := tea.ExecProcess(exec.Command("vi", dotenvPath), func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				return nil
-			})
-
-			actions = append(actions, Action{
-				Title: "Edit Command Environment",
-				Cmd: tea.Sequence(func() tea.Msg {
-					if _, err := os.Stat(dotenvPath); err == nil {
-						return nil
-					}
-
-					templatePath := filepath.Join(extension.Root, ".env.template")
-					if _, err := os.Stat(templatePath); os.IsNotExist(err) {
-						return nil
-					}
-
-					if err := utils.CopyFile(templatePath, dotenvPath); err != nil {
-						return err
-					}
-
-					return nil
-				}, editCmd),
-			})
-
-			listItems = append(listItems, ListItem{
-				Id:          rootItemId,
-				Title:       rootItem.Title,
-				Subtitle:    extension.Title,
-				Accessories: []string{rootItem.Extension},
-				Actions:     actions,
-			})
-		}
-
-		rl.extensions[i] = extension
-	}
-
-	return listItems
-}
-
 type exit struct {
 }
 
 func Exit() tea.Msg { return exit{} }
-
-func (rl RootList) SetSize(width int, height int) {
-	rl.list.SetSize(width, height)
-}
-
-func (rl RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
-	switch msg := msg.(type) {
-	case []ListItem:
-		if len(msg) == 0 {
-			rl.list.SetEmptyMessage("No extension found. Hit 'enter' to open the documentation and learn how to install extensions.")
-			rl.list.defaultActions = []Action{
-				{
-					Title: "Open Documentation",
-					Cmd:   NewOpenUrlCmd("https://pomdtr.github.io/sunbeam/user-guide/managing-extensions"),
-				},
-			}
-		}
-
-		sort.SliceStable(msg, func(i, j int) bool {
-			return rl.history.Get(msg[i].Id) > rl.history.Get(msg[j].Id)
-		})
-
-		rl.list.SetItems(msg)
-	case ReloadPageMsg:
-		return rl, rl.RefreshItem
-	}
-
-	var cmd tea.Cmd
-	page, cmd := rl.list.Update(msg)
-
-	rl.list = page.(*List)
-
-	return rl, cmd
-}
-
-func (rl RootList) View() string {
-	return rl.list.View()
-}
 
 func Draw(model *Model) (err error) {
 	// Log to a file

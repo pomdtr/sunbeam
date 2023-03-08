@@ -112,8 +112,7 @@
         "listitem": {
             "additionalProperties": false,
             "required": [
-                "title",
-                "actions"
+                "title"
             ],
             "properties": {
                 "title": {
@@ -155,141 +154,43 @@
                 "type": {
                     "type": "string",
                     "enum": [
-                        "copy-text",
-                        "reload-page",
-                        "open-url",
-                        "run-command"
+                        "copy",
+                        "reload",
+                        "open",
+                        "run",
+                        "push"
                     ]
                 }
-            },
-            "allOf": [
-                {
-                    "if": {
-                        "required": [
-                            "type"
-                        ],
-                        "properties": {
-                            "type": {
-                                "const": "run-command"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "title",
-                            "command"
-                        ],
-                        "properties": {
-                            "with": {
-                                "type": "object",
-                                "additionalProperties": false,
-                                "patternProperties": {
-                                    "^[a-zA-Z_][a-zA-Z0-9_]+$": {
-                                        "anyOf": [
-                                            {
-                                                "type": "object"
-                                            },
-                                            {
-                                                "type": "string"
-                                            },
-                                            {
-                                                "type": "boolean"
-                                            }
-                                        ]
-                                    }
-                                }
-                            },
-                            "command": {
-                                "type": "string"
-                            },
-                            "onSuccess": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "required": [
-                            "type"
-                        ],
-                        "properties": {
-                            "type": {
-                                "const": "copy-text"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "text"
-                        ],
-                        "properties": {
-                            "text": {
-                                "anyOf": [
-                                    {
-                                        "type": "string"
-                                    },
-                                    {
-                                        "type": "null"
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "required": [
-                            "type"
-                        ],
-                        "properties": {
-                            "type": {
-                                "const": "open-url"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "url"
-                        ],
-                        "properties": {
-                            "url": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            ]
+            }
         },
         "preview": {
             "oneOf": [
                 {
                     "type": "object",
                     "additionalProperties": false,
+                    "required": [
+                        "text"
+                    ],
                     "properties": {
                         "text": {
                             "type": "string"
-                        },
-                        "language": {
-                            "type": "string"
-                        },
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "command"
+                    ],
+                    "properties": {
                         "command": {
                             "type": "string"
                         },
-                        "with": {
-                            "type": "object",
-                            "additionalProperties": false,
-                            "patternProperties": {
-                                "^[a-zA-Z_][a-zA-Z0-9_]+$": {
-                                    "anyOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        }
-                                    ]
-                                }
+                        "args": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
                             }
                         }
                     }

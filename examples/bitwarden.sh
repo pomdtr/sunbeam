@@ -12,20 +12,14 @@ bw --nointeraction list items --session "$BW_SESSION" | jq '.[] | {
     subtitle: .login.username,
     actions: [
         {
-            type: "copy-text",
+            type: "copy",
             title: "Copy Password",
             text: .login.password
         },
         {
-            type: "copy-text",
+            type: "copy",
             title: "Copy Login",
             text: "\(.login)"
-        },
-        {
-            "type": "run-command",
-            "title": "Lock Vault",
-            "onSuccess": "reload-page",
-            "command": "lock-vault"
         }
     ]
 }' | jq --slurp '{

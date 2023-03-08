@@ -12,12 +12,13 @@
                 "--headless",
                 "--listen=:2345",
                 "--api-version=2",
-                "${workspaceFolder}/main.go"
+                "${workspaceFolder}/main.go",
+                "--",
+                "./examples/google.mjs"
             ],
             "options": {
                 "env": {
-                    "SUNBEAM_HEIGHT": "0",
-                    "EDITOR": "vim",
+                    "SUNBEAM_HEIGHT": "0"
                 }
             },
             "isBackground": true,

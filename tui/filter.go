@@ -6,7 +6,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
 )
 
@@ -101,14 +100,14 @@ func (m Filter) View() string {
 
 		if availableHeight > 0 && m.DrawLines {
 			separator := strings.Repeat("─", itemWidth)
-			separator = styles.Faint.Render(separator)
+			separator = lipgloss.NewStyle().Faint(true).Render(separator)
 			rows = append(rows, separator)
 			availableHeight--
 		}
 	}
 
 	if len(rows) == 0 {
-		return styles.Faint.Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(m.EmptyMessage)
+		return lipgloss.NewStyle().Faint(true).Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(m.EmptyMessage)
 	}
 
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)
@@ -146,7 +145,7 @@ func (m *Filter) CursorUp() {
 		}
 	} else {
 		m.cursor = len(m.filtered) - 1
-		m.minIndex = utils.Max(0, m.cursor-m.nbVisibleItems()+1)
+		m.minIndex = Max(0, m.cursor-m.nbVisibleItems()+1)
 	}
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env zx
 
-const query = argv._[0];
+const query = await stdin();
 
 let items = [];
 if (query) {
@@ -14,13 +14,13 @@ if (query) {
     title: suggestion,
     actions: [
       {
-        type: "open-url",
+        type: "open",
         url: `https://www.google.com/search?q=${encodeURIComponent(
           suggestion
         )}`,
       },
       {
-        type: "copy-text",
+        type: "copy",
         title: "Copy Suggestion",
         text: suggestion,
       },
@@ -32,7 +32,6 @@ console.log(
   JSON.stringify({
     type: "list",
     generateItems: true,
-    emptyMessage: query ? "No results" : "Enter a query",
     items,
   })
 );

@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Footer struct {
@@ -29,7 +28,7 @@ func (f Footer) View() string {
 	horizontal := strings.Repeat("─", f.Width)
 
 	if len(f.bindings) == 0 {
-		title := styles.Italic.Copy().Padding(0, 1).Width(f.Width).Render(f.title)
+		title := lipgloss.NewStyle().Italic(true).Padding(0, 1).Width(f.Width).Render(f.title)
 		return lipgloss.JoinVertical(lipgloss.Left, horizontal, title)
 	}
 
@@ -40,16 +39,16 @@ func (f Footer) View() string {
 	help := strings.Join(keys, " · ")
 	help = fmt.Sprintf("  %s ", help)
 
-	availableWidth := utils.Max(0, f.Width-lipgloss.Width(help))
+	availableWidth := Max(0, f.Width-lipgloss.Width(help))
 	title := fmt.Sprintf(" %s", f.title)
 
 	if availableWidth < lipgloss.Width(title) {
 		title = title[:availableWidth]
 	}
 
-	blanks := strings.Repeat(" ", utils.Max(0, f.Width-lipgloss.Width(title)-lipgloss.Width(help)))
+	blanks := strings.Repeat(" ", Max(0, f.Width-lipgloss.Width(title)-lipgloss.Width(help)))
 
-	footerRow := lipgloss.JoinHorizontal(lipgloss.Left, styles.Italic.Render(title), blanks, help)
+	footerRow := lipgloss.JoinHorizontal(lipgloss.Left, lipgloss.NewStyle().Italic(true).Render(title), blanks, help)
 
 	return lipgloss.JoinVertical(lipgloss.Left, horizontal, footerRow)
 }

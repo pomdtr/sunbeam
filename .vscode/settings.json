@@ -1,9 +1,4 @@
 {
-    "yaml.schemas": {
-        "./app/schemas/extension.json": [
-            "sunbeam.yml"
-        ],
-    },
     "markdownlint.ignore": [
         "docs/src/SUMMARY.md"
     ],

@@ -20,7 +20,7 @@ func NewHeader() Header {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.Placeholder = ""
-	ti.PlaceholderStyle = styles.Faint.Copy()
+	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 	spinner := spinner.New()
 	spinner.Style = lipgloss.NewStyle().Padding(0, 1)
 	return Header{
@@ -87,6 +87,6 @@ func (c Header) View() string {
 	}
 
 	line := strings.Repeat("─", c.Width)
-	line = styles.Bold.Render(line)
+	line = lipgloss.NewStyle().Bold(true).Render(line)
 	return lipgloss.JoinVertical(lipgloss.Left, headerRow, line)
 }

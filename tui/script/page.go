@@ -1,6 +1,35 @@
-package app
+package script
 
-type Page struct {
+import (
+	"strings"
+
+	"github.com/santhosh-tekuri/jsonschema/v5"
+
+	_ "embed"
+
+	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
+)
+
+//go:embed page.json
+var pageSchema string
+
+var Schema *jsonschema.Schema
+
+func init() {
+	var err error
+
+	compiler := jsonschema.NewCompiler()
+
+	if err = compiler.AddResource("https://pomdtr.github.io/sunbeam/schemas/page.json", strings.NewReader(pageSchema)); err != nil {
+		panic(err)
+	}
+	Schema, err = compiler.Compile("https://pomdtr.github.io/sunbeam/schemas/page.json")
+	if err != nil {
+		panic(err)
+	}
+}
+
+type Response struct {
 	Type  string `json:"type"`
 	Title string `json:"title"`
 
@@ -24,10 +53,10 @@ type List struct {
 }
 
 type Preview struct {
-	Text     string         `json:"text,omitempty"`
-	Language string         `json:"language,omitempty"`
-	Command  string         `json:"command,omitempty"`
-	With     map[string]any `json:"with,omitempty"`
+	Text     string   `json:"text,omitempty"`
+	Language string   `json:"language,omitempty"`
+	Command  string   `json:"command,omitempty"`
+	Args     []string `json:"with,omitempty"`
 }
 
 type ListItem struct {
@@ -43,12 +72,10 @@ type Action struct {
 	Title string `json:"title"`
 	Type  string `json:"type"`
 
+	Target string `json:"target,omitempty"`
+
 	Text string `json:"text,omitempty"`
 
-	Url  string `json:"url,omitempty"`
-	Path string `json:"path,omitempty"`
-
-	Command   string         `json:"command,omitempty"`
-	With      map[string]Arg `json:"with,omitempty"`
-	OnSuccess string         `json:"onSuccess,omitempty"`
+	Command string   `json:"command,omitempty"`
+	Args    []string `json:"args,omitempty"`
 }

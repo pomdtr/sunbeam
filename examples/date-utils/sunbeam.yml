@@ -1,9 +1,0 @@
-version: "1.0"
-title: Date Utils
-rootItems:
-  - command: utc
-    title: Copy UTC Timestamp
-commands:
-  - name: utc
-    exec: date +%Y-%m-%dT%H:%M:%SZ
-    onSuccess: copy-text

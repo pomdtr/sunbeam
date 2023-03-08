@@ -2,11 +2,12 @@ package tui
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/app"
+	"github.com/pomdtr/sunbeam/tui/script"
 )
 
 type Action struct {
@@ -14,7 +15,7 @@ type Action struct {
 	Title string
 }
 
-func NewCopyTextCmd(text string) tea.Cmd {
+func NewCopyCmd(text string) tea.Cmd {
 	return func() tea.Msg {
 		return CopyTextMsg{
 			Text: text,
@@ -26,75 +27,55 @@ type CopyTextMsg struct {
 	Text string
 }
 
-func NewOpenUrlCmd(Url string) tea.Cmd {
+func NewOpenCmd(Target string) tea.Cmd {
 	return func() tea.Msg {
-		return OpenUrlMsg{
-			Url: Url,
+		return OpenMsg{
+			Target: Target,
 		}
 	}
 }
 
-type OpenUrlMsg struct {
-	Url string
+type OpenMsg struct {
+	Target string
 }
 
-func NewReloadPageCmd(with map[string]app.Arg) tea.Cmd {
+func NewReloadPageCmd() tea.Cmd {
 	return func() tea.Msg {
-		return ReloadPageMsg{
-			With: with,
-		}
+		return ReloadPageMsg{}
 	}
 }
 
 type ReloadPageMsg struct {
-	With map[string]app.Arg
-}
-
-func NewRunCommandCmd(command string, with map[string]app.Arg) tea.Cmd {
-	return func() tea.Msg {
-		return RunCommandMsg{
-			Command: command,
-			With:    with,
-		}
-	}
 }
 
 type PushPageMsg struct {
 	Page Page
 }
 
-type RunCommandMsg struct {
-	Command   string
-	With      map[string]app.Arg
-	OnSuccess string
-}
-
-func NewAction(scriptAction app.Action) Action {
+func NewAction(scriptAction script.Action) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
-	case "copy-text":
+	case "copy":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
-		cmd = NewCopyTextCmd(scriptAction.Text)
-	case "reload-page":
+		cmd = NewCopyCmd(scriptAction.Text)
+	case "reload":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Reload Page"
 		}
-		cmd = NewReloadPageCmd(scriptAction.With)
-	case "run-command":
+		cmd = NewReloadPageCmd()
+	case "run":
 		cmd = func() tea.Msg {
-			return RunCommandMsg{
-				Command:   scriptAction.Command,
-				With:      scriptAction.With,
-				OnSuccess: scriptAction.OnSuccess,
-			}
+			return exec.Command(scriptAction.Command, scriptAction.Args...)
 		}
-	case "open-url":
+	case "open":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open in Browser"
 		}
-		cmd = NewOpenUrlCmd(scriptAction.Url)
+		cmd = NewOpenCmd(scriptAction.Target)
+	case "push":
+		cmd = NewPushCmd(NewCommandRunner(scriptAction.Command, scriptAction.Args))
 	default:
 		scriptAction.Title = "Unknown"
 		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))

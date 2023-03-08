@@ -3,15 +3,14 @@
 import json
 import pathlib
 import argparse
-import os
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--root", required=True, type=pathlib.Path)
+parser.add_argument("root", nargs="?", type=str)
 parser.add_argument("--show-hidden", action="store_true")
 args = parser.parse_args()
 
-root: pathlib.Path = args.root
+root: pathlib.Path = pathlib.Path(args.root) if args.root else pathlib.Path.cwd()
 entries = root.iterdir()
 if not args.show_hidden:
     entries = filter(lambda p: not p.name.startswith("."), entries)
@@ -26,35 +25,23 @@ json.dump(
                 "actions": [
                     (
                         {
-                            "type": "open-url",
-                            "url": f"file://{path.absolute()}",
+                            "type": "open",
                             "title": "Open File",
+                            "url": f"file://{path.absolute()}",
                         }
                         if path.is_file()
                         else {
-                            "type": "run-command",
-                            "command": "browse-files",
+                            "type": "push",
                             "title": "Browse Directory",
-                            "with": {"root": str(path.absolute())},
+                            "command": sys.argv[0],
+                            "args": [str(path.absolute())],
                         }
                     ),
                     {
-                        "type": "run-command",
-                        "title": "Edit",
-                        "command": "edit-file",
-                        "with": {"file": str(path.absolute())},
-                    },
-                    {
-                        "type": "copy-text",
+                        "type": "copy",
                         "title": "Copy Path",
                         "shorcut": "ctrl+y",
                         "text": str(path.absolute()),
-                    },
-                    {
-                        "type": "run-command",
-                        "title": "Delete File",
-                        "command": "delete-file",
-                        "with": {"path": str(path.absolute())},
                     },
                 ],
             }

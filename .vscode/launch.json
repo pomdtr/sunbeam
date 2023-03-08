@@ -10,16 +10,6 @@
             "port": 2345,
             "host": "127.0.0.1",
             "preLaunchTask": "Run app"
-        },
-        {
-            "name": "Run server",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}",
-            "args": [
-                "serve"
-            ]
         }
     ]
 }
