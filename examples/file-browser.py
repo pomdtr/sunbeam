@@ -33,8 +33,7 @@ json.dump(
                         else {
                             "type": "push",
                             "title": "Browse Directory",
-                            "command": sys.argv[0],
-                            "args": [str(path.absolute())],
+                            "command": [sys.argv[0], str(path.absolute())],
                         }
                     ),
                     {

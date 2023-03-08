@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Action struct {
@@ -68,7 +69,8 @@ func NewAction(scriptAction scripts.Action) Action {
 		cmd = NewReloadPageCmd()
 	case "run":
 		cmd = func() tea.Msg {
-			return exec.Command(scriptAction.Command, scriptAction.Args...)
+			name, args := utils.SplitCommand(scriptAction.Command)
+			return exec.Command(name, args...)
 		}
 	case "open":
 		if scriptAction.Title == "" {
@@ -76,7 +78,7 @@ func NewAction(scriptAction scripts.Action) Action {
 		}
 		cmd = NewOpenCmd(scriptAction.Target)
 	case "push":
-		cmd = NewPushCmd(NewCommandRunner(scriptAction.Command, scriptAction.Args...))
+		cmd = NewPushCmd(NewCommandRunner(scriptAction.Command...))
 	default:
 		scriptAction.Title = "Unknown"
 		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))

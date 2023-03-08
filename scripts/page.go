@@ -51,8 +51,7 @@ type List struct {
 type Preview struct {
 	Text     string   `json:"text"`
 	Language string   `json:"language"`
-	Command  string   `json:"command"`
-	Args     []string `json:"args"`
+	Command  []string `json:"command"`
 }
 
 type ListItem struct {
@@ -74,6 +73,5 @@ type Action struct {
 
 	Text string `json:"text"`
 
-	Command string   `json:"command"`
-	Args    []string `json:"args"`
+	Command []string `json:"command"`
 }

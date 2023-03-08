@@ -17,8 +17,7 @@ type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	command string
-	args    []string
+	command []string
 
 	header Header
 	footer Footer
@@ -27,16 +26,14 @@ type CommandRunner struct {
 	detail *Detail
 }
 
-func NewCommandRunner(command string, args ...string) *CommandRunner {
-	runner := CommandRunner{
+func NewCommandRunner(command ...string) *CommandRunner {
+	return &CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),
 		currentView: "loading",
 		command:     command,
-		args:        args,
 	}
 
-	return &runner
 }
 func (c *CommandRunner) Init() tea.Cmd {
 	return tea.Batch(c.SetIsloading(true), c.Run())
@@ -45,7 +42,8 @@ func (c *CommandRunner) Init() tea.Cmd {
 type CommandOutput []byte
 
 func (c *CommandRunner) Run() tea.Cmd {
-	cmd := exec.Command(c.command, c.args...)
+	name, args := utils.SplitCommand(c.command)
+	cmd := exec.Command(name, args...)
 
 	if c.currentView == "list" {
 		cmd.Stdin = strings.NewReader(c.list.Query())
@@ -132,8 +130,9 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return res.Detail.Content.Text
 				}
 
-				cmd := exec.Command(res.Detail.Content.Command, res.Detail.Content.Args...)
+				name, args := utils.SplitCommand(res.Detail.Content.Command)
 
+				cmd := exec.Command(name, args...)
 				output, err := cmd.Output()
 				if err != nil {
 					return err.Error()
@@ -180,7 +179,8 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 							return scriptItem.Preview.Text
 						}
 
-						cmd := exec.Command(scriptItem.Preview.Command, scriptItem.Preview.Args...)
+						name, args := utils.SplitCommand(scriptItem.Preview.Command)
+						cmd := exec.Command(name, args...)
 						output, err := cmd.Output()
 						if err != nil {
 							return err.Error()

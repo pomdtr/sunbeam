@@ -25,8 +25,7 @@ curl https://devdocs.io/docs/docs.json | jq --arg command "$0" '.[] |
       {
           type: "push",
           title: "Browse \(.release // "latest") entries",
-          command: $command,
-          args: [ .slug ],
+          command: [$command, .slug],
       }
     ]
   }

@@ -18,14 +18,12 @@ if [[ $COMMAND == "list-repos" ]]; then
                 {
                     type: "push",
                     title: "View README",
-                    command: $command,
-                    args: ["view-readme", .full_name]
+                    command: [$command,  "view-readme", .full_name],
                 },
                 {
                     type: "push",
                     title: "List Pull Requests",
-                    command: $command,
-                    args: ["list-prs", .full_name],
+                    command:[$command, "list-prs", .full_name]
                 }
             ]
         }

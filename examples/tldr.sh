@@ -8,8 +8,7 @@ PLATFORM="${1:-macos}"
 tldr --list --platform="$PLATFORM" | jq --arg platform "$PLATFORM" -R '{
     title: .,
     preview: {
-      command: "tldr",
-      args: ["--color",  "always",  "--platform", $platform, .]
+      command: ["tldr", "--color=always", "--platform=\($platform)", .],
     }
 }' | jq --slurp '
   {

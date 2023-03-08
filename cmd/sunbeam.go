@@ -11,6 +11,7 @@ import (
 
 	"github.com/pomdtr/sunbeam/scripts"
 	"github.com/pomdtr/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 func Execute(version string) (err error) {
@@ -25,14 +26,10 @@ You will need to provide a compatible script as the first argument to you use su
 		Version: version,
 		Run: func(cmd *cobra.Command, args []string) {
 			var runner *tui.CommandRunner
-			command := args[0]
-			var commandArgs []string
-			if len(args) > 1 {
-				commandArgs = args[1:]
-			}
 
 			if check, _ := cmd.Flags().GetBool("check"); check {
-				cmd := exec.Command(command, commandArgs...)
+				name, args := utils.SplitCommand(args)
+				cmd := exec.Command(name, args...)
 				output, err := cmd.Output()
 				if err != nil {
 					fmt.Println("An error occured while running the script:", err)
@@ -57,7 +54,7 @@ You will need to provide a compatible script as the first argument to you use su
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")
 
-			runner = tui.NewCommandRunner(command, commandArgs...)
+			runner = tui.NewCommandRunner(args...)
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,
