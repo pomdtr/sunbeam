@@ -139,6 +139,7 @@ func (c *List) Init() tea.Cmd {
 }
 
 func (c *List) RefreshPreview() {
+	c.viewport.SetYOffset(0)
 	previewWidth := c.viewport.Width - 2 // take padding into account
 	previewContent := wrap.String(wordwrap.String(c.previewContent, previewWidth), previewWidth)
 
