@@ -2,8 +2,6 @@
 
 Generate complex TUIs from simple scripts written in any language.
 
-![Github Extension Demo](./docs/src/vhs/gifs/github.gif)
-
 Draft Documentation: <https://pomdtr.github.io/sunbeam/>
 
 ## Getting started

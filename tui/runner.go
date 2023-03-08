@@ -26,7 +26,7 @@ type CommandRunner struct {
 	detail *Detail
 }
 
-func NewCommandRunner(command string, args []string) *CommandRunner {
+func NewCommandRunner(command string, args ...string) *CommandRunner {
 	runner := CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),

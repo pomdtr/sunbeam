@@ -75,7 +75,7 @@ func NewAction(scriptAction script.Action) Action {
 		}
 		cmd = NewOpenCmd(scriptAction.Target)
 	case "push":
-		cmd = NewPushCmd(NewCommandRunner(scriptAction.Command, scriptAction.Args))
+		cmd = NewPushCmd(NewCommandRunner(scriptAction.Command, scriptAction.Args...))
 	default:
 		scriptAction.Title = "Unknown"
 		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))
