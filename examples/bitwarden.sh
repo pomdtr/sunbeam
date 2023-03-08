@@ -18,8 +18,9 @@ bw --nointeraction list items --session "$BW_SESSION" | jq '.[] | {
         },
         {
             type: "copy",
-            title: "Copy Login",
-            text: "\(.login)"
+            title: "Copy Username",
+            text: .login.username,
+            shortcut: "ctrl+l"
         }
     ]
 }' | jq --slurp '{
