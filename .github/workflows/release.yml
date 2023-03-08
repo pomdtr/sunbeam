@@ -23,10 +23,6 @@ jobs:
         with:
           go-version: ">=1.19.4"
           cache: true
-      # Needed to build the frontend
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
       # More assembly might be required: Docker logins, GPG, etc. It all depends
       # on your needs.
       - uses: goreleaser/goreleaser-action@v4
