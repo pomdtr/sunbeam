@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -53,13 +54,31 @@ You will need to provide a compatible script as the first argument to you use su
 				os.Exit(0)
 			}
 
+			padding, _ := cmd.Flags().GetInt("padding")
+			maxHeight, _ := cmd.Flags().GetInt("height")
+
 			runner = tui.NewCommandRunner(command, commandArgs...)
-			model := tui.NewModel(runner)
-			tui.Draw(model)
+			model := tui.NewModel(runner, tui.SunbeamOptions{
+				Padding:   padding,
+				MaxHeight: maxHeight,
+			})
+			tui.Draw(model, maxHeight == 0)
 		},
 	}
 
+	rootCmd.Flags().IntP("padding", "p", lookupInt("SUNBEAM_PADDING", 0), "Padding around the window")
+	rootCmd.Flags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "Maximum height of the window")
 	rootCmd.Flags().Bool("check", false, "Check if the script is valid")
 
 	return rootCmd.Execute()
+}
+
+func lookupInt(key string, fallback int) int {
+	if env, ok := os.LookupEnv(key); ok {
+		if value, err := strconv.Atoi(env); err == nil {
+			return value
+		}
+	}
+
+	return fallback
 }

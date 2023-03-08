@@ -2,11 +2,8 @@ package tui
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
-	"path"
-	"strconv"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,10 +19,14 @@ type Page interface {
 	SetSize(width, height int)
 }
 
+type SunbeamOptions struct {
+	MaxHeight int
+	Padding   int
+}
+
 type Model struct {
 	width, height int
-	MaxHeight     int
-	Padding       int
+	options       SunbeamOptions
 	exitCmd       *exec.Cmd
 
 	root  Page
@@ -34,8 +35,8 @@ type Model struct {
 	hidden bool
 }
 
-func NewModel(root Page) *Model {
-	return &Model{root: root}
+func NewModel(root Page, options SunbeamOptions) *Model {
+	return &Model{root: root, options: options}
 }
 
 func (m *Model) SetRoot(root Page) {
@@ -136,7 +137,7 @@ func (m *Model) View() string {
 		pageView = m.root.View()
 	}
 
-	return lipgloss.NewStyle().Padding(m.Padding).Render(pageView)
+	return lipgloss.NewStyle().Padding(m.options.Padding).Render(pageView)
 }
 
 func (m *Model) SetSize(width, height int) {
@@ -150,14 +151,14 @@ func (m *Model) SetSize(width, height int) {
 }
 
 func (m *Model) pageWidth() int {
-	return m.width - 2*m.Padding
+	return m.width - 2*m.options.Padding
 }
 
 func (m *Model) pageHeight() int {
-	if m.MaxHeight > 0 {
-		return utils.Min(m.MaxHeight, m.height) - 2*m.Padding
+	if m.options.MaxHeight > 0 {
+		return utils.Min(m.options.MaxHeight, m.height) - 2*m.options.Padding
 	}
-	return m.height - 2*m.Padding
+	return m.height - 2*m.options.Padding
 }
 
 type popMsg struct{}
@@ -193,62 +194,23 @@ type exit struct {
 
 func Exit() tea.Msg { return exit{} }
 
-func Draw(model *Model) (err error) {
-	// Log to a file
-	if env := os.Getenv("SUNBEAM_LOG_FILE"); env != "" {
-		f, err := tea.LogToFile(env, "debug")
-		if err != nil {
-			log.Fatalf("could not open log file: %v", err)
-		}
-		defer f.Close()
-	} else {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return err
-		}
-		logDir := path.Join(home, ".local", "state", "sunbeam")
-		if _, err := os.Stat(logDir); os.IsNotExist(err) {
-			err = os.MkdirAll(path.Join(home, ".local", "state", "sunbeam"), 0755)
-			if err != nil {
-				return err
-			}
-		}
-		tea.LogToFile(path.Join(logDir, "sunbeam.log"), "")
-	}
-
-	var p *tea.Program
-
-	padding, ok := os.LookupEnv("SUNBEAM_PADDING")
-	if ok || padding != "" {
-		padding, err := strconv.Atoi(padding)
-		if err != nil {
-			return fmt.Errorf("could not parse SUNBEAM_PADDING: %w", err)
-		}
-		model.Padding = padding
-	}
-
-	height, ok := os.LookupEnv("SUNBEAM_HEIGHT")
-	if !ok || height == "" || height == "0" {
-		p = tea.NewProgram(model, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
-	} else {
-		height, err := strconv.Atoi(height)
-		if err != nil {
-			return fmt.Errorf("could not parse SUNBEAM_HEIGHT: %w", err)
-		}
-
-		model.MaxHeight = height
-		p = tea.NewProgram(model, tea.WithOutput(os.Stderr))
-	}
-
+func Draw(model *Model, fullscreen bool) (err error) {
 	// Background detection before we start the program
 	lipgloss.SetHasDarkBackground(lipgloss.HasDarkBackground())
+
+	var p *tea.Program
+	if fullscreen {
+		p = tea.NewProgram(model, tea.WithAltScreen())
+	} else {
+		p = tea.NewProgram(model)
+	}
 
 	m, err := p.Run()
 	if err != nil {
 		return err
 	}
 
-	model, ok = m.(*Model)
+	model, ok := m.(*Model)
 	if !ok {
 		return fmt.Errorf("could not convert model to *Model")
 	}
