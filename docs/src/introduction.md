@@ -3,8 +3,7 @@
 ## What is sunbeam?
 
 Sunbeam is a command-line launcher, similar to spotlight, rofi or raycast.
-
-It allows you to build interactives UIs from simple scripts, and share them as git repositories.
+It allows you to build interactives UIs from simple scripts.
 
 ## Why sunbeam?
 
