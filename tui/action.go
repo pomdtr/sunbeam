@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/tui/script"
+	"github.com/pomdtr/sunbeam/scripts"
 )
 
 type Action struct {
@@ -52,7 +52,7 @@ type PushPageMsg struct {
 	Page Page
 }
 
-func NewAction(scriptAction script.Action) Action {
+func NewAction(scriptAction scripts.Action) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
 	case "copy":

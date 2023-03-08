@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Page interface {
@@ -154,7 +155,7 @@ func (m *Model) pageWidth() int {
 
 func (m *Model) pageHeight() int {
 	if m.MaxHeight > 0 {
-		return Min(m.MaxHeight, m.height) - 2*m.Padding
+		return utils.Min(m.MaxHeight, m.height) - 2*m.Padding
 	}
 	return m.height - 2*m.Padding
 }

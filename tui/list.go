@@ -11,7 +11,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
-	"github.com/pomdtr/sunbeam/tui/script"
+	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 const debounceDuration = 300 * time.Millisecond
@@ -25,7 +26,7 @@ type ListItem struct {
 	Actions     []Action
 }
 
-func ParseScriptItem(scriptItem script.ListItem) ListItem {
+func ParseScriptItem(scriptItem scripts.ListItem) ListItem {
 	actions := make([]Action, len(scriptItem.Actions))
 	for i, scriptAction := range scriptItem.Actions {
 		actions[i] = NewAction(scriptAction)
@@ -81,7 +82,7 @@ func (i ListItem) Render(width int, selected bool) string {
 		accessories = accessories[:width-lipgloss.Width(title)]
 	} else {
 		accessories = ""
-		title = title[:Min(len(title), width)]
+		title = title[:utils.Min(len(title), width)]
 	}
 
 	title = titleStyle.Render(title)
@@ -149,7 +150,7 @@ func (c *List) RefreshPreview() {
 }
 
 func (c *List) SetSize(width, height int) {
-	availableHeight := Max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
+	availableHeight := utils.Max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
 	c.footer.Width = width
 	c.header.Width = width
 	c.actions.SetSize(width, height)

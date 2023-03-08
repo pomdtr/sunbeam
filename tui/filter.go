@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/sahilm/fuzzy"
 )
 
@@ -145,7 +146,7 @@ func (m *Filter) CursorUp() {
 		}
 	} else {
 		m.cursor = len(m.filtered) - 1
-		m.minIndex = Max(0, m.cursor-m.nbVisibleItems()+1)
+		m.minIndex = utils.Max(0, m.cursor-m.nbVisibleItems()+1)
 	}
 }
 

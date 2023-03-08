@@ -9,7 +9,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/tui/script"
+	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 type CommandRunner struct {
@@ -104,13 +105,13 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case CommandOutput:
 		c.SetIsloading(false)
-		var res script.Response
+		var res scripts.Response
 		var v any
 		if err := json.Unmarshal(msg, &v); err != nil {
 			return c, NewErrorCmd(err)
 		}
 
-		if err := script.Schema.Validate(v); err != nil {
+		if err := scripts.Schema.Validate(v); err != nil {
 			return c, NewErrorCmd(err)
 		}
 
@@ -225,7 +226,7 @@ func (c *CommandRunner) View() string {
 	case "loading":
 		headerView := c.header.View()
 		footerView := c.footer.View()
-		padding := make([]string, Max(0, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView)))
+		padding := make([]string, utils.Max(0, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView)))
 		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), strings.Join(padding, "\n"), c.footer.View())
 	default:
 		return ""

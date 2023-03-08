@@ -1,4 +1,4 @@
-package script
+package scripts
 
 import (
 	"strings"
@@ -56,7 +56,7 @@ type Preview struct {
 	Text     string   `json:"text,omitempty"`
 	Language string   `json:"language,omitempty"`
 	Command  string   `json:"command,omitempty"`
-	Args     []string `json:"with,omitempty"`
+	Args     []string `json:"args,omitempty"`
 }
 
 type ListItem struct {
