@@ -27,7 +27,7 @@ json.dump(
                         {
                             "type": "open",
                             "title": "Open File",
-                            "url": f"file://{path.absolute()}",
+                            "target": f"file://{path.absolute()}",
                         }
                         if path.is_file()
                         else {
