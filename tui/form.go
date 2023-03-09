@@ -193,7 +193,7 @@ func (c *Form) renderInputs() {
 			inputView = normalBorder.Render(inputView)
 		}
 
-		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("%s: ", "Input")), inputView)
+		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("%s: ", input.Title())), inputView)
 		if lipgloss.Width(itemViews[i]) > maxWidth {
 			maxWidth = lipgloss.Width(itemViews[i])
 		}

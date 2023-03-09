@@ -103,6 +103,19 @@
                     ]
                 }
             ]
+        },
+        {
+            "title": "List Todos",
+            "subtitle": "Todo",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Run",
+                    "command": [
+                        "./docs/src/code/todo.py"
+                    ]
+                }
+            ]
         }
     ]
 }

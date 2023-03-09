@@ -19,6 +19,7 @@ type FormInput interface {
 
 	Height() int
 	Value() string
+	Title() string
 
 	SetWidth(int)
 	Update(tea.Msg) (FormInput, tea.Cmd)
@@ -44,6 +45,11 @@ func NewFormInput(param *scripts.FormInput) FormInput {
 
 type TextArea struct {
 	textarea.Model
+	title string
+}
+
+func (ta *TextArea) Title() string {
+	return ta.title
 }
 
 func NewTextArea(formItem *scripts.FormInput) *TextArea {
@@ -56,6 +62,7 @@ func NewTextArea(formItem *scripts.FormInput) *TextArea {
 
 	return &TextArea{
 		Model: ta,
+		title: formItem.Title,
 	}
 }
 
@@ -79,6 +86,7 @@ func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 
 type TextInput struct {
 	textinput.Model
+	title       string
 	placeholder string
 }
 
@@ -91,9 +99,14 @@ func NewTextInput(formItem *scripts.FormInput) *TextInput {
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
 	return &TextInput{
+		title:       formItem.Title,
 		Model:       ti,
 		placeholder: placeholder,
 	}
+}
+
+func (ti *TextInput) Title() string {
+	return ti.title
 }
 
 func (ti *TextInput) SetHidden() {
@@ -146,6 +159,7 @@ func (d DropDownItem) FilterValue() string {
 }
 
 type DropDown struct {
+	title     string
 	filter    Filter
 	textinput textinput.Model
 	items     map[string]DropDownItem
@@ -182,6 +196,7 @@ func NewDropDown(formItem scripts.FormInput) *DropDown {
 	filter.Height = 3
 
 	dropdown.filter = filter
+	dropdown.title = formItem.Title
 
 	return &dropdown
 }
@@ -219,6 +234,10 @@ func (dd DropDown) View() string {
 
 func (d DropDown) Value() string {
 	return d.selection.value
+}
+
+func (d DropDown) Title() string {
+	return d.title
 }
 
 func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
