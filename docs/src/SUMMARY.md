@@ -16,4 +16,4 @@
 # Reference
 
 - [Response Schema](./pages.md)
-- [Command Line Interface]()
+- [Command Line Interface](./cli.md)
