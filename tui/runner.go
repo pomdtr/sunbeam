@@ -133,6 +133,10 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		switch res.Type {
 		case "detail":
 			c.currentView = "detail"
+			actions := make([]Action, len(res.Actions))
+			for i, scriptAction := range res.Actions {
+				actions[i] = NewAction(scriptAction)
+			}
 			c.detail = NewDetail(res.Title, func() string {
 				if res.Detail.Content.Text != "" {
 					return res.Detail.Content.Text
@@ -147,23 +151,24 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				return string(output)
-			})
+			}, actions)
 
-			actions := make([]Action, len(res.Actions))
-			for i, scriptAction := range res.Actions {
-				actions[i] = NewAction(scriptAction)
-			}
-			c.detail.SetActions(actions...)
 			c.detail.SetSize(c.width, c.height)
 
 			return c, c.detail.Init()
 		case "list":
 			c.currentView = "list"
 
+			actions := make([]Action, len(res.Actions))
+			for i, scriptAction := range res.Actions {
+				actions[i] = NewAction(scriptAction)
+			}
+
 			if c.list == nil {
-				c.list = NewList(res.Title)
+				c.list = NewList(res.Title, actions)
 			} else {
 				c.list.SetTitle(res.Title)
+				c.list.actionList.globalActions = actions
 			}
 
 			if res.List.ShowPreview {

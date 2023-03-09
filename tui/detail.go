@@ -20,10 +20,18 @@ type Detail struct {
 	footer     Footer
 }
 
-func NewDetail(title string, contentCmd func() string) *Detail {
+func NewDetail(title string, contentCmd func() string, actions []Action) *Detail {
 	footer := NewFooter(title)
+	if len(actions) == 0 {
+		footer.SetBindings()
+	} else {
+		footer.SetBindings(
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+		)
+	}
 
-	actionList := NewActionList()
+	actionList := NewActionList(actions)
 	actionList.SetTitle(title)
 
 	header := NewHeader()
@@ -37,20 +45,6 @@ func NewDetail(title string, contentCmd func() string) *Detail {
 
 	return &d
 }
-
-func (c *Detail) SetActions(actions ...Action) {
-	c.actions.SetActions(actions...)
-
-	if len(actions) == 0 {
-		c.footer.SetBindings()
-	} else {
-		c.footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
-			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
-		)
-	}
-}
-
 func (d *Detail) Init() tea.Cmd {
 	return func() tea.Msg {
 		content := d.ContentCmd()

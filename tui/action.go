@@ -2,13 +2,11 @@ package tui
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/scripts"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Action struct {
@@ -29,11 +27,11 @@ type ReloadPageMsg struct {
 }
 
 type PushPageMsg struct {
-	Page Page
+	Fields []scripts.Field
 }
 
 type RunCommandMsg struct {
-	Command *exec.Cmd
+	Fields []scripts.Field
 }
 
 func NewAction(scriptAction scripts.Action) Action {
@@ -55,9 +53,8 @@ func NewAction(scriptAction scripts.Action) Action {
 		}
 	case "run":
 		cmd = func() tea.Msg {
-			name, args := utils.SplitCommand(scriptAction.Command)
 			return RunCommandMsg{
-				Command: exec.Command(name, args...),
+				Fields: scriptAction.Command,
 			}
 		}
 	case "open":
@@ -69,7 +66,7 @@ func NewAction(scriptAction scripts.Action) Action {
 		}
 	case "push":
 		cmd = func() tea.Msg {
-			return PushPageMsg{Page: NewCommandRunner(scriptAction.Command...)}
+			return PushPageMsg{Fields: scriptAction.Command}
 		}
 	default:
 		scriptAction.Title = "Unknown"
@@ -90,10 +87,11 @@ type ActionList struct {
 	filter Filter
 	footer Footer
 
-	actions []Action
+	globalActions []Action
+	actions       []Action
 }
 
-func NewActionList() ActionList {
+func NewActionList(actions []Action) ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
 
@@ -105,9 +103,10 @@ func NewActionList() ActionList {
 	)
 
 	return ActionList{
-		header: header,
-		filter: filter,
-		footer: footer,
+		header:        header,
+		filter:        filter,
+		globalActions: actions,
+		footer:        footer,
 	}
 }
 
@@ -125,7 +124,7 @@ func (al *ActionList) SetTitle(title string) {
 
 func (al *ActionList) SetActions(actions ...Action) {
 	al.actions = actions
-	filterItems := make([]FilterItem, len(actions))
+	filterItems := make([]FilterItem, len(actions)+len(al.globalActions))
 	for i, action := range actions {
 		if i == 0 {
 			action.Shortcut = "↩"
@@ -136,6 +135,15 @@ func (al *ActionList) SetActions(actions ...Action) {
 			Actions:  []Action{action},
 		}
 	}
+
+	for i, action := range al.globalActions {
+		filterItems[i+len(actions)] = ListItem{
+			Title:    action.Title,
+			Subtitle: action.Shortcut,
+			Actions:  []Action{action},
+		}
+	}
+
 	al.filter.SetItems(filterItems)
 	al.filter.FilterItems(al.header.Value())
 }

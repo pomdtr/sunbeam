@@ -30,16 +30,16 @@ func init() {
 }
 
 type Response struct {
-	Type  string `json:"type"`
-	Title string `json:"title"`
+	Type    string   `json:"type"`
+	Title   string   `json:"title"`
+	Actions []Action `json:"actions"`
 
 	*Detail
 	*List
 }
 
 type Detail struct {
-	Content Preview  `json:"content"`
-	Actions []Action `json:"actions"`
+	Content Preview `json:"content"`
 }
 
 type List struct {

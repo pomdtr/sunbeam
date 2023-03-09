@@ -93,9 +93,9 @@ func (i ListItem) Render(width int, selected bool) string {
 }
 
 type List struct {
-	header  Header
-	footer  Footer
-	actions ActionList
+	header     Header
+	footer     Footer
+	actionList ActionList
 
 	GenerateItems bool
 	ShowPreview   bool
@@ -109,9 +109,7 @@ func (c *List) SetTitle(title string) {
 	c.footer.title = title
 }
 
-func NewList(title string) *List {
-	actions := NewActionList()
-
+func NewList(title string, actions []Action) *List {
 	header := NewHeader()
 
 	viewport := viewport.New(0, 0)
@@ -121,11 +119,11 @@ func NewList(title string) *List {
 	footer := NewFooter(title)
 
 	return &List{
-		actions:  actions,
-		header:   header,
-		filter:   filter,
-		viewport: viewport,
-		footer:   footer,
+		actionList: NewActionList(actions),
+		header:     header,
+		filter:     filter,
+		viewport:   viewport,
+		footer:     footer,
 	}
 }
 
@@ -145,7 +143,7 @@ func (c *List) SetSize(width, height int) {
 	availableHeight := utils.Max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
 	c.footer.Width = width
 	c.header.Width = width
-	c.actions.SetSize(width, height)
+	c.actionList.SetSize(width, height)
 	if c.ShowPreview {
 		listWidth := width/3 - 1 // take separator into account
 		c.filter.SetSize(listWidth, availableHeight)
@@ -198,11 +196,11 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 		l.previewContent = ""
 	} else {
 		item := filter.Selection().(ListItem)
-		l.actions.SetTitle(item.Title)
+		l.actionList.SetTitle(item.Title)
 		actions = append(actions, item.Actions...)
 	}
 
-	l.actions.SetActions(actions...)
+	l.actionList.SetActions(actions...)
 	if len(actions) == 0 {
 		l.footer.SetBindings()
 	} else {
@@ -229,7 +227,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEscape:
-			if c.actions.Focused() {
+			if c.actionList.Focused() {
 				break
 			} else if c.header.input.Value() != "" {
 				header.input.SetValue("")
@@ -289,10 +287,10 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, nil
 	}
 
-	c.actions, cmd = c.actions.Update(msg)
+	c.actionList, cmd = c.actionList.Update(msg)
 	cmds = append(cmds, cmd)
 
-	if c.actions.Focused() {
+	if c.actionList.Focused() {
 		return c, tea.Batch(cmds...)
 	}
 
@@ -328,8 +326,8 @@ type UpdateQueryMsg struct {
 }
 
 func (c List) View() string {
-	if c.actions.Focused() {
-		return c.actions.View()
+	if c.actionList.Focused() {
+		return c.actionList.View()
 	}
 
 	if c.ShowPreview {
