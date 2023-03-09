@@ -120,6 +120,7 @@ func NewList(title string, actions []Action) *List {
 	footer := NewFooter(title)
 
 	return &List{
+		actions:    actions,
 		actionList: NewActionList(),
 		header:     header,
 		filter:     filter,

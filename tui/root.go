@@ -115,7 +115,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case RunCommandMsg:
 		if hasMissingFields(msg.Fields) {
 			form := NewForm(msg.Fields, func(fields []scripts.Field) tea.Msg {
-				return RunCommandMsg{Fields: fields}
+				return RunCommandMsg{Fields: fields, OnSuccess: msg.OnSuccess}
 			})
 			m.form = form
 			form.SetSize(m.pageWidth(), m.pageHeight())
