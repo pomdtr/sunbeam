@@ -89,6 +89,17 @@ def handle(args: argparse.Namespace):
                                         },
                                     ],
                                 },
+                                {
+                                    "type": "run",
+                                    "title": "Delete",
+                                    "shortcut": "ctrl+d",
+                                    "onSuccess": "reload",
+                                    "command": [
+                                        sys.argv[0],
+                                        "delete",
+                                        key,
+                                    ],
+                                },
                             ],
                         }
                         for key, item in todolist["items"].items()
@@ -113,6 +124,11 @@ def handle(args: argparse.Namespace):
         print(todolist["items"][key]["done"])
         save_todolist(todolist)
 
+    elif args.command == "delete":
+        key = args.key
+        del todolist["items"][key]
+        save_todolist(todolist)
+
     else:
         raise ValueError(f"Unknown command {args.command}")
 
@@ -132,6 +148,9 @@ if __name__ == "__main__":
     edit_title = subparsers.add_parser("edit-title")
     edit_title.add_argument("key", type=str)
     edit_title.add_argument("title", type=str)
+
+    delete = subparsers.add_parser("delete")
+    delete.add_argument("key", type=str)
 
     args = parser.parse_args()
 
