@@ -12,6 +12,12 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
+type PopPageMsg struct{}
+
+type pushMsg struct {
+	container Page
+}
+
 type Page interface {
 	Init() tea.Cmd
 	Update(tea.Msg) (Page, tea.Cmd)
@@ -63,7 +69,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case OpenMsg:
 		err := browser.OpenURL(msg.Target)
 		if err != nil {
-			return m, NewErrorCmd(err)
+			return m, func() tea.Msg {
+				return err
+			}
 		}
 
 		m.hidden = true
@@ -71,7 +79,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case CopyTextMsg:
 		err := clipboard.WriteAll(msg.Text)
 		if err != nil {
-			return m, NewErrorCmd(fmt.Errorf("failed to copy text to clipboard: %s", err))
+			return m, func() tea.Msg {
+				return fmt.Errorf("failed to copy text to clipboard: %s", err)
+			}
 		}
 
 		m.hidden = true
@@ -79,10 +89,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case PushPageMsg:
 		cmd := m.Push(msg.Page)
 		return m, cmd
-	case pushMsg:
-		cmd := m.Push(msg.container)
-		return m, cmd
-	case popMsg:
+	case PopPageMsg:
 		if len(m.pages) == 0 {
 			m.hidden = true
 			return m, tea.Quit
@@ -90,12 +97,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Pop()
 			return m, nil
 		}
-	case exit:
+	case RunCommandMsg:
 		m.hidden = true
-		return m, tea.Quit
-	case *exec.Cmd:
-		m.hidden = true
-		m.exitCmd = msg
+		m.exitCmd = msg.Command
 		return m, tea.Quit
 	case error:
 		detail := NewDetail("Error", msg.Error)
@@ -161,22 +165,6 @@ func (m *Model) pageHeight() int {
 	return m.height - 2*m.options.Padding
 }
 
-type popMsg struct{}
-
-func PopCmd() tea.Msg {
-	return popMsg{}
-}
-
-type pushMsg struct {
-	container Page
-}
-
-func NewPushCmd(page Page) tea.Cmd {
-	return func() tea.Msg {
-		return pushMsg{page}
-	}
-}
-
 func (m *Model) Push(page Page) tea.Cmd {
 	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
@@ -189,30 +177,25 @@ func (m *Model) Pop() {
 	}
 }
 
-type exit struct {
-}
-
-func Exit() tea.Msg { return exit{} }
-
-func Draw(model *Model, fullscreen bool) (err error) {
+func (m *Model) Draw() (err error) {
 	// Background detection before we start the program
 	lipgloss.SetHasDarkBackground(lipgloss.HasDarkBackground())
 
 	var p *tea.Program
-	if fullscreen {
-		p = tea.NewProgram(model, tea.WithAltScreen())
+	if m.options.MaxHeight == 0 {
+		p = tea.NewProgram(m, tea.WithAltScreen())
 	} else {
-		p = tea.NewProgram(model)
+		p = tea.NewProgram(m)
 	}
 
-	m, err := p.Run()
+	res, err := p.Run()
 	if err != nil {
 		return err
 	}
 
-	model, ok := m.(*Model)
+	model, ok := res.(*Model)
 	if !ok {
-		return fmt.Errorf("could not convert model to *Model")
+		return fmt.Errorf("could not convert res back to *Model")
 	}
 
 	if model.exitCmd != nil {

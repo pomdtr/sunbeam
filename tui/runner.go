@@ -99,23 +99,31 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if c.currentView != "loading" {
 				break
 			}
-			return c, PopCmd
+			return c, func() tea.Msg {
+				return PopPageMsg{}
+			}
 		}
 	case CommandOutput:
 		c.SetIsloading(false)
 		var res scripts.Response
 		var v any
 		if err := json.Unmarshal(msg, &v); err != nil {
-			return c, NewErrorCmd(err)
+			return c, func() tea.Msg {
+				return err
+			}
 		}
 
 		if err := scripts.Schema.Validate(v); err != nil {
-			return c, NewErrorCmd(err)
+			return c, func() tea.Msg {
+				return err
+			}
 		}
 
 		err := json.Unmarshal(msg, &res)
 		if err != nil {
-			return c, NewErrorCmd(err)
+			return c, func() tea.Msg {
+				return err
+			}
 		}
 
 		if res.Title == "" {

@@ -77,7 +77,9 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if c.actions.Focused() {
 				break
 			}
-			return &c, PopCmd
+			return &c, func() tea.Msg {
+				return PopPageMsg{}
+			}
 
 		}
 	case PreviewContentMsg:

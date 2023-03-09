@@ -17,34 +17,12 @@ type Action struct {
 	Shortcut string
 }
 
-func NewCopyCmd(text string) tea.Cmd {
-	return func() tea.Msg {
-		return CopyTextMsg{
-			Text: text,
-		}
-	}
-}
-
 type CopyTextMsg struct {
 	Text string
 }
 
-func NewOpenCmd(Target string) tea.Cmd {
-	return func() tea.Msg {
-		return OpenMsg{
-			Target: Target,
-		}
-	}
-}
-
 type OpenMsg struct {
 	Target string
-}
-
-func NewReloadPageCmd() tea.Cmd {
-	return func() tea.Msg {
-		return ReloadPageMsg{}
-	}
 }
 
 type ReloadPageMsg struct {
@@ -54,6 +32,10 @@ type PushPageMsg struct {
 	Page Page
 }
 
+type RunCommandMsg struct {
+	Command *exec.Cmd
+}
+
 func NewAction(scriptAction scripts.Action) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
@@ -61,27 +43,39 @@ func NewAction(scriptAction scripts.Action) Action {
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
-		cmd = NewCopyCmd(scriptAction.Text)
+		cmd = func() tea.Msg {
+			return CopyTextMsg{Text: scriptAction.Target}
+		}
 	case "reload":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Reload Page"
 		}
-		cmd = NewReloadPageCmd()
+		cmd = func() tea.Msg {
+			return ReloadPageMsg{}
+		}
 	case "run":
 		cmd = func() tea.Msg {
 			name, args := utils.SplitCommand(scriptAction.Command)
-			return exec.Command(name, args...)
+			return RunCommandMsg{
+				Command: exec.Command(name, args...),
+			}
 		}
 	case "open":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open in Browser"
 		}
-		cmd = NewOpenCmd(scriptAction.Target)
+		cmd = func() tea.Msg {
+			return OpenMsg{Target: scriptAction.Target}
+		}
 	case "push":
-		cmd = NewPushCmd(NewCommandRunner(scriptAction.Command...))
+		cmd = func() tea.Msg {
+			return PushPageMsg{Page: NewCommandRunner(scriptAction.Command...)}
+		}
 	default:
 		scriptAction.Title = "Unknown"
-		cmd = NewErrorCmd(fmt.Errorf("unknown action type: %s", scriptAction.Type))
+		cmd = func() tea.Msg {
+			return fmt.Errorf("unknown action type: %s", scriptAction.Type)
+		}
 	}
 
 	return Action{

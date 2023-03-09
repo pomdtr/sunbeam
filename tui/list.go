@@ -232,7 +232,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				filter.FilterItems("")
 				c.updateSelection(filter)
 			} else {
-				return c, PopCmd
+				return c, func() tea.Msg {
+					return PopPageMsg{}
+				}
 			}
 		case tea.KeyShiftDown:
 			c.viewport.LineDown(1)
@@ -249,7 +251,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, nil
 		}
 
-		return c, NewReloadPageCmd()
+		return c, func() tea.Msg {
+			return ReloadPageMsg{}
+		}
 	case SelectionChangeMsg:
 		if !c.ShowPreview {
 			return c, nil
@@ -337,10 +341,4 @@ func (c List) View() string {
 
 func (c List) Query() string {
 	return c.header.input.Value()
-}
-
-func NewErrorCmd(err error) func() tea.Msg {
-	return func() tea.Msg {
-		return err
-	}
 }

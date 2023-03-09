@@ -59,7 +59,7 @@ You will need to provide a compatible script as the first argument to you use su
 				Padding:   padding,
 				MaxHeight: maxHeight,
 			})
-			tui.Draw(model, maxHeight == 0)
+			model.Draw()
 		},
 	}
 
