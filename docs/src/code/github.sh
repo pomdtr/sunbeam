@@ -25,9 +25,6 @@ if [[ $COMMAND == "list-repos" ]]; then
         }
     ' | jq --slurp '{
         type: "list",
-        actions: [
-            {type: "open", title: "Open Github", target: "https://github.com"}
-        ],
         items: .
     }'
 elif [[ $COMMAND == "list-prs" ]]; then

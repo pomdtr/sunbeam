@@ -116,6 +116,34 @@
                     ]
                 }
             ]
+        },
+        {
+            "title": "Search Repositories",
+            "subtitle": "Github",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Search",
+                    "command": [
+                        "./docs/src/code/github.sh"
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "Search Pull Requests",
+            "subtitle": "Github",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Search",
+                    "command": [
+                        "./docs/src/code/github.sh",
+                        "list-prs",
+                        "pomdtr/excalidraw"
+                    ]
+                }
+            ]
         }
     ]
 }
