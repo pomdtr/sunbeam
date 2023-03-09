@@ -96,6 +96,7 @@ type List struct {
 	header     Header
 	footer     Footer
 	actionList ActionList
+	actions    []Action
 
 	GenerateItems bool
 	ShowPreview   bool
@@ -119,7 +120,7 @@ func NewList(title string, actions []Action) *List {
 	footer := NewFooter(title)
 
 	return &List{
-		actionList: NewActionList(actions),
+		actionList: NewActionList(),
 		header:     header,
 		filter:     filter,
 		viewport:   viewport,
@@ -200,14 +201,18 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 		actions = append(actions, item.Actions...)
 	}
 
+	for _, action := range l.actions {
+		actions = append(actions, action)
+	}
+
 	l.actionList.SetActions(actions...)
-	if len(actions) == 0 {
-		l.footer.SetBindings()
-	} else {
+	if len(actions) > 0 {
 		l.footer.SetBindings(
 			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
+	} else {
+		l.footer.SetBindings()
 	}
 
 	return l.filter.Selection()

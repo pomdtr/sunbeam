@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
+	"github.com/pomdtr/sunbeam/scripts"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -37,6 +38,7 @@ type Model struct {
 
 	root  Page
 	pages []Page
+	form  *Form
 
 	hidden bool
 }
@@ -87,9 +89,52 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case PushPageMsg:
-		cmd := m.Push(msg.Page)
+		if hasMissingFields(msg.Fields) {
+			form := NewForm(msg.Fields, func(fields []scripts.Field) tea.Msg {
+				return PushPageMsg{Fields: fields}
+			})
+			m.form = form
+			form.SetSize(m.pageWidth(), m.pageHeight())
+			return m, form.Init()
+		}
+
+		m.form = nil
+		args := make([]string, len(msg.Fields))
+		for i, field := range msg.Fields {
+			args[i] = field.Value
+		}
+
+		cmd := m.Push(NewCommandRunner(args...))
 		return m, cmd
+	case RunCommandMsg:
+		if hasMissingFields(msg.Fields) {
+			form := NewForm(msg.Fields, func(fields []scripts.Field) tea.Msg {
+				return RunCommandMsg{Fields: fields}
+			})
+			m.form = form
+			form.SetSize(m.pageWidth(), m.pageHeight())
+			return m, form.Init()
+		}
+
+		m.form = nil
+
+		args := make([]string, len(msg.Fields))
+		for i, field := range msg.Fields {
+			args[i] = field.Value
+		}
+
+		name, args := utils.SplitCommand(args)
+		cmd := exec.Command(name, args...)
+
+		m.exitCmd = cmd
+		m.hidden = true
+		return m, tea.Quit
 	case PopPageMsg:
+		if m.form != nil {
+			m.form = nil
+			return m, nil
+		}
+
 		if len(m.pages) == 0 {
 			m.hidden = true
 			return m, tea.Quit
@@ -97,12 +142,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Pop()
 			return m, nil
 		}
-	case RunCommandMsg:
-		m.hidden = true
-		m.exitCmd = msg.Command
-		return m, tea.Quit
 	case error:
-		detail := NewDetail("Error", msg.Error)
+		detail := NewDetail("Error", msg.Error, []Action{
+			{
+				Title: "Copy error",
+				Cmd: func() tea.Msg {
+					return CopyTextMsg{Text: msg.Error()}
+				},
+			},
+			{
+				Title: "Reload Page",
+				Cmd: func() tea.Msg {
+					return ReloadPageMsg{}
+				},
+			},
+		})
 		detail.SetSize(m.pageWidth(), m.pageHeight())
 
 		if len(m.pages) == 0 {
@@ -117,7 +171,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Update the current page
 	var cmd tea.Cmd
 
-	if len(m.pages) == 0 {
+	if m.form != nil {
+		m.form, cmd = m.form.Update(msg)
+	} else if len(m.pages) == 0 {
 		m.root, cmd = m.root.Update(msg)
 	} else {
 		currentPageIdx := len(m.pages) - 1
@@ -130,6 +186,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) View() string {
 	if m.hidden {
 		return ""
+	}
+
+	if m.form != nil {
+		return m.form.View()
 	}
 
 	var pageView string

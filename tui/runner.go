@@ -168,7 +168,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.list = NewList(res.Title, actions)
 			} else {
 				c.list.SetTitle(res.Title)
-				c.list.actionList.globalActions = actions
+				c.list.actions = actions
 			}
 
 			if res.List.ShowPreview {

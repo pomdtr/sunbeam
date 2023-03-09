@@ -1,0 +1,61 @@
+{
+    "$schema": "./scripts/page.json",
+    "type": "list",
+    "actions": [
+        {
+            "type": "edit",
+            "title": "Edit Manifest",
+            "path": "./sunbeam.json",
+            "shortcut": "ctrl+e"
+        },
+        {
+            "type": "reload",
+            "shortcut": "ctrl+r"
+        }
+    ],
+    "items": [
+        {
+            "title": "Browse Current Dir",
+            "subtitle": "File Browser",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Browse Current Dir",
+                    "command": [
+                        "./docs/src/code/file-browser.py"
+                    ]
+                },
+                {
+                    "type": "push",
+                    "title": "Browse Root Dir",
+                    "command": [
+                        "./docs/src/code/file-browser.py",
+                        "/"
+                    ]
+                },
+                {
+                    "type": "edit",
+                    "title": "Edit Script",
+                    "path": "./docs/src/code/file-browser.py"
+                }
+            ]
+        },
+        {
+            "title": "Browse Custom Dir",
+            "subtitle": "File Browser",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Browse Custom Dir",
+                    "command": [
+                        "./docs/src/code/file-browser.py",
+                        {
+                            "type": "textfield",
+                            "title": "Enter a directory"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

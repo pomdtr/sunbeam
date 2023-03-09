@@ -17,18 +17,17 @@ if [[ $COMMAND == "list-repos" ]]; then
                 {type: "open", target: .html_url},
                 {
                     type: "push",
-                    title: "View README",
-                    command: [$command,  "view-readme", .full_name],
-                },
-                {
-                    type: "push",
                     title: "List Pull Requests",
+                    shortcut: "ctrl+p",
                     command:[$command, "list-prs", .full_name]
                 }
             ]
         }
     ' | jq --slurp '{
         type: "list",
+        actions: [
+            {type: "open", title: "Open Github", target: "https://github.com"}
+        ],
         items: .
     }'
 elif [[ $COMMAND == "list-prs" ]]; then

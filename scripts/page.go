@@ -1,6 +1,7 @@
 package scripts
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -63,15 +64,44 @@ type ListItem struct {
 	Actions     []Action `json:"actions"`
 }
 
+type FormInput struct {
+	Type        string `json:"type"`
+	Title       string `json:"title"`
+	Placeholder string `json:"placeholder"`
+	Default     string `json:"default"`
+
+	Choices []string `json:"choices"`
+	Label   string   `json:"label"`
+}
+
+type Field struct {
+	Value string     `json:"value"`
+	Input *FormInput `json:"input"`
+}
+
+func (field *Field) UnmarshalJSON(data []byte) error {
+	err := json.Unmarshal(data, &field.Value)
+	if err == nil {
+		return nil
+	}
+
+	return json.Unmarshal(data, &field.Input)
+}
+
 type Action struct {
-	Title string `json:"title"`
-	Type  string `json:"type"`
-
+	Title    string `json:"title"`
 	Shortcut string `json:"shortcut"`
+	Type     string `json:"type"`
 
+	// edit
+	Path string `json:"path"`
+
+	// open
 	Target string `json:"target"`
 
+	// copy
 	Text string `json:"text"`
 
-	Command []string `json:"command"`
+	// run / push
+	Command []Field `json:"command"`
 }

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -64,6 +65,23 @@ func NewAction(scriptAction scripts.Action) Action {
 		cmd = func() tea.Msg {
 			return OpenMsg{Target: scriptAction.Target}
 		}
+	case "edit":
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Edit"
+		}
+
+		cmd = func() tea.Msg {
+			editor, ok := os.LookupEnv("EDITOR")
+			if !ok {
+				editor = "vim"
+			}
+			return RunCommandMsg{
+				Fields: []scripts.Field{
+					{Value: editor},
+					{Value: scriptAction.Path},
+				},
+			}
+		}
 	case "push":
 		cmd = func() tea.Msg {
 			return PushPageMsg{Fields: scriptAction.Command}
@@ -87,11 +105,10 @@ type ActionList struct {
 	filter Filter
 	footer Footer
 
-	globalActions []Action
-	actions       []Action
+	actions []Action
 }
 
-func NewActionList(actions []Action) ActionList {
+func NewActionList() ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
 
@@ -103,10 +120,9 @@ func NewActionList(actions []Action) ActionList {
 	)
 
 	return ActionList{
-		header:        header,
-		filter:        filter,
-		globalActions: actions,
-		footer:        footer,
+		header: header,
+		filter: filter,
+		footer: footer,
 	}
 }
 
@@ -124,20 +140,12 @@ func (al *ActionList) SetTitle(title string) {
 
 func (al *ActionList) SetActions(actions ...Action) {
 	al.actions = actions
-	filterItems := make([]FilterItem, len(actions)+len(al.globalActions))
+	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
 		if i == 0 {
 			action.Shortcut = "↩"
 		}
 		filterItems[i] = ListItem{
-			Title:    action.Title,
-			Subtitle: action.Shortcut,
-			Actions:  []Action{action},
-		}
-	}
-
-	for i, action := range al.globalActions {
-		filterItems[i+len(actions)] = ListItem{
 			Title:    action.Title,
 			Subtitle: action.Shortcut,
 			Actions:  []Action{action},

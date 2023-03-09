@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -14,7 +15,7 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-func Execute(version string) (err error) {
+func Execute(version string) error {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "sunbeam <script>",
@@ -22,22 +23,37 @@ func Execute(version string) (err error) {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 You will need to provide a compatible script as the first argument to you use sunbeam. See http://pomdtr.github.io/sunbeam for more information.`,
-		Args:    cobra.MinimumNArgs(1),
 		Version: version,
 		Run: func(cmd *cobra.Command, args []string) {
-			var runner *tui.CommandRunner
-
 			if check, _ := cmd.Flags().GetBool("check"); check {
-				name, args := utils.SplitCommand(args)
-				cmd := exec.Command(name, args...)
-				output, err := cmd.Output()
-				if err != nil {
-					fmt.Println("An error occured while running the script:", err)
-					os.Exit(1)
+				var page []byte
+
+				if len(args) == 0 {
+					cwd, _ := os.Getwd()
+					sunbeamFile := path.Join(cwd, "sunbeam.json")
+
+					if _, err := os.Stat(sunbeamFile); os.IsNotExist(err) {
+						fmt.Println("No script provided and no sunbeam.json file found in the current directory.")
+						os.Exit(1)
+					}
+
+					var err error
+					if page, err = os.ReadFile(sunbeamFile); err != nil {
+						fmt.Println("An error occured while reading the script:", err)
+						os.Exit(1)
+					}
+				} else {
+					name, args := utils.SplitCommand(args)
+					cmd := exec.Command(name, args...)
+					var err error
+					if page, err = cmd.Output(); err != nil {
+						fmt.Println("An error occured while running the script:", err)
+						os.Exit(1)
+					}
 				}
 
 				var v interface{}
-				if err := json.Unmarshal(output, &v); err != nil {
+				if err := json.Unmarshal(page, &v); err != nil {
 					fmt.Println("Script is not valid:", err)
 					os.Exit(1)
 				}
@@ -51,10 +67,28 @@ You will need to provide a compatible script as the first argument to you use su
 				os.Exit(0)
 			}
 
+			if len(args) == 0 {
+				cwd, _ := os.Getwd()
+				sunbeamFile := path.Join(cwd, "sunbeam.json")
+
+				if _, err := os.Stat(sunbeamFile); os.IsNotExist(err) {
+					fmt.Println("No script provided and no sunbeam.json file found in the current directory.")
+					os.Exit(1)
+				}
+
+				runner := tui.NewCommandRunner("cat", sunbeamFile)
+				model := tui.NewModel(runner, tui.SunbeamOptions{
+					Padding:   0,
+					MaxHeight: 0,
+				})
+				model.Draw()
+				return
+			}
+
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")
 
-			runner = tui.NewCommandRunner(args...)
+			runner := tui.NewCommandRunner(args...)
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,

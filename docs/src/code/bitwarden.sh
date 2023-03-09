@@ -14,12 +14,12 @@ bw --nointeraction list items --session "$BW_SESSION" | jq '.[] | {
         {
             type: "copy",
             title: "Copy Password",
-            text: .login.password
+            text: (.login.password // ""),
         },
         {
             type: "copy",
             title: "Copy Username",
-            text: .login.username,
+            text: (.login.username // ""),
             shortcut: "ctrl+l"
         }
     ]

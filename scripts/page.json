@@ -39,6 +39,9 @@
                     "type": {
                         "const": "list"
                     },
+                    "$schema": {
+                        "type": "string"
+                    },
                     "title": {
                         "type": "string"
                     },
@@ -79,6 +82,9 @@
                 "additionalProperties": false,
                 "properties": {
                     "title": {
+                        "type": "string"
+                    },
+                    "$schema": {
                         "type": "string"
                     },
                     "content": {

@@ -31,7 +31,8 @@ func NewDetail(title string, contentCmd func() string, actions []Action) *Detail
 		)
 	}
 
-	actionList := NewActionList(actions)
+	actionList := NewActionList()
+	actionList.SetActions(actions...)
 	actionList.SetTitle(title)
 
 	header := NewHeader()
