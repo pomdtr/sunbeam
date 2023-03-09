@@ -104,7 +104,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			args[i] = field.Value
 		}
 
-		cmd := m.Push(NewCommandRunner(args...))
+		cmd := m.Push(NewCommandRunner(func(s string) ([]byte, error) {
+			name, args := utils.SplitCommand(args)
+			cmd := exec.Command(name, args...)
+			cmd.Stdin = os.Stdin
+			return cmd.Output()
+		}))
+
 		return m, cmd
 	case RunCommandMsg:
 		if hasMissingFields(msg.Fields) {

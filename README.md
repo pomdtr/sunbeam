@@ -4,7 +4,8 @@ Generate complex TUIs from simple scripts written in any language.
 
 Draft Documentation: <https://pomdtr.github.io/sunbeam/>
 
-## Getting started
+## Running the examples in this repository
 
-1. Install the cli from the main branch: `go install github.com/pomdtr/sunbeam@main`
-2. Run some scripts from the example folder: `sunbeam ./docs/src/code/file-browser.py`
+- clone this repository: `git clone https://github.com/pomdtr/sunbeam.git && cd sunbeam`
+
+- run sunbeam from the root of the repository: `go run main.go`

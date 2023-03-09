@@ -56,6 +56,53 @@
                     ]
                 }
             ]
+        },
+        {
+            "title": "Search Devdocs",
+            "subtitle": "Devdocs",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Search Docsets",
+                    "command": [
+                        "./docs/src/code/devdocs.sh"
+                    ]
+                },
+                {
+                    "type": "push",
+                    "title": "Search Go Docs",
+                    "command": [
+                        "./docs/src/code/devdocs.sh",
+                        "go"
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "Search TLDR Pages",
+            "subtitle": "TLDR",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Run",
+                    "command": [
+                        "./docs/src/code/tldr.sh"
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "Search Bitwarden Items",
+            "subtitle": "Bitwarden",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Run",
+                    "command": [
+                        "./docs/src/code/bitwarden.sh"
+                    ]
+                }
+            ]
         }
     ]
 }

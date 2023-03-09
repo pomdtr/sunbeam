@@ -3,10 +3,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -76,7 +78,9 @@ You will need to provide a compatible script as the first argument to you use su
 					os.Exit(1)
 				}
 
-				runner := tui.NewCommandRunner("cat", sunbeamFile)
+				runner := tui.NewCommandRunner(func(s string) ([]byte, error) {
+					return os.ReadFile(sunbeamFile)
+				})
 				model := tui.NewModel(runner, tui.SunbeamOptions{
 					Padding:   0,
 					MaxHeight: 0,
@@ -88,7 +92,28 @@ You will need to provide a compatible script as the first argument to you use su
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")
 
-			runner := tui.NewCommandRunner(args...)
+			var generator tui.Generator
+			if args[0] == "-" {
+				bytes, err := ioutil.ReadAll(os.Stdin)
+				if err != nil {
+					fmt.Println("An error occured while reading stdin:", err)
+					os.Exit(1)
+				}
+				generator = func(s string) ([]byte, error) {
+					if s != "" {
+						return nil, fmt.Errorf("stdin script do not support beeing refreshed")
+					}
+					return bytes, nil
+				}
+			} else {
+				generator = func(s string) ([]byte, error) {
+					name, args := utils.SplitCommand(args)
+					cmd := exec.Command(name, args...)
+					cmd.Stdin = strings.NewReader(s)
+					return cmd.Output()
+				}
+			}
+			runner := tui.NewCommandRunner(generator)
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,

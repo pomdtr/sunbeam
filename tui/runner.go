@@ -2,7 +2,6 @@ package tui
 
 import (
 	"encoding/json"
-	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -17,7 +16,7 @@ type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	command []string
+	generator Generator
 
 	header Header
 	footer Footer
@@ -26,12 +25,14 @@ type CommandRunner struct {
 	detail *Detail
 }
 
-func NewCommandRunner(command ...string) *CommandRunner {
+type Generator func(string) ([]byte, error)
+
+func NewCommandRunner(generator Generator) *CommandRunner {
 	return &CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),
 		currentView: "loading",
-		command:     command,
+		generator:   generator,
 	}
 
 }
@@ -42,22 +43,15 @@ func (c *CommandRunner) Init() tea.Cmd {
 type CommandOutput []byte
 
 func (c *CommandRunner) Run() tea.Cmd {
-	name, args := utils.SplitCommand(c.command)
-	cmd := exec.Command(name, args...)
-
+	var query string
 	if c.currentView == "list" {
-		cmd.Stdin = strings.NewReader(c.list.Query())
+		query = c.list.Query()
 	}
 
 	return func() tea.Msg {
-		output, err := cmd.Output()
+		output, err := c.generator(query)
 		if err != nil {
-			exitError, ok := err.(*exec.ExitError)
-			if !ok {
-				return err
-			}
-
-			return fmt.Errorf("error running command %s: %s", cmd.String(), exitError.Stderr)
+			return err
 		}
 
 		return CommandOutput(output)
