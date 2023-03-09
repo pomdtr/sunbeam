@@ -2,17 +2,27 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Run app",
+            "label": "start mdbook",
+            "type": "process",
+            "command": "mdbook",
+            "args": [
+                "serve",
+                "docs"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "start sunbeam",
             "type": "process",
             "command": [
-                "dlv",
+                "dlv"
             ],
             "args": [
                 "debug",
                 "--headless",
                 "--listen=:2345",
                 "--api-version=2",
-                "${workspaceFolder}/main.go",
+                "${workspaceFolder}/main.go"
             ],
             "options": {
                 "env": {
@@ -24,7 +34,7 @@
                 "owner": "go",
                 "fileLocation": "relative",
                 "pattern": {
-                    "regexp": "^couldn't start listener:",
+                    "regexp": "^couldn't start listener:"
                 },
                 "background": {
                     "activeOnStart": true,

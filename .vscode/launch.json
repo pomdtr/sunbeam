@@ -9,7 +9,7 @@
             "remotePath": "${workspaceFolder}",
             "port": 2345,
             "host": "127.0.0.1",
-            "preLaunchTask": "Run app"
+            "preLaunchTask": "start sunbeam"
         }
     ]
 }
