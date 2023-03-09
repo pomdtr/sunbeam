@@ -62,7 +62,7 @@ func NewAction(scriptAction scripts.Action) Action {
 		}
 	case "open":
 		if scriptAction.Title == "" {
-			scriptAction.Title = "Open in Browser"
+			scriptAction.Title = "Open"
 		}
 		cmd = func() tea.Msg {
 			return OpenMsg{Target: scriptAction.Target}

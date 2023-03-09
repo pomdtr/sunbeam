@@ -7,7 +7,10 @@
   "type": "list", // required
   "showPreview": false, // optional, default: false
   "generateItems": false, // optional, default: false
-  "items": [] // required, see ListItem
+  "items": [
+    {"title": "Item 1"},
+    {"title": "Item 2"}
+  ] // required, see ListItem
 }
 ```
 
@@ -15,9 +18,14 @@
 
 ```javascript
 {
-  "type": "detail",
-  "content": "preview text", // required, see Preview
-  "actions": [...] // optional, see Action
+  "type": "detail", // required
+  "content": {
+    "text": "preview text"
+  }, // required, see Preview
+  "actions": [
+    {"type": "open", "target": "https://example.com"},
+    {"type": "copy", "text": "username"}
+  ] // optional, see Action
 }
 ```
 
@@ -28,19 +36,14 @@
   "title": "Item title", // required
   "subtitle": "Item subtitle", // optional
   "accessories": ["Accessory 1", "Accessory 2"], // optional
-  "actions": [] // optional, see Action
+  "actions": [
+    { "type": "open", "target": "https://example.com" },
+    { "type": "copy", "text": "username" }
+  ] // optional, see Action
 }
 ```
 
-## Action
-
-```javascript
-{
-  "type": "open", // required. See Action types
-  "title": "Action title",
-  "shortcut": "ctrl+o" // optional
-}
-```
+## Actions
 
 ### open
 
@@ -50,6 +53,7 @@ Open an URI in the default application/browser.
 {
   "type": "open", // required
   "title": "Open in browser", // optional, default: "Open"
+  "shortcut": "ctrl+o", // optional
   "target": "https://example.com" // required
 }
 ```
@@ -61,6 +65,7 @@ Copy text to the system clipboard.
 ```javascript
 {
   "type": "copy", // required
+  "shortcut": "ctrl+y", // optional
   "title": "Copy to Clipboard", // optional, default: "Copy"
   "text": "username" // required
 }
