@@ -130,21 +130,120 @@
         },
         "action": {
             "type": "object",
-            "required": [
-                "type"
-            ],
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "copy",
-                        "reload",
-                        "open",
-                        "run",
-                        "push"
-                    ]
+            "anyOf": [
+                {
+                    "required": [
+                        "type",
+                        "text"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "copy"
+                        },
+                        "title": {
+                            "type": "string"
+                        },
+                        "text": {
+                            "type": "string"
+                        },
+                        "shortcut": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type",
+                        "target"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "open"
+                        },
+                        "title": {
+                            "type": "string"
+                        },
+                        "target": {
+                            "type": "string"
+                        },
+                        "shortcut": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "reload"
+                        },
+                        "title": {
+                            "type": "string"
+                        },
+                        "shortcut": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type",
+                        "title",
+                        "shortcut",
+                        "command"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "push"
+                        },
+                        "title": {
+                            "type": "string"
+                        },
+                        "shortcut": {
+                            "type": "string"
+                        },
+                        "command": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type",
+                        "title",
+                        "command"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "run"
+                        },
+                        "title": {
+                            "type": "string"
+                        },
+                        "commands": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "shortcut": {
+                            "type": "string"
+                        }
+                    }
                 }
-            }
+            ]
         },
         "preview": {
             "oneOf": [
@@ -168,10 +267,8 @@
                     ],
                     "properties": {
                         "command": {
-                            "type": "string"
-                        },
-                        "args": {
                             "type": "array",
+                            "minItems": 1,
                             "items": {
                                 "type": "string"
                             }
