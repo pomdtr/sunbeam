@@ -2,7 +2,7 @@
 
 ## Requirements
 
-You will need to have [tealdeer](https://github.com/dbrgn/tealdeer) installed.
+You will need to have [tealdeer](https://github.com/dbrgn/tealdeer) and [jq](https://stedolan.github.io/jq/) installed.
 
 ## Usage
 
