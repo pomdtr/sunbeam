@@ -104,4 +104,7 @@ type Action struct {
 
 	// run / push
 	Command []Field `json:"command"`
+
+	// run
+	OnSuccess string `json:"onSuccess"`
 }

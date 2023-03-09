@@ -126,9 +126,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		name, args := utils.SplitCommand(args)
 		cmd := exec.Command(name, args...)
 
-		m.exitCmd = cmd
-		m.hidden = true
-		return m, tea.Quit
+		if msg.OnSuccess == "" {
+			m.exitCmd = cmd
+			m.hidden = true
+			return m, tea.Quit
+		}
+		return m, func() tea.Msg {
+			output, err := cmd.Output()
+			if err != nil {
+				return fmt.Errorf("failed to run command: %s", err)
+			}
+
+			switch msg.OnSuccess {
+			case "copy":
+				return CopyTextMsg{Text: string(output)}
+			case "open":
+				return OpenMsg{Target: string(output)}
+			case "reload":
+				return ReloadPageMsg{}
+			default:
+				return fmt.Errorf("unknown onSuccess action: %s", msg.OnSuccess)
+			}
+		}
 	case PopPageMsg:
 		if m.form != nil {
 			m.form = nil

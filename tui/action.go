@@ -32,7 +32,8 @@ type PushPageMsg struct {
 }
 
 type RunCommandMsg struct {
-	Fields []scripts.Field
+	Fields    []scripts.Field
+	OnSuccess string
 }
 
 func NewAction(scriptAction scripts.Action) Action {
@@ -55,7 +56,8 @@ func NewAction(scriptAction scripts.Action) Action {
 	case "run":
 		cmd = func() tea.Msg {
 			return RunCommandMsg{
-				Fields: scriptAction.Command,
+				Fields:    scriptAction.Command,
+				OnSuccess: scriptAction.OnSuccess,
 			}
 		}
 	case "open":
