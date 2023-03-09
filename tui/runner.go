@@ -198,10 +198,10 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 				listItems[i] = listItem
 			}
-			c.list.SetItems(listItems)
+			cmd := c.list.SetItems(listItems)
 
 			c.list.SetSize(c.width, c.height)
-			return c, c.list.Init()
+			return c, tea.Sequence(c.list.Init(), cmd)
 		}
 
 	case ReloadPageMsg:

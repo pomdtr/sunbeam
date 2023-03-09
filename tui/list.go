@@ -130,11 +130,6 @@ func NewList(title string) *List {
 }
 
 func (c *List) Init() tea.Cmd {
-	if len(c.filter.items) > 0 {
-		return tea.Batch(c.header.Focus(), func() tea.Msg {
-			return SelectionChangeMsg{c.filter.items[0].ID()}
-		})
-	}
 	return c.header.Focus()
 }
 
@@ -180,8 +175,15 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 	c.filter.SetItems(filterItems)
 	c.filter.FilterItems(c.Query())
 
-	c.updateSelection(c.filter)
-	return nil
+	selection := c.updateSelection(c.filter)
+
+	if selection == nil {
+		return nil
+	}
+
+	return func() tea.Msg {
+		return SelectionChangeMsg{c.filter.Selection().ID()}
+	}
 }
 
 func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
@@ -190,7 +192,7 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 
 type PreviewContentMsg string
 
-func (l *List) updateSelection(filter Filter) {
+func (l *List) updateSelection(filter Filter) FilterItem {
 	actions := make([]Action, 0)
 	if filter.Selection() == nil {
 		l.previewContent = ""
@@ -209,6 +211,8 @@ func (l *List) updateSelection(filter Filter) {
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}
+
+	return l.filter.Selection()
 }
 
 func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -272,11 +276,14 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, nil
 		}
 
-		return c, func() tea.Msg {
+		cmd := c.SetIsLoading(true)
+
+		return c, tea.Sequence(cmd, func() tea.Msg {
 			return PreviewContentMsg(item.PreviewFunc())
-		}
+		})
 
 	case PreviewContentMsg:
+		c.SetIsLoading(false)
 		c.previewContent = string(msg)
 		c.RefreshPreview()
 		return c, nil
