@@ -14,5 +14,5 @@ I used a lot of application launchers, but all of them had some limitations.
 Sunbeam supports:
 
 - Running on all platforms (Windows, Linux, MacOS)
-- Scripts written in any language, as long as they can output JSON
-- Generating complex UIs compose of list, forms, details...
+- Commands written in any language, as long as they can output JSON
+- Generating powerful UIs composed of a succession of pages

@@ -54,23 +54,4 @@ elif [[ $COMMAND == "list-prs" ]]; then
         type: "list",
         items: .
     }'
-elif [[ $COMMAND == "view-readme" ]]; then
-    REPO=$2
-    if [[ -z "$REPO" ]]; then
-        echo "Usage: $0 list-prs <repo>"
-        exit 1
-    fi
-
-    # shellcheck disable=SC2016
-    gh api "repos/$REPO/readme" | jq '
-    {
-      type: "detail",
-      content: {
-        text: .content
-      },
-      actions: [
-        { type: "open", title: "Open in Browser", url: .html_url }
-      ]
-      }
-    '
 fi

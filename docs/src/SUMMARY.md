@@ -4,7 +4,7 @@
 
 - [Installation](./installation.md)
 - [Usage](./usage.md)
-- [Examples](./getting-started.md)
+- [Examples](./examples/index.md)
   - [File Browser (Python)](./examples/file-browser.md)
   - [Google Search (Node / ZX)](./examples/google-search.md)
   - [TLDR Pages (Bash / jq)](./examples/tldr.md)
