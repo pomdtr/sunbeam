@@ -44,7 +44,7 @@ func NewAction(scriptAction scripts.Action) Action {
 			scriptAction.Title = "Copy to Clipboard"
 		}
 		cmd = func() tea.Msg {
-			return CopyTextMsg{Text: scriptAction.Target}
+			return CopyTextMsg{Text: scriptAction.Text}
 		}
 	case "reload":
 		if scriptAction.Title == "" {
