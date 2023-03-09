@@ -27,6 +27,9 @@ func Execute(version string) error {
 You will need to provide a compatible script as the first argument to you use sunbeam. See http://pomdtr.github.io/sunbeam for more information.`,
 		Version: version,
 		Run: func(cmd *cobra.Command, args []string) {
+			padding, _ := cmd.Flags().GetInt("padding")
+			maxHeight, _ := cmd.Flags().GetInt("height")
+
 			if check, _ := cmd.Flags().GetBool("check"); check {
 				var page []byte
 
@@ -82,15 +85,12 @@ You will need to provide a compatible script as the first argument to you use su
 					return os.ReadFile(sunbeamFile)
 				})
 				model := tui.NewModel(runner, tui.SunbeamOptions{
-					Padding:   0,
-					MaxHeight: 0,
+					Padding:   padding,
+					MaxHeight: maxHeight,
 				})
 				model.Draw()
 				return
 			}
-
-			padding, _ := cmd.Flags().GetInt("padding")
-			maxHeight, _ := cmd.Flags().GetInt("height")
 
 			var generator tui.Generator
 			if args[0] == "-" {
