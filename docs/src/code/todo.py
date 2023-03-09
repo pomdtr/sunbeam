@@ -29,7 +29,7 @@ def load_todolist() -> TodoList:
 
 
 def save_todolist(todolist: TodoList):
-    with open(todolist_path / "todolist.json", "w") as f:
+    with open(todolist_path, "w") as f:
         json.dump(todolist, f)
 
 
@@ -50,37 +50,42 @@ def handle(args: argparse.Namespace):
                                 "add",
                                 {
                                     "title": "Title",
-                                    "type": "textinput",
+                                    "type": "textfield",
                                 },
                             ],
+                            "shortcut": "ctrl+n",
                             "onSuccess": "reload",
                         }
                     ],
                     "items": [
                         {
                             "title": item["title"],
-                            "subtitle": key,
-                            "accessories": [str(item["done"])],
+                            "subtitle": "Done" if item["done"] else "Todo",
+                            "accessories": [key],
                             "actions": [
                                 {
                                     "type": "run",
-                                    "title": "Toggle Done",
+                                    "title": "Toggle Completion",
                                     "command": [
                                         sys.argv[0],
                                         "toggle",
                                         key,
                                     ],
+                                    "onSuccess": "reload",
                                 },
                                 {
                                     "type": "run",
                                     "title": "Edit Title",
+                                    "shortcut": "ctrl+e",
+                                    "onSuccess": "reload",
                                     "command": [
                                         sys.argv[0],
                                         "edit-title",
                                         key,
                                         {
                                             "title": "Title",
-                                            "type": "textinput",
+                                            "type": "textfield",
+                                            "default": item["title"],
                                         },
                                     ],
                                 },

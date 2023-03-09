@@ -85,7 +85,7 @@ items = [
 print(json.dumps({"type": "list", "items": items}))
 ```
 
-Save this script as `file-browser.py` and run `sunbeam file-browser.py` to show the list.
+Save this script as `file-browser.py`, make it executable using `chmod +x ./file-browser.py` and run `sunbeam ./file-browser.py` to show the list.
 
 ### Adding Arguments
 
@@ -136,7 +136,7 @@ print(json.dumps({"type": "list", "items": items}))
 
 You can now run `sunbeam file-browser.py /tmp` to show the list of files in the `/tmp` directory, or `sunbeam -- file-browser.py --show-hidden` to show hidden files in the current directory.
 
-Notice that we used the `--` argument separator to pass arguments to the script. This is required because sunbeam also accepts arguments, and we don't want it to interpret them.
+Notice that we used the `--` argument separator to pass arguments to the script. This is required because sunbeam also accepts flags, and we don't want it to interpret them.
 
 ### Adding Navigation
 

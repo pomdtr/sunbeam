@@ -6,6 +6,7 @@
 - [Usage](./usage.md)
 - [Examples](./examples/index.md)
   - [File Browser (Python)](./examples/file-browser.md)
+  - [Todo List (Python)](./examples/todo.md)
   - [Google Search (Node / ZX)](./examples/google-search.md)
   - [TLDR Pages (Bash / jq)](./examples/tldr.md)
   - [Github (Bash / jq)](./examples/github.md)
