@@ -14,8 +14,9 @@
   - [Brew (Bash / jq)](./examples/brew/brew.md)
   - [Bitwarden (Bash / jq)](./examples/bitwarden/bitwarden.md)
   - [Devdocs (Bash / jq)](./examples/devdocs/devdocs.md)
+- [FAQ](./faq.md)
 
 # Reference
 
 - [Response Schema](./schema.md)
-- [Command Line Interface](./cli.md)
+- [CLI](./cli.md)
