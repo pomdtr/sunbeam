@@ -1,5 +1,23 @@
 # Command Line Interface
 
+## Extending the default list
+
+When run without arguments, sunbeam will read the default list from `~/.config/sunbeam/sunbeam.json`. You can extend this list by adding items to this file.
+
+If your directory contains a `sunbeam.json` file, it will be used instead of the default list.
+
+## Using sunbeam as a filter
+
+There is two ways to wire sunbeam to your programs:
+
+- Wrap your command in sunbeam: `sunbeam run <my-command>`
+- Pipe data to sunbeam: `<my-command> | sunbeam read -`
+
+Both methods have advantages and drawbacks:
+
+- Using the wrap method, sunbeam controls the whole process. However, it requires your user to invoke sunbeam instead of your command, so you will loose completions.
+- The pipe method is more flexible and easier to integrate with existing programs, but you loose the ability to reload your script since sunbeam is not responsible for generating the data.
+
 ## Detecting that a script is running in sunbeam
 
 Sunbeam set the `SUNBEAM_RUNNER` environment variable to `true` when it's running a script. You can use it to adapt the output of your script depending on the context.
