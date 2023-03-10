@@ -1,5 +1,5 @@
 {
-    "$schema": "./scripts/page.json",
+    "$schema": "./schemas/schema.json",
     "type": "list",
     "actions": [
         {
