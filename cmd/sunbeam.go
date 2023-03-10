@@ -84,6 +84,7 @@ You will need to provide a compatible script as the first argument to you use su
 
 	rootCmd.AddCommand(NewRunCmd())
 	rootCmd.AddCommand(NewReadCmd())
+	rootCmd.AddCommand(NewQueryCmd())
 
 	return rootCmd.Execute()
 }

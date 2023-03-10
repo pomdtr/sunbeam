@@ -1,8 +1,8 @@
-# Brew (Bash / jq)
+# Brew (Bash)
 
 ## Requirements
 
-You will need to have the [Brew CLI](https://brew.sh/) and [jq](https://stedolan.github.io/jq/) installed.
+- [Brew](https://brew.sh/)
 
 ## Usage
 

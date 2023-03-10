@@ -5,7 +5,7 @@ set -euo pipefail
 PLATFORM="${1:-osx}"
 
 # shellcheck disable=SC2016
-tldr --list --platform="$PLATFORM" | jq --arg platform "$PLATFORM" -R '{
+tldr --list --platform="$PLATFORM" | sunbeam query --arg=platform "$PLATFORM" -R '{
     title: .,
     preview: {
       command: ["tldr", "--color=always", "--platform=\($platform)", .],
@@ -17,7 +17,7 @@ tldr --list --platform="$PLATFORM" | jq --arg platform "$PLATFORM" -R '{
         target: "https://tldr.inbrowser.app/pages/common/\(. | @uri)",
       }
     ],
-}' | jq --slurp '
+}' | sunbeam query --slurp '
   {
     type: "list",
     showPreview: true,

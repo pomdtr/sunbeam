@@ -6,7 +6,7 @@ COMMAND="${1:-list-repos}"
 
 if [[ $COMMAND == "list-repos" ]]; then
     # shellcheck disable=SC2016
-    gh api "/user/repos?sort=updated" | jq --arg command "$0" '.[] |
+    gh api "/user/repos?sort=updated" | sunbeam query --arg=command "$0" '.[] |
         {
             title: .name,
             subtitle: .description,
@@ -23,7 +23,7 @@ if [[ $COMMAND == "list-repos" ]]; then
                 }
             ]
         }
-    ' | jq --slurp '{
+    ' | sunbeam query --slurp '{
         type: "list",
         items: .
     }'
@@ -34,7 +34,7 @@ elif [[ $COMMAND == "list-prs" ]]; then
         exit 1
     fi
 
-    gh pr list --repo "$REPO" --json author,title,url,number | jq '.[] |
+    gh pr list --repo "$REPO" --json author,title,url,number | sunbeam query '.[] |
     {
         title: .title,
         subtitle: .author.login,
@@ -46,7 +46,7 @@ elif [[ $COMMAND == "list-prs" ]]; then
             {type: "copy", text: .url}
         ]
     }
-    ' | jq --slurp '{
+    ' | sunbeam query --slurp '{
         type: "list",
         items: .
     }'

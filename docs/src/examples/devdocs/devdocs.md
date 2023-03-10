@@ -1,8 +1,8 @@
-# Devdocs (Bash / jq)
+# Devdocs (Bash)
 
 ## Requirements
 
-You will need to have [curl](https://curl.haxx.se/) and [jq](https://stedolan.github.io/jq/) installed.
+- [curl](https://curl.haxx.se/)
 
 ## Usage
 

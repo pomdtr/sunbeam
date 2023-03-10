@@ -2,9 +2,9 @@
 
 ## Requirements
 
-You will need to have [gh](https://cli.github.com/) and [jq](https://stedolan.github.io/jq/) installed.
+- [gh](https://cli.github.com/)
 
-You should be authenticated with GitHub using the `gh auth login` command before running the scripts.
+> **Note** You should be authenticated with GitHub using the `gh auth login` command before running the scripts.
 
 ## Usage
 

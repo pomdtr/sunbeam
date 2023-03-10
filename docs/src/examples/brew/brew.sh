@@ -1,6 +1,6 @@
 #!/bin/bash
 
-xargs brew search | jq -R '. | {
+xargs brew search | sunbeam query -R '. | {
     title: .,
     preview: {
         command: ["brew", "info", .],
@@ -9,7 +9,7 @@ xargs brew search | jq -R '. | {
         { type: "copy", title: "Copy", text: . },
         { type: "open", title: "Open", target: "https://formulae.brew.sh/formula/\(.)" }
     ]
-}' | jq --slurp '{
+}' | sunbeam query --slurp '{
     type: "list",
     generateItems: true,
     showPreview: true,
