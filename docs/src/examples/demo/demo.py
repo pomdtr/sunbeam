@@ -63,7 +63,7 @@ def handle_args(args):
                         "type": "copy",
                         "title": "Copy list alias",
                         "text": " ".join(
-                            ["sunbeam", "run", sys.argv[0], "dynamic-list", "5"]
+                            ["sunbeam", "run", sys.argv[0], "static-list", "5"]
                         ),
                     },
                 ],
@@ -151,7 +151,7 @@ def handle_args(args):
                         "subtitle": "Subtitle",
                         "accessories": [f"Item {i+1}"],
                         "preview": {
-                            "text": "Preview text",
+                            "text": f"Preview text of item {i+1}",
                         },
                         "actions": [],
                     }

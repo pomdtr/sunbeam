@@ -4,6 +4,8 @@ Sunbeam is a command-line launcher, inspired by [fzf](https://github.com/junegun
 
 It allows you to build interactives UIs from simple scripts.
 
+![demo gif](./docs/src/examples/demo/demo.gif)
+
 Docs: <https://pomdtr.github.io/sunbeam/>
 
 ## Running the examples in this repository
