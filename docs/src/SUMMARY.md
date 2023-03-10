@@ -9,11 +9,11 @@
   - [File Browser (Python)](./examples/file-browser/file-browser.md)
   - [Todo List (Python)](./examples/todo/todo.md)
   - [Google Search (Node / ZX)](./examples/google-search/google-search.md)
-  - [TLDR Pages (Bash / jq)](./examples/tldr/tldr.md)
-  - [Github (Bash / jq)](./examples/github/github.md)
-  - [Brew (Bash / jq)](./examples/brew/brew.md)
-  - [Bitwarden (Bash / jq)](./examples/bitwarden/bitwarden.md)
-  - [Devdocs (Bash / jq)](./examples/devdocs/devdocs.md)
+  - [TLDR Pages (Bash)](./examples/tldr/tldr.md)
+  - [Github (Bash)](./examples/github/github.md)
+  - [Brew (Bash)](./examples/brew/brew.md)
+  - [Bitwarden (Bash)](./examples/bitwarden/bitwarden.md)
+  - [Devdocs (Bash)](./examples/devdocs/devdocs.md)
 - [FAQ](./faq.md)
 
 # Reference
