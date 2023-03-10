@@ -132,6 +132,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.form = nil
 
+		args := msg.Action.Command
+		homeDir, _ := os.UserHomeDir()
+		for i, arg := range args {
+			arg = strings.ReplaceAll(arg, "${userHome}", homeDir)
+			args[i] = arg
+		}
+
 		name, args := utils.SplitCommand(msg.Action.Command)
 
 		if msg.Action.OnSuccess == "" {
@@ -291,10 +298,7 @@ func (m *Model) Draw() (err error) {
 	// Background detection before we start the program
 	lipgloss.SetHasDarkBackground(lipgloss.HasDarkBackground())
 
-	err = os.Setenv("SUNBEAM_RUNNER", "true")
-	if err != nil {
-		return fmt.Errorf("failed to set SUNBEAM_RUNNER env var: %s", err)
-	}
+	os.Setenv("SUNBEAM_RUNNER", "true")
 
 	var p *tea.Program
 	if m.options.MaxHeight == 0 {

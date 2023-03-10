@@ -1,10 +1,4 @@
-# Command Line Interface
-
-## Extending the default list
-
-When run without arguments, sunbeam will read the default list from `~/.config/sunbeam/sunbeam.json`. You can extend this list by adding items to this file.
-
-If your directory contains a `sunbeam.json` file, it will be used instead of the default list.
+# FAQ
 
 ## Using sunbeam as a filter
 
