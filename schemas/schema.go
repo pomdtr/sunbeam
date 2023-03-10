@@ -1,7 +1,6 @@
 package schemas
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -65,6 +64,7 @@ type ListItem struct {
 }
 
 type FormInput struct {
+	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Title       string `json:"title"`
 	Placeholder string `json:"placeholder"`
@@ -74,24 +74,12 @@ type FormInput struct {
 	Label   string   `json:"label"`
 }
 
-type Field struct {
-	Value string     `json:"value"`
-	Input *FormInput `json:"input"`
-}
-
-func (field *Field) UnmarshalJSON(data []byte) error {
-	err := json.Unmarshal(data, &field.Value)
-	if err == nil {
-		return nil
-	}
-
-	return json.Unmarshal(data, &field.Input)
-}
-
 type Action struct {
 	Title    string `json:"title"`
 	Shortcut string `json:"shortcut"`
 	Type     string `json:"type"`
+
+	Inputs []FormInput `json:"inputs"`
 
 	// edit
 	Path string `json:"path"`
@@ -103,7 +91,7 @@ type Action struct {
 	Text string `json:"text"`
 
 	// run / push
-	Command []Field `json:"command"`
+	Command []string `json:"command"`
 
 	// run
 	OnSuccess string `json:"onSuccess"`

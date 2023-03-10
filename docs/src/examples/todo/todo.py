@@ -45,13 +45,13 @@ def handle(args: argparse.Namespace):
                         {
                             "type": "run",
                             "title": "Add Item",
-                            "command": [
-                                sys.argv[0],
-                                "add",
+                            "command": [sys.argv[0], "add", "${input:title}"],
+                            "inputs": [
                                 {
+                                    "name": "title",
                                     "title": "Title",
                                     "type": "textfield",
-                                },
+                                }
                             ],
                             "shortcut": "ctrl+n",
                             "onSuccess": "reload",
@@ -82,11 +82,14 @@ def handle(args: argparse.Namespace):
                                         sys.argv[0],
                                         "edit-title",
                                         key,
+                                        "${input:title}",
+                                    ],
+                                    "inputs": [
                                         {
+                                            "name": "title",
                                             "title": "Title",
                                             "type": "textfield",
-                                            "default": item["title"],
-                                        },
+                                        }
                                     ],
                                 },
                                 {

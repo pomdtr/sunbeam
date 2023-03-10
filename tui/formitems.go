@@ -19,28 +19,40 @@ type FormInput interface {
 
 	Height() int
 	Value() string
-	Title() string
 
 	SetWidth(int)
 	Update(tea.Msg) (FormInput, tea.Cmd)
 	View() string
 }
 
-func NewFormInput(param *schemas.FormInput) FormInput {
+type FormItem struct {
+	FormInput
+	Title string
+	Name  string
+}
+
+func NewFormItem(param schemas.FormInput) (FormItem, error) {
+	var input FormInput
 	switch param.Type {
 	case "textfield":
-		return NewTextInput(param)
+		input = NewTextInput(param)
 	case "password":
 		ti := NewTextInput(param)
 		ti.SetHidden()
-		return ti
+		input = ti
 	case "textarea":
-		return NewTextArea(param)
+		input = NewTextArea(param)
 	case "dropdown":
-		return NewDropDown(*param)
+		input = NewDropDown(param)
 	default:
-		return nil
+		return FormItem{}, fmt.Errorf("invalid form input type: %s", param.Type)
 	}
+
+	return FormItem{
+		Name:      param.Name,
+		Title:     param.Title,
+		FormInput: input,
+	}, nil
 }
 
 type TextArea struct {
@@ -52,7 +64,7 @@ func (ta *TextArea) Title() string {
 	return ta.title
 }
 
-func NewTextArea(formItem *schemas.FormInput) *TextArea {
+func NewTextArea(formItem schemas.FormInput) *TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
 	ta.SetValue(formItem.Default)
@@ -90,7 +102,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem *schemas.FormInput) *TextInput {
+func NewTextInput(formItem schemas.FormInput) *TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.SetValue(formItem.Default)

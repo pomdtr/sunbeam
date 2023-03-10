@@ -57,6 +57,12 @@
                             "$ref": "#/$defs/action"
                         }
                     },
+                    "inputs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/$defs/input"
+                        }
+                    },
                     "items": {
                         "type": "array",
                         "items": {
@@ -92,6 +98,12 @@
                     },
                     "type": {
                         "const": "detail"
+                    },
+                    "inputs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/$defs/input"
+                        }
                     },
                     "actions": {
                         "type": "array",

@@ -17,86 +17,79 @@ type Action struct {
 }
 
 type CopyTextMsg struct {
-	Text string
+	Action schemas.Action
 }
 
 type OpenMsg struct {
-	Target string
+	Action schemas.Action
 }
 
 type ReloadPageMsg struct {
+	Action schemas.Action
 }
 
 type PushPageMsg struct {
-	Fields []schemas.Field
+	Action schemas.Action
 }
 
 type RunCommandMsg struct {
-	Fields    []schemas.Field
-	OnSuccess string
+	Action schemas.Action
 }
 
 func NewAction(scriptAction schemas.Action) Action {
-	var cmd tea.Cmd
+	var msg tea.Msg
 	switch scriptAction.Type {
 	case "copy":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Copy to Clipboard"
 		}
-		cmd = func() tea.Msg {
-			return CopyTextMsg{Text: scriptAction.Text}
-		}
+		msg = CopyTextMsg{Action: scriptAction}
 	case "reload":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Reload Page"
 		}
-		cmd = func() tea.Msg {
-			return ReloadPageMsg{}
-		}
+		msg = ReloadPageMsg{Action: scriptAction}
 	case "run":
-		cmd = func() tea.Msg {
-			return RunCommandMsg{
-				Fields:    scriptAction.Command,
-				OnSuccess: scriptAction.OnSuccess,
-			}
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Run Command"
+		}
+		msg = RunCommandMsg{
+			Action: scriptAction,
 		}
 	case "open":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open"
 		}
-		cmd = func() tea.Msg {
-			return OpenMsg{Target: scriptAction.Target}
-		}
+		msg = OpenMsg{Action: scriptAction}
 	case "edit":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Edit"
 		}
 
-		cmd = func() tea.Msg {
-			editor, ok := os.LookupEnv("EDITOR")
-			if !ok {
-				editor = "vim"
-			}
-			return RunCommandMsg{
-				Fields: []schemas.Field{
-					{Value: editor},
-					{Value: scriptAction.Path},
-				},
-			}
+		editor, ok := os.LookupEnv("EDITOR")
+		if !ok {
+			editor = "vim"
+		}
+
+		msg = RunCommandMsg{
+			Action: schemas.Action{
+				Type:    "run",
+				Command: []string{editor, scriptAction.Path},
+			},
 		}
 	case "push":
-		cmd = func() tea.Msg {
-			return PushPageMsg{Fields: scriptAction.Command}
+		if scriptAction.Title == "" {
+			scriptAction.Title = "Push Page"
 		}
+
+		msg = PushPageMsg{Action: scriptAction}
 	default:
 		scriptAction.Title = "Unknown"
-		cmd = func() tea.Msg {
-			return fmt.Errorf("unknown action type: %s", scriptAction.Type)
-		}
+		msg = fmt.Errorf("unknown action type: %s", scriptAction.Type)
 	}
 
 	return Action{
-		Cmd:      cmd,
+		Cmd:      func() tea.Msg { return msg },
 		Shortcut: scriptAction.Shortcut,
 		Title:    scriptAction.Title,
 	}

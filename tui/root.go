@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -69,7 +70,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case OpenMsg:
-		err := browser.OpenURL(msg.Target)
+		err := browser.OpenURL(msg.Action.Target)
 		if err != nil {
 			return m, func() tea.Msg {
 				return err
@@ -79,7 +80,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case CopyTextMsg:
-		err := clipboard.WriteAll(msg.Text)
+		err := clipboard.WriteAll(msg.Action.Text)
 		if err != nil {
 			return m, func() tea.Msg {
 				return fmt.Errorf("failed to copy text to clipboard: %s", err)
@@ -89,9 +90,33 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case PushPageMsg:
-		if hasMissingFields(msg.Fields) {
-			form := NewForm(msg.Fields, func(fields []schemas.Field) tea.Msg {
-				return PushPageMsg{Fields: fields}
+		if len(msg.Action.Inputs) > 0 {
+			formItems := make([]FormItem, len(msg.Action.Inputs))
+			for i, input := range msg.Action.Inputs {
+				item, err := NewFormItem(input)
+				if err != nil {
+					return m, func() tea.Msg {
+						return fmt.Errorf("failed to create form input: %s", err)
+					}
+				}
+
+				formItems[i] = item
+			}
+
+			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
+				return func() tea.Msg {
+					command := make([]string, len(msg.Action.Command))
+					for i, arg := range msg.Action.Command {
+						for key, value := range values {
+							arg = strings.ReplaceAll(arg, fmt.Sprintf("${input:%s}", key), value)
+						}
+						command[i] = arg
+					}
+
+					return PushPageMsg{Action: schemas.Action{
+						Command: command,
+					}}
+				}
 			})
 			m.form = form
 			form.SetSize(m.pageWidth(), m.pageHeight())
@@ -99,13 +124,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.form = nil
-		args := make([]string, len(msg.Fields))
-		for i, field := range msg.Fields {
-			args[i] = field.Value
-		}
 
 		cmd := m.Push(NewCommandRunner(func(s string) ([]byte, error) {
-			name, args := utils.SplitCommand(args)
+			name, args := utils.SplitCommand(msg.Action.Command)
 			cmd := exec.Command(name, args...)
 			cmd.Stdin = os.Stdin
 			return cmd.Output()
@@ -113,9 +134,34 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, cmd
 	case RunCommandMsg:
-		if hasMissingFields(msg.Fields) {
-			form := NewForm(msg.Fields, func(fields []schemas.Field) tea.Msg {
-				return RunCommandMsg{Fields: fields, OnSuccess: msg.OnSuccess}
+		if len(msg.Action.Inputs) > 0 {
+			formItems := make([]FormItem, len(msg.Action.Inputs))
+			for i, input := range msg.Action.Inputs {
+				item, err := NewFormItem(input)
+				if err != nil {
+					return m, func() tea.Msg {
+						return fmt.Errorf("failed to create form input: %s", err)
+					}
+				}
+
+				formItems[i] = item
+			}
+
+			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
+				command := make([]string, len(msg.Action.Command))
+				for i, arg := range msg.Action.Command {
+					for key, value := range values {
+						arg = strings.ReplaceAll(arg, fmt.Sprintf("${input:%s}", key), value)
+					}
+					command[i] = arg
+				}
+
+				return func() tea.Msg {
+					return RunCommandMsg{Action: schemas.Action{
+						Command:   command,
+						OnSuccess: msg.Action.OnSuccess,
+					}}
+				}
 			})
 			m.form = form
 			form.SetSize(m.pageWidth(), m.pageHeight())
@@ -124,15 +170,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.form = nil
 
-		args := make([]string, len(msg.Fields))
-		for i, field := range msg.Fields {
-			args[i] = field.Value
-		}
-
-		name, args := utils.SplitCommand(args)
+		name, args := utils.SplitCommand(msg.Action.Command)
 		cmd := exec.Command(name, args...)
 
-		if msg.OnSuccess == "" {
+		if msg.Action.OnSuccess == "" {
 			m.exitCmd = cmd
 			m.hidden = true
 			return m, tea.Quit
@@ -143,15 +184,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return fmt.Errorf("failed to run command: %s", err)
 			}
 
-			switch msg.OnSuccess {
+			switch msg.Action.OnSuccess {
 			case "copy":
-				return CopyTextMsg{Text: string(output)}
+				return CopyTextMsg{Action: schemas.Action{
+					Text: string(output),
+				}}
 			case "open":
-				return OpenMsg{Target: string(output)}
+				return OpenMsg{Action: schemas.Action{
+					Target: string(output),
+				}}
 			case "reload":
 				return ReloadPageMsg{}
 			default:
-				return fmt.Errorf("unknown onSuccess action: %s", msg.OnSuccess)
+				return fmt.Errorf("unknown onSuccess action: %s", msg.Action.OnSuccess)
 			}
 		}
 	case PopPageMsg:
@@ -172,7 +217,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			{
 				Title: "Copy error",
 				Cmd: func() tea.Msg {
-					return CopyTextMsg{Text: msg.Error()}
+					return CopyTextMsg{schemas.Action{
+						Text: msg.Error(),
+					}}
 				},
 			},
 			{

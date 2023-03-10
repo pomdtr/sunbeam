@@ -7,17 +7,11 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/schemas"
 )
 
-type FormItem struct {
-	Field schemas.Field
-	input FormInput
-}
-
 type Form struct {
-	inputs    []FormInput
-	submitCmd func() tea.Msg
+	inputs    []FormItem
+	submitCmd func(map[string]string) tea.Cmd
 
 	width    int
 	header   Header
@@ -28,17 +22,7 @@ type Form struct {
 	focusIndex   int
 }
 
-func hasMissingFields(fields []schemas.Field) bool {
-	for _, field := range fields {
-		if field.Value == "" {
-			return true
-		}
-	}
-
-	return false
-}
-
-func NewForm(fields []schemas.Field, submitFunc func(fields []schemas.Field) tea.Msg) *Form {
+func NewForm(inputs []FormItem, submitCmd func(fields map[string]string) tea.Cmd) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter("Sunbeam")
@@ -47,37 +31,12 @@ func NewForm(fields []schemas.Field, submitFunc func(fields []schemas.Field) tea
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Focus Next")),
 	)
 
-	items := make([]FormItem, 0)
-	inputs := make([]FormInput, 0)
-	for _, field := range fields {
-		item := FormItem{
-			Field: field,
-		}
-
-		if field.Input != nil {
-			item.input = NewFormInput(field.Input)
-			inputs = append(inputs, item.input)
-		}
-		items = append(items, item)
-	}
-
 	return &Form{
-		header: header,
-		submitCmd: func() tea.Msg {
-			fields := make([]schemas.Field, 0)
-			for _, item := range items {
-				if item.input != nil {
-					item.Field.Value = item.input.Value()
-				}
-
-				fields = append(fields, item.Field)
-			}
-
-			return submitFunc(fields)
-		},
-		footer:   footer,
-		viewport: viewport,
-		inputs:   inputs,
+		header:    header,
+		footer:    footer,
+		viewport:  viewport,
+		inputs:    inputs,
+		submitCmd: submitCmd,
 	}
 }
 
@@ -161,7 +120,11 @@ func (c Form) Update(msg tea.Msg) (*Form, tea.Cmd) {
 
 			return &c, tea.Batch(cmds...)
 		case tea.KeyCtrlS:
-			return &c, c.submitCmd
+			values := make(map[string]string)
+			for _, input := range c.inputs {
+				values[input.Name] = input.Value()
+			}
+			return &c, c.submitCmd(values)
 		}
 	}
 
@@ -193,7 +156,7 @@ func (c *Form) renderInputs() {
 			inputView = normalBorder.Render(inputView)
 		}
 
-		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("%s: ", input.Title())), inputView)
+		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("%s: ", input.Title)), inputView)
 		if lipgloss.Width(itemViews[i]) > maxWidth {
 			maxWidth = lipgloss.Width(itemViews[i])
 		}
@@ -215,7 +178,7 @@ func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 	// Only text inputs with Focus() set will respond, so it's safe to simply
 	// update all of them here without any further logic.
 	for i := range c.inputs {
-		c.inputs[i], cmds[i] = c.inputs[i].Update(msg)
+		c.inputs[i].FormInput, cmds[i] = c.inputs[i].Update(msg)
 	}
 
 	return tea.Batch(cmds...)

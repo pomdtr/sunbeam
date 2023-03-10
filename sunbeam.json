@@ -45,9 +45,13 @@
                     "title": "Browse Custom Dir",
                     "command": [
                         "./docs/src/examples/file-browser/file-browser.py",
+                        "${input:dir}"
+                    ],
+                    "inputs": [
                         {
-                            "type": "textfield",
-                            "title": "Enter a directory"
+                            "name": "dir",
+                            "title": "Directory",
+                            "type": "textfield"
                         }
                     ]
                 }
