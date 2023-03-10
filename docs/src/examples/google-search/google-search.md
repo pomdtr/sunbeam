@@ -13,5 +13,5 @@ sunbeam run ./google-search.mjs
 ## Code
 
 ```javascript
-{{#include ../code/google-search.mjs}}
+{{#include ./google-search.mjs}}
 ```

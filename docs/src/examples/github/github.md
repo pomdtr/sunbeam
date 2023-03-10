@@ -16,5 +16,5 @@ sunbeam run ./github.sh list-prs <repo> # List all pull requests for a repositor
 ## Code
 
 ```bash
-{{#include ../code/github.sh}}
+{{#include ./github.sh}}
 ```

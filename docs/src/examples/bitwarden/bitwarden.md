@@ -16,5 +16,5 @@ sunbeam run ./bitwarden.sh
 ## Code
 
 ```bash
-{{#include ../code/bitwarden.sh}}
+{{#include ./bitwarden.sh}}
 ```

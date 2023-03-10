@@ -13,5 +13,5 @@ sunbeam run ./brew.sh
 ## Code
 
 ```bash
-{{#include ../code/brew.sh}}
+{{#include ./brew.sh}}
 ```

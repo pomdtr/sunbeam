@@ -15,5 +15,5 @@ sunbeam run -- ./file-browser.py --show-hidden # Show hidden files
 ## Code
 
 ```python
-{{#include ../code/file-browser.py}}
+{{#include ./file-browser.py}}
 ```

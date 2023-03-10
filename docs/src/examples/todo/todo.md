@@ -9,5 +9,5 @@ sunbeam run todo.py
 ## Code
 
 ```python
-{{#include ../code/todo.py}}
+{{#include ./todo.py}}
 ```

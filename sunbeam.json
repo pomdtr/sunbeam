@@ -18,21 +18,21 @@
                     "type": "push",
                     "title": "Browse Current Dir",
                     "command": [
-                        "./docs/src/code/file-browser.py"
+                        "./docs/src/examples/file-browser/file-browser.py"
                     ]
                 },
                 {
                     "type": "push",
                     "title": "Browse Root Dir",
                     "command": [
-                        "./docs/src/code/file-browser.py",
+                        "./docs/src/examples/file-browser/file-browser.py",
                         "/"
                     ]
                 },
                 {
                     "type": "edit",
                     "title": "Edit Script",
-                    "path": "./docs/src/code/file-browser.py"
+                    "path": "./docs/src/examples/file-browser/file-browser.py"
                 }
             ]
         },
@@ -44,7 +44,7 @@
                     "type": "push",
                     "title": "Browse Custom Dir",
                     "command": [
-                        "./docs/src/code/file-browser.py",
+                        "./docs/src/examples/file-browser/file-browser.py",
                         {
                             "type": "textfield",
                             "title": "Enter a directory"
@@ -61,14 +61,14 @@
                     "type": "push",
                     "title": "Search Docsets",
                     "command": [
-                        "./docs/src/code/devdocs.sh"
+                        "./docs/src/examples/devdocs/devdocs.sh"
                     ]
                 },
                 {
                     "type": "push",
                     "title": "Search Go Docs",
                     "command": [
-                        "./docs/src/code/devdocs.sh",
+                        "./docs/src/examples/devdocs/devdocs.sh",
                         "go"
                     ]
                 }
@@ -82,7 +82,7 @@
                     "type": "push",
                     "title": "Run",
                     "command": [
-                        "./docs/src/code/tldr.sh"
+                        "./docs/src/examples/tldr/tldr.sh"
                     ]
                 }
             ]
@@ -95,7 +95,7 @@
                     "type": "push",
                     "title": "Run",
                     "command": [
-                        "./docs/src/code/bitwarden.sh"
+                        "./docs/src/examples/bitwarden/bitwarden.sh"
                     ]
                 }
             ]
@@ -108,7 +108,7 @@
                     "type": "push",
                     "title": "Run",
                     "command": [
-                        "./docs/src/code/todo.py"
+                        "./docs/src/examples/todo/todo.py"
                     ]
                 }
             ]
@@ -121,7 +121,7 @@
                     "type": "push",
                     "title": "Search",
                     "command": [
-                        "./docs/src/code/github.sh"
+                        "./docs/src/examples/github/github.sh"
                     ]
                 }
             ]
@@ -134,7 +134,7 @@
                     "type": "push",
                     "title": "Search",
                     "command": [
-                        "./docs/src/code/github.sh",
+                        "./docs/src/examples/github/github.sh",
                         "list-prs",
                         "pomdtr/excalidraw"
                     ]

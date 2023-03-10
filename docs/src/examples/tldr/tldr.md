@@ -13,5 +13,5 @@ sunbeam run ./tldr.sh
 ## Code
 
 ```javascript
-{{#include ../code/tldr.sh}}
+{{#include ./tldr.sh}}
 ```

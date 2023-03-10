@@ -39,7 +39,7 @@ json.dump(
                     {
                         "type": "copy",
                         "title": "Copy Path",
-                        "shorcut": "ctrl+y",
+                        "shortcut": "ctrl+y",
                         "text": str(path.absolute()),
                     },
                 ],
