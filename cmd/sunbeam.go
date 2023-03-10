@@ -23,7 +23,7 @@ func Execute(version string) error {
 		Short: "Command Line Launcher",
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
-You will need to provide a compatible script as the first argument to you use sunbeam. See http://pomdtr.github.io/sunbeam for more information.`,
+See http://pomdtr.github.io/sunbeam for more information.`,
 		Args:    cobra.NoArgs,
 		Version: version,
 		// If the config file does not exist, create it

@@ -1,5 +1,9 @@
 # CLI
 
+## sunbeam
+
+If a `sunbeam.json` file is present in the current directory, sunbeam will parse it and display the page. Otherwise, sunbeam will print the help.
+
 ## sunbeam run
 
 Run the given command, and parse the output as a sunbeam page.
