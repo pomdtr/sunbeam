@@ -1,11 +1,12 @@
 # Sunbeam
 
-Generate complex TUIs from simple scripts written in any language.
+Sunbeam is a command-line launcher, inspired by [fzf](https://github.com/junegunn/fzf), [raycast](https://raycast.com) and [gum](https://github.com/charmbracelet/gum).
 
-Draft Documentation: <https://pomdtr.github.io/sunbeam/>
+It allows you to build interactives UIs from simple scripts.
+
+Docs: <https://pomdtr.github.io/sunbeam/>
 
 ## Running the examples in this repository
 
 - clone this repository: `git clone https://github.com/pomdtr/sunbeam.git && cd sunbeam`
-
 - run sunbeam from the root of the repository: `go run main.go`
