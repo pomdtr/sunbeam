@@ -16,7 +16,8 @@ if [[ $COMMAND == "list-repos" ]]; then
             actions: [
                 {type: "open", target: .html_url},
                 {
-                    type: "push",
+                    type: "run",
+                    onSuccess: "push",
                     title: "List Pull Requests",
                     shortcut: "ctrl+p",
                     command:[$command, "list-prs", .full_name]

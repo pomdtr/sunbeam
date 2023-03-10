@@ -164,9 +164,8 @@
                         "copy",
                         "open",
                         "reload",
-                        "edit",
-                        "run",
-                        "push"
+                        "push",
+                        "run"
                     ]
                 }
             },
@@ -195,10 +194,168 @@
                             "title": {
                                 "type": "string"
                             },
+                            "inputs": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/input"
+                                }
+                            },
                             "shortcut": {
                                 "type": "string"
                             },
                             "text": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "open"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "type",
+                            "target"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "const": "open"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "inputs": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/input"
+                                }
+                            },
+                            "shortcut": {
+                                "type": "string"
+                            },
+                            "target": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "run"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "type",
+                            "command"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "const": "run"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "shortcut": {
+                                "type": "string"
+                            },
+                            "onSuccess": {
+                                "type": "string",
+                                "enum": [
+                                    "reload",
+                                    "push",
+                                    "copy",
+                                    "open"
+                                ]
+                            },
+                            "inputs": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/$defs/input"
+                                }
+                            },
+                            "command": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "push"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "type",
+                            "command"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "const": "push"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "shortcut": {
+                                "type": "string"
+                            },
+                            "path": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "reload"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "type"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "const": "reload"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "shortcut": {
                                 "type": "string"
                             }
                         }
@@ -216,12 +373,144 @@
                     "type": "string",
                     "enum": [
                         "textfield",
-                        "password",
                         "textarea",
                         "dropdown"
                     ]
                 }
-            }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "textfield"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "name",
+                            "title",
+                            "type"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "const": "textfield"
+                            },
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "string"
+                            },
+                            "secure": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "textarea"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "name",
+                            "title",
+                            "type"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "const": "textarea"
+                            },
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "dropdown"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "name",
+                            "title",
+                            "type",
+                            "options"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "const": "dropdown"
+                            },
+                            "options": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "title",
+                                        "value"
+                                    ],
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "default": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            ]
         },
         "preview": {
             "oneOf": [

@@ -33,12 +33,14 @@ def handle_args(args):
                 },
                 "actions": [
                     {
-                        "type": "push",
+                        "type": "run",
+                        "onSuccess": "push",
                         "title": "Tell me more about you!",
                         "command": [sys.argv[0], "help"],
                     },
                     {
-                        "type": "push",
+                        "type": "run",
+                        "onSuccess": "push",
                         "title": "Show me a static list!",
                         "command": [sys.argv[0], "static-list", "${input:nb_items}"],
                         "inputs": [
@@ -50,7 +52,8 @@ def handle_args(args):
                         ],
                     },
                     {
-                        "type": "push",
+                        "type": "run",
+                        "onSuccess": "push",
                         "title": "Show me a dynamic list!",
                         "command": [sys.argv[0], "dynamic-list"],
                     },

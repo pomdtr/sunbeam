@@ -3,12 +3,6 @@
     "type": "list",
     "actions": [
         {
-            "type": "edit",
-            "title": "Edit Manifest",
-            "path": "./sunbeam.json",
-            "shortcut": "ctrl+e"
-        },
-        {
             "type": "reload",
             "shortcut": "ctrl+r"
         }
@@ -19,7 +13,8 @@
             "subtitle": "Demo",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
+                    "onSuccess": "push",
                     "title": "Show Demo",
                     "command": [
                         "./docs/src/examples/demo/demo.py"
@@ -32,24 +27,21 @@
             "subtitle": "File Browser",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Browse Current Dir",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/file-browser/file-browser.py"
                     ]
                 },
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Browse Root Dir",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/file-browser/file-browser.py",
                         "/"
                     ]
-                },
-                {
-                    "type": "edit",
-                    "title": "Edit Script",
-                    "path": "./docs/src/examples/file-browser/file-browser.py"
                 }
             ]
         },
@@ -58,12 +50,13 @@
             "subtitle": "File Browser",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Browse Custom Dir",
                     "command": [
                         "./docs/src/examples/file-browser/file-browser.py",
                         "${input:dir}"
                     ],
+                    "onSuccess": "push",
                     "inputs": [
                         {
                             "name": "dir",
@@ -79,15 +72,17 @@
             "subtitle": "Devdocs",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Search Docsets",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/devdocs/devdocs.sh"
                     ]
                 },
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Search Go Docs",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/devdocs/devdocs.sh",
                         "go"
@@ -100,8 +95,9 @@
             "subtitle": "TLDR",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Run",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/tldr/tldr.sh"
                     ]
@@ -113,8 +109,9 @@
             "subtitle": "Bitwarden",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Run",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/bitwarden/bitwarden.sh"
                     ]
@@ -126,8 +123,9 @@
             "subtitle": "Todo",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Run",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/todo/todo.py"
                     ]
@@ -139,8 +137,9 @@
             "subtitle": "Github",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Search",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/github/github.sh"
                     ]
@@ -152,8 +151,9 @@
             "subtitle": "Github",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "run",
                     "title": "Search",
+                    "onSuccess": "push",
                     "command": [
                         "./docs/src/examples/github/github.sh",
                         "list-prs",

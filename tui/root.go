@@ -90,46 +90,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case PushPageMsg:
-		if len(msg.Action.Inputs) > 0 {
-			formItems := make([]FormItem, len(msg.Action.Inputs))
-			for i, input := range msg.Action.Inputs {
-				item, err := NewFormItem(input)
-				if err != nil {
-					return m, func() tea.Msg {
-						return fmt.Errorf("failed to create form input: %s", err)
-					}
-				}
-
-				formItems[i] = item
-			}
-
-			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
-				return func() tea.Msg {
-					command := make([]string, len(msg.Action.Command))
-					for i, arg := range msg.Action.Command {
-						for key, value := range values {
-							arg = strings.ReplaceAll(arg, fmt.Sprintf("${input:%s}", key), value)
-						}
-						command[i] = arg
-					}
-
-					return PushPageMsg{Action: schemas.Action{
-						Command: command,
-					}}
-				}
-			})
-			m.form = form
-			form.SetSize(m.pageWidth(), m.pageHeight())
-			return m, form.Init()
-		}
-
-		m.form = nil
-
 		cmd := m.Push(NewCommandRunner(func(query string) ([]byte, error) {
-			name, args := utils.SplitCommand(msg.Action.Command)
-			cmd := exec.Command(name, args...)
-			cmd.Stdin = strings.NewReader(query)
-			return cmd.Output()
+			return os.ReadFile(msg.Action.Path)
 		}))
 
 		return m, cmd
@@ -177,7 +139,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.exitCmd = cmd
 			m.hidden = true
 			return m, tea.Quit
+		} else if msg.Action.OnSuccess == "push" {
+			return m, m.Push(NewCommandRunner(func(query string) ([]byte, error) {
+				cmd.Stdin = strings.NewReader(query)
+				return cmd.Output()
+			}))
 		}
+
 		return m, func() tea.Msg {
 			output, err := cmd.Output()
 			if err != nil {

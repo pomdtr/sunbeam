@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -61,22 +60,6 @@ func NewAction(scriptAction schemas.Action) Action {
 			scriptAction.Title = "Open"
 		}
 		msg = OpenMsg{Action: scriptAction}
-	case "edit":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Edit"
-		}
-
-		editor, ok := os.LookupEnv("EDITOR")
-		if !ok {
-			editor = "vim"
-		}
-
-		msg = RunCommandMsg{
-			Action: schemas.Action{
-				Type:    "run",
-				Command: []string{editor, scriptAction.Path},
-			},
-		}
 	case "push":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Push Page"

@@ -73,14 +73,14 @@ Copy text to the system clipboard.
 
 ### run
 
-Run a command, and display output on stdout.
+Run a command, and handle the output depending on the `onSuccess` property.
 
 ```javascript
 {
   "type": "run", // required
   "title": "Run", // required
-  "command": "printf", // required
-  "args": ["Hello World"] // optional
+  "onSuccess": "push", // optional, default: null
+  "command": ["my-command"], // required
 }
 ```
 
@@ -92,8 +92,7 @@ Push a new page to the navigation stack
 {
   "type": "push", // required
   "title": "Push", // required
-  "command": "my-command", // required
-  "args": ["list-items"] // optional
+  "path": "path/to/page.json" // required
 }
 ```
 
@@ -105,6 +104,42 @@ Reload the current page
 {
   "type": "reload", // required
   "title": "Reload" // optional, default: "Reload"
+}
+```
+
+## FormInput
+
+## textfield
+
+```javascript
+{
+  "type": "textfield", // required
+  "title": "Username", // required
+  "name": "username", // required
+}
+```
+
+## textarea
+
+```javascript
+{
+  "type": "textarea", // required
+  "title": "Description", // required
+  "name": "description", // required
+}
+```
+
+## dropdown
+
+```javascript
+{
+  "type": "dropdown", // required
+  "title": "Language", // required
+  "name": "language", // required
+  "options": [
+    {"title": "English", "value": "en"},
+    {"title": "French", "value": "fr"}
+  ] // required
 }
 ```
 
