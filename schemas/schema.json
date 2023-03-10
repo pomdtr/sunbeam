@@ -57,12 +57,6 @@
                             "$ref": "#/$defs/action"
                         }
                     },
-                    "inputs": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/$defs/input"
-                        }
-                    },
                     "items": {
                         "type": "array",
                         "items": {
@@ -98,12 +92,6 @@
                     },
                     "type": {
                         "const": "detail"
-                    },
-                    "inputs": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/$defs/input"
-                        }
                     },
                     "actions": {
                         "type": "array",
@@ -194,12 +182,6 @@
                             "title": {
                                 "type": "string"
                             },
-                            "inputs": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/$defs/input"
-                                }
-                            },
                             "shortcut": {
                                 "type": "string"
                             },
@@ -232,12 +214,6 @@
                             },
                             "title": {
                                 "type": "string"
-                            },
-                            "inputs": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/$defs/input"
-                                }
                             },
                             "shortcut": {
                                 "type": "string"
