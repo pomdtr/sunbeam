@@ -23,8 +23,16 @@ func NewRunCmd() *cobra.Command {
 			generator := func(s string) ([]byte, error) {
 				name, args := utils.SplitCommand(args)
 				command := exec.Command(name, args...)
+				output, err := command.Output()
+				if err != nil {
+					if exitError, ok := err.(*exec.ExitError); ok {
+						return nil, fmt.Errorf("Script exited with code %d: %s", exitError.ExitCode(), string(exitError.Stderr))
+					}
 
-				return command.Output()
+					return nil, err
+				}
+
+				return output, nil
 			}
 
 			if check, _ := cmd.Flags().GetBool("check"); check {

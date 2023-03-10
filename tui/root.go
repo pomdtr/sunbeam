@@ -133,20 +133,30 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.form = nil
 
 		name, args := utils.SplitCommand(msg.Action.Command)
-		cmd := exec.Command(name, args...)
 
 		if msg.Action.OnSuccess == "" {
-			m.exitCmd = cmd
+			m.exitCmd = exec.Command(name, args...)
 			m.hidden = true
 			return m, tea.Quit
-		} else if msg.Action.OnSuccess == "push" {
+		}
+		if msg.Action.OnSuccess == "push" {
 			return m, m.Push(NewCommandRunner(func(query string) ([]byte, error) {
+				cmd := exec.Command(name, args...)
 				cmd.Stdin = strings.NewReader(query)
-				return cmd.Output()
+				output, err := cmd.Output()
+				if err != nil {
+					if err, ok := err.(*exec.ExitError); ok {
+						return nil, fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
+					}
+					return nil, err
+				}
+
+				return output, nil
 			}))
 		}
 
 		return m, func() tea.Msg {
+			cmd := exec.Command(name, args...)
 			output, err := cmd.Output()
 			if err != nil {
 				return fmt.Errorf("failed to run command: %s", err)
