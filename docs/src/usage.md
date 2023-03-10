@@ -150,7 +150,7 @@ This schema describe the sunbeam event loop. Each time a `push` action is trigge
 Let's update our file browser to support navigation.
 
 ```python
-{{#include ./code/file-browser.py}}
+{{#include ./examples/file-browser/file-browser.py}}
 ```
 
 ### What's next?
