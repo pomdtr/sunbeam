@@ -313,6 +313,11 @@ func (m *Model) Draw() (err error) {
 	// Background detection before we start the program
 	lipgloss.SetHasDarkBackground(lipgloss.HasDarkBackground())
 
+	err = os.Setenv("SUNBEAM_RUNNER", "true")
+	if err != nil {
+		return fmt.Errorf("failed to set SUNBEAM_RUNNER env var: %s", err)
+	}
+
 	var p *tea.Program
 	if m.options.MaxHeight == 0 {
 		p = tea.NewProgram(m, tea.WithAltScreen())
