@@ -1,5 +1,13 @@
 # CLI
 
+## sunbeam
+
+The `sunbeam` command is the main entry point to the sunbeam cli.
+
+If a `sunbeam.json` file is present in the current directory, it will be used as the default page.
+
+Otherwise, the default page will be read from the `$XDG_CONFIG_DIR/sunbeam/sunbeam.json` file. The file will be created if it doesn't exist.
+
 ## sunbeam run
 
 Run the given command, and parse the output as a sunbeam page.
