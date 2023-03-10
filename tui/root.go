@@ -9,7 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -90,7 +90,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	case PushPageMsg:
 		if hasMissingFields(msg.Fields) {
-			form := NewForm(msg.Fields, func(fields []scripts.Field) tea.Msg {
+			form := NewForm(msg.Fields, func(fields []schemas.Field) tea.Msg {
 				return PushPageMsg{Fields: fields}
 			})
 			m.form = form
@@ -114,7 +114,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case RunCommandMsg:
 		if hasMissingFields(msg.Fields) {
-			form := NewForm(msg.Fields, func(fields []scripts.Field) tea.Msg {
+			form := NewForm(msg.Fields, func(fields []schemas.Field) tea.Msg {
 				return RunCommandMsg{Fields: fields, OnSuccess: msg.OnSuccess}
 			})
 			m.form = form

@@ -141,7 +141,75 @@
             }
         },
         "action": {
-            "type": "object"
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "copy",
+                        "open",
+                        "reload",
+                        "edit",
+                        "run",
+                        "push"
+                    ]
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "copy"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "type",
+                            "text"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "const": "copy"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "shortcut": {
+                                "type": "string"
+                            },
+                            "text": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "input": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "textfield",
+                        "password",
+                        "textarea",
+                        "dropdown"
+                    ]
+                }
+            }
         },
         "preview": {
             "oneOf": [

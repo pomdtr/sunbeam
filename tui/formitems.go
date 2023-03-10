@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -26,9 +26,9 @@ type FormInput interface {
 	View() string
 }
 
-func NewFormInput(param *scripts.FormInput) FormInput {
+func NewFormInput(param *schemas.FormInput) FormInput {
 	switch param.Type {
-	case "textfield", "file", "directory":
+	case "textfield":
 		return NewTextInput(param)
 	case "password":
 		ti := NewTextInput(param)
@@ -52,7 +52,7 @@ func (ta *TextArea) Title() string {
 	return ta.title
 }
 
-func NewTextArea(formItem *scripts.FormInput) *TextArea {
+func NewTextArea(formItem *schemas.FormInput) *TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
 	ta.SetValue(formItem.Default)
@@ -90,7 +90,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem *scripts.FormInput) *TextInput {
+func NewTextInput(formItem *schemas.FormInput) *TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.SetValue(formItem.Default)
@@ -166,7 +166,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem scripts.FormInput) *DropDown {
+func NewDropDown(formItem schemas.FormInput) *DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 

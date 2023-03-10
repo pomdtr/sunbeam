@@ -10,7 +10,7 @@ Use the `bw login` command to generate a session token.
 ## Usage
 
 ```bash
-sunbeam ./bitwarden.sh
+sunbeam run ./bitwarden.sh
 ```
 
 ## Code

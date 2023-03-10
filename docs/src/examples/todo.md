@@ -3,7 +3,7 @@
 ## Usage
 
 ```bash
-sunbeam todo.py
+sunbeam run todo.py
 ```
 
 ## Code

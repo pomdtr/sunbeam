@@ -7,8 +7,8 @@ You will need to have [curl](https://curl.haxx.se/) and [jq](https://stedolan.gi
 ## Usage
 
 ```bash
-sunbeam ./devdocs.sh # List all docsets
-sunbeam ./devdocs.sh <docset-slug> # List all entries for a docset
+sunbeam run ./devdocs.sh # List all docsets
+sunbeam run ./devdocs.sh <docset-slug> # List all entries for a docset
 ```
 
 ## Code

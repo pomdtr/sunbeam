@@ -7,11 +7,11 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/schemas"
 )
 
 type FormItem struct {
-	Field scripts.Field
+	Field schemas.Field
 	input FormInput
 }
 
@@ -28,7 +28,7 @@ type Form struct {
 	focusIndex   int
 }
 
-func hasMissingFields(fields []scripts.Field) bool {
+func hasMissingFields(fields []schemas.Field) bool {
 	for _, field := range fields {
 		if field.Value == "" {
 			return true
@@ -38,7 +38,7 @@ func hasMissingFields(fields []scripts.Field) bool {
 	return false
 }
 
-func NewForm(fields []scripts.Field, submitFunc func(fields []scripts.Field) tea.Msg) *Form {
+func NewForm(fields []schemas.Field, submitFunc func(fields []schemas.Field) tea.Msg) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter("Sunbeam")
@@ -64,7 +64,7 @@ func NewForm(fields []scripts.Field, submitFunc func(fields []scripts.Field) tea
 	return &Form{
 		header: header,
 		submitCmd: func() tea.Msg {
-			fields := make([]scripts.Field, 0)
+			fields := make([]schemas.Field, 0)
 			for _, item := range items {
 				if item.input != nil {
 					item.Field.Value = item.input.Value()

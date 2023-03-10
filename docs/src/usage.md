@@ -47,7 +47,7 @@ The simplest sunbeam script you can write is a json file, that describe a static
 }
 ```
 
-Create a file named `sunbeam.json` and run `sunbeam` to show the list.
+Create a file named `sunbeam.json` and run `sunbeam run sunbeam.json` or just `sunbeam` to show the list.
 
 ### Writing a dynamic list
 
@@ -85,7 +85,7 @@ items = [
 print(json.dumps({"type": "list", "items": items}))
 ```
 
-Save this script as `file-browser.py`, make it executable using `chmod +x ./file-browser.py` and run `sunbeam ./file-browser.py` to show the list.
+Save this script as `file-browser.py`, make it executable using `chmod +x ./file-browser.py` and run `sunbeam run ./file-browser.py` to show the list.
 
 ### Adding Arguments
 
@@ -134,7 +134,7 @@ items = [
 print(json.dumps({"type": "list", "items": items}))
 ```
 
-You can now run `sunbeam file-browser.py /tmp` to show the list of files in the `/tmp` directory, or `sunbeam -- file-browser.py --show-hidden` to show hidden files in the current directory.
+You can now run `sunbeam run file-browser.py /tmp` to show the list of files in the `/tmp` directory, or `sunbeam run -- file-browser.py --show-hidden` to show hidden files in the current directory.
 
 Notice that we used the `--` argument separator to pass arguments to the script. This is required because sunbeam also accepts flags, and we don't want it to interpret them.
 

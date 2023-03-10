@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -26,7 +26,7 @@ type ListItem struct {
 	Actions     []Action
 }
 
-func ParseScriptItem(scriptItem scripts.ListItem) ListItem {
+func ParseScriptItem(scriptItem schemas.ListItem) ListItem {
 	actions := make([]Action, len(scriptItem.Actions))
 	for i, scriptAction := range scriptItem.Actions {
 		actions[i] = NewAction(scriptAction)

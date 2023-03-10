@@ -7,7 +7,7 @@ You will need to have the [Brew CLI](https://brew.sh/) and [jq](https://stedolan
 ## Usage
 
 ```bash
-sunbeam ./brew.sh
+sunbeam run ./brew.sh
 ```
 
 ## Code

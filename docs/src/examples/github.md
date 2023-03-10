@@ -9,8 +9,8 @@ You should be authenticated with GitHub using the `gh auth login` command before
 ## Usage
 
 ```bash
-sunbeam ./github.sh # List all repositories
-sunbeam ./github.sh list-prs <repo> # List all pull requests for a repository
+sunbeam run ./github.sh # List all repositories
+sunbeam run ./github.sh list-prs <repo> # List all pull requests for a repository
 ```
 
 ## Code

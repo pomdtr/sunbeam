@@ -8,7 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -99,7 +99,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case CommandOutput:
 		c.SetIsloading(false)
-		var res scripts.Response
+		var res schemas.Response
 		var v any
 		if err := json.Unmarshal(msg, &v); err != nil {
 			return c, func() tea.Msg {
@@ -107,7 +107,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		}
 
-		if err := scripts.Schema.Validate(v); err != nil {
+		if err := schemas.Schema.Validate(v); err != nil {
 			return c, func() tea.Msg {
 				return err
 			}

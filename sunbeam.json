@@ -7,10 +7,6 @@
             "title": "Edit Manifest",
             "path": "./sunbeam.json",
             "shortcut": "ctrl+e"
-        },
-        {
-            "type": "reload",
-            "shortcut": "ctrl+r"
         }
     ],
     "items": [

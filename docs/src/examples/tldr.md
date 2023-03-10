@@ -7,7 +7,7 @@ You will need to have [tealdeer](https://github.com/dbrgn/tealdeer) and [jq](htt
 ## Usage
 
 ```bash
-sunbeam ./tldr.sh
+sunbeam run ./tldr.sh
 ```
 
 ## Code

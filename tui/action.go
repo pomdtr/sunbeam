@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/scripts"
+	"github.com/pomdtr/sunbeam/schemas"
 )
 
 type Action struct {
@@ -28,15 +28,15 @@ type ReloadPageMsg struct {
 }
 
 type PushPageMsg struct {
-	Fields []scripts.Field
+	Fields []schemas.Field
 }
 
 type RunCommandMsg struct {
-	Fields    []scripts.Field
+	Fields    []schemas.Field
 	OnSuccess string
 }
 
-func NewAction(scriptAction scripts.Action) Action {
+func NewAction(scriptAction schemas.Action) Action {
 	var cmd tea.Cmd
 	switch scriptAction.Type {
 	case "copy":
@@ -78,7 +78,7 @@ func NewAction(scriptAction scripts.Action) Action {
 				editor = "vim"
 			}
 			return RunCommandMsg{
-				Fields: []scripts.Field{
+				Fields: []schemas.Field{
 					{Value: editor},
 					{Value: scriptAction.Path},
 				},

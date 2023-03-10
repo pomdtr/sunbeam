@@ -1,4 +1,4 @@
-package scripts
+package schemas
 
 import (
 	"encoding/json"
@@ -11,8 +11,8 @@ import (
 	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 )
 
-//go:embed page.json
-var pageSchema string
+//go:embed schema.json
+var schemaString string
 
 var Schema *jsonschema.Schema
 
@@ -21,7 +21,7 @@ func init() {
 
 	compiler := jsonschema.NewCompiler()
 
-	if err = compiler.AddResource("https://pomdtr.github.io/sunbeam/schemas/page.json", strings.NewReader(pageSchema)); err != nil {
+	if err = compiler.AddResource("https://pomdtr.github.io/sunbeam/schemas/page.json", strings.NewReader(schemaString)); err != nil {
 		panic(err)
 	}
 	Schema, err = compiler.Compile("https://pomdtr.github.io/sunbeam/schemas/page.json")

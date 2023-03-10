@@ -2,4 +2,7 @@
     "markdownlint.ignore": [
         "docs/src/SUMMARY.md"
     ],
+    "search.exclude": {
+        "docs/book": true
+    }
 }
