@@ -7,9 +7,26 @@
             "title": "Edit Manifest",
             "path": "./sunbeam.json",
             "shortcut": "ctrl+e"
+        },
+        {
+            "type": "reload",
+            "shortcut": "ctrl+r"
         }
     ],
     "items": [
+        {
+            "title": "Show Demo",
+            "subtitle": "Demo",
+            "actions": [
+                {
+                    "type": "push",
+                    "title": "Show Demo",
+                    "command": [
+                        "./docs/src/examples/demo/demo.py"
+                    ]
+                }
+            ]
+        },
         {
             "title": "Browse Current Dir",
             "subtitle": "File Browser",

@@ -125,10 +125,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.form = nil
 
-		cmd := m.Push(NewCommandRunner(func(s string) ([]byte, error) {
+		cmd := m.Push(NewCommandRunner(func(query string) ([]byte, error) {
 			name, args := utils.SplitCommand(msg.Action.Command)
 			cmd := exec.Command(name, args...)
-			cmd.Stdin = os.Stdin
+			cmd.Stdin = strings.NewReader(query)
 			return cmd.Output()
 		}))
 

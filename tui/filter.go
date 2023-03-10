@@ -47,6 +47,7 @@ func (f Filter) Selection() FilterItem {
 
 func (f *Filter) SetItems(items []FilterItem) {
 	f.items = items
+	f.filtered = items
 }
 
 func (f *Filter) FilterItems(query string) {

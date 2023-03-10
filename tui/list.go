@@ -173,7 +173,9 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 	}
 
 	c.filter.SetItems(filterItems)
-	c.filter.FilterItems(c.Query())
+	if !c.GenerateItems {
+		c.filter.FilterItems(c.Query())
+	}
 
 	selection := c.updateSelection(c.filter)
 

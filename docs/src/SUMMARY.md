@@ -5,6 +5,7 @@
 - [Installation](./installation.md)
 - [Usage](./usage.md)
 - [Examples](./examples/index.md)
+  - [Demo (Python)](./examples/demo/demo.md)
   - [File Browser (Python)](./examples/file-browser/file-browser.md)
   - [Todo List (Python)](./examples/todo/todo.md)
   - [Google Search (Node / ZX)](./examples/google-search/google-search.md)
