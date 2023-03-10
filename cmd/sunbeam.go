@@ -83,6 +83,7 @@ You will need to provide a compatible script as the first argument to you use su
 	rootCmd.PersistentFlags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "maximum height of the window")
 
 	rootCmd.AddCommand(NewRunCmd())
+	rootCmd.AddCommand(NewReadCmd())
 
 	return rootCmd.Execute()
 }

@@ -1,6 +1,8 @@
 package schemas
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -27,6 +29,15 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func Validate(bytes []byte) error {
+	var v any
+	if err := json.Unmarshal(bytes, &v); err != nil {
+		return fmt.Errorf("invalid json: %w", err)
+	}
+
+	return Schema.Validate(v)
 }
 
 type Response struct {

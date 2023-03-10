@@ -2,44 +2,52 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
-	"os/exec"
 
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/tui"
-	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
 
-func NewRunCmd() *cobra.Command {
+func NewReadCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "run <script>",
-		Short: "Run a script",
-		Args:  cobra.MinimumNArgs(1),
+		Use:   "read",
+		Short: "Read payload from stdin or file",
 		Run: func(cmd *cobra.Command, args []string) {
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")
+			var generator tui.Generator
 
-			generator := func(s string) ([]byte, error) {
-				name, args := utils.SplitCommand(args)
-				command := exec.Command(name, args...)
+			if args[0] == "-" {
+				bytes, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					fmt.Println("An error occured while reading script:", err)
+					os.Exit(1)
+				}
 
-				return command.Output()
+				generator = func(string) ([]byte, error) {
+					return bytes, nil
+				}
+			} else {
+				generator = func(s string) ([]byte, error) {
+					return os.ReadFile(args[0])
+				}
 			}
 
 			if check, _ := cmd.Flags().GetBool("check"); check {
 				page, err := generator("")
 				if err != nil {
-					fmt.Println("An error occured while running the script:", err)
+					fmt.Println("An error occured while reading the file:", err)
 					os.Exit(1)
 				}
 
 				if err := schemas.Validate(page); err != nil {
-					fmt.Println("Script Output is not valid:", err)
+					fmt.Println("File is not valid:", err)
 					os.Exit(1)
 				}
 
-				fmt.Println("Script Output is valid!")
+				fmt.Println("File is valid!")
 				return
 			}
 
@@ -48,6 +56,7 @@ func NewRunCmd() *cobra.Command {
 				Padding:   padding,
 				MaxHeight: maxHeight,
 			})
+
 			model.Draw()
 		},
 	}

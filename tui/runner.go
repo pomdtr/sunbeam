@@ -2,6 +2,7 @@ package tui
 
 import (
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -99,20 +100,13 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case CommandOutput:
 		c.SetIsloading(false)
+		if err := schemas.Validate(msg); err != nil {
+			return c, func() tea.Msg {
+				return fmt.Errorf("invalid response: %s", err)
+			}
+		}
+
 		var res schemas.Response
-		var v any
-		if err := json.Unmarshal(msg, &v); err != nil {
-			return c, func() tea.Msg {
-				return err
-			}
-		}
-
-		if err := schemas.Schema.Validate(v); err != nil {
-			return c, func() tea.Msg {
-				return err
-			}
-		}
-
 		err := json.Unmarshal(msg, &res)
 		if err != nil {
 			return c, func() tea.Msg {

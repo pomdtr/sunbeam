@@ -18,7 +18,8 @@ sunbeam --height 20 --padding 2 ./github.sh
 To validate the output of a script, you can use the `--check` command:
 
 ```bash
-sunbeam --check ./github.sh
+sunbeam run --check ./github.sh
+sunbeam read --check sunbeam.json
 ```
 
-The interactive UI will not be shown, but the output will be validated and an error will be thrown if the output is not valid.
+The interactive UI will not be shown, but the output will be validated. If the output is invalid, the command will exit with a non-zero status code.

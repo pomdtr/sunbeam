@@ -47,7 +47,7 @@ The simplest sunbeam script you can write is a json file, that describe a static
 }
 ```
 
-Create a file named `sunbeam.json` and run `sunbeam run sunbeam.json` or just `sunbeam` to show the list.
+Create a file named `sunbeam.json` and run `sunbeam read sunbeam.json` to show the list.
 
 ### Writing a dynamic list
 
