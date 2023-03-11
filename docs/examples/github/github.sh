@@ -6,7 +6,7 @@ COMMAND="${1:-list-repos}"
 
 if [[ $COMMAND == "list-repos" ]]; then
     # shellcheck disable=SC2016
-    gh api "/user/repos?sort=updated" | sunbeam query --arg=command "$0" '.[] |
+    gh api "/user/repos?sort=updated" | sunbeam query --arg "command=$COMMAND" '.[] |
         {
             title: .name,
             subtitle: .description,
@@ -20,7 +20,8 @@ if [[ $COMMAND == "list-repos" ]]; then
                     onSuccess: "push",
                     title: "List Pull Requests",
                     shortcut: "ctrl+p",
-                    command:[$command, "list-prs", .full_name]
+                    command: $command,
+                    args: ["list-prs", .full_name]
                 }
             ]
         }

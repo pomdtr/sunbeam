@@ -52,7 +52,7 @@ func NewAction(scriptAction schemas.Action, dir string) Action {
 		}
 		msg = ReloadPageMsg{Action: scriptAction}
 	case "run":
-		if scriptAction.Title != "" {
+		if scriptAction.Title == "" {
 			switch scriptAction.OnSuccess {
 			case "open":
 				scriptAction.Title = "Run & Open"
