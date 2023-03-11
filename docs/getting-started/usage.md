@@ -63,9 +63,9 @@ Notice that we used the `--` argument separator to pass arguments to the script.
 ### Adding Navigation
 
 This is nice, but we can do better. A full-blown file browser would allow us to navigate through directories.
-In sunbeam, navigate to a new page using the `push` action.
+In sunbeam, we can push a new page by using a `run` action associated with the`onSuccess` event.
 
-This schema describe the sunbeam event loop. Each time a `push` action is triggered, a new command is run, and the output is pushed to the navigation stack.
+This schema describe the sunbeam event loop.
 
 ![Sunbeam Event Loop](./event-loop.excalidraw.png)
 
