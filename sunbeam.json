@@ -13,7 +13,7 @@
             "actions": [
                 {
                     "type": "push",
-                    "page": "./docs/src/examples/sunbeam.json"
+                    "page": "./docs/examples/sunbeam.json"
                 }
             ]
         },
@@ -22,7 +22,7 @@
             "actions": [
                 {
                     "type": "push",
-                    "page": "./docs/src/getting-started/sunbeam.json"
+                    "page": "./docs/getting-started/sunbeam.json"
                 }
             ]
         }
