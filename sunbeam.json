@@ -1,12 +1,6 @@
 {
     "$schema": "./schemas/schema.json",
     "type": "list",
-    "actions": [
-        {
-            "type": "reload",
-            "shortcut": "ctrl+r"
-        }
-    ],
     "items": [
         {
             "title": "Show Examples",
