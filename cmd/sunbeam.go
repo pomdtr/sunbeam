@@ -13,9 +13,6 @@ import (
 	"github.com/pomdtr/sunbeam/tui"
 )
 
-//go:embed sunbeam.json
-var defaultConfig []byte
-
 func Execute(version string) error {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -46,7 +43,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				}
 
 				return bytes, nil
-			})
+			}, path.Dir(manifestPath))
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,
@@ -57,9 +54,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 	rootCmd.PersistentFlags().IntP("padding", "p", lookupInt("SUNBEAM_PADDING", 0), "padding around the window")
 	rootCmd.PersistentFlags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "maximum height of the window")
+	rootCmd.PersistentFlags().StringP("directory", "C", "", "cd to dir before starting sunbeam")
 
 	rootCmd.AddCommand(NewRunCmd())
-	rootCmd.AddCommand(NewReadCmd())
+	rootCmd.AddCommand(NewPushCmd())
 	rootCmd.AddCommand(NewQueryCmd())
 
 	return rootCmd.Execute()

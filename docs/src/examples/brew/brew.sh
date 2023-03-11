@@ -13,5 +13,5 @@ xargs brew search | sunbeam query -R '. | {
     type: "list",
     generateItems: true,
     showPreview: true,
-    items: .
+    items: (. // [])
 }'

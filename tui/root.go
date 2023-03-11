@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 
 	"github.com/atotto/clipboard"
@@ -90,9 +91,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case PushPageMsg:
-		cmd := m.Push(NewCommandRunner(func(query string) ([]byte, error) {
-			return os.ReadFile(msg.Action.Path)
-		}))
+		page := msg.Action.Page
+		if msg.Action.Dir != "" {
+			page = path.Join(msg.Action.Dir, msg.Action.Page)
+		}
+		runner := NewCommandRunner(func(query string) ([]byte, error) {
+			return os.ReadFile(page)
+		}, path.Dir(page))
+		cmd := m.Push(runner)
 
 		return m, cmd
 	case RunCommandMsg:
@@ -110,17 +116,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
-				command := make([]string, len(msg.Action.Command))
-				for i, arg := range msg.Action.Command {
-					for key, value := range values {
+				for key, value := range values {
+					msg.Action.Command = strings.ReplaceAll(msg.Action.Command, fmt.Sprintf("${input:%s}", key), value)
+					for i, arg := range msg.Action.Args {
 						arg = strings.ReplaceAll(arg, fmt.Sprintf("${input:%s}", key), value)
+						msg.Action.Args[i] = arg
 					}
-					command[i] = arg
 				}
 
 				return func() tea.Msg {
 					return RunCommandMsg{Action: schemas.Action{
-						Command:   command,
+						Command:   msg.Action.Command,
+						Args:      msg.Action.Args,
 						OnSuccess: msg.Action.OnSuccess,
 					}}
 				}
@@ -132,24 +139,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.form = nil
 
-		args := msg.Action.Command
 		homeDir, _ := os.UserHomeDir()
-		for i, arg := range args {
+		msg.Action.Command = strings.ReplaceAll(msg.Action.Command, "${userHome}", homeDir)
+		for i, arg := range msg.Action.Args {
 			arg = strings.ReplaceAll(arg, "${userHome}", homeDir)
-			args[i] = arg
+			msg.Action.Args[i] = arg
 		}
 
-		name, args := utils.SplitCommand(msg.Action.Command)
-
 		if msg.Action.OnSuccess == "" {
-			m.exitCmd = exec.Command(name, args...)
+			m.exitCmd = exec.Command(msg.Action.Command, msg.Action.Args...)
 			m.hidden = true
 			return m, tea.Quit
 		}
 		if msg.Action.OnSuccess == "push" {
 			return m, m.Push(NewCommandRunner(func(query string) ([]byte, error) {
-				cmd := exec.Command(name, args...)
+				cmd := exec.Command(msg.Action.Command, msg.Action.Args...)
 				cmd.Stdin = strings.NewReader(query)
+				cmd.Dir = msg.Action.Dir
 				output, err := cmd.Output()
 				if err != nil {
 					if err, ok := err.(*exec.ExitError); ok {
@@ -159,11 +165,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				return output, nil
-			}))
+			}, msg.Action.Dir))
 		}
 
 		return m, func() tea.Msg {
-			cmd := exec.Command(name, args...)
+			cmd := exec.Command(msg.Action.Command, msg.Action.Args...)
+			cmd.Dir = msg.Action.Dir
 			output, err := cmd.Output()
 			if err != nil {
 				return fmt.Errorf("failed to run command: %s", err)

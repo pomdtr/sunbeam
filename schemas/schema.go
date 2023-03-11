@@ -62,7 +62,8 @@ type List struct {
 type Preview struct {
 	Text     string   `json:"text"`
 	Language string   `json:"language"`
-	Command  []string `json:"command"`
+	Command  string   `json:"command"`
+	Args     []string `json:"args"`
 }
 
 type ListItem struct {
@@ -93,7 +94,7 @@ type Action struct {
 	Inputs []FormInput `json:"inputs"`
 
 	// edit
-	Path string `json:"path"`
+	Page string `json:"page"`
 
 	// open
 	Target string `json:"target"`
@@ -102,7 +103,9 @@ type Action struct {
 	Text string `json:"text"`
 
 	// run / push
-	Command []string `json:"command"`
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
+	Dir     string
 
 	// run
 	OnSuccess string `json:"onSuccess"`

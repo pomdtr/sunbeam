@@ -3,7 +3,7 @@
 # User Guide
 
 - [Installation](./installation.md)
-- [Usage](./usage.md)
+- [Usage](./getting-started/usage.md)
 - [Examples](./examples/index.md)
   - [Demo (Python)](./examples/demo/demo.md)
   - [File Browser (Python)](./examples/file-browser/file-browser.md)

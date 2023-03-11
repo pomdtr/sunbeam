@@ -7,21 +7,20 @@ import (
 
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/tui"
-	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
 
 func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run <script>",
-		Short: "Run a script",
+		Short: "Run a script and push it's output.",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")
 
 			generator := func(s string) ([]byte, error) {
-				name, args := utils.SplitCommand(args)
+				name, args := SplitCommand(args)
 				command := exec.Command(name, args...)
 				output, err := command.Output()
 				if err != nil {
@@ -51,7 +50,12 @@ func NewRunCmd() *cobra.Command {
 				return
 			}
 
-			runner := tui.NewCommandRunner(generator)
+			cwd, err := os.Getwd()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "could not get current working directory:", err)
+				os.Exit(1)
+			}
+			runner := tui.NewCommandRunner(generator, cwd)
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,
@@ -63,4 +67,17 @@ func NewRunCmd() *cobra.Command {
 	cmd.Flags().Bool("check", false, "Check the script output format")
 
 	return cmd
+}
+
+func SplitCommand(fields []string) (string, []string) {
+	if len(fields) == 0 {
+		return "", nil
+	}
+
+	if len(fields) == 1 {
+		return fields[0], nil
+	}
+
+	return fields[0], fields[1:]
+
 }

@@ -1,0 +1,14 @@
+{
+    "title": "My first sunbeam script",
+    "type": "list",
+    "items": [
+        {
+            "title": "Item 1",
+            "subtitle": "Subtitle 1"
+        },
+        {
+            "title": "Item 2",
+            "subtitle": "Subtitle 2"
+        }
+    ]
+}

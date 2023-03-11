@@ -45,7 +45,8 @@ def handle(args: argparse.Namespace):
                         {
                             "type": "run",
                             "title": "Add Item",
-                            "command": [sys.argv[0], "add", "${input:title}"],
+                            "command": sys.argv[0],
+                            "args": ["add", "${input:title}"],
                             "inputs": [
                                 {
                                     "name": "title",
@@ -66,8 +67,8 @@ def handle(args: argparse.Namespace):
                                 {
                                     "type": "run",
                                     "title": "Toggle Completion",
-                                    "command": [
-                                        sys.argv[0],
+                                    "command": sys.argv[0],
+                                    "args": [
                                         "toggle",
                                         key,
                                     ],
@@ -78,8 +79,8 @@ def handle(args: argparse.Namespace):
                                     "title": "Edit Title",
                                     "shortcut": "ctrl+e",
                                     "onSuccess": "reload",
-                                    "command": [
-                                        sys.argv[0],
+                                    "command": sys.argv[0],
+                                    "args": [
                                         "edit-title",
                                         key,
                                         "${input:title}",
@@ -97,8 +98,8 @@ def handle(args: argparse.Namespace):
                                     "title": "Delete",
                                     "shortcut": "ctrl+d",
                                     "onSuccess": "reload",
-                                    "command": [
-                                        sys.argv[0],
+                                    "command": sys.argv[0],
+                                    "args": [
                                         "delete",
                                         key,
                                     ],

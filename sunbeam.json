@@ -9,156 +9,20 @@
     ],
     "items": [
         {
-            "title": "Show Demo",
-            "subtitle": "Demo",
+            "title": "Show Examples",
             "actions": [
                 {
-                    "type": "run",
-                    "onSuccess": "push",
-                    "title": "Show Demo",
-                    "command": [
-                        "./docs/src/examples/demo/demo.py"
-                    ]
+                    "type": "push",
+                    "page": "./docs/src/examples/sunbeam.json"
                 }
             ]
         },
         {
-            "title": "Browse Current Dir",
-            "subtitle": "File Browser",
+            "title": "Show Getting Started",
             "actions": [
                 {
-                    "type": "run",
-                    "title": "Browse Current Dir",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/file-browser/file-browser.py"
-                    ]
-                },
-                {
-                    "type": "run",
-                    "title": "Browse Root Dir",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/file-browser/file-browser.py",
-                        "/"
-                    ]
-                }
-            ]
-        },
-        {
-            "title": "Browse Custom Dir",
-            "subtitle": "File Browser",
-            "actions": [
-                {
-                    "type": "run",
-                    "title": "Browse Custom Dir",
-                    "command": [
-                        "./docs/src/examples/file-browser/file-browser.py",
-                        "${input:dir}"
-                    ],
-                    "onSuccess": "push",
-                    "inputs": [
-                        {
-                            "name": "dir",
-                            "title": "Directory",
-                            "type": "textfield"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "title": "Search Devdocs",
-            "subtitle": "Devdocs",
-            "actions": [
-                {
-                    "type": "run",
-                    "title": "Search Docsets",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/devdocs/devdocs.sh"
-                    ]
-                },
-                {
-                    "type": "run",
-                    "title": "Search Go Docs",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/devdocs/devdocs.sh",
-                        "go"
-                    ]
-                }
-            ]
-        },
-        {
-            "title": "Search TLDR Pages",
-            "subtitle": "TLDR",
-            "actions": [
-                {
-                    "type": "run",
-                    "title": "Run",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/tldr/tldr.sh"
-                    ]
-                }
-            ]
-        },
-        {
-            "title": "Search Bitwarden Items",
-            "subtitle": "Bitwarden",
-            "actions": [
-                {
-                    "type": "run",
-                    "title": "Run",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/bitwarden/bitwarden.sh"
-                    ]
-                }
-            ]
-        },
-        {
-            "title": "List Todos",
-            "subtitle": "Todo",
-            "actions": [
-                {
-                    "type": "run",
-                    "title": "Run",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/todo/todo.py"
-                    ]
-                }
-            ]
-        },
-        {
-            "title": "Search Repositories",
-            "subtitle": "Github",
-            "actions": [
-                {
-                    "type": "run",
-                    "title": "Search",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/github/github.sh"
-                    ]
-                }
-            ]
-        },
-        {
-            "title": "Search Pull Requests",
-            "subtitle": "Github",
-            "actions": [
-                {
-                    "type": "run",
-                    "title": "Search",
-                    "onSuccess": "push",
-                    "command": [
-                        "./docs/src/examples/github/github.sh",
-                        "list-prs",
-                        "pomdtr/excalidraw"
-                    ]
+                    "type": "push",
+                    "page": "./docs/src/getting-started/sunbeam.json"
                 }
             ]
         }

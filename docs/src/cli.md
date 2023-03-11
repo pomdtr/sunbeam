@@ -17,7 +17,7 @@ sunbeam run ./tldr.sh
 sunbeam run -- ./file-browser.py --show-hidden
 ```
 
-## sunbeam read
+## sunbeam push
 
 Read the given file, and parse the output as a sunbeam page.
 
@@ -26,7 +26,7 @@ Accept a `--check` flag to non-interactively check if the file is a valid sunbea
 ### Examples
 
 ```bash
-sunbeam read page.json
+sunbeam push page.json
 ./file-browser.py --show-hidden | sunbeam read -
 ```
 

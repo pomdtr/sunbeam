@@ -26,10 +26,10 @@ type ListItem struct {
 	Actions     []Action
 }
 
-func ParseScriptItem(scriptItem schemas.ListItem) ListItem {
+func ParseScriptItem(scriptItem schemas.ListItem, dir string) ListItem {
 	actions := make([]Action, len(scriptItem.Actions))
 	for i, scriptAction := range scriptItem.Actions {
-		actions[i] = NewAction(scriptAction)
+		actions[i] = NewAction(scriptAction, dir)
 	}
 
 	return ListItem{

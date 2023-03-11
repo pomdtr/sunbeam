@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/tui"
 	"github.com/spf13/cobra"
 )
 
-func NewReadCmd() *cobra.Command {
+func NewPushCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "read",
-		Short: "Read payload from stdin or file",
+		Use:   "push <page>",
+		Short: "push page from stdin or file",
 		Run: func(cmd *cobra.Command, args []string) {
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")
 			var generator tui.Generator
+			var dir string
 
 			if args[0] == "-" {
 				bytes, err := io.ReadAll(os.Stdin)
@@ -33,6 +35,7 @@ func NewReadCmd() *cobra.Command {
 				generator = func(s string) ([]byte, error) {
 					return os.ReadFile(args[0])
 				}
+				dir = path.Dir(args[0])
 			}
 
 			if check, _ := cmd.Flags().GetBool("check"); check {
@@ -51,7 +54,7 @@ func NewReadCmd() *cobra.Command {
 				return
 			}
 
-			runner := tui.NewCommandRunner(generator)
+			runner := tui.NewCommandRunner(generator, dir)
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,

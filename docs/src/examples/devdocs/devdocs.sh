@@ -28,7 +28,8 @@ curl https://devdocs.io/docs/docs.json | sunbeam query --arg command="$0" '.[] |
           type: "run",
           "onSuccess": "push",
           title: "Browse \(.release // "latest") entries",
-          command: [$command, .slug],
+          command: $command,
+          args: [.slug],
       }
     ]
   }

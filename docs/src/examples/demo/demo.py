@@ -47,13 +47,15 @@ if not args.command:
                     "type": "run",
                     "onSuccess": "push",
                     "title": "Tell me more about you!",
-                    "command": [sys.argv[0], "help"],
+                    "command": sys.argv[0],
+                    "args": ["help"],
                 },
                 {
                     "type": "run",
                     "onSuccess": "push",
                     "title": "Show me a static list!",
-                    "command": [sys.argv[0], "static-list", "${input:nb_items}"],
+                    "command": sys.argv[0],
+                    "args": ["static-list", "${input:nb_items}"],
                     "inputs": [
                         {
                             "name": "nb_items",
@@ -66,7 +68,8 @@ if not args.command:
                     "type": "run",
                     "onSuccess": "push",
                     "title": "Show me a dynamic list!",
-                    "command": [sys.argv[0], "dynamic-list"],
+                    "command": sys.argv[0],
+                    "args": ["dynamic-list"],
                 },
                 {
                     "type": "open",

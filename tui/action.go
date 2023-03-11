@@ -35,8 +35,11 @@ type RunCommandMsg struct {
 	Action schemas.Action
 }
 
-func NewAction(scriptAction schemas.Action) Action {
+func NewAction(scriptAction schemas.Action, dir string) Action {
 	var msg tea.Msg
+	if scriptAction.Dir == "" {
+		scriptAction.Dir = dir
+	}
 	switch scriptAction.Type {
 	case "copy":
 		if scriptAction.Title == "" {
@@ -49,9 +52,21 @@ func NewAction(scriptAction schemas.Action) Action {
 		}
 		msg = ReloadPageMsg{Action: scriptAction}
 	case "run":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Run Command"
+		if scriptAction.Title != "" {
+			switch scriptAction.OnSuccess {
+			case "open":
+				scriptAction.Title = "Run & Open"
+			case "copy":
+				scriptAction.Title = "Run & Reload"
+			case "reload":
+				scriptAction.Title = "Run & Reload"
+			case "push":
+				scriptAction.Title = "Run & Push"
+			default:
+				scriptAction.Title = "Run"
+			}
 		}
+
 		msg = RunCommandMsg{
 			Action: scriptAction,
 		}
@@ -59,10 +74,11 @@ func NewAction(scriptAction schemas.Action) Action {
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Open"
 		}
+
 		msg = OpenMsg{Action: scriptAction}
 	case "push":
 		if scriptAction.Title == "" {
-			scriptAction.Title = "Push Page"
+			scriptAction.Title = "Push"
 		}
 
 		msg = PushPageMsg{Action: scriptAction}

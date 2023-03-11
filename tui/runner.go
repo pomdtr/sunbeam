@@ -18,6 +18,7 @@ type CommandRunner struct {
 	currentView   string
 
 	generator Generator
+	dir       string
 
 	header Header
 	footer Footer
@@ -28,12 +29,13 @@ type CommandRunner struct {
 
 type Generator func(string) ([]byte, error)
 
-func NewCommandRunner(generator Generator) *CommandRunner {
+func NewCommandRunner(generator Generator, dir string) *CommandRunner {
 	return &CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),
 		currentView: "loading",
 		generator:   generator,
+		dir:         dir,
 	}
 
 }
@@ -86,22 +88,22 @@ func (c *CommandRunner) SetSize(width, height int) {
 	}
 }
 
-func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if c.currentView != "loading" {
+			if runner.currentView != "loading" {
 				break
 			}
-			return c, func() tea.Msg {
+			return runner, func() tea.Msg {
 				return PopPageMsg{}
 			}
 		}
 	case CommandOutput:
-		c.SetIsloading(false)
+		runner.SetIsloading(false)
 		if err := schemas.Validate(msg); err != nil {
-			return c, func() tea.Msg {
+			return runner, func() tea.Msg {
 				return fmt.Errorf("invalid response: %s", err)
 			}
 		}
@@ -109,7 +111,7 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		var res schemas.Response
 		err := json.Unmarshal(msg, &res)
 		if err != nil {
-			return c, func() tea.Msg {
+			return runner, func() tea.Msg {
 				return err
 			}
 		}
@@ -120,19 +122,18 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 		switch res.Type {
 		case "detail":
-			c.currentView = "detail"
+			runner.currentView = "detail"
 			actions := make([]Action, len(res.Actions))
 			for i, scriptAction := range res.Actions {
-				actions[i] = NewAction(scriptAction)
+				actions[i] = NewAction(scriptAction, runner.dir)
 			}
-			c.detail = NewDetail(res.Title, func() string {
+			runner.detail = NewDetail(res.Title, func() string {
 				if res.Detail.Content.Text != "" {
 					return res.Detail.Content.Text
 				}
 
-				name, args := utils.SplitCommand(res.Detail.Content.Command)
-
-				cmd := exec.Command(name, args...)
+				cmd := exec.Command(res.Detail.Content.Command, res.Detail.Content.Args...)
+				cmd.Dir = runner.dir
 				output, err := cmd.Output()
 				if err != nil {
 					return err.Error()
@@ -141,29 +142,29 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return string(output)
 			}, actions)
 
-			c.detail.SetSize(c.width, c.height)
+			runner.detail.SetSize(runner.width, runner.height)
 
-			return c, c.detail.Init()
+			return runner, runner.detail.Init()
 		case "list":
-			c.currentView = "list"
+			runner.currentView = "list"
 
 			actions := make([]Action, len(res.Actions))
 			for i, scriptAction := range res.Actions {
-				actions[i] = NewAction(scriptAction)
+				actions[i] = NewAction(scriptAction, runner.dir)
 			}
 
-			if c.list == nil {
-				c.list = NewList(res.Title, actions)
+			if runner.list == nil {
+				runner.list = NewList(res.Title, actions)
 			} else {
-				c.list.SetTitle(res.Title)
-				c.list.actions = actions
+				runner.list.SetTitle(res.Title)
+				runner.list.actions = actions
 			}
 
 			if res.List.ShowPreview {
-				c.list.ShowPreview = true
+				runner.list.ShowPreview = true
 			}
 			if res.List.GenerateItems {
-				c.list.GenerateItems = true
+				runner.list.GenerateItems = true
 			}
 
 			listItems := make([]ListItem, len(res.List.Items))
@@ -173,15 +174,15 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				if scriptItem.Id == "" {
 					scriptItem.Id = strconv.Itoa(i)
 				}
-				listItem := ParseScriptItem(scriptItem)
+				listItem := ParseScriptItem(scriptItem, runner.dir)
 				if scriptItem.Preview != nil {
 					listItem.PreviewFunc = func() string {
 						if scriptItem.Preview.Text != "" {
 							return scriptItem.Preview.Text
 						}
 
-						name, args := utils.SplitCommand(scriptItem.Preview.Command)
-						cmd := exec.Command(name, args...)
+						cmd := exec.Command(scriptItem.Preview.Command, scriptItem.Preview.Args...)
+						cmd.Dir = runner.dir
 						output, err := cmd.Output()
 						if err != nil {
 							return err.Error()
@@ -191,30 +192,30 @@ func (c *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 				listItems[i] = listItem
 			}
-			cmd := c.list.SetItems(listItems)
+			cmd := runner.list.SetItems(listItems)
 
-			c.list.SetSize(c.width, c.height)
-			return c, tea.Sequence(c.list.Init(), cmd)
+			runner.list.SetSize(runner.width, runner.height)
+			return runner, tea.Sequence(runner.list.Init(), cmd)
 		}
 
 	case ReloadPageMsg:
-		return c, tea.Sequence(c.SetIsloading(true), c.Run())
+		return runner, tea.Sequence(runner.SetIsloading(true), runner.Run())
 	}
 
 	var cmd tea.Cmd
 	var container Page
 
-	switch c.currentView {
+	switch runner.currentView {
 	case "list":
-		container, cmd = c.list.Update(msg)
-		c.list, _ = container.(*List)
+		container, cmd = runner.list.Update(msg)
+		runner.list, _ = container.(*List)
 	case "detail":
-		container, cmd = c.detail.Update(msg)
-		c.detail, _ = container.(*Detail)
+		container, cmd = runner.detail.Update(msg)
+		runner.detail, _ = container.(*Detail)
 	default:
-		c.header, cmd = c.header.Update(msg)
+		runner.header, cmd = runner.header.Update(msg)
 	}
-	return c, cmd
+	return runner, cmd
 }
 
 func (c *CommandRunner) View() string {
