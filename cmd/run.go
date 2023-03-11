@@ -13,7 +13,7 @@ import (
 func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run <script>",
-		Short: "Run a script and push it's output.",
+		Short: "Run a script and push it's output",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			padding, _ := cmd.Flags().GetInt("padding")

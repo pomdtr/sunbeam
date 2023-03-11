@@ -14,7 +14,7 @@ import (
 func NewPushCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "read <page>",
-		Short: "read page from stdin or file",
+		Short: "Read page from file or stdin, and push it's content",
 		Run: func(cmd *cobra.Command, args []string) {
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")

@@ -54,11 +54,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 	rootCmd.PersistentFlags().IntP("padding", "p", lookupInt("SUNBEAM_PADDING", 0), "padding around the window")
 	rootCmd.PersistentFlags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "maximum height of the window")
-	rootCmd.PersistentFlags().StringP("directory", "C", "", "cd to dir before starting sunbeam")
+	rootCmd.Flags().StringP("directory", "C", "", "cd to dir before starting sunbeam")
 
 	rootCmd.AddCommand(NewRunCmd())
 	rootCmd.AddCommand(NewPushCmd())
 	rootCmd.AddCommand(NewQueryCmd())
+	rootCmd.AddCommand(NewCopyCmd())
+	rootCmd.AddCommand(NewOpenCmd())
 
 	return rootCmd.Execute()
 }
