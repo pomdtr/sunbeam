@@ -12,7 +12,7 @@
             "title": "Show Examples",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "read",
                     "page": "./docs/examples/sunbeam.json"
                 }
             ]
@@ -21,7 +21,7 @@
             "title": "Show Getting Started",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "read",
                     "page": "./docs/getting-started/sunbeam.json"
                 }
             ]

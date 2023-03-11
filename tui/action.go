@@ -43,28 +43,12 @@ func NewAction(scriptAction schemas.Action, dir string) Action {
 	switch scriptAction.Type {
 	case "copy":
 		if scriptAction.Title == "" {
-			scriptAction.Title = "Copy to Clipboard"
+			scriptAction.Title = "Copy"
 		}
 		msg = CopyTextMsg{Action: scriptAction}
-	case "reload":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Reload Page"
-		}
-		msg = ReloadPageMsg{Action: scriptAction}
 	case "run":
 		if scriptAction.Title == "" {
-			switch scriptAction.OnSuccess {
-			case "open":
-				scriptAction.Title = "Run & Open"
-			case "copy":
-				scriptAction.Title = "Run & Reload"
-			case "reload":
-				scriptAction.Title = "Run & Reload"
-			case "push":
-				scriptAction.Title = "Run & Push"
-			default:
-				scriptAction.Title = "Run"
-			}
+			scriptAction.Title = "Run"
 		}
 
 		msg = RunCommandMsg{
@@ -76,11 +60,10 @@ func NewAction(scriptAction schemas.Action, dir string) Action {
 		}
 
 		msg = OpenMsg{Action: scriptAction}
-	case "push":
+	case "read":
 		if scriptAction.Title == "" {
 			scriptAction.Title = "Push"
 		}
-
 		msg = PushPageMsg{Action: scriptAction}
 	default:
 		scriptAction.Title = "Unknown"

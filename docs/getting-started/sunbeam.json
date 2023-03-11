@@ -1,12 +1,12 @@
 {
-    "$schema": "../../../schemas/schema.json",
+    "$schema": "../../schemas/schema.json",
     "type": "list",
     "items": [
         {
             "title": "Static List",
             "actions": [
                 {
-                    "type": "push",
+                    "type": "read",
                     "page": "./static-list.json"
                 }
             ]

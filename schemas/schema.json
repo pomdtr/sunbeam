@@ -151,8 +151,7 @@
                     "enum": [
                         "copy",
                         "open",
-                        "reload",
-                        "push",
+                        "read",
                         "run"
                     ]
                 }
@@ -255,9 +254,7 @@
                                 "type": "string",
                                 "enum": [
                                     "reload",
-                                    "push",
-                                    "copy",
-                                    "open"
+                                    "push"
                                 ]
                             },
                             "inputs": {
@@ -285,7 +282,7 @@
                         ],
                         "properties": {
                             "type": {
-                                "const": "push"
+                                "const": "read"
                             }
                         }
                     },
@@ -297,7 +294,7 @@
                         "additionalProperties": false,
                         "properties": {
                             "type": {
-                                "const": "push"
+                                "const": "read"
                             },
                             "title": {
                                 "type": "string"
@@ -306,35 +303,6 @@
                                 "type": "string"
                             },
                             "page": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "required": [
-                            "type"
-                        ],
-                        "properties": {
-                            "type": {
-                                "const": "reload"
-                            }
-                        }
-                    },
-                    "then": {
-                        "required": [
-                            "type"
-                        ],
-                        "additionalProperties": false,
-                        "properties": {
-                            "type": {
-                                "const": "reload"
-                            },
-                            "title": {
-                                "type": "string"
-                            },
-                            "shortcut": {
                                 "type": "string"
                             }
                         }

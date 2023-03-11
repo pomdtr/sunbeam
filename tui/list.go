@@ -112,6 +112,13 @@ func (c *List) SetTitle(title string) {
 
 func NewList(title string, actions []Action) *List {
 	header := NewHeader()
+	actions = append(actions, Action{
+		Title:    "Reload Page",
+		Shortcut: "ctrl+r",
+		Cmd: func() tea.Msg {
+			return ReloadPageMsg{}
+		},
+	})
 
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle().Padding(0, 1)

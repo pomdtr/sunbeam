@@ -90,20 +90,9 @@ Push a new page to the navigation stack
 
 ```javascript
 {
-  "type": "push", // required
-  "title": "Push", // required
+  "type": "read", // required
+  "title": "Read", // required
   "path": "path/to/page.json" // required
-}
-```
-
-### reload
-
-Reload the current page
-
-```javascript
-{
-  "type": "reload", // required
-  "title": "Reload" // optional, default: "Reload"
 }
 ```
 

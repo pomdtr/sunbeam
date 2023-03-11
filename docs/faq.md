@@ -5,7 +5,7 @@
 There is two ways to wire sunbeam to your programs:
 
 - Wrap your command in sunbeam: `sunbeam run <my-command>`
-- Pipe data to sunbeam: `<my-command> | sunbeam push -`
+- Pipe data to sunbeam: `<my-command> | sunbeam read -`
 
 Both methods have advantages and drawbacks:
 
@@ -35,7 +35,7 @@ To validate the output of a script, you can use the `--check` command:
 
 ```bash
 sunbeam run --check ./github.sh
-sunbeam push --check sunbeam.json
+sunbeam read --check sunbeam.json
 ```
 
 The interactive UI will not be shown, but the output will be validated. If the output is invalid, the command will exit with a non-zero status code.

@@ -21,6 +21,14 @@ type Detail struct {
 }
 
 func NewDetail(title string, contentCmd func() string, actions []Action) *Detail {
+	actions = append(actions, Action{
+		Title:    "Reload Page",
+		Shortcut: "ctrl+r",
+		Cmd: func() tea.Msg {
+			return ReloadPageMsg{}
+		},
+	})
+
 	footer := NewFooter(title)
 	if len(actions) == 0 {
 		footer.SetBindings()
