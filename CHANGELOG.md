@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2023-03-11
+
+### Added
+
+- Add `copy` and `open` command for usage in scripts
+- the `read` action now update the dir of the sunbeam processes, so that relative paths are resolved correctly
+
+### Changed
+
+- revert back to the `read` command instead of `push` for both command and action
+- onSuccess does not support `copy` and `open` anymore, use the `open` and `copy` commands instead
+
 ## [0.3.1] - 2023-03-10
 
 ### Changed
