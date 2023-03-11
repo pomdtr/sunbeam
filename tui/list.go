@@ -112,13 +112,6 @@ func (c *List) SetTitle(title string) {
 
 func NewList(title string, actions []Action) *List {
 	header := NewHeader()
-	actions = append(actions, Action{
-		Title:    "Reload Page",
-		Shortcut: "ctrl+r",
-		Cmd: func() tea.Msg {
-			return ReloadPageMsg{}
-		},
-	})
 
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
@@ -126,18 +119,36 @@ func NewList(title string, actions []Action) *List {
 	filter.DrawLines = true
 	footer := NewFooter(title)
 
-	return &List{
-		actions:    actions,
+	list := List{
 		actionList: NewActionList(),
 		header:     header,
 		filter:     filter,
 		viewport:   viewport,
 		footer:     footer,
 	}
+
+	list.SetActions(actions)
+
+	return &list
 }
 
 func (c *List) Init() tea.Cmd {
 	return c.header.Focus()
+}
+
+func (list *List) SetActions(actions []Action) {
+	list.actions = make([]Action, len(actions)+1)
+	for i, action := range actions {
+		list.actions[i] = action
+	}
+
+	list.actions[len(actions)] = Action{
+		Title:    "Reload Page",
+		Shortcut: "ctrl+r",
+		Cmd: func() tea.Msg {
+			return ReloadPageMsg{}
+		},
+	}
 }
 
 func (c *List) RefreshPreview() {
