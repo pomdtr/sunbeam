@@ -3,6 +3,6 @@
         "docs/src/SUMMARY.md"
     ],
     "search.exclude": {
-        "docs/book": true
+        "book": true
     }
 }
