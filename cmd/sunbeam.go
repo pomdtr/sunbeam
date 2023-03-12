@@ -19,6 +19,7 @@ var defaultManifest string
 
 func exitWithErrorMsg(msg string, args ...any) {
 	fmt.Fprintf(os.Stderr, msg, args...)
+	fmt.Println()
 	os.Exit(1)
 }
 
@@ -90,8 +91,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 
-	rootCmd.PersistentFlags().IntP("padding", "p", lookupInt("SUNBEAM_PADDING", 0), "padding around the window")
-	rootCmd.PersistentFlags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "maximum height of the window")
+	rootCmd.Flags().IntP("padding", "p", lookupInt("SUNBEAM_PADDING", 0), "padding around the window")
+	rootCmd.Flags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "maximum height of the window")
 	rootCmd.Flags().StringP("directory", "C", "", "cd to dir before starting sunbeam")
 
 	rootCmd.AddGroup(coreCommandsGroup, extensionCommandsGroup)
@@ -101,6 +102,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewCopyCmd())
 	rootCmd.AddCommand(NewOpenCmd())
+	rootCmd.AddCommand(NewHttpCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
 

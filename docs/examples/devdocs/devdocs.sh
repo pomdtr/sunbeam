@@ -4,7 +4,7 @@ set -euo pipefail
 
 if [ $# -eq 1 ]; then
   # shellcheck disable=SC2016
-  curl "https://devdocs.io/docs/$1/index.json" | sunbeam query --arg slug="$1" '.entries[] |
+  sunbeam http "https://devdocs.io/docs/$1/index.json" | sunbeam query --arg slug="$1" '.entries[] |
 {
   title: .name,
   subtitle: .type,
@@ -18,7 +18,7 @@ if [ $# -eq 1 ]; then
 fi
 
 # shellcheck disable=SC2016
-curl https://devdocs.io/docs/docs.json | sunbeam query --arg command="$0" '.[] |
+sunbeam http https://devdocs.io/docs/docs.json | sunbeam query --arg command="$0" '.[] |
   {
     title: .name,
     subtitle: (.release // "latest"),
