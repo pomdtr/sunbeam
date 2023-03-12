@@ -3,6 +3,7 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -17,25 +18,26 @@ type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	generator Generator
-	dir       string
+	Generator Generator
+	baseUrl   *url.URL
 
 	header Header
 	footer Footer
 
 	list   *List
 	detail *Detail
+	err    *Detail
 }
 
 type Generator func(string) ([]byte, error)
 
-func NewCommandRunner(generator Generator, dir string) *CommandRunner {
+func NewCommandRunner(generator Generator, baseUrl *url.URL) *CommandRunner {
 	return &CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),
 		currentView: "loading",
-		generator:   generator,
-		dir:         dir,
+		Generator:   generator,
+		baseUrl:     baseUrl,
 	}
 
 }
@@ -52,7 +54,7 @@ func (c *CommandRunner) Run() tea.Cmd {
 	}
 
 	return func() tea.Msg {
-		output, err := c.generator(query)
+		output, err := c.Generator(query)
 		if err != nil {
 			return err
 		}
@@ -85,10 +87,12 @@ func (c *CommandRunner) SetSize(width, height int) {
 		c.list.SetSize(width, height)
 	case "detail":
 		c.detail.SetSize(width, height)
+	case "error":
+		c.err.SetSize(width, height)
 	}
 }
 
-func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -121,43 +125,49 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		switch res.Type {
-		case "detail":
+		case schemas.DetailPage:
 			runner.currentView = "detail"
-			actions := make([]Action, len(res.Actions))
-			for i, scriptAction := range res.Actions {
-				actions[i] = NewAction(scriptAction, runner.dir)
-			}
 			runner.detail = NewDetail(res.Title, func() string {
 				if res.Detail.Content.Text != "" {
 					return res.Detail.Content.Text
 				}
 
 				cmd := exec.Command(res.Detail.Content.Command, res.Detail.Content.Args...)
-				cmd.Dir = runner.dir
+				cmd.Dir = runner.baseUrl.Path
 				output, err := cmd.Output()
 				if err != nil {
 					return err.Error()
 				}
 
 				return string(output)
-			}, actions)
+			}, res.Actions)
 
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()
-		case "list":
+		case schemas.ListPage:
 			runner.currentView = "list"
 
-			actions := make([]Action, len(res.Actions))
-			for i, scriptAction := range res.Actions {
-				actions[i] = NewAction(scriptAction, runner.dir)
-			}
-
 			if runner.list == nil {
-				runner.list = NewList(res.Title, actions)
+				runner.list = NewList(res.Title, res.Actions)
+				if res.List.ShowPreview {
+					runner.list.PreviewFunc = func(item schemas.ListItem) string {
+						if item.Preview.Text != "" {
+							return item.Preview.Text
+						}
+
+						cmd := exec.Command(item.Preview.Command, item.Preview.Args...)
+						cmd.Dir = runner.baseUrl.Path
+						output, err := cmd.Output()
+						if err != nil {
+							return err.Error()
+						}
+						return string(output)
+					}
+				}
 			} else {
 				runner.list.SetTitle(res.Title)
-				runner.list.SetActions(actions)
+				runner.list.SetActions(res.Actions)
 			}
 
 			if res.List.ShowPreview {
@@ -174,22 +184,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				if scriptItem.Id == "" {
 					scriptItem.Id = strconv.Itoa(i)
 				}
-				listItem := ParseScriptItem(scriptItem, runner.dir)
-				if scriptItem.Preview != nil {
-					listItem.PreviewFunc = func() string {
-						if scriptItem.Preview.Text != "" {
-							return scriptItem.Preview.Text
-						}
 
-						cmd := exec.Command(scriptItem.Preview.Command, scriptItem.Preview.Args...)
-						cmd.Dir = runner.dir
-						output, err := cmd.Output()
-						if err != nil {
-							return err.Error()
-						}
-						return string(output)
-					}
-				}
+				listItem := ParseScriptItem(scriptItem)
 				listItems[i] = listItem
 			}
 			cmd := runner.list.SetItems(listItems)
@@ -200,6 +196,19 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	case ReloadPageMsg:
 		return runner, tea.Sequence(runner.SetIsloading(true), runner.Run())
+	case error:
+		runner.currentView = "error"
+		errorView := NewDetail("Error", msg.Error, []schemas.Action{
+			{
+				Type:     schemas.CopyAction,
+				RawTitle: "Copy error",
+				Text:     msg.Error(),
+			},
+		})
+
+		runner.err = errorView
+		runner.err.SetSize(runner.width, runner.height)
+		return runner, runner.err.Init()
 	}
 
 	var cmd tea.Cmd
@@ -212,6 +221,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case "detail":
 		container, cmd = runner.detail.Update(msg)
 		runner.detail, _ = container.(*Detail)
+	case "error":
+		container, cmd = runner.err.Update(msg)
+		runner.err, _ = container.(*Detail)
 	default:
 		runner.header, cmd = runner.header.Update(msg)
 	}
@@ -224,6 +236,8 @@ func (c *CommandRunner) View() string {
 		return c.list.View()
 	case "detail":
 		return c.detail.View()
+	case "error":
+		return c.err.View()
 	case "loading":
 		headerView := c.header.View()
 		footerView := c.footer.View()

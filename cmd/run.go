@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 
-	"github.com/pomdtr/sunbeam/schemas"
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/tui"
 	"github.com/spf13/cobra"
 )
@@ -34,28 +35,25 @@ func NewRunCmd() *cobra.Command {
 				return output, nil
 			}
 
-			if check, _ := cmd.Flags().GetBool("check"); check {
-				page, err := generator("")
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				output, err := generator("")
 				if err != nil {
-					fmt.Println("An error occured while running the script:", err)
-					os.Exit(1)
+					exitWithErrorMsg("could not generate page: %s", err)
 				}
 
-				if err := schemas.Validate(page); err != nil {
-					fmt.Println("Script Output is not valid:", err)
-					os.Exit(1)
-				}
-
-				fmt.Println("Script Output is valid!")
+				fmt.Print(string(output))
 				return
 			}
 
 			cwd, err := os.Getwd()
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "could not get current working directory:", err)
-				os.Exit(1)
+				exitWithErrorMsg("could not get current working directory: %s", err)
 			}
-			runner := tui.NewCommandRunner(generator, cwd)
+
+			runner := tui.NewCommandRunner(generator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,
@@ -63,8 +61,6 @@ func NewRunCmd() *cobra.Command {
 			model.Draw()
 		},
 	}
-
-	cmd.Flags().Bool("check", false, "Check the script output format")
 
 	return cmd
 }

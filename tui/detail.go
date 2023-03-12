@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
+	"github.com/pomdtr/sunbeam/schemas"
 )
 
 type Detail struct {
@@ -20,13 +21,10 @@ type Detail struct {
 	footer     Footer
 }
 
-func NewDetail(title string, contentCmd func() string, actions []Action) *Detail {
-	actions = append(actions, Action{
-		Title:    "Reload Page",
+func NewDetail(title string, contentCmd func() string, actions []schemas.Action) *Detail {
+	actions = append(actions, schemas.Action{
+		Type:     schemas.ReloadAction,
 		Shortcut: "ctrl+r",
-		Cmd: func() tea.Msg {
-			return ReloadPageMsg{}
-		},
 	})
 
 	footer := NewFooter(title)
@@ -34,7 +32,7 @@ func NewDetail(title string, contentCmd func() string, actions []Action) *Detail
 		footer.SetBindings()
 	} else {
 		footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title())),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}

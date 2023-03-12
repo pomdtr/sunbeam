@@ -2,16 +2,23 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"strconv"
 
 	_ "embed"
 
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 
 	"github.com/pomdtr/sunbeam/tui"
 )
+
+func exitWithErrorMsg(msg string, args ...any) {
+	fmt.Fprintf(os.Stderr, msg, args...)
+	os.Exit(1)
+}
 
 func Execute(version string) error {
 	// rootCmd represents the base command when called without any subcommands
@@ -36,14 +43,29 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				os.Exit(0)
 			}
 
-			runner := tui.NewCommandRunner(func(s string) ([]byte, error) {
+			generator := func(string) ([]byte, error) {
 				bytes, err := os.ReadFile(manifestPath)
 				if err != nil {
 					return nil, fmt.Errorf("Could not read manifest: %w", err)
 				}
 
 				return bytes, nil
-			}, path.Dir(manifestPath))
+			}
+
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				output, err := generator("")
+				if err != nil {
+					exitWithErrorMsg("could not generate page: %s", err)
+				}
+
+				fmt.Print(string(output))
+				return
+			}
+
+			runner := tui.NewCommandRunner(generator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,
@@ -61,6 +83,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewCopyCmd())
 	rootCmd.AddCommand(NewOpenCmd())
+	rootCmd.AddCommand(NewValidateCmd())
 
 	return rootCmd.Execute()
 }

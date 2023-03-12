@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2023-03-12
+
+### Added
+
+- `sunbeam read` command and `read` action now support http/https url !
+- All pages now have a default `reload` action
+
+### Changed
+
+- `sunbeam read` do not require the `-` arg to read from stdin anymore
+- `--check` flag for the `sunbeam read` and `sunbeam push` commands was replaced by the `sunbeam validate` command
+
 ## [0.4.0] - 2023-03-11
 
 ### Added

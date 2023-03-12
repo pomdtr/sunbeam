@@ -34,18 +34,14 @@ type FormItem struct {
 func NewFormItem(param schemas.FormInput) (FormItem, error) {
 	var input FormInput
 	switch param.Type {
-	case "textfield":
+	case schemas.TextField:
 		input = NewTextInput(param)
-	case "password":
-		ti := NewTextInput(param)
-		ti.SetHidden()
-		input = ti
-	case "textarea":
+	case schemas.TextArea:
 		input = NewTextArea(param)
-	case "dropdown":
+	case schemas.DropDown:
 		input = NewDropDown(param)
 	default:
-		return FormItem{}, fmt.Errorf("invalid form input type: %s", param.Type)
+		return FormItem{}, fmt.Errorf("invalid form input type")
 	}
 
 	return FormItem{

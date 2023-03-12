@@ -2,6 +2,9 @@ package tui
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -14,6 +17,8 @@ import (
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
 )
+
+type ReloadPageMsg struct{}
 
 type PopPageMsg struct{}
 
@@ -38,23 +43,144 @@ type Model struct {
 	options       SunbeamOptions
 	exitCmd       *exec.Cmd
 
-	root  Page
-	pages []Page
+	pages []*CommandRunner
 	form  *Form
 
 	hidden bool
 }
 
-func NewModel(root Page, options SunbeamOptions) *Model {
-	return &Model{root: root, options: options}
-}
-
-func (m *Model) SetRoot(root Page) {
-	m.root = root
+func NewModel(root *CommandRunner, options SunbeamOptions) *Model {
+	return &Model{pages: []*CommandRunner{
+		root,
+	}, options: options}
 }
 
 func (m *Model) Init() tea.Cmd {
-	return m.root.Init()
+	if len(m.pages) == 0 {
+		return nil
+	}
+
+	return m.pages[0].Init()
+}
+
+func (m *Model) CurrentUrl() *url.URL {
+	if len(m.pages) == 0 {
+		return nil
+	}
+
+	return m.pages[len(m.pages)-1].baseUrl
+}
+
+func (m *Model) handleAction(action schemas.Action) tea.Cmd {
+	switch action.Type {
+	case schemas.ReloadAction:
+		return func() tea.Msg {
+			return ReloadPageMsg{}
+		}
+	case schemas.OpenAction:
+		err := browser.OpenURL(action.Target)
+		if err != nil {
+			return func() tea.Msg {
+				return err
+			}
+		}
+
+		m.hidden = true
+		return tea.Quit
+	case schemas.CopyAction:
+		err := clipboard.WriteAll(action.Text)
+		if err != nil {
+			return func() tea.Msg {
+				return fmt.Errorf("failed to copy text to clipboard: %s", err)
+			}
+		}
+
+		m.hidden = true
+		return tea.Quit
+	case schemas.ReadAction:
+		page := action.Page
+
+		baseUrl := m.CurrentUrl()
+		runner := NewCommandRunner(func(query string) ([]byte, error) {
+			switch baseUrl.Scheme {
+			case "http", "https":
+				target := url.URL{
+					Scheme: baseUrl.Scheme,
+					Path:   path.Join(baseUrl.Path, page),
+				}
+
+				res, err := http.Get(target.String())
+				if err != nil {
+					return nil, fmt.Errorf("failed to get page: %s", err)
+				}
+				defer res.Body.Close()
+
+				if res.StatusCode != http.StatusOK {
+					return nil, fmt.Errorf("failed to get page: %s", res.Status)
+				}
+
+				return io.ReadAll(res.Body)
+			case "file":
+				return os.ReadFile(path.Join(baseUrl.Path, page))
+			default:
+				return nil, fmt.Errorf("unsupported scheme: %s", m.CurrentUrl().Scheme)
+			}
+		}, &url.URL{
+			Scheme: baseUrl.Scheme,
+			Path:   path.Dir(page),
+		})
+		return m.Push(runner)
+	case schemas.RunAction:
+		if m.CurrentUrl().Scheme != "file" {
+			return func() tea.Msg {
+				return fmt.Errorf("unsupported scheme: %s", m.CurrentUrl().Scheme)
+			}
+		}
+
+		switch action.OnSuccess {
+		case schemas.PushOnSuccess:
+			return m.Push(NewCommandRunner(func(query string) ([]byte, error) {
+				cmd := exec.Command(action.Command, action.Args...)
+				cmd.Stdin = strings.NewReader(query)
+				cmd.Dir = m.CurrentUrl().Path
+				output, err := cmd.Output()
+				if err != nil {
+					if err, ok := err.(*exec.ExitError); ok {
+						return nil, fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
+					}
+					return nil, err
+				}
+
+				return output, nil
+			}, m.CurrentUrl()))
+		case schemas.ReloadOnSuccess:
+			return func() tea.Msg {
+				command := exec.Command(action.Command, action.Args...)
+				err := command.Run()
+				if err != nil {
+					if err, ok := err.(*exec.ExitError); ok {
+						return fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
+					}
+					return err
+				}
+
+				return ReloadPageMsg{}
+			}
+		case schemas.ExitOnSuccess:
+			command := exec.Command(action.Command, action.Args...)
+			m.exitCmd = command
+			m.hidden = true
+			return tea.Quit
+		default:
+			return func() tea.Msg {
+				return fmt.Errorf("unsupported onSuccess")
+			}
+		}
+	default:
+		return func() tea.Msg {
+			return fmt.Errorf("unknown action type")
+		}
+	}
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -70,41 +196,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
-	case OpenMsg:
-		err := browser.OpenURL(msg.Action.Target)
-		if err != nil {
-			return m, func() tea.Msg {
-				return err
-			}
+	case PopPageMsg:
+		if m.form != nil {
+			m.form = nil
+			return m, nil
+		}
+
+		if len(m.pages) > 1 {
+			m.Pop()
+			return m, nil
 		}
 
 		m.hidden = true
 		return m, tea.Quit
-	case CopyTextMsg:
-		err := clipboard.WriteAll(msg.Action.Text)
-		if err != nil {
-			return m, func() tea.Msg {
-				return fmt.Errorf("failed to copy text to clipboard: %s", err)
-			}
-		}
-
-		m.hidden = true
-		return m, tea.Quit
-	case PushPageMsg:
-		page := msg.Action.Page
-		if msg.Action.Dir != "" {
-			page = path.Join(msg.Action.Dir, msg.Action.Page)
-		}
-		runner := NewCommandRunner(func(query string) ([]byte, error) {
-			return os.ReadFile(page)
-		}, path.Dir(page))
-		cmd := m.Push(runner)
-
-		return m, cmd
-	case RunCommandMsg:
-		if len(msg.Action.Inputs) > 0 {
-			formItems := make([]FormItem, len(msg.Action.Inputs))
-			for i, input := range msg.Action.Inputs {
+	case schemas.Action:
+		if len(msg.Inputs) > 0 {
+			formItems := make([]FormItem, len(msg.Inputs))
+			for i, input := range msg.Inputs {
 				item, err := NewFormItem(input)
 				if err != nil {
 					return m, func() tea.Msg {
@@ -117,119 +225,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
 				for key, value := range values {
-					msg.Action.Command = strings.ReplaceAll(msg.Action.Command, fmt.Sprintf("${input:%s}", key), value)
-					for i, arg := range msg.Action.Args {
+					msg.Command = strings.ReplaceAll(msg.Command, fmt.Sprintf("${input:%s}", key), value)
+					for i, arg := range msg.Args {
 						arg = strings.ReplaceAll(arg, fmt.Sprintf("${input:%s}", key), value)
-						msg.Action.Args[i] = arg
+						msg.Args[i] = arg
 					}
 				}
 
 				return func() tea.Msg {
-					return RunCommandMsg{Action: schemas.Action{
-						Command:   msg.Action.Command,
-						Args:      msg.Action.Args,
-						OnSuccess: msg.Action.OnSuccess,
-					}}
+					return schemas.Action{
+						Command:   msg.Command,
+						Args:      msg.Args,
+						OnSuccess: msg.OnSuccess,
+					}
 				}
 			})
 			m.form = form
 			form.SetSize(m.pageWidth(), m.pageHeight())
 			return m, form.Init()
 		}
-
 		m.form = nil
 
-		homeDir, _ := os.UserHomeDir()
-		msg.Action.Command = strings.ReplaceAll(msg.Action.Command, "${userHome}", homeDir)
-		for i, arg := range msg.Action.Args {
-			arg = strings.ReplaceAll(arg, "${userHome}", homeDir)
-			msg.Action.Args[i] = arg
-		}
-
-		if msg.Action.OnSuccess == "" {
-			m.exitCmd = exec.Command(msg.Action.Command, msg.Action.Args...)
-			m.hidden = true
-			return m, tea.Quit
-		}
-		if msg.Action.OnSuccess == "push" {
-			return m, m.Push(NewCommandRunner(func(query string) ([]byte, error) {
-				cmd := exec.Command(msg.Action.Command, msg.Action.Args...)
-				cmd.Stdin = strings.NewReader(query)
-				cmd.Dir = msg.Action.Dir
-				output, err := cmd.Output()
-				if err != nil {
-					if err, ok := err.(*exec.ExitError); ok {
-						return nil, fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
-					}
-					return nil, err
-				}
-
-				return output, nil
-			}, msg.Action.Dir))
-		}
-
-		return m, func() tea.Msg {
-			cmd := exec.Command(msg.Action.Command, msg.Action.Args...)
-			cmd.Dir = msg.Action.Dir
-			output, err := cmd.Output()
-			if err != nil {
-				return fmt.Errorf("failed to run command: %s", err)
-			}
-
-			switch msg.Action.OnSuccess {
-			case "copy":
-				return CopyTextMsg{Action: schemas.Action{
-					Text: string(output),
-				}}
-			case "open":
-				return OpenMsg{Action: schemas.Action{
-					Target: string(output),
-				}}
-			case "reload":
-				return ReloadPageMsg{}
-			default:
-				return fmt.Errorf("unknown onSuccess action: %s", msg.Action.OnSuccess)
-			}
-		}
-	case PopPageMsg:
-		if m.form != nil {
-			m.form = nil
-			return m, nil
-		}
-
-		if len(m.pages) == 0 {
-			m.hidden = true
-			return m, tea.Quit
-		} else {
-			m.Pop()
-			return m, nil
-		}
-	case error:
-		detail := NewDetail("Error", msg.Error, []Action{
-			{
-				Title: "Copy error",
-				Cmd: func() tea.Msg {
-					return CopyTextMsg{schemas.Action{
-						Text: msg.Error(),
-					}}
-				},
-			},
-			{
-				Title: "Reload Page",
-				Cmd: func() tea.Msg {
-					return ReloadPageMsg{}
-				},
-			},
-		})
-		detail.SetSize(m.pageWidth(), m.pageHeight())
-
-		if len(m.pages) == 0 {
-			m.root = detail
-		} else {
-			m.pages[len(m.pages)-1] = detail
-		}
-
-		return m, detail.Init()
+		return m, m.handleAction(msg)
 	}
 
 	// Update the current page
@@ -237,11 +254,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if m.form != nil {
 		m.form, cmd = m.form.Update(msg)
-	} else if len(m.pages) == 0 {
-		m.root, cmd = m.root.Update(msg)
-	} else {
+	} else if len(m.pages) > 0 {
 		currentPageIdx := len(m.pages) - 1
 		m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
+	} else {
+		return m, nil
 	}
 
 	return m, cmd
@@ -257,12 +274,9 @@ func (m *Model) View() string {
 	}
 
 	var pageView string
-
 	if len(m.pages) > 0 {
 		currentPage := m.pages[len(m.pages)-1]
 		pageView = currentPage.View()
-	} else {
-		pageView = m.root.View()
 	}
 
 	return lipgloss.NewStyle().Padding(m.options.Padding).Render(pageView)
@@ -272,7 +286,6 @@ func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 
-	m.root.SetSize(m.pageWidth(), m.pageHeight())
 	for _, page := range m.pages {
 		page.SetSize(m.pageWidth(), m.pageHeight())
 	}
@@ -289,7 +302,7 @@ func (m *Model) pageHeight() int {
 	return m.height - 2*m.options.Padding
 }
 
-func (m *Model) Push(page Page) tea.Cmd {
+func (m *Model) Push(page *CommandRunner) tea.Cmd {
 	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
 	return page.Init()

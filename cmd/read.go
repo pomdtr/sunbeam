@@ -3,58 +3,103 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
 
-	"github.com/pomdtr/sunbeam/schemas"
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/tui"
 	"github.com/spf13/cobra"
 )
 
 func NewPushCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "read <page>",
+		Use:   "read [page]",
 		Short: "Read page from file or stdin, and push it's content",
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")
-			var generator tui.Generator
-			var dir string
 
-			if args[0] == "-" {
+			var runner *tui.CommandRunner
+			if len(args) == 0 {
+				if isatty.IsTerminal(os.Stdin.Fd()) {
+					exitWithErrorMsg("No input provided")
+				}
+
 				bytes, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					fmt.Println("An error occured while reading script:", err)
 					os.Exit(1)
 				}
 
-				generator = func(string) ([]byte, error) {
+				cwd, err := os.Getwd()
+				if err != nil {
+					exitWithErrorMsg("could not get current working directory: %s", err)
+				}
+
+				generator := func(string) ([]byte, error) {
 					return bytes, nil
 				}
+				runner = tui.NewCommandRunner(generator, &url.URL{
+					Scheme: "file",
+					Path:   cwd,
+				})
+
 			} else {
-				generator = func(s string) ([]byte, error) {
-					return os.ReadFile(args[0])
+				target, err := url.Parse(args[0])
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "An error occured while parsing the url:", err)
+					os.Exit(1)
 				}
-				dir = path.Dir(args[0])
+
+				switch target.Scheme {
+				case "http", "https":
+					generator := func(s string) ([]byte, error) {
+						res, err := http.Get(args[0])
+						if err != nil {
+							return nil, err
+						}
+						defer res.Body.Close()
+
+						if res.StatusCode != http.StatusOK {
+							return nil, fmt.Errorf("http request failed with status %s", res.Status)
+						}
+
+						return io.ReadAll(res.Body)
+					}
+
+					runner = tui.NewCommandRunner(generator, &url.URL{
+						Scheme: target.Scheme,
+						Host:   target.Host,
+						Path:   path.Dir(target.Path),
+					})
+				case "file", "":
+					generator := func(s string) ([]byte, error) {
+						return os.ReadFile(args[0])
+					}
+					runner = tui.NewCommandRunner(generator, &url.URL{
+						Scheme: "file",
+						Path:   path.Dir(args[0]),
+					})
+
+				default:
+					fmt.Fprintln(os.Stderr, "Unsupported scheme:", target.Scheme)
+					os.Exit(1)
+				}
 			}
 
-			if check, _ := cmd.Flags().GetBool("check"); check {
-				page, err := generator("")
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				output, err := runner.Generator("")
 				if err != nil {
-					fmt.Println("An error occured while reading the file:", err)
-					os.Exit(1)
+					exitWithErrorMsg("could not generate page: %s", err)
 				}
 
-				if err := schemas.Validate(page); err != nil {
-					fmt.Println("File is not valid:", err)
-					os.Exit(1)
-				}
-
-				fmt.Println("File is valid!")
+				fmt.Println(string(output))
 				return
 			}
 
-			runner := tui.NewCommandRunner(generator, dir)
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,
@@ -63,8 +108,6 @@ func NewPushCmd() *cobra.Command {
 			model.Draw()
 		},
 	}
-
-	cmd.Flags().Bool("check", false, "Check the script output format")
 
 	return cmd
 }

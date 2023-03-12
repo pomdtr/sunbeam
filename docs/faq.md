@@ -31,11 +31,18 @@ sunbeam --height 20 --padding 2 ./github.sh
 
 ## Validating the output of a script
 
-To validate the output of a script, you can use the `--check` command:
+To validate the output of a script, you can use the validate command:
 
 ```bash
-sunbeam run --check ./github.sh
-sunbeam read --check sunbeam.json
+# Validate a static page
+sunbeam validate sunbeam.json
+
+# validate a dynamic page
+./github.sh | sunbeam validate
+
+# You can even chain it with other sunbeam commands !
+sunbeam run ./github.sh | sunbeam validate
+sunbeam read sunbeam.json | sunbeam validate
 ```
 
-The interactive UI will not be shown, but the output will be validated. If the output is invalid, the command will exit with a non-zero status code.
+The validate command will exit with a non-zero exit code if the output is invalid.

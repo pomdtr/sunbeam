@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"fmt"
+	"net/url"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -9,80 +9,16 @@ import (
 	"github.com/pomdtr/sunbeam/schemas"
 )
 
-type Action struct {
-	Cmd      tea.Cmd
-	Title    string
-	Shortcut string
-}
-
-type CopyTextMsg struct {
-	Action schemas.Action
-}
-
-type OpenMsg struct {
-	Action schemas.Action
-}
-
-type ReloadPageMsg struct {
-	Action schemas.Action
-}
-
-type PushPageMsg struct {
-	Action schemas.Action
-}
-
-type RunCommandMsg struct {
-	Action schemas.Action
-}
-
-func NewAction(scriptAction schemas.Action, dir string) Action {
-	var msg tea.Msg
-	if scriptAction.Dir == "" {
-		scriptAction.Dir = dir
-	}
-	switch scriptAction.Type {
-	case "copy":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Copy"
-		}
-		msg = CopyTextMsg{Action: scriptAction}
-	case "run":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Run"
-		}
-
-		msg = RunCommandMsg{
-			Action: scriptAction,
-		}
-	case "open":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Open"
-		}
-
-		msg = OpenMsg{Action: scriptAction}
-	case "read":
-		if scriptAction.Title == "" {
-			scriptAction.Title = "Push"
-		}
-		msg = PushPageMsg{Action: scriptAction}
-	default:
-		scriptAction.Title = "Unknown"
-		msg = fmt.Errorf("unknown action type: %s", scriptAction.Type)
-	}
-
-	return Action{
-		Cmd:      func() tea.Msg { return msg },
-		Shortcut: scriptAction.Shortcut,
-		Title:    scriptAction.Title,
-	}
-}
-
 type ActionList struct {
-	header Header
-	filter Filter
-	footer Footer
+	actions []schemas.Action
+	header  Header
+	filter  Filter
+	footer  Footer
+}
 
-	actions []Action
+type SelectMsg struct {
+	action schemas.Action
+	path   *url.URL
 }
 
 func NewActionList() ActionList {
@@ -115,7 +51,7 @@ func (al *ActionList) SetTitle(title string) {
 	al.footer.title = title
 }
 
-func (al *ActionList) SetActions(actions ...Action) {
+func (al *ActionList) SetActions(actions ...schemas.Action) {
 	al.actions = actions
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
@@ -123,9 +59,11 @@ func (al *ActionList) SetActions(actions ...Action) {
 			action.Shortcut = "↩"
 		}
 		filterItems[i] = ListItem{
-			Title:    action.Title,
-			Subtitle: action.Shortcut,
-			Actions:  []Action{action},
+			ListItem: schemas.ListItem{
+				Title:    action.Title(),
+				Subtitle: action.Shortcut,
+				Actions:  actions,
+			},
 		}
 	}
 
@@ -166,12 +104,16 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			}
 			listItem, _ := selectedItem.(ListItem)
 			al.Blur()
-			return al, listItem.Actions[0].Cmd
+			return al, func() tea.Msg {
+				return listItem.Actions[0]
+			}
 		default:
 			for _, action := range al.actions {
 				if action.Shortcut == msg.String() {
 					al.Blur()
-					return al, action.Cmd
+					return al, func() tea.Msg {
+						return action
+					}
 				}
 			}
 		}

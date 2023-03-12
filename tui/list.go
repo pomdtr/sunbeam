@@ -17,29 +17,15 @@ import (
 
 const debounceDuration = 300 * time.Millisecond
 
+// Probably not necessary, need to be refactored
 type ListItem struct {
-	Id          string
-	Title       string
-	Subtitle    string
-	PreviewFunc func() string
-	Accessories []string
-	Actions     []Action
+	schemas.ListItem
 }
 
-func ParseScriptItem(scriptItem schemas.ListItem, dir string) ListItem {
-	actions := make([]Action, len(scriptItem.Actions))
-	for i, scriptAction := range scriptItem.Actions {
-		actions[i] = NewAction(scriptAction, dir)
-	}
-
+func ParseScriptItem(scriptItem schemas.ListItem) ListItem {
 	return ListItem{
-		Id:          scriptItem.Id,
-		Title:       scriptItem.Title,
-		Subtitle:    scriptItem.Subtitle,
-		Accessories: scriptItem.Accessories,
-		Actions:     actions,
+		ListItem: scriptItem,
 	}
-
 }
 
 func (i ListItem) ID() string {
@@ -93,10 +79,11 @@ func (i ListItem) Render(width int, selected bool) string {
 }
 
 type List struct {
-	header     Header
-	footer     Footer
-	actionList ActionList
-	actions    []Action
+	header      Header
+	footer      Footer
+	actionList  ActionList
+	actions     []schemas.Action
+	PreviewFunc func(schemas.ListItem) string
 
 	GenerateItems bool
 	ShowPreview   bool
@@ -110,7 +97,7 @@ func (c *List) SetTitle(title string) {
 	c.footer.title = title
 }
 
-func NewList(title string, actions []Action) *List {
+func NewList(title string, actions []schemas.Action) *List {
 	header := NewHeader()
 
 	viewport := viewport.New(0, 0)
@@ -136,18 +123,15 @@ func (c *List) Init() tea.Cmd {
 	return c.header.Focus()
 }
 
-func (list *List) SetActions(actions []Action) {
-	list.actions = make([]Action, len(actions)+1)
+func (list *List) SetActions(actions []schemas.Action) {
+	list.actions = make([]schemas.Action, len(actions)+1)
 	for i, action := range actions {
 		list.actions[i] = action
 	}
 
-	list.actions[len(actions)] = Action{
-		Title:    "Reload Page",
+	list.actions[len(actions)] = schemas.Action{
+		Type:     schemas.ReloadAction,
 		Shortcut: "ctrl+r",
-		Cmd: func() tea.Msg {
-			return ReloadPageMsg{}
-		},
 	}
 }
 
@@ -213,7 +197,7 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 type PreviewContentMsg string
 
 func (l *List) updateSelection(filter Filter) FilterItem {
-	actions := make([]Action, 0)
+	actions := make([]schemas.Action, 0)
 	if filter.Selection() == nil {
 		l.previewContent = ""
 	} else {
@@ -229,7 +213,7 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 	l.actionList.SetActions(actions...)
 	if len(actions) > 0 {
 		l.footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title())),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	} else {
@@ -296,14 +280,14 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		item := c.filter.Selection().(ListItem)
-		if item.PreviewFunc == nil {
+		if c.PreviewFunc == nil {
 			return c, nil
 		}
 
 		cmd := c.SetIsLoading(true)
 
 		return c, tea.Sequence(cmd, func() tea.Msg {
-			return PreviewContentMsg(item.PreviewFunc())
+			return PreviewContentMsg(c.PreviewFunc(item.ListItem))
 		})
 
 	case PreviewContentMsg:
