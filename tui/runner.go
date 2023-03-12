@@ -39,12 +39,12 @@ func NewRunner(generator PageGenerator, workingDir string) *CommandRunner {
 
 }
 func (c *CommandRunner) Init() tea.Cmd {
-	return tea.Batch(c.SetIsloading(true), c.Run())
+	return tea.Batch(c.SetIsloading(true), c.Refresh())
 }
 
 type CommandOutput []byte
 
-func (c *CommandRunner) Run() tea.Cmd {
+func (c *CommandRunner) Refresh() tea.Cmd {
 	var query string
 	if c.currentView == "list" {
 		query = c.list.Query()
@@ -109,28 +109,29 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 			}
 		}
 
-		var res schemas.Page
-		err := json.Unmarshal(msg, &res)
+		var page schemas.Page
+		err := json.Unmarshal(msg, &page)
 		if err != nil {
 			return runner, func() tea.Msg {
 				return err
 			}
 		}
 
-		if res.Title == "" {
-			res.Title = "Sunbeam"
+		if page.Title == "" {
+			page.Title = "Sunbeam"
 		}
 
-		switch res.Type {
+		switch page.Type {
 		case schemas.DetailPage:
 			runner.currentView = "detail"
+
 			var detailFunc func() string
-			if res.Detail.Text != "" {
+			if page.Detail.Text != "" {
 				detailFunc = func() string {
-					return res.Detail.Text
+					return page.Detail.Text
 				}
 			} else {
-				args, err := shell.Fields(res.Detail.Command, nil)
+				args, err := shell.Fields(page.Detail.Command, nil)
 				if err != nil {
 					return runner, func() tea.Msg {
 						return fmt.Errorf("invalid command: %s", err)
@@ -152,55 +153,24 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 				}
 			}
 
-			runner.detail = NewDetail(res.Title, detailFunc, res.Actions)
-
+			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()
 		case schemas.ListPage:
 			runner.currentView = "list"
 
-			if runner.list == nil {
-				runner.list = NewList(res.Title, res.Actions)
-				if res.List.ShowDetail {
-					runner.list.DetailFunc = func(item schemas.ListItem) string {
-						if item.Detail.Text != "" {
-							return item.Detail.Text
-						}
-
-						args, err := shell.Fields(item.Detail.Command, nil)
-						if err != nil {
-							return err.Error()
-						}
-
-						var extraArgs []string
-						if len(args) > 1 {
-							extraArgs = args[1:]
-						}
-
-						generator := NewCommandGenerator(args[0], extraArgs, runner.workingDir)
-
-						output, err := generator("")
-						if err != nil {
-							return err.Error()
-						}
-						return string(output)
-					}
-				}
-			} else {
-				runner.list.SetTitle(res.Title)
-				runner.list.SetActions(res.Actions)
+			// Save query string
+			var query string
+			if runner.list != nil {
+				query = runner.list.Query()
 			}
 
-			if res.List.ShowDetail {
-				runner.list.ShowDetail = true
-			}
-			if res.List.GenerateItems {
-				runner.list.GenerateItems = true
-			}
+			runner.list = NewList(page, runner.workingDir)
+			runner.list.SetQuery(query)
 
-			listItems := make([]ListItem, len(res.List.Items))
-			for i, scriptItem := range res.List.Items {
+			listItems := make([]ListItem, len(page.List.Items))
+			for i, scriptItem := range page.List.Items {
 				scriptItem := scriptItem
 
 				if scriptItem.Id == "" {
@@ -210,14 +180,14 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 				listItem := ParseScriptItem(scriptItem)
 				listItems[i] = listItem
 			}
-			cmd := runner.list.SetItems(listItems)
 
+			cmd := runner.list.SetItems(listItems)
 			runner.list.SetSize(runner.width, runner.height)
 			return runner, tea.Sequence(runner.list.Init(), cmd)
 		}
 
 	case ReloadPageMsg:
-		return runner, tea.Sequence(runner.SetIsloading(true), runner.Run())
+		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh())
 	case error:
 		runner.currentView = "error"
 		errorView := NewDetail("Error", msg.Error, []schemas.Action{

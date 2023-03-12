@@ -22,15 +22,18 @@ type Filter struct {
 	Query         string
 	Less          func(i, j FilterItem) bool
 
-	items    []FilterItem
-	filtered []FilterItem
+	items     []FilterItem
+	filtered  []FilterItem
+	EmptyText string
 
 	DrawLines bool
 	cursor    int
 }
 
 func NewFilter() Filter {
-	return Filter{}
+	return Filter{
+		EmptyText: "No results",
+	}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -106,7 +109,7 @@ func (m Filter) View() string {
 	}
 
 	if len(rows) == 0 {
-		return lipgloss.NewStyle().Faint(true).Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render("No results")
+		return lipgloss.NewStyle().Faint(true).Copy().Width(m.Width).Height(m.Height).Padding(0, 3).Render(m.EmptyText)
 	}
 
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)

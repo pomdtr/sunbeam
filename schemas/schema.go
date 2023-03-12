@@ -95,6 +95,7 @@ type Detail struct {
 type List struct {
 	ShowDetail    bool       `json:"showDetail"`
 	GenerateItems bool       `json:"generateItems"`
+	EmptyText     string     `json:"emptyText,omitempty"`
 	Items         []ListItem `json:"items"`
 }
 

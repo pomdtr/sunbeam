@@ -42,6 +42,9 @@
                     "$schema": {
                         "type": "string"
                     },
+                    "emptyText": {
+                        "type": "string"
+                    },
                     "title": {
                         "type": "string"
                     },

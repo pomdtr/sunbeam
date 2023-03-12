@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 type PageGenerator func(input string) ([]byte, error)
@@ -17,6 +18,7 @@ type CmdGenerator struct {
 func NewCommandGenerator(command string, args []string, dir string) PageGenerator {
 	return func(input string) ([]byte, error) {
 		command := exec.Command(command, args...)
+		command.Stdin = strings.NewReader(input)
 		command.Dir = dir
 		output, err := command.Output()
 		if err != nil {

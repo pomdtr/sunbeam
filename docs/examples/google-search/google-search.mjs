@@ -31,6 +31,7 @@ if (query) {
 console.log(
   JSON.stringify({
     type: "list",
+    emptyText: query ? "No results" : "Enter a query",
     generateItems: true,
     items,
   })

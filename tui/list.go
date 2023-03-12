@@ -13,6 +13,7 @@ import (
 	"github.com/muesli/reflow/wrap"
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
+	"mvdan.cc/sh/v3/shell"
 )
 
 const debounceDuration = 300 * time.Millisecond
@@ -97,24 +98,55 @@ func (c *List) SetTitle(title string) {
 	c.footer.title = title
 }
 
-func NewList(title string, actions []schemas.Action) *List {
+func NewList(page schemas.Page, dir string) *List {
 	header := NewHeader()
 
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
+
 	filter := NewFilter()
 	filter.DrawLines = true
-	footer := NewFooter(title)
-
-	list := List{
-		actionList: NewActionList(),
-		header:     header,
-		filter:     filter,
-		viewport:   viewport,
-		footer:     footer,
+	if page.EmptyText != "" {
+		filter.EmptyText = page.EmptyText
 	}
 
-	list.SetActions(actions)
+	footer := NewFooter(page.Title)
+
+	list := List{
+		actionList:    NewActionList(),
+		header:        header,
+		filter:        filter,
+		GenerateItems: page.GenerateItems,
+		ShowDetail:    page.ShowDetail,
+		viewport:      viewport,
+		footer:        footer,
+	}
+
+	list.DetailFunc = func(item schemas.ListItem) string {
+		if item.Detail.Text != "" {
+			return item.Detail.Text
+		}
+
+		args, err := shell.Fields(item.Detail.Command, nil)
+		if err != nil {
+			return err.Error()
+		}
+
+		var extraArgs []string
+		if len(args) > 1 {
+			extraArgs = args[1:]
+		}
+
+		generator := NewCommandGenerator(args[0], extraArgs, dir)
+
+		output, err := generator("")
+		if err != nil {
+			return err.Error()
+		}
+		return string(output)
+	}
+
+	list.SetActions(page.Actions)
 
 	return &list
 }
@@ -185,8 +217,14 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 		return nil
 	}
 
+	if c.filter.Selection() == nil {
+		return nil
+	}
+
 	return func() tea.Msg {
-		return SelectionChangeMsg{c.filter.Selection().ID()}
+		return SelectionChangeMsg{
+			SelectionId: c.filter.Selection().ID(),
+		}
 	}
 }
 
@@ -352,6 +390,10 @@ func (c List) View() string {
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.filter.View(), c.footer.View())
+}
+
+func (c *List) SetQuery(query string) {
+	c.header.input.SetValue(query)
 }
 
 func (c List) Query() string {
