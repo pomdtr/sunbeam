@@ -90,6 +90,9 @@
                     "$schema": {
                         "type": "string"
                     },
+                    "language": {
+                        "type": "string"
+                    },
                     "text": {
                         "type": "string"
                     },

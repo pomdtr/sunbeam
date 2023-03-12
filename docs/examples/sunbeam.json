@@ -15,6 +15,24 @@
             ]
         },
         {
+            "title": "Highlight Example",
+            "subtitle": "Highlight",
+            "actions": [
+                {
+                    "title": "Highlight Detail",
+                    "type": "run",
+                    "onSuccess": "push",
+                    "command": "./highlight/highlight.sh"
+                },
+                {
+                    "title": "Highlight List",
+                    "type": "run",
+                    "onSuccess": "push",
+                    "command": "./highlight/list.sh"
+                }
+            ]
+        },
+        {
             "title": "Brew",
             "subtitle": "Brew",
             "actions": [

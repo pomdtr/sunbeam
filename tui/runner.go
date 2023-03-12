@@ -153,6 +153,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 			}
 
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
+			runner.detail.Language = page.Language
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()

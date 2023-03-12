@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alecthomas/chroma/quick"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -124,7 +125,14 @@ func NewList(page schemas.Page, dir string) *List {
 
 	list.DetailFunc = func(item schemas.ListItem) string {
 		if item.Detail.Text != "" {
-			return item.Detail.Text
+			if item.Detail.Language == "" {
+				return item.Detail.Text
+			}
+			builder := strings.Builder{}
+			if err := quick.Highlight(&builder, item.Detail.Text, item.Detail.Language, "terminal16", "github"); err != nil {
+				return item.Detail.Text
+			}
+			return builder.String()
 		}
 
 		args, err := shell.Fields(item.Detail.Command, nil)
@@ -143,7 +151,17 @@ func NewList(page schemas.Page, dir string) *List {
 		if err != nil {
 			return err.Error()
 		}
-		return string(output)
+		content := string(output)
+
+		if item.Detail.Language == "" {
+			return content
+		}
+
+		builder := strings.Builder{}
+		if err := quick.Highlight(&builder, content, item.Detail.Language, "terminal16", "github"); err != nil {
+			return content
+		}
+		return builder.String()
 	}
 
 	list.SetActions(page.Actions)

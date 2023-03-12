@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"strings"
+
+	"github.com/alecthomas/chroma/quick"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,6 +17,7 @@ type Detail struct {
 	header     Header
 	Style      lipgloss.Style
 	viewport   viewport.Model
+	Language   string
 	actions    ActionList
 	content    string
 	ready      bool
@@ -84,7 +88,16 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 		}
 	case ContentMsg:
-		c.content = string(msg)
+		if c.Language != "" {
+			builder := strings.Builder{}
+			if err := quick.Highlight(&builder, string(msg), c.Language, "terminal16", "github"); err != nil {
+				c.content = string(msg)
+			} else {
+				c.content = builder.String()
+			}
+		} else {
+			c.content = string(msg)
+		}
 		c.RefreshContent()
 	}
 	var cmds []tea.Cmd
