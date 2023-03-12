@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"html/template"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -77,8 +78,18 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 			return ReloadPageMsg{}
 		}
 	case schemas.OpenAction:
-		err := browser.OpenURL(action.Target)
+		target, err := url.Parse(action.Target)
 		if err != nil {
+			return func() tea.Msg {
+				return fmt.Errorf("failed to parse target: %s", err)
+			}
+		}
+
+		if target.Scheme == "" || target.Scheme == "file" && !path.IsAbs(target.Path) {
+			target.Path = path.Join(m.WorkingDir(), target.Path)
+		}
+
+		if err := browser.OpenURL(target.String()); err != nil {
 			return func() tea.Msg {
 				return err
 			}
