@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"os/exec"
 
@@ -45,20 +44,13 @@ func NewRunCmd() *cobra.Command {
 				return
 			}
 
-			cwd, err := os.Getwd()
-			if err != nil {
-				exitWithErrorMsg("could not get current working directory: %s", err)
-			}
-
-			runner := tui.NewCommandRunner(generator, &url.URL{
-				Scheme: "file",
-				Path:   cwd,
-			})
-			model := tui.NewModel(runner, tui.SunbeamOptions{
+			cwd, _ := os.Getwd()
+			command, args := SplitCommand(args)
+			runner := tui.NewRunner(tui.NewCommandGenerator(command, args, cwd), cwd)
+			tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,
-			})
-			model.Draw()
+			}).Draw()
 		},
 	}
 
@@ -75,5 +67,4 @@ func SplitCommand(fields []string) (string, []string) {
 	}
 
 	return fields[0], fields[1:]
-
 }

@@ -26,10 +26,7 @@
             "actions": [
                 {
                     "type": "run",
-                    "command": "./dynamic-list-with-args.py",
-                    "args": [
-                        "/"
-                    ],
+                    "command": "./dynamic-list-with-args.py /",
                     "onSuccess": "push"
                 }
             ]

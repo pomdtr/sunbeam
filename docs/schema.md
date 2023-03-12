@@ -5,7 +5,7 @@
 ```javascript
 {
   "type": "list", // required
-  "showPreview": false, // optional, default: false
+  "showDetail": false, // optional, default: false
   "generateItems": false, // optional, default: false
   "items": [
     {"title": "Item 1"},
@@ -19,9 +19,8 @@
 ```javascript
 {
   "type": "detail", // required
-  "content": {
-    "text": "preview text"
-  }, // required, see Preview
+  "text": "detail text",
+  "command": "print-detail-cmd",
   "actions": [
     {"type": "open", "target": "https://example.com"},
     {"type": "copy", "text": "username"}
@@ -129,22 +128,5 @@ Push a new page to the navigation stack
     {"title": "English", "value": "en"},
     {"title": "French", "value": "fr"}
   ] // required
-}
-```
-
-## Preview
-
-The preview can be a string or a command. If it's a command, the output will refreshed every time the user changes the selection.
-
-```javascript
-{
-  "text": "preview text"
-}
-```
-
-```javascript
-{
-  "command": "my-command",
-  "args": ["preview"]
 }
 ```

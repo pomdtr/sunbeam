@@ -10,6 +10,13 @@
             "port": 2345,
             "host": "127.0.0.1",
             "preLaunchTask": "start sunbeam"
+        },
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}"
         }
     ]
 }

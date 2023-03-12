@@ -3,8 +3,6 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"os/exec"
 	"strconv"
 	"strings"
 
@@ -12,14 +10,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
+	"mvdan.cc/sh/v3/shell"
 )
 
 type CommandRunner struct {
 	width, height int
 	currentView   string
 
-	Generator Generator
-	baseUrl   *url.URL
+	Generator  PageGenerator
+	workingDir string
 
 	header Header
 	footer Footer
@@ -29,15 +28,13 @@ type CommandRunner struct {
 	err    *Detail
 }
 
-type Generator func(string) ([]byte, error)
-
-func NewCommandRunner(generator Generator, baseUrl *url.URL) *CommandRunner {
+func NewRunner(generator PageGenerator, workingDir string) *CommandRunner {
 	return &CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),
 		currentView: "loading",
 		Generator:   generator,
-		baseUrl:     baseUrl,
+		workingDir:  workingDir,
 	}
 
 }
@@ -112,7 +109,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 			}
 		}
 
-		var res schemas.Response
+		var res schemas.Page
 		err := json.Unmarshal(msg, &res)
 		if err != nil {
 			return runner, func() tea.Msg {
@@ -127,20 +124,35 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 		switch res.Type {
 		case schemas.DetailPage:
 			runner.currentView = "detail"
-			runner.detail = NewDetail(res.Title, func() string {
-				if res.Detail.Content.Text != "" {
-					return res.Detail.Content.Text
+			var detailFunc func() string
+			if res.Detail.Text != "" {
+				detailFunc = func() string {
+					return res.Detail.Text
 				}
-
-				cmd := exec.Command(res.Detail.Content.Command, res.Detail.Content.Args...)
-				cmd.Dir = runner.baseUrl.Path
-				output, err := cmd.Output()
+			} else {
+				args, err := shell.Fields(res.Detail.Command, nil)
 				if err != nil {
-					return err.Error()
+					return runner, func() tea.Msg {
+						return fmt.Errorf("invalid command: %s", err)
+					}
 				}
 
-				return string(output)
-			}, res.Actions)
+				extraArgs := []string{}
+				if len(args) > 1 {
+					extraArgs = args[1:]
+				}
+
+				generator := NewCommandGenerator(args[0], extraArgs, runner.workingDir)
+				detailFunc = func() string {
+					output, err := generator("")
+					if err != nil {
+						return err.Error()
+					}
+					return string(output)
+				}
+			}
+
+			runner.detail = NewDetail(res.Title, detailFunc, res.Actions)
 
 			runner.detail.SetSize(runner.width, runner.height)
 
@@ -150,15 +162,25 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 
 			if runner.list == nil {
 				runner.list = NewList(res.Title, res.Actions)
-				if res.List.ShowPreview {
-					runner.list.PreviewFunc = func(item schemas.ListItem) string {
-						if item.Preview.Text != "" {
-							return item.Preview.Text
+				if res.List.ShowDetail {
+					runner.list.DetailFunc = func(item schemas.ListItem) string {
+						if item.Detail.Text != "" {
+							return item.Detail.Text
 						}
 
-						cmd := exec.Command(item.Preview.Command, item.Preview.Args...)
-						cmd.Dir = runner.baseUrl.Path
-						output, err := cmd.Output()
+						args, err := shell.Fields(item.Detail.Command, nil)
+						if err != nil {
+							return err.Error()
+						}
+
+						var extraArgs []string
+						if len(args) > 1 {
+							extraArgs = args[1:]
+						}
+
+						generator := NewCommandGenerator(args[0], extraArgs, runner.workingDir)
+
+						output, err := generator("")
 						if err != nil {
 							return err.Error()
 						}
@@ -170,8 +192,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 				runner.list.SetActions(res.Actions)
 			}
 
-			if res.List.ShowPreview {
-				runner.list.ShowPreview = true
+			if res.List.ShowDetail {
+				runner.list.ShowDetail = true
 			}
 			if res.List.GenerateItems {
 				runner.list.GenerateItems = true

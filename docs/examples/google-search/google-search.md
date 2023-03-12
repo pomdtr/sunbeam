@@ -2,7 +2,7 @@
 
 ## Requirements
 
-You will need to have [zx](https://github.com/google/zx) installed.
+- [zx](https://github.com/google/zx)
 
 ## Usage
 

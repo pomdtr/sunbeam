@@ -7,7 +7,9 @@ git log | jc --git-log | sunbeam query '.[] | {
     subtitle: .commit[:7],
     accessories: [.author, .date],
     actions: [
-        { title: "Copy Commit Hash", text: .commit, type: "copy" }
+        { title: "Checkout Commit", type: "run", command: "git checkout \(.commit)" },
+        { title: "Copy Commit Hash", text: .commit, type: "copy", shortcut: "ctrl+h" },
+        { title: "Copy Message", text: .message, type: "copy", shortcut: "ctrl+m" }
     ]
 }' | sunbeam query --slurp '{
     type: "list",

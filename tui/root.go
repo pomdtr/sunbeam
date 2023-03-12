@@ -2,20 +2,19 @@ package tui
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
+	"html/template"
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 
+	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
+	"mvdan.cc/sh/v3/shell"
 )
 
 type ReloadPageMsg struct{}
@@ -63,12 +62,12 @@ func (m *Model) Init() tea.Cmd {
 	return m.pages[0].Init()
 }
 
-func (m *Model) CurrentUrl() *url.URL {
+func (m *Model) WorkingDir() string {
 	if len(m.pages) == 0 {
-		return nil
+		return ""
 	}
 
-	return m.pages[len(m.pages)-1].baseUrl
+	return m.pages[len(m.pages)-1].workingDir
 }
 
 func (m *Model) handleAction(action schemas.Action) tea.Cmd {
@@ -98,64 +97,41 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 		m.hidden = true
 		return tea.Quit
 	case schemas.ReadAction:
-		page := action.Page
+		var page string
+		if path.IsAbs(action.Page) {
+			page = action.Page
+		} else {
+			page = path.Join(m.WorkingDir(), action.Page)
+		}
 
-		baseUrl := m.CurrentUrl()
-		runner := NewCommandRunner(func(query string) ([]byte, error) {
-			switch baseUrl.Scheme {
-			case "http", "https":
-				target := url.URL{
-					Scheme: baseUrl.Scheme,
-					Path:   path.Join(baseUrl.Path, page),
-				}
-
-				res, err := http.Get(target.String())
-				if err != nil {
-					return nil, fmt.Errorf("failed to get page: %s", err)
-				}
-				defer res.Body.Close()
-
-				if res.StatusCode != http.StatusOK {
-					return nil, fmt.Errorf("failed to get page: %s", res.Status)
-				}
-
-				return io.ReadAll(res.Body)
-			case "file":
-				return os.ReadFile(path.Join(baseUrl.Path, page))
-			default:
-				return nil, fmt.Errorf("unsupported scheme: %s", m.CurrentUrl().Scheme)
-			}
-		}, &url.URL{
-			Scheme: baseUrl.Scheme,
-			Path:   path.Dir(page),
-		})
+		runner := NewRunner(NewFileGenerator(
+			page,
+		), path.Dir(page))
 		return m.Push(runner)
 	case schemas.RunAction:
-		if m.CurrentUrl().Scheme != "file" {
+		args, err := shell.Fields(action.Command, nil)
+		if err != nil {
 			return func() tea.Msg {
-				return fmt.Errorf("unsupported scheme: %s", m.CurrentUrl().Scheme)
+				return fmt.Errorf("failed to parse command: %s", err)
 			}
+		}
+
+		name := args[0]
+		var extraArgs []string
+		if len(args) > 1 {
+			extraArgs = args[1:]
 		}
 
 		switch action.OnSuccess {
 		case schemas.PushOnSuccess:
-			return m.Push(NewCommandRunner(func(query string) ([]byte, error) {
-				cmd := exec.Command(action.Command, action.Args...)
-				cmd.Stdin = strings.NewReader(query)
-				cmd.Dir = m.CurrentUrl().Path
-				output, err := cmd.Output()
-				if err != nil {
-					if err, ok := err.(*exec.ExitError); ok {
-						return nil, fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
-					}
-					return nil, err
-				}
-
-				return output, nil
-			}, m.CurrentUrl()))
+			workingDir := m.WorkingDir()
+			generator := NewCommandGenerator(name, extraArgs, workingDir)
+			runner := NewRunner(generator, workingDir)
+			return m.Push(runner)
 		case schemas.ReloadOnSuccess:
 			return func() tea.Msg {
-				command := exec.Command(action.Command, action.Args...)
+				command := exec.Command(name, extraArgs...)
+				command.Dir = m.WorkingDir()
 				err := command.Run()
 				if err != nil {
 					if err, ok := err.(*exec.ExitError); ok {
@@ -167,8 +143,9 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 				return ReloadPageMsg{}
 			}
 		case schemas.ExitOnSuccess:
-			command := exec.Command(action.Command, action.Args...)
+			command := exec.Command(name, extraArgs...)
 			m.exitCmd = command
+			m.exitCmd.Dir = m.WorkingDir()
 			m.hidden = true
 			return tea.Quit
 		default:
@@ -224,18 +201,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
+				funcmap := template.FuncMap{}
 				for key, value := range values {
-					msg.Command = strings.ReplaceAll(msg.Command, fmt.Sprintf("${input:%s}", key), value)
-					for i, arg := range msg.Args {
-						arg = strings.ReplaceAll(arg, fmt.Sprintf("${input:%s}", key), value)
-						msg.Args[i] = arg
+					funcmap[key] = func() string {
+						return shellescape.Quote(value)
+					}
+				}
+
+				renderedCommand, err := utils.RenderString(msg.Command, funcmap)
+				if err != nil {
+					return func() tea.Msg {
+						return fmt.Errorf("failed to render command: %s", err)
 					}
 				}
 
 				return func() tea.Msg {
 					return schemas.Action{
-						Command:   msg.Command,
-						Args:      msg.Args,
+						Type:      schemas.RunAction,
+						Command:   renderedCommand,
 						OnSuccess: msg.OnSuccess,
 					}
 				}

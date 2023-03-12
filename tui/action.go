@@ -62,7 +62,7 @@ func (al *ActionList) SetActions(actions ...schemas.Action) {
 			ListItem: schemas.ListItem{
 				Title:    action.Title(),
 				Subtitle: action.Shortcut,
-				Actions:  actions,
+				Actions:  []schemas.Action{action},
 			},
 		}
 	}
@@ -109,6 +109,7 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			}
 		default:
 			for _, action := range al.actions {
+				action := action
 				if action.Shortcut == msg.String() {
 					al.Blur()
 					return al, func() tea.Msg {

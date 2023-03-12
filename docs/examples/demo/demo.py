@@ -47,15 +47,13 @@ if not args.command:
                     "type": "run",
                     "onSuccess": "push",
                     "title": "Tell me more about you!",
-                    "command": sys.argv[0],
-                    "args": ["help"],
+                    "command": f"{sys.argv[0]} help",
                 },
                 {
                     "type": "run",
                     "onSuccess": "push",
                     "title": "Show me a static list!",
-                    "command": sys.argv[0],
-                    "args": ["static-list", "${input:nb_items}"],
+                    "command": f"{sys.argv[0]} static-list {{{{ nb_items }}}}",
                     "inputs": [
                         {
                             "name": "nb_items",
@@ -68,8 +66,7 @@ if not args.command:
                     "type": "run",
                     "onSuccess": "push",
                     "title": "Show me a dynamic list!",
-                    "command": sys.argv[0],
-                    "args": ["dynamic-list"],
+                    "command": f"{sys.argv[0]} dynamic-list",
                 },
                 {
                     "type": "open",
@@ -164,14 +161,14 @@ elif args.command == "static-list":
     json.dump(
         {
             "type": "list",
-            "showPreview": True,
+            "showDetail": True,
             "items": [
                 {
                     "title": "Title",
                     "subtitle": "Subtitle",
                     "accessories": [f"Item {i+1}"],
-                    "preview": {
-                        "text": f"Preview text of item {i+1}",
+                    "detail": {
+                        "text": f"Detail text of item {i+1}",
                     },
                     "actions": [],
                 }

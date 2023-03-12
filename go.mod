@@ -3,6 +3,7 @@ module github.com/pomdtr/sunbeam
 go 1.19
 
 require (
+	github.com/alessio/shellescape v1.4.1
 	github.com/charmbracelet/bubbles v0.15.0
 	github.com/charmbracelet/bubbletea v0.23.2
 	github.com/charmbracelet/lipgloss v0.6.0
@@ -10,6 +11,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
 	github.com/spf13/cobra v1.6.1
+	mvdan.cc/sh/v3 v3.6.0
 )
 
 require (
@@ -33,7 +35,7 @@ require (
 	github.com/muesli/termenv v0.14.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/sahilm/fuzzy v0.1.0
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 )

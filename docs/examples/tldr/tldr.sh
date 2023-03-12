@@ -7,9 +7,8 @@ PLATFORM="${1:-osx}"
 # shellcheck disable=SC2016
 tldr --list --platform="$PLATFORM" | sunbeam query --arg platform="$PLATFORM" -R '{
     title: .,
-    preview: {
-      command: "tldr",
-      args: ["--color=always", "--platform=\($platform)", .],
+    detail: {
+      command: "tldr --color=always --platform=\($platform) \(.)",
     },
     actions: [
       {
@@ -21,7 +20,7 @@ tldr --list --platform="$PLATFORM" | sunbeam query --arg platform="$PLATFORM" -R
 }' | sunbeam query --slurp '
   {
     type: "list",
-    showPreview: true,
+    showDetail: true,
     items: .
   }
 '

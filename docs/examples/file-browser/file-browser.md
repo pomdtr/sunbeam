@@ -2,7 +2,7 @@
 
 ## Requirements
 
-You will need to have [Python](https://www.python.org/) installed.
+- [python](https://www.python.org/)
 
 ## Usage
 

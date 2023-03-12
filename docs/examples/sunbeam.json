@@ -50,10 +50,7 @@
                     "type": "run",
                     "title": "Search Go Docs",
                     "onSuccess": "push",
-                    "command": "./devdocs/devdocs.sh",
-                    "args": [
-                        "go"
-                    ]
+                    "command": "./devdocs/devdocs.sh go"
                 }
             ]
         },
@@ -71,18 +68,12 @@
                     "type": "run",
                     "title": "Browse Root Dir",
                     "onSuccess": "push",
-                    "command": "./file-browser/file-browser.py",
-                    "args": [
-                        "/"
-                    ]
+                    "command": "./file-browser/file-browser.py /"
                 },
                 {
                     "type": "run",
                     "title": "Browse Custom Dir",
-                    "command": "./file-browser/file-browser.py",
-                    "args": [
-                        "${input:dir}"
-                    ],
+                    "command": "./file-browser/file-browser.py {{dir}}",
                     "onSuccess": "push",
                     "inputs": [
                         {
@@ -108,11 +99,7 @@
                     "type": "run",
                     "title": "Search Excalidraw Pull Requests",
                     "onSuccess": "push",
-                    "command": "./github/github.sh",
-                    "args": [
-                        "list-prs",
-                        "pomdtr/excalidraw"
-                    ]
+                    "command": "./github/github.sh list-prs pomdtr/excalidraw"
                 }
             ]
         },

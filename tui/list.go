@@ -79,18 +79,18 @@ func (i ListItem) Render(width int, selected bool) string {
 }
 
 type List struct {
-	header      Header
-	footer      Footer
-	actionList  ActionList
-	actions     []schemas.Action
-	PreviewFunc func(schemas.ListItem) string
+	header     Header
+	footer     Footer
+	actionList ActionList
+	actions    []schemas.Action
+	DetailFunc func(schemas.ListItem) string
 
 	GenerateItems bool
-	ShowPreview   bool
+	ShowDetail    bool
 
-	filter         Filter
-	viewport       viewport.Model
-	previewContent string
+	filter        Filter
+	viewport      viewport.Model
+	detailContent string
 }
 
 func (c *List) SetTitle(title string) {
@@ -135,12 +135,12 @@ func (list *List) SetActions(actions []schemas.Action) {
 	}
 }
 
-func (c *List) RefreshPreview() {
+func (c *List) RefreshDetail() {
 	c.viewport.SetYOffset(0)
-	previewWidth := c.viewport.Width - 2 // take padding into account
-	previewContent := wrap.String(wordwrap.String(c.previewContent, previewWidth), previewWidth)
+	detailWidth := c.viewport.Width - 2 // take padding into account
+	detailContent := wrap.String(wordwrap.String(c.detailContent, detailWidth), detailWidth)
 
-	c.viewport.SetContent(previewContent)
+	c.viewport.SetContent(detailContent)
 }
 
 func (c *List) SetSize(width, height int) {
@@ -148,12 +148,12 @@ func (c *List) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
 	c.actionList.SetSize(width, height)
-	if c.ShowPreview {
+	if c.ShowDetail {
 		listWidth := width/3 - 1 // take separator into account
 		c.filter.SetSize(listWidth, availableHeight)
 		c.viewport.Width = width - listWidth
 		c.viewport.Height = availableHeight
-		c.RefreshPreview()
+		c.RefreshDetail()
 	} else {
 		c.filter.SetSize(width, availableHeight)
 	}
@@ -194,12 +194,12 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 	return c.header.SetIsLoading(isLoading)
 }
 
-type PreviewContentMsg string
+type ContentMsg string
 
 func (l *List) updateSelection(filter Filter) FilterItem {
 	actions := make([]schemas.Action, 0)
 	if filter.Selection() == nil {
-		l.previewContent = ""
+		l.detailContent = ""
 	} else {
 		item := filter.Selection().(ListItem)
 		l.actionList.SetTitle(item.Title)
@@ -267,7 +267,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return ReloadPageMsg{}
 		}
 	case SelectionChangeMsg:
-		if !c.ShowPreview {
+		if !c.ShowDetail {
 			return c, nil
 		}
 
@@ -280,20 +280,20 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		item := c.filter.Selection().(ListItem)
-		if c.PreviewFunc == nil {
+		if c.DetailFunc == nil {
 			return c, nil
 		}
 
 		cmd := c.SetIsLoading(true)
 
 		return c, tea.Sequence(cmd, func() tea.Msg {
-			return PreviewContentMsg(c.PreviewFunc(item.ListItem))
+			return ContentMsg(c.DetailFunc(item.ListItem))
 		})
 
-	case PreviewContentMsg:
+	case ContentMsg:
 		c.SetIsLoading(false)
-		c.previewContent = string(msg)
-		c.RefreshPreview()
+		c.detailContent = string(msg)
+		c.RefreshDetail()
 		return c, nil
 	}
 
@@ -340,7 +340,7 @@ func (c List) View() string {
 		return c.actionList.View()
 	}
 
-	if c.ShowPreview {
+	if c.ShowDetail {
 		var separatorChars = make([]string, c.viewport.Height)
 		for i := 0; i < c.viewport.Height; i++ {
 			separatorChars[i] = "│"

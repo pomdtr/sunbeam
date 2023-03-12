@@ -45,8 +45,7 @@ def handle(args: argparse.Namespace):
                         {
                             "type": "run",
                             "title": "Add Item",
-                            "command": sys.argv[0],
-                            "args": ["add", "${input:title}"],
+                            "command": f"{sys.argv[0]} add {{{{ title }}}}",
                             "inputs": [
                                 {
                                     "name": "title",
@@ -67,11 +66,7 @@ def handle(args: argparse.Namespace):
                                 {
                                     "type": "run",
                                     "title": "Toggle Completion",
-                                    "command": sys.argv[0],
-                                    "args": [
-                                        "toggle",
-                                        key,
-                                    ],
+                                    "command": f"{sys.argv[0]} toggle {key}",
                                     "onSuccess": "reload",
                                 },
                                 {
@@ -79,12 +74,7 @@ def handle(args: argparse.Namespace):
                                     "title": "Edit Title",
                                     "shortcut": "ctrl+e",
                                     "onSuccess": "reload",
-                                    "command": sys.argv[0],
-                                    "args": [
-                                        "edit-title",
-                                        key,
-                                        "${input:title}",
-                                    ],
+                                    "command": f"{sys.argv[0]} edit-title {key} {{{{ title }}}}",
                                     "inputs": [
                                         {
                                             "name": "title",
@@ -98,11 +88,7 @@ def handle(args: argparse.Namespace):
                                     "title": "Delete",
                                     "shortcut": "ctrl+d",
                                     "onSuccess": "reload",
-                                    "command": sys.argv[0],
-                                    "args": [
-                                        "delete",
-                                        key,
-                                    ],
+                                    "command": f"{sys.argv[0]} delete {key}",
                                 },
                             ],
                         }

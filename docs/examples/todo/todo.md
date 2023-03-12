@@ -1,5 +1,9 @@
 # Todo List
 
+## Requirements
+
+- [python](https://www.python.org/)
+
 ## Usage
 
 ```bash

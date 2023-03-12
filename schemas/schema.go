@@ -66,39 +66,45 @@ func (p *PageType) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type Response struct {
+func (p PageType) MarshalJSON() ([]byte, error) {
+	switch p {
+	case DetailPage:
+		return json.Marshal("detail")
+	case ListPage:
+		return json.Marshal("list")
+	default:
+		return nil, fmt.Errorf("unknown page type: %d", p)
+	}
+}
+
+type Page struct {
 	Type    PageType `json:"type"`
-	Title   string   `json:"title"`
-	Actions []Action `json:"actions"`
+	Title   string   `json:"title,omitempty"`
+	Actions []Action `json:"actions,omitempty"`
 
 	*Detail
 	*List
 }
 
 type Detail struct {
-	Content Preview `json:"content"`
+	Text     string `json:"text"`
+	Command  string `json:"command"`
+	Language string `json:"language"`
 }
 
 type List struct {
-	ShowPreview   bool       `json:"showPreview"`
+	ShowDetail    bool       `json:"showDetail"`
 	GenerateItems bool       `json:"generateItems"`
 	Items         []ListItem `json:"items"`
 }
 
-type Preview struct {
-	Text     string   `json:"text"`
-	Language string   `json:"language"`
-	Command  string   `json:"command"`
-	Args     []string `json:"args"`
-}
-
 type ListItem struct {
-	Id          string   `json:"id"`
+	Id          string   `json:"id,omitempty"`
 	Title       string   `json:"title"`
-	Subtitle    string   `json:"subtitle"`
-	Preview     *Preview `json:"preview"`
-	Accessories []string `json:"accessories"`
-	Actions     []Action `json:"actions"`
+	Subtitle    string   `json:"subtitle,omitempty"`
+	Detail      *Detail  `json:"detail,omitempty"`
+	Accessories []string `json:"accessories,omitempty"`
+	Actions     []Action `json:"actions,omitempty"`
 }
 
 type FormInputType int
@@ -130,15 +136,28 @@ func (input *FormInputType) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
+func (input FormInputType) MarshalJSON() ([]byte, error) {
+	switch input {
+	case TextField:
+		return json.Marshal("textfield")
+	case TextArea:
+		return json.Marshal("textarea")
+	case DropDown:
+		return json.Marshal("dropdown")
+	default:
+		return nil, fmt.Errorf("unknown form input type: %d", input)
+	}
+}
+
 type FormInput struct {
 	Name        string        `json:"name"`
 	Type        FormInputType `json:"type"`
 	Title       string        `json:"title"`
-	Placeholder string        `json:"placeholder"`
-	Default     string        `json:"default"`
+	Placeholder string        `json:"placeholder,omitempty"`
+	Default     string        `json:"default,omitempty"`
 
-	Choices []string `json:"choices"`
-	Label   string   `json:"label"`
+	// Only for dropdown
+	Choices []string `json:"choices,omitempty"`
 }
 
 type ActionType int
@@ -176,6 +195,23 @@ func (a *ActionType) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
+func (a ActionType) MarshalJSON() ([]byte, error) {
+	switch a {
+	case CopyAction:
+		return json.Marshal("copy")
+	case OpenAction:
+		return json.Marshal("open")
+	case ReadAction:
+		return json.Marshal("read")
+	case RunAction:
+		return json.Marshal("run")
+	case ReloadAction:
+		return json.Marshal("reload")
+	default:
+		return nil, fmt.Errorf("unknown action type: %d", a)
+	}
+}
+
 type OnSuccessType int
 
 const (
@@ -202,28 +238,35 @@ func (o *OnSuccessType) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
+func (o OnSuccessType) MarshalJSON() ([]byte, error) {
+	switch o {
+	case PushOnSuccess:
+		return json.Marshal("push")
+	case ReloadOnSuccess:
+		return json.Marshal("reload")
+	default:
+		return nil, fmt.Errorf("unknown on success type: %d", o)
+	}
+}
+
 type Action struct {
-	RawTitle string     `json:"title"`
-	Shortcut string     `json:"shortcut"`
+	RawTitle string     `json:"title,omitempty"`
+	Shortcut string     `json:"shortcut,omitempty"`
 	Type     ActionType `json:"type"`
 
-	Inputs []FormInput `json:"inputs"`
-
-	// edit
-	Page string `json:"page"`
-
 	// open
-	Target string `json:"target"`
+	Target string `json:"target,omitempty"`
 
 	// copy
-	Text string `json:"text"`
+	Text string `json:"text,omitempty"`
 
-	// run / push
-	Command string   `json:"command"`
-	Args    []string `json:"args"`
+	// read
+	Page string `json:"page,omitempty"`
 
 	// run
-	OnSuccess OnSuccessType `json:"onSuccess"`
+	Command   string        `json:"command,omitempty"`
+	Inputs    []FormInput   `json:"inputs,omitempty"`
+	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
 }
 
 func (a Action) Title() string {

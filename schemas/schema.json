@@ -48,7 +48,7 @@
                     "generateItems": {
                         "type": "boolean"
                     },
-                    "showPreview": {
+                    "showDetail": {
                         "type": "boolean"
                     },
                     "actions": {
@@ -87,8 +87,11 @@
                     "$schema": {
                         "type": "string"
                     },
-                    "content": {
-                        "$ref": "#/$defs/preview"
+                    "text": {
+                        "type": "string"
+                    },
+                    "command": {
+                        "type": "string"
                     },
                     "type": {
                         "const": "detail"
@@ -123,8 +126,14 @@
                         }
                     ]
                 },
-                "preview": {
-                    "$ref": "#/$defs/preview"
+                "detail": {
+                    "type": "object",
+                    "text": {
+                        "type": "string"
+                    },
+                    "command": {
+                        "type": "string"
+                    }
                 },
                 "accessories": {
                     "type": "array",
@@ -265,12 +274,6 @@
                             },
                             "command": {
                                 "type": "string"
-                            },
-                            "args": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                }
                             }
                         }
                     }
@@ -452,40 +455,6 @@
                                 }
                             },
                             "default": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            ]
-        },
-        "preview": {
-            "oneOf": [
-                {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                        "text"
-                    ],
-                    "properties": {
-                        "text": {
-                            "type": "string"
-                        }
-                    }
-                },
-                {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                        "command"
-                    ],
-                    "properties": {
-                        "command": {
-                            "type": "string"
-                        },
-                        "args": {
-                            "type": "array",
-                            "items": {
                                 "type": "string"
                             }
                         }

@@ -55,7 +55,7 @@ func NewDetail(title string, contentCmd func() string, actions []schemas.Action)
 func (d *Detail) Init() tea.Cmd {
 	return func() tea.Msg {
 		content := d.ContentCmd()
-		return PreviewContentMsg(content)
+		return ContentMsg(content)
 	}
 }
 
@@ -83,9 +83,9 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 		}
-	case PreviewContentMsg:
+	case ContentMsg:
 		c.content = string(msg)
-		c.RefreshPreview()
+		c.RefreshContent()
 	}
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
@@ -102,7 +102,7 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return &c, tea.Batch(cmds...)
 }
 
-func (c *Detail) RefreshPreview() {
+func (c *Detail) RefreshContent() {
 	content := wrap.String(wordwrap.String(c.content, c.viewport.Width-2), c.viewport.Width-2)
 	c.viewport.SetContent(content)
 }
@@ -122,7 +122,7 @@ func (c *Detail) SetSize(width, height int) {
 		c.viewport.Height = viewportHeight
 	}
 
-	c.RefreshPreview()
+	c.RefreshContent()
 }
 
 func (c *Detail) View() string {
