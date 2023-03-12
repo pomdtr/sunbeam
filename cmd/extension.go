@@ -70,6 +70,12 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								RawTitle: "Install",
 								Command:  fmt.Sprintf("sunbeam extension install %s", repo.HtmlUrl),
 							},
+							{
+								Type:     schemas.OpenAction,
+								RawTitle: "Open in Browser",
+								Shortcut: "ctrl+o",
+								Target:   repo.HtmlUrl,
+							},
 						},
 					})
 				}
@@ -123,6 +129,12 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								Command:   fmt.Sprintf("sunbeam extension exec %s", extension),
 							},
 							{
+								RawTitle: "Upgrade Extension",
+								Type:     schemas.RunAction,
+								Command:  fmt.Sprintf("sunbeam extension upgrade %s", extension),
+								Shortcut: "ctrl+u",
+							},
+							{
 								Type:      schemas.RunAction,
 								RawTitle:  "Remove Extension",
 								Shortcut:  "ctrl+x",
@@ -135,6 +147,22 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 
 				page := schemas.Page{
 					Type: schemas.ListPage,
+					Actions: []schemas.Action{
+						{
+							Type:     schemas.RunAction,
+							RawTitle: "Create Extension",
+							Command:  "sunbeam extension create {{ extensionName }}",
+							Inputs: []schemas.FormInput{
+								{
+									Type:        schemas.TextField,
+									Name:        "extensionName",
+									Title:       "Extension Name",
+									Placeholder: "my-extension",
+								},
+							},
+							Shortcut: "ctrl+n",
+						},
+					},
 					List: &schemas.List{
 						Items: listItems,
 					},
