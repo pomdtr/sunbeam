@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strconv"
 
 	_ "embed"
 
@@ -65,9 +64,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 		// If the config file does not exist, create it
 		Run: func(cmd *cobra.Command, args []string) {
-			padding, _ := cmd.Flags().GetInt("padding")
-			maxHeight, _ := cmd.Flags().GetInt("height")
-
 			generator := func(string) ([]byte, error) {
 				return os.ReadFile(configFile)
 			}
@@ -83,17 +79,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			runner := tui.NewRunner(generator, configDir)
-			model := tui.NewModel(runner, tui.SunbeamOptions{
-				Padding:   padding,
-				MaxHeight: maxHeight,
-			})
-			model.Draw()
+			tui.NewModel(runner).Draw()
 		},
 	}
-
-	rootCmd.Flags().IntP("padding", "p", lookupInt("SUNBEAM_PADDING", 0), "padding around the window")
-	rootCmd.Flags().IntP("height", "H", lookupInt("SUNBEAM_HEIGHT", 0), "maximum height of the window")
-	rootCmd.Flags().StringP("directory", "C", "", "cd to dir before starting sunbeam")
 
 	rootCmd.AddGroup(coreCommandsGroup, extensionCommandsGroup)
 
@@ -167,20 +155,7 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 
 			runner := tui.NewRunner(generator, cwd)
 
-			tui.NewModel(runner, tui.SunbeamOptions{
-				Padding:   0,
-				MaxHeight: 0,
-			}).Draw()
+			tui.NewModel(runner).Draw()
 		},
 	}
-}
-
-func lookupInt(key string, fallback int) int {
-	if env, ok := os.LookupEnv(key); ok {
-		if value, err := strconv.Atoi(env); err == nil {
-			return value
-		}
-	}
-
-	return fallback
 }

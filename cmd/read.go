@@ -17,9 +17,6 @@ func NewPushCmd() *cobra.Command {
 		Short: "Read page from file or stdin, and push it's content",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			padding, _ := cmd.Flags().GetInt("padding")
-			maxHeight, _ := cmd.Flags().GetInt("height")
-
 			var runner *tui.CommandRunner
 			if len(args) == 0 {
 				if isatty.IsTerminal(os.Stdin.Fd()) {
@@ -57,10 +54,7 @@ func NewPushCmd() *cobra.Command {
 				return
 			}
 
-			model := tui.NewModel(runner, tui.SunbeamOptions{
-				Padding:   padding,
-				MaxHeight: maxHeight,
-			})
+			model := tui.NewModel(runner)
 
 			model.Draw()
 		},

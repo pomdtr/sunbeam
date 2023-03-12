@@ -16,9 +16,6 @@ func NewRunCmd() *cobra.Command {
 		Short: "Run a script and push it's output",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			padding, _ := cmd.Flags().GetInt("padding")
-			maxHeight, _ := cmd.Flags().GetInt("height")
-
 			generator := func(s string) ([]byte, error) {
 				name, args := SplitCommand(args)
 				command := exec.Command(name, args...)
@@ -47,10 +44,7 @@ func NewRunCmd() *cobra.Command {
 			cwd, _ := os.Getwd()
 			command, args := SplitCommand(args)
 			runner := tui.NewRunner(tui.NewCommandGenerator(command, args, cwd), cwd)
-			tui.NewModel(runner, tui.SunbeamOptions{
-				Padding:   padding,
-				MaxHeight: maxHeight,
-			}).Draw()
+			tui.NewModel(runner).Draw()
 		},
 	}
 

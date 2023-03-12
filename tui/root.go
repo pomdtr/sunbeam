@@ -49,10 +49,13 @@ type Model struct {
 	hidden bool
 }
 
-func NewModel(root *CommandRunner, options SunbeamOptions) *Model {
+func NewModel(root *CommandRunner) *Model {
 	return &Model{pages: []*CommandRunner{
 		root,
-	}, options: options}
+	}, options: SunbeamOptions{
+		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
+		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
+	}}
 }
 
 func (m *Model) Init() tea.Cmd {

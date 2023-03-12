@@ -101,7 +101,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 
 			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(generator, cwd)
-			tui.NewModel(runner, tui.SunbeamOptions{}).Draw()
+			tui.NewModel(runner).Draw()
 		},
 	}
 }
@@ -182,7 +182,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 
 			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(generator, cwd)
-			tui.NewModel(runner, tui.SunbeamOptions{}).Draw()
+			tui.NewModel(runner).Draw()
 		},
 	}
 }
@@ -255,10 +255,7 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 
 			runner := tui.NewRunner(generator, cwd)
 
-			tui.NewModel(runner, tui.SunbeamOptions{
-				Padding:   0,
-				MaxHeight: 0,
-			}).Draw()
+			tui.NewModel(runner).Draw()
 		},
 	}
 }
