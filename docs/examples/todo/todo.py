@@ -59,6 +59,7 @@ def handle(args: argparse.Namespace):
                     ],
                     "items": [
                         {
+                            "id": key,
                             "title": item["title"],
                             "subtitle": "Done" if item["done"] else "Todo",
                             "accessories": [key],

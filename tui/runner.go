@@ -3,7 +3,6 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -162,8 +161,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 
 			// Save query string
 			var query string
+			var selectedId string
+
 			if runner.list != nil {
 				query = runner.list.Query()
+				if runner.list.Selection() != nil {
+					selectedId = runner.list.Selection().Id
+				}
 			}
 
 			runner.list = NewList(page, runner.workingDir)
@@ -172,16 +176,12 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 			listItems := make([]ListItem, len(page.List.Items))
 			for i, scriptItem := range page.List.Items {
 				scriptItem := scriptItem
-
-				if scriptItem.Id == "" {
-					scriptItem.Id = strconv.Itoa(i)
-				}
-
 				listItem := ParseScriptItem(scriptItem)
 				listItems[i] = listItem
 			}
 
-			cmd := runner.list.SetItems(listItems)
+			cmd := runner.list.SetItems(listItems, selectedId)
+
 			runner.list.SetSize(runner.width, runner.height)
 			return runner, tea.Sequence(runner.list.Init(), cmd)
 		}

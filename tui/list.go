@@ -200,7 +200,7 @@ func (c List) Selection() *ListItem {
 	return &item
 }
 
-func (c *List) SetItems(items []ListItem) tea.Cmd {
+func (c *List) SetItems(items []ListItem, selectedId string) tea.Cmd {
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
 		filterItems[i] = item
@@ -209,6 +209,9 @@ func (c *List) SetItems(items []ListItem) tea.Cmd {
 	c.filter.SetItems(filterItems)
 	if !c.GenerateItems {
 		c.filter.FilterItems(c.Query())
+	}
+	if selectedId != "" {
+		c.filter.Select(selectedId)
 	}
 
 	selection := c.updateSelection(c.filter)

@@ -85,6 +85,14 @@ func (f *Filter) FilterItems(query string) {
 	f.minIndex = 0
 }
 
+func (f *Filter) Select(id string) {
+	for i, item := range f.filtered {
+		if item.ID() == id {
+			f.cursor = i
+		}
+	}
+}
+
 func (m Filter) Init() tea.Cmd { return nil }
 
 func (m Filter) View() string {

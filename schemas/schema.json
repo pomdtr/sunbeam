@@ -119,6 +119,9 @@
                 "title": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "subtitle": {
                     "anyOf": [
                         {
