@@ -117,7 +117,7 @@ func (input *FormInputType) UnmarshalJSON(bytes []byte) error {
 	}
 
 	switch s {
-	case "text":
+	case "textfield":
 		*input = TextField
 	case "textarea":
 		*input = TextArea
