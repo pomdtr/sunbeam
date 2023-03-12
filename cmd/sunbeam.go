@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -12,9 +11,11 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 
-	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/tui"
 )
+
+//go:embed sunbeam.json
+var defaultManifest string
 
 func exitWithErrorMsg(msg string, args ...any) {
 	fmt.Fprintf(os.Stderr, msg, args...)
@@ -34,8 +35,12 @@ var (
 
 func Execute(version string) error {
 	homeDir, _ := os.UserHomeDir()
+
+	configDir := path.Join(homeDir, ".config", "sunbeam")
 	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
+
+	configFile := path.Join(configDir, "sunbeam.json")
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -46,81 +51,24 @@ func Execute(version string) error {
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args:    cobra.NoArgs,
 		Version: version,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if _, err := os.Stat(configFile); !os.IsNotExist(err) {
+				return
+			}
+
+			// Create the config file
+			_ = os.MkdirAll(configDir, 0755)
+
+			// Write the default manifest
+			_ = os.WriteFile(configFile, []byte(defaultManifest), 0644)
+		},
 		// If the config file does not exist, create it
 		Run: func(cmd *cobra.Command, args []string) {
 			padding, _ := cmd.Flags().GetInt("padding")
 			maxHeight, _ := cmd.Flags().GetInt("height")
 
-			cwd, _ := os.Getwd()
-			manifestPath := path.Join(cwd, "sunbeam.json")
-
 			generator := func(string) ([]byte, error) {
-				listItems := make([]schemas.ListItem, 0)
-				if _, err := os.Stat(manifestPath); err == nil {
-					listItems = append(listItems, schemas.ListItem{
-						Title: "Read Current Directory Config",
-						Actions: []schemas.Action{
-							{
-								Type:     schemas.ReadAction,
-								RawTitle: "Read",
-								Page:     manifestPath,
-							},
-						},
-					})
-				}
-
-				listItems = append(listItems, schemas.ListItem{
-					Title: "Manage Installed Extensions",
-					Actions: []schemas.Action{
-						{
-							Type:      schemas.RunAction,
-							RawTitle:  "Manage",
-							Command:   "sunbeam extension manage",
-							OnSuccess: schemas.PushOnSuccess,
-						},
-					},
-				})
-
-				listItems = append(listItems, schemas.ListItem{
-					Title: "Browse Extensions from Github",
-					Actions: []schemas.Action{
-						{
-							Type:      schemas.RunAction,
-							RawTitle:  "Browse",
-							Command:   "sunbeam extension browse",
-							OnSuccess: schemas.PushOnSuccess,
-						},
-					},
-				})
-
-				// Add the core commands
-				listItems = append(listItems, schemas.ListItem{
-					Title: "Create Extension",
-					Actions: []schemas.Action{
-						{
-							Type:     schemas.RunAction,
-							RawTitle: "Create Extension",
-							Command:  "sunbeam extension create {{ extensionName }}",
-							Inputs: []schemas.FormInput{
-								{
-									Type:        schemas.TextField,
-									Name:        "extensionName",
-									Placeholder: "my-extension",
-									Title:       "Extension Name",
-								},
-							},
-						},
-					},
-				})
-
-				page := schemas.Page{
-					Type: schemas.ListPage,
-					List: &schemas.List{
-						Items: listItems,
-					},
-				}
-
-				return json.Marshal(page)
+				return os.ReadFile(configFile)
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
@@ -133,7 +81,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return
 			}
 
-			runner := tui.NewRunner(generator, cwd)
+			runner := tui.NewRunner(generator, configDir)
 			model := tui.NewModel(runner, tui.SunbeamOptions{
 				Padding:   padding,
 				MaxHeight: maxHeight,

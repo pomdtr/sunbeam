@@ -1,0 +1,56 @@
+{
+    "$schema": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/schemas/schema.json",
+    "type": "list",
+    "items": [
+        {
+            "title": "Manage Installed Extensions",
+            "actions": [
+                {
+                    "title": "Manage Extensions",
+                    "type": "run",
+                    "command": "sunbeam extension manage",
+                    "onSuccess": "push"
+                }
+            ]
+        },
+        {
+            "title": "Browse Available Extensions",
+            "actions": [
+                {
+                    "title": "Browse Extensions",
+                    "type": "run",
+                    "command": "sunbeam extension browse",
+                    "onSuccess": "push"
+                }
+            ]
+        },
+        {
+            "title": "Create New Extension",
+            "actions": [
+                {
+                    "title": "Create Extension",
+                    "type": "run",
+                    "command": "sunbeam extension create {{ extensionName }}",
+                    "onSuccess": "push",
+                    "inputs": [
+                        {
+                            "title": "Extension Name",
+                            "name": "extensionName",
+                            "type": "textfield"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "Open Sunbeam Config",
+            "actions": [
+                {
+                    "title": "Open",
+                    "type": "open",
+                    "target": "./sunbeam.json"
+                }
+            ]
+        }
+    ]
+}
