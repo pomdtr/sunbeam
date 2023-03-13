@@ -136,13 +136,8 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 				exitWithErrorMsg("Extension not found: %s", extensionId)
 			}
 
-			extraArgs := []string{}
-			if len(args) > 1 {
-				extraArgs = args[1:]
-			}
-
 			cwd, _ := os.Getwd()
-			generator := tui.NewCommandGenerator(binPath, extraArgs, cwd)
+			generator := tui.NewCommandGenerator(binPath, args, cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
