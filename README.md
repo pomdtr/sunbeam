@@ -23,4 +23,4 @@ Sunbeam supports:
 ## Running the examples in this repository
 
 - clone this repository: `git clone https://github.com/pomdtr/sunbeam.git && cd sunbeam`
-- run sunbeam from the root of the repository: `go install && sunbeam`
+- run sunbeam from the root of the repository: `go install && sunbeam read sunbeam.yml`
