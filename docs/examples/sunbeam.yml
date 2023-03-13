@@ -1,0 +1,92 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/pomdtr/sunbeam/main/schemas/schema.json
+type: list
+title: Examples
+items:
+  - title: Search Bitwarden Items
+    subtitle: Bitwarden
+    actions:
+      - type: run
+        onSuccess: push
+        command: "./bitwarden/bitwarden.sh"
+  - title: Highlight Example
+    subtitle: Highlight
+    actions:
+      - title: Highlight Detail
+        type: run
+        onSuccess: push
+        command: "./highlight/highlight.sh"
+      - title: Highlight List
+        type: run
+        onSuccess: push
+        command: "./highlight/list.sh"
+  - title: Brew
+    subtitle: Brew
+    actions:
+      - type: run
+        onSuccess: push
+        command: "./brew/brew.sh"
+  - title: Demo
+    subtitle: Examples
+    actions:
+      - type: run
+        onSuccess: push
+        command: "./demo/demo.py"
+  - title: DevDocs
+    subtitle: Examples
+    actions:
+      - type: run
+        title: Search Docsets
+        onSuccess: push
+        command: "./devdocs/devdocs.sh"
+      - type: run
+        title: Search Go Docs
+        onSuccess: push
+        command: "./devdocs/devdocs.sh go"
+  - title: File Browser
+    subtitle: Examples
+    actions:
+      - type: run
+        title: Browse Current Dir
+        onSuccess: push
+        command: "./file-browser/file-browser.py"
+      - type: run
+        title: Browse Root Dir
+        onSuccess: push
+        command: "./file-browser/file-browser.py /"
+      - type: run
+        title: Browse Custom Dir
+        command: "./file-browser/file-browser.py {{dir}}"
+        onSuccess: push
+        inputs:
+          - name: dir
+            title: Directory
+            type: textfield
+  - title: Github
+    subtitle: Examples
+    actions:
+      - type: run
+        title: Search Repositories
+        onSuccess: push
+        command: "./github/github.sh"
+      - type: run
+        title: Search Excalidraw Pull Requests
+        onSuccess: push
+        command: "./github/github.sh list-prs pomdtr/excalidraw"
+  - title: Google Search
+    subtitle: Examples
+    actions:
+      - type: run
+        onSuccess: push
+        command: "./google-search/google-search.mjs"
+  - title: TLDR Pages
+    subtitle: Examples
+    actions:
+      - type: run
+        onSuccess: push
+        command: "./tldr/tldr.sh"
+  - title: List Todos
+    subtitle: Todo
+    actions:
+      - type: run
+        onSuccess: push
+        command: "./todo/todo.py"

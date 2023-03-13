@@ -24,7 +24,7 @@
                 "${workspaceFolder}/main.go",
                 "--",
                 "read",
-                "sunbeam.json"
+                "sunbeam.yml"
             ],
             "options": {
                 "env": {

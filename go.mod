@@ -24,6 +24,7 @@ require (
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/sync v0.1.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

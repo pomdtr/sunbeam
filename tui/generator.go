@@ -1,10 +1,15 @@
 package tui
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
+
+	"github.com/pomdtr/sunbeam/schemas"
+	"gopkg.in/yaml.v3"
 )
 
 type PageGenerator func(input string) ([]byte, error)
@@ -33,9 +38,27 @@ func NewCommandGenerator(command string, args []string, dir string) PageGenerato
 	}
 }
 
-func NewFileGenerator(path string) PageGenerator {
+func NewFileGenerator(name string) PageGenerator {
 	return func(input string) ([]byte, error) {
-		return os.ReadFile(path)
+		if path.Ext(name) == ".json" {
+			return os.ReadFile(name)
+		}
+
+		if path.Ext(name) == ".yaml" || path.Ext(name) == ".yml" {
+			bytes, err := os.ReadFile(name)
+			if err != nil {
+				return nil, err
+			}
+
+			var page schemas.Page
+			if err := yaml.Unmarshal(bytes, &page); err != nil {
+				return nil, err
+			}
+
+			return json.Marshal(page)
+		}
+
+		return nil, fmt.Errorf("unsupported file type")
 	}
 }
 

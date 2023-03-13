@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/pomdtr/sunbeam/main/schemas/schema.json
+type: list
+items:
+  - title: Show Examples
+    actions:
+      - type: read
+        page: "./docs/examples/sunbeam.yml"
+  - title: Show Getting Started
+    actions:
+      - type: read
+        page: "./docs/getting-started/sunbeam.yml"

@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/pomdtr/sunbeam/main/schemas/schema.json
+type: list
+items:
+    - title: Static List
+      actions:
+          - type: read
+            page: "./static-list.json"
+    - title: Dynamic List
+      actions:
+          - type: run
+            command: "./dynamic-list.py"
+            onSuccess: push
+    - title: Dynamic List with Args
+      actions:
+          - type: run
+            command: "./dynamic-list-with-args.py /"
+            onSuccess: push
+    - title: Full-Blown File Browser
+      actions:
+          - type: run
+            onSuccess: push
+            command: "../examples/file-browser/file-browser.py"

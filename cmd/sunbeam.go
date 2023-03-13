@@ -13,7 +13,7 @@ import (
 	"github.com/pomdtr/sunbeam/tui"
 )
 
-//go:embed sunbeam.json
+//go:embed root.yaml
 var defaultManifest string
 
 func exitWithErrorMsg(msg string, args ...any) {
@@ -40,7 +40,7 @@ func Execute(version string) error {
 	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
 
-	configFile := path.Join(configDir, "sunbeam.json")
+	rootFile := path.Join(configDir, "root.yaml")
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -52,7 +52,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Args:    cobra.NoArgs,
 		Version: version,
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if _, err := os.Stat(configFile); !os.IsNotExist(err) {
+			if _, err := os.Stat(rootFile); !os.IsNotExist(err) {
 				return
 			}
 
@@ -60,13 +60,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			_ = os.MkdirAll(configDir, 0755)
 
 			// Write the default manifest
-			_ = os.WriteFile(configFile, []byte(defaultManifest), 0644)
+			_ = os.WriteFile(rootFile, []byte(defaultManifest), 0644)
 		},
 		// If the config file does not exist, create it
 		Run: func(cmd *cobra.Command, args []string) {
-			generator := func(string) ([]byte, error) {
-				return os.ReadFile(configFile)
-			}
+			generator := tui.NewFileGenerator(rootFile)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")

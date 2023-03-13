@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
+	"gopkg.in/yaml.v3"
 
 	_ "embed"
 
@@ -77,13 +78,31 @@ func (p PageType) MarshalJSON() ([]byte, error) {
 	}
 }
 
+func (p *PageType) UnmarshalYAML(node *yaml.Node) error {
+	var s string
+	if err := node.Decode(&s); err != nil {
+		return err
+	}
+
+	switch s {
+	case "detail":
+		*p = DetailPage
+	case "list":
+		*p = ListPage
+	default:
+		return fmt.Errorf("unknown page type: %s", s)
+	}
+
+	return nil
+}
+
 type Page struct {
 	Type    PageType `json:"type"`
 	Title   string   `json:"title,omitempty"`
 	Actions []Action `json:"actions,omitempty"`
 
-	*Detail
-	*List
+	*Detail `yaml:",inline"`
+	*List   `yaml:",inline"`
 }
 
 type Detail struct {
@@ -93,9 +112,9 @@ type Detail struct {
 }
 
 type List struct {
-	ShowDetail    bool       `json:"showDetail"`
-	GenerateItems bool       `json:"generateItems"`
-	EmptyText     string     `json:"emptyText,omitempty"`
+	ShowDetail    bool       `json:"showDetail,omitempty" yaml:"showDetail"`
+	GenerateItems bool       `json:"generateItems,omitempty" yaml:"generateItems"`
+	EmptyText     string     `json:"emptyText,omitempty" yaml:"emptyText"`
 	Items         []ListItem `json:"items"`
 }
 
@@ -120,6 +139,26 @@ const (
 func (input *FormInputType) UnmarshalJSON(bytes []byte) error {
 	var s string
 	if err := json.Unmarshal(bytes, &s); err != nil {
+		return fmt.Errorf("unable to unmarshal form input type: %w", err)
+	}
+
+	switch s {
+	case "textfield":
+		*input = TextField
+	case "textarea":
+		*input = TextArea
+	case "dropdown":
+		*input = DropDown
+	default:
+		return fmt.Errorf("unknown form input type: %s", s)
+	}
+
+	return nil
+}
+
+func (input *FormInputType) UnmarshalYAML(value *yaml.Node) error {
+	var s string
+	if err := value.Decode(&s); err != nil {
 		return fmt.Errorf("unable to unmarshal form input type: %w", err)
 	}
 
@@ -218,6 +257,32 @@ func (a ActionType) MarshalJSON() ([]byte, error) {
 	}
 }
 
+func (a *ActionType) UnmarshalYAML(node *yaml.Node) error {
+	var rawType string
+	if err := node.Decode(&rawType); err != nil {
+		return err
+	}
+
+	switch rawType {
+	case "copy":
+		*a = CopyAction
+	case "open":
+		*a = OpenAction
+	case "read":
+		*a = ReadAction
+	case "run":
+		*a = RunAction
+	case "edit":
+		*a = EditAction
+	case "reload":
+		*a = ReloadAction
+	default:
+		return fmt.Errorf("unknown action type: %s", rawType)
+	}
+
+	return nil
+}
+
 type OnSuccessType int
 
 const (
@@ -255,8 +320,26 @@ func (o OnSuccessType) MarshalJSON() ([]byte, error) {
 	}
 }
 
+func (o *OnSuccessType) UnmarshalYAML(node *yaml.Node) error {
+	var rawType string
+	if err := node.Decode(&rawType); err != nil {
+		return err
+	}
+
+	switch rawType {
+	case "push":
+		*o = PushOnSuccess
+	case "reload":
+		*o = ReloadOnSuccess
+	default:
+		return fmt.Errorf("Unknown onSuccess type: %s", rawType)
+	}
+
+	return nil
+}
+
 type Action struct {
-	RawTitle string     `json:"title,omitempty"`
+	RawTitle string     `json:"title,omitempty" yaml:"title"`
 	Shortcut string     `json:"shortcut,omitempty"`
 	Type     ActionType `json:"type"`
 
@@ -275,7 +358,7 @@ type Action struct {
 	// run
 	Command   string        `json:"command,omitempty"`
 	Inputs    []FormInput   `json:"inputs,omitempty"`
-	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
+	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess"`
 }
 
 func (a Action) Title() string {
