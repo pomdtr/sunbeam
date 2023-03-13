@@ -61,9 +61,3 @@ func NewFileGenerator(name string) PageGenerator {
 		return nil, fmt.Errorf("unsupported file type")
 	}
 }
-
-func NewStaticGenerator(content []byte) PageGenerator {
-	return func(input string) ([]byte, error) {
-		return content, nil
-	}
-}
