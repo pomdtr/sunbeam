@@ -91,7 +91,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewCopyCmd())
 	rootCmd.AddCommand(NewOpenCmd())
-	rootCmd.AddCommand(NewHttpCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
 
