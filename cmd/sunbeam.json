@@ -1,6 +1,14 @@
 {
     "$schema": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/schemas/schema.json",
     "type": "list",
+    "actions": [
+        {
+            "title": "Edit Config",
+            "type": "edit",
+            "path": "~/.config/sunbeam/sunbeam.json",
+            "shortcut": "ctrl+e"
+        }
+    ],
     "items": [
         {
             "title": "Manage Installed Extensions",
@@ -39,16 +47,6 @@
                             "type": "textfield"
                         }
                     ]
-                }
-            ]
-        },
-        {
-            "title": "Open Sunbeam Config",
-            "actions": [
-                {
-                    "title": "Open",
-                    "type": "open",
-                    "target": "./sunbeam.json"
                 }
             ]
         }

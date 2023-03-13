@@ -168,6 +168,7 @@ const (
 	CopyAction
 	OpenAction
 	ReadAction
+	EditAction
 	RunAction
 	ReloadAction
 )
@@ -187,6 +188,8 @@ func (a *ActionType) UnmarshalJSON(bytes []byte) error {
 		*a = ReadAction
 	case "run":
 		*a = RunAction
+	case "edit":
+		*a = EditAction
 	case "reload":
 		*a = ReloadAction
 	default:
@@ -204,6 +207,8 @@ func (a ActionType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("open")
 	case ReadAction:
 		return json.Marshal("read")
+	case EditAction:
+		return json.Marshal("edit")
 	case RunAction:
 		return json.Marshal("run")
 	case ReloadAction:
@@ -263,6 +268,9 @@ type Action struct {
 
 	// read
 	Page string `json:"page,omitempty"`
+
+	// edit
+	Path string `json:"path,omitempty"`
 
 	// run
 	Command   string        `json:"command,omitempty"`

@@ -170,6 +170,7 @@
                         "copy",
                         "open",
                         "read",
+                        "edit",
                         "run"
                     ]
                 }
@@ -215,6 +216,39 @@
                         ],
                         "properties": {
                             "type": {
+                                "const": "edit"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "type",
+                            "path"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "const": "edit"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "shortcut": {
+                                "type": "string"
+                            },
+                            "path": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
                                 "const": "open"
                             }
                         }
@@ -236,6 +270,9 @@
                                 "type": "string"
                             },
                             "target": {
+                                "type": "string"
+                            },
+                            "path": {
                                 "type": "string"
                             }
                         }

@@ -81,6 +81,18 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 		return func() tea.Msg {
 			return ReloadPageMsg{}
 		}
+	case schemas.EditAction:
+		if strings.HasPrefix(action.Path, "~") {
+			home, _ := os.UserHomeDir()
+			action.Path = path.Join(home, action.Path[1:])
+		}
+		return func() tea.Msg {
+			return schemas.Action{
+				Type:      schemas.RunAction,
+				OnSuccess: schemas.ExitOnSuccess,
+				Command:   fmt.Sprintf("${EDITOR:-vi} %s", shellescape.Quote(action.Path)),
+			}
+		}
 	case schemas.OpenAction:
 		target, err := url.Parse(action.Target)
 		if err != nil {
