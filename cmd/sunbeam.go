@@ -78,7 +78,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return
 			}
 
-			runner := tui.NewRunner(generator, configDir)
+			cwd, _ := os.Getwd()
+			runner := tui.NewRunner(generator, cwd)
 			tui.NewModel(runner).Draw()
 		},
 	}
