@@ -11,6 +11,7 @@ import (
 	_ "embed"
 
 	"github.com/mattn/go-isatty"
+	cp "github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/tui"
 	"github.com/pomdtr/sunbeam/utils"
@@ -305,16 +306,35 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 				exitWithErrorMsg("Unable to parse repository: %s", err)
 			}
 
+			if !strings.HasPrefix(repository.Name(), "sunbeam-") {
+				exitWithErrorMsg("Extension name must be prefixed with sunbeam- (e.g. sunbeam-foo)")
+			}
+
 			targetDir := path.Join(extensionDir, repository.Name())
 			if _, err := os.Stat(targetDir); !os.IsNotExist(err) {
 				exitWithErrorMsg("Extension already installed: %s", repository.Name())
 			}
 
-			if err = utils.GitClone(repository, targetDir); err != nil {
+			tempDir, err := os.MkdirTemp("", "sunbeam-*")
+			if err != nil {
+				exitWithErrorMsg("Unable to install extension: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
+
+			if err = utils.GitClone(repository, tempDir); err != nil {
 				exitWithErrorMsg("Unable to install extension: %s", err)
 			}
 
-			fmt.Sprintln("Extension installed:", repository.Name())
+			binPath := path.Join(tempDir, repository.Name())
+			if os.Stat(binPath); os.IsNotExist(err) {
+				exitWithErrorMsg("Extension binary not found: %s", binPath)
+			}
+
+			if err := cp.Copy(tempDir, targetDir); err != nil {
+				exitWithErrorMsg("Unable to install extension: %s", err)
+			}
+
+			fmt.Println("Extension installed:", repository.Name())
 		},
 	}
 }
