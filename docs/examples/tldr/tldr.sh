@@ -14,7 +14,7 @@ tldr --list --platform="$PLATFORM" | sunbeam query --arg platform="$PLATFORM" -R
       {
         type: "open",
         title: "Open in browser",
-        target: "https://tldr.inbrowser.app/pages/common/\(. | @uri)",
+        url: "https://tldr.inbrowser.app/pages/common/\(. | @uri)",
       }
     ],
 }' | sunbeam query --slurp '

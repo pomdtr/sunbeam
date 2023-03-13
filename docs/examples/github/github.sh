@@ -14,7 +14,7 @@ if [[ $COMMAND == "list-repos" ]]; then
                 "\(.stargazers_count) *"
             ],
             actions: [
-                {type: "open", target: .html_url},
+                {type: "open", url: .html_url},
                 {
                     type: "run",
                     onSuccess: "push",
@@ -43,7 +43,7 @@ elif [[ $COMMAND == "list-prs" ]]; then
             "#\(.number)"
         ],
         actions: [
-            {type: "open", title: "Open in Browser", target: .url},
+            {type: "open", title: "Open in Browser", url: .url},
             {type: "copy", text: .url}
         ]
     }

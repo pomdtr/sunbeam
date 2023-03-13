@@ -343,17 +343,14 @@ type Action struct {
 	Shortcut string     `json:"shortcut,omitempty"`
 	Type     ActionType `json:"type"`
 
-	// open
-	Target string `json:"target,omitempty"`
-
 	// copy
 	Text string `json:"text,omitempty"`
 
-	// read
-	Page string `json:"page,omitempty"`
-
 	// edit
 	Path string `json:"path,omitempty"`
+
+	// open
+	Url string `json:"url,omitempty"`
 
 	// run
 	Command   string        `json:"command,omitempty"`

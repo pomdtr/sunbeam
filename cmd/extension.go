@@ -75,7 +75,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								Type:     schemas.OpenAction,
 								RawTitle: "Open in Browser",
 								Shortcut: "ctrl+o",
-								Target:   repo.HtmlUrl,
+								Url:      repo.HtmlUrl,
 							},
 						},
 					})

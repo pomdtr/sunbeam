@@ -255,8 +255,7 @@
                     },
                     "then": {
                         "required": [
-                            "type",
-                            "target"
+                            "type"
                         ],
                         "additionalProperties": false,
                         "properties": {
@@ -269,10 +268,10 @@
                             "shortcut": {
                                 "type": "string"
                             },
-                            "target": {
+                            "path": {
                                 "type": "string"
                             },
-                            "path": {
+                            "url": {
                                 "type": "string"
                             }
                         }
@@ -338,7 +337,7 @@
                     "then": {
                         "required": [
                             "type",
-                            "page"
+                            "path"
                         ],
                         "additionalProperties": false,
                         "properties": {
@@ -351,7 +350,7 @@
                             "shortcut": {
                                 "type": "string"
                             },
-                            "page": {
+                            "path": {
                                 "type": "string"
                             }
                         }

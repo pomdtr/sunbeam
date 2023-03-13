@@ -39,9 +39,7 @@ if not args.command:
     json.dump(
         {
             "type": "detail",
-            "content": {
-                "text": welcome_text,
-            },
+            "text": welcome_text,
             "actions": [
                 {
                     "type": "run",
@@ -71,7 +69,7 @@ if not args.command:
                 {
                     "type": "open",
                     "title": "Open the Docs",
-                    "target": "https://pomdtr.github.io/sunbeam/",
+                    "url": "https://pomdtr.github.io/sunbeam/",
                 },
                 {
                     "type": "copy",

@@ -3,7 +3,6 @@ package tui
 import (
 	"fmt"
 	"html/template"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -94,26 +93,21 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 			}
 		}
 	case schemas.OpenAction:
-		target, err := url.Parse(action.Target)
-		if err != nil {
-			return func() tea.Msg {
-				return fmt.Errorf("failed to parse target: %s", err)
-			}
-		}
-
-		if target.Scheme == "" {
-			target.Scheme = "file"
-			if strings.HasPrefix(target.Path, "~") {
+		var target string
+		if action.Url != "" {
+			target = action.Url
+		} else {
+			if strings.HasPrefix(action.Path, "~") {
 				home, _ := os.UserHomeDir()
-				target.Path = path.Join(home, target.Path[1:])
-			}
-
-			if !path.IsAbs(target.Path) {
-				target.Path = path.Join(m.WorkingDir(), target.Path)
+				target = path.Join(home, action.Path[1:])
+			} else if !path.IsAbs(action.Path) {
+				target = path.Join(m.WorkingDir(), action.Path)
+			} else {
+				target = action.Path
 			}
 		}
 
-		if err := browser.OpenURL(target.String()); err != nil {
+		if err := browser.OpenURL(target); err != nil {
 			return func() tea.Msg {
 				return err
 			}
@@ -133,10 +127,10 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 		return tea.Quit
 	case schemas.ReadAction:
 		var page string
-		if path.IsAbs(action.Page) {
-			page = action.Page
+		if path.IsAbs(action.Path) {
+			page = action.Path
 		} else {
-			page = path.Join(m.WorkingDir(), action.Page)
+			page = path.Join(m.WorkingDir(), action.Path)
 		}
 
 		runner := NewRunner(NewFileGenerator(

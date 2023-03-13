@@ -15,7 +15,7 @@ if (query) {
     actions: [
       {
         type: "open",
-        target: `https://www.google.com/search?q=${encodeURIComponent(
+        url: `https://www.google.com/search?q=${encodeURIComponent(
           suggestion
         )}`,
       },

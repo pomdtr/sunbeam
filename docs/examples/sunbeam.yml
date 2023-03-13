@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/pomdtr/sunbeam/main/schemas/schema.json
+# yaml-language-server: $schema=../../schemas/schema.json
 type: list
 title: Examples
 items:
@@ -19,12 +19,6 @@ items:
         type: run
         onSuccess: push
         command: "./highlight/list.sh"
-  - title: Brew
-    subtitle: Brew
-    actions:
-      - type: run
-        onSuccess: push
-        command: "./brew/brew.sh"
   - title: Demo
     subtitle: Examples
     actions:
