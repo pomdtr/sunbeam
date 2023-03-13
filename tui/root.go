@@ -88,7 +88,7 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 			}
 		}
 
-		if target.Scheme == "" || target.Scheme == "file" && !path.IsAbs(target.Path) {
+		if (target.Scheme == "" || target.Scheme == "file") && !path.IsAbs(target.Path) {
 			target.Path = path.Join(m.WorkingDir(), target.Path)
 		}
 
