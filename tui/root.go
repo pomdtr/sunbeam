@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
@@ -88,8 +89,16 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 			}
 		}
 
-		if (target.Scheme == "" || target.Scheme == "file") && !path.IsAbs(target.Path) {
-			target.Path = path.Join(m.WorkingDir(), target.Path)
+		if target.Scheme == "" {
+			target.Scheme = "file"
+			if strings.HasPrefix(target.Path, "~") {
+				home, _ := os.UserHomeDir()
+				target.Path = path.Join(home, target.Path[1:])
+			}
+
+			if !path.IsAbs(target.Path) {
+				target.Path = path.Join(m.WorkingDir(), target.Path)
+			}
 		}
 
 		if err := browser.OpenURL(target.String()); err != nil {
