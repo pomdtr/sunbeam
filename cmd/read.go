@@ -33,7 +33,6 @@ func NewPushCmd() *cobra.Command {
 
 				var content []byte
 				format, _ := cmd.Flags().GetString("format")
-
 				runner = tui.NewRunner(func(input string) ([]byte, error) {
 					if content != nil {
 						return content, nil
@@ -64,9 +63,34 @@ func NewPushCmd() *cobra.Command {
 
 			} else {
 
-				runner = tui.NewRunner(tui.NewFileGenerator(
-					args[0],
-				), path.Dir(args[0]))
+				// By default, we detect the format of the file based on the extension
+				generator := tui.NewFileGenerator(args[0])
+
+				// If the format flag is set, we override the detected format
+				if cmd.Flags().Changed("format") {
+					format, _ := cmd.Flags().GetString("format")
+					if format == "yaml" || format == "yml" {
+						generator = func(input string) ([]byte, error) {
+							bytes, err := os.ReadFile(args[0])
+							if err != nil {
+								return nil, err
+							}
+
+							var page schemas.Page
+							if err := yaml.Unmarshal(bytes, &page); err != nil {
+								return nil, err
+							}
+
+							return json.Marshal(page)
+						}
+					} else {
+						generator = func(input string) ([]byte, error) {
+							return os.ReadFile(args[0])
+						}
+					}
+				}
+
+				runner = tui.NewRunner(generator, path.Dir(args[0]))
 
 			}
 
