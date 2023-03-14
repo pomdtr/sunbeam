@@ -224,7 +224,7 @@ func (c *List) SetItems(items []ListItem, selectedId string) tea.Cmd {
 	c.Aliases = make(map[string]schemas.Action)
 	for i, item := range items {
 		if item.Alias != "" && len(item.Actions) > 0 {
-			c.Aliases[item.Alias+" "] = item.Actions[0]
+			c.Aliases[item.Alias] = item.Actions[0]
 		}
 
 		filterItems[i] = item
@@ -292,12 +292,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	header, cmd := c.header.Update(msg)
-	cmds = append(cmds, cmd)
-
-	filter, cmd := c.filter.Update(msg)
-	cmds = append(cmds, cmd)
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -305,12 +299,31 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if c.actionList.Focused() {
 				break
 			} else if c.header.input.Value() != "" {
-				header.input.SetValue("")
-				filter.FilterItems("")
-				c.updateSelection(filter)
+				c.header.input.SetValue("")
+				c.filter.FilterItems("")
+				c.updateSelection(c.filter)
+				return c, tea.Sequence(func() tea.Msg {
+					return SelectionChangeMsg{
+						SelectionId: c.filter.Selection().ID(),
+					}
+				}, func() tea.Msg {
+					return UpdateQueryMsg{
+						Query: c.Query(),
+					}
+				})
 			} else {
 				return c, func() tea.Msg {
 					return PopPageMsg{}
+				}
+			}
+		case tea.KeySpace:
+			if c.actionList.Focused() {
+				break
+			}
+
+			if action, ok := c.Aliases[c.Query()]; ok {
+				return c, func() tea.Msg {
+					return action
 				}
 			}
 		case tea.KeyShiftDown:
@@ -362,6 +375,12 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, nil
 	}
 
+	header, cmd := c.header.Update(msg)
+	cmds = append(cmds, cmd)
+
+	filter, cmd := c.filter.Update(msg)
+	cmds = append(cmds, cmd)
+
 	c.actionList, cmd = c.actionList.Update(msg)
 	cmds = append(cmds, cmd)
 
@@ -370,11 +389,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 
 	if header.Value() != c.header.Value() {
-		if action, ok := c.Aliases[header.Value()]; ok {
-			return c, func() tea.Msg {
-				return action
-			}
-		}
 		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
 			return UpdateQueryMsg{Query: header.Value()}
 		}))
