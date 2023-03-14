@@ -35,10 +35,8 @@ func (i ListItem) ID() string {
 }
 
 func (i ListItem) FilterValue() string {
-	if i.Subtitle == "" {
-		return i.Title
-	}
-	return fmt.Sprintf("%s %s", i.Title, i.Subtitle)
+	keywords := []string{i.Title, i.Subtitle, i.Alias}
+	return strings.Join(keywords, " ")
 }
 
 func (i ListItem) Render(width int, selected bool) string {
