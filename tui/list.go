@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pomdtr/sunbeam/types"
+
 	"github.com/alecthomas/chroma/quick"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -12,7 +14,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
-	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
 	"mvdan.cc/sh/v3/shell"
 )
@@ -21,10 +22,10 @@ const debounceDuration = 300 * time.Millisecond
 
 // Probably not necessary, need to be refactored
 type ListItem struct {
-	schemas.ListItem
+	types.ListItem
 }
 
-func ParseScriptItem(scriptItem schemas.ListItem) ListItem {
+func ParseScriptItem(scriptItem types.ListItem) ListItem {
 	return ListItem{
 		ListItem: scriptItem,
 	}
@@ -82,9 +83,9 @@ type List struct {
 	header     Header
 	footer     Footer
 	actionList ActionList
-	actions    []schemas.Action
-	DetailFunc func(schemas.ListItem) string
-	Aliases    map[string]schemas.Action
+	actions    []types.Action
+	DetailFunc func(types.ListItem) string
+	Aliases    map[string]types.Action
 
 	GenerateItems bool
 	ShowDetail    bool
@@ -98,7 +99,7 @@ func (c *List) SetTitle(title string) {
 	c.footer.title = title
 }
 
-func NewList(page schemas.Page, dir string) *List {
+func NewList(page types.Page, dir string) *List {
 	header := NewHeader()
 
 	viewport := viewport.New(0, 0)
@@ -122,7 +123,7 @@ func NewList(page schemas.Page, dir string) *List {
 		footer:        footer,
 	}
 
-	list.DetailFunc = func(item schemas.ListItem) string {
+	list.DetailFunc = func(item types.ListItem) string {
 		if item.Detail.Text != "" {
 			if item.Detail.Language == "" {
 				return item.Detail.Text
@@ -172,12 +173,12 @@ func (c *List) Init() tea.Cmd {
 	return c.header.Focus()
 }
 
-func (list *List) SetActions(actions []schemas.Action) {
-	list.actions = make([]schemas.Action, len(actions)+1)
+func (list *List) SetActions(actions []types.Action) {
+	list.actions = make([]types.Action, len(actions)+1)
 	copy(list.actions, actions)
 
-	list.actions[len(actions)] = schemas.Action{
-		Type:     schemas.ReloadAction,
+	list.actions[len(actions)] = types.Action{
+		Type:     types.ReloadAction,
 		Shortcut: "ctrl+r",
 	}
 }
@@ -217,7 +218,7 @@ func (c List) Selection() *ListItem {
 
 func (c *List) SetItems(items []ListItem, selectedId string) tea.Cmd {
 	filterItems := make([]FilterItem, len(items))
-	c.Aliases = make(map[string]schemas.Action)
+	c.Aliases = make(map[string]types.Action)
 	for i, item := range items {
 		if item.Alias != "" && len(item.Actions) > 0 {
 			c.Aliases[item.Alias] = item.Actions[0]
@@ -258,7 +259,7 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 type ContentMsg string
 
 func (l *List) updateSelection(filter Filter) FilterItem {
-	actions := make([]schemas.Action, 0)
+	actions := make([]types.Action, 0)
 	if filter.Selection() == nil {
 		l.detailContent = ""
 	} else {

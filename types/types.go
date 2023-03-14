@@ -1,4 +1,4 @@
-package schemas
+package types
 
 import (
 	"encoding/json"

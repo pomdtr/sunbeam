@@ -7,7 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/schemas"
+	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
 	"mvdan.cc/sh/v3/shell"
 )
@@ -102,13 +102,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 		}
 	case CommandOutput:
 		runner.SetIsloading(false)
-		if err := schemas.Validate(msg); err != nil {
+		if err := types.Validate(msg); err != nil {
 			return runner, func() tea.Msg {
 				return fmt.Errorf("invalid response: %s", err)
 			}
 		}
 
-		var page schemas.Page
+		var page types.Page
 		err := json.Unmarshal(msg, &page)
 		if err != nil {
 			return runner, func() tea.Msg {
@@ -121,7 +121,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 		}
 
 		switch page.Type {
-		case schemas.DetailPage:
+		case types.DetailPage:
 			runner.currentView = "detail"
 
 			var detailFunc func() string
@@ -157,7 +157,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()
-		case schemas.ListPage:
+		case types.ListPage:
 			runner.currentView = "list"
 
 			// Save query string
@@ -191,9 +191,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh())
 	case error:
 		runner.currentView = "error"
-		errorView := NewDetail("Error", msg.Error, []schemas.Action{
+		errorView := NewDetail("Error", msg.Error, []types.Action{
 			{
-				Type:     schemas.CopyAction,
+				Type:     types.CopyAction,
 				RawTitle: "Copy error",
 				Text:     msg.Error(),
 			},

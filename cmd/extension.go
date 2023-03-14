@@ -10,9 +10,10 @@ import (
 
 	_ "embed"
 
+	"github.com/pomdtr/sunbeam/types"
+
 	"github.com/mattn/go-isatty"
 	cp "github.com/otiai10/copy"
-	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/tui"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
@@ -56,23 +57,23 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 					return nil, err
 				}
 
-				listItems := make([]schemas.ListItem, 0)
+				listItems := make([]types.ListItem, 0)
 
 				for _, repo := range repos {
-					listItems = append(listItems, schemas.ListItem{
+					listItems = append(listItems, types.ListItem{
 						Title:    repo.FullName,
 						Subtitle: repo.Description,
 						Accessories: []string{
 							fmt.Sprintf("%d *", repo.StargazersCount),
 						},
-						Actions: []schemas.Action{
+						Actions: []types.Action{
 							{
-								Type:     schemas.RunAction,
+								Type:     types.RunAction,
 								RawTitle: "Install",
 								Command:  fmt.Sprintf("sunbeam extension install %s", repo.HtmlUrl),
 							},
 							{
-								Type:     schemas.OpenAction,
+								Type:     types.OpenAction,
 								RawTitle: "Open in Browser",
 								Shortcut: "ctrl+o",
 								Url:      repo.HtmlUrl,
@@ -81,9 +82,9 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 					})
 				}
 
-				page := schemas.Page{
-					Type: schemas.ListPage,
-					List: &schemas.List{
+				page := types.Page{
+					Type: types.ListPage,
+					List: &types.List{
 						Items: listItems,
 					},
 				}
@@ -118,44 +119,44 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 					return nil, fmt.Errorf("could not list extensions: %s", err)
 				}
 
-				listItems := make([]schemas.ListItem, 0)
+				listItems := make([]types.ListItem, 0)
 				for _, extension := range extensions {
-					listItems = append(listItems, schemas.ListItem{
+					listItems = append(listItems, types.ListItem{
 						Title: extension,
-						Actions: []schemas.Action{
+						Actions: []types.Action{
 							{
-								Type:      schemas.RunAction,
+								Type:      types.RunAction,
 								RawTitle:  "Run Command",
-								OnSuccess: schemas.PushOnSuccess,
+								OnSuccess: types.PushOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension exec %s", extension),
 							},
 							{
 								RawTitle: "Upgrade Extension",
-								Type:     schemas.RunAction,
+								Type:     types.RunAction,
 								Command:  fmt.Sprintf("sunbeam extension upgrade %s", extension),
 								Shortcut: "ctrl+u",
 							},
 							{
-								Type:      schemas.RunAction,
+								Type:      types.RunAction,
 								RawTitle:  "Remove Extension",
 								Shortcut:  "ctrl+x",
-								OnSuccess: schemas.ReloadOnSuccess,
+								OnSuccess: types.ReloadOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension remove %s", extension),
 							},
 						},
 					})
 				}
 
-				page := schemas.Page{
-					Type: schemas.ListPage,
-					Actions: []schemas.Action{
+				page := types.Page{
+					Type: types.ListPage,
+					Actions: []types.Action{
 						{
-							Type:     schemas.RunAction,
+							Type:     types.RunAction,
 							RawTitle: "Create Extension",
 							Command:  "sunbeam extension create {{ extensionName }}",
-							Inputs: []schemas.FormInput{
+							Inputs: []types.FormInput{
 								{
-									Type:        schemas.TextField,
+									Type:        types.TextField,
 									Name:        "extensionName",
 									Title:       "Extension Name",
 									Placeholder: "my-extension",
@@ -164,7 +165,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 							Shortcut: "ctrl+n",
 						},
 					},
-					List: &schemas.List{
+					List: &types.List{
 						Items: listItems,
 					},
 				}

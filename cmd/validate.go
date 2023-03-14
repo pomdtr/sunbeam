@@ -5,8 +5,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/pomdtr/sunbeam/types"
+
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/spf13/cobra"
 )
 
@@ -31,13 +32,12 @@ func NewValidateCmd() *cobra.Command {
 				exitWithErrorMsg("No input provided")
 			}
 
-			if err := schemas.Validate(page); err != nil {
+			if err := types.Validate(page); err != nil {
 				fmt.Printf("☠️ Input is not valid: %s!", err)
 				os.Exit(1)
 			}
 
 			fmt.Println("✅ Input is valid!")
-			return
 		},
 	}
 }

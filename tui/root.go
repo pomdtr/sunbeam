@@ -8,12 +8,13 @@ import (
 	"path"
 	"strings"
 
+	"github.com/pomdtr/sunbeam/types"
+
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
-	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/utils"
 	"mvdan.cc/sh/v3/shell"
 )
@@ -70,25 +71,25 @@ func (m *Model) WorkingDir() string {
 	return m.pages[len(m.pages)-1].workingDir
 }
 
-func (m *Model) handleAction(action schemas.Action) tea.Cmd {
+func (m *Model) handleAction(action types.Action) tea.Cmd {
 	switch action.Type {
-	case schemas.ReloadAction:
+	case types.ReloadAction:
 		return func() tea.Msg {
 			return ReloadPageMsg{}
 		}
-	case schemas.EditAction:
+	case types.EditAction:
 		if strings.HasPrefix(action.Path, "~") {
 			home, _ := os.UserHomeDir()
 			action.Path = path.Join(home, action.Path[1:])
 		}
 		return func() tea.Msg {
-			return schemas.Action{
-				Type:      schemas.RunAction,
-				OnSuccess: schemas.ExitOnSuccess,
+			return types.Action{
+				Type:      types.RunAction,
+				OnSuccess: types.ExitOnSuccess,
 				Command:   fmt.Sprintf("${EDITOR:-vi} %s", shellescape.Quote(action.Path)),
 			}
 		}
-	case schemas.OpenAction:
+	case types.OpenAction:
 		var target string
 		if action.Url != "" {
 			target = action.Url
@@ -111,7 +112,7 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 
 		m.hidden = true
 		return tea.Quit
-	case schemas.CopyAction:
+	case types.CopyAction:
 		err := clipboard.WriteAll(action.Text)
 		if err != nil {
 			return func() tea.Msg {
@@ -121,7 +122,7 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 
 		m.hidden = true
 		return tea.Quit
-	case schemas.ReadAction:
+	case types.ReadAction:
 		var page string
 		if path.IsAbs(action.Path) {
 			page = action.Path
@@ -133,7 +134,7 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 			page,
 		), path.Dir(page))
 		return m.Push(runner)
-	case schemas.RunAction:
+	case types.RunAction:
 		args, err := shell.Fields(action.Command, nil)
 		if err != nil {
 			return func() tea.Msg {
@@ -148,12 +149,12 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 		}
 
 		switch action.OnSuccess {
-		case schemas.PushOnSuccess:
+		case types.PushOnSuccess:
 			workingDir := m.WorkingDir()
 			generator := NewCommandGenerator(name, extraArgs, workingDir)
 			runner := NewRunner(generator, workingDir)
 			return m.Push(runner)
-		case schemas.ReloadOnSuccess:
+		case types.ReloadOnSuccess:
 			return func() tea.Msg {
 				command := exec.Command(name, extraArgs...)
 				command.Dir = m.WorkingDir()
@@ -167,7 +168,7 @@ func (m *Model) handleAction(action schemas.Action) tea.Cmd {
 
 				return ReloadPageMsg{}
 			}
-		case schemas.ExitOnSuccess:
+		case types.ExitOnSuccess:
 			command := exec.Command(name, extraArgs...)
 			m.exitCmd = command
 			m.exitCmd.Dir = m.WorkingDir()
@@ -211,7 +212,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.hidden = true
 		return m, tea.Quit
-	case schemas.Action:
+	case types.Action:
 		if len(msg.Inputs) > 0 {
 			formItems := make([]FormItem, len(msg.Inputs))
 			for i, input := range msg.Inputs {
@@ -241,8 +242,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				return func() tea.Msg {
-					return schemas.Action{
-						Type:      schemas.RunAction,
+					return types.Action{
+						Type:      types.RunAction,
 						Command:   renderedCommand,
 						OnSuccess: msg.OnSuccess,
 					}

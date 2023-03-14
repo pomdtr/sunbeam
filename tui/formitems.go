@@ -9,7 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/schemas"
+
+	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -31,14 +32,14 @@ type FormItem struct {
 	Name  string
 }
 
-func NewFormItem(param schemas.FormInput) (FormItem, error) {
+func NewFormItem(param types.FormInput) (FormItem, error) {
 	var input FormInput
 	switch param.Type {
-	case schemas.TextField:
+	case types.TextField:
 		input = NewTextInput(param)
-	case schemas.TextArea:
+	case types.TextArea:
 		input = NewTextArea(param)
-	case schemas.DropDown:
+	case types.DropDown:
 		input = NewDropDown(param)
 	default:
 		return FormItem{}, fmt.Errorf("invalid form input type")
@@ -60,7 +61,7 @@ func (ta *TextArea) Title() string {
 	return ta.title
 }
 
-func NewTextArea(formItem schemas.FormInput) *TextArea {
+func NewTextArea(formItem types.FormInput) *TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
 	ta.SetValue(formItem.Default)
@@ -98,7 +99,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem schemas.FormInput) *TextInput {
+func NewTextInput(formItem types.FormInput) *TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.SetValue(formItem.Default)
@@ -174,7 +175,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem schemas.FormInput) *DropDown {
+func NewDropDown(formItem types.FormInput) *DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 

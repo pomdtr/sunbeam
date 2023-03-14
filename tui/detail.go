@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
-	"github.com/pomdtr/sunbeam/schemas"
+	"github.com/pomdtr/sunbeam/types"
 )
 
 type Detail struct {
@@ -25,9 +25,9 @@ type Detail struct {
 	footer     Footer
 }
 
-func NewDetail(title string, contentCmd func() string, actions []schemas.Action) *Detail {
-	actions = append(actions, schemas.Action{
-		Type:     schemas.ReloadAction,
+func NewDetail(title string, contentCmd func() string, actions []types.Action) *Detail {
+	actions = append(actions, types.Action{
+		Type:     types.ReloadAction,
 		Shortcut: "ctrl+r",
 	})
 

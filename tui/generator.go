@@ -8,7 +8,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/pomdtr/sunbeam/schemas"
+	"github.com/pomdtr/sunbeam/types"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -50,7 +51,7 @@ func NewFileGenerator(name string) PageGenerator {
 				return nil, err
 			}
 
-			var page schemas.Page
+			var page types.Page
 			if err := yaml.Unmarshal(bytes, &page); err != nil {
 				return nil, err
 			}

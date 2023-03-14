@@ -4,11 +4,11 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/schemas"
+	"github.com/pomdtr/sunbeam/types"
 )
 
 type ActionList struct {
-	actions []schemas.Action
+	actions []types.Action
 	header  Header
 	filter  Filter
 	footer  Footer
@@ -44,7 +44,7 @@ func (al *ActionList) SetTitle(title string) {
 	al.footer.title = title
 }
 
-func (al *ActionList) SetActions(actions ...schemas.Action) {
+func (al *ActionList) SetActions(actions ...types.Action) {
 	al.actions = actions
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
@@ -52,10 +52,10 @@ func (al *ActionList) SetActions(actions ...schemas.Action) {
 			action.Shortcut = "↩"
 		}
 		filterItems[i] = ListItem{
-			ListItem: schemas.ListItem{
+			ListItem: types.ListItem{
 				Title:    action.Title(),
 				Subtitle: action.Shortcut,
-				Actions:  []schemas.Action{action},
+				Actions:  []types.Action{action},
 			},
 		}
 	}
