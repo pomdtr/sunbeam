@@ -32,7 +32,10 @@ func ParseScriptItem(scriptItem types.ListItem) ListItem {
 }
 
 func (i ListItem) ID() string {
-	return i.Id
+	if i.Id != "" {
+		return i.Id
+	}
+	return i.Title
 }
 
 func (i ListItem) FilterValue() string {

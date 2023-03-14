@@ -167,7 +167,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 			if runner.list != nil {
 				query = runner.list.Query()
 				if runner.list.Selection() != nil {
-					selectedId = runner.list.Selection().Id
+					selectedId = runner.list.Selection().ID()
 				}
 			}
 
