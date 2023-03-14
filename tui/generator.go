@@ -28,7 +28,7 @@ func NewCommandGenerator(command string, args []string, dir string) PageGenerato
 		output, err := command.Output()
 		if err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
-				return nil, fmt.Errorf("Script exited with code %d: %s", exitError.ExitCode(), string(exitError.Stderr))
+				return nil, fmt.Errorf("script exited with code %d: %s", exitError.ExitCode(), string(exitError.Stderr))
 			}
 
 			return nil, err

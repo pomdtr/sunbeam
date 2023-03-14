@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"net/url"
-
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -14,11 +12,6 @@ type ActionList struct {
 	header  Header
 	filter  Filter
 	footer  Footer
-}
-
-type SelectMsg struct {
-	action schemas.Action
-	path   *url.URL
 }
 
 func NewActionList() ActionList {

@@ -22,10 +22,6 @@ type ReloadPageMsg struct{}
 
 type PopPageMsg struct{}
 
-type pushMsg struct {
-	container Page
-}
-
 type Page interface {
 	Init() tea.Cmd
 	Update(tea.Msg) (Page, tea.Cmd)

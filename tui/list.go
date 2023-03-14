@@ -174,9 +174,7 @@ func (c *List) Init() tea.Cmd {
 
 func (list *List) SetActions(actions []schemas.Action) {
 	list.actions = make([]schemas.Action, len(actions)+1)
-	for i, action := range actions {
-		list.actions[i] = action
-	}
+	copy(list.actions, actions)
 
 	list.actions[len(actions)] = schemas.Action{
 		Type:     schemas.ReloadAction,
@@ -269,9 +267,7 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 		actions = append(actions, item.Actions...)
 	}
 
-	for _, action := range l.actions {
-		actions = append(actions, action)
-	}
+	actions = append(actions, l.actions...)
 
 	l.actionList.SetActions(actions...)
 	if len(actions) > 0 {
