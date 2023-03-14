@@ -120,6 +120,7 @@ type List struct {
 
 type ListItem struct {
 	Id          string   `json:"id,omitempty"`
+	Alias       string   `json:"alias,omitempty"`
 	Title       string   `json:"title"`
 	Subtitle    string   `json:"subtitle,omitempty"`
 	Detail      *Detail  `json:"detail,omitempty"`

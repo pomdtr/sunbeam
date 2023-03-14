@@ -125,6 +125,9 @@
                 "id": {
                     "type": "string"
                 },
+                "alias": {
+                    "type": "string"
+                },
                 "subtitle": {
                     "anyOf": [
                         {

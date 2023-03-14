@@ -86,6 +86,7 @@ type List struct {
 	actionList ActionList
 	actions    []schemas.Action
 	DetailFunc func(schemas.ListItem) string
+	Aliases    map[string]schemas.Action
 
 	GenerateItems bool
 	ShowDetail    bool
@@ -220,7 +221,12 @@ func (c List) Selection() *ListItem {
 
 func (c *List) SetItems(items []ListItem, selectedId string) tea.Cmd {
 	filterItems := make([]FilterItem, len(items))
+	c.Aliases = make(map[string]schemas.Action)
 	for i, item := range items {
+		if item.Alias != "" && len(item.Actions) > 0 {
+			c.Aliases[item.Alias+" "] = item.Actions[0]
+		}
+
 		filterItems[i] = item
 	}
 
@@ -364,6 +370,11 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 
 	if header.Value() != c.header.Value() {
+		if action, ok := c.Aliases[header.Value()]; ok {
+			return c, func() tea.Msg {
+				return action
+			}
+		}
 		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
 			return UpdateQueryMsg{Query: header.Value()}
 		}))
