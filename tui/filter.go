@@ -6,8 +6,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/fzf"
 	"github.com/pomdtr/sunbeam/utils"
-	"github.com/sahilm/fuzzy"
 )
 
 type FilterItem interface {
@@ -53,6 +53,11 @@ func (f *Filter) SetItems(items []FilterItem) {
 	f.filtered = items
 }
 
+type Match struct {
+	item  *FilterItem
+	score int
+}
+
 func (f *Filter) FilterItems(query string) {
 	f.Query = query
 	values := make([]string, len(f.items))
@@ -65,10 +70,21 @@ func (f *Filter) FilterItems(query string) {
 	if query == "" {
 		filtered = f.items
 	} else {
-		matches := fuzzy.Find(query, values)
+		matches := make([]Match, 0)
+		for i := 0; i < len(f.items); i++ {
+			score := fzf.Score(f.items[i].FilterValue(), query)
+			if score > 0 {
+				matches = append(matches, Match{&f.items[i], score})
+			}
+		}
+
+		sort.SliceStable(matches, func(i, j int) bool {
+			return matches[i].score > matches[j].score
+		})
+
 		filtered = make([]FilterItem, len(matches))
 		for i, match := range matches {
-			filtered[i] = f.items[match.Index]
+			filtered[i] = *match.item
 		}
 	}
 
