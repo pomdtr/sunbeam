@@ -259,6 +259,7 @@ type OnSuccessType int
 const (
 	ExitOnSuccess OnSuccessType = iota
 	PushOnSuccess
+	ReplaceOnSuccess
 	ReloadOnSuccess
 )
 
@@ -273,6 +274,8 @@ func (o *OnSuccessType) UnmarshalJSON(bytes []byte) error {
 		*o = PushOnSuccess
 	case "reload":
 		*o = ReloadOnSuccess
+	case "replace":
+		*o = ReplaceOnSuccess
 	default:
 		return fmt.Errorf("unknown on success type: %s", rawType)
 	}
@@ -286,6 +289,8 @@ func (o OnSuccessType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("push")
 	case ReloadOnSuccess:
 		return json.Marshal("reload")
+	case ReplaceOnSuccess:
+		return json.Marshal("replace")
 	default:
 		return nil, fmt.Errorf("unknown on success type: %d", o)
 	}
@@ -302,8 +307,10 @@ func (o *OnSuccessType) UnmarshalYAML(node *yaml.Node) error {
 		*o = PushOnSuccess
 	case "reload":
 		*o = ReloadOnSuccess
+	case "replace":
+		*o = ReplaceOnSuccess
 	default:
-		return fmt.Errorf("Unknown onSuccess type: %s", rawType)
+		return fmt.Errorf("unknown onSuccess type: %s", rawType)
 	}
 
 	return nil

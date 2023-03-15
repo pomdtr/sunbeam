@@ -60,31 +60,29 @@ func NewRunner(generator PageGenerator, validator PageValidator, workingDir stri
 
 }
 func (c *CommandRunner) Init() tea.Cmd {
-	return tea.Batch(c.SetIsloading(true), c.Refresh())
+	return tea.Batch(c.SetIsloading(true), c.Refresh)
 }
 
 type CommandOutput []byte
 
-func (c *CommandRunner) Refresh() tea.Cmd {
+func (c *CommandRunner) Refresh() tea.Msg {
 	var query string
 	if c.currentView == RunnerViewList {
 		query = c.list.Query()
 	}
 
-	return func() tea.Msg {
-		output, err := c.Generator(query)
-		if err != nil {
-			return err
-		}
-
-		return CommandOutput(output)
+	output, err := c.Generator(query)
+	if err != nil {
+		return err
 	}
+
+	return CommandOutput(output)
 }
 
 func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 	switch action.Type {
 	case types.ReloadAction:
-		return tea.Sequence(runner.SetIsloading(true), runner.Refresh())
+		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.EditAction:
 		if strings.HasPrefix(action.Path, "~") {
 			home, _ := os.UserHomeDir()
@@ -183,6 +181,10 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 					Type: types.ReloadAction,
 				}
 			}
+		case types.ReplaceOnSuccess:
+			runner.Generator = NewCommandGenerator(name, extraArgs, runner.workingDir)
+			return runner.Refresh
+
 		case types.ExitOnSuccess:
 			command := exec.Command(name, extraArgs...)
 			command.Dir = runner.workingDir

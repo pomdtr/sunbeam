@@ -311,6 +311,7 @@
                                 "type": "string",
                                 "enum": [
                                     "reload",
+                                    "replace",
                                     "push"
                                 ]
                             },
