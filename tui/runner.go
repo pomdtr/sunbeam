@@ -24,6 +24,7 @@ type CommandRunner struct {
 	currentView   RunnerView
 
 	Generator  PageGenerator
+	Validator  PageValidator
 	workingDir string
 
 	header Header
@@ -45,12 +46,15 @@ const (
 	RunnerViewForm
 )
 
-func NewRunner(generator PageGenerator, workingDir string) *CommandRunner {
+type PageValidator func([]byte) error
+
+func NewRunner(generator PageGenerator, validator PageValidator, workingDir string) *CommandRunner {
 	return &CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),
 		currentView: RunnerViewLoading,
 		Generator:   generator,
+		Validator:   validator,
 		workingDir:  workingDir,
 	}
 
@@ -137,7 +141,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 		runner := NewRunner(NewFileGenerator(
 			page,
-		), path.Dir(page))
+		), runner.Validator, path.Dir(page))
 		return func() tea.Msg {
 			return PushPageMsg{runner: runner}
 		}
@@ -159,7 +163,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		case types.PushOnSuccess:
 			workingDir := runner.workingDir
 			generator := NewCommandGenerator(name, extraArgs, workingDir)
-			runner := NewRunner(generator, workingDir)
+			runner := NewRunner(generator, runner.Validator, workingDir)
 			return func() tea.Msg {
 				return PushPageMsg{runner: runner}
 			}
@@ -243,7 +247,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case CommandOutput:
 		runner.SetIsloading(false)
-		if err := types.Validate(msg); err != nil {
+		if err := runner.Validator(msg); err != nil {
 			return runner, func() tea.Msg {
 				return fmt.Errorf("invalid response: %s", err)
 			}

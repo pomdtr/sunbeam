@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRunCmd() *cobra.Command {
+func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run <script>",
 		Short: "Run a script and push it's output",
@@ -43,7 +43,7 @@ func NewRunCmd() *cobra.Command {
 
 			cwd, _ := os.Getwd()
 			command, args := SplitCommand(args)
-			runner := tui.NewRunner(tui.NewCommandGenerator(command, args, cwd), cwd)
+			runner := tui.NewRunner(tui.NewCommandGenerator(command, args, cwd), validator, cwd)
 			tui.NewModel(runner).Draw()
 		},
 	}

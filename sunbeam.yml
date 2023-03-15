@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=./types/schema.json
+# yaml-language-server: $schema=./docs/schema.json
 type: list
 items:
   - title: Show Examples

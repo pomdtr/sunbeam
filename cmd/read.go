@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewPushCmd() *cobra.Command {
+func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "read [page]",
 		Short: "Read page from file or stdin, and push it's content",
@@ -60,7 +60,7 @@ func NewPushCmd() *cobra.Command {
 					}
 
 					return content, err
-				}, cwd)
+				}, validator, cwd)
 
 			} else {
 
@@ -91,7 +91,7 @@ func NewPushCmd() *cobra.Command {
 					}
 				}
 
-				runner = tui.NewRunner(generator, path.Dir(args[0]))
+				runner = tui.NewRunner(generator, validator, path.Dir(args[0]))
 
 			}
 

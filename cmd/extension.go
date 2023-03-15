@@ -22,10 +22,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//go:embed extension.sh
+//go:embed templates/extension.sh
 var extensionTemplate []byte
 
-func NewExtensionCmd(extensionDir string) *cobra.Command {
+func NewExtensionCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:   "extension",
 		Short: "Extension commands",
@@ -36,11 +36,11 @@ func NewExtensionCmd(extensionDir string) *cobra.Command {
 		},
 	}
 
-	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionDir))
-	extensionCmd.AddCommand(NewExtensionViewCmd())
-	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir))
+	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionDir, validator))
+	extensionCmd.AddCommand(NewExtensionViewCmd(validator))
+	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir, validator))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
-	extensionCmd.AddCommand(NewExtensionExecCmd(extensionDir))
+	extensionCmd.AddCommand(NewExtensionExecCmd(extensionDir, validator))
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionListCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionDir))
@@ -50,7 +50,7 @@ func NewExtensionCmd(extensionDir string) *cobra.Command {
 	return extensionCmd
 }
 
-func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
+func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
 	return &cobra.Command{
 		Use:   "browse",
 		Short: "Browse extensions",
@@ -112,13 +112,13 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, cwd)
+			runner := tui.NewRunner(generator, validator, cwd)
 			tui.NewModel(runner).Draw()
 		},
 	}
 }
 
-func NewExtensionViewCmd() *cobra.Command {
+func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 	return &cobra.Command{
 		Use:   "view <repo>",
 		Short: "View extension",
@@ -175,13 +175,13 @@ func NewExtensionViewCmd() *cobra.Command {
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, cwd)
+			runner := tui.NewRunner(generator, validator, cwd)
 			tui.NewModel(runner).Draw()
 		},
 	}
 }
 
-func NewExtensionManageCmd(extensionDir string) *cobra.Command {
+func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
 	return &cobra.Command{
 		Use:   "manage",
 		Short: "Manage installed extensions",
@@ -256,7 +256,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, cwd)
+			runner := tui.NewRunner(generator, validator, cwd)
 			tui.NewModel(runner).Draw()
 		},
 	}
@@ -293,7 +293,7 @@ func NewExtensionCreateCmd() *cobra.Command {
 	}
 }
 
-func NewExtensionExecCmd(extensionDir string) *cobra.Command {
+func NewExtensionExecCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
 	return &cobra.Command{
 		Use:   "exec",
 		Short: "Execute an installed extension",
@@ -328,7 +328,7 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator, cwd)
+			runner := tui.NewRunner(generator, validator, cwd)
 
 			tui.NewModel(runner).Draw()
 		},

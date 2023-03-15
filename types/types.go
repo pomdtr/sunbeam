@@ -3,43 +3,13 @@ package types
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
-	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 
 	_ "embed"
 
 	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 )
-
-//go:embed schema.json
-var schemaString string
-
-var Schema *jsonschema.Schema
-
-func init() {
-	var err error
-
-	compiler := jsonschema.NewCompiler()
-
-	if err = compiler.AddResource("https://pomdtr.github.io/sunbeam/schemas/page.json", strings.NewReader(schemaString)); err != nil {
-		panic(err)
-	}
-	Schema, err = compiler.Compile("https://pomdtr.github.io/sunbeam/schemas/page.json")
-	if err != nil {
-		panic(err)
-	}
-}
-
-func Validate(bytes []byte) error {
-	var v any
-	if err := json.Unmarshal(bytes, &v); err != nil {
-		return fmt.Errorf("invalid json: %w", err)
-	}
-
-	return Schema.Validate(v)
-}
 
 type PageType int
 

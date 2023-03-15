@@ -5,13 +5,13 @@ import (
 	"io"
 	"os"
 
-	"github.com/pomdtr/sunbeam/types"
+	"github.com/pomdtr/sunbeam/tui"
 
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
-func NewValidateCmd() *cobra.Command {
+func NewValidateCmd(validator tui.PageValidator) *cobra.Command {
 	return &cobra.Command{
 		Use:   "validate [file]",
 		Short: "Validate a page against the schema",
@@ -32,7 +32,7 @@ func NewValidateCmd() *cobra.Command {
 				exitWithErrorMsg("No input provided")
 			}
 
-			if err := types.Validate(page); err != nil {
+			if err := validator(page); err != nil {
 				fmt.Printf("☠️ Input is not valid: %s!", err)
 				os.Exit(1)
 			}

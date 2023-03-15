@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -8,12 +9,13 @@ import (
 	_ "embed"
 
 	"github.com/mattn/go-isatty"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
 
 	"github.com/pomdtr/sunbeam/tui"
 )
 
-//go:embed root.yml
+//go:embed templates/root.yml
 var defaultManifest string
 
 func exitWithErrorMsg(msg string, args ...any) {
@@ -33,7 +35,7 @@ var (
 	}
 )
 
-func Execute(version string) error {
+func Execute(version string, schema *jsonschema.Schema) error {
 	homeDir, _ := os.UserHomeDir()
 
 	configDir := path.Join(homeDir, ".config", "sunbeam")
@@ -41,7 +43,14 @@ func Execute(version string) error {
 	extensionDir := path.Join(dataDir, "extensions")
 
 	rootFile := path.Join(configDir, "root.yml")
+	validator := func(page []byte) error {
+		var v any
+		if err := json.Unmarshal(page, &v); err != nil {
+			return fmt.Errorf("unable to parse input: %s", err)
+		}
 
+		return schema.Validate(v)
+	}
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "sunbeam",
@@ -77,20 +86,20 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, cwd)
+			runner := tui.NewRunner(generator, validator, cwd)
 			tui.NewModel(runner).Draw()
 		},
 	}
 
 	rootCmd.AddGroup(coreCommandsGroup, extensionCommandsGroup)
 
-	rootCmd.AddCommand(NewRunCmd())
-	rootCmd.AddCommand(NewPushCmd())
+	rootCmd.AddCommand(NewRunCmd(validator))
+	rootCmd.AddCommand(NewReadCmd(validator))
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewCopyCmd())
 	rootCmd.AddCommand(NewOpenCmd())
-	rootCmd.AddCommand(NewValidateCmd())
-	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
+	rootCmd.AddCommand(NewValidateCmd(validator))
+	rootCmd.AddCommand(NewExtensionCmd(extensionDir, validator))
 
 	coreCommands := map[string]struct{}{}
 	for _, coreCommand := range rootCmd.Commands() {
@@ -110,13 +119,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			continue
 		}
 
-		rootCmd.AddCommand(NewExtensionShortcutCmd(extensionDir, extension))
+		rootCmd.AddCommand(NewExtensionShortcutCmd(extensionDir, validator, extension))
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.Command {
+func NewExtensionShortcutCmd(extensionDir string, validator tui.PageValidator, extensionName string) *cobra.Command {
 	return &cobra.Command{
 		Use:                extensionName,
 		DisableFlagParsing: true,
@@ -146,7 +155,7 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 				return
 			}
 
-			runner := tui.NewRunner(generator, cwd)
+			runner := tui.NewRunner(generator, validator, cwd)
 
 			tui.NewModel(runner).Draw()
 		},
