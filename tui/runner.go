@@ -3,10 +3,17 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
+	"path"
 	"strings"
+	"text/template"
 
+	"github.com/alessio/shellescape"
+	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
 	"mvdan.cc/sh/v3/shell"
@@ -14,7 +21,7 @@ import (
 
 type CommandRunner struct {
 	width, height int
-	currentView   string
+	currentView   RunnerView
 
 	Generator  PageGenerator
 	workingDir string
@@ -22,16 +29,27 @@ type CommandRunner struct {
 	header Header
 	footer Footer
 
+	form   *Form
 	list   *List
 	detail *Detail
 	err    *Detail
 }
 
+type RunnerView int
+
+const (
+	RunnerViewList RunnerView = iota
+	RunnerViewDetail
+	RunnerViewLoading
+	RunnerViewError
+	RunnerViewForm
+)
+
 func NewRunner(generator PageGenerator, workingDir string) *CommandRunner {
 	return &CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),
-		currentView: "loading",
+		currentView: RunnerViewLoading,
 		Generator:   generator,
 		workingDir:  workingDir,
 	}
@@ -45,7 +63,7 @@ type CommandOutput []byte
 
 func (c *CommandRunner) Refresh() tea.Cmd {
 	var query string
-	if c.currentView == "list" {
+	if c.currentView == RunnerViewList {
 		query = c.list.Query()
 	}
 
@@ -59,13 +77,131 @@ func (c *CommandRunner) Refresh() tea.Cmd {
 	}
 }
 
+func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
+	switch action.Type {
+	case types.ReloadAction:
+		return tea.Sequence(runner.SetIsloading(true), runner.Refresh())
+	case types.EditAction:
+		if strings.HasPrefix(action.Path, "~") {
+			home, _ := os.UserHomeDir()
+			action.Path = path.Join(home, action.Path[1:])
+		}
+		return func() tea.Msg {
+			return types.Action{
+				Type:      types.RunAction,
+				OnSuccess: types.ExitOnSuccess,
+				Command:   fmt.Sprintf("${EDITOR:-vi} %s", shellescape.Quote(action.Path)),
+			}
+		}
+	case types.OpenAction:
+		var target string
+		if action.Url != "" {
+			target = action.Url
+		} else {
+			if strings.HasPrefix(action.Path, "~") {
+				home, _ := os.UserHomeDir()
+				target = path.Join(home, action.Path[1:])
+			} else if !path.IsAbs(action.Path) {
+				target = path.Join(runner.workingDir, action.Path)
+			} else {
+				target = action.Path
+			}
+		}
+
+		if err := browser.OpenURL(target); err != nil {
+			return func() tea.Msg {
+				return err
+			}
+		}
+
+		return tea.Quit
+	case types.CopyAction:
+		err := clipboard.WriteAll(action.Text)
+		if err != nil {
+			return func() tea.Msg {
+				return fmt.Errorf("failed to copy text to clipboard: %s", err)
+			}
+		}
+
+		return tea.Quit
+	case types.ReadAction:
+		var page string
+		if path.IsAbs(action.Path) {
+			page = action.Path
+		} else {
+			page = path.Join(runner.workingDir, action.Path)
+		}
+
+		runner := NewRunner(NewFileGenerator(
+			page,
+		), path.Dir(page))
+		return func() tea.Msg {
+			return PushPageMsg{runner: runner}
+		}
+	case types.RunAction:
+		args, err := shell.Fields(action.Command, nil)
+		if err != nil {
+			return func() tea.Msg {
+				return fmt.Errorf("failed to parse command: %s", err)
+			}
+		}
+
+		name := args[0]
+		var extraArgs []string
+		if len(args) > 1 {
+			extraArgs = args[1:]
+		}
+
+		switch action.OnSuccess {
+		case types.PushOnSuccess:
+			workingDir := runner.workingDir
+			generator := NewCommandGenerator(name, extraArgs, workingDir)
+			runner := NewRunner(generator, workingDir)
+			return func() tea.Msg {
+				return PushPageMsg{runner: runner}
+			}
+		case types.ReloadOnSuccess:
+			return func() tea.Msg {
+				command := exec.Command(name, extraArgs...)
+				command.Dir = runner.workingDir
+				err := command.Run()
+				if err != nil {
+					if err, ok := err.(*exec.ExitError); ok {
+						return fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
+					}
+					return err
+				}
+
+				return types.Action{
+					Type: types.ReloadAction,
+				}
+			}
+		case types.ExitOnSuccess:
+			command := exec.Command(name, extraArgs...)
+			command.Dir = runner.workingDir
+
+			return func() tea.Msg {
+				return command
+			}
+		default:
+			return func() tea.Msg {
+				return fmt.Errorf("unsupported onSuccess")
+			}
+		}
+	default:
+		return func() tea.Msg {
+			return fmt.Errorf("unknown action type")
+		}
+	}
+}
+
 func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
 	switch c.currentView {
-	case "list":
+	case RunnerViewList:
 		return c.list.SetIsLoading(isLoading)
-	case "detail":
+	case RunnerViewDetail:
 		return c.detail.SetIsLoading(isLoading)
-	case "loading":
+	case RunnerViewLoading:
 		return c.header.SetIsLoading(isLoading)
 	default:
 		return nil
@@ -79,21 +215,23 @@ func (c *CommandRunner) SetSize(width, height int) {
 	c.footer.Width = width
 
 	switch c.currentView {
-	case "list":
+	case RunnerViewList:
 		c.list.SetSize(width, height)
-	case "detail":
+	case RunnerViewDetail:
 		c.detail.SetSize(width, height)
-	case "error":
+	case RunnerViewError:
 		c.err.SetSize(width, height)
+	case RunnerViewForm:
+		c.form.SetSize(width, height)
 	}
 }
 
-func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
+func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if runner.currentView != "loading" {
+			if runner.currentView != RunnerViewLoading {
 				break
 			}
 			return runner, func() tea.Msg {
@@ -122,7 +260,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 
 		switch page.Type {
 		case types.DetailPage:
-			runner.currentView = "detail"
+			runner.currentView = RunnerViewDetail
 
 			var detailFunc func() string
 			if page.Detail.Text != "" {
@@ -158,7 +296,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 
 			return runner, runner.detail.Init()
 		case types.ListPage:
-			runner.currentView = "list"
+			runner.currentView = RunnerViewList
 
 			// Save query string
 			var query string
@@ -187,10 +325,52 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 			return runner, tea.Sequence(runner.list.Init(), cmd)
 		}
 
-	case ReloadPageMsg:
-		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh())
+	case types.Action:
+		if len(msg.Inputs) > 0 {
+			formItems := make([]FormItem, len(msg.Inputs))
+			for i, input := range msg.Inputs {
+				item, err := NewFormItem(input)
+				if err != nil {
+					return runner, func() tea.Msg {
+						return fmt.Errorf("failed to create form input: %s", err)
+					}
+				}
+
+				formItems[i] = item
+			}
+
+			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
+				funcmap := template.FuncMap{}
+				for key, value := range values {
+					funcmap[key] = func() string {
+						return shellescape.Quote(value)
+					}
+				}
+
+				renderedCommand, err := utils.RenderString(msg.Command, funcmap)
+				if err != nil {
+					return func() tea.Msg {
+						return fmt.Errorf("failed to render command: %s", err)
+					}
+				}
+
+				return func() tea.Msg {
+					return types.Action{
+						Type:      types.RunAction,
+						Command:   renderedCommand,
+						OnSuccess: msg.OnSuccess,
+					}
+				}
+			})
+			runner.form = form
+			runner.SetSize(runner.width, runner.height)
+			return runner, form.Init()
+		}
+
+		cmd := runner.handleAction(msg)
+		return runner, cmd
 	case error:
-		runner.currentView = "error"
+		runner.currentView = RunnerViewError
 		errorView := NewDetail("Error", msg.Error, []types.Action{
 			{
 				Type:     types.CopyAction,
@@ -208,13 +388,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 	var container Page
 
 	switch runner.currentView {
-	case "list":
+	case RunnerViewList:
 		container, cmd = runner.list.Update(msg)
 		runner.list, _ = container.(*List)
-	case "detail":
+	case RunnerViewDetail:
 		container, cmd = runner.detail.Update(msg)
 		runner.detail, _ = container.(*Detail)
-	case "error":
+	case RunnerViewError:
 		container, cmd = runner.err.Update(msg)
 		runner.err, _ = container.(*Detail)
 	default:
@@ -225,13 +405,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (*CommandRunner, tea.Cmd) {
 
 func (c *CommandRunner) View() string {
 	switch c.currentView {
-	case "list":
+	case RunnerViewList:
 		return c.list.View()
-	case "detail":
+	case RunnerViewDetail:
 		return c.detail.View()
-	case "error":
+	case RunnerViewError:
 		return c.err.View()
-	case "loading":
+	case RunnerViewLoading:
 		headerView := c.header.View()
 		footerView := c.footer.View()
 		padding := make([]string, utils.Max(0, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView)))

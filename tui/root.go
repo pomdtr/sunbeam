@@ -2,26 +2,19 @@ package tui
 
 import (
 	"fmt"
-	"html/template"
 	"os"
 	"os/exec"
-	"path"
-	"strings"
 
-	"github.com/pomdtr/sunbeam/types"
-
-	"github.com/alessio/shellescape"
-	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/utils"
-	"mvdan.cc/sh/v3/shell"
 )
 
-type ReloadPageMsg struct{}
-
 type PopPageMsg struct{}
+
+type PushPageMsg struct {
+	runner Page
+}
 
 type Page interface {
 	Init() tea.Cmd
@@ -40,14 +33,13 @@ type Model struct {
 	options       SunbeamOptions
 	exitCmd       *exec.Cmd
 
-	pages []*CommandRunner
-	form  *Form
+	pages []Page
 
 	hidden bool
 }
 
-func NewModel(root *CommandRunner) *Model {
-	return &Model{pages: []*CommandRunner{
+func NewModel(root Page) *Model {
+	return &Model{pages: []Page{
 		root,
 	}, options: SunbeamOptions{
 		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
@@ -63,129 +55,6 @@ func (m *Model) Init() tea.Cmd {
 	return m.pages[0].Init()
 }
 
-func (m *Model) WorkingDir() string {
-	if len(m.pages) == 0 {
-		return ""
-	}
-
-	return m.pages[len(m.pages)-1].workingDir
-}
-
-func (m *Model) handleAction(action types.Action) tea.Cmd {
-	switch action.Type {
-	case types.ReloadAction:
-		return func() tea.Msg {
-			return ReloadPageMsg{}
-		}
-	case types.EditAction:
-		if strings.HasPrefix(action.Path, "~") {
-			home, _ := os.UserHomeDir()
-			action.Path = path.Join(home, action.Path[1:])
-		}
-		return func() tea.Msg {
-			return types.Action{
-				Type:      types.RunAction,
-				OnSuccess: types.ExitOnSuccess,
-				Command:   fmt.Sprintf("${EDITOR:-vi} %s", shellescape.Quote(action.Path)),
-			}
-		}
-	case types.OpenAction:
-		var target string
-		if action.Url != "" {
-			target = action.Url
-		} else {
-			if strings.HasPrefix(action.Path, "~") {
-				home, _ := os.UserHomeDir()
-				target = path.Join(home, action.Path[1:])
-			} else if !path.IsAbs(action.Path) {
-				target = path.Join(m.WorkingDir(), action.Path)
-			} else {
-				target = action.Path
-			}
-		}
-
-		if err := browser.OpenURL(target); err != nil {
-			return func() tea.Msg {
-				return err
-			}
-		}
-
-		m.hidden = true
-		return tea.Quit
-	case types.CopyAction:
-		err := clipboard.WriteAll(action.Text)
-		if err != nil {
-			return func() tea.Msg {
-				return fmt.Errorf("failed to copy text to clipboard: %s", err)
-			}
-		}
-
-		m.hidden = true
-		return tea.Quit
-	case types.ReadAction:
-		var page string
-		if path.IsAbs(action.Path) {
-			page = action.Path
-		} else {
-			page = path.Join(m.WorkingDir(), action.Path)
-		}
-
-		runner := NewRunner(NewFileGenerator(
-			page,
-		), path.Dir(page))
-		return m.Push(runner)
-	case types.RunAction:
-		args, err := shell.Fields(action.Command, nil)
-		if err != nil {
-			return func() tea.Msg {
-				return fmt.Errorf("failed to parse command: %s", err)
-			}
-		}
-
-		name := args[0]
-		var extraArgs []string
-		if len(args) > 1 {
-			extraArgs = args[1:]
-		}
-
-		switch action.OnSuccess {
-		case types.PushOnSuccess:
-			workingDir := m.WorkingDir()
-			generator := NewCommandGenerator(name, extraArgs, workingDir)
-			runner := NewRunner(generator, workingDir)
-			return m.Push(runner)
-		case types.ReloadOnSuccess:
-			return func() tea.Msg {
-				command := exec.Command(name, extraArgs...)
-				command.Dir = m.WorkingDir()
-				err := command.Run()
-				if err != nil {
-					if err, ok := err.(*exec.ExitError); ok {
-						return fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
-					}
-					return err
-				}
-
-				return ReloadPageMsg{}
-			}
-		case types.ExitOnSuccess:
-			command := exec.Command(name, extraArgs...)
-			m.exitCmd = command
-			m.exitCmd.Dir = m.WorkingDir()
-			m.hidden = true
-			return tea.Quit
-		default:
-			return func() tea.Msg {
-				return fmt.Errorf("unsupported onSuccess")
-			}
-		}
-	default:
-		return func() tea.Msg {
-			return fmt.Errorf("unknown action type")
-		}
-	}
-}
-
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -199,12 +68,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
+	case PushPageMsg:
+		cmd := m.Push(msg.runner)
+		return m, cmd
 	case PopPageMsg:
-		if m.form != nil {
-			m.form = nil
-			return m, nil
-		}
-
 		if len(m.pages) > 1 {
 			m.Pop()
 			return m, nil
@@ -212,58 +79,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.hidden = true
 		return m, tea.Quit
-	case types.Action:
-		if len(msg.Inputs) > 0 {
-			formItems := make([]FormItem, len(msg.Inputs))
-			for i, input := range msg.Inputs {
-				item, err := NewFormItem(input)
-				if err != nil {
-					return m, func() tea.Msg {
-						return fmt.Errorf("failed to create form input: %s", err)
-					}
-				}
-
-				formItems[i] = item
-			}
-
-			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
-				funcmap := template.FuncMap{}
-				for key, value := range values {
-					funcmap[key] = func() string {
-						return shellescape.Quote(value)
-					}
-				}
-
-				renderedCommand, err := utils.RenderString(msg.Command, funcmap)
-				if err != nil {
-					return func() tea.Msg {
-						return fmt.Errorf("failed to render command: %s", err)
-					}
-				}
-
-				return func() tea.Msg {
-					return types.Action{
-						Type:      types.RunAction,
-						Command:   renderedCommand,
-						OnSuccess: msg.OnSuccess,
-					}
-				}
-			})
-			m.form = form
-			form.SetSize(m.pageWidth(), m.pageHeight())
-			return m, form.Init()
-		}
-		m.form = nil
-
-		return m, m.handleAction(msg)
 	}
 
 	// Update the current page
 	var cmd tea.Cmd
 
-	if m.form != nil {
-		m.form, cmd = m.form.Update(msg)
-	} else if len(m.pages) > 0 {
+	if len(m.pages) > 0 {
 		currentPageIdx := len(m.pages) - 1
 		m.pages[currentPageIdx], cmd = m.pages[currentPageIdx].Update(msg)
 	} else {
@@ -276,10 +97,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) View() string {
 	if m.hidden {
 		return ""
-	}
-
-	if m.form != nil {
-		return m.form.View()
 	}
 
 	var pageView string
@@ -311,7 +128,7 @@ func (m *Model) pageHeight() int {
 	return m.height - 2*m.options.Padding
 }
 
-func (m *Model) Push(page *CommandRunner) tea.Cmd {
+func (m *Model) Push(page Page) tea.Cmd {
 	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
 	return page.Init()

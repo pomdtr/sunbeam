@@ -340,7 +340,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		return c, func() tea.Msg {
-			return ReloadPageMsg{}
+			return types.Action{
+				Type: types.ReloadAction,
+			}
 		}
 	case SelectionChangeMsg:
 		if !c.ShowDetail {
