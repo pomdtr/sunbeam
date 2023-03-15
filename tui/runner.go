@@ -128,6 +128,9 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		var page string
 		if path.IsAbs(action.Path) {
 			page = action.Path
+		} else if strings.HasPrefix(action.Path, "~") {
+			home, _ := os.UserHomeDir()
+			page = path.Join(home, action.Path[1:])
 		} else {
 			page = path.Join(runner.workingDir, action.Path)
 		}
@@ -219,10 +222,10 @@ func (c *CommandRunner) SetSize(width, height int) {
 		c.list.SetSize(width, height)
 	case RunnerViewDetail:
 		c.detail.SetSize(width, height)
-	case RunnerViewError:
-		c.err.SetSize(width, height)
 	case RunnerViewForm:
 		c.form.SetSize(width, height)
+	case RunnerViewError:
+		c.err.SetSize(width, height)
 	}
 }
 
@@ -362,6 +365,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 				}
 			})
+
+			runner.currentView = RunnerViewForm
 			runner.form = form
 			runner.SetSize(runner.width, runner.height)
 			return runner, form.Init()
@@ -394,6 +399,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case RunnerViewDetail:
 		container, cmd = runner.detail.Update(msg)
 		runner.detail, _ = container.(*Detail)
+	case RunnerViewForm:
+		container, cmd = runner.form.Update(msg)
+		runner.form, _ = container.(*Form)
 	case RunnerViewError:
 		container, cmd = runner.err.Update(msg)
 		runner.err, _ = container.(*Detail)
@@ -407,6 +415,8 @@ func (c *CommandRunner) View() string {
 	switch c.currentView {
 	case RunnerViewList:
 		return c.list.View()
+	case RunnerViewForm:
+		return c.form.View()
 	case RunnerViewDetail:
 		return c.detail.View()
 	case RunnerViewError:
