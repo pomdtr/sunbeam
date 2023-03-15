@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/pomdtr/sunbeam/main/types/schema.json
+# yaml-language-server: $schema=https://pomdtr.github.io/sunbeam/schema.json
 type: list
 actions:
   - title: Edit Config
