@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../schemas/schema.json
+# yaml-language-server: $schema=../schemas/page.json
 type: list
 items:
   - title: Static List

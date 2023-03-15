@@ -9,6 +9,10 @@
         "$schema": {
             "type": "string"
         },
+        "version": {
+            "type": "string",
+            "const": "0"
+        },
         "type": {
             "type": "string",
             "enum": [
