@@ -16,7 +16,7 @@ func NewRepository(url *url.URL) *Repository {
 	return &Repository{url: url}
 }
 
-func (r *Repository) Fullname() string {
+func (r *Repository) FullName() string {
 	return fmt.Sprintf("%s/%s", r.Owner(), r.Name())
 }
 

@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -34,6 +37,7 @@ func NewExtensionCmd(extensionDir string) *cobra.Command {
 	}
 
 	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionDir))
+	extensionCmd.AddCommand(NewExtensionViewCmd())
 	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
 	extensionCmd.AddCommand(NewExtensionExecCmd(extensionDir))
@@ -68,6 +72,12 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 						},
 						Actions: []types.Action{
 							{
+								Type:      types.RunAction,
+								RawTitle:  "View Readme",
+								OnSuccess: types.PushOnSuccess,
+								Command:   fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
+							},
+							{
 								Type:     types.RunAction,
 								RawTitle: "Install",
 								Command:  fmt.Sprintf("sunbeam extension install %s", repo.HtmlUrl),
@@ -98,6 +108,69 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 					exitWithErrorMsg("Could not generate page: %s", err)
 				}
 				fmt.Print(string(output))
+				return
+			}
+
+			cwd, _ := os.Getwd()
+			runner := tui.NewRunner(generator, cwd)
+			tui.NewModel(runner).Draw()
+		},
+	}
+}
+
+func NewExtensionViewCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "view <repo>",
+		Short: "View extension",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			repo, err := utils.RepositoryFromString(args[0])
+			if err != nil {
+				exitWithErrorMsg("Could not parse repository: %s", err)
+			}
+
+			generator := func(string) ([]byte, error) {
+				res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/readme", repo.FullName()))
+				if err != nil {
+					return nil, fmt.Errorf("could not fetch readme: %s", err)
+				}
+				defer res.Body.Close()
+
+				content, err := io.ReadAll(res.Body)
+				if err != nil {
+					return nil, fmt.Errorf("could not read readme: %s", err)
+				}
+
+				var ReadmePayload struct {
+					Content string `json:"content"`
+				}
+				if err := json.Unmarshal(content, &ReadmePayload); err != nil {
+					return nil, fmt.Errorf("could not parse readme: %s", err)
+				}
+
+				payload, err := base64.StdEncoding.DecodeString(ReadmePayload.Content)
+				if err != nil {
+					return nil, fmt.Errorf("could not decode readme: %s", err)
+				}
+
+				page := types.Page{
+					Type: types.DetailPage,
+					Detail: &types.Detail{
+						Text:     string(payload),
+						Language: "markdown",
+					},
+				}
+
+				return json.Marshal(page)
+			}
+
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				content, err := generator("")
+				if err != nil {
+					exitWithErrorMsg("Could not generate page: %s", err)
+				}
+
+				fmt.Print(string(content))
 				return
 			}
 
