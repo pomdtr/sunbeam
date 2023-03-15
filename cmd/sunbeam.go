@@ -13,7 +13,7 @@ import (
 	"github.com/pomdtr/sunbeam/tui"
 )
 
-//go:embed root.yaml
+//go:embed root.yml
 var defaultManifest string
 
 func exitWithErrorMsg(msg string, args ...any) {
@@ -40,7 +40,7 @@ func Execute(version string) error {
 	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
 
-	rootFile := path.Join(configDir, "root.yaml")
+	rootFile := path.Join(configDir, "root.yml")
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=./schemas/schema.json
+# yaml-language-server: $schema=./types/schema.json
 type: list
 items:
   - title: Show Examples
@@ -9,3 +9,7 @@ items:
     actions:
       - type: read
         path: "./docs/getting-started/sunbeam.yml"
+  - title: Show Root
+    actions:
+      - type: read
+        path: "~/.config/sunbeam/root.yml"
