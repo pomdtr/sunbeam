@@ -11,7 +11,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-//go:embed docs/schema.json
+//go:embed docs/schemas/page.json
 var schema string
 
 var version = "dev"
