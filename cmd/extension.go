@@ -93,10 +93,8 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 				}
 
 				page := types.Page{
-					Type: types.ListPage,
-					List: &types.List{
-						Items: listItems,
-					},
+					Type:  types.ListPage,
+					Items: listItems,
 				}
 
 				return json.Marshal(page)
@@ -154,11 +152,9 @@ func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 				}
 
 				page := types.Page{
-					Type: types.DetailPage,
-					Detail: &types.Detail{
-						Text:     string(payload),
-						Language: "markdown",
-					},
+					Type:     types.DetailPage,
+					Text:     string(payload),
+					Language: "markdown",
 				}
 
 				return json.Marshal(page)
@@ -238,9 +234,7 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 							Shortcut: "ctrl+n",
 						},
 					},
-					List: &types.List{
-						Items: listItems,
-					},
+					Items: listItems,
 				}
 
 				return json.Marshal(page)

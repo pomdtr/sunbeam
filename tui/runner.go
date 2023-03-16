@@ -272,12 +272,12 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			runner.currentView = RunnerViewDetail
 
 			var detailFunc func() string
-			if page.Detail.Text != "" {
+			if page.Text != "" {
 				detailFunc = func() string {
-					return page.Detail.Text
+					return page.Text
 				}
 			} else {
-				args, err := shell.Fields(page.Detail.Command, nil)
+				args, err := shell.Fields(page.Command, nil)
 				if err != nil {
 					return runner, func() tea.Msg {
 						return fmt.Errorf("invalid command: %s", err)
@@ -321,8 +321,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			runner.list = NewList(page, runner.workingDir)
 			runner.list.SetQuery(query)
 
-			listItems := make([]ListItem, len(page.List.Items))
-			for i, scriptItem := range page.List.Items {
+			listItems := make([]ListItem, len(page.Items))
+			for i, scriptItem := range page.Items {
 				scriptItem := scriptItem
 				listItem := ParseScriptItem(scriptItem)
 				listItems[i] = listItem
