@@ -24,7 +24,7 @@ items = [
             {
                 "type": "open",
                 "title": "Open File",
-                "target": str(filepath),
+                "path": str(filepath),
             },
             {
                 "type": "copy",
