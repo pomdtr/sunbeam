@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path"
 
@@ -21,7 +22,6 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 		Short: "Read page from file or stdin, and push it's content",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			var runner *tui.CommandRunner
 			if len(args) == 0 {
 				if isatty.IsTerminal(os.Stdin.Fd()) {
 					exitWithErrorMsg("No input provided")
@@ -34,7 +34,7 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 
 				var content []byte
 				format, _ := cmd.Flags().GetString("format")
-				runner = tui.NewRunner(func(input string) ([]byte, error) {
+				runner := tui.NewRunner(func(input string) ([]byte, error) {
 					if content != nil {
 						return content, nil
 					}
@@ -62,10 +62,17 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 					return content, err
 				}, validator, cwd)
 
-			} else {
+				tui.NewModel(runner).Draw()
+				return
 
+			}
+
+			var generator tui.PageGenerator
+			if target, err := url.ParseRequestURI(args[0]); err == nil && (target.Scheme == "http" || target.Scheme == "https") {
+				generator = tui.NewHttpGenerator(args[0])
+			} else {
 				// By default, we detect the format of the file based on the extension
-				generator := tui.NewFileGenerator(args[0])
+				generator = tui.NewFileGenerator(args[0])
 
 				// If the format flag is set, we override the detected format
 				if cmd.Flags().Changed("format") {
@@ -91,12 +98,10 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 					}
 				}
 
-				runner = tui.NewRunner(generator, validator, path.Dir(args[0]))
-
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := runner.Generator("")
+				output, err := generator("")
 				if err != nil {
 					exitWithErrorMsg("could not generate page: %s", err)
 				}
@@ -105,6 +110,7 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 				return
 			}
 
+			runner := tui.NewRunner(generator, validator, path.Dir(args[0]))
 			model := tui.NewModel(runner)
 
 			model.Draw()

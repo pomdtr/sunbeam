@@ -3,6 +3,8 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -60,5 +62,22 @@ func NewFileGenerator(name string) PageGenerator {
 		}
 
 		return nil, fmt.Errorf("unsupported file type")
+	}
+}
+
+func NewHttpGenerator(url string) PageGenerator {
+	return func(input string) ([]byte, error) {
+		res, err := http.Get(url)
+		if err != nil {
+			return nil, err
+		}
+
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("http request returned status code %d", res.StatusCode)
+		}
+
+		return io.ReadAll(res.Body)
 	}
 }
