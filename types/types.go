@@ -15,8 +15,6 @@ const (
 	ListPage
 )
 
-// TODO: remove the yaml dependency
-
 func (p *PageType) UnmarshalJSON(b []byte) error {
 	var s string
 	if err := json.Unmarshal(b, &s); err != nil {
@@ -76,36 +74,36 @@ func (p PageType) MarshalYAML() (interface{}, error) {
 }
 
 type Page struct {
-	Type    PageType `json:"type"`
-	Title   string   `json:"title,omitempty"`
-	Actions []Action `json:"actions,omitempty"`
+	Type    PageType `json:"type" yaml:"type"`
+	Title   string   `json:"title,omitempty" yaml:"title,omitempty"`
+	Actions []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
 
 	// Detail page
-	Text     string `json:"text,omitempty"`
-	Command  string `json:"command,omitempty"`
-	Language string `json:"language,omitempty"`
+	Text     string `json:"text,omitempty" yaml:"text,omitempty"`
+	Command  string `json:"command,omitempty" yaml:"command,omitempty"`
+	Language string `json:"language,omitempty" yaml:"language,omitempty"`
 
 	// List page
-	ShowDetail    bool       `json:"showDetail,omitempty" yaml:"showDetail"`
-	GenerateItems bool       `json:"generateItems,omitempty" yaml:"generateItems"`
-	EmptyText     string     `json:"emptyText,omitempty" yaml:"emptyText"`
-	Items         []ListItem `json:"items"`
+	ShowDetail    bool       `json:"showDetail,omitempty" yaml:"showDetail,omitempty"`
+	GenerateItems bool       `json:"generateItems,omitempty" yaml:"generateItems,omitempty"`
+	EmptyText     string     `json:"emptyText,omitempty" yaml:"emptyText,omitempty"`
+	Items         []ListItem `json:"items" yaml:"items"`
 }
 
 type ListItem struct {
-	Id          string   `json:"id,omitempty"`
-	Alias       string   `json:"alias,omitempty"`
-	Title       string   `json:"title"`
-	Subtitle    string   `json:"subtitle,omitempty"`
-	Detail      *Detail  `json:"detail,omitempty"`
-	Accessories []string `json:"accessories,omitempty"`
-	Actions     []Action `json:"actions,omitempty"`
+	Id          string   `json:"id,omitempty" yaml:"id,omitempty"`
+	Alias       string   `json:"alias,omitempty" yaml:"alias,omitempty"`
+	Title       string   `json:"title" yaml:"title"`
+	Subtitle    string   `json:"subtitle,omitempty" yaml:"subtitle,omitempty"`
+	Detail      *Detail  `json:"detail,omitempty" yaml:"detail,omitempty"`
+	Accessories []string `json:"accessories,omitempty" yaml:"accessories,omitempty"`
+	Actions     []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
 
 type Detail struct {
-	Text     string `json:"text"`
-	Command  string `json:"command"`
-	Language string `json:"language"`
+	Text     string `json:"text" yaml:"text"`
+	Command  string `json:"command" yaml:"command"`
+	Language string `json:"language" yaml:"language"`
 }
 
 type FormInputType int
@@ -184,14 +182,14 @@ func (input FormInputType) MarshalYAML() (interface{}, error) {
 }
 
 type FormInput struct {
-	Name        string        `json:"name"`
-	Type        FormInputType `json:"type"`
-	Title       string        `json:"title"`
-	Placeholder string        `json:"placeholder,omitempty"`
-	Default     string        `json:"default,omitempty"`
+	Name        string        `json:"name" yaml:"name"`
+	Type        FormInputType `json:"type" yaml:"type"`
+	Title       string        `json:"title" yaml:"title"`
+	Placeholder string        `json:"placeholder,omitempty" yaml:"placeholder,omitempty"`
+	Default     string        `json:"default,omitempty" yaml:"default,omitempty"`
 
 	// Only for dropdown
-	Choices []string `json:"choices,omitempty"`
+	Choices []string `json:"choices,omitempty" yaml:"choices,omitempty"`
 }
 
 type ActionType int
@@ -372,23 +370,23 @@ func (o OnSuccessType) MarshalYAML() (interface{}, error) {
 }
 
 type Action struct {
-	Title    string     `json:"title,omitempty" yaml:"title"`
-	Shortcut string     `json:"shortcut,omitempty"`
-	Type     ActionType `json:"type"`
+	Title    string     `json:"title,omitempty" yaml:"title,omitempty"`
+	Shortcut string     `json:"shortcut,omitempty" yaml:"shortcut,omitempty"`
+	Type     ActionType `json:"type" yaml:"type"`
 
 	// copy
-	Text string `json:"text,omitempty"`
+	Text string `json:"text,omitempty" yaml:"text,omitempty"`
 
 	// edit
-	Path string `json:"path,omitempty"`
+	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 
 	// open
-	Url string `json:"url,omitempty"`
+	Url string `json:"url,omitempty" yaml:"url,omitempty"`
 
 	// run
-	Command   string        `json:"command,omitempty"`
-	Inputs    []FormInput   `json:"inputs,omitempty"`
-	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess"`
+	Command   string        `json:"command,omitempty" yaml:"command,omitempty"`
+	Inputs    []FormInput   `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
 
 func (a Action) DisplayTitle() string {
