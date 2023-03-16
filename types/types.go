@@ -75,7 +75,7 @@ type Page struct {
 	*List   `yaml:",inline"`
 }
 
-func NewList(title string, items ...ListItem) Page {
+func NewList(title string, items []ListItem) Page {
 	return Page{
 		Type:  ListPage,
 		Title: title,
@@ -122,7 +122,7 @@ type ListItem struct {
 	Actions     []Action `json:"actions,omitempty"`
 }
 
-func NewListItem(title string, actions ...Action) ListItem {
+func NewListItem(title string, actions []Action) ListItem {
 	return ListItem{
 		Title:   title,
 		Actions: actions,
