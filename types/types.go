@@ -15,7 +15,7 @@ const (
 	ListPage
 )
 
-// Use with options pattern
+// TODO: remove the yaml dependency
 
 func (p *PageType) UnmarshalJSON(b []byte) error {
 	var s string
@@ -62,6 +62,17 @@ func (p *PageType) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	return nil
+}
+
+func (p PageType) MarshalYAML() (interface{}, error) {
+	switch p {
+	case DetailPage:
+		return "detail", nil
+	case ListPage:
+		return "list", nil
+	default:
+		return nil, fmt.Errorf("unknown page type: %d", p)
+	}
 }
 
 type Page struct {
@@ -154,6 +165,19 @@ func (input FormInputType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("textarea")
 	case DropDown:
 		return json.Marshal("dropdown")
+	default:
+		return nil, fmt.Errorf("unknown form input type: %d", input)
+	}
+}
+
+func (input FormInputType) MarshalYAML() (interface{}, error) {
+	switch input {
+	case TextField:
+		return "textfield", nil
+	case TextArea:
+		return "textarea", nil
+	case DropDown:
+		return "dropdown", nil
 	default:
 		return nil, fmt.Errorf("unknown form input type: %d", input)
 	}
@@ -253,6 +277,25 @@ func (a *ActionType) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
+func (a ActionType) MarshalYAML() (interface{}, error) {
+	switch a {
+	case CopyAction:
+		return "copy", nil
+	case OpenAction:
+		return "open", nil
+	case ReadAction:
+		return "read", nil
+	case EditAction:
+		return "edit", nil
+	case RunAction:
+		return "run", nil
+	case ReloadAction:
+		return "reload", nil
+	default:
+		return nil, fmt.Errorf("unknown action type: %d", a)
+	}
+}
+
 type OnSuccessType int
 
 const (
@@ -313,6 +356,19 @@ func (o *OnSuccessType) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	return nil
+}
+
+func (o OnSuccessType) MarshalYAML() (interface{}, error) {
+	switch o {
+	case PushOnSuccess:
+		return "push", nil
+	case ReloadOnSuccess:
+		return "reload", nil
+	case ReplaceOnSuccess:
+		return "replace", nil
+	default:
+		return nil, fmt.Errorf("unknown onSuccess type: %d", o)
+	}
 }
 
 type Action struct {
