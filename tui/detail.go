@@ -36,7 +36,7 @@ func NewDetail(title string, contentCmd func() string, actions []types.Action) *
 		footer.SetBindings()
 	} else {
 		footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].DisplayTitle())),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}

@@ -388,23 +388,3 @@ type Action struct {
 	Inputs    []FormInput   `json:"inputs,omitempty" yaml:"inputs,omitempty"`
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
-
-func (a Action) DisplayTitle() string {
-	if a.Title != "" {
-		return a.Title
-	}
-	switch a.Type {
-	case CopyAction:
-		return "Copy"
-	case OpenAction:
-		return "Open"
-	case ReadAction:
-		return "Read"
-	case RunAction:
-		return "Run"
-	case ReloadAction:
-		return "Reload"
-	default:
-		return "Unknown"
-	}
-}
