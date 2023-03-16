@@ -6,6 +6,7 @@ items:
     subtitle: Bitwarden
     actions:
       - type: run
+        title: Run
         onSuccess: push
         command: "./bitwarden/bitwarden.sh"
   - title: Highlight Example
@@ -23,6 +24,7 @@ items:
     subtitle: Examples
     actions:
       - type: run
+        title: Run
         onSuccess: push
         command: "./demo/demo.py"
   - title: DevDocs
@@ -70,17 +72,20 @@ items:
     subtitle: Examples
     actions:
       - type: run
+        title: Search
         onSuccess: push
         command: "./google-search/google-search.mjs"
   - title: TLDR Pages
     subtitle: Examples
     actions:
       - type: run
+        title: Search
         onSuccess: push
         command: "./tldr/tldr.sh"
   - title: List Todos
     subtitle: Todo
     actions:
       - type: run
+        title: List Todos
         onSuccess: push
         command: "./todo/todo.py"

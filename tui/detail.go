@@ -28,6 +28,7 @@ type Detail struct {
 func NewDetail(title string, contentCmd func() string, actions []types.Action) *Detail {
 	actions = append(actions, types.Action{
 		Type:     types.ReloadAction,
+		Title:    "Reload Page",
 		Shortcut: "ctrl+r",
 	})
 

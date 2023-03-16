@@ -4,12 +4,15 @@ items:
   - title: Show Examples
     actions:
       - type: read
+        title: Examples
         path: "./docs/examples/sunbeam.yml"
   - title: Show Getting Started
     actions:
       - type: read
+        title: Getting Started
         path: "./docs/getting-started/sunbeam.yml"
   - title: Show Root
     actions:
       - type: read
+        title: Root
         path: "~/.config/sunbeam/root.yml"
