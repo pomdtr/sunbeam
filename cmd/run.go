@@ -16,9 +16,14 @@ func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 		Short: "Run a script and push it's output",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			name := args[0]
+			var extraArgs []string
+			if len(args) > 1 {
+				extraArgs = args[1:]
+			}
+
 			generator := func(s string) ([]byte, error) {
-				name, args := SplitCommand(args)
-				command := exec.Command(name, args...)
+				command := exec.Command(name, extraArgs...)
 				output, err := command.Output()
 				if err != nil {
 					if exitError, ok := err.(*exec.ExitError); ok {
@@ -42,23 +47,10 @@ func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 			}
 
 			cwd, _ := os.Getwd()
-			command, args := SplitCommand(args)
-			runner := tui.NewRunner(tui.NewCommandGenerator(command, args, cwd), validator, cwd)
+			runner := tui.NewRunner(tui.NewCommandGenerator(name, args, cwd), validator, cwd)
 			tui.NewModel(runner).Draw()
 		},
 	}
 
 	return cmd
-}
-
-func SplitCommand(fields []string) (string, []string) {
-	if len(fields) == 0 {
-		return "", nil
-	}
-
-	if len(fields) == 1 {
-		return fields[0], nil
-	}
-
-	return fields[0], fields[1:]
 }

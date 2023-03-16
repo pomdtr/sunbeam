@@ -9,7 +9,7 @@ if [ $# -eq 1 ]; then
   title: .name,
   subtitle: .type,
   actions: [
-    {type: "open", url: "https://devdocs.io/\($slug)/\(.path)"}
+    {type: "open", title: "Open in Browser", url: "https://devdocs.io/\($slug)/\(.path)"}
   ]
 }
 ' | sunbeam query --slurp '{ type: "list", items: . }'

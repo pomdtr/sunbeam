@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
-	"mvdan.cc/sh/v3/shell"
 )
 
 type CommandRunner struct {
@@ -277,10 +276,10 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return page.Text
 				}
 			} else {
-				args, err := shell.Fields(page.Command, nil)
+				args, err := shlex.Split(page.Command)
 				if err != nil {
 					return runner, func() tea.Msg {
-						return fmt.Errorf("invalid command: %s", err)
+						return fmt.Errorf("failed to parse command: %s", err)
 					}
 				}
 

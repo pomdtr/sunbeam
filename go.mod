@@ -16,7 +16,6 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
 	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v3 v3.0.1
-	mvdan.cc/sh/v3 v3.6.0
 )
 
 require (

@@ -87,7 +87,7 @@ type Page struct {
 	ShowDetail    bool       `json:"showDetail,omitempty" yaml:"showDetail,omitempty"`
 	GenerateItems bool       `json:"generateItems,omitempty" yaml:"generateItems,omitempty"`
 	EmptyText     string     `json:"emptyText,omitempty" yaml:"emptyText,omitempty"`
-	Items         []ListItem `json:"items" yaml:"items"`
+	Items         []ListItem `json:"items,omitempty" yaml:"items,omitempty"`
 }
 
 type ListItem struct {
