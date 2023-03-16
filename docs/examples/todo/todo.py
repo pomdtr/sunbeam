@@ -45,7 +45,7 @@ def handle(args: argparse.Namespace):
                         {
                             "type": "run",
                             "title": "Add Item",
-                            "command": f"{sys.argv[0]} add {{{{ title }}}}",
+                            "command": f"{sys.argv[0]} add ${{input:title}}",
                             "inputs": [
                                 {
                                     "name": "title",
@@ -75,7 +75,7 @@ def handle(args: argparse.Namespace):
                                     "title": "Edit Title",
                                     "shortcut": "ctrl+e",
                                     "onSuccess": "reload",
-                                    "command": f"{sys.argv[0]} edit-title {key} {{{{ title }}}}",
+                                    "command": f"{sys.argv[0]} edit-title {key} ${{input:title}}",
                                     "inputs": [
                                         {
                                             "name": "title",

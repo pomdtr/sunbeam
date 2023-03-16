@@ -7,12 +7,12 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	"text/template"
 
 	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/google/shlex"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
@@ -144,7 +144,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			return PushPageMsg{runner: runner}
 		}
 	case types.RunAction:
-		args, err := shell.Fields(action.Command, nil)
+		args, err := shlex.Split(action.Command)
 		if err != nil {
 			return func() tea.Msg {
 				return fmt.Errorf("failed to parse command: %s", err)
@@ -349,24 +349,16 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
-				funcmap := template.FuncMap{}
-				for key, value := range values {
-					funcmap[key] = func() string {
-						return shellescape.Quote(value)
-					}
-				}
+				command := msg.Command
 
-				renderedCommand, err := utils.RenderString(msg.Command, funcmap)
-				if err != nil {
-					return func() tea.Msg {
-						return fmt.Errorf("failed to render command: %s", err)
-					}
+				for key, value := range values {
+					command = strings.ReplaceAll(command, fmt.Sprintf("${input:%s}", key), value)
 				}
 
 				return func() tea.Msg {
 					return types.Action{
 						Type:      types.RunAction,
-						Command:   renderedCommand,
+						Command:   command,
 						OnSuccess: msg.OnSuccess,
 					}
 				}

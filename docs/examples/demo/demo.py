@@ -51,7 +51,7 @@ if not args.command:
                     "type": "run",
                     "onSuccess": "push",
                     "title": "Show me a static list!",
-                    "command": f"{sys.argv[0]} static-list {{{{ nb_items }}}}",
+                    "command": f"{sys.argv[0]} static-list ${{input:nb_items}}",
                     "inputs": [
                         {
                             "name": "nb_items",

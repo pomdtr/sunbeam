@@ -22,7 +22,7 @@ items:
     actions:
       - title: Create Extension
         type: run
-        command: sunbeam extension create {{ extensionName }}
+        command: sunbeam extension create ${input:extensionName}
         onSuccess: push
         inputs:
           - title: Extension Name

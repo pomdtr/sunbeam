@@ -226,7 +226,7 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 						{
 							Type:     types.RunAction,
 							RawTitle: "Create Extension",
-							Command:  "sunbeam extension create {{ extensionName }}",
+							Command:  "sunbeam extension create ${input:extensionName}",
 							Inputs: []types.FormInput{
 								{
 									Type:        types.TextField,
