@@ -53,7 +53,7 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 		}
 		filterItems[i] = ListItem{
 			ListItem: types.ListItem{
-				Title:    action.Title(),
+				Title:    action.DisplayTitle(),
 				Subtitle: action.Shortcut,
 				Actions:  []types.Action{action},
 			},

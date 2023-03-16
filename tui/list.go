@@ -276,7 +276,7 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 	l.actionList.SetActions(actions...)
 	if len(actions) > 0 {
 		l.footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title())),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].DisplayTitle())),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	} else {

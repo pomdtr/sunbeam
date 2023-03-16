@@ -316,7 +316,7 @@ func (o *OnSuccessType) UnmarshalYAML(node *yaml.Node) error {
 }
 
 type Action struct {
-	RawTitle string     `json:"title,omitempty" yaml:"title"`
+	Title    string     `json:"title,omitempty" yaml:"title"`
 	Shortcut string     `json:"shortcut,omitempty"`
 	Type     ActionType `json:"type"`
 
@@ -335,9 +335,9 @@ type Action struct {
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess"`
 }
 
-func (a Action) Title() string {
-	if a.RawTitle != "" {
-		return a.RawTitle
+func (a Action) DisplayTitle() string {
+	if a.Title != "" {
+		return a.Title
 	}
 	switch a.Type {
 	case CopyAction:

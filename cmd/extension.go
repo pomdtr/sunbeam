@@ -73,18 +73,18 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 						Actions: []types.Action{
 							{
 								Type:      types.RunAction,
-								RawTitle:  "View Readme",
+								Title:     "View Readme",
 								OnSuccess: types.PushOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
 							},
 							{
-								Type:     types.RunAction,
-								RawTitle: "Install",
-								Command:  fmt.Sprintf("sunbeam extension install %s", repo.HtmlUrl),
+								Type:    types.RunAction,
+								Title:   "Install",
+								Command: fmt.Sprintf("sunbeam extension install %s", repo.HtmlUrl),
 							},
 							{
 								Type:     types.OpenAction,
-								RawTitle: "Open in Browser",
+								Title:    "Open in Browser",
 								Shortcut: "ctrl+o",
 								Url:      repo.HtmlUrl,
 							},
@@ -195,19 +195,19 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 						Actions: []types.Action{
 							{
 								Type:      types.RunAction,
-								RawTitle:  "Run Command",
+								Title:     "Run Command",
 								OnSuccess: types.PushOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension exec %s", extension),
 							},
 							{
-								RawTitle: "Upgrade Extension",
+								Title:    "Upgrade Extension",
 								Type:     types.RunAction,
 								Command:  fmt.Sprintf("sunbeam extension upgrade %s", extension),
 								Shortcut: "ctrl+u",
 							},
 							{
 								Type:      types.RunAction,
-								RawTitle:  "Remove Extension",
+								Title:     "Remove Extension",
 								Shortcut:  "ctrl+x",
 								OnSuccess: types.ReloadOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension remove %s", extension),
@@ -220,9 +220,9 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 					Type: types.ListPage,
 					Actions: []types.Action{
 						{
-							Type:     types.RunAction,
-							RawTitle: "Create Extension",
-							Command:  "sunbeam extension create ${input:extensionName}",
+							Type:    types.RunAction,
+							Title:   "Create Extension",
+							Command: "sunbeam extension create ${input:extensionName}",
 							Inputs: []types.FormInput{
 								{
 									Type:        types.TextField,

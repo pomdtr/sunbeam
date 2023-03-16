@@ -376,9 +376,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		runner.currentView = RunnerViewError
 		errorView := NewDetail("Error", msg.Error, []types.Action{
 			{
-				Type:     types.CopyAction,
-				RawTitle: "Copy error",
-				Text:     msg.Error(),
+				Type:  types.CopyAction,
+				Title: "Copy error",
+				Text:  msg.Error(),
 			},
 		})
 
