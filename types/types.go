@@ -75,10 +75,34 @@ type Page struct {
 	*List   `yaml:",inline"`
 }
 
+func NewList(title string, items ...ListItem) Page {
+	return Page{
+		Type:  ListPage,
+		Title: title,
+		List: &List{
+			Items: items,
+		},
+	}
+}
+
 type Detail struct {
 	Text     string `json:"text"`
 	Command  string `json:"command"`
 	Language string `json:"language"`
+}
+
+func NewDetailFromText(text string, language string) *Detail {
+	return &Detail{
+		Text:     text,
+		Language: language,
+	}
+}
+
+func NewDetailFromCommand(command, language string) *Detail {
+	return &Detail{
+		Command:  command,
+		Language: language,
+	}
 }
 
 type List struct {
@@ -96,6 +120,13 @@ type ListItem struct {
 	Detail      *Detail  `json:"detail,omitempty"`
 	Accessories []string `json:"accessories,omitempty"`
 	Actions     []Action `json:"actions,omitempty"`
+}
+
+func NewListItem(title string, actions ...Action) ListItem {
+	return ListItem{
+		Title:   title,
+		Actions: actions,
+	}
 }
 
 type FormInputType int
@@ -169,6 +200,33 @@ type FormInput struct {
 
 	// Only for dropdown
 	Choices []string `json:"choices,omitempty"`
+}
+
+func NewTextField(name, title, placeholder string) FormInput {
+	return FormInput{
+		Name:        name,
+		Type:        TextField,
+		Title:       title,
+		Placeholder: placeholder,
+	}
+}
+
+func NewTextArea(name, title, placeholder string) FormInput {
+	return FormInput{
+		Name:        name,
+		Type:        TextArea,
+		Title:       title,
+		Placeholder: placeholder,
+	}
+}
+
+func NewDropDown(name, title string, choices []string) FormInput {
+	return FormInput{
+		Name:    name,
+		Type:    DropDown,
+		Title:   title,
+		Choices: choices,
+	}
 }
 
 type ActionType int
@@ -334,6 +392,48 @@ type Action struct {
 	Command   string        `json:"command,omitempty"`
 	Inputs    []FormInput   `json:"inputs,omitempty"`
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess"`
+}
+
+func NewRunAction(title, command string, inputs []FormInput, onSuccess OnSuccessType) Action {
+	return Action{
+		RawTitle:  title,
+		Type:      RunAction,
+		Command:   command,
+		Inputs:    inputs,
+		OnSuccess: onSuccess,
+	}
+}
+
+func NewReadAction(title, text string) Action {
+	return Action{
+		RawTitle: title,
+		Type:     ReadAction,
+		Text:     text,
+	}
+}
+
+func NewCopyAction(title, text string) Action {
+	return Action{
+		RawTitle: title,
+		Type:     CopyAction,
+		Text:     text,
+	}
+}
+
+func NewOpenUrlAction(title string, url string) Action {
+	return Action{
+		RawTitle: title,
+		Type:     OpenAction,
+		Url:      url,
+	}
+}
+
+func NewOpenPathAction(title string, path string) Action {
+	return Action{
+		RawTitle: title,
+		Type:     OpenAction,
+		Path:     path,
+	}
 }
 
 func (a Action) Title() string {
