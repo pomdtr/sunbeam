@@ -5,10 +5,6 @@ import (
 	"fmt"
 
 	"gopkg.in/yaml.v3"
-
-	_ "embed"
-
-	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 )
 
 type PageType int
@@ -18,6 +14,8 @@ const (
 	DetailPage
 	ListPage
 )
+
+// Use with options pattern
 
 func (p *PageType) UnmarshalJSON(b []byte) error {
 	var s string
