@@ -196,7 +196,6 @@
                     },
                     "then": {
                         "required": [
-                            "title",
                             "type",
                             "text"
                         ],
@@ -230,7 +229,6 @@
                     },
                     "then": {
                         "required": [
-                            "title",
                             "type",
                             "path"
                         ],
@@ -264,7 +262,6 @@
                     },
                     "then": {
                         "required": [
-                            "title",
                             "type"
                         ],
                         "additionalProperties": false,
@@ -300,7 +297,6 @@
                     },
                     "then": {
                         "required": [
-                            "title",
                             "type",
                             "command"
                         ],
@@ -348,7 +344,6 @@
                     },
                     "then": {
                         "required": [
-                            "title",
                             "type",
                             "path"
                         ],

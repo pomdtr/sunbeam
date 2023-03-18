@@ -14,6 +14,26 @@ type ActionList struct {
 	footer  Footer
 }
 
+func ActionTitle(action types.Action) string {
+	if action.Title != "" {
+		return action.Title
+	}
+	switch action.Type {
+	case types.RunAction:
+		return "Run"
+	case types.EditAction:
+		return "Edit"
+	case types.CopyAction:
+		return "Copy"
+	case types.OpenAction:
+		return "Open"
+	case types.ReadAction:
+		return "Read"
+	default:
+		return "Unknown"
+	}
+}
+
 func NewActionList() ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
@@ -53,7 +73,7 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 		}
 		filterItems[i] = ListItem{
 			ListItem: types.ListItem{
-				Title:    action.Title,
+				Title:    ActionTitle(action),
 				Subtitle: action.Shortcut,
 				Actions:  []types.Action{action},
 			},
