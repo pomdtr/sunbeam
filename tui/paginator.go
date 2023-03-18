@@ -148,8 +148,6 @@ func (m *Paginator) Draw() (err error) {
 	// Background detection before we start the program
 	lipgloss.SetHasDarkBackground(lipgloss.HasDarkBackground())
 
-	os.Setenv("SUNBEAM", "1")
-
 	var p *tea.Program
 	if m.options.MaxHeight == 0 {
 		p = tea.NewProgram(m, tea.WithAltScreen())

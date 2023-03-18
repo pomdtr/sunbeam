@@ -10,6 +10,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.12
+	github.com/joho/godotenv v1.5.1
 	github.com/junegunn/fzf v0.0.0-20230215142442-352ea072269d
 	github.com/otiai10/copy v1.9.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8

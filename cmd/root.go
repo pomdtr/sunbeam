@@ -8,6 +8,7 @@ import (
 
 	_ "embed"
 
+	"github.com/joho/godotenv"
 	"github.com/mattn/go-isatty"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
@@ -16,7 +17,10 @@ import (
 )
 
 //go:embed templates/root.yml
-var defaultManifest string
+var defaultManifest []byte
+
+//go:embed templates/.env
+var defaultEnv []byte
 
 func exitWithErrorMsg(msg string, args ...any) {
 	fmt.Fprintf(os.Stderr, msg, args...)
@@ -43,6 +47,7 @@ func Execute(version string, schema *jsonschema.Schema) error {
 	extensionDir := path.Join(dataDir, "extensions")
 
 	rootFile := path.Join(configDir, "root.yml")
+	envFile := path.Join(configDir, ".env")
 	validator := func(page []byte) error {
 		var v any
 		if err := json.Unmarshal(page, &v); err != nil {
@@ -51,6 +56,7 @@ func Execute(version string, schema *jsonschema.Schema) error {
 
 		return schema.Validate(v)
 	}
+
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "sunbeam",
@@ -61,15 +67,22 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Args:    cobra.NoArgs,
 		Version: version,
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if _, err := os.Stat(rootFile); !os.IsNotExist(err) {
-				return
+			if _, err := os.Stat(rootFile); os.IsNotExist(err) {
+				// Create the config file
+				_ = os.MkdirAll(configDir, 0755)
+				// Write the default manifest
+				_ = os.WriteFile(rootFile, defaultManifest, 0644)
 			}
 
-			// Create the config file
-			_ = os.MkdirAll(configDir, 0755)
+			if _, err := os.Stat(envFile); os.IsNotExist(err) {
+				// Create the config file
+				_ = os.MkdirAll(configDir, 0755)
+				// Write the default manifest
+				_ = os.WriteFile(envFile, defaultEnv, 0644)
+			}
 
-			// Write the default manifest
-			_ = os.WriteFile(rootFile, []byte(defaultManifest), 0644)
+			godotenv.Load(envFile)
+			os.Setenv("SUNBEAM", "1")
 		},
 		// If the config file does not exist, create it
 		Run: func(cmd *cobra.Command, args []string) {
