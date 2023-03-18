@@ -79,6 +79,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.hidden = true
 		return m, tea.Quit
+	case *exec.Cmd:
+		m.exitCmd = msg
+		m.hidden = true
+		return m, tea.Quit
 	}
 
 	// Update the current page

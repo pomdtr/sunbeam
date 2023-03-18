@@ -89,3 +89,12 @@ items:
         title: List Todos
         onSuccess: push
         command: "./todo/todo.py"
+  - title: Show Form
+    actions:
+      - type: run
+        title: Show
+        command: echo ${input:text}
+        inputs:
+          - type: textfield
+            name: text
+            title: Text
