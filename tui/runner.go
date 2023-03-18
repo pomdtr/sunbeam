@@ -41,8 +41,6 @@ const (
 	RunnerViewList RunnerView = iota
 	RunnerViewDetail
 	RunnerViewLoading
-	RunnerViewError
-	RunnerViewForm
 )
 
 type PageValidator func([]byte) error
@@ -222,15 +220,21 @@ func (c *CommandRunner) SetSize(width, height int) {
 	c.header.Width = width
 	c.footer.Width = width
 
+	if c.form != nil {
+		c.form.SetSize(width, height)
+		return
+	}
+
+	if c.err != nil {
+		c.err.SetSize(width, height)
+		return
+	}
+
 	switch c.currentView {
 	case RunnerViewList:
 		c.list.SetSize(width, height)
 	case RunnerViewDetail:
 		c.detail.SetSize(width, height)
-	case RunnerViewForm:
-		c.form.SetSize(width, height)
-	case RunnerViewError:
-		c.err.SetSize(width, height)
 	}
 }
 
@@ -239,11 +243,15 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if runner.currentView != RunnerViewLoading {
-				break
+			if runner.form != nil {
+				runner.form = nil
+				return runner, nil
 			}
-			return runner, func() tea.Msg {
-				return PopPageMsg{}
+
+			if runner.currentView == RunnerViewLoading {
+				return runner, func() tea.Msg {
+					return PopPageMsg{}
+				}
 			}
 		}
 	case CommandOutput:
@@ -366,7 +374,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			})
 
-			runner.currentView = RunnerViewForm
 			runner.form = form
 			runner.SetSize(runner.width, runner.height)
 			return runner, form.Init()
@@ -375,7 +382,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		cmd := runner.handleAction(msg)
 		return runner, cmd
 	case error:
-		runner.currentView = RunnerViewError
 		errorView := NewDetail("Error", msg.Error, []types.Action{
 			{
 				Type:  types.CopyAction,
@@ -392,6 +398,18 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmd tea.Cmd
 	var container Page
 
+	if runner.form != nil {
+		container, cmd = runner.form.Update(msg)
+		runner.form, _ = container.(*Form)
+		return runner, cmd
+	}
+
+	if runner.err != nil {
+		container, cmd = runner.err.Update(msg)
+		runner.err, _ = container.(*Detail)
+		return runner, cmd
+	}
+
 	switch runner.currentView {
 	case RunnerViewList:
 		container, cmd = runner.list.Update(msg)
@@ -399,12 +417,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case RunnerViewDetail:
 		container, cmd = runner.detail.Update(msg)
 		runner.detail, _ = container.(*Detail)
-	case RunnerViewForm:
-		container, cmd = runner.form.Update(msg)
-		runner.form, _ = container.(*Form)
-	case RunnerViewError:
-		container, cmd = runner.err.Update(msg)
-		runner.err, _ = container.(*Detail)
 	default:
 		runner.header, cmd = runner.header.Update(msg)
 	}
@@ -412,15 +424,19 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *CommandRunner) View() string {
+	if c.form != nil {
+		return c.form.View()
+	}
+
+	if c.err != nil {
+		return c.err.View()
+	}
+
 	switch c.currentView {
 	case RunnerViewList:
 		return c.list.View()
-	case RunnerViewForm:
-		return c.form.View()
 	case RunnerViewDetail:
 		return c.detail.View()
-	case RunnerViewError:
-		return c.err.View()
 	case RunnerViewLoading:
 		headerView := c.header.View()
 		footerView := c.footer.View()

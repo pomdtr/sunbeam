@@ -82,11 +82,7 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 								OnSuccess: types.PushOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
 							},
-							{
-								Type:    types.RunAction,
-								Title:   "Install",
-								Command: fmt.Sprintf("sunbeam extension install %s", repo.HtmlUrl),
-							},
+							newExtensionInstallAction(repo.FullName),
 							{
 								Type:     types.OpenAction,
 								Title:    "Open in Browser",
@@ -117,6 +113,22 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(generator, validator, cwd)
 			tui.NewPaginator(runner).Draw()
+		},
+	}
+}
+
+func newExtensionInstallAction(extensionUrl string) types.Action {
+	return types.Action{
+		Type:    types.RunAction,
+		Title:   "Install",
+		Command: fmt.Sprintf("sunbeam extension install ${input:name} %s", extensionUrl),
+		Inputs: []types.Input{
+			{
+				Type:        types.TextFieldInput,
+				Name:        "name",
+				Title:       "Extension Name",
+				Placeholder: "Extension Name",
+			},
 		},
 	}
 }
@@ -169,7 +181,7 @@ func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 					Text:     string(payload),
 					Language: "markdown",
 					Actions: []types.Action{
-						{Title: "Install Extension", Command: fmt.Sprintf("sunbeam extension install %s", repo.Url())},
+						newExtensionInstallAction(repo.Url().String()),
 					},
 				})
 			}
@@ -237,9 +249,9 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 							Type:    types.RunAction,
 							Title:   "Create Extension",
 							Command: "sunbeam extension create ${input:extensionName}",
-							Inputs: []types.FormInput{
+							Inputs: []types.Input{
 								{
-									Type:        types.TextField,
+									Type:        types.TextFieldInput,
 									Name:        "extensionName",
 									Title:       "Extension Name",
 									Placeholder: "my-extension",
@@ -532,17 +544,12 @@ func ListExtensions(extensionDir string) ([]string, error) {
 
 	extensions := make([]string, 0)
 	for _, entry := range entries {
-		if !strings.HasPrefix(entry.Name(), "sunbeam-") {
-			continue
-		}
-
-		binary := path.Join(extensionDir, entry.Name(), entry.Name())
+		binary := path.Join(extensionDir, entry.Name(), extensionBinaryName)
 		if _, err := os.Stat(binary); os.IsNotExist(err) {
 			continue
 		}
 
-		extensionId := strings.TrimPrefix(entry.Name(), "sunbeam-")
-		extensions = append(extensions, extensionId)
+		extensions = append(extensions, entry.Name())
 	}
 
 	return extensions, nil

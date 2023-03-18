@@ -32,14 +32,14 @@ type FormItem struct {
 	Name  string
 }
 
-func NewFormItem(param types.FormInput) (FormItem, error) {
+func NewFormItem(param types.Input) (FormItem, error) {
 	var input FormInput
 	switch param.Type {
-	case types.TextField:
+	case types.TextFieldInput:
 		input = NewTextInput(param)
-	case types.TextArea:
+	case types.TextAreaInput:
 		input = NewTextArea(param)
-	case types.DropDown:
+	case types.DropDownInput:
 		input = NewDropDown(param)
 	default:
 		return FormItem{}, fmt.Errorf("invalid form input type")
@@ -61,7 +61,7 @@ func (ta *TextArea) Title() string {
 	return ta.title
 }
 
-func NewTextArea(formItem types.FormInput) *TextArea {
+func NewTextArea(formItem types.Input) *TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
 	ta.SetValue(formItem.Default)
@@ -99,7 +99,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem types.FormInput) *TextInput {
+func NewTextInput(formItem types.Input) *TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.SetValue(formItem.Default)
@@ -175,7 +175,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem types.FormInput) *DropDown {
+func NewDropDown(formItem types.Input) *DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 

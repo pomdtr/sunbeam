@@ -110,9 +110,9 @@ type FormInputType int
 
 const (
 	UnknownFormInput FormInputType = iota
-	TextField
-	TextArea
-	DropDown
+	TextFieldInput
+	TextAreaInput
+	DropDownInput
 )
 
 func (input *FormInputType) UnmarshalJSON(bytes []byte) error {
@@ -123,11 +123,11 @@ func (input *FormInputType) UnmarshalJSON(bytes []byte) error {
 
 	switch s {
 	case "textfield":
-		*input = TextField
+		*input = TextFieldInput
 	case "textarea":
-		*input = TextArea
+		*input = TextAreaInput
 	case "dropdown":
-		*input = DropDown
+		*input = DropDownInput
 	default:
 		return fmt.Errorf("unknown form input type: %s", s)
 	}
@@ -143,11 +143,11 @@ func (input *FormInputType) UnmarshalYAML(value *yaml.Node) error {
 
 	switch s {
 	case "textfield":
-		*input = TextField
+		*input = TextFieldInput
 	case "textarea":
-		*input = TextArea
+		*input = TextAreaInput
 	case "dropdown":
-		*input = DropDown
+		*input = DropDownInput
 	default:
 		return fmt.Errorf("unknown form input type: %s", s)
 	}
@@ -157,11 +157,11 @@ func (input *FormInputType) UnmarshalYAML(value *yaml.Node) error {
 
 func (input FormInputType) MarshalJSON() ([]byte, error) {
 	switch input {
-	case TextField:
+	case TextFieldInput:
 		return json.Marshal("textfield")
-	case TextArea:
+	case TextAreaInput:
 		return json.Marshal("textarea")
-	case DropDown:
+	case DropDownInput:
 		return json.Marshal("dropdown")
 	default:
 		return nil, fmt.Errorf("unknown form input type: %d", input)
@@ -170,18 +170,18 @@ func (input FormInputType) MarshalJSON() ([]byte, error) {
 
 func (input FormInputType) MarshalYAML() (interface{}, error) {
 	switch input {
-	case TextField:
+	case TextFieldInput:
 		return "textfield", nil
-	case TextArea:
+	case TextAreaInput:
 		return "textarea", nil
-	case DropDown:
+	case DropDownInput:
 		return "dropdown", nil
 	default:
 		return nil, fmt.Errorf("unknown form input type: %d", input)
 	}
 }
 
-type FormInput struct {
+type Input struct {
 	Name        string        `json:"name" yaml:"name"`
 	Type        FormInputType `json:"type" yaml:"type"`
 	Title       string        `json:"title" yaml:"title"`
@@ -385,6 +385,6 @@ type Action struct {
 
 	// run
 	Command   string        `json:"command,omitempty" yaml:"command,omitempty"`
-	Inputs    []FormInput   `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Inputs    []Input       `json:"inputs,omitempty" yaml:"inputs,omitempty"`
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }

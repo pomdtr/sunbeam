@@ -14,7 +14,7 @@ Both methods have advantages and drawbacks:
 
 ## Detecting that a script is running in sunbeam
 
-Sunbeam set the `SUNBEAM_RUNNER` environment variable to `true` when it's running a script. You can use it to adapt the output of your script depending on the context.
+Sunbeam set the `SUNBEAM` environment variable to `1` when it's running a script. You can use it to adapt the output of your script depending on the context.
 
 ## Configuring sunbeam appearance
 

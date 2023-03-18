@@ -177,12 +177,64 @@
                         "copy",
                         "open",
                         "read",
+                        "http",
                         "edit",
                         "run"
                     ]
                 }
             },
             "allOf": [
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "http"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "type",
+                            "url"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "const": "http"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "shortcut": {
+                                "type": "string"
+                            },
+                            "url": {
+                                "type": "string"
+                            },
+                            "method": {
+                                "type": "string",
+                                "enum": [
+                                    "GET",
+                                    "POST",
+                                    "PUT",
+                                    "DELETE"
+                                ]
+                            },
+                            "body": {
+                                "type": "string"
+                            },
+                            "headers": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
                 {
                     "if": {
                         "required": [
