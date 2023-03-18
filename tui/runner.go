@@ -85,11 +85,16 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			home, _ := os.UserHomeDir()
 			action.Path = path.Join(home, action.Path[1:])
 		}
+		editor, ok := os.LookupEnv("EDITOR")
+		if !ok {
+			editor = "vi"
+		}
+
 		return func() tea.Msg {
 			return types.Action{
 				Type:      types.RunAction,
 				OnSuccess: types.ExitOnSuccess,
-				Command:   fmt.Sprintf("${EDITOR:-vi} %s", shellescape.Quote(action.Path)),
+				Command:   fmt.Sprintf("%s %s", editor, shellescape.Quote(action.Path)),
 			}
 		}
 	case types.OpenAction:
