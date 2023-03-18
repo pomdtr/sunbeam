@@ -28,7 +28,7 @@ type SunbeamOptions struct {
 	Padding   int
 }
 
-type Model struct {
+type Paginator struct {
 	width, height int
 	options       SunbeamOptions
 	exitCmd       *exec.Cmd
@@ -38,8 +38,8 @@ type Model struct {
 	hidden bool
 }
 
-func NewModel(root Page) *Model {
-	return &Model{pages: []Page{
+func NewPaginator(root Page) *Paginator {
+	return &Paginator{pages: []Page{
 		root,
 	}, options: SunbeamOptions{
 		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
@@ -47,7 +47,7 @@ func NewModel(root Page) *Model {
 	}}
 }
 
-func (m *Model) Init() tea.Cmd {
+func (m *Paginator) Init() tea.Cmd {
 	if len(m.pages) == 0 {
 		return nil
 	}
@@ -55,7 +55,7 @@ func (m *Model) Init() tea.Cmd {
 	return m.pages[0].Init()
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -98,7 +98,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *Model) View() string {
+func (m *Paginator) View() string {
 	if m.hidden {
 		return ""
 	}
@@ -112,7 +112,7 @@ func (m *Model) View() string {
 	return lipgloss.NewStyle().Padding(m.options.Padding).Render(pageView)
 }
 
-func (m *Model) SetSize(width, height int) {
+func (m *Paginator) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 
@@ -121,30 +121,30 @@ func (m *Model) SetSize(width, height int) {
 	}
 }
 
-func (m *Model) pageWidth() int {
+func (m *Paginator) pageWidth() int {
 	return m.width - 2*m.options.Padding
 }
 
-func (m *Model) pageHeight() int {
+func (m *Paginator) pageHeight() int {
 	if m.options.MaxHeight > 0 {
 		return utils.Min(m.options.MaxHeight, m.height) - 2*m.options.Padding
 	}
 	return m.height - 2*m.options.Padding
 }
 
-func (m *Model) Push(page Page) tea.Cmd {
+func (m *Paginator) Push(page Page) tea.Cmd {
 	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
 	return page.Init()
 }
 
-func (m *Model) Pop() {
+func (m *Paginator) Pop() {
 	if len(m.pages) > 0 {
 		m.pages = m.pages[:len(m.pages)-1]
 	}
 }
 
-func (m *Model) Draw() (err error) {
+func (m *Paginator) Draw() (err error) {
 	// Background detection before we start the program
 	lipgloss.SetHasDarkBackground(lipgloss.HasDarkBackground())
 
@@ -162,7 +162,7 @@ func (m *Model) Draw() (err error) {
 		return err
 	}
 
-	model, ok := res.(*Model)
+	model, ok := res.(*Paginator)
 	if !ok {
 		return fmt.Errorf("could not convert res back to *Model")
 	}

@@ -48,7 +48,7 @@ func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 
 			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(tui.NewCommandGenerator(name, args, cwd), validator, cwd)
-			tui.NewModel(runner).Draw()
+			tui.NewPaginator(runner).Draw()
 		},
 	}
 

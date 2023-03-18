@@ -61,7 +61,7 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 					return content, err
 				}, validator, cwd)
 
-				tui.NewModel(runner).Draw()
+				tui.NewPaginator(runner).Draw()
 				return
 
 			}
@@ -105,7 +105,7 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 			}
 
 			runner := tui.NewRunner(generator, validator, path.Dir(args[0]))
-			model := tui.NewModel(runner)
+			model := tui.NewPaginator(runner)
 
 			model.Draw()
 		},

@@ -268,14 +268,12 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 		switch page.Type {
 		case types.DetailPage:
-			runner.currentView = RunnerViewDetail
-
 			var detailFunc func() string
 			if page.Text != "" {
 				detailFunc = func() string {
 					return page.Text
 				}
-			} else {
+			} else if page.Command != "" {
 				args, err := shlex.Split(page.Command)
 				if err != nil {
 					return runner, func() tea.Msg {
@@ -296,8 +294,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 					return string(output)
 				}
+			} else {
+				return runner, func() tea.Msg {
+					return fmt.Errorf("detail page must have either text or command")
+				}
 			}
 
+			runner.currentView = RunnerViewDetail
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
 			runner.detail.Language = page.Language
 			runner.detail.SetSize(runner.width, runner.height)

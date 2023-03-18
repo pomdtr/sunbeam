@@ -87,7 +87,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(generator, validator, cwd)
-			tui.NewModel(runner).Draw()
+			tui.NewPaginator(runner).Draw()
 		},
 	}
 
@@ -131,15 +131,9 @@ func NewExtensionShortcutCmd(extensionDir string, validator tui.PageValidator, e
 		DisableFlagParsing: true,
 		GroupID:            extensionCommandsGroup.ID,
 		Run: func(cmd *cobra.Command, args []string) {
-			extensionId, err := ExtensionID(extensionName)
-			if err != nil {
-				exitWithErrorMsg("Invalid extension: %s", err)
-			}
-
-			binPath := path.Join(extensionDir, extensionId, extensionId)
-
+			binPath := path.Join(extensionDir, extensionName, extensionBinaryName)
 			if _, err := os.Stat(binPath); os.IsNotExist(err) {
-				exitWithErrorMsg("Extension not found: %s", extensionId)
+				exitWithErrorMsg("Extension not found: %s", extensionName)
 			}
 
 			cwd, _ := os.Getwd()
@@ -157,7 +151,7 @@ func NewExtensionShortcutCmd(extensionDir string, validator tui.PageValidator, e
 
 			runner := tui.NewRunner(generator, validator, cwd)
 
-			tui.NewModel(runner).Draw()
+			tui.NewPaginator(runner).Draw()
 		},
 	}
 }

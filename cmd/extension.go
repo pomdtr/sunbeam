@@ -22,7 +22,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//go:embed templates/extension.sh
+const (
+	extensionBinaryName = "sunbeam-extension"
+)
+
+//go:embed templates/sunbeam-extension
 var extensionTemplate []byte
 
 func NewExtensionCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
@@ -40,6 +44,7 @@ func NewExtensionCmd(extensionDir string, validator tui.PageValidator) *cobra.Co
 	extensionCmd.AddCommand(NewExtensionViewCmd(validator))
 	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir, validator))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
+	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionExecCmd(extensionDir, validator))
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionListCmd(extensionDir))
@@ -111,7 +116,7 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 
 			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(generator, validator, cwd)
-			tui.NewModel(runner).Draw()
+			tui.NewPaginator(runner).Draw()
 		},
 	}
 }
@@ -134,6 +139,14 @@ func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 				}
 				defer res.Body.Close()
 
+				if res.StatusCode != http.StatusOK {
+					return json.Marshal(types.Page{
+						Type:     types.DetailPage,
+						Text:     fmt.Sprintf("Could not fetch readme: %s", res.Status),
+						Language: "markdown",
+					})
+				}
+
 				content, err := io.ReadAll(res.Body)
 				if err != nil {
 					return nil, fmt.Errorf("could not read readme: %s", err)
@@ -151,13 +164,14 @@ func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 					return nil, fmt.Errorf("could not decode readme: %s", err)
 				}
 
-				page := types.Page{
+				return json.Marshal(types.Page{
 					Type:     types.DetailPage,
 					Text:     string(payload),
 					Language: "markdown",
-				}
-
-				return json.Marshal(page)
+					Actions: []types.Action{
+						{Title: "Install Extension", Command: fmt.Sprintf("sunbeam extension install %s", repo.Url())},
+					},
+				})
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
@@ -172,7 +186,7 @@ func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 
 			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(generator, validator, cwd)
-			tui.NewModel(runner).Draw()
+			tui.NewPaginator(runner).Draw()
 		},
 	}
 }
@@ -251,7 +265,7 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 
 			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(generator, validator, cwd)
-			tui.NewModel(runner).Draw()
+			tui.NewPaginator(runner).Draw()
 		},
 	}
 }
@@ -262,13 +276,9 @@ func NewExtensionCreateCmd() *cobra.Command {
 		Short: "Create a new extension",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			extensionID, err := ExtensionID(args[0])
-			if err != nil {
-				exitWithErrorMsg("Invalid extension name: %s", err)
-			}
-
+			extensionName := args[0]
 			cwd, _ := os.Getwd()
-			extensionDir := path.Join(cwd, extensionID)
+			extensionDir := path.Join(cwd, extensionName)
 			if _, err := os.Stat(extensionDir); !os.IsNotExist(err) {
 				exitWithErrorMsg("Extension already exists: %s", extensionDir)
 			}
@@ -277,7 +287,7 @@ func NewExtensionCreateCmd() *cobra.Command {
 				exitWithErrorMsg("Could not create extension directory: %s", err)
 			}
 
-			extensionScriptPath := path.Join(extensionDir, extensionID)
+			extensionScriptPath := path.Join(extensionDir, extensionBinaryName)
 			if err := os.WriteFile(extensionScriptPath, extensionTemplate, 0755); err != nil {
 				exitWithErrorMsg("Could not write extension script: %s", err)
 			}
@@ -293,15 +303,12 @@ func NewExtensionExecCmd(extensionDir string, validator tui.PageValidator) *cobr
 		Short: "Execute an installed extension",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			extensionId, err := ExtensionID(args[0])
-			if err != nil {
-				exitWithErrorMsg("Invalid extension: %s", err)
-			}
+			extensionName := args[0]
 
-			binPath := path.Join(extensionDir, extensionId, extensionId)
+			binPath := path.Join(extensionDir, extensionName, extensionBinaryName)
 
 			if _, err := os.Stat(binPath); os.IsNotExist(err) {
-				exitWithErrorMsg("Extension not found: %s", extensionId)
+				exitWithErrorMsg("Extension not found: %s", extensionName)
 			}
 
 			extraArgs := []string{}
@@ -324,7 +331,7 @@ func NewExtensionExecCmd(extensionDir string, validator tui.PageValidator) *cobr
 
 			runner := tui.NewRunner(generator, validator, cwd)
 
-			tui.NewModel(runner).Draw()
+			tui.NewPaginator(runner).Draw()
 		},
 	}
 }
@@ -333,17 +340,13 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "install",
 		Short: "Install a sunbeam extension from a repository",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		PreRun: func(cmd *cobra.Command, args []string) {
-			if args[0] == "." {
+			extensionOrigin := args[1]
+			if extensionOrigin == "." {
 				cwd, _ := os.Getwd()
-				extensionName := path.Base(cwd)
 
-				if !strings.HasPrefix(extensionName, "sunbeam-") {
-					exitWithErrorMsg("Extension directory must be named sunbeam-<name> (e.g. sunbeam-foo)")
-				}
-
-				bin := path.Join(cwd, extensionName)
+				bin := path.Join(cwd, extensionBinaryName)
 				if _, err := os.Stat(bin); os.IsNotExist(err) {
 					exitWithErrorMsg("Extension binary not found: %s", bin)
 				}
@@ -351,15 +354,17 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 				return
 			}
 
-			_, err := url.Parse(args[0])
+			_, err := url.Parse(extensionOrigin)
 			if err != nil {
 				exitWithErrorMsg("Invalid extension URL: %s", args[0])
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if args[0] == "." {
+			extensionName := args[0]
+			extensionOrigin := args[1]
+			if extensionOrigin == "." {
 				cwd, _ := os.Getwd()
-				targetDir := path.Join(extensionDir, path.Base(cwd))
+				targetDir := path.Join(extensionDir, extensionName)
 				err := os.Symlink(cwd, targetDir)
 				if err != nil {
 					exitWithErrorMsg("Unable to install local extension: %s", err)
@@ -369,7 +374,7 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 				return
 			}
 
-			repository, err := utils.RepositoryFromString(args[0])
+			repository, err := utils.RepositoryFromString(extensionOrigin)
 			if err != nil {
 				exitWithErrorMsg("Unable to parse repository: %s", err)
 			}
@@ -378,7 +383,7 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 				exitWithErrorMsg("Extension name must be prefixed with sunbeam- (e.g. sunbeam-foo)")
 			}
 
-			targetDir := path.Join(extensionDir, repository.Name())
+			targetDir := path.Join(extensionDir, extensionName)
 			if _, err := os.Stat(targetDir); !os.IsNotExist(err) {
 				exitWithErrorMsg("Extension already installed: %s", repository.Name())
 			}
@@ -393,7 +398,7 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 				exitWithErrorMsg("Unable to install extension: %s", err)
 			}
 
-			binPath := path.Join(tempDir, repository.Name())
+			binPath := path.Join(tempDir, extensionBinaryName)
 			if os.Stat(binPath); os.IsNotExist(err) {
 				exitWithErrorMsg("Extension binary not found: %s", binPath)
 			}
@@ -403,6 +408,29 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 			}
 
 			fmt.Println("Extension installed:", repository.Name())
+		},
+	}
+}
+
+func NewExtensionRenameCmd(extensionDir string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "rename <old-name> <new-name>",
+		Short: "Rename an installed extension",
+		Args:  cobra.ExactArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			src := path.Join(extensionDir, args[0])
+			if _, err := os.Stat(src); os.IsNotExist(err) {
+				exitWithErrorMsg("Source directory not found: %s", src)
+			}
+
+			dst := path.Join(extensionDir, args[1])
+			if _, err := os.Stat(dst); !os.IsNotExist(err) {
+				exitWithErrorMsg("Destination directory already exists: %s", dst)
+			}
+
+			if err := os.Rename(src, dst); err != nil {
+				exitWithErrorMsg("Unable to rename extension: %s", err)
+			}
 		},
 	}
 }
@@ -431,21 +459,17 @@ func NewExtensionRemoveCmd(extensionDir string) *cobra.Command {
 		Short: "Remove an installed extension",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			extensionId, err := ExtensionID(args[0])
-			if err != nil {
-				exitWithErrorMsg("Invalid extension: %s", err)
-			}
-
-			targetDir := path.Join(extensionDir, extensionId)
+			extensionName := args[0]
+			targetDir := path.Join(extensionDir, extensionName)
 			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
-				exitWithErrorMsg("Extension not installed: %s", extensionId)
+				exitWithErrorMsg("Extension not installed: %s", extensionName)
 			}
 
 			if err := os.RemoveAll(targetDir); err != nil {
 				exitWithErrorMsg("Unable to remove extension: %s", err)
 			}
 
-			fmt.Println("Extension removed:", extensionId)
+			fmt.Println("Extension removed:", extensionName)
 		},
 	}
 }
@@ -456,12 +480,9 @@ func NewExtensionUpgradeCmd(extensionDir string) *cobra.Command {
 		Short: "Upgrade an installed extension",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			extensionId, err := ExtensionID(args[0])
-			if err != nil {
-				exitWithErrorMsg("Invalid extension: %s", err)
-			}
+			extensionName := args[0]
 
-			extensionPath := path.Join(extensionDir, extensionId)
+			extensionPath := path.Join(extensionDir, extensionName)
 			if _, err := os.Stat(extensionPath); os.IsNotExist(err) {
 				exitWithErrorMsg("Extension not installed: %s", args[0])
 			}
@@ -472,20 +493,6 @@ func NewExtensionUpgradeCmd(extensionDir string) *cobra.Command {
 
 			fmt.Sprintln("Extension upgraded:", args[0])
 		},
-	}
-}
-
-func ExtensionID(input string) (string, error) {
-	tokens := strings.Split(input, "/")
-	if len(tokens) == 1 {
-		if strings.HasPrefix(input, "sunbeam-") {
-			return input, nil
-		}
-		return fmt.Sprintf("sunbeam-%s", input), nil
-	} else if len(tokens) == 2 {
-		return tokens[1], nil
-	} else {
-		return "", fmt.Errorf("invalid extension ID: %s", input)
 	}
 }
 
