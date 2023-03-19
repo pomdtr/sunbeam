@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strings"
+	"runtime"
 
 	_ "embed"
 
@@ -404,37 +404,67 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 				exitWithErrorMsg("Unable to parse repository: %s", err)
 			}
 
-			if !strings.HasPrefix(repository.Name(), "sunbeam-") {
-				exitWithErrorMsg("Extension name must be prefixed with sunbeam- (e.g. sunbeam-foo)")
-			}
-
 			targetDir := path.Join(extensionDir, extensionName)
 			if _, err := os.Stat(targetDir); !os.IsNotExist(err) {
 				exitWithErrorMsg("Extension already installed: %s", repository.Name())
 			}
 
-			tempDir, err := os.MkdirTemp("", "sunbeam-*")
+			release, err := utils.GetLatestRelease(repository)
 			if err != nil {
-				exitWithErrorMsg("Unable to install extension: %s", err)
-			}
-			defer os.RemoveAll(tempDir)
+				err := gitInstall(repository, targetDir)
+				if err != nil {
+					exitWithErrorMsg("Unable to install extension: %s", err)
+				}
 
-			if err = utils.GitClone(repository, tempDir); err != nil {
-				exitWithErrorMsg("Unable to install extension: %s", err)
-			}
-
-			binPath := path.Join(tempDir, extensionBinaryName)
-			if os.Stat(binPath); os.IsNotExist(err) {
-				exitWithErrorMsg("Extension binary not found: %s", binPath)
+				fmt.Println("Extension installed:", repository.Name())
+				return
 			}
 
-			if err := cp.Copy(tempDir, targetDir); err != nil {
+			if err := releaseInstall(release, targetDir); err != nil {
 				exitWithErrorMsg("Unable to install extension: %s", err)
 			}
 
 			fmt.Println("Extension installed:", repository.Name())
 		},
 	}
+}
+
+func releaseInstall(release *utils.Release, targetDir string) error {
+	downloadUrl := fmt.Sprintf("https://github.com/pomdtr/sunbeam-vscode/releases/download/%s/sunbeam-extension-%s-%s", release.TagName, runtime.GOOS, runtime.GOARCH)
+	res, err := http.Get(downloadUrl)
+	if err != nil {
+		return fmt.Errorf("unable to install extension: %s", err)
+	}
+	defer res.Body.Close()
+
+	os.MkdirAll(targetDir, 0755)
+	out, err := os.OpenFile(path.Join(targetDir, extensionBinaryName), os.O_CREATE|os.O_WRONLY, 0755)
+	if err != nil {
+		return fmt.Errorf("unable to install extension: %s", err)
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, res.Body)
+	return err
+}
+
+func gitInstall(repository *utils.Repository, targetDir string) error {
+	tempDir, err := os.MkdirTemp("", "sunbeam-*")
+	if err != nil {
+		exitWithErrorMsg("Unable to install extension: %s", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	if err = utils.GitClone(repository, tempDir); err != nil {
+		return fmt.Errorf("unable to install extension: %s", err)
+	}
+
+	binPath := path.Join(tempDir, extensionBinaryName)
+	if os.Stat(binPath); os.IsNotExist(err) {
+		return fmt.Errorf("extension binary not found: %s", binPath)
+	}
+
+	return cp.Copy(tempDir, targetDir)
 }
 
 func NewExtensionRenameCmd(extensionDir string) *cobra.Command {

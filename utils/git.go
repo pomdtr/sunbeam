@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -39,6 +41,27 @@ func RepositoryFromString(repositoryUrl string) (*Repository, error) {
 
 func (r *Repository) Url() *url.URL {
 	return r.url
+}
+
+type Release struct {
+	TagName string `json:"tag_name"`
+}
+
+func GetLatestRelease(repo *Repository) (*Release, error) {
+	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repo.FullName())
+
+	resp, err := http.Get(apiUrl)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var release Release
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return nil, err
+	}
+
+	return &release, nil
 }
 
 func GitClone(repo *Repository, targetDir string) error {
