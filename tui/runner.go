@@ -168,10 +168,17 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			}
 		}
 		if target.Scheme == "" && runner.url.Scheme != "" {
+			var targetPath string
+			if path.IsAbs(target.Path) {
+				targetPath = target.Path
+			} else {
+				targetPath = path.Join(runner.url.Path, target.Path)
+			}
+
 			target = &url.URL{
 				Scheme: runner.url.Scheme,
 				Host:   runner.url.Host,
-				Path:   path.Join(runner.url.Path, target.Path),
+				Path:   targetPath,
 			}
 		}
 
