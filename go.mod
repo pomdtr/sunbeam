@@ -11,7 +11,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.12
 	github.com/joho/godotenv v1.5.1
-	github.com/junegunn/fzf v0.0.0-20230215142442-352ea072269d
+	github.com/junegunn/fzf v0.0.0-20230319065331-cfc0747d5da7
 	github.com/otiai10/copy v1.9.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
@@ -35,7 +35,7 @@ require (
 	github.com/mattn/go-isatty v0.0.17
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
-	github.com/muesli/ansi v0.0.0-20230307104941-78d3738a59f2 // indirect
+	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.1 // indirect
