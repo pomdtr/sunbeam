@@ -99,7 +99,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Actions: []types.Action{
 							{Type: types.RunAction, OnSuccess: types.PushOnSuccess, Command: "sunbeam " + extension},
 							{Type: types.RunAction, Title: "Upgrade", Shortcut: "ctrl+u", Command: fmt.Sprintf("sunbeam extension upgrade %s", extension)},
-							{Type: types.RunAction, Title: "Remove", Shortcut: "ctrl+x", Command: fmt.Sprintf("sunbeam extension remove %s", extension)},
+							{Type: types.RunAction, Title: "Remove", Shortcut: "ctrl+x", OnSuccess: types.ReloadOnSuccess, Command: fmt.Sprintf("sunbeam extension remove %s", extension)},
 						},
 					})
 				}

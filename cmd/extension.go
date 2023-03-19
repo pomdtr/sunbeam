@@ -82,7 +82,7 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 								OnSuccess: types.PushOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
 							},
-							newExtensionInstallAction(repo.FullName),
+							newExtensionInstallAction(repo.HtmlUrl, "ctrl+i"),
 							{
 								Type:     types.OpenAction,
 								Title:    "Open in Browser",
@@ -120,11 +120,12 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 	}
 }
 
-func newExtensionInstallAction(extensionUrl string) types.Action {
+func newExtensionInstallAction(extensionUrl string, shortcut string) types.Action {
 	return types.Action{
-		Type:    types.RunAction,
-		Title:   "Install",
-		Command: fmt.Sprintf("sunbeam extension install ${input:name} %s", extensionUrl),
+		Type:     types.RunAction,
+		Title:    "Install",
+		Shortcut: shortcut,
+		Command:  fmt.Sprintf("sunbeam extension install ${input:name} %s", extensionUrl),
 		Inputs: []types.Input{
 			{
 				Type:        types.TextFieldInput,
@@ -184,7 +185,7 @@ func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 					Text:     string(payload),
 					Language: "markdown",
 					Actions: []types.Action{
-						newExtensionInstallAction(repo.Url().String()),
+						newExtensionInstallAction(repo.Url().String(), "ctrl+i"),
 					},
 				})
 			}
