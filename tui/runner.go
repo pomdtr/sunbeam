@@ -3,7 +3,6 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -162,18 +161,6 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			return PushPageMsg{runner: runner}
 		}
 	case types.HttpAction:
-		for _, value := range os.Environ() {
-			tokens := strings.SplitN(value, "=", 2)
-			if len(tokens) != 2 {
-				continue
-			}
-
-			action.Url = strings.Replace(action.Url, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1], -1)
-			for key, value := range action.Headers {
-				action.Headers[key] = strings.Replace(value, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1], -1)
-			}
-		}
-
 		target, err := url.Parse(action.Url)
 		if err != nil {
 			return func() tea.Msg {
@@ -188,20 +175,9 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			}
 		}
 
-		req, err := http.NewRequest(action.Method, target.String(), strings.NewReader(action.Body))
-		if err != nil {
-			return func() tea.Msg {
-				return fmt.Errorf("failed to create http request: %s", err)
-			}
-		}
-
-		for key, value := range action.Headers {
-			req.Header.Set(key, value)
-		}
-
 		return func() tea.Msg {
 			return PushPageMsg{
-				runner: NewRunner(NewHttpGenerator(req), runner.Validator, &url.URL{
+				runner: NewRunner(NewHttpGenerator(action.Url, action.Method, action.Headers, action.Body), runner.Validator, &url.URL{
 					Scheme: target.Scheme,
 					Host:   target.Host,
 					Path:   path.Dir(target.Path),
@@ -216,40 +192,16 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			}
 		}
 
-		for _, value := range os.Environ() {
-			tokens := strings.SplitN(value, "=", 2)
-			if len(tokens) != 2 {
-				continue
-			}
-
-			action.Command = strings.Replace(action.Command, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1], -1)
-		}
-
-		args, err := shlex.Split(action.Command)
-		if err != nil {
-			return func() tea.Msg {
-				return fmt.Errorf("failed to parse command: %s", err)
-			}
-		}
-
-		name := args[0]
-		var extraArgs []string
-		if len(args) > 1 {
-			extraArgs = args[1:]
-		}
-
+		generator := NewCommandGenerator(action.Command, "", runner.url.Path)
 		switch action.OnSuccess {
 		case types.PushOnSuccess:
-			generator := NewCommandGenerator(name, extraArgs, runner.url.Path)
 			runner := NewRunner(generator, runner.Validator, runner.url)
 			return func() tea.Msg {
 				return PushPageMsg{runner: runner}
 			}
 		case types.ReloadOnSuccess:
 			return func() tea.Msg {
-				command := exec.Command(name, extraArgs...)
-				command.Dir = runner.url.Path
-				err := command.Run()
+				_, err := generator("")
 				if err != nil {
 					if err, ok := err.(*exec.ExitError); ok {
 						return fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
@@ -262,11 +214,23 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				}
 			}
 		case types.ReplaceOnSuccess:
-			runner.Generator = NewCommandGenerator(name, extraArgs, runner.url.Path)
+			runner.Generator = generator
 			return runner.Refresh
 
 		case types.ExitOnSuccess:
-			command := exec.Command(name, extraArgs...)
+			args, err := shlex.Split(action.Command)
+			if err != nil {
+				return func() tea.Msg {
+					return fmt.Errorf("failed to parse command: %s", err)
+				}
+			}
+
+			var extraArgs []string
+			if len(args) > 1 {
+				extraArgs = args[1:]
+			}
+
+			command := exec.Command(args[0], extraArgs...)
 			command.Dir = runner.url.Path
 
 			return func() tea.Msg {
@@ -365,19 +329,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return page.Text
 				}
 			} else if page.Command != "" {
-				args, err := shlex.Split(page.Command)
-				if err != nil {
-					return runner, func() tea.Msg {
-						return fmt.Errorf("failed to parse command: %s", err)
-					}
-				}
-
-				extraArgs := []string{}
-				if len(args) > 1 {
-					extraArgs = args[1:]
-				}
-
-				generator := NewCommandGenerator(args[0], extraArgs, runner.url.Path)
+				generator := NewCommandGenerator(page.Command, "", runner.url.Path)
 				detailFunc = func() string {
 					output, err := generator("")
 					if err != nil {
@@ -442,18 +394,19 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
-				command := msg.Command
-
 				for key, value := range values {
-					command = strings.ReplaceAll(command, fmt.Sprintf("${input:%s}", key), value)
+					msg.Command = strings.ReplaceAll(msg.Command, fmt.Sprintf("${input:%s}", key), shellescape.Quote(value))
+					msg.Url = strings.ReplaceAll(msg.Url, fmt.Sprintf("${input:%s}", key), url.QueryEscape(value))
+					for i, header := range msg.Headers {
+						msg.Headers[i] = strings.ReplaceAll(header, fmt.Sprintf("${input:%s}", key), value)
+					}
+					msg.Text = strings.ReplaceAll(msg.Text, fmt.Sprintf("${input:%s}", key), value)
+					msg.Path = strings.ReplaceAll(msg.Path, fmt.Sprintf("${input:%s}", key), value)
 				}
 
+				msg.Inputs = nil
 				return func() tea.Msg {
-					return types.Action{
-						Type:      types.RunAction,
-						Command:   command,
-						OnSuccess: msg.OnSuccess,
-					}
+					return msg
 				}
 			})
 
@@ -462,6 +415,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, form.Init()
 		}
 
+		runner.form = nil
 		cmd := runner.handleAction(msg)
 		return runner, cmd
 	case error:

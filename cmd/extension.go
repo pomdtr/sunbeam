@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strings"
 
 	_ "embed"
 
@@ -333,13 +334,10 @@ func NewExtensionExecCmd(extensionDir string, validator tui.PageValidator) *cobr
 				exitWithErrorMsg("Extension not found: %s", extensionName)
 			}
 
-			extraArgs := []string{}
-			if len(args) > 1 {
-				extraArgs = args[1:]
-			}
+			command := fmt.Sprintf("%s %s", binPath, strings.Join(args[1:], " "))
 
 			cwd, _ := os.Getwd()
-			generator := tui.NewCommandGenerator(binPath, extraArgs, cwd)
+			generator := tui.NewCommandGenerator(command, "", cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")

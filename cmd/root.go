@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 
 	_ "embed"
 
@@ -222,14 +223,17 @@ func NewExtensionShortcutCmd(extensionDir string, validator tui.PageValidator, e
 		Use:                extensionName,
 		DisableFlagParsing: true,
 		GroupID:            extensionCommandsGroup.ID,
+		Args:               cobra.ArbitraryArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			binPath := path.Join(extensionDir, extensionName, extensionBinaryName)
 			if _, err := os.Stat(binPath); os.IsNotExist(err) {
 				exitWithErrorMsg("Extension not found: %s", extensionName)
 			}
 
+			command := fmt.Sprintf("%s %s", binPath, strings.Join(args, " "))
+
 			cwd, _ := os.Getwd()
-			generator := tui.NewCommandGenerator(binPath, args, cwd)
+			generator := tui.NewCommandGenerator(command, "", cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")

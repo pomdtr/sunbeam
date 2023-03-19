@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
+	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/tui"
@@ -17,29 +17,10 @@ func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 		Short: "Run a script and push it's output",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			name := args[0]
-			var extraArgs []string
-			if len(args) > 1 {
-				extraArgs = args[1:]
-			}
+			cwd, _ := os.Getwd()
 
-			if name == "." {
-				name = fmt.Sprintf("./%s", extensionBinaryName)
-			}
-
-			generator := func(s string) ([]byte, error) {
-				command := exec.Command(name, extraArgs...)
-				output, err := command.Output()
-				if err != nil {
-					if exitError, ok := err.(*exec.ExitError); ok {
-						return nil, fmt.Errorf("script exited with code %d: %s", exitError.ExitCode(), string(exitError.Stderr))
-					}
-
-					return nil, err
-				}
-
-				return output, nil
-			}
+			command := strings.Join(args, " ")
+			generator := tui.NewCommandGenerator(command, "", cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
@@ -51,8 +32,7 @@ func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 				return
 			}
 
-			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(tui.NewCommandGenerator(name, args, cwd), validator, &url.URL{
+			runner := tui.NewRunner(generator, validator, &url.URL{
 				Scheme: "file",
 				Path:   cwd,
 			})

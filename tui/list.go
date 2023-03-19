@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/shlex"
 	"github.com/pomdtr/sunbeam/types"
 
 	"github.com/alecthomas/chroma/quick"
@@ -138,17 +137,7 @@ func NewList(page types.Page, dir string) *List {
 			return builder.String()
 		}
 
-		args, err := shlex.Split(item.Detail.Command)
-		if err != nil {
-			return err.Error()
-		}
-
-		var extraArgs []string
-		if len(args) > 1 {
-			extraArgs = args[1:]
-		}
-
-		generator := NewCommandGenerator(args[0], extraArgs, dir)
+		generator := NewCommandGenerator(item.Detail.Command, "", dir)
 
 		output, err := generator("")
 		if err != nil {

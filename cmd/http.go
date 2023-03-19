@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -23,30 +22,22 @@ func NewHTTPCmd(validator tui.PageValidator) *cobra.Command {
 			headers, _ := cmd.Flags().GetStringArray("header")
 			body, _ := cmd.Flags().GetString("data")
 
-			if strings.HasPrefix(args[0], "localhost") {
-				args[0] = "http://" + args[0]
-			}
-
 			target, err := url.Parse(args[0])
 			if err != nil {
 				exitWithErrorMsg("invalid url: %s", err)
 			}
 
-			req, err := http.NewRequest(method, target.String(), strings.NewReader(body))
-			if err != nil {
-				exitWithErrorMsg("could not create request: %s", err)
-			}
-
+			headerMap := make(map[string]string)
 			for _, header := range headers {
 				tokens := strings.SplitN(header, ":", 2)
 				if len(tokens) != 2 {
 					exitWithErrorMsg("invalid header: %s", header)
 				}
 
-				req.Header.Add(tokens[0], tokens[1])
+				headerMap[tokens[0]] = tokens[1]
 			}
 
-			generator := tui.NewHttpGenerator(req)
+			generator := tui.NewHttpGenerator(args[0], method, headerMap, body)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
