@@ -11,8 +11,3 @@ items:
       - type: read
         title: Getting Started
         path: "./docs/getting-started/sunbeam.yml"
-  - title: Show Root
-    actions:
-      - type: read
-        title: Root
-        path: "~/.config/sunbeam/root.yml"

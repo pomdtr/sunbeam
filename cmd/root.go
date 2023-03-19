@@ -9,6 +9,7 @@ import (
 
 	_ "embed"
 
+	"github.com/joho/godotenv"
 	"github.com/mattn/go-isatty"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
@@ -35,10 +36,20 @@ var (
 )
 
 func Execute(version string, schema *jsonschema.Schema) error {
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("could not get user home directory: %s", err)
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("could not get current working directory: %s", err)
+	}
 
 	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
+
+	envFile := path.Join(homeDir, ".config", "sunbeam", "sunbeam.env")
 
 	validator := func(page []byte) error {
 		var v any
@@ -58,13 +69,56 @@ func Execute(version string, schema *jsonschema.Schema) error {
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args:    cobra.NoArgs,
 		Version: version,
-		PreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if _, err := os.Stat(envFile); !os.IsNotExist(err) {
+				err := godotenv.Load(envFile)
+				if err != nil {
+					exitWithErrorMsg("could not load env file: %s", err)
+				}
+			}
+
+			dotenv := path.Join(cwd, ".env")
+			if _, err := os.Stat(dotenv); !os.IsNotExist(err) {
+				err := godotenv.Load(dotenv)
+				if err != nil {
+					exitWithErrorMsg("could not load env file: %s", err)
+				}
+			}
+
 			os.Setenv("SUNBEAM", "1")
 		},
 		// If the config file does not exist, create it
 		Run: func(cmd *cobra.Command, args []string) {
 			generator := func(string) ([]byte, error) {
-				items := []types.ListItem{
+				items := make([]types.ListItem, 0)
+
+				for _, ext := range []string{"yaml", "yml", "json"} {
+					manifestPath := path.Join(cwd, fmt.Sprintf("sunbeam.%s", ext))
+					if _, err := os.Stat(manifestPath); !os.IsNotExist(err) {
+						items = append(items, types.ListItem{
+							Title:    "Read Current Dir Manifest",
+							Subtitle: "Sunbeam",
+							Actions: []types.Action{
+								{Type: types.ReadAction, Path: manifestPath},
+							},
+						})
+
+						break
+					}
+				}
+
+				binaryPath := path.Join(cwd, extensionBinaryName)
+				if _, err := os.Stat(binaryPath); !os.IsNotExist(err) {
+					items = append(items, types.ListItem{
+						Title:    "Run Current Directory Extension",
+						Subtitle: "Sunbeam",
+						Actions: []types.Action{
+							{Type: types.RunAction, OnSuccess: types.PushOnSuccess, Command: binaryPath},
+						},
+					})
+				}
+
+				items = append(items, []types.ListItem{
 					{
 						Title:    "Browse Available Extensions",
 						Subtitle: "Sunbeam",
@@ -85,7 +139,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 							},
 						},
 					},
-				}
+				}...)
 
 				extension, err := ListExtensions(extensionDir)
 				if err != nil {
@@ -120,7 +174,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return
 			}
 
-			cwd, _ := os.Getwd()
 			runner := tui.NewRunner(generator, validator, &url.URL{
 				Scheme: "file",
 				Path:   cwd,

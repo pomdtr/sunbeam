@@ -162,6 +162,18 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			return PushPageMsg{runner: runner}
 		}
 	case types.HttpAction:
+		for _, value := range os.Environ() {
+			tokens := strings.SplitN(value, "=", 2)
+			if len(tokens) != 2 {
+				continue
+			}
+
+			action.Url = strings.Replace(action.Url, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1], -1)
+			for key, value := range action.Headers {
+				action.Headers[key] = strings.Replace(value, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1], -1)
+			}
+		}
+
 		target, err := url.Parse(action.Url)
 		if err != nil {
 			return func() tea.Msg {
@@ -202,6 +214,15 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			return func() tea.Msg {
 				return fmt.Errorf("cannot run command on non-file url")
 			}
+		}
+
+		for _, value := range os.Environ() {
+			tokens := strings.SplitN(value, "=", 2)
+			if len(tokens) != 2 {
+				continue
+			}
+
+			action.Command = strings.Replace(action.Command, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1], -1)
 		}
 
 		args, err := shlex.Split(action.Command)
