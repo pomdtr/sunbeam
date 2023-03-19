@@ -29,6 +29,8 @@ func ActionTitle(action types.Action) string {
 		return "Open"
 	case types.ReadAction:
 		return "Read"
+	case types.HttpAction:
+		return "Request"
 	default:
 		return "Unknown"
 	}

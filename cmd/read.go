@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path"
 
@@ -59,7 +60,10 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 					}
 
 					return content, err
-				}, validator, cwd)
+				}, validator, &url.URL{
+					Scheme: "file",
+					Path:   cwd,
+				})
 
 				tui.NewPaginator(runner).Draw()
 				return
@@ -104,7 +108,10 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, path.Dir(args[0]))
+			runner := tui.NewRunner(generator, validator, &url.URL{
+				Scheme: "file",
+				Path:   path.Dir(args[0]),
+			})
 			model := tui.NewPaginator(runner)
 
 			model.Draw()

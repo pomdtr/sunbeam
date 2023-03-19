@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 
@@ -20,6 +21,10 @@ func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 			var extraArgs []string
 			if len(args) > 1 {
 				extraArgs = args[1:]
+			}
+
+			if name == "." {
+				name = fmt.Sprintf("./%s", extensionBinaryName)
 			}
 
 			generator := func(s string) ([]byte, error) {
@@ -47,7 +52,10 @@ func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(tui.NewCommandGenerator(name, args, cwd), validator, cwd)
+			runner := tui.NewRunner(tui.NewCommandGenerator(name, args, cwd), validator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 			tui.NewPaginator(runner).Draw()
 		},
 	}

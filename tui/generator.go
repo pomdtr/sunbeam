@@ -3,6 +3,8 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -60,5 +62,24 @@ func NewFileGenerator(name string) PageGenerator {
 		}
 
 		return nil, fmt.Errorf("unsupported file type")
+	}
+}
+
+func NewHttpGenerator(req *http.Request) PageGenerator {
+	return func(input string) ([]byte, error) {
+		if input != "" {
+			req.Header.Set("X-Sunbeam-Input", input)
+		}
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("could not make request: %w", err)
+		}
+
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
+		}
+
+		return io.ReadAll(res.Body)
 	}
 }

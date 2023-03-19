@@ -3,6 +3,8 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -22,9 +24,9 @@ type CommandRunner struct {
 	width, height int
 	currentView   RunnerView
 
-	Generator  PageGenerator
-	Validator  PageValidator
-	workingDir string
+	Generator PageGenerator
+	Validator PageValidator
+	url       *url.URL
 
 	header Header
 	footer Footer
@@ -45,14 +47,14 @@ const (
 
 type PageValidator func([]byte) error
 
-func NewRunner(generator PageGenerator, validator PageValidator, workingDir string) *CommandRunner {
+func NewRunner(generator PageGenerator, validator PageValidator, url *url.URL) *CommandRunner {
 	return &CommandRunner{
 		header:      NewHeader(),
 		footer:      NewFooter("Sunbeam"),
 		currentView: RunnerViewLoading,
 		Generator:   generator,
 		Validator:   validator,
-		workingDir:  workingDir,
+		url:         url,
 	}
 
 }
@@ -81,6 +83,11 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 	case types.ReloadAction:
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.EditAction:
+		if runner.url.Scheme != "file" {
+			return func() tea.Msg {
+				return fmt.Errorf("cannot edit file on non-file url")
+			}
+		}
 		if strings.HasPrefix(action.Path, "~") {
 			home, _ := os.UserHomeDir()
 			action.Path = path.Join(home, action.Path[1:])
@@ -101,12 +108,18 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		var target string
 		if action.Url != "" {
 			target = action.Url
-		} else {
+		} else if action.Path != "" {
+			if runner.url.Scheme != "file" {
+				return func() tea.Msg {
+					return fmt.Errorf("cannot open file on non-file url")
+				}
+			}
+
 			if strings.HasPrefix(action.Path, "~") {
 				home, _ := os.UserHomeDir()
 				target = path.Join(home, action.Path[1:])
 			} else if !path.IsAbs(action.Path) {
-				target = path.Join(runner.workingDir, action.Path)
+				target = path.Join(runner.url.Path, action.Path)
 			} else {
 				target = action.Path
 			}
@@ -130,22 +143,67 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		return tea.Quit
 	case types.ReadAction:
 		var page string
-		if path.IsAbs(action.Path) {
+		if runner.url.Scheme == "file" && path.IsAbs(action.Path) {
 			page = action.Path
-		} else if strings.HasPrefix(action.Path, "~") {
+		} else if runner.url.Scheme == "file" && strings.HasPrefix(action.Path, "~") {
 			home, _ := os.UserHomeDir()
 			page = path.Join(home, action.Path[1:])
 		} else {
-			page = path.Join(runner.workingDir, action.Path)
+			page = path.Join(runner.url.Path, action.Path)
 		}
 
 		runner := NewRunner(NewFileGenerator(
 			page,
-		), runner.Validator, path.Dir(page))
+		), runner.Validator, &url.URL{
+			Scheme: runner.url.Scheme,
+			Path:   path.Dir(page),
+		})
 		return func() tea.Msg {
 			return PushPageMsg{runner: runner}
 		}
+	case types.HttpAction:
+		target, err := url.Parse(action.Url)
+		if err != nil {
+			return func() tea.Msg {
+				return fmt.Errorf("failed to parse url: %s", err)
+			}
+		}
+		if target.Scheme == "" && runner.url.Scheme != "" {
+			target = &url.URL{
+				Scheme: runner.url.Scheme,
+				Host:   runner.url.Host,
+				Path:   path.Join(runner.url.Path, target.Path),
+			}
+		}
+
+		req, err := http.NewRequest(action.Method, target.String(), strings.NewReader(action.Body))
+		if err != nil {
+			return func() tea.Msg {
+				return fmt.Errorf("failed to create http request: %s", err)
+			}
+		}
+
+		for key, value := range action.Headers {
+			req.Header.Set(key, value)
+		}
+
+		return func() tea.Msg {
+			return PushPageMsg{
+				runner: NewRunner(NewHttpGenerator(req), runner.Validator, &url.URL{
+					Scheme: target.Scheme,
+					Host:   target.Host,
+					Path:   path.Dir(target.Path),
+				}),
+			}
+		}
+
 	case types.RunAction:
+		if runner.url.Scheme != "file" {
+			return func() tea.Msg {
+				return fmt.Errorf("cannot run command on non-file url")
+			}
+		}
+
 		args, err := shlex.Split(action.Command)
 		if err != nil {
 			return func() tea.Msg {
@@ -161,16 +219,15 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 		switch action.OnSuccess {
 		case types.PushOnSuccess:
-			workingDir := runner.workingDir
-			generator := NewCommandGenerator(name, extraArgs, workingDir)
-			runner := NewRunner(generator, runner.Validator, workingDir)
+			generator := NewCommandGenerator(name, extraArgs, runner.url.Path)
+			runner := NewRunner(generator, runner.Validator, runner.url)
 			return func() tea.Msg {
 				return PushPageMsg{runner: runner}
 			}
 		case types.ReloadOnSuccess:
 			return func() tea.Msg {
 				command := exec.Command(name, extraArgs...)
-				command.Dir = runner.workingDir
+				command.Dir = runner.url.Path
 				err := command.Run()
 				if err != nil {
 					if err, ok := err.(*exec.ExitError); ok {
@@ -184,12 +241,12 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				}
 			}
 		case types.ReplaceOnSuccess:
-			runner.Generator = NewCommandGenerator(name, extraArgs, runner.workingDir)
+			runner.Generator = NewCommandGenerator(name, extraArgs, runner.url.Path)
 			return runner.Refresh
 
 		case types.ExitOnSuccess:
 			command := exec.Command(name, extraArgs...)
-			command.Dir = runner.workingDir
+			command.Dir = runner.url.Path
 
 			return func() tea.Msg {
 				return command
@@ -299,7 +356,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					extraArgs = args[1:]
 				}
 
-				generator := NewCommandGenerator(args[0], extraArgs, runner.workingDir)
+				generator := NewCommandGenerator(args[0], extraArgs, runner.url.Path)
 				detailFunc = func() string {
 					output, err := generator("")
 					if err != nil {
@@ -333,7 +390,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 
-			runner.list = NewList(page, runner.workingDir)
+			runner.list = NewList(page, runner.url.Path)
 			runner.list.SetQuery(query)
 
 			listItems := make([]ListItem, len(page.Items))

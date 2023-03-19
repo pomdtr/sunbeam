@@ -111,7 +111,10 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, validator, cwd)
+			runner := tui.NewRunner(generator, validator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 			tui.NewPaginator(runner).Draw()
 		},
 	}
@@ -197,7 +200,10 @@ func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, validator, cwd)
+			runner := tui.NewRunner(generator, validator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 			tui.NewPaginator(runner).Draw()
 		},
 	}
@@ -276,7 +282,10 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, validator, cwd)
+			runner := tui.NewRunner(generator, validator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 			tui.NewPaginator(runner).Draw()
 		},
 	}
@@ -341,7 +350,10 @@ func NewExtensionExecCmd(extensionDir string, validator tui.PageValidator) *cobr
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, cwd)
+			runner := tui.NewRunner(generator, validator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 
 			tui.NewPaginator(runner).Draw()
 		},

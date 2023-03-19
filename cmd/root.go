@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 
@@ -99,20 +100,24 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, validator, cwd)
+			runner := tui.NewRunner(generator, validator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 			tui.NewPaginator(runner).Draw()
 		},
 	}
 
 	rootCmd.AddGroup(coreCommandsGroup, extensionCommandsGroup)
 
-	rootCmd.AddCommand(NewRunCmd(validator))
-	rootCmd.AddCommand(NewReadCmd(validator))
-	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewCopyCmd())
-	rootCmd.AddCommand(NewOpenCmd())
-	rootCmd.AddCommand(NewValidateCmd(validator))
 	rootCmd.AddCommand(NewExtensionCmd(extensionDir, validator))
+	rootCmd.AddCommand(NewHTTPCmd(validator))
+	rootCmd.AddCommand(NewOpenCmd())
+	rootCmd.AddCommand(NewQueryCmd())
+	rootCmd.AddCommand(NewReadCmd(validator))
+	rootCmd.AddCommand(NewRunCmd(validator))
+	rootCmd.AddCommand(NewValidateCmd(validator))
 
 	coreCommands := map[string]struct{}{}
 	for _, coreCommand := range rootCmd.Commands() {
@@ -162,7 +167,10 @@ func NewExtensionShortcutCmd(extensionDir string, validator tui.PageValidator, e
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, cwd)
+			runner := tui.NewRunner(generator, validator, &url.URL{
+				Scheme: "file",
+				Path:   cwd,
+			})
 
 			tui.NewPaginator(runner).Draw()
 		},
