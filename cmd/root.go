@@ -14,6 +14,7 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	"github.com/pomdtr/sunbeam/tui"
 	"github.com/pomdtr/sunbeam/types"
@@ -36,6 +37,10 @@ var (
 	}
 )
 
+type SunbeamConfig struct {
+	RootItems []types.ListItem `yaml:"rootItems"`
+}
+
 func Execute(version string, schema *jsonschema.Schema) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -50,7 +55,20 @@ func Execute(version string, schema *jsonschema.Schema) error {
 	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
 
-	envFile := path.Join(homeDir, ".config", "sunbeam", "sunbeam.env")
+	configDir := path.Join(homeDir, ".config", "sunbeam")
+	envFile := path.Join(configDir, "sunbeam.env")
+	configFile := path.Join(configDir, "sunbeam.yml")
+
+	var config SunbeamConfig
+	if _, err := os.Stat(configFile); !os.IsNotExist(err) {
+		bytes, err := os.ReadFile(configFile)
+		if err != nil {
+			return fmt.Errorf("could not read config file: %s", err)
+		}
+		if yaml.Unmarshal(bytes, &config); err != nil {
+			return fmt.Errorf("could not parse config file: %s", err)
+		}
+	}
 
 	validator := func(page []byte) error {
 		var v any
@@ -141,6 +159,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						},
 					},
 				}...)
+
+				items = append(items, config.RootItems...)
 
 				extension, err := ListExtensions(extensionDir)
 				if err != nil {
