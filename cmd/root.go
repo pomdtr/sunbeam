@@ -37,8 +37,13 @@ var (
 	}
 )
 
+type RootItem struct {
+	Title string
+	Args  []string
+}
+
 type SunbeamConfig struct {
-	RootItems []types.ListItem `yaml:"rootItems"`
+	RootItems []RootItem `yaml:"rootItems"`
 }
 
 func Execute(version string, schema *jsonschema.Schema) error {
@@ -160,21 +165,22 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					},
 				}...)
 
-				items = append(items, config.RootItems...)
-
-				extension, err := ListExtensions(extensionDir)
-				if err != nil {
-					return nil, fmt.Errorf("could not list extensions: %s", err)
-				}
-
-				for _, extension := range extension {
+				for _, item := range config.RootItems {
+					command := fmt.Sprintf("sunbeam %s", strings.Join(item.Args, " "))
 					items = append(items, types.ListItem{
-						Title:    fmt.Sprintf("Run %s Extension", extension),
-						Subtitle: extension,
+						Title: item.Title,
 						Actions: []types.Action{
-							{Type: types.RunAction, OnSuccess: types.PushOnSuccess, Command: "sunbeam " + extension},
-							{Type: types.RunAction, Title: "Upgrade", Shortcut: "ctrl+u", Command: fmt.Sprintf("sunbeam extension upgrade %s", extension)},
-							{Type: types.RunAction, Title: "Remove", Shortcut: "ctrl+x", OnSuccess: types.ReloadOnSuccess, Command: fmt.Sprintf("sunbeam extension remove %s", extension)},
+							{
+								Title:     "Run",
+								Type:      types.RunAction,
+								OnSuccess: types.PushOnSuccess,
+								Command:   command,
+							},
+							{
+								Title: "Copy Command",
+								Type:  types.CopyAction,
+								Text:  command,
+							},
 						},
 					})
 				}
