@@ -129,9 +129,6 @@
                 "id": {
                     "type": "string"
                 },
-                "alias": {
-                    "type": "string"
-                },
                 "subtitle": {
                     "anyOf": [
                         {
@@ -225,6 +222,9 @@
                             },
                             "body": {
                                 "type": "string"
+                            },
+                            "inputs": {
+                                "ref": "#/$defs/input"
                             },
                             "headers": {
                                 "type": "object",

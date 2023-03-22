@@ -92,7 +92,6 @@ type Page struct {
 
 type ListItem struct {
 	Id          string   `json:"id,omitempty" yaml:"id,omitempty"`
-	Alias       string   `json:"alias,omitempty" yaml:"alias,omitempty"`
 	Title       string   `json:"title" yaml:"title"`
 	Subtitle    string   `json:"subtitle,omitempty" yaml:"subtitle,omitempty"`
 	Detail      *Detail  `json:"detail,omitempty" yaml:"detail,omitempty"`

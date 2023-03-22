@@ -38,7 +38,7 @@ func (i ListItem) ID() string {
 }
 
 func (i ListItem) FilterValue() string {
-	keywords := []string{i.Title, i.Subtitle, i.Alias}
+	keywords := []string{i.Title, i.Subtitle}
 	return strings.Join(keywords, " ")
 }
 
@@ -87,7 +87,6 @@ type List struct {
 	actionList ActionList
 	actions    []types.Action
 	DetailFunc func(types.ListItem) string
-	Aliases    map[string]types.Action
 
 	GenerateItems bool
 	ShowDetail    bool
@@ -211,12 +210,7 @@ func (c List) Selection() *ListItem {
 
 func (c *List) SetItems(items []ListItem, selectedId string) tea.Cmd {
 	filterItems := make([]FilterItem, len(items))
-	c.Aliases = make(map[string]types.Action)
 	for i, item := range items {
-		if item.Alias != "" && len(item.Actions) > 0 {
-			c.Aliases[item.Alias] = item.Actions[0]
-		}
-
 		filterItems[i] = item
 	}
 
@@ -302,16 +296,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			} else {
 				return c, func() tea.Msg {
 					return PopPageMsg{}
-				}
-			}
-		case tea.KeySpace:
-			if c.actionList.Focused() {
-				break
-			}
-
-			if action, ok := c.Aliases[c.Query()]; ok {
-				return c, func() tea.Msg {
-					return action
 				}
 			}
 		case tea.KeyShiftDown:
