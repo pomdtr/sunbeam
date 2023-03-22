@@ -167,24 +167,25 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return fmt.Errorf("failed to parse url: %s", err)
 			}
 		}
-		if target.Scheme == "" && runner.url.Scheme != "" {
-			var targetPath string
-			if path.IsAbs(target.Path) {
-				targetPath = target.Path
-			} else {
-				targetPath = path.Join(runner.url.Path, target.Path)
+		if target.Scheme == "" {
+			if runner.url.Scheme == "file" {
+				return func() tea.Msg {
+					return fmt.Errorf("cannot open url on file url")
+				}
 			}
 
-			target = &url.URL{
-				Scheme: runner.url.Scheme,
-				Host:   runner.url.Host,
-				Path:   targetPath,
-			}
+			target.Scheme = runner.url.Scheme
+			target.Host = runner.url.Host
+		}
+		if target.Path == "" {
+			target.Path = "/"
+		} else if !path.IsAbs(target.Path) {
+			target.Path = path.Join(runner.url.Path, target.Path)
 		}
 
 		return func() tea.Msg {
 			return PushPageMsg{
-				runner: NewRunner(NewHttpGenerator(action.Url, action.Method, action.Headers, action.Body), runner.Validator, &url.URL{
+				runner: NewRunner(NewHttpGenerator(target.String(), action.Method, action.Headers, action.Body), runner.Validator, &url.URL{
 					Scheme: target.Scheme,
 					Host:   target.Host,
 					Path:   path.Dir(target.Path),
