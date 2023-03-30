@@ -1,4 +1,4 @@
-package tui
+package internal
 
 import (
 	"sort"
@@ -6,7 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/fzf"
+	"github.com/pomdtr/sunbeam/internal/fzf"
 	"github.com/pomdtr/sunbeam/utils"
 )
 

@@ -1,4 +1,4 @@
-package tui
+package internal
 
 import (
 	"encoding/json"

@@ -6,10 +6,10 @@ import (
 	"io"
 	"os"
 
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/tui"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -27,7 +27,7 @@ func NewReadCmd() *cobra.Command {
 
 				var content []byte
 				format, _ := cmd.Flags().GetString("format")
-				runner := tui.NewRunner(func(input string) ([]byte, error) {
+				runner := internal.NewRunner(func(input string) ([]byte, error) {
 					if content != nil {
 						return content, nil
 					}
@@ -55,12 +55,12 @@ func NewReadCmd() *cobra.Command {
 					return content, err
 				})
 
-				tui.NewPaginator(runner).Draw()
+				internal.NewPaginator(runner).Draw()
 				return
 
 			}
 
-			var generator tui.PageGenerator
+			var generator internal.PageGenerator
 			// If the format flag is set, we override the detected format
 			if cmd.Flags().Changed("format") {
 				format, _ := cmd.Flags().GetString("format")
@@ -85,7 +85,7 @@ func NewReadCmd() *cobra.Command {
 				}
 			} else {
 				// By default, we detect the format of the file based on the extension
-				generator = tui.NewFileGenerator(args[0])
+				generator = internal.NewFileGenerator(args[0])
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
@@ -98,8 +98,8 @@ func NewReadCmd() *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator)
-			model := tui.NewPaginator(runner)
+			runner := internal.NewRunner(generator)
+			model := internal.NewPaginator(runner)
 
 			model.Draw()
 		},

@@ -41,6 +41,8 @@ github.com/junegunn/fzf v0.0.0-20230215142442-352ea072269d h1:wwPyf3KN4uqBZAnEat
 github.com/junegunn/fzf v0.0.0-20230215142442-352ea072269d/go.mod h1:hp6hy/ZCMCP+zkx+keV2IRZqjJXN01fp15PknbX2zQc=
 github.com/junegunn/fzf v0.0.0-20230319065331-cfc0747d5da7 h1:tiL40m2KXQ/N7UEqNReOCD6VJQZ1X8gpx6MuOngIVbc=
 github.com/junegunn/fzf v0.0.0-20230319065331-cfc0747d5da7/go.mod h1:hp6hy/ZCMCP+zkx+keV2IRZqjJXN01fp15PknbX2zQc=
+github.com/junegunn/fzf v0.0.0-20230327032137-ae745d9397bd h1:mIwYKFxsVroFNg+SyT//O8oQT/Hsx8UIjlqTwV9GJv0=
+github.com/junegunn/fzf v0.0.0-20230327032137-ae745d9397bd/go.mod h1:jsMTIqqr5HOEPlNtUDehOyido1n1g3Pn9rGdqegXO44=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
 github.com/lucasb-eyer/go-colorful v1.2.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
@@ -48,6 +50,8 @@ github.com/mattn/go-isatty v0.0.14/go.mod h1:7GGIvUiUoEMVVmxf/4nioHXj79iQHKdU27k
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
 github.com/mattn/go-isatty v0.0.17 h1:BTarxUcIeDqL27Mc+vyvdWYSL28zpIhv3RoTdsLMPng=
 github.com/mattn/go-isatty v0.0.17/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
+github.com/mattn/go-isatty v0.0.18 h1:DOKFKCQ7FNG2L1rbrmstDN4QVRdS89Nkh85u68Uwp98=
+github.com/mattn/go-isatty v0.0.18/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-localereader v0.0.1 h1:ygSAOl7ZXTx4RdPYinUpg6W99U8jWvWi9Ye2JC/oIi4=
 github.com/mattn/go-localereader v0.0.1/go.mod h1:8fBrzywKY7BI3czFoHkuzRoWE9C+EiG4R1k4Cjx5p88=
 github.com/mattn/go-runewidth v0.0.10/go.mod h1:RAqKPSqVFrSLVXbA8x7dzmKdmGzieGRCM46jaSJTDAk=

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ func NewFetchCmd() *cobra.Command {
 				headerMap[tokens[0]] = tokens[1]
 			}
 
-			generator := tui.NewHttpGenerator(args[0], method, headerMap, body)
+			generator := internal.NewHttpGenerator(args[0], method, headerMap, body)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
@@ -42,8 +42,8 @@ func NewFetchCmd() *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator)
-			tui.NewPaginator(runner).Draw()
+			runner := internal.NewRunner(generator)
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 

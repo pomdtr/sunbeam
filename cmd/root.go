@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/pomdtr/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 )
 
@@ -183,8 +183,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return
 			}
 
-			runner := tui.NewRunner(generator)
-			tui.NewPaginator(runner).Draw()
+			runner := internal.NewRunner(generator)
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 
@@ -239,7 +239,7 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 			command := fmt.Sprintf("%s %s", binPath, strings.Join(args, " "))
 
 			cwd, _ := os.Getwd()
-			generator := tui.NewCommandGenerator(command, "", cwd)
+			generator := internal.NewCommandGenerator(command, "", cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
@@ -251,9 +251,9 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 				return
 			}
 
-			runner := tui.NewRunner(generator)
+			runner := internal.NewRunner(generator)
 
-			tui.NewPaginator(runner).Draw()
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 }

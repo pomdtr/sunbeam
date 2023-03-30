@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func NewRunCmd() *cobra.Command {
 			cwd, _ := os.Getwd()
 
 			command := strings.Join(args, " ")
-			generator := tui.NewCommandGenerator(command, "", cwd)
+			generator := internal.NewCommandGenerator(command, "", cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
@@ -31,8 +31,8 @@ func NewRunCmd() *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator)
-			tui.NewPaginator(runner).Draw()
+			runner := internal.NewRunner(generator)
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 

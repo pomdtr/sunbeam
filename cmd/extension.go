@@ -15,11 +15,11 @@ import (
 
 	_ "embed"
 
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 
 	"github.com/mattn/go-isatty"
 	cp "github.com/otiai10/copy"
-	"github.com/pomdtr/sunbeam/tui"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
@@ -111,8 +111,8 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator)
-			tui.NewPaginator(runner).Draw()
+			runner := internal.NewRunner(generator)
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 }
@@ -197,8 +197,8 @@ func NewExtensionViewCmd() *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator)
-			tui.NewPaginator(runner).Draw()
+			runner := internal.NewRunner(generator)
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 }
@@ -274,8 +274,8 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator)
-			tui.NewPaginator(runner).Draw()
+			runner := internal.NewRunner(generator)
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 }
@@ -324,7 +324,7 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 			command := fmt.Sprintf("%s %s", binPath, strings.Join(args[1:], " "))
 
 			cwd, _ := os.Getwd()
-			generator := tui.NewCommandGenerator(command, "", cwd)
+			generator := internal.NewCommandGenerator(command, "", cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
@@ -336,9 +336,9 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator)
+			runner := internal.NewRunner(generator)
 
-			tui.NewPaginator(runner).Draw()
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 }

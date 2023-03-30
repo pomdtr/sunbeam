@@ -9,7 +9,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/tui"
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,7 @@ func NewTriggerCmd() *cobra.Command {
 		Short: "Trigger an action",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			var generator tui.PageGenerator
+			var generator internal.PageGenerator
 			inputsFlag, _ := cmd.Flags().GetStringArray("inputs")
 			inputs := make(map[string]string)
 			for _, input := range inputsFlag {
@@ -53,7 +53,7 @@ func NewTriggerCmd() *cobra.Command {
 				return
 			}
 
-			generator = tui.NewActionGenerator(action, inputs)
+			generator = internal.NewActionGenerator(action, inputs)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
@@ -65,8 +65,8 @@ func NewTriggerCmd() *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator)
-			tui.NewPaginator(runner).Draw()
+			runner := internal.NewRunner(generator)
+			internal.NewPaginator(runner).Draw()
 		},
 	}
 
