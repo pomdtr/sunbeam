@@ -126,6 +126,19 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 					Type: types.ReloadAction,
 				}
 			}
+		case types.ExitOnSuccess:
+			return func() tea.Msg {
+				_, err := generator("")
+				if err != nil {
+					if err, ok := err.(*exec.ExitError); ok {
+						return fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
+					}
+					return err
+				}
+
+				return tea.Quit
+			}
+
 		default:
 			return func() tea.Msg {
 				return fmt.Errorf("unsupported onSuccess")
