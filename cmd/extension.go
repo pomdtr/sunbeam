@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -390,18 +391,14 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 				exitWithErrorMsg("Extension already installed: %s", repository.Name())
 			}
 
-			release, err := utils.GetLatestRelease(repository)
-			if err != nil {
-				err := gitInstall(repository, targetDir)
-				if err != nil {
+			if release, err := utils.GetLatestRelease(repository); err == nil {
+				if err := releaseInstall(release, targetDir); err != nil {
 					exitWithErrorMsg("Unable to install extension: %s", err)
 				}
-
 				fmt.Println("Extension installed:", repository.Name())
-				return
 			}
 
-			if err := releaseInstall(release, targetDir); err != nil {
+			if err := gitInstall(repository, targetDir); err != nil {
 				exitWithErrorMsg("Unable to install extension: %s", err)
 			}
 
@@ -521,6 +518,10 @@ func NewExtensionUpgradeCmd(extensionDir string) *cobra.Command {
 			extensionPath := path.Join(extensionDir, extensionName)
 			if _, err := os.Stat(extensionPath); os.IsNotExist(err) {
 				exitWithErrorMsg("Extension not installed: %s", args[0])
+			}
+
+			if _, err := os.Stat(filepath.Join(extensionPath, ".git")); os.IsNotExist(err) {
+				exitWithErrorMsg("Extension not installed from git: %s", args[0])
 			}
 
 			if err := utils.GitPull(extensionPath); err != nil {
