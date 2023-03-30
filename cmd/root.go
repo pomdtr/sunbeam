@@ -39,15 +39,15 @@ type SunbeamConfig struct {
 	RootActions []types.Action `yaml:"rootItems"`
 }
 
-func Execute(version string) error {
+func NewRootCmd() (*cobra.Command, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("could not get user home directory: %s", err)
+		return nil, fmt.Errorf("could not get user home directory: %s", err)
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("could not get current working directory: %s", err)
+		return nil, fmt.Errorf("could not get current working directory: %s", err)
 	}
 
 	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
@@ -61,10 +61,10 @@ func Execute(version string) error {
 	if _, err := os.Stat(configFile); !os.IsNotExist(err) {
 		bytes, err := os.ReadFile(configFile)
 		if err != nil {
-			return fmt.Errorf("could not read config file: %s", err)
+			return nil, fmt.Errorf("could not read config file: %s", err)
 		}
 		if yaml.Unmarshal(bytes, &config); err != nil {
-			return fmt.Errorf("could not parse config file: %s", err)
+			return nil, fmt.Errorf("could not parse config file: %s", err)
 		}
 	}
 	// rootCmd represents the base command when called without any subcommands
@@ -74,8 +74,7 @@ func Execute(version string) error {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
-		Args:    cobra.NoArgs,
-		Version: version,
+		Args: cobra.NoArgs,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if _, err := os.Stat(envFile); !os.IsNotExist(err) {
 				err := godotenv.Load(envFile)
@@ -221,7 +220,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		rootCmd.AddCommand(NewExtensionShortcutCmd(extensionDir, extension))
 	}
 
-	return rootCmd.Execute()
+	return rootCmd, nil
 }
 
 func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.Command {

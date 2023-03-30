@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	_ "embed"
@@ -11,7 +12,14 @@ import (
 var version = "dev"
 
 func main() {
-	if err := cmd.Execute(version); err != nil {
+	cmd, err := cmd.NewRootCmd()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	cmd.Version = version
+
+	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
