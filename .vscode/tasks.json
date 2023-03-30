@@ -22,9 +22,6 @@
                 "--listen=:2345",
                 "--api-version=2",
                 "${workspaceFolder}/main.go",
-                "--",
-                "read",
-                "sunbeam.yml"
             ],
             "options": {
                 "env": {

@@ -14,28 +14,6 @@ type ActionList struct {
 	footer  Footer
 }
 
-func ActionTitle(action types.Action) string {
-	if action.Title != "" {
-		return action.Title
-	}
-	switch action.Type {
-	case types.RunAction:
-		return "Run"
-	case types.EditAction:
-		return "Edit"
-	case types.CopyAction:
-		return "Copy"
-	case types.OpenAction:
-		return "Open"
-	case types.ReadAction:
-		return "Read"
-	case types.HttpAction:
-		return "Request"
-	default:
-		return "Unknown"
-	}
-}
-
 func NewActionList() ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
@@ -70,14 +48,10 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 	al.actions = actions
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
-		if i == 0 {
-			action.Shortcut = "↩"
-		}
 		filterItems[i] = ListItem{
 			ListItem: types.ListItem{
-				Title:    ActionTitle(action),
-				Subtitle: action.Shortcut,
-				Actions:  []types.Action{action},
+				Title:   action.Title,
+				Actions: []types.Action{action},
 			},
 		}
 	}
@@ -121,16 +95,6 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			al.Blur()
 			return al, func() tea.Msg {
 				return listItem.Actions[0]
-			}
-		default:
-			for _, action := range al.actions {
-				action := action
-				if action.Shortcut == msg.String() {
-					al.Blur()
-					return al, func() tea.Msg {
-						return action
-					}
-				}
 			}
 		}
 	}

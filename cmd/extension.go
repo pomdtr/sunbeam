@@ -30,7 +30,7 @@ const (
 //go:embed templates/sunbeam-extension
 var extensionTemplate []byte
 
-func NewExtensionCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
+func NewExtensionCmd(extensionDir string) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:   "extension",
 		Short: "Extension commands",
@@ -41,12 +41,12 @@ func NewExtensionCmd(extensionDir string, validator tui.PageValidator) *cobra.Co
 		},
 	}
 
-	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionDir, validator))
-	extensionCmd.AddCommand(NewExtensionViewCmd(validator))
-	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir, validator))
+	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionDir))
+	extensionCmd.AddCommand(NewExtensionViewCmd())
+	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
 	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionDir))
-	extensionCmd.AddCommand(NewExtensionExecCmd(extensionDir, validator))
+	extensionCmd.AddCommand(NewExtensionExecCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionListCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionDir))
@@ -56,7 +56,7 @@ func NewExtensionCmd(extensionDir string, validator tui.PageValidator) *cobra.Co
 	return extensionCmd
 }
 
-func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
+func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "browse",
 		Short: "Browse extensions",
@@ -85,10 +85,9 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 							},
 							newExtensionInstallAction(repo.HtmlUrl, "ctrl+i"),
 							{
-								Type:     types.OpenAction,
-								Title:    "Open in Browser",
-								Shortcut: "ctrl+o",
-								Url:      repo.HtmlUrl,
+								Type:  types.OpenAction,
+								Title: "Open in Browser",
+								Url:   repo.HtmlUrl,
 							},
 						},
 					})
@@ -111,11 +110,7 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 				return
 			}
 
-			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: "file",
-				Path:   cwd,
-			})
+			runner := tui.NewRunner(generator)
 			tui.NewPaginator(runner).Draw()
 		},
 	}
@@ -123,10 +118,10 @@ func NewExtensionBrowseCmd(extensionDir string, validator tui.PageValidator) *co
 
 func newExtensionInstallAction(extensionUrl string, shortcut string) types.Action {
 	return types.Action{
-		Type:     types.RunAction,
-		Title:    "Install",
-		Shortcut: shortcut,
-		Command:  fmt.Sprintf("sunbeam extension install ${input:name} %s", extensionUrl),
+		Type:      types.RunAction,
+		Title:     "Install",
+		OnSuccess: types.PushOnSuccess,
+		Command:   fmt.Sprintf("sunbeam extension install ${input:name} %s", extensionUrl),
 		Inputs: []types.Input{
 			{
 				Type:        types.TextFieldInput,
@@ -138,7 +133,7 @@ func newExtensionInstallAction(extensionUrl string, shortcut string) types.Actio
 	}
 }
 
-func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
+func NewExtensionViewCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "view <repo>",
 		Short: "View extension",
@@ -201,17 +196,13 @@ func NewExtensionViewCmd(validator tui.PageValidator) *cobra.Command {
 				return
 			}
 
-			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: "file",
-				Path:   cwd,
-			})
+			runner := tui.NewRunner(generator)
 			tui.NewPaginator(runner).Draw()
 		},
 	}
 }
 
-func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
+func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "manage",
 		Short: "Manage installed extensions",
@@ -234,15 +225,14 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 								Command:   fmt.Sprintf("sunbeam extension exec %s", extension),
 							},
 							{
-								Title:    "Upgrade Extension",
-								Type:     types.RunAction,
-								Command:  fmt.Sprintf("sunbeam extension upgrade %s", extension),
-								Shortcut: "ctrl+u",
+								Title:     "Upgrade Extension",
+								Type:      types.RunAction,
+								OnSuccess: types.ExitOnSuccess,
+								Command:   fmt.Sprintf("sunbeam extension upgrade %s", extension),
 							},
 							{
 								Type:      types.RunAction,
 								Title:     "Remove Extension",
-								Shortcut:  "ctrl+x",
 								OnSuccess: types.ReloadOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension remove %s", extension),
 							},
@@ -254,9 +244,10 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 					Type: types.ListPage,
 					Actions: []types.Action{
 						{
-							Type:    types.RunAction,
-							Title:   "Create Extension",
-							Command: "sunbeam extension create ${input:extensionName}",
+							Type:      types.RunAction,
+							OnSuccess: types.ExitOnSuccess,
+							Title:     "Create Extension",
+							Command:   "sunbeam extension create ${input:extensionName}",
 							Inputs: []types.Input{
 								{
 									Type:        types.TextFieldInput,
@@ -265,7 +256,6 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 									Placeholder: "my-extension",
 								},
 							},
-							Shortcut: "ctrl+n",
 						},
 					},
 					Items: listItems,
@@ -283,11 +273,7 @@ func NewExtensionManageCmd(extensionDir string, validator tui.PageValidator) *co
 				return
 			}
 
-			cwd, _ := os.Getwd()
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: "file",
-				Path:   cwd,
-			})
+			runner := tui.NewRunner(generator)
 			tui.NewPaginator(runner).Draw()
 		},
 	}
@@ -320,7 +306,7 @@ func NewExtensionCreateCmd() *cobra.Command {
 	}
 }
 
-func NewExtensionExecCmd(extensionDir string, validator tui.PageValidator) *cobra.Command {
+func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "exec",
 		Short: "Execute an installed extension",
@@ -349,10 +335,7 @@ func NewExtensionExecCmd(extensionDir string, validator tui.PageValidator) *cobr
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: "file",
-				Path:   cwd,
-			})
+			runner := tui.NewRunner(generator)
 
 			tui.NewPaginator(runner).Draw()
 		},

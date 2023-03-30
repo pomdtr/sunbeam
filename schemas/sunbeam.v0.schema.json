@@ -103,6 +103,9 @@
                     "command": {
                         "type": "string"
                     },
+                    "dir": {
+                        "type": "string"
+                    },
                     "type": {
                         "const": "detail"
                     },
@@ -174,8 +177,7 @@
                         "copy",
                         "open",
                         "read",
-                        "http",
-                        "edit",
+                        "fetch",
                         "run"
                     ]
                 }
@@ -188,7 +190,7 @@
                         ],
                         "properties": {
                             "type": {
-                                "const": "http"
+                                "const": "fetch"
                             }
                         }
                     },
@@ -200,7 +202,7 @@
                         "additionalProperties": false,
                         "properties": {
                             "type": {
-                                "const": "http"
+                                "const": "fetch"
                             },
                             "title": {
                                 "type": "string"
@@ -350,7 +352,8 @@
                     "then": {
                         "required": [
                             "type",
-                            "command"
+                            "command",
+                            "onSuccess"
                         ],
                         "additionalProperties": false,
                         "properties": {
@@ -360,14 +363,14 @@
                             "title": {
                                 "type": "string"
                             },
-                            "shortcut": {
+                            "dir": {
                                 "type": "string"
                             },
                             "onSuccess": {
                                 "type": "string",
                                 "enum": [
                                     "reload",
-                                    "replace",
+                                    "exit",
                                     "push"
                                 ]
                             },

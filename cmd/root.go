@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/mattn/go-isatty"
-	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
@@ -37,16 +35,11 @@ var (
 	}
 )
 
-type RootItem struct {
-	Title string
-	Args  []string
-}
-
 type SunbeamConfig struct {
-	RootItems []RootItem `yaml:"rootItems"`
+	RootActions []types.Action `yaml:"rootItems"`
 }
 
-func Execute(version string, schema *jsonschema.Schema) error {
+func Execute(version string) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not get user home directory: %s", err)
@@ -74,16 +67,6 @@ func Execute(version string, schema *jsonschema.Schema) error {
 			return fmt.Errorf("could not parse config file: %s", err)
 		}
 	}
-
-	validator := func(page []byte) error {
-		var v any
-		if err := json.Unmarshal(page, &v); err != nil {
-			return fmt.Errorf("unable to parse input: %s", err)
-		}
-
-		return schema.Validate(v)
-	}
-
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "sunbeam",
@@ -123,7 +106,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 							Title:    "Read Current Dir Manifest",
 							Subtitle: "Sunbeam",
 							Actions: []types.Action{
-								{Type: types.ReadAction, Path: manifestPath},
+								{Type: types.ReadAction, Title: "Read", Path: manifestPath},
 							},
 						})
 
@@ -137,7 +120,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Title:    "Run Current Directory Extension",
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
-							{Type: types.RunAction, OnSuccess: types.PushOnSuccess, Command: binaryPath},
+							{Type: types.RunAction, Title: "Run", OnSuccess: types.PushOnSuccess, Command: binaryPath},
 						},
 					})
 				}
@@ -147,7 +130,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Title:    "Browse Available Extensions",
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
-							{Type: types.RunAction, OnSuccess: types.PushOnSuccess, Command: "sunbeam extension browse"},
+							{Type: types.RunAction, Title: "Run", OnSuccess: types.PushOnSuccess, Command: "sunbeam extension browse"},
+						},
+					},
+					{
+						Title:    "Manage Extensions",
+						Subtitle: "Sunbeam",
+						Actions: []types.Action{
+							{Type: types.RunAction, Title: "Run", OnSuccess: types.PushOnSuccess, Command: "sunbeam extension manage"},
 						},
 					},
 					{
@@ -155,8 +145,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
 							{
-								Type:    types.RunAction,
-								Command: "sunbeam extension create ${input:name}",
+								Type:      types.RunAction,
+								Title:     "Run",
+								OnSuccess: types.PushOnSuccess,
+								Command:   "sunbeam extension create ${input:name}",
 								Inputs: []types.Input{
 									{Name: "name", Type: types.TextFieldInput, Title: "Extension name", Placeholder: "Extension Name"},
 								},
@@ -165,22 +157,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					},
 				}...)
 
-				for _, item := range config.RootItems {
-					command := fmt.Sprintf("sunbeam %s", strings.Join(item.Args, " "))
+				for _, item := range config.RootActions {
 					items = append(items, types.ListItem{
-						Title: item.Title,
+						Title:    item.Title,
+						Subtitle: "Root Action",
 						Actions: []types.Action{
-							{
-								Title:     "Run",
-								Type:      types.RunAction,
-								OnSuccess: types.PushOnSuccess,
-								Command:   command,
-							},
-							{
-								Title: "Copy Command",
-								Type:  types.CopyAction,
-								Text:  command,
-							},
+							item,
 						},
 					})
 				}
@@ -201,10 +183,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: "file",
-				Path:   cwd,
-			})
+			runner := tui.NewRunner(generator)
 			tui.NewPaginator(runner).Draw()
 		},
 	}
@@ -212,13 +191,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddGroup(coreCommandsGroup, extensionCommandsGroup)
 
 	rootCmd.AddCommand(NewCopyCmd())
-	rootCmd.AddCommand(NewExtensionCmd(extensionDir, validator))
-	rootCmd.AddCommand(NewHTTPCmd(validator))
+	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
+	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewOpenCmd())
 	rootCmd.AddCommand(NewQueryCmd())
-	rootCmd.AddCommand(NewReadCmd(validator))
-	rootCmd.AddCommand(NewRunCmd(validator))
-	rootCmd.AddCommand(NewValidateCmd(validator))
+	rootCmd.AddCommand(NewReadCmd())
+	rootCmd.AddCommand(NewRunCmd())
+	rootCmd.AddCommand(NewValidateCmd())
+	rootCmd.AddCommand(NewTriggerCmd())
 
 	coreCommands := map[string]struct{}{}
 	for _, coreCommand := range rootCmd.Commands() {
@@ -238,13 +218,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			continue
 		}
 
-		rootCmd.AddCommand(NewExtensionShortcutCmd(extensionDir, validator, extension))
+		rootCmd.AddCommand(NewExtensionShortcutCmd(extensionDir, extension))
 	}
 
 	return rootCmd.Execute()
 }
 
-func NewExtensionShortcutCmd(extensionDir string, validator tui.PageValidator, extensionName string) *cobra.Command {
+func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.Command {
 	return &cobra.Command{
 		Use:                extensionName,
 		DisableFlagParsing: true,
@@ -271,10 +251,7 @@ func NewExtensionShortcutCmd(extensionDir string, validator tui.PageValidator, e
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: "file",
-				Path:   cwd,
-			})
+			runner := tui.NewRunner(generator)
 
 			tui.NewPaginator(runner).Draw()
 		},

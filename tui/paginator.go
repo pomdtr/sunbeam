@@ -2,8 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -31,7 +29,6 @@ type SunbeamOptions struct {
 type Paginator struct {
 	width, height int
 	options       SunbeamOptions
-	exitCmd       *exec.Cmd
 
 	pages []Page
 
@@ -77,10 +74,6 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		m.hidden = true
-		return m, tea.Quit
-	case *exec.Cmd:
-		m.exitCmd = msg
 		m.hidden = true
 		return m, tea.Quit
 	}
@@ -155,23 +148,6 @@ func (m *Paginator) Draw() (err error) {
 		p = tea.NewProgram(m)
 	}
 
-	res, err := p.Run()
-	if err != nil {
-		return err
-	}
-
-	model, ok := res.(*Paginator)
-	if !ok {
-		return fmt.Errorf("could not convert res back to *Model")
-	}
-
-	if model.exitCmd != nil {
-		model.exitCmd.Stdin = os.Stdin
-		model.exitCmd.Stdout = os.Stdout
-		model.exitCmd.Stderr = os.Stderr
-
-		return model.exitCmd.Run()
-	}
-
-	return nil
+	_, err = p.Run()
+	return err
 }

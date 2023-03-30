@@ -92,6 +92,7 @@ items:
   - title: Show Form
     actions:
       - type: run
+        onSuccess: exit
         title: Show
         command: echo ${input:text}
         inputs:

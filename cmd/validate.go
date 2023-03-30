@@ -1,17 +1,17 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/pomdtr/sunbeam/tui"
-
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/spf13/cobra"
 )
 
-func NewValidateCmd(validator tui.PageValidator) *cobra.Command {
+func NewValidateCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "validate [file]",
 		Short: "Validate a page against the schema",
@@ -32,8 +32,13 @@ func NewValidateCmd(validator tui.PageValidator) *cobra.Command {
 				exitWithErrorMsg("No input provided")
 			}
 
-			if err := validator(page); err != nil {
-				fmt.Printf("☠️ Input is not valid: %s!", err)
+			var v any
+			if err := json.Unmarshal(page, &v); err != nil {
+				exitWithErrorMsg("Unable to parse input: %s", err)
+			}
+
+			if err := schemas.Validate(page); err != nil {
+				fmt.Printf("Input is not valid: %s!", err)
 				os.Exit(1)
 			}
 

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRunCmd(validator tui.PageValidator) *cobra.Command {
+func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run <script>",
 		Short: "Run a script and push it's output",
@@ -32,10 +31,7 @@ func NewRunCmd(validator tui.PageValidator) *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: "file",
-				Path:   cwd,
-			})
+			runner := tui.NewRunner(generator)
 			tui.NewPaginator(runner).Draw()
 		},
 	}

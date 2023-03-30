@@ -2,9 +2,11 @@ package tui
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 	"time"
 
+	"github.com/google/shlex"
 	"github.com/pomdtr/sunbeam/types"
 
 	"github.com/alecthomas/chroma/quick"
@@ -100,7 +102,7 @@ func (c *List) SetTitle(title string) {
 	c.footer.title = title
 }
 
-func NewList(page types.Page, dir string) *List {
+func NewList(page types.Page) *List {
 	header := NewHeader()
 
 	viewport := viewport.New(0, 0)
@@ -136,7 +138,23 @@ func NewList(page types.Page, dir string) *List {
 			return builder.String()
 		}
 
-		generator := NewCommandGenerator(item.Detail.Command, "", dir)
+		generator := func(input string) ([]byte, error) {
+			args, err := shlex.Split(item.Detail.Command)
+			if err != nil {
+				return nil, err
+			}
+
+			var cmd *exec.Cmd
+			if len(args) > 1 {
+				cmd = exec.Command(args[0], args[1:]...)
+			} else {
+				cmd = exec.Command(args[0])
+			}
+
+			cmd.Dir = item.Detail.Dir
+
+			return cmd.Output()
+		}
 
 		output, err := generator("")
 		if err != nil {
@@ -169,9 +187,8 @@ func (list *List) SetActions(actions []types.Action) {
 	copy(list.actions, actions)
 
 	list.actions[len(actions)] = types.Action{
-		Type:     types.ReloadAction,
-		Title:    "Reload Page",
-		Shortcut: "ctrl+r",
+		Type:  types.ReloadAction,
+		Title: "Reload Page",
 	}
 }
 
@@ -260,7 +277,7 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 	l.actionList.SetActions(actions...)
 	if len(actions) > 0 {
 		l.footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", ActionTitle(actions[0]))),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	} else {

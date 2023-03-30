@@ -27,9 +27,8 @@ type Detail struct {
 
 func NewDetail(title string, contentCmd func() string, actions []types.Action) *Detail {
 	actions = append(actions, types.Action{
-		Type:     types.ReloadAction,
-		Title:    "Reload Page",
-		Shortcut: "ctrl+r",
+		Type:  types.ReloadAction,
+		Title: "Reload Page",
 	})
 
 	footer := NewFooter(title)
@@ -37,7 +36,7 @@ func NewDetail(title string, contentCmd func() string, actions []types.Action) *
 		footer.SetBindings()
 	} else {
 		footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", ActionTitle(actions[0]))),
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
 		)
 	}

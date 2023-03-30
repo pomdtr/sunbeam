@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
-	"path"
 
 	"github.com/pomdtr/sunbeam/types"
 
@@ -16,7 +14,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewReadCmd(validator tui.PageValidator) *cobra.Command {
+func NewReadCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "read [page]",
 		Short: "Read page from file or stdin, and push it's content",
@@ -25,11 +23,6 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 			if len(args) == 0 {
 				if isatty.IsTerminal(os.Stdin.Fd()) {
 					exitWithErrorMsg("No input provided")
-				}
-
-				cwd, err := os.Getwd()
-				if err != nil {
-					exitWithErrorMsg("could not get current working directory: %s", err)
 				}
 
 				var content []byte
@@ -60,9 +53,6 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 					}
 
 					return content, err
-				}, validator, &url.URL{
-					Scheme: "file",
-					Path:   cwd,
 				})
 
 				tui.NewPaginator(runner).Draw()
@@ -108,10 +98,7 @@ func NewReadCmd(validator tui.PageValidator) *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: "file",
-				Path:   path.Dir(args[0]),
-			})
+			runner := tui.NewRunner(generator)
 			model := tui.NewPaginator(runner)
 
 			model.Draw()

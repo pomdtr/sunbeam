@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"net/url"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -12,20 +10,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewHTTPCmd(validator tui.PageValidator) *cobra.Command {
+func NewFetchCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "http <url>",
-		Short: "Run a HTTP server",
+		Use:   "fetch <url>",
+		Short: "fetch a page and push it's output",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			method, _ := cmd.Flags().GetString("method")
 			headers, _ := cmd.Flags().GetStringArray("header")
 			body, _ := cmd.Flags().GetString("data")
-
-			target, err := url.Parse(args[0])
-			if err != nil {
-				exitWithErrorMsg("invalid url: %s", err)
-			}
 
 			headerMap := make(map[string]string)
 			for _, header := range headers {
@@ -49,11 +42,7 @@ func NewHTTPCmd(validator tui.PageValidator) *cobra.Command {
 				return
 			}
 
-			runner := tui.NewRunner(generator, validator, &url.URL{
-				Scheme: target.Scheme,
-				Host:   target.Host,
-				Path:   path.Dir(target.Path),
-			})
+			runner := tui.NewRunner(generator)
 			tui.NewPaginator(runner).Draw()
 		},
 	}

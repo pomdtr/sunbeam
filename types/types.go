@@ -81,6 +81,7 @@ type Page struct {
 	// Detail page
 	Text     string `json:"text,omitempty" yaml:"text,omitempty"`
 	Command  string `json:"command,omitempty" yaml:"command,omitempty"`
+	Dir      string `json:"dir,omitempty" yaml:"dir,omitempty"`
 	Language string `json:"language,omitempty" yaml:"language,omitempty"`
 
 	// List page
@@ -102,6 +103,7 @@ type ListItem struct {
 type Detail struct {
 	Text     string `json:"text" yaml:"text"`
 	Command  string `json:"command" yaml:"command"`
+	Dir      string `json:"dir" yaml:"dir"`
 	Language string `json:"language" yaml:"language"`
 }
 
@@ -198,9 +200,8 @@ const (
 	CopyAction
 	OpenAction
 	ReadAction
-	EditAction
 	RunAction
-	HttpAction
+	FetchAction
 	ReloadAction
 )
 
@@ -219,10 +220,8 @@ func (a *ActionType) UnmarshalJSON(bytes []byte) error {
 		*a = ReadAction
 	case "run":
 		*a = RunAction
-	case "http":
-		*a = HttpAction
-	case "edit":
-		*a = EditAction
+	case "fetch":
+		*a = FetchAction
 	case "reload":
 		*a = ReloadAction
 	default:
@@ -240,12 +239,10 @@ func (a ActionType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("open")
 	case ReadAction:
 		return json.Marshal("read")
-	case EditAction:
-		return json.Marshal("edit")
 	case RunAction:
 		return json.Marshal("run")
-	case HttpAction:
-		return json.Marshal("http")
+	case FetchAction:
+		return json.Marshal("fetch")
 	case ReloadAction:
 		return json.Marshal("reload")
 	default:
@@ -268,10 +265,8 @@ func (a *ActionType) UnmarshalYAML(node *yaml.Node) error {
 		*a = ReadAction
 	case "run":
 		*a = RunAction
-	case "http":
-		*a = HttpAction
-	case "edit":
-		*a = EditAction
+	case "fetch":
+		*a = FetchAction
 	case "reload":
 		*a = ReloadAction
 	default:
@@ -289,12 +284,10 @@ func (a ActionType) MarshalYAML() (interface{}, error) {
 		return "open", nil
 	case ReadAction:
 		return "read", nil
-	case EditAction:
-		return "edit", nil
 	case RunAction:
 		return "run", nil
-	case HttpAction:
-		return "http", nil
+	case FetchAction:
+		return "fetch", nil
 	case ReloadAction:
 		return "reload", nil
 	default:
@@ -305,10 +298,10 @@ func (a ActionType) MarshalYAML() (interface{}, error) {
 type OnSuccessType int
 
 const (
-	ExitOnSuccess OnSuccessType = iota
+	UnknowOnSuccess OnSuccessType = iota
 	PushOnSuccess
-	ReplaceOnSuccess
 	ReloadOnSuccess
+	ExitOnSuccess
 )
 
 func (o *OnSuccessType) UnmarshalJSON(bytes []byte) error {
@@ -320,10 +313,10 @@ func (o *OnSuccessType) UnmarshalJSON(bytes []byte) error {
 	switch rawType {
 	case "push":
 		*o = PushOnSuccess
+	case "exit":
+		*o = ExitOnSuccess
 	case "reload":
 		*o = ReloadOnSuccess
-	case "replace":
-		*o = ReplaceOnSuccess
 	default:
 		return fmt.Errorf("unknown on success type: %s", rawType)
 	}
@@ -335,10 +328,10 @@ func (o OnSuccessType) MarshalJSON() ([]byte, error) {
 	switch o {
 	case PushOnSuccess:
 		return json.Marshal("push")
+	case ExitOnSuccess:
+		return json.Marshal("exit")
 	case ReloadOnSuccess:
 		return json.Marshal("reload")
-	case ReplaceOnSuccess:
-		return json.Marshal("replace")
 	default:
 		return nil, fmt.Errorf("unknown on success type: %d", o)
 	}
@@ -353,10 +346,10 @@ func (o *OnSuccessType) UnmarshalYAML(node *yaml.Node) error {
 	switch rawType {
 	case "push":
 		*o = PushOnSuccess
+	case "exit":
+		*o = ExitOnSuccess
 	case "reload":
 		*o = ReloadOnSuccess
-	case "replace":
-		*o = ReplaceOnSuccess
 	default:
 		return fmt.Errorf("unknown onSuccess type: %s", rawType)
 	}
@@ -368,9 +361,9 @@ func (o OnSuccessType) MarshalYAML() (interface{}, error) {
 	switch o {
 	case PushOnSuccess:
 		return "push", nil
+	case ExitOnSuccess:
+		return "exit", nil
 	case ReloadOnSuccess:
-		return "reload", nil
-	case ReplaceOnSuccess:
 		return "replace", nil
 	default:
 		return nil, fmt.Errorf("unknown onSuccess type: %d", o)
@@ -378,9 +371,8 @@ func (o OnSuccessType) MarshalYAML() (interface{}, error) {
 }
 
 type Action struct {
-	Title    string     `json:"title,omitempty" yaml:"title,omitempty"`
-	Shortcut string     `json:"shortcut,omitempty" yaml:"shortcut,omitempty"`
-	Type     ActionType `json:"type" yaml:"type"`
+	Title string     `json:"title,omitempty" yaml:"title,omitempty"`
+	Type  ActionType `json:"type" yaml:"type"`
 
 	// copy
 	Text string `json:"text,omitempty" yaml:"text,omitempty"`
@@ -388,16 +380,17 @@ type Action struct {
 	// edit / open
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 
-	// open / http
+	// open / fetch
 	Url string `json:"url,omitempty" yaml:"url,omitempty"`
 
-	// http
+	// fetch
 	Method  string            `json:"method,omitempty" yaml:"method,omitempty"`
 	Headers map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Body    string            `json:"body,omitempty" yaml:"body,omitempty"`
 
 	// run
 	Command   string        `json:"command,omitempty" yaml:"command,omitempty"`
+	Dir       string        `json:"dir,omitempty" yaml:"dir,omitempty"`
 	Inputs    []Input       `json:"inputs,omitempty" yaml:"inputs,omitempty"`
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
