@@ -10,12 +10,7 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-type Page struct {
-	Command      *cobra.Command
-	HeaderOffset int
-}
-
-func buildDoc(command *cobra.Command, headerOffset int) (string, error) {
+func buildDoc(command *cobra.Command) (string, error) {
 	if command.GroupID == "extension" {
 		return "", nil
 	}
@@ -31,18 +26,12 @@ func buildDoc(command *cobra.Command, headerOffset int) (string, error) {
 		if strings.Contains(line, "SEE ALSO") {
 			break
 		}
-		if strings.HasPrefix(line, "#") {
-			if headerOffset < 0 {
-				line = strings.TrimPrefix(line, strings.Repeat("#", -headerOffset))
-			} else {
-				line = strings.Repeat("#", headerOffset) + line
-			}
-		}
+
 		out.WriteString(line + "\n")
 	}
 
 	for _, child := range command.Commands() {
-		childPage, err := buildDoc(child, headerOffset+1)
+		childPage, err := buildDoc(child)
 		if err != nil {
 			return "", err
 		}
@@ -59,7 +48,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	doc, err := buildDoc(cmd, -1)
+	doc, err := buildDoc(cmd)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error generating docs:", err)
 		os.Exit(1)

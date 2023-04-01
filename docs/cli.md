@@ -1,8 +1,8 @@
-# sunbeam
+## sunbeam
 
 Command Line Launcher
 
-## Synopsis
+### Synopsis
 
 Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
@@ -12,7 +12,7 @@ See https://pomdtr.github.io/sunbeam for more information.
 sunbeam [flags]
 ```
 
-## Options
+### Options
 
 ```
   -h, --help   help for sunbeam
@@ -42,7 +42,7 @@ Extension commands
   -h, --help   help for extension
 ```
 
-### sunbeam extension browse
+## sunbeam extension browse
 
 Browse extensions
 
@@ -50,13 +50,13 @@ Browse extensions
 sunbeam extension browse [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for browse
 ```
 
-### sunbeam extension create
+## sunbeam extension create
 
 Create a new extension
 
@@ -64,13 +64,13 @@ Create a new extension
 sunbeam extension create [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for create
 ```
 
-### sunbeam extension exec
+## sunbeam extension exec
 
 Execute an installed extension
 
@@ -78,17 +78,17 @@ Execute an installed extension
 sunbeam extension exec [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for exec
 ```
 
-### sunbeam extension help
+## sunbeam extension help
 
 Help about any command
 
-#### Synopsis
+### Synopsis
 
 Help provides help for any command in the application.
 Simply type extension help [path to command] for full details.
@@ -97,13 +97,13 @@ Simply type extension help [path to command] for full details.
 sunbeam extension help [command] [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for help
 ```
 
-### sunbeam extension install
+## sunbeam extension install
 
 Install a sunbeam extension from a repository
 
@@ -111,13 +111,13 @@ Install a sunbeam extension from a repository
 sunbeam extension install [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for install
 ```
 
-### sunbeam extension list
+## sunbeam extension list
 
 List installed extension commands
 
@@ -125,13 +125,13 @@ List installed extension commands
 sunbeam extension list [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for list
 ```
 
-### sunbeam extension manage
+## sunbeam extension manage
 
 Manage installed extensions
 
@@ -139,13 +139,13 @@ Manage installed extensions
 sunbeam extension manage [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for manage
 ```
 
-### sunbeam extension remove
+## sunbeam extension remove
 
 Remove an installed extension
 
@@ -153,13 +153,13 @@ Remove an installed extension
 sunbeam extension remove [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for remove
 ```
 
-### sunbeam extension rename
+## sunbeam extension rename
 
 Rename an installed extension
 
@@ -167,13 +167,13 @@ Rename an installed extension
 sunbeam extension rename <old-name> <new-name> [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for rename
 ```
 
-### sunbeam extension search
+## sunbeam extension search
 
 Search for repositories with the sunbeam-extension topic
 
@@ -181,13 +181,13 @@ Search for repositories with the sunbeam-extension topic
 sunbeam extension search [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for search
 ```
 
-### sunbeam extension upgrade
+## sunbeam extension upgrade
 
 Upgrade an installed extension
 
@@ -195,13 +195,13 @@ Upgrade an installed extension
 sunbeam extension upgrade [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for upgrade
 ```
 
-### sunbeam extension view
+## sunbeam extension view
 
 View extension
 
@@ -209,7 +209,7 @@ View extension
 sunbeam extension view <repo> [flags]
 ```
 
-#### Options
+### Options
 
 ```
   -h, --help   help for view
