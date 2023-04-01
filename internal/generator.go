@@ -29,7 +29,7 @@ type CmdGenerator struct {
 	Dir     string
 }
 
-func NewActionGenerator(action types.Action, inputs map[string]string) PageGenerator {
+func ExpandAction(action types.Action, inputs map[string]string) types.Action {
 	for key, value := range inputs {
 		action.Command = strings.ReplaceAll(action.Command, fmt.Sprintf("${input:%s}", key), shellescape.Quote(value))
 		action.Url = strings.ReplaceAll(action.Url, fmt.Sprintf("${input:%s}", key), url.QueryEscape(value))
@@ -54,22 +54,11 @@ func NewActionGenerator(action types.Action, inputs map[string]string) PageGener
 		action.Path = strings.ReplaceAll(action.Path, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1])
 	}
 
-	switch action.Type {
-	case types.RunAction:
-		return NewCommandGenerator(action.Command, "", action.Dir)
-	case types.FetchAction:
-		return NewHttpGenerator(action.Url, action.Method, action.Headers, action.Body)
-	case types.ReadAction:
-		return NewFileGenerator(action.Path)
-	}
-
-	return nil
+	return action
 }
 
-func NewCommandGenerator(command string, input string, dir string) PageGenerator {
+func NewCommandGenerator(command string, dir string) PageGenerator {
 	return func(query string) ([]byte, error) {
-		command := strings.ReplaceAll(command, "${query}", shellescape.Quote(input))
-
 		args, err := shlex.Split(command)
 		if err != nil {
 			return nil, err
@@ -85,9 +74,7 @@ func NewCommandGenerator(command string, input string, dir string) PageGenerator
 		}
 
 		cmd := exec.Command(args[0], extraArgs...)
-		cmd.Stdin = strings.NewReader(input)
 		cmd.Dir = dir
-		cmd.Stdin = strings.NewReader(input)
 		output, err := cmd.Output()
 		if err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {

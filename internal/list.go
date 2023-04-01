@@ -2,11 +2,9 @@ package internal
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 
-	"github.com/google/shlex"
 	"github.com/pomdtr/sunbeam/types"
 
 	"github.com/alecthomas/chroma/quick"
@@ -138,37 +136,18 @@ func NewList(page types.Page) *List {
 			return builder.String()
 		}
 
-		generator := func(input string) ([]byte, error) {
-			args, err := shlex.Split(item.Detail.Command)
-			if err != nil {
-				return nil, err
-			}
-
-			var cmd *exec.Cmd
-			if len(args) > 1 {
-				cmd = exec.Command(args[0], args[1:]...)
-			} else {
-				cmd = exec.Command(args[0])
-			}
-
-			cmd.Dir = item.Detail.Dir
-
-			return cmd.Output()
-		}
-
-		output, err := generator("")
+		output, err := utils.RunCommand(item.Detail.Command, item.Detail.Dir)
 		if err != nil {
 			return err.Error()
 		}
-		content := string(output)
 
 		if item.Detail.Language == "" {
-			return content
+			return output
 		}
 
 		builder := strings.Builder{}
-		if err := quick.Highlight(&builder, content, item.Detail.Language, "terminal16", "github"); err != nil {
-			return content
+		if err := quick.Highlight(&builder, output, item.Detail.Language, "terminal16", "github"); err != nil {
+			return output
 		}
 		return builder.String()
 	}

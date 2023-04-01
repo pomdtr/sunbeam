@@ -324,7 +324,7 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 			command := fmt.Sprintf("%s %s", binPath, strings.Join(args[1:], " "))
 
 			cwd, _ := os.Getwd()
-			generator := internal.NewCommandGenerator(command, "", cwd)
+			generator := internal.NewCommandGenerator(command, cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")

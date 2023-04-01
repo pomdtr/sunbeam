@@ -53,7 +53,6 @@ def handle(args: argparse.Namespace):
                                     "type": "textfield",
                                 }
                             ],
-                            "shortcut": "ctrl+n",
                             "onSuccess": "reload",
                         }
                     ],
@@ -73,7 +72,6 @@ def handle(args: argparse.Namespace):
                                 {
                                     "type": "run",
                                     "title": "Edit Title",
-                                    "shortcut": "ctrl+e",
                                     "onSuccess": "reload",
                                     "command": f"{sys.argv[0]} edit-title {key} ${{input:title}}",
                                     "inputs": [
@@ -87,7 +85,6 @@ def handle(args: argparse.Namespace):
                                 {
                                     "type": "run",
                                     "title": "Delete",
-                                    "shortcut": "ctrl+d",
                                     "onSuccess": "reload",
                                     "command": f"{sys.argv[0]} delete {key}",
                                 },

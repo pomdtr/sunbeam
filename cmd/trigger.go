@@ -9,8 +9,10 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/mattn/go-isatty"
+	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
+	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +22,6 @@ func NewTriggerCmd() *cobra.Command {
 		Short: "Trigger an action",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			var generator internal.PageGenerator
 			inputsFlag, _ := cmd.Flags().GetStringArray("inputs")
 			inputs := make(map[string]string)
 			for _, input := range inputsFlag {
@@ -53,7 +54,36 @@ func NewTriggerCmd() *cobra.Command {
 				return
 			}
 
-			generator = internal.NewActionGenerator(action, inputs)
+			var generator internal.PageGenerator
+			action = internal.ExpandAction(action, inputs)
+			switch action.Type {
+			case types.ReadAction:
+				generator = internal.NewFileGenerator(action.Path)
+			case types.RunAction:
+				if action.OnSuccess != types.PushOnSuccess {
+					if _, err := utils.RunCommand(action.Command, action.Dir); err != nil {
+						exitWithErrorMsg("Unable to run command")
+					}
+					return
+				}
+
+				generator = internal.NewCommandGenerator(action.Command, action.Dir)
+			case types.FetchAction:
+				generator = internal.NewHttpGenerator(action.Url, action.Method, action.Headers, action.Body)
+			case types.OpenAction:
+				err := browser.OpenURL(args[0])
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "Unable to open link:", err)
+					os.Exit(1)
+				}
+				return
+			case types.CopyAction:
+				if err := clipboard.WriteAll(action.Text); err != nil {
+					fmt.Fprintln(os.Stderr, "Unabble to write to clipboard:", err)
+					os.Exit(1)
+				}
+				return
+			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")

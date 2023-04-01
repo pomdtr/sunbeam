@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=./docs/schemas/page.json
 type: list
 items:
   - title: Show Examples

@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"github.com/atotto/clipboard"
@@ -71,6 +70,7 @@ func (c *CommandRunner) Refresh() tea.Msg {
 }
 
 func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
+	action = ExpandAction(action, runner.values)
 	switch action.Type {
 	case types.ReloadAction:
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
@@ -100,25 +100,23 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		return tea.Quit
 	case types.ReadAction, types.FetchAction:
 		return func() tea.Msg {
+			generator := NewFileGenerator(action.Path)
 			return PushPageMsg{
-				runner: NewRunner(NewActionGenerator(action, runner.values)),
+				runner: NewRunner(generator),
 			}
 		}
 
 	case types.RunAction:
-		generator := NewActionGenerator(action, runner.values)
 		switch action.OnSuccess {
 		case types.PushOnSuccess:
+			generator := NewCommandGenerator(action.Command, action.Dir)
 			return func() tea.Msg {
 				return PushPageMsg{NewRunner(generator)}
 			}
 		case types.ReloadOnSuccess:
 			return func() tea.Msg {
-				_, err := generator("")
+				_, err := utils.RunCommand(action.Command, action.Dir)
 				if err != nil {
-					if err, ok := err.(*exec.ExitError); ok {
-						return fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
-					}
 					return err
 				}
 
@@ -128,11 +126,8 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			}
 		case types.ExitOnSuccess:
 			return func() tea.Msg {
-				_, err := generator("")
+				_, err := utils.RunCommand(action.Command, action.Dir)
 				if err != nil {
-					if err, ok := err.(*exec.ExitError); ok {
-						return fmt.Errorf("command exit with code %d: %s", err.ExitCode(), err.Stderr)
-					}
 					return err
 				}
 
@@ -227,9 +222,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return page.Text
 				}
 			} else if page.Command != "" {
-				generator := NewCommandGenerator(page.Command, "", page.Dir)
 				detailFunc = func() string {
-					output, err := generator("")
+					output, err := utils.RunCommand(page.Command, page.Dir)
 					if err != nil {
 						return err.Error()
 					}
@@ -287,15 +281,12 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return fmt.Errorf("failed to create form input: %s", err)
 					}
 				}
-
 				formItems[i] = item
 			}
 
-			form := NewForm(formItems, func(values map[string]string) tea.Cmd {
-				msg.Inputs = nil
-				return func() tea.Msg {
-					return msg
-				}
+			form := NewForm(formItems, func(values map[string]string) tea.Msg {
+				runner.values = values
+				return msg
 			})
 
 			runner.form = form
