@@ -46,6 +46,7 @@ def handle(args: argparse.Namespace):
                             "type": "run",
                             "title": "Add Item",
                             "command": f"{sys.argv[0]} add ${{input:title}}",
+                            "key": "n",
                             "inputs": [
                                 {
                                     "name": "title",

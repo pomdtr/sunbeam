@@ -373,6 +373,7 @@ func (o OnSuccessType) MarshalYAML() (interface{}, error) {
 type Action struct {
 	Title string     `json:"title,omitempty" yaml:"title,omitempty"`
 	Type  ActionType `json:"type" yaml:"type"`
+	Key   string     `json:"key" yaml:"key"`
 
 	// copy
 	Text string `json:"text,omitempty" yaml:"text,omitempty"`

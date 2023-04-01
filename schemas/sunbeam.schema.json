@@ -207,7 +207,7 @@
                             "title": {
                                 "type": "string"
                             },
-                            "shortcut": {
+                            "key": {
                                 "type": "string"
                             },
                             "url": {
@@ -261,7 +261,7 @@
                             "title": {
                                 "type": "string"
                             },
-                            "shortcut": {
+                            "key": {
                                 "type": "string"
                             },
                             "text": {
@@ -294,7 +294,7 @@
                             "title": {
                                 "type": "string"
                             },
-                            "shortcut": {
+                            "key": {
                                 "type": "string"
                             },
                             "path": {
@@ -326,7 +326,7 @@
                             "title": {
                                 "type": "string"
                             },
-                            "shortcut": {
+                            "key": {
                                 "type": "string"
                             },
                             "path": {
@@ -361,6 +361,9 @@
                                 "const": "run"
                             },
                             "title": {
+                                "type": "string"
+                            },
+                            "key": {
                                 "type": "string"
                             },
                             "dir": {
@@ -410,7 +413,7 @@
                             "title": {
                                 "type": "string"
                             },
-                            "shortcut": {
+                            "key": {
                                 "type": "string"
                             },
                             "path": {

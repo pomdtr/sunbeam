@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -96,7 +98,16 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			return al, func() tea.Msg {
 				return listItem.Actions[0]
 			}
+		default:
+			for _, action := range al.actions {
+				if fmt.Sprintf("ctrl+%s", action.Key) == msg.String() {
+					return al, func() tea.Msg {
+						return action
+					}
+				}
+			}
 		}
+
 	}
 
 	var cmds []tea.Cmd
