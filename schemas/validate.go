@@ -6,7 +6,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-//go:embed sunbeam.v0.schema.json
+//go:embed sunbeam.schema.json
 var schemaString string
 var schema = jsonschema.MustCompileString("", schemaString)
 
