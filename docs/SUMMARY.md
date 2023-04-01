@@ -20,5 +20,4 @@
 
 # Reference
 
-- [Response Schema](./schema.md)
 - [CLI](./cli.md)
