@@ -8,15 +8,14 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/alessio/shellescape"
-	"github.com/google/shlex"
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/types"
+	"github.com/pomdtr/sunbeam/utils"
 
 	"gopkg.in/yaml.v3"
 )
@@ -59,28 +58,8 @@ func ExpandAction(action types.Action, inputs map[string]string) types.Action {
 
 func NewCommandGenerator(command string, dir string) PageGenerator {
 	return func(query string) ([]byte, error) {
-		args, err := shlex.Split(command)
+		output, err := utils.RunCommand(command, dir)
 		if err != nil {
-			return nil, err
-		}
-
-		if len(args) == 0 {
-			return nil, fmt.Errorf("no command provided")
-		}
-
-		var extraArgs []string
-		if len(args) > 1 {
-			extraArgs = args[1:]
-		}
-
-		cmd := exec.Command(args[0], extraArgs...)
-		cmd.Dir = dir
-		output, err := cmd.Output()
-		if err != nil {
-			if exitError, ok := err.(*exec.ExitError); ok {
-				return nil, fmt.Errorf("script exited with code %d: %s", exitError.ExitCode(), string(exitError.Stderr))
-			}
-
 			return nil, err
 		}
 
@@ -98,13 +77,15 @@ func NewCommandGenerator(command string, dir string) PageGenerator {
 			return nil, err
 		}
 
-		if err := expandPage(&page, &url.URL{
+		page, err = expandPage(page, &url.URL{
 			Scheme: "file",
 			Path:   dir,
-		}); err != nil {
+		})
+		if err != nil {
 			return nil, err
 		}
-		return output, nil
+
+		return json.Marshal(page)
 	}
 }
 
@@ -151,10 +132,11 @@ func NewFileGenerator(name string) PageGenerator {
 			return nil, fmt.Errorf("unsupported file type")
 		}
 
-		if err := expandPage(&page, &url.URL{
+		page, err := expandPage(page, &url.URL{
 			Scheme: "file",
 			Path:   filepath.Dir(name),
-		}); err != nil {
+		})
+		if err != nil {
 			return nil, err
 		}
 
@@ -213,7 +195,8 @@ func NewHttpGenerator(target string, method string, headers map[string]string, b
 			return nil, err
 		}
 
-		if err := expandPage(&page, target); err != nil {
+		page, err = expandPage(page, target)
+		if err != nil {
 			return nil, err
 		}
 
@@ -221,75 +204,94 @@ func NewHttpGenerator(target string, method string, headers map[string]string, b
 	}
 }
 
-func expandPage(page *types.Page, root *url.URL) error {
+func expandPage(page types.Page, root *url.URL) (types.Page, error) {
+	var err error
+	expandAction := func(action types.Action) (types.Action, error) {
+		switch action.Type {
+		case types.CopyAction:
+			if action.Title == "" {
+				action.Title = "Copy"
+			}
+		case types.FetchAction:
+			if action.Method == "" {
+				action.Method = "Fetch"
+			}
+			target, err := url.Parse(action.Url)
+			if !filepath.IsAbs(target.Path) && err == nil {
+				action.Url = (&url.URL{
+					Scheme: root.Scheme,
+					Host:   root.Host,
+					Path:   filepath.Join(root.Path, target.Path),
+				}).String()
+			}
+		case types.RunAction:
+			if root.Scheme != "file" {
+				return types.Action{}, fmt.Errorf("run actions are only supported for file urls")
+			}
+
+			if action.Title == "" {
+				action.Title = "Run"
+			}
+			if action.Dir == "" {
+				action.Dir = root.Path
+			}
+		case types.ReadAction:
+			if root.Scheme != "file" {
+				return types.Action{}, fmt.Errorf("read actions are only supported for file urls")
+			}
+
+			if action.Title == "" {
+				action.Title = "Read"
+			}
+
+			if strings.HasPrefix(action.Path, "~/") {
+				homeDir, _ := os.UserHomeDir()
+				action.Path = filepath.Join(homeDir, action.Path[2:])
+			} else if !filepath.IsAbs(action.Path) && action.Dir == "" {
+				action.Path = filepath.Join(root.Path, action.Path)
+			}
+		case types.OpenAction:
+			if action.Title == "" {
+				action.Title = "Open"
+			}
+
+			if strings.HasPrefix(action.Path, "~/") {
+				homeDir, _ := os.UserHomeDir()
+				action.Path = filepath.Join(homeDir, action.Path[2:])
+			} else if action.Path != "" && !filepath.IsAbs(action.Path) {
+				action.Path = filepath.Join(root.Path, action.Path)
+			}
+		}
+
+		return action, nil
+	}
+
+	for i, action := range page.Actions {
+		action, err = expandAction(action)
+		if err != nil {
+			return page, err
+		}
+
+		page.Actions[i] = action
+	}
+
 	switch page.Type {
 	case types.DetailPage:
 		if page.Dir == "" {
 			page.Dir = root.Path
 		}
-	}
-	for _, item := range page.Items {
-		if item.Detail != nil {
-			item.Detail.Dir = root.Path
-		}
-		for j, action := range item.Actions {
-			switch action.Type {
-			case types.CopyAction:
-				if action.Title == "" {
-					item.Actions[j].Title = "Copy"
-				}
-			case types.FetchAction:
-				if action.Method == "" {
-					item.Actions[j].Method = "Fetch"
-				}
-				target, err := url.Parse(action.Url)
-				if !filepath.IsAbs(target.Path) && err == nil {
-					item.Actions[j].Url = (&url.URL{
-						Scheme: root.Scheme,
-						Host:   root.Host,
-						Path:   filepath.Join(root.Path, target.Path),
-					}).String()
-				}
-			case types.RunAction:
-				if root.Scheme != "file" {
-					return fmt.Errorf("run actions are only supported for file urls")
-				}
 
-				if action.Title == "" {
-					item.Actions[j].Title = "Run"
+	case types.ListPage:
+		for i, item := range page.Items {
+			for j, action := range item.Actions {
+				action, err := expandAction(action)
+				if err != nil {
+					return page, err
 				}
-				if action.Dir == "" {
-					item.Actions[j].Dir = root.Path
-				}
-			case types.ReadAction:
-				if root.Scheme != "file" {
-					return fmt.Errorf("read actions are only supported for file urls")
-				}
-
-				if action.Title == "" {
-					item.Actions[j].Title = "Read"
-				}
-
-				if strings.HasPrefix(action.Path, "~/") {
-					homeDir, _ := os.UserHomeDir()
-					action.Path = filepath.Join(homeDir, action.Path[2:])
-				} else if !filepath.IsAbs(action.Path) && action.Dir == "" {
-					item.Actions[j].Path = filepath.Join(root.Path, action.Path)
-				}
-			case types.OpenAction:
-				if action.Title == "" {
-					item.Actions[j].Title = "Open"
-				}
-
-				if strings.HasPrefix(action.Path, "~/") {
-					homeDir, _ := os.UserHomeDir()
-					action.Path = filepath.Join(homeDir, action.Path[2:])
-				} else if action.Path != "" && !filepath.IsAbs(action.Path) {
-					item.Actions[j].Path = filepath.Join(root.Path, action.Path)
-				}
+				page.Items[i].Actions[j] = action
 			}
 		}
 	}
 
-	return nil
+	return page, nil
 }

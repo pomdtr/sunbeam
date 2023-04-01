@@ -69,8 +69,8 @@ func (c *CommandRunner) Refresh() tea.Msg {
 	return CommandOutput(output)
 }
 
-func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
-	action = ExpandAction(action, runner.values)
+func (runner *CommandRunner) handleAction(action types.Action, values map[string]string) tea.Cmd {
+	action = ExpandAction(action, values)
 	switch action.Type {
 	case types.ReloadAction:
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
@@ -295,7 +295,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		runner.form = nil
-		cmd := runner.handleAction(msg)
+		cmd := runner.handleAction(msg, runner.values)
+		runner.values = nil
 		return runner, cmd
 	case error:
 		errorView := NewDetail("Error", msg.Error, []types.Action{

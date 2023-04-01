@@ -141,13 +141,15 @@ func NewList(page types.Page) *List {
 			return err.Error()
 		}
 
+		content := string(output)
+
 		if item.Detail.Language == "" {
-			return output
+			return content
 		}
 
 		builder := strings.Builder{}
-		if err := quick.Highlight(&builder, output, item.Detail.Language, "terminal16", "github"); err != nil {
-			return output
+		if err := quick.Highlight(&builder, content, item.Detail.Language, "terminal16", "github"); err != nil {
+			return content
 		}
 		return builder.String()
 	}
