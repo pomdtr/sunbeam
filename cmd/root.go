@@ -238,7 +238,7 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 			command := fmt.Sprintf("%s %s", binPath, strings.Join(args, " "))
 
 			cwd, _ := os.Getwd()
-			generator := internal.NewCommandGenerator(command, cwd)
+			generator := internal.NewCommandGenerator(command, cwd, "")
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")

@@ -56,9 +56,9 @@ func ExpandAction(action types.Action, inputs map[string]string) types.Action {
 	return action
 }
 
-func NewCommandGenerator(command string, dir string) PageGenerator {
+func NewCommandGenerator(command string, dir string, input string) PageGenerator {
 	return func(query string) ([]byte, error) {
-		output, err := utils.RunCommand(command, dir)
+		output, err := utils.RunCommand(command, dir, input)
 		if err != nil {
 			return nil, err
 		}

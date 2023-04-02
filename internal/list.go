@@ -136,7 +136,7 @@ func NewList(page types.Page) *List {
 			return builder.String()
 		}
 
-		output, err := utils.RunCommand(item.Detail.Command, item.Detail.Dir)
+		output, err := utils.RunCommand(item.Detail.Command, item.Detail.Dir, list.Query())
 		if err != nil {
 			return err.Error()
 		}

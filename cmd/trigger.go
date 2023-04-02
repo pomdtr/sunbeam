@@ -61,13 +61,13 @@ func NewTriggerCmd() *cobra.Command {
 				generator = internal.NewFileGenerator(action.Path)
 			case types.RunAction:
 				if action.OnSuccess != types.PushOnSuccess {
-					if _, err := utils.RunCommand(action.Command, action.Dir); err != nil {
+					if _, err := utils.RunCommand(action.Command, action.Dir, ""); err != nil {
 						exitWithErrorMsg("Unable to run command")
 					}
 					return
 				}
 
-				generator = internal.NewCommandGenerator(action.Command, action.Dir)
+				generator = internal.NewCommandGenerator(action.Command, action.Dir, "")
 			case types.FetchAction:
 				generator = internal.NewHttpGenerator(action.Url, action.Method, action.Headers, action.Body)
 			case types.OpenAction:

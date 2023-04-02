@@ -109,13 +109,13 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 	case types.RunAction:
 		switch action.OnSuccess {
 		case types.PushOnSuccess:
-			generator := NewCommandGenerator(action.Command, action.Dir)
+			generator := NewCommandGenerator(action.Command, action.Dir, "")
 			return func() tea.Msg {
 				return PushPageMsg{NewRunner(generator)}
 			}
 		case types.ReloadOnSuccess:
 			return func() tea.Msg {
-				_, err := utils.RunCommand(action.Command, action.Dir)
+				_, err := utils.RunCommand(action.Command, action.Dir, "")
 				if err != nil {
 					return err
 				}
@@ -126,7 +126,7 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 			}
 		case types.ExitOnSuccess:
 			return func() tea.Msg {
-				_, err := utils.RunCommand(action.Command, action.Dir)
+				_, err := utils.RunCommand(action.Command, action.Dir, "")
 				if err != nil {
 					return err
 				}
@@ -223,7 +223,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			} else if page.Command != "" {
 				detailFunc = func() string {
-					output, err := utils.RunCommand(page.Command, page.Dir)
+					output, err := utils.RunCommand(page.Command, page.Dir, "")
 					if err != nil {
 						return err.Error()
 					}
