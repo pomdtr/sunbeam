@@ -20,7 +20,7 @@ bw --nointeraction list items --session "$BW_SESSION" | sunbeam query '.[] | {
             type: "copy",
             title: "Copy Username",
             text: (.login.username // ""),
-            shortcut: "ctrl+l"
+            key: "l"
         }
     ]
 }' | sunbeam query --slurp '{

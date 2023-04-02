@@ -117,10 +117,11 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 	}
 }
 
-func newExtensionInstallAction(extensionUrl string, shortcut string) types.Action {
+func newExtensionInstallAction(extensionUrl string, key string) types.Action {
 	return types.Action{
 		Type:      types.RunAction,
 		Title:     "Install",
+		Key:       key,
 		OnSuccess: types.PushOnSuccess,
 		Command:   fmt.Sprintf("sunbeam extension install ${input:name} %s", extensionUrl),
 		Inputs: []types.Input{

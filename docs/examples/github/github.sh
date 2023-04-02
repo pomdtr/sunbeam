@@ -19,7 +19,7 @@ if [[ $COMMAND == "list-repos" ]]; then
                     type: "run",
                     onSuccess: "push",
                     title: "List Pull Requests",
-                    shortcut: "ctrl+p",
+                    key: "p",
                     command: "\($command) list-prs \(.full_name)",
                 }
             ]

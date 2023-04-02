@@ -48,7 +48,7 @@ export type ReadAction = ActionProps & {
   type: "read";
 };
 
-export type Input = TextField | TextArea;
+export type Input = TextField | TextArea | DropDown;
 
 export type InputProps = {
   title: string;
@@ -65,4 +65,9 @@ export type TextArea = InputProps & {
   type: "textarea";
   placeholder?: string;
   default?: string;
+};
+
+export type DropDown = InputProps & {
+  type: "dropdown";
+  choices: string[];
 };

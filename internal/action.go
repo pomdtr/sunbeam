@@ -50,10 +50,18 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 	al.actions = actions
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
+		subtitle := ""
+		if action.Key != "" {
+			subtitle = fmt.Sprintf("ctrl+%s", action.Key)
+		}
+		if i == 0 {
+			subtitle = "enter"
+		}
 		filterItems[i] = ListItem{
 			ListItem: types.ListItem{
-				Title:   action.Title,
-				Actions: []types.Action{action},
+				Title:    action.Title,
+				Subtitle: subtitle,
+				Actions:  []types.Action{action},
 			},
 		}
 	}

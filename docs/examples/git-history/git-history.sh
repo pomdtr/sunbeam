@@ -8,8 +8,8 @@ git log | jc --git-log | sunbeam query '.[] | {
     accessories: [.author, .date],
     actions: [
         { title: "Checkout Commit", type: "run", command: "git checkout \(.commit)" },
-        { title: "Copy Commit Hash", text: .commit, type: "copy", shortcut: "ctrl+h" },
-        { title: "Copy Message", text: .message, type: "copy", shortcut: "ctrl+m" }
+        { title: "Copy Commit Hash", text: .commit, type: "copy", key: "h" },
+        { title: "Copy Message", text: .message, type: "copy", key: "m" }
     ]
 }' | sunbeam query --slurp '{
     type: "list",

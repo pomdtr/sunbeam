@@ -16,7 +16,7 @@ items = [
             {
                 "type": "copy",
                 "title": "Copy Path",
-                "shortcut": "ctrl+y",
+                "key": "y",
                 "text": str(path),
             },
         ],
