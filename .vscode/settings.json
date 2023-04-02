@@ -1,9 +1,10 @@
 {
     "markdownlint.ignore": [
-        "docs/src/SUMMARY.md"
+        "docs/src/SUMMARY.md",
+        "docs/cli.md"
     ],
     "browse-lite.startUrl": "http://localhost:3000",
     "search.exclude": {
         "book": true
-    }
+    },
 }

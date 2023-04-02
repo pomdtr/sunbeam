@@ -1,7 +1,6 @@
 {
     "recommendations": [
         "golang.go",
-        "davidanson.vscode-markdownlint",
-        "antfu.browse-lite"
+        "davidanson.vscode-markdownlint"
     ]
 }
