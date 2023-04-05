@@ -53,6 +53,11 @@ func ExpandAction(action types.Action, inputs map[string]string) types.Action {
 		action.Path = strings.ReplaceAll(action.Path, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1])
 	}
 
+	if strings.HasPrefix(action.Path, "~/") {
+		homeDir, _ := os.UserHomeDir()
+		action.Path = filepath.Join(homeDir, action.Path[2:])
+	}
+
 	return action
 }
 
@@ -244,10 +249,7 @@ func expandPage(page types.Page, root *url.URL) (types.Page, error) {
 				action.Title = "Read"
 			}
 
-			if strings.HasPrefix(action.Path, "~/") {
-				homeDir, _ := os.UserHomeDir()
-				action.Path = filepath.Join(homeDir, action.Path[2:])
-			} else if !filepath.IsAbs(action.Path) && action.Dir == "" {
+			if !filepath.IsAbs(action.Path) && action.Dir == "" {
 				action.Path = filepath.Join(root.Path, action.Path)
 			}
 		case types.OpenAction:
@@ -255,10 +257,7 @@ func expandPage(page types.Page, root *url.URL) (types.Page, error) {
 				action.Title = "Open"
 			}
 
-			if strings.HasPrefix(action.Path, "~/") {
-				homeDir, _ := os.UserHomeDir()
-				action.Path = filepath.Join(homeDir, action.Path[2:])
-			} else if action.Path != "" && !filepath.IsAbs(action.Path) {
+			if action.Path != "" && !filepath.IsAbs(action.Path) {
 				action.Path = filepath.Join(root.Path, action.Path)
 			}
 		}
