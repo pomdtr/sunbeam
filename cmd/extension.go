@@ -84,7 +84,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								OnSuccess: types.PushOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
 							},
-							newExtensionInstallAction(repo.HtmlUrl, "ctrl+i"),
+							newExtensionInstallAction(repo.HtmlUrl, "i"),
 							{
 								Type:  types.OpenAction,
 								Title: "Open in Browser",
@@ -183,7 +183,7 @@ func NewExtensionViewCmd() *cobra.Command {
 					Text:     string(payload),
 					Language: "markdown",
 					Actions: []types.Action{
-						newExtensionInstallAction(repo.Url().String(), "ctrl+i"),
+						newExtensionInstallAction(repo.Url().String(), "i"),
 					},
 				})
 			}

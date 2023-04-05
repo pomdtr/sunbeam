@@ -29,6 +29,7 @@ func NewDetail(title string, contentCmd func() string, actions []types.Action) *
 	actions = append(actions, types.Action{
 		Type:  types.ReloadAction,
 		Title: "Reload Page",
+		Key:   "r",
 	})
 
 	footer := NewFooter(title)

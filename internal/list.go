@@ -170,6 +170,7 @@ func (list *List) SetActions(actions []types.Action) {
 	list.actions[len(actions)] = types.Action{
 		Type:  types.ReloadAction,
 		Title: "Reload Page",
+		Key:   "r",
 	}
 }
 
