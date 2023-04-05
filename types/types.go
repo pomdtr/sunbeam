@@ -114,6 +114,7 @@ const (
 	TextFieldInput
 	TextAreaInput
 	DropDownInput
+	CheckboxInput
 )
 
 func (input *FormInputType) UnmarshalJSON(bytes []byte) error {
@@ -129,6 +130,8 @@ func (input *FormInputType) UnmarshalJSON(bytes []byte) error {
 		*input = TextAreaInput
 	case "dropdown":
 		*input = DropDownInput
+	case "checkbox":
+		*input = CheckboxInput
 	default:
 		return fmt.Errorf("unknown form input type: %s", s)
 	}
@@ -149,6 +152,8 @@ func (input *FormInputType) UnmarshalYAML(value *yaml.Node) error {
 		*input = TextAreaInput
 	case "dropdown":
 		*input = DropDownInput
+	case "checkbox":
+		*input = CheckboxInput
 	default:
 		return fmt.Errorf("unknown form input type: %s", s)
 	}
@@ -164,6 +169,8 @@ func (input FormInputType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("textarea")
 	case DropDownInput:
 		return json.Marshal("dropdown")
+	case CheckboxInput:
+		return json.Marshal("checkbox")
 	default:
 		return nil, fmt.Errorf("unknown form input type: %d", input)
 	}
@@ -177,9 +184,16 @@ func (input FormInputType) MarshalYAML() (interface{}, error) {
 		return "textarea", nil
 	case DropDownInput:
 		return "dropdown", nil
+	case CheckboxInput:
+		return "checkbox", nil
 	default:
 		return nil, fmt.Errorf("unknown form input type: %d", input)
 	}
+}
+
+type DropDownItem struct {
+	Title string `json:"title" yaml:"title"`
+	Value string `json:"value" yaml:"value"`
 }
 
 type Input struct {
@@ -187,10 +201,15 @@ type Input struct {
 	Type        FormInputType `json:"type" yaml:"type"`
 	Title       string        `json:"title" yaml:"title"`
 	Placeholder string        `json:"placeholder,omitempty" yaml:"placeholder,omitempty"`
-	Default     string        `json:"default,omitempty" yaml:"default,omitempty"`
+	Default     any           `json:"default,omitempty" yaml:"default,omitempty"`
 
 	// Only for dropdown
-	Choices []string `json:"choices,omitempty" yaml:"choices,omitempty"`
+	Items []DropDownItem `json:"items,omitempty" yaml:"items,omitempty"`
+
+	// Only for checkbox
+	Label             string `json:"label,omitempty" yaml:"label,omitempty"`
+	TrueSubstitution  string `json:"trueSubstitution,omitempty" yaml:"trueSubstitution,omitempty"`
+	FalseSubstitution string `json:"falseSubstitution,omitempty" yaml:"falseSubstitution,omitempty"`
 }
 
 type ActionType int

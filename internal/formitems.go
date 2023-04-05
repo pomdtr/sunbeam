@@ -32,23 +32,25 @@ type FormItem struct {
 	Name  string
 }
 
-func NewFormItem(param types.Input) (FormItem, error) {
-	var input FormInput
-	switch param.Type {
+func NewFormItem(input types.Input) (FormItem, error) {
+	var item FormInput
+	switch input.Type {
 	case types.TextFieldInput:
-		input = NewTextInput(param)
+		item = NewTextInput(input)
 	case types.TextAreaInput:
-		input = NewTextArea(param)
+		item = NewTextArea(input)
+	case types.CheckboxInput:
+		item = NewCheckbox(input)
 	case types.DropDownInput:
-		input = NewDropDown(param)
+		item = NewDropDown(input)
 	default:
 		return FormItem{}, fmt.Errorf("invalid form input type")
 	}
 
 	return FormItem{
-		Name:      param.Name,
-		Title:     param.Title,
-		FormInput: input,
+		Name:      input.Name,
+		Title:     input.Title,
+		FormInput: item,
 	}, nil
 }
 
@@ -64,7 +66,7 @@ func (ta *TextArea) Title() string {
 func NewTextArea(formItem types.Input) *TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
-	ta.SetValue(formItem.Default)
+	ta.SetValue(formItem.Default.(string))
 
 	ta.Placeholder = formItem.Placeholder
 	ta.SetHeight(5)
@@ -102,7 +104,7 @@ type TextInput struct {
 func NewTextInput(formItem types.Input) *TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	ti.SetValue(formItem.Default)
+	ti.SetValue(formItem.Default.(string))
 
 	placeholder := formItem.Placeholder
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
@@ -147,8 +149,92 @@ func (ti TextInput) View() string {
 	return ti.Model.View()
 }
 
+type Checkbox struct {
+	title string
+	label string
+	width int
+
+	trueSubstitution  string
+	falseSubstitution string
+
+	focused bool
+	checked bool
+}
+
+func NewCheckbox(input types.Input) *Checkbox {
+	var defaultValue bool
+	defaultValue, ok := input.Default.(bool)
+	if !ok {
+		defaultValue = false
+	}
+
+	return &Checkbox{
+		label:   input.Label,
+		title:   input.Title,
+		checked: defaultValue,
+	}
+}
+
+func (cb *Checkbox) Height() int {
+	return 1
+}
+
+func (cb *Checkbox) Focus() tea.Cmd {
+	cb.focused = true
+	return nil
+}
+
+func (cb *Checkbox) Blur() {
+	cb.focused = false
+}
+
+func (cb *Checkbox) SetWidth(width int) {
+	cb.width = width
+}
+
+func (cb Checkbox) Update(msg tea.Msg) (FormInput, tea.Cmd) {
+	if !cb.focused {
+		return &cb, nil
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter", " ":
+			cb.Toggle()
+		}
+	}
+
+	return &cb, nil
+}
+
+func (cb Checkbox) View() string {
+	var checkbox string
+	if cb.checked {
+		checkbox = fmt.Sprintf("[x] %s", cb.label)
+	} else {
+		checkbox = fmt.Sprintf("[ ] %s", cb.label)
+	}
+
+	padding := utils.Max(0, cb.width-len(checkbox))
+
+	return fmt.Sprintf("%s%s", checkbox, strings.Repeat(" ", padding))
+}
+
+func (cb Checkbox) Value() string {
+	if cb.checked {
+		return cb.trueSubstitution
+	}
+	return cb.falseSubstitution
+}
+
+func (cb *Checkbox) Toggle() {
+	cb.checked = !cb.checked
+}
+
 type DropDownItem struct {
 	id    string
+	title string
 	value string
 }
 
@@ -158,9 +244,9 @@ func (d DropDownItem) ID() string {
 
 func (d DropDownItem) Render(width int, selected bool) string {
 	if selected {
-		return fmt.Sprintf("* %s", d.value)
+		return fmt.Sprintf("* %s", d.title)
 	}
-	return fmt.Sprintf("  %s", d.value)
+	return fmt.Sprintf("  %s", d.title)
 }
 
 func (d DropDownItem) FilterValue() string {
@@ -179,11 +265,12 @@ func NewDropDown(formItem types.Input) *DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 
-	choices := make([]FilterItem, len(formItem.Choices))
-	for i, formItem := range formItem.Choices {
+	choices := make([]FilterItem, len(formItem.Items))
+	for i, formItem := range formItem.Items {
 		item := DropDownItem{
 			id:    strconv.Itoa(i),
-			value: formItem,
+			title: formItem.Title,
+			value: formItem.Value,
 		}
 
 		choices[i] = item

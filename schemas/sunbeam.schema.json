@@ -434,6 +434,7 @@
                     "type": "string",
                     "enum": [
                         "textfield",
+                        "checkbox",
                         "textarea",
                         "dropdown"
                     ]
@@ -476,6 +477,49 @@
                             },
                             "secure": {
                                 "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "type"
+                        ],
+                        "properties": {
+                            "type": {
+                                "const": "checkbox"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "name",
+                            "title",
+                            "type"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "const": "checkbox"
+                            },
+                            "default": {
+                                "type": "boolean"
+                            },
+                            "label": {
+                                "type": "string"
+                            },
+                            "trueSubstitution": {
+                                "type": "string"
+                            },
+                            "falseSubstitution": {
+                                "type": "string"
                             }
                         }
                     }
@@ -533,7 +577,7 @@
                             "name",
                             "title",
                             "type",
-                            "options"
+                            "items"
                         ],
                         "additionalProperties": false,
                         "properties": {
@@ -546,7 +590,7 @@
                             "type": {
                                 "const": "dropdown"
                             },
-                            "options": {
+                            "items": {
                                 "type": "array",
                                 "items": {
                                     "type": "object",
