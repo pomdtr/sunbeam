@@ -66,7 +66,9 @@ func (ta *TextArea) Title() string {
 func NewTextArea(formItem types.Input) *TextArea {
 	ta := textarea.New()
 	ta.Prompt = ""
-	ta.SetValue(formItem.Default.(string))
+	if formItem.Default != nil {
+		ta.SetValue(formItem.Default.(string))
+	}
 
 	ta.Placeholder = formItem.Placeholder
 	ta.SetHeight(5)
@@ -104,7 +106,9 @@ type TextInput struct {
 func NewTextInput(formItem types.Input) *TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	ti.SetValue(formItem.Default.(string))
+	if formItem.Default != nil {
+		ti.SetValue(formItem.Default.(string))
+	}
 
 	placeholder := formItem.Placeholder
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
@@ -163,9 +167,8 @@ type Checkbox struct {
 
 func NewCheckbox(input types.Input) *Checkbox {
 	var defaultValue bool
-	defaultValue, ok := input.Default.(bool)
-	if !ok {
-		defaultValue = false
+	if input.Default != nil {
+		defaultValue = input.Default.(bool)
 	}
 
 	return &Checkbox{
@@ -265,12 +268,23 @@ func NewDropDown(formItem types.Input) *DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 
+	var defaultValue string
+	if formItem.Default != nil {
+		defaultValue = formItem.Default.(string)
+	}
+
 	choices := make([]FilterItem, len(formItem.Items))
+	var defaultId string
 	for i, formItem := range formItem.Items {
+
 		item := DropDownItem{
 			id:    strconv.Itoa(i),
 			title: formItem.Title,
 			value: formItem.Value,
+		}
+		if formItem.Value == defaultValue {
+			defaultId = item.ID()
+			dropdown.selection = item
 		}
 
 		choices[i] = item
@@ -287,6 +301,9 @@ func NewDropDown(formItem types.Input) *DropDown {
 
 	filter := NewFilter()
 	filter.SetItems(choices)
+	if defaultId != "" {
+		filter.Select(defaultId)
+	}
 	filter.FilterItems("")
 	filter.DrawLines = false
 	filter.Height = 3
