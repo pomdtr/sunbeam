@@ -21,7 +21,7 @@ func NewCopyCmd() *cobra.Command {
 			}
 
 			if err := clipboard.WriteAll(string(text)); err != nil {
-				fmt.Fprintln(os.Stderr, "Unabble to write to clipboard:", err)
+				fmt.Fprintln(os.Stderr, "Unable to write to clipboard:", err)
 				os.Exit(1)
 			}
 		},

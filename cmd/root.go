@@ -190,6 +190,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddGroup(coreCommandsGroup, extensionCommandsGroup)
 
 	rootCmd.AddCommand(NewCopyCmd())
+	rootCmd.AddCommand(NewPasteCmd())
 	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
 	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewOpenCmd())
