@@ -13,17 +13,17 @@ func NewCopyCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "copy",
 		Short: "Copy stdin to system clipboard",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			text, err := io.ReadAll(os.Stdin)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "Unable to read stdin:", err)
-				os.Exit(1)
+				return fmt.Errorf("unable to read stdin: %s", err)
 			}
 
 			if err := clipboard.WriteAll(string(text)); err != nil {
-				fmt.Fprintln(os.Stderr, "Unable to write to clipboard:", err)
-				os.Exit(1)
+				return fmt.Errorf("unable to write to clipboard: %s", err)
 			}
+
+			return nil
 		},
 	}
 }

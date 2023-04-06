@@ -18,12 +18,6 @@ import (
 	"github.com/pomdtr/sunbeam/types"
 )
 
-func exitWithErrorMsg(msg string, args ...any) {
-	fmt.Fprintf(os.Stderr, msg, args...)
-	fmt.Println()
-	os.Exit(1)
-}
-
 var (
 	coreCommandsGroup = &cobra.Group{
 		ID:    "core",
@@ -75,11 +69,11 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args: cobra.NoArgs,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if _, err := os.Stat(envFile); !os.IsNotExist(err) {
 				err := godotenv.Load(envFile)
 				if err != nil {
-					exitWithErrorMsg("could not load env file: %s", err)
+					return fmt.Errorf("could not load env file: %s", err)
 				}
 			}
 
@@ -87,14 +81,15 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			if _, err := os.Stat(dotenv); !os.IsNotExist(err) {
 				err := godotenv.Load(dotenv)
 				if err != nil {
-					exitWithErrorMsg("could not load env file: %s", err)
+					return fmt.Errorf("could not load env file: %s", err)
 				}
 			}
 
 			os.Setenv("SUNBEAM", "1")
+			return nil
 		},
 		// If the config file does not exist, create it
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			generator := func(string) ([]byte, error) {
 				items := make([]types.ListItem, 0)
 
@@ -175,15 +170,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
 				if err != nil {
-					exitWithErrorMsg("could not generate page: %s", err)
+					return fmt.Errorf("could not generate page: %s", err)
 				}
 
 				fmt.Print(string(output))
-				return
+				return nil
 			}
 
 			runner := internal.NewRunner(generator)
 			internal.NewPaginator(runner).Draw()
+			return nil
 		},
 	}
 
@@ -209,7 +205,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	// Add the extension commands
 	extensions, err := ListExtensions(extensionDir)
 	if err != nil {
-		exitWithErrorMsg("could not list extensions: %s", err)
+		return nil, fmt.Errorf("could not list extensions: %s", err)
 	}
 
 	for _, extension := range extensions {
@@ -230,10 +226,10 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 		DisableFlagParsing: true,
 		GroupID:            extensionCommandsGroup.ID,
 		Args:               cobra.ArbitraryArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			binPath := path.Join(extensionDir, extensionName, extensionBinaryName)
 			if _, err := os.Stat(binPath); os.IsNotExist(err) {
-				exitWithErrorMsg("Extension not found: %s", extensionName)
+				return fmt.Errorf("extension not found: %s", extensionName)
 			}
 
 			command := fmt.Sprintf("%s %s", binPath, strings.Join(args, " "))
@@ -244,16 +240,17 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
 				if err != nil {
-					exitWithErrorMsg("could not generate page: %s", err)
+					return fmt.Errorf("could not generate page: %s", err)
 				}
 
 				fmt.Print(string(output))
-				return
+				return nil
 			}
 
 			runner := internal.NewRunner(generator)
 
 			internal.NewPaginator(runner).Draw()
+			return nil
 		},
 	}
 }

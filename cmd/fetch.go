@@ -15,7 +15,7 @@ func NewFetchCmd() *cobra.Command {
 		Use:   "fetch <url>",
 		Short: "fetch a page and push it's output",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			method, _ := cmd.Flags().GetString("method")
 			headers, _ := cmd.Flags().GetStringArray("header")
 			body, _ := cmd.Flags().GetString("data")
@@ -24,7 +24,7 @@ func NewFetchCmd() *cobra.Command {
 			for _, header := range headers {
 				tokens := strings.SplitN(header, ":", 2)
 				if len(tokens) != 2 {
-					exitWithErrorMsg("invalid header: %s", header)
+					return fmt.Errorf("invalid header: %s", header)
 				}
 
 				headerMap[tokens[0]] = tokens[1]
@@ -35,15 +35,16 @@ func NewFetchCmd() *cobra.Command {
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
 				if err != nil {
-					exitWithErrorMsg("could not generate page: %s", err)
+					return fmt.Errorf("could not generate page: %s", err)
 				}
 
 				fmt.Println(string(output))
-				return
+				return nil
 			}
 
 			runner := internal.NewRunner(generator)
 			internal.NewPaginator(runner).Draw()
+			return nil
 		},
 	}
 

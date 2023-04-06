@@ -26,7 +26,7 @@ func NewQueryCmd() *cobra.Command {
 		Use:   "query <query>",
 		Short: "Transform or generate JSON using a jq query",
 		Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			vars := make([]string, 0)
 			values := make([]interface{}, 0)
@@ -55,18 +55,18 @@ func NewQueryCmd() *cobra.Command {
 
 			query, err := gojq.Parse(args[0])
 			if err != nil {
-				exitWithErrorMsg("could not parse query: %s", err)
+				return fmt.Errorf("could not parse query: %s", err)
 			}
 			code, err := gojq.Compile(query, gojq.WithVariables(vars))
 			if err != nil {
-				exitWithErrorMsg("could not compile query: %s", err)
+				return fmt.Errorf("could not compile query: %s", err)
 			}
 
 			var inputFile *os.File
 			if len(args) == 2 {
 				inputFile, err = os.Open(args[1])
 				if err != nil {
-					exitWithErrorMsg("could not open file: %s", err)
+					return fmt.Errorf("could not open file: %s", err)
 				}
 			} else {
 				inputFile = os.Stdin
@@ -121,7 +121,7 @@ func NewQueryCmd() *cobra.Command {
 						break
 					}
 					if err, ok := v.(error); ok {
-						exitWithErrorMsg("could not run query: %s", err)
+						return fmt.Errorf("could not run query: %s", err)
 					}
 					if jqFlags.RawOutput {
 						fmt.Println(v)
@@ -129,10 +129,11 @@ func NewQueryCmd() *cobra.Command {
 					}
 					err := encoder.Encode(v)
 					if err != nil {
-						exitWithErrorMsg("could not encode output: %s", err)
+						return fmt.Errorf("could not encode output: %s", err)
 					}
 				}
 			}
+			return nil
 		},
 	}
 

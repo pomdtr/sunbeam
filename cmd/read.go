@@ -19,10 +19,10 @@ func NewReadCmd() *cobra.Command {
 		Use:   "read [page]",
 		Short: "Read page from file or stdin, and push it's content",
 		Args:  cobra.MaximumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				if isatty.IsTerminal(os.Stdin.Fd()) {
-					exitWithErrorMsg("No input provided")
+					return fmt.Errorf("no input provided")
 				}
 
 				var content []byte
@@ -56,7 +56,7 @@ func NewReadCmd() *cobra.Command {
 				})
 
 				internal.NewPaginator(runner).Draw()
-				return
+				return nil
 
 			}
 
@@ -91,17 +91,18 @@ func NewReadCmd() *cobra.Command {
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
 				if err != nil {
-					exitWithErrorMsg("could not generate page: %s", err)
+					return fmt.Errorf("could not generate page: %s", err)
 				}
 
 				fmt.Println(string(output))
-				return
+				return nil
 			}
 
 			runner := internal.NewRunner(generator)
 			model := internal.NewPaginator(runner)
 
 			model.Draw()
+			return nil
 		},
 	}
 

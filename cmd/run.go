@@ -15,7 +15,7 @@ func NewRunCmd() *cobra.Command {
 		Use:   "run <script>",
 		Short: "Run a script and push it's output",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			cwd, _ := os.Getwd()
 
 			command := strings.Join(args, " ")
@@ -24,15 +24,16 @@ func NewRunCmd() *cobra.Command {
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
 				if err != nil {
-					exitWithErrorMsg("could not generate page: %s", err)
+					return fmt.Errorf("could not generate page: %s", err)
 				}
 
 				fmt.Print(string(output))
-				return
+				return nil
 			}
 
 			runner := internal.NewRunner(generator)
 			internal.NewPaginator(runner).Draw()
+			return nil
 		},
 	}
 

@@ -21,37 +21,37 @@ func NewTriggerCmd() *cobra.Command {
 		Use:   "trigger <action>",
 		Short: "Trigger an action",
 		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			inputsFlag, _ := cmd.Flags().GetStringArray("inputs")
 			inputs := make(map[string]string)
 			for _, input := range inputsFlag {
 				parts := strings.SplitN(input, "=", 2)
 				if len(parts) != 2 {
-					exitWithErrorMsg("invalid input: %s", input)
+					return fmt.Errorf("invalid input: %s", input)
 				}
 				inputs[parts[0]] = parts[1]
 			}
 
 			if isatty.IsTerminal(os.Stdin.Fd()) {
-				exitWithErrorMsg("No input provided")
+				return fmt.Errorf("no input provided")
 			}
 
 			input, err := io.ReadAll(os.Stdin)
 			if err != nil {
-				exitWithErrorMsg("could not read input: %s", err)
+				return fmt.Errorf("could not read input: %s", err)
 			}
 
 			var action types.Action
 			if err := json.Unmarshal(input, &action); err != nil {
-				exitWithErrorMsg("could not parse input: %s", err)
+				return fmt.Errorf("could not parse input: %s", err)
 			}
 
 			if action.Type == types.CopyAction {
 				err := clipboard.WriteAll(action.Text)
 				if err != nil {
-					exitWithErrorMsg("could not copy to clipboard: %s", err)
+					return fmt.Errorf("could not copy to clipboard: %s", err)
 				}
-				return
+				return nil
 			}
 
 			var generator internal.PageGenerator
@@ -62,9 +62,9 @@ func NewTriggerCmd() *cobra.Command {
 			case types.RunAction:
 				if action.OnSuccess != types.PushOnSuccess {
 					if _, err := utils.RunCommand(action.Command, action.Dir, ""); err != nil {
-						exitWithErrorMsg("Unable to run command")
+						return fmt.Errorf("unable to run command")
 					}
-					return
+					return nil
 				}
 
 				generator = internal.NewCommandGenerator(action.Command, action.Dir, "")
@@ -73,30 +73,29 @@ func NewTriggerCmd() *cobra.Command {
 			case types.OpenAction:
 				err := browser.OpenURL(args[0])
 				if err != nil {
-					fmt.Fprintln(os.Stderr, "Unable to open link:", err)
-					os.Exit(1)
+					return fmt.Errorf("unable to open link: %s", err)
 				}
-				return
+				return nil
 			case types.CopyAction:
 				if err := clipboard.WriteAll(action.Text); err != nil {
-					fmt.Fprintln(os.Stderr, "Unabble to write to clipboard:", err)
-					os.Exit(1)
+					return fmt.Errorf("unable to write to clipboard: %s", err)
 				}
-				return
+				return nil
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator("")
 				if err != nil {
-					exitWithErrorMsg("could not generate page: %s", err)
+					return fmt.Errorf("could not generate page: %s", err)
 				}
 
 				fmt.Println(string(output))
-				return
+				return nil
 			}
 
 			runner := internal.NewRunner(generator)
 			internal.NewPaginator(runner).Draw()
+			return nil
 		},
 	}
 

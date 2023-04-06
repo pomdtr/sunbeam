@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/atotto/clipboard"
 	"github.com/spf13/cobra"
@@ -12,14 +11,14 @@ func NewPasteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "paste",
 		Short: "Paste system clipboard to stdout",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			text, err := clipboard.ReadAll()
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "Unable to read from clipboard:", err)
-				os.Exit(1)
+				return fmt.Errorf("unable to read from clipboard: %s", err)
 			}
 
 			fmt.Print(text)
+			return nil
 		},
 	}
 }
