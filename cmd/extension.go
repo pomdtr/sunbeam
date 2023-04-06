@@ -17,6 +17,7 @@ import (
 
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
+	"gopkg.in/yaml.v3"
 
 	"github.com/mattn/go-isatty"
 	cp "github.com/otiai10/copy"
@@ -389,21 +390,39 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 
 			targetDir := path.Join(extensionDir, extensionName)
 			if _, err := os.Stat(targetDir); !os.IsNotExist(err) {
-				exitWithErrorMsg("Extension already installed: %s", repository.Name())
+				exitWithErrorMsg("Extension already installed")
 			}
 
 			if release, err := utils.GetLatestRelease(repository); err == nil {
 				if err := releaseInstall(release, targetDir); err != nil {
 					exitWithErrorMsg("Unable to install extension: %s", err)
 				}
-				fmt.Println("Extension installed:", repository.Name())
+				manifest := ExtensionManifest{
+					Name:  repository.Name(),
+					Owner: repository.Owner(),
+					Host:  "github.com",
+					Tag:   release.TagName,
+					Path:  targetDir,
+				}
+				bytes, err := yaml.Marshal(manifest)
+				if err != nil {
+					exitWithErrorMsg("Unable to write extension manifest: %s", err)
+				}
+
+				manifestPath := path.Join(targetDir, "manifest.yml")
+				if err := os.WriteFile(manifestPath, bytes, 0644); err != nil {
+					exitWithErrorMsg("Unable to write extension manifest: %s", err)
+				}
+
+				fmt.Println("Extension installed!")
+				return
 			}
 
 			if err := gitInstall(repository, targetDir); err != nil {
 				exitWithErrorMsg("Unable to install extension: %s", err)
 			}
 
-			fmt.Println("Extension installed:", repository.Name())
+			fmt.Println("Extension installed!")
 		},
 	}
 }
@@ -521,6 +540,40 @@ func NewExtensionUpgradeCmd(extensionDir string) *cobra.Command {
 				exitWithErrorMsg("Extension not installed: %s", args[0])
 			}
 
+			manifestPath := path.Join(extensionPath, "manifest.yml")
+			if _, err := os.Stat(manifestPath); err == nil {
+				bytes, err := os.ReadFile(manifestPath)
+				if err != nil {
+					exitWithErrorMsg("Unable to upgrade extension: %s", err)
+				}
+				var manifest ExtensionManifest
+				if err := yaml.Unmarshal(bytes, &manifest); err != nil {
+					exitWithErrorMsg("Unable to upgrade extension: %s", err)
+				}
+
+				repositoryUrl := &url.URL{
+					Scheme: "https",
+					Host:   manifest.Host,
+					Path:   fmt.Sprintf("/%s/%s", manifest.Owner, manifest.Name),
+				}
+
+				release, err := utils.GetLatestRelease(utils.NewRepository(repositoryUrl))
+				if err != nil {
+					exitWithErrorMsg("Unable to upgrade extension: %s", err)
+				}
+
+				if release.TagName == manifest.Tag {
+					fmt.Println("Extension already up to date")
+					return
+				}
+
+				if err := releaseInstall(release, extensionPath); err != nil {
+					exitWithErrorMsg("Unable to upgrade extension: %s", err)
+				}
+
+				return
+			}
+
 			if _, err := os.Stat(filepath.Join(extensionPath, ".git")); os.IsNotExist(err) {
 				exitWithErrorMsg("Extension not installed from git: %s", args[0])
 			}
@@ -579,4 +632,12 @@ func ListExtensions(extensionDir string) ([]string, error) {
 	}
 
 	return extensions, nil
+}
+
+type ExtensionManifest struct {
+	Owner string `yaml:"owner"`
+	Name  string `yaml:"name"`
+	Host  string `yaml:"host"`
+	Tag   string `yaml:"tag"`
+	Path  string `yaml:"path"`
 }
