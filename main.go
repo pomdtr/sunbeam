@@ -14,7 +14,7 @@ var version = "dev"
 func main() {
 	cmd, err := cmd.NewRootCmd()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "could not create root command: %s", err)
 		os.Exit(1)
 	}
 
@@ -22,7 +22,6 @@ func main() {
 	cmd.SilenceUsage = true
 
 	if err := cmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s", err)
 		os.Exit(1)
 	}
 }

@@ -78,3 +78,5 @@ go.work
 
 # mdbook
 book
+
+.env

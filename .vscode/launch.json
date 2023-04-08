@@ -16,7 +16,18 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}"
+            "program": "${workspaceFolder}",
+            "args": [
+                "ask",
+                "${input:prompt}"
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "prompt",
+            "type": "promptString",
+            "description": "GPT4 Prompt",
         }
     ]
 }

@@ -415,6 +415,7 @@ type Action struct {
 
 	// run
 	Command   string        `json:"command,omitempty" yaml:"command,omitempty"`
+	Input     string        `json:"input,omitempty" yaml:"input,omitempty"`
 	Dir       string        `json:"dir,omitempty" yaml:"dir,omitempty"`
 	Inputs    []Input       `json:"inputs,omitempty" yaml:"inputs,omitempty"`
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`

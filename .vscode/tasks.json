@@ -22,6 +22,9 @@
                 "--listen=:2345",
                 "--api-version=2",
                 "${workspaceFolder}/main.go",
+                "--",
+                "ask",
+                "yolo"
             ],
             "options": {
                 "env": {

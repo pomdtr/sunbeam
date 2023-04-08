@@ -188,13 +188,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCopyCmd())
 	rootCmd.AddCommand(NewPasteCmd())
 	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
-	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewOpenCmd())
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewReadCmd())
-	rootCmd.AddCommand(NewRunCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
+	rootCmd.AddCommand(NewCmdAsk())
+	rootCmd.AddCommand(NewCmdEval())
 
 	coreCommands := map[string]struct{}{}
 	for _, coreCommand := range rootCmd.Commands() {
@@ -235,7 +235,7 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 			command := fmt.Sprintf("%s %s", binPath, strings.Join(args, " "))
 
 			cwd, _ := os.Getwd()
-			generator := internal.NewCommandGenerator(command, cwd)
+			generator := internal.NewCommandGenerator(command, "", cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				output, err := generator()

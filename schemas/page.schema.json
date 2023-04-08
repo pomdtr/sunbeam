@@ -264,6 +264,10 @@
                             "type": "string",
                             "description": "The command to run."
                         },
+                        "input": {
+                            "type": "string",
+                            "description": "The input to pass to the command stdin."
+                        },
                         "dir": {
                             "type": "string",
                             "description": "The directory where the command should be run."
