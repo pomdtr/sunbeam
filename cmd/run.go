@@ -19,10 +19,10 @@ func NewRunCmd() *cobra.Command {
 			cwd, _ := os.Getwd()
 
 			command := strings.Join(args, " ")
-			generator := internal.NewCommandGenerator(command, cwd, "")
+			generator := internal.NewCommandGenerator(command, cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}

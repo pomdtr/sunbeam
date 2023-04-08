@@ -1,0 +1,519 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema#",
+    "oneOf": [
+        {
+            "$ref": "#/$defs/list"
+        },
+        {
+            "$ref": "#/$defs/detail"
+        }
+    ],
+    "$defs": {
+        "list": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "description": "The type of the response.",
+                    "const": "list"
+                },
+                "title": {
+                    "description": "The title of the page.",
+                    "type": "string"
+                },
+                "emptyText": {
+                    "description": "The text to show when the list is empty.",
+                    "type": "string"
+                },
+                "showPreview": {
+                    "description": "Whether to show details on the right side of the list.",
+                    "type": "boolean"
+                },
+                "actions": {
+                    "description": "The global actions attached to the list.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/action"
+                    }
+                },
+                "items": {
+                    "description": "The items in the list.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/listitem"
+                    }
+                }
+            }
+        },
+        "detail": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "description": "A detail view displayign a preview and actions.",
+            "properties": {
+                "type": {
+                    "description": "The type of the response.",
+                    "const": "detail"
+                },
+                "title": {
+                    "description": "The title of the page.",
+                    "type": "string"
+                },
+                "preview": {
+                    "$ref": "#/$defs/preview"
+                },
+                "actions": {
+                    "type": "array",
+                    "description": "The actions attached to the detail view.",
+                    "items": {
+                        "$ref": "#/$defs/action"
+                    }
+                }
+            }
+        },
+        "listitem": {
+            "additionalProperties": false,
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "The title of the item."
+                },
+                "id": {
+                    "type": "string",
+                    "description": "The id of the item."
+                },
+                "subtitle": {
+                    "type": "string",
+                    "description": "The subtitle of the item."
+                },
+                "preview": {
+                    "$ref": "#/$defs/preview"
+                },
+                "accessories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "The accessories to show on the right side of the item."
+                },
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/action"
+                    },
+                    "description": "The actions attached to the item."
+                }
+            }
+        },
+        "action": {
+            "oneOf": [
+                {
+                    "required": [
+                        "type",
+                        "url"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "fetch-url",
+                            "description": "The type of the action."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
+                        },
+                        "key": {
+                            "type": "string",
+                            "description": "The key used as a shortcut."
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "The url to fetch."
+                        },
+                        "method": {
+                            "type": "string",
+                            "enum": [
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "DELETE"
+                            ],
+                            "description": "The method to use when fetching."
+                        },
+                        "body": {
+                            "type": "string",
+                            "description": "The body to send when fetching."
+                        },
+                        "headers": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            },
+                            "description": "The headers to send when fetching."
+                        },
+                        "inputs": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/input"
+                            },
+                            "description": "The inputs to show when the action is run."
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type",
+                        "text"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "copy-text",
+                            "description": "The type of the action."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
+                        },
+                        "text": {
+                            "type": "string",
+                            "description": "The text to copy."
+                        },
+                        "key": {
+                            "type": "string",
+                            "description": "The key used as a shortcut."
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "open-file",
+                            "description": "The type of the action."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
+                        },
+                        "key": {
+                            "type": "string",
+                            "description": "The key used as a shortcut."
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "The path to open."
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "open-url",
+                            "description": "The type of the action."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
+                        },
+                        "key": {
+                            "type": "string",
+                            "description": "The key used as a shortcut."
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "The url to open."
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type",
+                        "command"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "run-command",
+                            "description": "The type of the action."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
+                        },
+                        "key": {
+                            "type": "string",
+                            "description": "The key used as a shortcut."
+                        },
+                        "command": {
+                            "type": "string",
+                            "description": "The command to run."
+                        },
+                        "dir": {
+                            "type": "string",
+                            "description": "The directory where the command should be run."
+                        },
+                        "onSuccess": {
+                            "type": "string",
+                            "enum": [
+                                "reload",
+                                "exit",
+                                "push"
+                            ],
+                            "description": "The action to take when the command succeeds."
+                        },
+                        "inputs": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/input"
+                            },
+                            "description": "The inputs to show when the action is run."
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type",
+                        "path"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "read-file",
+                            "description": "The type of the action."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
+                        },
+                        "key": {
+                            "type": "string",
+                            "description": "The key used as a shortcut."
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "The path to read."
+                        }
+                    }
+                }
+            ]
+        },
+        "input": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "required": [
+                        "name",
+                        "title",
+                        "type"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the input."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the input."
+                        },
+                        "type": {
+                            "const": "textfield",
+                            "description": "The type of the input."
+                        },
+                        "placeholder": {
+                            "type": "string",
+                            "description": "The placeholder of the input."
+                        },
+                        "default": {
+                            "type": "string",
+                            "description": "The default value of the input."
+                        },
+                        "secure": {
+                            "type": "boolean",
+                            "description": "Whether the input should be secure."
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "name",
+                        "title",
+                        "type"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the input."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the input."
+                        },
+                        "type": {
+                            "const": "checkbox",
+                            "description": "The type of the input."
+                        },
+                        "default": {
+                            "type": "boolean",
+                            "description": "The default value of the input."
+                        },
+                        "label": {
+                            "type": "string",
+                            "description": "The label of the input."
+                        },
+                        "trueSubstitution": {
+                            "type": "string",
+                            "description": "The text substitution to use when the input is true."
+                        },
+                        "falseSubstitution": {
+                            "type": "string",
+                            "description": "The text substitution to use when the input is false."
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "name",
+                        "title",
+                        "type"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the input."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the input."
+                        },
+                        "type": {
+                            "const": "textarea",
+                            "description": "The type of the input."
+                        },
+                        "placeholder": {
+                            "type": "string",
+                            "description": "The placeholder of the input."
+                        },
+                        "default": {
+                            "type": "string",
+                            "description": "The default value of the input."
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "name",
+                        "title",
+                        "type",
+                        "items"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the input."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the input."
+                        },
+                        "type": {
+                            "const": "dropdown",
+                            "description": "The type of the input."
+                        },
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "title",
+                                    "value"
+                                ],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "description": "The title of the item."
+                                    },
+                                    "value": {
+                                        "type": "string",
+                                        "description": "The value of the item."
+                                    }
+                                }
+                            },
+                            "description": "The items of the input."
+                        },
+                        "default": {
+                            "type": "string",
+                            "description": "The default value of the input."
+                        }
+                    }
+                }
+            ]
+        },
+        "preview": {
+            "description": "The preview to show in the detail view.",
+            "oneOf": [
+                {
+                    "type": "object",
+                    "required": [
+                        "text"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "text": {
+                            "type": "string",
+                            "description": "The text to show in the preview."
+                        },
+                        "language": {
+                            "type": "string",
+                            "description": "The language of the preview text."
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "command"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "command": {
+                            "description": "The command used to generate the preview.",
+                            "type": "string"
+                        },
+                        "dir": {
+                            "description": "The directory where the command should be run.",
+                            "type": "string"
+                        },
+                        "language": {
+                            "description": "The language of the preview text.",
+                            "type": "string"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

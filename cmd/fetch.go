@@ -33,7 +33,7 @@ func NewFetchCmd() *cobra.Command {
 			generator := internal.NewHttpGenerator(args[0], method, headerMap, body)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}

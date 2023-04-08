@@ -11,7 +11,6 @@
   - [File Browser (Python)](./examples/file-browser/file-browser.md)
   - [Todo List (Python)](./examples/todo/todo.md)
   - [Git History (Bash)](./examples/git-history/git-history.md)
-  - [Google Search (Node / ZX)](./examples/google-search/google-search.md)
   - [TLDR Pages (Bash)](./examples/tldr/tldr.md)
   - [Github (Bash)](./examples/github/github.md)
   - [Bitwarden (Bash)](./examples/bitwarden/bitwarden.md)
@@ -20,4 +19,5 @@
 
 # Reference
 
+- [Types](./types.md)
 - [CLI](./cli.md)

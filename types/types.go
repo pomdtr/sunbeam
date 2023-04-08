@@ -79,32 +79,28 @@ type Page struct {
 	Actions []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
 
 	// Detail page
+	Preview *Preview `json:"preview,omitempty" yaml:"preview,omitempty"`
+
+	// List page
+	ShowDetail bool       `json:"showDetail,omitempty" yaml:"showDetail,omitempty"`
+	EmptyText  string     `json:"emptyText,omitempty" yaml:"emptyText,omitempty"`
+	Items      []ListItem `json:"items,omitempty" yaml:"items,omitempty"`
+}
+
+type Preview struct {
+	Language string `json:"language,omitempty" yaml:"language,omitempty"`
 	Text     string `json:"text,omitempty" yaml:"text,omitempty"`
 	Command  string `json:"command,omitempty" yaml:"command,omitempty"`
 	Dir      string `json:"dir,omitempty" yaml:"dir,omitempty"`
-	Language string `json:"language,omitempty" yaml:"language,omitempty"`
-
-	// List page
-	ShowDetail    bool       `json:"showDetail,omitempty" yaml:"showDetail,omitempty"`
-	GenerateItems bool       `json:"generateItems,omitempty" yaml:"generateItems,omitempty"`
-	EmptyText     string     `json:"emptyText,omitempty" yaml:"emptyText,omitempty"`
-	Items         []ListItem `json:"items,omitempty" yaml:"items,omitempty"`
 }
 
 type ListItem struct {
 	Id          string   `json:"id,omitempty" yaml:"id,omitempty"`
 	Title       string   `json:"title" yaml:"title"`
 	Subtitle    string   `json:"subtitle,omitempty" yaml:"subtitle,omitempty"`
-	Detail      *Detail  `json:"detail,omitempty" yaml:"detail,omitempty"`
+	Preview     *Preview `json:"preview,omitempty" yaml:"preview,omitempty"`
 	Accessories []string `json:"accessories,omitempty" yaml:"accessories,omitempty"`
 	Actions     []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
-}
-
-type Detail struct {
-	Text     string `json:"text" yaml:"text"`
-	Command  string `json:"command" yaml:"command"`
-	Dir      string `json:"dir" yaml:"dir"`
-	Language string `json:"language" yaml:"language"`
 }
 
 type FormInputType int
@@ -217,7 +213,8 @@ type ActionType int
 const (
 	UnknownAction ActionType = iota
 	CopyAction
-	OpenAction
+	OpenFileAction
+	OpenUrlAction
 	ReadAction
 	RunAction
 	FetchAction
@@ -231,17 +228,19 @@ func (a *ActionType) UnmarshalJSON(bytes []byte) error {
 	}
 
 	switch rawType {
-	case "copy":
+	case "copy-text":
 		*a = CopyAction
-	case "open":
-		*a = OpenAction
-	case "read":
+	case "open-file":
+		*a = OpenFileAction
+	case "open-url":
+		*a = OpenUrlAction
+	case "read-file":
 		*a = ReadAction
-	case "run":
+	case "run-command":
 		*a = RunAction
-	case "fetch":
+	case "fetch-url":
 		*a = FetchAction
-	case "reload":
+	case "reload-page":
 		*a = ReloadAction
 	default:
 		return fmt.Errorf("unknown action type: %s", rawType)
@@ -253,17 +252,19 @@ func (a *ActionType) UnmarshalJSON(bytes []byte) error {
 func (a ActionType) MarshalJSON() ([]byte, error) {
 	switch a {
 	case CopyAction:
-		return json.Marshal("copy")
-	case OpenAction:
-		return json.Marshal("open")
+		return json.Marshal("copy-text")
+	case OpenFileAction:
+		return json.Marshal("open-file")
+	case OpenUrlAction:
+		return json.Marshal("open-url")
 	case ReadAction:
-		return json.Marshal("read")
+		return json.Marshal("read-file")
 	case RunAction:
-		return json.Marshal("run")
+		return json.Marshal("run-command")
 	case FetchAction:
-		return json.Marshal("fetch")
+		return json.Marshal("fetch-url")
 	case ReloadAction:
-		return json.Marshal("reload")
+		return json.Marshal("reload-page")
 	default:
 		return nil, fmt.Errorf("unknown action type: %d", a)
 	}
@@ -276,17 +277,19 @@ func (a *ActionType) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	switch rawType {
-	case "copy":
+	case "copy-text":
 		*a = CopyAction
-	case "open":
-		*a = OpenAction
-	case "read":
+	case "open-file":
+		*a = OpenFileAction
+	case "open-url":
+		*a = OpenUrlAction
+	case "read-file":
 		*a = ReadAction
-	case "run":
+	case "run-command":
 		*a = RunAction
-	case "fetch":
+	case "fetch-url":
 		*a = FetchAction
-	case "reload":
+	case "reload-page":
 		*a = ReloadAction
 	default:
 		return fmt.Errorf("unknown action type: %s", rawType)
@@ -298,17 +301,19 @@ func (a *ActionType) UnmarshalYAML(node *yaml.Node) error {
 func (a ActionType) MarshalYAML() (interface{}, error) {
 	switch a {
 	case CopyAction:
-		return "copy", nil
-	case OpenAction:
-		return "open", nil
+		return "copy-text", nil
+	case OpenFileAction:
+		return "open-file", nil
+	case OpenUrlAction:
+		return "open-url", nil
 	case ReadAction:
-		return "read", nil
+		return "read-file", nil
 	case RunAction:
-		return "run", nil
+		return "run-command", nil
 	case FetchAction:
-		return "fetch", nil
+		return "fetch-url", nil
 	case ReloadAction:
-		return "reload", nil
+		return "reload-page", nil
 	default:
 		return nil, fmt.Errorf("unknown action type: %d", a)
 	}
@@ -392,7 +397,7 @@ func (o OnSuccessType) MarshalYAML() (interface{}, error) {
 type Action struct {
 	Title string     `json:"title,omitempty" yaml:"title,omitempty"`
 	Type  ActionType `json:"type" yaml:"type"`
-	Key   string     `json:"key" yaml:"key"`
+	Key   string     `json:"key,omitempty" yaml:"key,omitempty"`
 
 	// copy
 	Text string `json:"text,omitempty" yaml:"text,omitempty"`

@@ -90,7 +90,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 		// If the config file does not exist, create it
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func(string) ([]byte, error) {
+			generator := func() ([]byte, error) {
 				items := make([]types.ListItem, 0)
 
 				for _, ext := range []string{"yaml", "yml", "json"} {
@@ -168,7 +168,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
@@ -235,10 +235,10 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 			command := fmt.Sprintf("%s %s", binPath, strings.Join(args, " "))
 
 			cwd, _ := os.Getwd()
-			generator := internal.NewCommandGenerator(command, cwd, "")
+			generator := internal.NewCommandGenerator(command, cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}

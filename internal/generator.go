@@ -20,13 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type PageGenerator func(input string) ([]byte, error)
-
-type CmdGenerator struct {
-	Command string
-	Args    []string
-	Dir     string
-}
+type PageGenerator func() ([]byte, error)
 
 func ExpandAction(action types.Action, inputs map[string]string) types.Action {
 	for key, value := range inputs {
@@ -61,9 +55,9 @@ func ExpandAction(action types.Action, inputs map[string]string) types.Action {
 	return action
 }
 
-func NewCommandGenerator(command string, dir string, input string) PageGenerator {
-	return func(query string) ([]byte, error) {
-		output, err := utils.RunCommand(command, dir, input)
+func NewCommandGenerator(command string, dir string) PageGenerator {
+	return func() ([]byte, error) {
+		output, err := utils.RunCommand(command, dir)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +89,7 @@ func NewCommandGenerator(command string, dir string, input string) PageGenerator
 }
 
 func NewFileGenerator(name string) PageGenerator {
-	return func(input string) ([]byte, error) {
+	return func() ([]byte, error) {
 		var page types.Page
 		if path.Ext(name) == ".json" {
 			bytes, err := os.ReadFile(name)
@@ -150,9 +144,7 @@ func NewFileGenerator(name string) PageGenerator {
 }
 
 func NewHttpGenerator(target string, method string, headers map[string]string, body string) PageGenerator {
-	return func(query string) ([]byte, error) {
-		target = strings.Replace(target, "${query}", url.QueryEscape(query), -1)
-		body = strings.Replace(body, "${query}", query, -1)
+	return func() ([]byte, error) {
 		for key, value := range headers {
 			headers[key] = strings.Replace(value, "${query}", value, -1)
 		}
@@ -252,14 +244,30 @@ func expandPage(page types.Page, root *url.URL) (types.Page, error) {
 			if !filepath.IsAbs(action.Path) && action.Dir == "" {
 				action.Path = filepath.Join(root.Path, action.Path)
 			}
-		case types.OpenAction:
+		case types.OpenFileAction:
 			if action.Title == "" {
-				action.Title = "Open"
+				action.Title = "Open File"
 			}
 
 			if action.Path != "" && !filepath.IsAbs(action.Path) {
 				action.Path = filepath.Join(root.Path, action.Path)
 			}
+		case types.OpenUrlAction:
+			if action.Title == "" {
+				action.Title = "Open in Browser"
+			}
+
+			if action.Url != "" {
+				target, err := url.Parse(action.Url)
+				if !filepath.IsAbs(target.Path) && err == nil {
+					action.Url = (&url.URL{
+						Scheme: root.Scheme,
+						Host:   root.Host,
+						Path:   filepath.Join(root.Path, target.Path),
+					}).String()
+				}
+			}
+
 		}
 
 		return action, nil
@@ -276,8 +284,8 @@ func expandPage(page types.Page, root *url.URL) (types.Page, error) {
 
 	switch page.Type {
 	case types.DetailPage:
-		if page.Dir == "" {
-			page.Dir = root.Path
+		if page.Preview.Dir == "" {
+			page.Preview.Dir = root.Path
 		}
 
 	case types.ListPage:

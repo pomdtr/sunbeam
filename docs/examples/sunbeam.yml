@@ -1,10 +1,11 @@
+# yaml-language-server: $schema=../../schemas/page.schema.json
 type: list
 title: Examples
 items:
   - title: Search Bitwarden Items
     subtitle: Bitwarden
     actions:
-      - type: run
+      - type: run-command
         title: Run
         onSuccess: push
         command: "./bitwarden/bitwarden.sh"
@@ -12,43 +13,36 @@ items:
     subtitle: Highlight
     actions:
       - title: Highlight Detail
-        type: run
+        type: run-command
         onSuccess: push
         command: "./highlight/highlight.sh"
       - title: Highlight List
-        type: run
+        type: run-command
         onSuccess: push
         command: "./highlight/list.sh"
-  - title: Demo
-    subtitle: Examples
-    actions:
-      - type: run
-        title: Run
-        onSuccess: push
-        command: "./demo/demo.py"
   - title: DevDocs
     subtitle: Examples
     actions:
-      - type: run
+      - type: run-command
         title: Search Docsets
         onSuccess: push
         command: "./devdocs/devdocs.sh"
-      - type: run
+      - type: run-command
         title: Search Go Docs
         onSuccess: push
         command: "./devdocs/devdocs.sh go"
   - title: File Browser
     subtitle: Examples
     actions:
-      - type: run
+      - type: run-command
         title: Browse Current Dir
         onSuccess: push
         command: "./file-browser/file-browser.py"
-      - type: run
+      - type: run-command
         title: Browse Root Dir
         onSuccess: push
         command: "./file-browser/file-browser.py /"
-      - type: run
+      - type: run-command
         title: Browse Custom Dir
         command: "./file-browser/file-browser.py {{dir}}"
         onSuccess: push
@@ -59,38 +53,31 @@ items:
   - title: Github
     subtitle: Examples
     actions:
-      - type: run
+      - type: run-command
         title: Search Repositories
         onSuccess: push
         command: "./github/github.sh"
-      - type: run
+      - type: run-command
         title: Search Excalidraw Pull Requests
         onSuccess: push
         command: "./github/github.sh list-prs pomdtr/excalidraw"
-  - title: Google Search
-    subtitle: Examples
-    actions:
-      - type: run
-        title: Search
-        onSuccess: push
-        command: "./google-search/google-search.mjs"
   - title: TLDR Pages
     subtitle: Examples
     actions:
-      - type: run
+      - type: run-command
         title: Search
         onSuccess: push
         command: "./tldr/tldr.sh"
   - title: List Todos
     subtitle: Todo
     actions:
-      - type: run
+      - type: run-command
         title: List Todos
         onSuccess: push
         command: "./todo/todo.py"
   - title: Show Form
     actions:
-      - type: run
+      - type: run-command
         onSuccess: exit
         title: Show
         command: echo ${input:text}

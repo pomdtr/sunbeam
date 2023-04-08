@@ -1,19 +1,19 @@
-# yaml-language-server: $schema=./schemas/sunbeam.schema.json
+# yaml-language-server: $schema=./schemas/page.schema.json
 type: list
 items:
   - title: Show Examples
     actions:
-      - type: read
+      - type: read-file
         title: Examples
         path: "./docs/examples/sunbeam.yml"
   - title: Show Getting Started
     actions:
-      - type: read
+      - type: read-file
         title: Getting Started
         path: "./docs/getting-started/sunbeam.yml"
   - title: Format
     actions:
-      - type: run
+      - type: run-command
         onSuccess: exit
         command: "echo ${input:format} ${input:path} ${input:message} ${input:dropdown}"
         inputs:

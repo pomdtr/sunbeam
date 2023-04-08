@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alecthomas/chroma/quick"
 	"github.com/pomdtr/sunbeam/types"
 
-	"github.com/alecthomas/chroma/quick"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -88,8 +88,7 @@ type List struct {
 	actions    []types.Action
 	DetailFunc func(types.ListItem) string
 
-	GenerateItems bool
-	ShowDetail    bool
+	ShowDetail bool
 
 	filter        Filter
 	viewport      viewport.Model
@@ -115,40 +114,39 @@ func NewList(page types.Page) *List {
 	footer := NewFooter(page.Title)
 
 	list := List{
-		actionList:    NewActionList(),
-		header:        header,
-		filter:        filter,
-		GenerateItems: page.GenerateItems,
-		ShowDetail:    page.ShowDetail,
-		viewport:      viewport,
-		footer:        footer,
+		actionList: NewActionList(),
+		header:     header,
+		filter:     filter,
+		ShowDetail: page.ShowDetail,
+		viewport:   viewport,
+		footer:     footer,
 	}
 
 	list.DetailFunc = func(item types.ListItem) string {
-		if item.Detail.Text != "" {
-			if item.Detail.Language == "" {
-				return item.Detail.Text
+		if item.Preview.Text != "" {
+			if item.Preview.Language == "" {
+				return item.Preview.Text
 			}
 			builder := strings.Builder{}
-			if err := quick.Highlight(&builder, item.Detail.Text, item.Detail.Language, "terminal16", "github"); err != nil {
-				return item.Detail.Text
+			if err := quick.Highlight(&builder, item.Preview.Text, item.Preview.Language, "terminal16", "github"); err != nil {
+				return item.Preview.Text
 			}
 			return builder.String()
 		}
 
-		output, err := utils.RunCommand(item.Detail.Command, item.Detail.Dir, list.Query())
+		output, err := utils.RunCommand(item.Preview.Command, item.Preview.Dir)
 		if err != nil {
 			return err.Error()
 		}
 
 		content := string(output)
 
-		if item.Detail.Language == "" {
+		if item.Preview.Language == "" {
 			return content
 		}
 
 		builder := strings.Builder{}
-		if err := quick.Highlight(&builder, content, item.Detail.Language, "terminal16", "github"); err != nil {
+		if err := quick.Highlight(&builder, content, item.Preview.Language, "terminal16", "github"); err != nil {
 			return content
 		}
 		return builder.String()
@@ -214,9 +212,7 @@ func (c *List) SetItems(items []ListItem, selectedId string) tea.Cmd {
 	}
 
 	c.filter.SetItems(filterItems)
-	if !c.GenerateItems {
-		c.filter.FilterItems(c.Query())
-	}
+	c.filter.FilterItems(c.Query())
 	if selectedId != "" {
 		c.filter.Select(selectedId)
 	}
@@ -287,10 +283,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return SelectionChangeMsg{
 						SelectionId: c.filter.Selection().ID(),
 					}
-				}, func() tea.Msg {
-					return UpdateQueryMsg{
-						Query: c.Query(),
-					}
 				})
 			} else {
 				return c, func() tea.Msg {
@@ -303,19 +295,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case tea.KeyShiftUp:
 			c.viewport.LineUp(1)
 			return c, nil
-		}
-	case UpdateQueryMsg:
-		if !c.GenerateItems {
-			return c, nil
-		}
-		if c.Query() != msg.Query {
-			return c, nil
-		}
-
-		return c, func() tea.Msg {
-			return types.Action{
-				Type: types.ReloadAction,
-			}
 		}
 	case SelectionChangeMsg:
 		if !c.ShowDetail {
@@ -362,12 +341,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 
 	if header.Value() != c.header.Value() {
-		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
-			return UpdateQueryMsg{Query: header.Value()}
-		}))
-		if !c.GenerateItems {
-			filter.FilterItems(header.Value())
-		}
+		filter.FilterItems(header.Value())
 	}
 
 	if c.filter.Selection() != nil && filter.Selection() != nil && filter.Selection().ID() != c.filter.Selection().ID() {
@@ -386,10 +360,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 type SelectionChangeMsg struct {
 	SelectionId string
-}
-
-type UpdateQueryMsg struct {
-	Query string
 }
 
 func (c List) View() string {

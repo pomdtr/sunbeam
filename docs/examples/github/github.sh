@@ -6,17 +6,17 @@ COMMAND="${1:-list-repos}"
 
 if [[ $COMMAND == "list-repos" ]]; then
     # shellcheck disable=SC2016
-    gh api "/user/repos?sort=updated" | sunbeam query --arg "command=$COMMAND" '.[] |
+    gh api "/user/repos?sort=updated" | sunbeam query --arg "command=$0" '.[] |
         {
             title: .name,
-            subtitle: .description,
+            subtitle: (.description // ""),
             accessories: [
                 "\(.stargazers_count) *"
             ],
             actions: [
-                {type: "open", url: .html_url},
+                {type: "open-url", url: .html_url},
                 {
-                    type: "run",
+                    type: "run-command",
                     onSuccess: "push",
                     title: "List Pull Requests",
                     key: "p",
@@ -43,8 +43,8 @@ elif [[ $COMMAND == "list-prs" ]]; then
             "#\(.number)"
         ],
         actions: [
-            {type: "open", title: "Open in Browser", url: .url},
-            {type: "copy", text: .url}
+            {type: "open-url", title: "Open in Browser", url: .url},
+            {type: "copy-text", text: .url}
         ]
     }
     ' | sunbeam query --slurp '{

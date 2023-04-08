@@ -61,16 +61,16 @@ func NewTriggerCmd() *cobra.Command {
 				generator = internal.NewFileGenerator(action.Path)
 			case types.RunAction:
 				if action.OnSuccess != types.PushOnSuccess {
-					if _, err := utils.RunCommand(action.Command, action.Dir, ""); err != nil {
+					if _, err := utils.RunCommand(action.Command, action.Dir); err != nil {
 						return fmt.Errorf("unable to run command")
 					}
 					return nil
 				}
 
-				generator = internal.NewCommandGenerator(action.Command, action.Dir, "")
+				generator = internal.NewCommandGenerator(action.Command, action.Dir)
 			case types.FetchAction:
 				generator = internal.NewHttpGenerator(action.Url, action.Method, action.Headers, action.Body)
-			case types.OpenAction:
+			case types.OpenFileAction, types.OpenUrlAction:
 				err := browser.OpenURL(args[0])
 				if err != nil {
 					return fmt.Errorf("unable to open link: %s", err)
@@ -84,7 +84,7 @@ func NewTriggerCmd() *cobra.Command {
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}

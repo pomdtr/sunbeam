@@ -429,12 +429,12 @@
       "locked": false,
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "open",
+      "text": "open-url",
       "baseline": 17,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "bl_up94CZ0w-XyOyhFkCM",
-      "originalText": "open"
+      "originalText": "open-url"
     },
     {
       "type": "arrow",
@@ -782,12 +782,12 @@
       "locked": false,
       "fontSize": 20,
       "fontFamily": 1,
-      "text": "run",
+      "text": "run-command",
       "baseline": 17,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "Q_OoQclyb1Fwe_4ieLJc_",
-      "originalText": "run"
+      "originalText": "run-command"
     },
     {
       "type": "arrow",

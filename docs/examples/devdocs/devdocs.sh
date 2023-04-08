@@ -9,7 +9,7 @@ if [ $# -eq 1 ]; then
   title: .name,
   subtitle: .type,
   actions: [
-    {type: "open", title: "Open in Browser", url: "https://devdocs.io/\($slug)/\(.path)"}
+    {type: "open-url", title: "Open in Browser", url: "https://devdocs.io/\($slug)/\(.path)"}
   ]
 }
 ' | sunbeam query --slurp '{ type: "list", items: . }'
@@ -25,7 +25,7 @@ curl https://devdocs.io/docs/docs.json | sunbeam query --arg command="$0" '.[] |
     accessories: [ .slug ],
     actions: [
       {
-          type: "run",
+          type: "run-command",
           "onSuccess": "push",
           title: "Browse \(.release // "latest") entries",
           command: "\($command) \(.slug)",

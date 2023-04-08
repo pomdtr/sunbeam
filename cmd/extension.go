@@ -64,7 +64,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 		Use:   "browse",
 		Short: "Browse extensions",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func(string) ([]byte, error) {
+			generator := func() ([]byte, error) {
 				repos, err := utils.SearchSunbeamExtensions("")
 				if err != nil {
 					return nil, err
@@ -88,7 +88,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 							},
 							newExtensionInstallAction(repo.HtmlUrl, "i"),
 							{
-								Type:  types.OpenAction,
+								Type:  types.OpenUrlAction,
 								Title: "Open in Browser",
 								Url:   repo.HtmlUrl,
 							},
@@ -105,7 +105,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
@@ -149,7 +149,7 @@ func NewExtensionViewCmd() *cobra.Command {
 				return fmt.Errorf("could not parse repository: %s", err)
 			}
 
-			generator := func(string) ([]byte, error) {
+			generator := func() ([]byte, error) {
 				res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/readme", repo.FullName()))
 				if err != nil {
 					return nil, fmt.Errorf("could not fetch readme: %s", err)
@@ -158,9 +158,10 @@ func NewExtensionViewCmd() *cobra.Command {
 
 				if res.StatusCode != http.StatusOK {
 					return json.Marshal(types.Page{
-						Type:     types.DetailPage,
-						Text:     fmt.Sprintf("Could not fetch readme: %s", res.Status),
-						Language: "markdown",
+						Type: types.DetailPage,
+						Preview: &types.Preview{
+							Text: fmt.Sprintf("Could not fetch readme: %s", res.Status),
+						},
 					})
 				}
 
@@ -182,9 +183,10 @@ func NewExtensionViewCmd() *cobra.Command {
 				}
 
 				return json.Marshal(types.Page{
-					Type:     types.DetailPage,
-					Text:     string(payload),
-					Language: "markdown",
+					Type: types.DetailPage,
+					Preview: &types.Preview{
+						Text: string(payload),
+					},
 					Actions: []types.Action{
 						newExtensionInstallAction(repo.Url().String(), "i"),
 					},
@@ -192,7 +194,7 @@ func NewExtensionViewCmd() *cobra.Command {
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				content, err := generator("")
+				content, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
@@ -215,7 +217,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 		Short: "Manage installed extensions",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func(string) ([]byte, error) {
+			generator := func() ([]byte, error) {
 				extensions, err := ListExtensions(extensionDir)
 				if err != nil {
 					return nil, fmt.Errorf("could not list extensions: %s", err)
@@ -273,7 +275,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
@@ -335,10 +337,10 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 			command := fmt.Sprintf("%s %s", binPath, strings.Join(args[1:], " "))
 
 			cwd, _ := os.Getwd()
-			generator := internal.NewCommandGenerator(command, cwd, "")
+			generator := internal.NewCommandGenerator(command, cwd)
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}

@@ -6,5 +6,13 @@
     "repository": {
         "url": "https://github.com/pomdtr/sunbeam"
     },
-    "types": "./index.d.ts"
+    "types": "./index.d.ts",
+    "scripts": {
+        "refresh-types": "json2ts -i ../schemas/page.schema.json -o index.d.ts"
+    },
+    "devDependencies": {
+        "json-schema-to-typescript": "^12.0.0",
+        "tsdoc-markdown": "^0.0.1",
+        "typescript-documentation": "^3.0.2"
+    }
 }

@@ -56,12 +56,7 @@ func (c *CommandRunner) Init() tea.Cmd {
 type CommandOutput []byte
 
 func (c *CommandRunner) Refresh() tea.Msg {
-	var query string
-	if c.currentView == RunnerViewList {
-		query = c.list.Query()
-	}
-
-	output, err := c.Generator(query)
+	output, err := c.Generator()
 	if err != nil {
 		return err
 	}
@@ -73,16 +68,18 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 	action = ExpandAction(action, values)
 	switch action.Type {
 	case types.ReloadAction:
+		runner.form = nil
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
-	case types.OpenAction:
-		var target string
-		if action.Url != "" {
-			target = action.Url
-		} else if action.Path != "" {
-			target = action.Path
+	case types.OpenFileAction:
+		if err := browser.OpenURL(action.Path); err != nil {
+			return func() tea.Msg {
+				return err
+			}
 		}
 
-		if err := browser.OpenURL(target); err != nil {
+		return tea.Quit
+	case types.OpenUrlAction:
+		if err := browser.OpenURL(action.Url); err != nil {
 			return func() tea.Msg {
 				return err
 			}
@@ -109,13 +106,14 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 	case types.RunAction:
 		switch action.OnSuccess {
 		case types.PushOnSuccess:
-			generator := NewCommandGenerator(action.Command, action.Dir, "")
+			generator := NewCommandGenerator(action.Command, action.Dir)
+			runner.form = nil
 			return func() tea.Msg {
 				return PushPageMsg{NewRunner(generator)}
 			}
 		case types.ReloadOnSuccess:
 			return func() tea.Msg {
-				_, err := utils.RunCommand(action.Command, action.Dir, "")
+				_, err := utils.RunCommand(action.Command, action.Dir)
 				if err != nil {
 					return err
 				}
@@ -126,7 +124,7 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 			}
 		case types.ExitOnSuccess:
 			return func() tea.Msg {
-				_, err := utils.RunCommand(action.Command, action.Dir, "")
+				_, err := utils.RunCommand(action.Command, action.Dir)
 				if err != nil {
 					return err
 				}
@@ -217,13 +215,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		switch page.Type {
 		case types.DetailPage:
 			var detailFunc func() string
-			if page.Text != "" {
+			if page.Preview.Text != "" {
 				detailFunc = func() string {
-					return page.Text
+					return page.Preview.Text
 				}
-			} else if page.Command != "" {
+			} else if page.Preview.Command != "" {
 				detailFunc = func() string {
-					output, err := utils.RunCommand(page.Command, page.Dir, "")
+					output, err := utils.RunCommand(page.Preview.Command, page.Preview.Dir)
 					if err != nil {
 						return err.Error()
 					}
@@ -237,7 +235,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			runner.currentView = RunnerViewDetail
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
-			runner.detail.Language = page.Language
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()
@@ -294,7 +291,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, form.Init()
 		}
 
-		runner.form = nil
 		cmd := runner.handleAction(msg, runner.values)
 		runner.values = nil
 		return runner, cmd

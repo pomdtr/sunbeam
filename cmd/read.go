@@ -27,7 +27,7 @@ func NewReadCmd() *cobra.Command {
 
 				var content []byte
 				format, _ := cmd.Flags().GetString("format")
-				runner := internal.NewRunner(func(input string) ([]byte, error) {
+				runner := internal.NewRunner(func() ([]byte, error) {
 					if content != nil {
 						return content, nil
 					}
@@ -65,7 +65,7 @@ func NewReadCmd() *cobra.Command {
 			if cmd.Flags().Changed("format") {
 				format, _ := cmd.Flags().GetString("format")
 				if format == "yaml" || format == "yml" {
-					generator = func(input string) ([]byte, error) {
+					generator = func() ([]byte, error) {
 						bytes, err := os.ReadFile(args[0])
 						if err != nil {
 							return nil, err
@@ -79,7 +79,7 @@ func NewReadCmd() *cobra.Command {
 						return json.Marshal(page)
 					}
 				} else {
-					generator = func(input string) ([]byte, error) {
+					generator = func() ([]byte, error) {
 						return os.ReadFile(args[0])
 					}
 				}
@@ -89,7 +89,7 @@ func NewReadCmd() *cobra.Command {
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator("")
+				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}

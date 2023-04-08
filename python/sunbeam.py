@@ -1,155 +1,149 @@
-"""
-Types for sunbeam scripts
-"""
+import sys
 
-__version__ = "0.1.0"
-
-from dataclasses import dataclass, asdict, field
-from typing import Literal
-import json
+if sys.version_info < (3, 11):
+    from typing_extensions import Literal, NotRequired, TypedDict, Union
+else:
+    from typing import Literal, NotRequired, TypedDict, Union
 
 
-@dataclass
-class ListItemDetail:
-    text: str = ""
-    command: str = ""
-    dir: str = ""
-    language: str = ""
-
-
-@dataclass
-class Page:
-    def json(self):
-        def dict_factory(fields):
-            return {field[0]: field[1] for field in fields if field[1]}
-
-        return json.dumps(asdict(self, dict_factory=dict_factory))
-
-
-@dataclass
-class List(Page):
-    items: list["ListItem"]
-    title: str = ""
-
-
-@dataclass
-class ListItem:
-    title: str
-    id: str = ""
-    subtitle: str = ""
-    detail: ListItemDetail = None
-    actions: list["Action"] = field(default_factory=list)
-
-
-@dataclass
-class Detail(Page):
-    actions: list["Action"]
-    text: str = ""
-    command: str = ""
-    dir: str = ""
-    language: str = ""
-    inputs: list["Input"] = field(default_factory=list)
-
-
-@dataclass
-class OpenAction:
+class ActionFetchUrl(TypedDict):
+    type: Literal["fetch-url"]
+    title: NotRequired[str]
+    key: NotRequired[str]
     url: str
-    path: str
-    type: str = field(init=False)
-    inputs: list["Input"] = field(default_factory=list)
-
-    def __post_init__(self):
-        self.type = "open"
+    method: NotRequired[Literal["GET", "POST", "PUT", "DELETE"]]
+    body: NotRequired[str]
+    headers: NotRequired[dict[str, str]]
+    inputs: NotRequired[list["Input"]]
 
 
-@dataclass
-class CopyAction:
+class ActionCopyText(TypedDict):
+    type: Literal["copy-text"]
+    title: NotRequired[str]
     text: str
-    inputs: list["Input"] = field(default_factory=list)
-    type: str = field(init=False)
-
-    def __post_init__(self):
-        self.type = "copy"
+    key: NotRequired[str]
 
 
-@dataclass
-class ReadAction:
-    path: str
-    inputs: list["Input"] = field(default_factory=list)
-    type: str = field(init=False)
-
-    def __post_init__(self):
-        self.type = "read"
+class ActionOpenFile(TypedDict):
+    type: Literal["open-file"]
+    title: NotRequired[str]
+    key: NotRequired[str]
+    path: NotRequired[str]
 
 
-@dataclass
-class FetchAction:
-    url: str
-    body: str
-    method: str
-    headers: dict[str, str] = field(default_factory=dict)
-    inputs: list["Input"] = field(default_factory=list)
-    type: str = field(init=False)
-
-    def __post_init__(self):
-        self.type = "fetch"
+class ActionOpenUrl(TypedDict):
+    type: Literal["open-url"]
+    title: NotRequired[str]
+    key: NotRequired[str]
+    url: NotRequired[str]
 
 
-@dataclass
-class RunAction:
+class ActionRunCommand(TypedDict):
+    type: Literal["run-command"]
+    title: NotRequired[str]
+    key: NotRequired[str]
     command: str
-    onSuccess: Literal["push", "pop", "exit"]
-    dir: str = ""
-    inputs: list["Input"] = field(default_factory=list)
-    type: str = field(init=False)
-
-    def __post_init__(self):
-        self.type = "run"
+    dir: NotRequired[str]
+    onSuccess: NotRequired[Literal["reload", "exit", "push"]]
+    inputs: NotRequired[list["Input"]]
 
 
-Action = RunAction | ReadAction | FetchAction | CopyAction | OpenAction
+class ActionReadFile(TypedDict):
+    type: Literal["read-file"]
+    title: NotRequired[str]
+    key: NotRequired[str]
+    path: str
 
 
-@dataclass
-class TextField:
+Action = Union[
+    ActionFetchUrl,
+    ActionCopyText,
+    ActionOpenFile,
+    ActionOpenUrl,
+    ActionRunCommand,
+    ActionReadFile,
+]
+
+
+class InputTextField(TypedDict):
+    name: str
+    title: str
+    type: Literal["textfield"]
+    placeholder: NotRequired[str]
+    default: NotRequired[str]
+    secure: NotRequired[bool]
+
+
+class InputCheckbox(TypedDict):
+    name: str
+    title: str
+    type: Literal["checkbox"]
+    default: NotRequired[bool]
+    label: NotRequired[str]
+    trueSubstitution: NotRequired[str]
+    falseSubstitution: NotRequired[str]
+
+
+class InputTextArea(TypedDict):
+    name: str
+    title: str
+    type: Literal["textarea"]
+    placeholder: NotRequired[str]
+    default: NotRequired[str]
+
+
+class InputDropdown(TypedDict):
+    name: str
+    title: str
+    type: Literal["dropdown"]
+    items: list[dict[str, str]]
+    default: NotRequired[str]
+
+
+Input = Union[
+    InputTextField,
+    InputCheckbox,
+    InputTextArea,
+    InputDropdown,
+]
+
+class StaticPreview(TypedDict):
     text: str
-    type: str = field(init=False)
+    language: NotRequired[str]
 
-    def __post_init__(self):
-        self.type = "textfield"
+class DynamicPreview(TypedDict):
+    command: str
+    dir: NotRequired[str]
+    language: NotRequired[str]
 
-
-@dataclass
-class TextArea:
-    text: str
-    type: str = field(init=False)
-
-    def __post_init__(self):
-        self.type = "textarea"
+Preview = Union[StaticPreview, DynamicPreview]
 
 
-@dataclass
-class DropDown:
-    text: str
-    options: list[str]
-    type: str = field(init=False)
+class List(TypedDict):
+    type: Literal["list"]
+    title: NotRequired[str]
+    emptyText: NotRequired[str]
+    showPreview: NotRequired[bool]
+    actions: NotRequired[list[Action]]
+    items: list["ListItem"]
 
-    def __post_init__(self):
-        self.type = "dropdown"
+
+class ListItem(TypedDict):
+    title: str
+    id: NotRequired[str]
+    subtitle: NotRequired[str]
+    preview: NotRequired[Preview]
+    accessories: NotRequired[list[str]]
+    actions: NotRequired[list[Action]]
 
 
-Input = TextField | TextArea | DropDown
+class Detail(TypedDict):
+    type: Literal["detail"]
+    title: NotRequired[str]
+    preview: NotRequired[Preview]
+    actions: NotRequired[list[Action]]
 
-page: Page = List(
-    items=[
-        ListItem(
-            title="foo",
-            actions=[
-                RunAction(
-                    command="echo foo",
-                    onSuccess="push",
-                ),
-            ],
-        )
-    ]
-)
+
+class Page(TypedDict):
+    List: NotRequired[List]
+    Detail: NotRequired[Detail]
