@@ -11,42 +11,6 @@ export type Action =
       /**
        * The type of the action.
        */
-      type: "fetch-url";
-      /**
-       * The title of the action.
-       */
-      title?: string;
-      /**
-       * The key used as a shortcut.
-       */
-      key?: string;
-      /**
-       * The url to fetch.
-       */
-      url: string;
-      /**
-       * The method to use when fetching.
-       */
-      method?: "GET" | "POST" | "PUT" | "DELETE";
-      /**
-       * The body to send when fetching.
-       */
-      body?: string;
-      /**
-       * The headers to send when fetching.
-       */
-      headers?: {
-        [k: string]: string;
-      };
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
-    }
-  | {
-      /**
-       * The type of the action.
-       */
       type: "copy-text";
       /**
        * The title of the action.
@@ -115,6 +79,10 @@ export type Action =
        */
       command: string;
       /**
+       * The input to pass to the command stdin.
+       */
+      input?: string;
+      /**
        * The directory where the command should be run.
        */
       dir?: string;
@@ -144,6 +112,14 @@ export type Action =
        * The path to read.
        */
       path: string;
+    }
+  | {
+      type: "push-page";
+      page:
+        | string
+        | {
+            [k: string]: unknown;
+          };
     };
 export type Input =
   | {

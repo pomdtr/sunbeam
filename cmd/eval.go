@@ -16,9 +16,8 @@ import (
 func NewCmdEval() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:  "eval",
-		Args: cobra.NoArgs,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			generator := func() ([]byte, error) {
 				buffer := bytes.Buffer{}
 				i := interp.New(interp.Options{
@@ -26,13 +25,19 @@ func NewCmdEval() *cobra.Command {
 				})
 				i.Use(stdlib.Symbols)
 
-				b, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return nil, err
-				}
+				if len(args) > 0 {
+					if _, err := i.EvalPath(args[0]); err != nil {
+						return nil, err
+					}
+				} else {
+					b, err := io.ReadAll(os.Stdin)
+					if err != nil {
+						return nil, err
+					}
 
-				if _, err := i.Eval(string(b)); err != nil {
-					return nil, err
+					if _, err := i.Eval(string(b)); err != nil {
+						return nil, err
+					}
 				}
 
 				return buffer.Bytes(), nil

@@ -217,7 +217,6 @@ const (
 	OpenUrlAction
 	ReadAction
 	RunAction
-	FetchAction
 	ReloadAction
 )
 
@@ -238,8 +237,6 @@ func (a *ActionType) UnmarshalJSON(bytes []byte) error {
 		*a = ReadAction
 	case "run-command":
 		*a = RunAction
-	case "fetch-url":
-		*a = FetchAction
 	case "reload-page":
 		*a = ReloadAction
 	default:
@@ -261,8 +258,6 @@ func (a ActionType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("read-file")
 	case RunAction:
 		return json.Marshal("run-command")
-	case FetchAction:
-		return json.Marshal("fetch-url")
 	case ReloadAction:
 		return json.Marshal("reload-page")
 	default:
@@ -287,8 +282,6 @@ func (a *ActionType) UnmarshalYAML(node *yaml.Node) error {
 		*a = ReadAction
 	case "run-command":
 		*a = RunAction
-	case "fetch-url":
-		*a = FetchAction
 	case "reload-page":
 		*a = ReloadAction
 	default:
@@ -310,8 +303,6 @@ func (a ActionType) MarshalYAML() (interface{}, error) {
 		return "read-file", nil
 	case RunAction:
 		return "run-command", nil
-	case FetchAction:
-		return "fetch-url", nil
 	case ReloadAction:
 		return "reload-page", nil
 	default:
@@ -405,13 +396,8 @@ type Action struct {
 	// edit / open
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 
-	// open / fetch
+	// open
 	Url string `json:"url,omitempty" yaml:"url,omitempty"`
-
-	// fetch
-	Method  string            `json:"method,omitempty" yaml:"method,omitempty"`
-	Headers map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Body    string            `json:"body,omitempty" yaml:"body,omitempty"`
 
 	// run
 	Command   string        `json:"command,omitempty" yaml:"command,omitempty"`

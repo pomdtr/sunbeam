@@ -95,7 +95,7 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 		}
 
 		return tea.Quit
-	case types.ReadAction, types.FetchAction:
+	case types.ReadAction:
 		return func() tea.Msg {
 			generator := NewFileGenerator(action.Path)
 			return PushPageMsg{

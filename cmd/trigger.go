@@ -68,8 +68,6 @@ func NewTriggerCmd() *cobra.Command {
 				}
 
 				generator = internal.NewCommandGenerator(action.Command, action.Input, action.Dir)
-			case types.FetchAction:
-				generator = internal.NewHttpGenerator(action.Url, action.Method, action.Headers, action.Body)
 			case types.OpenFileAction, types.OpenUrlAction:
 				err := browser.OpenURL(args[0])
 				if err != nil {

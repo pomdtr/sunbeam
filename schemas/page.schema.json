@@ -118,59 +118,6 @@
                 {
                     "required": [
                         "type",
-                        "url"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "type": {
-                            "const": "fetch-url",
-                            "description": "The type of the action."
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
-                        "key": {
-                            "type": "string",
-                            "description": "The key used as a shortcut."
-                        },
-                        "url": {
-                            "type": "string",
-                            "description": "The url to fetch."
-                        },
-                        "method": {
-                            "type": "string",
-                            "enum": [
-                                "GET",
-                                "POST",
-                                "PUT",
-                                "DELETE"
-                            ],
-                            "description": "The method to use when fetching."
-                        },
-                        "body": {
-                            "type": "string",
-                            "description": "The body to send when fetching."
-                        },
-                        "headers": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            },
-                            "description": "The headers to send when fetching."
-                        },
-                        "inputs": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/$defs/input"
-                            },
-                            "description": "The inputs to show when the action is run."
-                        }
-                    }
-                },
-                {
-                    "required": [
-                        "type",
                         "text"
                     ],
                     "additionalProperties": false,
@@ -312,6 +259,28 @@
                         "path": {
                             "type": "string",
                             "description": "The path to read."
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type",
+                        "page"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "push-page"
+                        },
+                        "page": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "command"
+                                }
+                            ]
                         }
                     }
                 }

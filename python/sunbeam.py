@@ -5,18 +5,6 @@ if sys.version_info < (3, 11):
 else:
     from typing import Literal, NotRequired, TypedDict, Union
 
-
-class ActionFetchUrl(TypedDict):
-    type: Literal["fetch-url"]
-    title: NotRequired[str]
-    key: NotRequired[str]
-    url: str
-    method: NotRequired[Literal["GET", "POST", "PUT", "DELETE"]]
-    body: NotRequired[str]
-    headers: NotRequired[dict[str, str]]
-    inputs: NotRequired[list["Input"]]
-
-
 class ActionCopyText(TypedDict):
     type: Literal["copy-text"]
     title: NotRequired[str]
