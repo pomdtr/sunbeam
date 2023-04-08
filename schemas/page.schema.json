@@ -262,28 +262,6 @@
                             "description": "The path to read."
                         }
                     }
-                },
-                {
-                    "required": [
-                        "type",
-                        "page"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "type": {
-                            "const": "push-page"
-                        },
-                        "page": {
-                            "oneOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "command"
-                                }
-                            ]
-                        }
-                    }
                 }
             ]
         },
