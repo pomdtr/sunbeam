@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type PageSchema = List | Detail;
+export type Page = List | Detail;
 export type Action =
   | {
       /**
