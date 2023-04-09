@@ -23,9 +23,6 @@ var systemMessage string
 
 var re = regexp.MustCompile("`{3}[\\w]*\n+([\\S\\s]+?\n)`{3}")
 
-type Conversation struct {
-}
-
 func extractMarkdownCodeblock(markdown string) string {
 	match := re.FindStringSubmatch(markdown)
 	if len(match) < 2 {
