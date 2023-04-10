@@ -3,9 +3,11 @@ type: list
 items:
   - title: Static List
     actions:
-      - type: read-file
+      - type: push-page
         title: Static List
-        path: "./static-list.json"
+        page:
+          type: static
+          path: "./static-list.json"
   - title: Dynamic List
     actions:
       - type: run-command

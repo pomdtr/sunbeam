@@ -82,17 +82,17 @@ func (i ListItem) Render(width int, selected bool) string {
 }
 
 type List struct {
-	header     Header
-	footer     Footer
-	actionList ActionList
-	actions    []types.Action
-	DetailFunc func(types.ListItem) string
+	header       Header
+	footer       Footer
+	actionList   ActionList
+	emptyActions []types.Action
+	DetailFunc   func(types.ListItem) string
 
-	ShowDetail bool
+	ShowPreview bool
 
-	filter        Filter
-	viewport      viewport.Model
-	detailContent string
+	filter         Filter
+	viewport       viewport.Model
+	previewContent string
 }
 
 func (c *List) SetTitle(title string) {
@@ -100,27 +100,26 @@ func (c *List) SetTitle(title string) {
 }
 
 func NewList(page types.Page) *List {
-	header := NewHeader()
-
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
 
+	list := List{
+		actionList:  NewActionList(),
+		header:      NewHeader(),
+		ShowPreview: page.ShowPreview,
+		viewport:    viewport,
+		footer:      NewFooter(page.Title),
+	}
+
 	filter := NewFilter()
 	filter.DrawLines = true
-	if page.EmptyText != "" {
-		filter.EmptyText = page.EmptyText
+
+	if page.EmptyView != nil {
+		filter.EmptyText = page.EmptyView.Text
+		list.emptyActions = page.EmptyView.Actions
 	}
 
-	footer := NewFooter(page.Title)
-
-	list := List{
-		actionList: NewActionList(),
-		header:     header,
-		filter:     filter,
-		ShowDetail: page.ShowDetail,
-		viewport:   viewport,
-		footer:     footer,
-	}
+	list.filter = filter
 
 	list.DetailFunc = func(item types.ListItem) string {
 		if item.Preview.Text != "" {
@@ -152,8 +151,6 @@ func NewList(page types.Page) *List {
 		return builder.String()
 	}
 
-	list.SetActions(page.Actions)
-
 	return &list
 }
 
@@ -161,21 +158,10 @@ func (c *List) Init() tea.Cmd {
 	return c.header.Focus()
 }
 
-func (list *List) SetActions(actions []types.Action) {
-	list.actions = make([]types.Action, len(actions)+1)
-	copy(list.actions, actions)
-
-	list.actions[len(actions)] = types.Action{
-		Type:  types.ReloadAction,
-		Title: "Reload Page",
-		Key:   "r",
-	}
-}
-
 func (c *List) RefreshDetail() {
 	c.viewport.SetYOffset(0)
 	detailWidth := c.viewport.Width - 2 // take padding into account
-	detailContent := wrap.String(wordwrap.String(c.detailContent, detailWidth), detailWidth)
+	detailContent := wrap.String(wordwrap.String(c.previewContent, detailWidth), detailWidth)
 
 	c.viewport.SetContent(detailContent)
 }
@@ -185,7 +171,7 @@ func (c *List) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
 	c.actionList.SetSize(width, height)
-	if c.ShowDetail {
+	if c.ShowPreview {
 		listWidth := width/3 - 1 // take separator into account
 		c.filter.SetSize(listWidth, availableHeight)
 		c.viewport.Width = width - listWidth
@@ -241,25 +227,27 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 type ContentMsg string
 
 func (l *List) updateSelection(filter Filter) FilterItem {
-	actions := make([]types.Action, 0)
 	if filter.Selection() == nil {
-		l.detailContent = ""
+		l.previewContent = ""
+		l.actionList.SetTitle("Empty Actions")
+		l.actionList.SetActions(l.emptyActions...)
+
+		if len(l.emptyActions) > 0 {
+			l.footer.SetBindings(
+				key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", l.emptyActions[0].Title)),
+				key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+			)
+		}
 	} else {
 		item := filter.Selection().(ListItem)
 		l.actionList.SetTitle(item.Title)
-		actions = append(actions, item.Actions...)
-	}
-
-	actions = append(actions, l.actions...)
-
-	l.actionList.SetActions(actions...)
-	if len(actions) > 0 {
-		l.footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
-			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
-		)
-	} else {
-		l.footer.SetBindings()
+		l.actionList.SetActions(item.Actions...)
+		if len(item.Actions) > 0 {
+			l.footer.SetBindings(
+				key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", item.Actions[0].Title)),
+				key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+			)
+		}
 	}
 
 	return l.filter.Selection()
@@ -271,8 +259,8 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEscape:
+		switch msg.String() {
+		case "esc":
 			if c.actionList.Focused() {
 				break
 			} else if c.header.input.Value() != "" {
@@ -289,15 +277,19 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return PopPageMsg{}
 				}
 			}
-		case tea.KeyShiftDown:
+		case "tab":
+			if !c.actionList.Focused() {
+				return c, c.actionList.Focus()
+			}
+		case "shift+down":
 			c.viewport.LineDown(1)
 			return c, nil
-		case tea.KeyShiftUp:
+		case "shift+up":
 			c.viewport.LineUp(1)
 			return c, nil
 		}
 	case SelectionChangeMsg:
-		if !c.ShowDetail {
+		if !c.ShowPreview {
 			return c, nil
 		}
 
@@ -322,7 +314,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	case ContentMsg:
 		c.SetIsLoading(false)
-		c.detailContent = string(msg)
+		c.previewContent = string(msg)
 		c.RefreshDetail()
 		return c, nil
 	}
@@ -367,7 +359,7 @@ func (c List) View() string {
 		return c.actionList.View()
 	}
 
-	if c.ShowDetail {
+	if c.ShowPreview {
 		var separatorChars = make([]string, c.viewport.Height)
 		for i := 0; i < c.viewport.Height; i++ {
 			separatorChars[i] = "│"

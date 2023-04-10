@@ -9,44 +9,8 @@ You output only the code. YOU NEVER OUTPUT \`\`\`, if it's present in the output
 The script output will be a JSON payload conform to the PageSchema typescript type defined below.
 
 // PageSchema typescript type
-export type PageSchema = List | Detail;
+export type Page = List | Detail | Form;
 export type Action =
-  | {
-      /**
-       * The type of the action.
-       */
-      type: "fetch-url";
-      /**
-       * The title of the action.
-       */
-      title?: string;
-      /**
-       * The key used to trigger the action. 'a' will map to ctrl+a.
-       */
-      key?: string;
-      /**
-       * The url to fetch.
-       */
-      url: string;
-      /**
-       * The method to use when fetching.
-       */
-      method?: "GET" | "POST" | "PUT" | "DELETE";
-      /**
-       * The body to send when fetching.
-       */
-      body?: string;
-      /**
-       * The headers to send when fetching.
-       */
-      headers?: {
-        [k: string]: string;
-      };
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
-    }
   | {
       /**
        * The type of the action.
@@ -61,7 +25,7 @@ export type Action =
        */
       text: string;
       /**
-       * The key used to trigger the action. 'a' will map to ctrl+a.
+       * The key used as a shortcut.
        */
       key?: string;
     }
@@ -75,7 +39,7 @@ export type Action =
        */
       title?: string;
       /**
-       * The key used to trigger the action. 'a' will map to ctrl+a.
+       * The key used as a shortcut.
        */
       key?: string;
       /**
@@ -93,7 +57,7 @@ export type Action =
        */
       title?: string;
       /**
-       * The key used to trigger the action. 'a' will map to ctrl+a.
+       * The key used as a shortcut.
        */
       key?: string;
       /**
@@ -111,13 +75,21 @@ export type Action =
        */
       title?: string;
       /**
-       * The key used to trigger the action. 'a' will map to ctrl+a.
+       * The inputs to show when the action is run.
+       */
+      inputs?: Input[];
+      /**
+       * The key used as a shortcut.
        */
       key?: string;
       /**
        * The command to run.
        */
       command: string;
+      /**
+       * The input to pass to the command stdin.
+       */
+      input?: string;
       /**
        * The directory where the command should be run.
        */
@@ -126,28 +98,49 @@ export type Action =
        * The action to take when the command succeeds.
        */
       onSuccess?: "reload" | "exit" | "push";
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
     }
   | {
       /**
        * The type of the action.
        */
-      type: "read-file";
+      type: "push-page";
       /**
        * The title of the action.
        */
       title?: string;
       /**
-       * The key used to trigger the action. 'a' will map to ctrl+a.
+       * The key used as a shortcut.
        */
       key?: string;
-      /**
-       * The path to read.
-       */
-      path: string;
+      page:
+        | {
+            /**
+             * The type of the page.
+             */
+            type: "static";
+            /**
+             * The path of the page.
+             */
+            path: string;
+          }
+        | {
+            /**
+             * The type of the page.
+             */
+            type: "dynamic";
+            /**
+             * The command to run.
+             */
+            command: string;
+            /**
+             * The input to pass to the command stdin.
+             */
+            input?: string;
+            /**
+             * The directory where the command should be run.
+             */
+            dir?: string;
+          };
     };
 export type Input =
   | {
@@ -264,6 +257,7 @@ export type Input =
  */
 export type Preview =
   | {
+      type: "static";
       /**
        * The text to show in the preview.
        */
@@ -274,6 +268,7 @@ export type Preview =
       language?: string;
     }
   | {
+      type: "dynamic";
       /**
        * The command used to generate the preview.
        */
@@ -297,18 +292,20 @@ export interface List {
    * The title of the page.
    */
   title?: string;
-  /**
-   * The text to show when the list is empty.
-   */
-  emptyText?: string;
+  emptyView?: {
+    /**
+     * The text to show when the list is empty.
+     */
+    text: string;
+    /**
+     * The actions to show when the list is empty.
+     */
+    actions?: Action[];
+  };
   /**
    * Whether to show details on the right side of the list.
    */
   showPreview?: boolean;
-  /**
-   * The global actions attached to the list.
-   */
-  actions?: Action[];
   /**
    * The items in the list.
    */
@@ -333,6 +330,10 @@ export interface Listitem {
    */
   accessories?: string[];
   /**
+   * The inputs to show when the action is run.
+   */
+  inputs?: Input[];
+  /**
    * The actions attached to the item.
    */
   actions?: Action[];
@@ -354,4 +355,11 @@ export interface Detail {
    * The actions attached to the detail view.
    */
   actions?: Action[];
+}
+export interface Form {
+  /**
+   * The type of the response.
+   */
+  type: "form";
+  submitAction: Action[];
 }

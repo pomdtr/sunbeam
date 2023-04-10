@@ -11,12 +11,12 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.12
 	github.com/joho/godotenv v1.5.1
-	github.com/junegunn/fzf v0.0.0-20230327032137-ae745d9397bd
-	github.com/otiai10/copy v1.9.0
+	github.com/junegunn/fzf v0.0.0-20230406044318-f1a962965259
+	github.com/otiai10/copy v1.10.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
-	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
-	github.com/sashabaranov/go-openai v1.6.1
-	github.com/spf13/cobra v1.6.1
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
+	github.com/sashabaranov/go-openai v1.7.0
+	github.com/spf13/cobra v1.7.0
 	github.com/traefik/yaegi v0.15.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -24,7 +24,7 @@ require (
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/dlclark/regexp2 v1.8.1 // indirect
+	github.com/dlclark/regexp2 v1.9.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -44,7 +44,7 @@ require (
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/term v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/term v0.7.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 )

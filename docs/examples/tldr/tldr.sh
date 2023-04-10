@@ -8,6 +8,7 @@ PLATFORM="${1:-osx}"
 tldr --list --platform="$PLATFORM" | sunbeam query --arg platform="$PLATFORM" -R '{
     title: .,
     preview: {
+      type: "dynamic",
       command: "tldr --color=always --platform=\($platform) \(.)",
     },
     actions: [

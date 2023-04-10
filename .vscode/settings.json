@@ -1,7 +1,8 @@
 {
     "markdownlint.ignore": [
         "docs/src/SUMMARY.md",
-        "docs/cli.md"
+        "docs/cli.md",
+        "docs/types.md"
     ],
     "browse-lite.startUrl": "http://localhost:3000",
     "search.exclude": {

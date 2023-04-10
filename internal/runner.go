@@ -24,6 +24,8 @@ type CommandRunner struct {
 	header Header
 	footer Footer
 
+	currentPage types.Page
+
 	form   *Form
 	list   *List
 	detail *Detail
@@ -36,6 +38,7 @@ const (
 	RunnerViewList RunnerView = iota
 	RunnerViewDetail
 	RunnerViewLoading
+	RunnerViewForm
 )
 
 type PageValidator func([]byte) error
@@ -55,8 +58,8 @@ func (c *CommandRunner) Init() tea.Cmd {
 
 type CommandOutput []byte
 
-func (c *CommandRunner) Refresh() tea.Msg {
-	output, err := c.Generator()
+func (runner *CommandRunner) Refresh() tea.Msg {
+	output, err := runner.Generator()
 	if err != nil {
 		return err
 	}
@@ -68,36 +71,50 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 	action = ExpandAction(action, values)
 	switch action.Type {
 	case types.ReloadAction:
-		runner.form = nil
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.OpenFileAction:
-		if err := browser.OpenURL(action.Path); err != nil {
-			return func() tea.Msg {
-				return err
-			}
-		}
-
-		return tea.Quit
-	case types.OpenUrlAction:
-		if err := browser.OpenURL(action.Url); err != nil {
-			return func() tea.Msg {
-				return err
-			}
-		}
-
-		return tea.Quit
-	case types.CopyAction:
-		err := clipboard.WriteAll(action.Text)
-		if err != nil {
-			return func() tea.Msg {
-				return fmt.Errorf("failed to copy text to clipboard: %s", err)
-			}
-		}
-
-		return tea.Quit
-	case types.ReadAction:
 		return func() tea.Msg {
-			generator := NewFileGenerator(action.Path)
+			if err := browser.OpenURL(action.Path); err != nil {
+				return func() tea.Msg {
+					return err
+				}
+			}
+			return tea.Quit()
+		}
+	case types.OpenUrlAction:
+		return func() tea.Msg {
+			if err := browser.OpenURL(action.Url); err != nil {
+				return func() tea.Msg {
+					return err
+				}
+			}
+
+			return tea.Quit()
+		}
+	case types.CopyAction:
+		return func() tea.Msg {
+			err := clipboard.WriteAll(action.Text)
+			if err != nil {
+				return func() tea.Msg {
+					return fmt.Errorf("failed to copy text to clipboard: %s", err)
+				}
+			}
+			return tea.Quit()
+		}
+
+	case types.PushPageAction:
+		return func() tea.Msg {
+			if action.Page == nil {
+				return fmt.Errorf("page is nil")
+			}
+			var generator PageGenerator
+			if action.Page.Type == "static" {
+				generator = NewFileGenerator(action.Page.Path)
+			} else if action.Page.Type == "dynamic" {
+				generator = NewCommandGenerator(action.Page.Command, "", action.Page.Dir)
+			} else {
+				return fmt.Errorf("unknown page type")
+			}
 			return PushPageMsg{
 				runner: NewRunner(generator),
 			}
@@ -129,9 +146,8 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 					return err
 				}
 
-				return tea.Quit
+				return tea.Quit()
 			}
-
 		default:
 			return func() tea.Msg {
 				return fmt.Errorf("unsupported onSuccess")
@@ -146,6 +162,8 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 
 func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
 	switch c.currentView {
+	case RunnerViewForm:
+		return c.form.SetIsLoading(isLoading)
 	case RunnerViewList:
 		return c.list.SetIsLoading(isLoading)
 	case RunnerViewDetail:
@@ -163,17 +181,14 @@ func (c *CommandRunner) SetSize(width, height int) {
 	c.header.Width = width
 	c.footer.Width = width
 
-	if c.form != nil {
-		c.form.SetSize(width, height)
-		return
-	}
-
 	if c.err != nil {
 		c.err.SetSize(width, height)
 		return
 	}
 
 	switch c.currentView {
+	case RunnerViewForm:
+		c.form.SetSize(width, height)
 	case RunnerViewList:
 		c.list.SetSize(width, height)
 	case RunnerViewDetail:
@@ -186,9 +201,15 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if runner.form != nil {
-				runner.form = nil
-				return runner, nil
+			if runner.currentView == RunnerViewForm {
+				switch runner.currentPage.Type {
+				case types.ListPage:
+					runner.currentView = RunnerViewList
+					return runner, nil
+				case types.DetailPage:
+					runner.currentView = RunnerViewDetail
+					return runner, nil
+				}
 			}
 
 			if runner.currentView == RunnerViewLoading {
@@ -212,6 +233,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			page.Title = "Sunbeam"
 		}
 
+		runner.currentPage = page
 		switch page.Type {
 		case types.DetailPage:
 			var detailFunc func() string
@@ -239,6 +261,27 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()
+		case types.FormPage:
+			runner.currentView = RunnerViewForm
+			var items []FormItem
+			for i, input := range page.SubmitAction.Inputs {
+				item, err := NewFormItem(input)
+				if err != nil {
+					return runner, func() tea.Msg {
+						return err
+					}
+				}
+				items[i] = item
+			}
+
+			runner.form, err = NewForm(*page.SubmitAction)
+			if err != nil {
+				return runner, func() tea.Msg {
+					return err
+				}
+			}
+			runner.form.SetSize(runner.width, runner.height)
+			return runner, runner.form.Init()
 		case types.ListPage:
 			runner.currentView = RunnerViewList
 
@@ -270,22 +313,16 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 	case types.Action:
-		if len(msg.Inputs) > len(runner.values) {
-			formItems := make([]FormItem, len(msg.Inputs))
-			for i, input := range msg.Inputs {
-				item, err := NewFormItem(input)
-				if err != nil {
-					return runner, func() tea.Msg {
-						return fmt.Errorf("failed to create form input: %s", err)
-					}
-				}
-				formItems[i] = item
-			}
 
-			form := NewForm(formItems, func(values map[string]string) tea.Msg {
-				runner.values = values
-				return msg
-			})
+		if len(msg.Inputs) > len(runner.values) {
+			runner.currentView = RunnerViewForm
+
+			form, err := NewForm(msg)
+			if err != nil {
+				return runner, func() tea.Msg {
+					return err
+				}
+			}
 
 			runner.form = form
 			runner.SetSize(runner.width, runner.height)
@@ -338,15 +375,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *CommandRunner) View() string {
-	if c.form != nil {
-		return c.form.View()
-	}
-
 	if c.err != nil {
 		return c.err.View()
 	}
 
 	switch c.currentView {
+	case RunnerViewForm:
+		return c.form.View()
 	case RunnerViewList:
 		return c.list.View()
 	case RunnerViewDetail:

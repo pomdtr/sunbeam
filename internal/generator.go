@@ -144,12 +144,16 @@ func expandPage(page types.Page, dir string) (types.Page, error) {
 			if action.Dir == "" {
 				action.Dir = dir
 			}
-		case types.ReadAction:
+		case types.PushPageAction:
 			if action.Title == "" {
-				action.Title = "Read"
+				action.Title = "Push"
 			}
 
-			if !filepath.IsAbs(action.Path) && action.Dir == "" {
+			if action.Page.Dir == "" {
+				action.Page.Dir = dir
+			}
+
+			if !filepath.IsAbs(action.Page.Path) {
 				action.Path = filepath.Join(dir, action.Path)
 			}
 		case types.OpenFileAction:

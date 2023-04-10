@@ -12,7 +12,14 @@
             "preLaunchTask": "start sunbeam"
         },
         {
-            "name": "Launch Package",
+            "name": "sunbeam root",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+        },
+        {
+            "name": "sunbeam ask",
             "type": "go",
             "request": "launch",
             "mode": "auto",

@@ -70,20 +70,24 @@ func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
 	return d.header.SetIsLoading(isLoading)
 }
 
-func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyRunes:
 			switch msg.String() {
 			case "q", "Q":
-				return &c, tea.Quit
+				return c, tea.Quit
+			case "tab":
+				if !c.actions.Focused() {
+					return c, c.actions.Focus()
+				}
 			}
 		case tea.KeyEscape:
 			if c.actions.Focused() {
 				break
 			}
-			return &c, func() tea.Msg {
+			return c, func() tea.Msg {
 				return PopPageMsg{}
 			}
 
@@ -113,7 +117,7 @@ func (c Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	c.header, cmd = c.header.Update(msg)
 	cmds = append(cmds, cmd)
 
-	return &c, tea.Batch(cmds...)
+	return c, tea.Batch(cmds...)
 }
 
 func (c *Detail) RefreshContent() {

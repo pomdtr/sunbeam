@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../schemas/page.schema.json
+type: form
+submitAction:
+  type: run-command
+  title: "Run Command"
+  command: "echo ${input:textfield}"
+  inputs:
+    - type: textfield
+      name: "textfield"
+      title: "Textfield"
+      default: "yolo"

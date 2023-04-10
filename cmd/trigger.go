@@ -57,7 +57,7 @@ func NewTriggerCmd() *cobra.Command {
 			var generator internal.PageGenerator
 			action = internal.ExpandAction(action, inputs)
 			switch action.Type {
-			case types.ReadAction:
+			case types.PushPageAction:
 				generator = internal.NewFileGenerator(action.Path)
 			case types.RunAction:
 				if action.OnSuccess != types.PushOnSuccess {

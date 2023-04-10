@@ -80,10 +80,12 @@ func NewCmdAsk() *cobra.Command {
 				}
 
 				code := extractMarkdownCodeblock(res.Choices[0].Message.Content)
+				// code := "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Hello World\")\n}"
 
 				page := types.Page{
 					Type: types.DetailPage,
 					Preview: &types.Preview{
+						Type:     "static",
 						Language: "go",
 						Text:     code,
 					},
@@ -95,10 +97,19 @@ func NewCmdAsk() *cobra.Command {
 						},
 						{
 							Type:      types.RunAction,
-							Title:     "Preview Page",
+							Title:     "Run Code",
 							OnSuccess: types.PushOnSuccess,
 							Command:   "sunbeam eval",
 							Input:     code,
+						},
+						{
+							Type:      types.RunAction,
+							Title:     "Save Code",
+							Command:   "cp /dev/stdin ${input:filepath}",
+							OnSuccess: types.ExitOnSuccess,
+							Inputs: []types.Input{
+								{Type: types.TextFieldInput, Name: "filepath", Title: "Filepath"},
+							},
 						},
 					},
 				}

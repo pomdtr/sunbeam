@@ -100,7 +100,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 							Title:    "Read Current Dir Manifest",
 							Subtitle: "Sunbeam",
 							Actions: []types.Action{
-								{Type: types.ReadAction, Title: "Read", Path: manifestPath},
+								{
+									Type: types.PushPageAction, Title: "Read", Page: &types.PageRef{
+										Type: "static",
+										Path: manifestPath,
+									},
+								},
 							},
 						})
 

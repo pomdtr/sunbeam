@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Page = List | Detail;
+export type Page = List | Detail | Form;
 export type Action =
   | {
       /**
@@ -71,6 +71,10 @@ export type Action =
        */
       title?: string;
       /**
+       * The inputs to show when the action is run.
+       */
+      inputs?: Input[];
+      /**
        * The key used as a shortcut.
        */
       key?: string;
@@ -90,16 +94,12 @@ export type Action =
        * The action to take when the command succeeds.
        */
       onSuccess?: "reload" | "exit" | "push";
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
     }
   | {
       /**
        * The type of the action.
        */
-      type: "read-file";
+      type: "push-page";
       /**
        * The title of the action.
        */
@@ -108,17 +108,34 @@ export type Action =
        * The key used as a shortcut.
        */
       key?: string;
-      /**
-       * The path to read.
-       */
-      path: string;
-    }
-  | {
-      type: "push-page";
       page:
-        | string
         | {
-            [k: string]: unknown;
+            /**
+             * The type of the page.
+             */
+            type: "static";
+            /**
+             * The path of the page.
+             */
+            path: string;
+          }
+        | {
+            /**
+             * The type of the page.
+             */
+            type: "dynamic";
+            /**
+             * The command to run.
+             */
+            command: string;
+            /**
+             * The input to pass to the command stdin.
+             */
+            input?: string;
+            /**
+             * The directory where the command should be run.
+             */
+            dir?: string;
           };
     };
 export type Input =
@@ -236,6 +253,7 @@ export type Input =
  */
 export type Preview =
   | {
+      type: "static";
       /**
        * The text to show in the preview.
        */
@@ -246,6 +264,7 @@ export type Preview =
       language?: string;
     }
   | {
+      type: "dynamic";
       /**
        * The command used to generate the preview.
        */
@@ -269,18 +288,20 @@ export interface List {
    * The title of the page.
    */
   title?: string;
-  /**
-   * The text to show when the list is empty.
-   */
-  emptyText?: string;
+  emptyView?: {
+    /**
+     * The text to show when the list is empty.
+     */
+    text: string;
+    /**
+     * The actions to show when the list is empty.
+     */
+    actions?: Action[];
+  };
   /**
    * Whether to show details on the right side of the list.
    */
   showPreview?: boolean;
-  /**
-   * The global actions attached to the list.
-   */
-  actions?: Action[];
   /**
    * The items in the list.
    */
@@ -305,6 +326,10 @@ export interface Listitem {
    */
   accessories?: string[];
   /**
+   * The inputs to show when the action is run.
+   */
+  inputs?: Input[];
+  /**
    * The actions attached to the item.
    */
   actions?: Action[];
@@ -326,4 +351,11 @@ export interface Detail {
    * The actions attached to the detail view.
    */
   actions?: Action[];
+}
+export interface Form {
+  /**
+   * The type of the response.
+   */
+  type: "form";
+  submitAction: Action[];
 }

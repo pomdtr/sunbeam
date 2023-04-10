@@ -5,21 +5,24 @@ items:
   - title: Search Bitwarden Items
     subtitle: Bitwarden
     actions:
-      - type: run-command
+      - type: push-page
         title: Run
-        onSuccess: push
-        command: "./bitwarden/bitwarden.sh"
+        page:
+          type: dynamic
+          command: "./bitwarden/bitwarden.sh"
   - title: Highlight Example
     subtitle: Highlight
     actions:
       - title: Highlight Detail
-        type: run-command
-        onSuccess: push
-        command: "./highlight/highlight.sh"
+        type: push-page
+        page:
+          type: dynamic
+          command: "./highlight/highlight.sh"
       - title: Highlight List
-        type: run-command
-        onSuccess: push
-        command: "./highlight/list.sh"
+        type: push-page
+        page:
+          type: dynamic
+          command: "./highlight/list.sh"
   - title: DevDocs
     subtitle: Examples
     actions:
@@ -45,7 +48,6 @@ items:
       - type: run-command
         title: Browse Custom Dir
         command: "./file-browser/file-browser.py {{dir}}"
-        onSuccess: push
         inputs:
           - name: dir
             title: Directory

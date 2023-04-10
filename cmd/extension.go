@@ -91,6 +91,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								Type:  types.OpenUrlAction,
 								Title: "Open in Browser",
 								Url:   repo.HtmlUrl,
+								Key:   "o",
 							},
 						},
 					})
@@ -251,7 +252,8 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 				}
 
 				page := types.Page{
-					Type: types.ListPage,
+					Type:  types.ListPage,
+					Items: listItems,
 					Actions: []types.Action{
 						{
 							Type:      types.RunAction,
@@ -268,7 +270,6 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 							},
 						},
 					},
-					Items: listItems,
 				}
 
 				return json.Marshal(page)
@@ -291,12 +292,11 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 }
 
 func NewExtensionCreateCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new extension",
-		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionName := args[0]
+			extensionName, _ := cmd.Flags().GetString("name")
 			cwd, _ := os.Getwd()
 			extensionDir := path.Join(cwd, extensionName)
 			if _, err := os.Stat(extensionDir); !os.IsNotExist(err) {
@@ -316,6 +316,9 @@ func NewExtensionCreateCmd() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringP("name", "n", "", "Extension name")
+	return cmd
 }
 
 func NewExtensionExecCmd(extensionDir string) *cobra.Command {
@@ -358,7 +361,7 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 }
 
 func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install a sunbeam extension from a repository",
 		Args:  cobra.ExactArgs(2),
@@ -382,8 +385,8 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionName := args[0]
-			extensionOrigin := args[1]
+			extensionName, _ := cmd.Flags().GetString("name")
+			extensionOrigin := args[0]
 			if extensionOrigin == "." {
 				cwd, _ := os.Getwd()
 				targetDir := path.Join(extensionDir, extensionName)
@@ -439,6 +442,10 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringP("name", "n", "", "Extension name (defaults to repository name)")
+	cmd.MarkFlagRequired("name")
+	return cmd
 }
 
 func releaseInstall(release *utils.Release, targetDir string) error {

@@ -41,22 +41,25 @@ def handle(args: argparse.Namespace):
             json.dumps(
                 {
                     "type": "list",
-                    "actions": [
-                        {
-                            "type": "run-command",
-                            "title": "Add Item",
-                            "command": f"{sys.argv[0]} add ${{input:title}}",
-                            "key": "n",
-                            "inputs": [
-                                {
-                                    "name": "title",
-                                    "title": "Title",
-                                    "type": "textfield",
-                                }
-                            ],
-                            "onSuccess": "reload",
-                        }
-                    ],
+                    "emptyView": {
+                        "text": "No items",
+                        "actions": [
+                            {
+                                "type": "run-command",
+                                "title": "Add Item",
+                                "command": f"{sys.argv[0]} add ${{input:title}}",
+                                "key": "n",
+                                "inputs": [
+                                    {
+                                        "name": "title",
+                                        "title": "Title",
+                                        "type": "textfield",
+                                    }
+                                ],
+                                "onSuccess": "reload",
+                            }
+                        ],
+                    },
                     "items": [
                         {
                             "id": key,
@@ -88,6 +91,20 @@ def handle(args: argparse.Namespace):
                                     "title": "Delete",
                                     "onSuccess": "reload",
                                     "command": f"{sys.argv[0]} delete {key}",
+                                },
+                                {
+                                    "type": "run-command",
+                                    "title": "Add Item",
+                                    "command": f"{sys.argv[0]} add ${{input:title}}",
+                                    "key": "n",
+                                    "inputs": [
+                                        {
+                                            "name": "title",
+                                            "title": "Title",
+                                            "type": "textfield",
+                                        }
+                                    ],
+                                    "onSuccess": "reload",
                                 },
                             ],
                         }

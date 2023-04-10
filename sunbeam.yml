@@ -3,38 +3,20 @@ type: list
 items:
   - title: Show Examples
     actions:
-      - type: read-file
+      - type: push-page
         title: Examples
-        path: "./docs/examples/sunbeam.yml"
+        page:
+          type: static
+          path: "./docs/examples/sunbeam.yml"
   - title: Show Getting Started
     actions:
-      - type: read-file
+      - type: push-page
         title: Getting Started
-        path: "./docs/getting-started/sunbeam.yml"
-  - title: Format
-    actions:
-      - type: run-command
-        onSuccess: exit
-        command: "echo ${input:format} ${input:path} ${input:message} ${input:dropdown}"
+        page:
+          type: static
+          path: "./docs/getting-started/sunbeam.yml ${input:dir}"
         inputs:
-          - type: checkbox
-            name: "format"
-            title: "Format"
-            label: "Format"
           - type: textfield
-            name: "path"
-            title: "Path"
-            default: "./"
-          - type: textarea
-            name: "message"
-            title: "Message"
-            default: "yolo"
-          - type: dropdown
-            name: "dropdown"
-            title: "Dropdown"
-            default: "yolo"
-            items:
-              - title: "yolo"
-                value: "yolo"
-              - title: "yolo2"
-                value: "yolo2"
+            name: "dir"
+            title: "Directory"
+            default: "/"

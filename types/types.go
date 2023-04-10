@@ -13,6 +13,7 @@ const (
 	Unknown PageType = iota
 	DetailPage
 	ListPage
+	FormPage
 )
 
 func (p *PageType) UnmarshalJSON(b []byte) error {
@@ -26,6 +27,8 @@ func (p *PageType) UnmarshalJSON(b []byte) error {
 		*p = DetailPage
 	case "list":
 		*p = ListPage
+	case "form":
+		*p = FormPage
 	default:
 		return fmt.Errorf("unknown page type: %s", s)
 	}
@@ -39,6 +42,8 @@ func (p PageType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("detail")
 	case ListPage:
 		return json.Marshal("list")
+	case FormPage:
+		return json.Marshal("form")
 	default:
 		return nil, fmt.Errorf("unknown page type: %d", p)
 	}
@@ -55,6 +60,8 @@ func (p *PageType) UnmarshalYAML(node *yaml.Node) error {
 		*p = DetailPage
 	case "list":
 		*p = ListPage
+	case "form":
+		*p = FormPage
 	default:
 		return fmt.Errorf("unknown page type: %s", s)
 	}
@@ -68,6 +75,8 @@ func (p PageType) MarshalYAML() (interface{}, error) {
 		return "detail", nil
 	case ListPage:
 		return "list", nil
+	case FormPage:
+		return "form", nil
 	default:
 		return nil, fmt.Errorf("unknown page type: %d", p)
 	}
@@ -78,16 +87,23 @@ type Page struct {
 	Title   string   `json:"title,omitempty" yaml:"title,omitempty"`
 	Actions []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
 
+	// Form page
+	SubmitAction *Action `json:"submitAction,omitempty" yaml:"submitAction,omitempty"`
+
 	// Detail page
 	Preview *Preview `json:"preview,omitempty" yaml:"preview,omitempty"`
 
 	// List page
-	ShowDetail bool       `json:"showDetail,omitempty" yaml:"showDetail,omitempty"`
-	EmptyText  string     `json:"emptyText,omitempty" yaml:"emptyText,omitempty"`
-	Items      []ListItem `json:"items,omitempty" yaml:"items,omitempty"`
+	ShowPreview bool `json:"showPreview,omitempty" yaml:"showPreview,omitempty"`
+	EmptyView   *struct {
+		Text    string   `json:"text,omitempty" yaml:"text,omitempty"`
+		Actions []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
+	} `json:"emptyView,omitempty" yaml:"emptyView,omitempty"`
+	Items []ListItem `json:"items,omitempty" yaml:"items,omitempty"`
 }
 
 type Preview struct {
+	Type     string `json:"type,omitempty" yaml:"type,omitempty"`
 	Language string `json:"language,omitempty" yaml:"language,omitempty"`
 	Text     string `json:"text,omitempty" yaml:"text,omitempty"`
 	Command  string `json:"command,omitempty" yaml:"command,omitempty"`
@@ -215,7 +231,7 @@ const (
 	CopyAction
 	OpenFileAction
 	OpenUrlAction
-	ReadAction
+	PushPageAction
 	RunAction
 	ReloadAction
 )
@@ -233,8 +249,8 @@ func (a *ActionType) UnmarshalJSON(bytes []byte) error {
 		*a = OpenFileAction
 	case "open-url":
 		*a = OpenUrlAction
-	case "read-file":
-		*a = ReadAction
+	case "push-page":
+		*a = PushPageAction
 	case "run-command":
 		*a = RunAction
 	case "reload-page":
@@ -254,8 +270,8 @@ func (a ActionType) MarshalJSON() ([]byte, error) {
 		return json.Marshal("open-file")
 	case OpenUrlAction:
 		return json.Marshal("open-url")
-	case ReadAction:
-		return json.Marshal("read-file")
+	case PushPageAction:
+		return json.Marshal("push-page")
 	case RunAction:
 		return json.Marshal("run-command")
 	case ReloadAction:
@@ -278,8 +294,8 @@ func (a *ActionType) UnmarshalYAML(node *yaml.Node) error {
 		*a = OpenFileAction
 	case "open-url":
 		*a = OpenUrlAction
-	case "read-file":
-		*a = ReadAction
+	case "push-page":
+		*a = PushPageAction
 	case "run-command":
 		*a = RunAction
 	case "reload-page":
@@ -299,8 +315,8 @@ func (a ActionType) MarshalYAML() (interface{}, error) {
 		return "open-file", nil
 	case OpenUrlAction:
 		return "open-url", nil
-	case ReadAction:
-		return "read-file", nil
+	case PushPageAction:
+		return "push-page", nil
 	case RunAction:
 		return "run-command", nil
 	case ReloadAction:
@@ -385,16 +401,27 @@ func (o OnSuccessType) MarshalYAML() (interface{}, error) {
 	}
 }
 
+type PageRef struct {
+	Type    string `json:"type" yaml:"type"`
+	Path    string `json:"path" yaml:"path"`
+	Command string `json:"command,omitempty" yaml:"command,omitempty"`
+	Dir     string `json:"dir,omitempty" yaml:"dir,omitempty"`
+}
+
 type Action struct {
-	Title string     `json:"title,omitempty" yaml:"title,omitempty"`
-	Type  ActionType `json:"type" yaml:"type"`
-	Key   string     `json:"key,omitempty" yaml:"key,omitempty"`
+	Title  string     `json:"title,omitempty" yaml:"title,omitempty"`
+	Type   ActionType `json:"type" yaml:"type"`
+	Key    string     `json:"key,omitempty" yaml:"key,omitempty"`
+	Inputs []Input    `json:"inputs,omitempty" yaml:"inputs,omitempty"`
 
 	// copy
 	Text string `json:"text,omitempty" yaml:"text,omitempty"`
 
-	// edit / open
+	// open
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
+
+	// push
+	Page *PageRef `json:"page,omitempty" yaml:"page,omitempty"`
 
 	// open
 	Url string `json:"url,omitempty" yaml:"url,omitempty"`
@@ -403,6 +430,5 @@ type Action struct {
 	Command   string        `json:"command,omitempty" yaml:"command,omitempty"`
 	Input     string        `json:"input,omitempty" yaml:"input,omitempty"`
 	Dir       string        `json:"dir,omitempty" yaml:"dir,omitempty"`
-	Inputs    []Input       `json:"inputs,omitempty" yaml:"inputs,omitempty"`
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
