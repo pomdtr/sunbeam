@@ -15,7 +15,7 @@ import (
 
 func NewCmdEval() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "eval",
+		Use:  "eval [file]",
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			generator := func() ([]byte, error) {

@@ -186,7 +186,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "open-file",
+                            "const": "open-path",
                             "description": "The type of the action."
                         },
                         "title": {
@@ -244,7 +244,8 @@
                 {
                     "required": [
                         "type",
-                        "command"
+                        "command",
+                        "onSuccess"
                     ],
                     "additionalProperties": false,
                     "properties": {
@@ -283,8 +284,7 @@
                             "type": "string",
                             "enum": [
                                 "reload",
-                                "exit",
-                                "push"
+                                "exit"
                             ],
                             "description": "The action to take when the command succeeds."
                         }

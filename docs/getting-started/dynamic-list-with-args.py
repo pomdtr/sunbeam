@@ -22,7 +22,7 @@ items = [
         "subtitle": str(filepath),
         "actions": [
             {
-                "type": "open-file",
+                "type": "open-path",
                 "title": "Open File",
                 "path": str(filepath),
             },

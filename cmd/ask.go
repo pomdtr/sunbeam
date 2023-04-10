@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"regexp"
 	"strings"
+	"text/template"
 
 	_ "embed"
 
@@ -18,8 +20,44 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//go:embed templates/system-message.txt
-var systemMessage string
+//go:embed templates/create-script-prompt.md
+var createScriptMessageTemplate string
+var createScriptMessage string
+
+//go:embed templates/edit-script-prompt.md
+var editScriptMessageTemplate string
+var editScriptMessage string
+
+func init() {
+	renderTemplate := func(templateStr string, data any) (string, error) {
+		t, err := template.New("").Parse(templateStr)
+		if err != nil {
+			return "", err
+		}
+
+		var b strings.Builder
+		if err := t.Execute(&b, data); err != nil {
+			return "", err
+		}
+		return b.String(), nil
+	}
+
+	data := struct {
+		Typescript string
+	}{
+		Typescript: types.TypeScript,
+	}
+
+	var err error
+	createScriptMessage, err = renderTemplate(createScriptMessageTemplate, data)
+	if err != nil {
+		panic(err)
+	}
+	editScriptMessage, err = renderTemplate(editScriptMessageTemplate, data)
+	if err != nil {
+		panic(err)
+	}
+}
 
 var re = regexp.MustCompile("`{3}[\\w]*\n+([\\S\\s]+?\n)`{3}")
 
@@ -33,10 +71,12 @@ func extractMarkdownCodeblock(markdown string) string {
 }
 
 func NewCmdAsk() *cobra.Command {
+	log.Fatalf(createScriptMessage)
 	cmd := &cobra.Command{
 		Use:   "ask",
 		Short: "Ask a question",
 		Long:  `Ask a question`,
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			token, ok := os.LookupEnv("OPENAI_API_KEY")
 			if !ok {
@@ -57,7 +97,7 @@ func NewCmdAsk() *cobra.Command {
 				messages = []openai.ChatCompletionMessage{
 					{
 						Role:    openai.ChatMessageRoleSystem,
-						Content: systemMessage,
+						Content: createScriptMessage,
 					},
 					{
 						Role:    openai.ChatMessageRoleUser,
@@ -85,7 +125,7 @@ func NewCmdAsk() *cobra.Command {
 				page := types.Page{
 					Type: types.DetailPage,
 					Preview: &types.Preview{
-						Type:     "static",
+						Type:     types.StaticPreviewType,
 						Language: "go",
 						Text:     code,
 					},
@@ -96,17 +136,20 @@ func NewCmdAsk() *cobra.Command {
 							Text:  code,
 						},
 						{
-							Type:      types.RunAction,
-							Title:     "Run Code",
-							OnSuccess: types.PushOnSuccess,
-							Command:   "sunbeam eval",
-							Input:     code,
+							Type:  types.PushPageAction,
+							Title: "Run Code",
+							Page: &types.PageRef{
+								Type:    "dynamic",
+								Command: "sunbeam eval",
+							},
+							Input: code,
 						},
 						{
 							Type:      types.RunAction,
 							Title:     "Save Code",
 							Command:   "cp /dev/stdin ${input:filepath}",
 							OnSuccess: types.ExitOnSuccess,
+							Input:     code,
 							Inputs: []types.Input{
 								{Type: types.TextFieldInput, Name: "filepath", Title: "Filepath"},
 							},

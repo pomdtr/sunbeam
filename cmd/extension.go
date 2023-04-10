@@ -81,10 +81,12 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 						},
 						Actions: []types.Action{
 							{
-								Type:      types.RunAction,
-								Title:     "View Readme",
-								OnSuccess: types.PushOnSuccess,
-								Command:   fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
+								Type:  types.PushPageAction,
+								Title: "View Readme",
+								Page: &types.PageRef{
+									Type:    "dynamic",
+									Command: fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
+								},
 							},
 							newExtensionInstallAction(repo.HtmlUrl, "i"),
 							{
@@ -125,8 +127,8 @@ func newExtensionInstallAction(extensionUrl string, key string) types.Action {
 	return types.Action{
 		Type:      types.RunAction,
 		Title:     "Install",
+		OnSuccess: types.ExitOnSuccess,
 		Key:       key,
-		OnSuccess: types.PushOnSuccess,
 		Command:   fmt.Sprintf("sunbeam extension install ${input:name} %s", extensionUrl),
 		Inputs: []types.Input{
 			{
@@ -230,10 +232,11 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 						Title: extension,
 						Actions: []types.Action{
 							{
-								Type:      types.RunAction,
-								Title:     "Run Command",
-								OnSuccess: types.PushOnSuccess,
-								Command:   fmt.Sprintf("sunbeam extension exec %s", extension),
+								Type:  types.PushPageAction,
+								Title: "Run Command",
+								Page: &types.PageRef{
+									Command: fmt.Sprintf("sunbeam extension exec %s", extension),
+								},
 							},
 							{
 								Title:     "Upgrade Extension",

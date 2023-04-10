@@ -6,6 +6,7 @@ sunbeam query -R --slurp '{
     type: "detail",
     title: "Highlight",
     preview: {
+        type: "static",
         text: .,
         language: "markdown"
     }

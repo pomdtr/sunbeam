@@ -26,28 +26,35 @@ items:
   - title: DevDocs
     subtitle: Examples
     actions:
-      - type: run-command
+      - type: push-page
+
         title: Search Docsets
-        onSuccess: push
-        command: "./devdocs/devdocs.sh"
-      - type: run-command
+        page:
+          type: dynamic
+          command: "./devdocs/devdocs.sh"
+      - type: push-page
         title: Search Go Docs
-        onSuccess: push
-        command: "./devdocs/devdocs.sh go"
+        page:
+          type: dynamic
+          command: "./devdocs/devdocs.sh go"
   - title: File Browser
     subtitle: Examples
     actions:
-      - type: run-command
+      - type: push-page
         title: Browse Current Dir
-        onSuccess: push
-        command: "./file-browser/file-browser.py"
-      - type: run-command
+        page:
+          type: dynamic
+          command: "./file-browser/file-browser.py"
+      - type: push-page
         title: Browse Root Dir
-        onSuccess: push
-        command: "./file-browser/file-browser.py /"
-      - type: run-command
+        page:
+          type: dynamic
+          command: "./file-browser/file-browser.py /"
+      - type: push-page
         title: Browse Custom Dir
-        command: "./file-browser/file-browser.py {{dir}}"
+        page:
+          type: dynamic
+          command: "./file-browser/file-browser.py {{dir}}"
         inputs:
           - name: dir
             title: Directory
@@ -55,34 +62,38 @@ items:
   - title: Github
     subtitle: Examples
     actions:
-      - type: run-command
+      - type: push-page
         title: Search Repositories
-        onSuccess: push
-        command: "./github/github.sh"
-      - type: run-command
+        page:
+          type: dynamic
+          command: "./github/github.sh"
+      - type: push-page
         title: Search Excalidraw Pull Requests
-        onSuccess: push
-        command: "./github/github.sh list-prs pomdtr/excalidraw"
+        page:
+          type: dynamic
+          command: "./github/github.sh list-prs pomdtr/excalidraw"
   - title: TLDR Pages
     subtitle: Examples
     actions:
-      - type: run-command
+      - type: push-page
         title: Search
-        onSuccess: push
-        command: "./tldr/tldr.sh"
+        page:
+          type: dynamic
+          command: "./tldr/tldr.sh"
   - title: List Todos
     subtitle: Todo
     actions:
-      - type: run-command
+      - type: push-page
         title: List Todos
-        onSuccess: push
-        command: "./todo/todo.py"
+        page:
+          type: dynamic
+          command: "./todo/todo.py"
   - title: Show Form
     actions:
       - type: run-command
-        onSuccess: exit
         title: Show
         command: echo ${input:text}
+        onSuccess: exit
         inputs:
           - type: textfield
             name: text

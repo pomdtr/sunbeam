@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/types"
 
 	"github.com/mattn/go-isatty"
@@ -39,20 +40,36 @@ func NewReadCmd() *cobra.Command {
 						return nil, err
 					}
 
+					var page types.Page
 					if format == "yaml" || format == "yml" {
-						var page types.Page
-						if err := yaml.Unmarshal(bytes, &page); err != nil {
+						var v interface{}
+						if err := yaml.Unmarshal(bytes, &v); err != nil {
 							return nil, err
 						}
-						content, err = json.Marshal(page)
-						if err != nil {
+
+						if err := schemas.Validate(bytes); err != nil {
+							return nil, err
+						}
+
+						if err := json.Unmarshal(bytes, &page); err != nil {
 							return nil, err
 						}
 					} else {
-						content = bytes
+						var v interface{}
+						if err := json.Unmarshal(bytes, &v); err != nil {
+							return nil, err
+						}
+
+						if err := schemas.Validate(bytes); err != nil {
+							return nil, err
+						}
+
+						if err := json.Unmarshal(bytes, &page); err != nil {
+							return nil, err
+						}
 					}
 
-					return content, err
+					return json.Marshal(page)
 				})
 
 				internal.NewPaginator(runner).Draw()

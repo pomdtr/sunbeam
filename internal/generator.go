@@ -156,7 +156,7 @@ func expandPage(page types.Page, dir string) (types.Page, error) {
 			if !filepath.IsAbs(action.Page.Path) {
 				action.Path = filepath.Join(dir, action.Path)
 			}
-		case types.OpenFileAction:
+		case types.OpenPathAction:
 			if action.Title == "" {
 				action.Title = "Open File"
 			}

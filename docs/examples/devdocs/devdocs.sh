@@ -25,10 +25,12 @@ curl https://devdocs.io/docs/docs.json | sunbeam query --arg command="$0" '.[] |
     accessories: [ .slug ],
     actions: [
       {
-          type: "run-command",
-          "onSuccess": "push",
+          type: "push-page",
           title: "Browse \(.release // "latest") entries",
-          command: "\($command) \(.slug)",
+          page: {
+            type: "dynamic",
+            command: "\($command) \(.slug)"
+          }
       }
     ]
   }

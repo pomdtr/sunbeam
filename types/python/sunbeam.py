@@ -13,7 +13,7 @@ class ActionCopyText(TypedDict):
 
 
 class ActionOpenFile(TypedDict):
-    type: Literal["open-file"]
+    type: Literal["open-path"]
     title: NotRequired[str]
     key: NotRequired[str]
     path: NotRequired[str]

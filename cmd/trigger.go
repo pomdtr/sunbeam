@@ -54,21 +54,35 @@ func NewTriggerCmd() *cobra.Command {
 				return nil
 			}
 
-			var generator internal.PageGenerator
 			action = internal.ExpandAction(action, inputs)
 			switch action.Type {
 			case types.PushPageAction:
-				generator = internal.NewFileGenerator(action.Path)
-			case types.RunAction:
-				if action.OnSuccess != types.PushOnSuccess {
-					if _, err := utils.RunCommand(action.Command, strings.NewReader(action.Input), action.Dir); err != nil {
-						return fmt.Errorf("unable to run command")
+				var generator internal.PageGenerator
+				switch action.Page.Type {
+				case types.StaticTarget:
+					generator = internal.NewFileGenerator(action.Path)
+				case types.DynamicTarget:
+					generator = internal.NewCommandGenerator(action.Command, action.Input, action.Dir)
+				}
+				if !isatty.IsTerminal(os.Stdout.Fd()) {
+					output, err := generator()
+					if err != nil {
+						return fmt.Errorf("could not generate page: %s", err)
 					}
+
+					fmt.Println(string(output))
 					return nil
 				}
 
-				generator = internal.NewCommandGenerator(action.Command, action.Input, action.Dir)
-			case types.OpenFileAction, types.OpenUrlAction:
+				runner := internal.NewRunner(generator)
+				internal.NewPaginator(runner).Draw()
+				return nil
+			case types.RunAction:
+				if _, err := utils.RunCommand(action.Command, strings.NewReader(action.Input), action.Dir); err != nil {
+					return fmt.Errorf("unable to run command")
+				}
+				return nil
+			case types.OpenPathAction, types.OpenUrlAction:
 				err := browser.OpenURL(args[0])
 				if err != nil {
 					return fmt.Errorf("unable to open link: %s", err)
@@ -79,21 +93,9 @@ func NewTriggerCmd() *cobra.Command {
 					return fmt.Errorf("unable to write to clipboard: %s", err)
 				}
 				return nil
+			default:
+				return fmt.Errorf("unknown action type: %s", action.Type)
 			}
-
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				output, err := generator()
-				if err != nil {
-					return fmt.Errorf("could not generate page: %s", err)
-				}
-
-				fmt.Println(string(output))
-				return nil
-			}
-
-			runner := internal.NewRunner(generator)
-			internal.NewPaginator(runner).Draw()
-			return nil
 		},
 	}
 

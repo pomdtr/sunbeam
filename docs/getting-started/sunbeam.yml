@@ -10,19 +10,22 @@ items:
           path: "./static-list.json"
   - title: Dynamic List
     actions:
-      - type: run-command
+      - type: push-page
         title: Dynamic List
-        command: "./dynamic-list.py"
-        onSuccess: push
+        page:
+          type: dynamic
+          command: "./dynamic-list.py"
   - title: Dynamic List with Args
     actions:
-      - type: run-command
+      - type: push-page
         title: Dynamic List with Args
-        command: "./dynamic-list-with-args.py /"
-        onSuccess: push
+        page:
+          type: dynamic
+          command: "./dynamic-list-with-args.py /"
   - title: Full-Blown File Browser
     actions:
-      - type: run-command
+      - type: push-page
         title: Browse Current Dir
-        onSuccess: push
-        command: "../examples/file-browser/file-browser.py"
+        page:
+          type: dynamic
+          command: "../examples/file-browser/file-browser.py"

@@ -18,15 +18,18 @@ and run json-schema-to-typescript to regenerate this file.
   - `type`: `'copy-text'` - The type of the action.
   - `title`: string - The title of the action.
   - `text`: string - The text to copy.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
 - object
-  - `type`: `'open-file'` - The type of the action.
+  - `type`: `'open-path'` - The type of the action.
   - `title`: string - The title of the action.
   - `key`: string - The key used as a shortcut.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `path`: string - The path to open.
 - object
   - `type`: `'open-url'` - The type of the action.
   - `title`: string - The title of the action.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
   - `url`: string - The url to open.
 - object
@@ -37,11 +40,12 @@ and run json-schema-to-typescript to regenerate this file.
   - `command`: string - The command to run.
   - `input`: string - The input to pass to the command stdin.
   - `dir`: string - The directory where the command should be run.
-  - `onSuccess`: `'reload'` | `'exit'` | `'push'` - The action to take when the command succeeds.
+  - `onSuccess`: `'reload'` | `'exit'` - The action to take when the command succeeds.
 - object
   - `type`: `'push-page'` - The type of the action.
   - `title`: string - The title of the action.
   - `key`: string - The key used as a shortcut.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `page`: object | object
 
 ## Input
@@ -115,7 +119,6 @@ The preview to show in the detail view.
 - `subtitle`: string - The subtitle of the item.
 - `preview`: [Preview](#preview)
 - `accessories`: string[] - The accessories to show on the right side of the item.
-- `inputs`: [Input](#input)[] - The inputs to show when the action is run.
 - `actions`: [Action](#action)[] - The actions attached to the item.
 
 ## Detail

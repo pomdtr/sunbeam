@@ -9,7 +9,7 @@ items = [
         "subtitle": str(path),
         "actions": [
             {
-                "type": "open-file",
+                "type": "open-path",
                 "title": "Open File",
                 "path": str(path),
             },

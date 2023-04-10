@@ -102,7 +102,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 							Actions: []types.Action{
 								{
 									Type: types.PushPageAction, Title: "Read", Page: &types.PageRef{
-										Type: "static",
+										Type: types.StaticTarget,
 										Path: manifestPath,
 									},
 								},
@@ -119,7 +119,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Title:    "Run Current Directory Extension",
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
-							{Type: types.RunAction, Title: "Run", OnSuccess: types.PushOnSuccess, Command: binaryPath},
+							{Type: types.PushPageAction, Title: "Run",
+								Page: &types.PageRef{
+									Type:    "dynamic",
+									Command: binaryPath,
+								},
+							},
 						},
 					})
 				}
@@ -129,14 +134,20 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Title:    "Browse Available Extensions",
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
-							{Type: types.RunAction, Title: "Run", OnSuccess: types.PushOnSuccess, Command: "sunbeam extension browse"},
+							{Type: types.PushPageAction, Title: "Run", Page: &types.PageRef{
+								Type:    "dynamic",
+								Command: "sunbeam extension browse",
+							}},
 						},
 					},
 					{
 						Title:    "Manage Extensions",
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
-							{Type: types.RunAction, Title: "Run", OnSuccess: types.PushOnSuccess, Command: "sunbeam extension manage"},
+							{Type: types.PushPageAction, Title: "Run", Page: &types.PageRef{
+								Type:    "dynamic",
+								Command: "sunbeam extension manage",
+							}},
 						},
 					},
 					{
@@ -144,10 +155,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
 							{
-								Type:      types.RunAction,
-								Title:     "Run",
-								OnSuccess: types.PushOnSuccess,
-								Command:   "sunbeam extension create ${input:name}",
+								Type:  types.PushPageAction,
+								Title: "Run",
+
+								Page: &types.PageRef{
+									Type:    "dynamic",
+									Command: "sunbeam extension create ${input:name}",
+								},
 								Inputs: []types.Input{
 									{Name: "name", Type: types.TextFieldInput, Title: "Extension name", Placeholder: "Extension Name"},
 								},

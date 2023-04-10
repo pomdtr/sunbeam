@@ -41,8 +41,6 @@ const (
 	RunnerViewForm
 )
 
-type PageValidator func([]byte) error
-
 func NewRunner(generator PageGenerator) *CommandRunner {
 	return &CommandRunner{
 		header:      NewHeader(),
@@ -72,7 +70,7 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 	switch action.Type {
 	case types.ReloadAction:
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
-	case types.OpenFileAction:
+	case types.OpenPathAction:
 		return func() tea.Msg {
 			if err := browser.OpenURL(action.Path); err != nil {
 				return func() tea.Msg {
@@ -108,9 +106,9 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 				return fmt.Errorf("page is nil")
 			}
 			var generator PageGenerator
-			if action.Page.Type == "static" {
+			if action.Page.Type == types.StaticTarget {
 				generator = NewFileGenerator(action.Page.Path)
-			} else if action.Page.Type == "dynamic" {
+			} else if action.Page.Type == types.DynamicTarget {
 				generator = NewCommandGenerator(action.Page.Command, "", action.Page.Dir)
 			} else {
 				return fmt.Errorf("unknown page type")
@@ -122,12 +120,6 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 
 	case types.RunAction:
 		switch action.OnSuccess {
-		case types.PushOnSuccess:
-			generator := NewCommandGenerator(action.Command, action.Input, action.Dir)
-			runner.form = nil
-			return func() tea.Msg {
-				return PushPageMsg{NewRunner(generator)}
-			}
 		case types.ReloadOnSuccess:
 			return func() tea.Msg {
 				_, err := utils.RunCommand(action.Command, strings.NewReader(action.Input), action.Dir)
@@ -333,7 +325,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		runner.values = nil
 		return runner, cmd
 	case error:
-		errorView := NewDetail("Error", msg.Error, []types.Action{
+		errorView := NewDetail("Error", func() string {
+			return fmt.Sprintf("%s", msg)
+		}, []types.Action{
 			{
 				Type:  types.CopyAction,
 				Title: "Copy error",
@@ -349,7 +343,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmd tea.Cmd
 	var container Page
 
-	if runner.form != nil {
+	if runner.currentView == RunnerViewForm {
 		container, cmd = runner.form.Update(msg)
 		runner.form, _ = container.(*Form)
 		return runner, cmd

@@ -8,8 +8,8 @@
     },
     "types": "./index.d.ts",
     "scripts": {
-        "refresh-types": "json2ts -i ../schemas/page.schema.json -o index.d.ts",
-        "generate-docs": "typescript-documentation --entry ./index.d.ts --output ../docs/types.md",
+        "refresh-types": "json2ts -i ../../schemas/page.schema.json -o index.d.ts",
+        "generate-docs": "typescript-documentation --entry ./index.d.ts --output ../../docs/types.md",
         "build": "npm run refresh-types && npm run generate-docs"
     },
     "devDependencies": {
