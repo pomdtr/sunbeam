@@ -114,9 +114,10 @@ const (
 	DynamicTarget TargetType = "dynamic"
 )
 
-type PageRef struct {
+type Target struct {
 	Type    TargetType `json:"type" yaml:"type"`
-	Path    string     `json:"path" yaml:"path"`
+	Path    string     `json:"path,omitempty" yaml:"path,omitempty"`
+	Input   string     `json:"input,omitempty" yaml:"input,omitempty"`
 	Command string     `json:"command,omitempty" yaml:"command,omitempty"`
 	Dir     string     `json:"dir,omitempty" yaml:"dir,omitempty"`
 }
@@ -134,7 +135,7 @@ type Action struct {
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 
 	// push
-	Page *PageRef `json:"page,omitempty" yaml:"page,omitempty"`
+	Page *Target `json:"page,omitempty" yaml:"page,omitempty"`
 
 	// open
 	Url string `json:"url,omitempty" yaml:"url,omitempty"`

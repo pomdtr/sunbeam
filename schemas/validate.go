@@ -43,7 +43,10 @@ func (e *PrettyValidationError) Error() string {
 
 func Validate(v any) error {
 	if err := schema.Validate(v); err != nil {
-		return NewPrettyValidationError(err.(*jsonschema.ValidationError))
+		if ve, ok := err.(*jsonschema.ValidationError); ok {
+			return NewPrettyValidationError(ve)
+		}
+		return err
 	}
 
 	return nil

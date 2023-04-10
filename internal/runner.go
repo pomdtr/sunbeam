@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/atotto/clipboard"
@@ -16,8 +17,6 @@ import (
 type CommandRunner struct {
 	width, height int
 	currentView   RunnerView
-
-	values map[string]string
 
 	Generator PageGenerator
 
@@ -65,8 +64,14 @@ func (runner *CommandRunner) Refresh() tea.Msg {
 	return CommandOutput(output)
 }
 
-func (runner *CommandRunner) handleAction(action types.Action, values map[string]string) tea.Cmd {
-	action = ExpandAction(action, values)
+func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
+	for _, env := range os.Environ() {
+		pair := strings.SplitN(env, "=", 2)
+		if len(pair) != 2 {
+			continue
+		}
+		action = ExpandAction(action, fmt.Sprintf("${env:%s}", pair[0]), pair[1])
+	}
 	switch action.Type {
 	case types.ReloadAction:
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
@@ -109,7 +114,7 @@ func (runner *CommandRunner) handleAction(action types.Action, values map[string
 			if action.Page.Type == types.StaticTarget {
 				generator = NewFileGenerator(action.Page.Path)
 			} else if action.Page.Type == types.DynamicTarget {
-				generator = NewCommandGenerator(action.Page.Command, "", action.Page.Dir)
+				generator = NewCommandGenerator(action.Page.Command, action.Page.Input, action.Page.Dir)
 			} else {
 				return fmt.Errorf("unknown page type")
 			}
@@ -305,8 +310,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 	case types.Action:
-
-		if len(msg.Inputs) > len(runner.values) {
+		if len(msg.Inputs) > 0 {
 			runner.currentView = RunnerViewForm
 
 			form, err := NewForm(msg)
@@ -321,8 +325,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, form.Init()
 		}
 
-		cmd := runner.handleAction(msg, runner.values)
-		runner.values = nil
+		cmd := runner.handleAction(msg)
 		return runner, cmd
 	case error:
 		errorView := NewDetail("Error", func() string {

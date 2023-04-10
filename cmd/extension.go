@@ -83,7 +83,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 							{
 								Type:  types.PushPageAction,
 								Title: "View Readme",
-								Page: &types.PageRef{
+								Page: &types.Target{
 									Type:    "dynamic",
 									Command: fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
 								},
@@ -234,7 +234,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 							{
 								Type:  types.PushPageAction,
 								Title: "Run Command",
-								Page: &types.PageRef{
+								Page: &types.Target{
 									Command: fmt.Sprintf("sunbeam extension exec %s", extension),
 								},
 							},

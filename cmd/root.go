@@ -101,7 +101,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 							Subtitle: "Sunbeam",
 							Actions: []types.Action{
 								{
-									Type: types.PushPageAction, Title: "Read", Page: &types.PageRef{
+									Type: types.PushPageAction, Title: "Read", Page: &types.Target{
 										Type: types.StaticTarget,
 										Path: manifestPath,
 									},
@@ -120,7 +120,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
 							{Type: types.PushPageAction, Title: "Run",
-								Page: &types.PageRef{
+								Page: &types.Target{
 									Type:    "dynamic",
 									Command: binaryPath,
 								},
@@ -134,7 +134,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Title:    "Browse Available Extensions",
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
-							{Type: types.PushPageAction, Title: "Run", Page: &types.PageRef{
+							{Type: types.PushPageAction, Title: "Run", Page: &types.Target{
 								Type:    "dynamic",
 								Command: "sunbeam extension browse",
 							}},
@@ -144,7 +144,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						Title:    "Manage Extensions",
 						Subtitle: "Sunbeam",
 						Actions: []types.Action{
-							{Type: types.PushPageAction, Title: "Run", Page: &types.PageRef{
+							{Type: types.PushPageAction, Title: "Run", Page: &types.Target{
 								Type:    "dynamic",
 								Command: "sunbeam extension manage",
 							}},
@@ -158,7 +158,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 								Type:  types.PushPageAction,
 								Title: "Run",
 
-								Page: &types.PageRef{
+								Page: &types.Target{
 									Type:    "dynamic",
 									Command: "sunbeam extension create ${input:name}",
 								},

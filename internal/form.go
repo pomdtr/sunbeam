@@ -131,12 +131,11 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return &c, tea.Batch(cmds...)
 		case tea.KeyCtrlS:
-			values := make(map[string]string)
+			action := c.submitAction
+			action.Inputs = []types.Input{}
 			for _, input := range c.items {
-				values[input.Name] = input.Value()
+				action = ExpandAction(action, fmt.Sprintf("${input:%s}", input.Name), input.Value())
 			}
-
-			action := ExpandAction(c.submitAction, values)
 
 			return &c, func() tea.Msg {
 				return action

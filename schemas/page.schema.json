@@ -49,7 +49,7 @@
                     }
                 },
                 "showPreview": {
-                    "description": "Whether to show details on the right side of the list.",
+                    "description": "Whether to show the preview on the right side of the list.",
                     "type": "boolean"
                 },
                 "items": {

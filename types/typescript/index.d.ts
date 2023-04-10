@@ -315,7 +315,7 @@ export interface List {
     actions?: Action[];
   };
   /**
-   * Whether to show details on the right side of the list.
+   * Whether to show the preview on the right side of the list.
    */
   showPreview?: boolean;
   /**

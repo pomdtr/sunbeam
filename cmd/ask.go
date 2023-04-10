@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -23,10 +21,6 @@ import (
 //go:embed templates/create-script-prompt.md
 var createScriptMessageTemplate string
 var createScriptMessage string
-
-//go:embed templates/edit-script-prompt.md
-var editScriptMessageTemplate string
-var editScriptMessage string
 
 func init() {
 	renderTemplate := func(templateStr string, data any) (string, error) {
@@ -53,10 +47,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	editScriptMessage, err = renderTemplate(editScriptMessageTemplate, data)
-	if err != nil {
-		panic(err)
-	}
 }
 
 var re = regexp.MustCompile("`{3}[\\w]*\n+([\\S\\s]+?\n)`{3}")
@@ -71,39 +61,27 @@ func extractMarkdownCodeblock(markdown string) string {
 }
 
 func NewCmdAsk() *cobra.Command {
-	log.Fatalf(createScriptMessage)
 	cmd := &cobra.Command{
 		Use:   "ask",
 		Short: "Ask a question",
 		Long:  `Ask a question`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			prompt := args[0]
 			token, ok := os.LookupEnv("OPENAI_API_KEY")
 			if !ok {
 				return fmt.Errorf("OPENAI_API_KEY not set")
 			}
 
-			var messages []openai.ChatCompletionMessage
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				b, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-
-				if err := json.Unmarshal(b, &messages); err != nil {
-					return err
-				}
-			} else {
-				messages = []openai.ChatCompletionMessage{
-					{
-						Role:    openai.ChatMessageRoleSystem,
-						Content: createScriptMessage,
-					},
-					{
-						Role:    openai.ChatMessageRoleUser,
-						Content: strings.Join(args, " "),
-					},
-				}
+			messages := []openai.ChatCompletionMessage{
+				{
+					Role:    openai.ChatMessageRoleSystem,
+					Content: createScriptMessage,
+				},
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: prompt,
+				},
 			}
 
 			generator := func() ([]byte, error) {
@@ -120,10 +98,10 @@ func NewCmdAsk() *cobra.Command {
 				}
 
 				code := extractMarkdownCodeblock(res.Choices[0].Message.Content)
-				// code := "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Hello World\")\n}"
 
 				page := types.Page{
-					Type: types.DetailPage,
+					Type:  types.DetailPage,
+					Title: args[0],
 					Preview: &types.Preview{
 						Type:     types.StaticPreviewType,
 						Language: "go",
@@ -131,18 +109,30 @@ func NewCmdAsk() *cobra.Command {
 					},
 					Actions: []types.Action{
 						{
+							Type:  types.PushPageAction,
+							Title: "Eval Code",
+							Page: &types.Target{
+								Input:   code,
+								Type:    types.DynamicTarget,
+								Command: "sunbeam eval",
+							},
+						},
+						{
 							Type:  types.CopyAction,
 							Title: "Copy Code",
 							Text:  code,
 						},
 						{
 							Type:  types.PushPageAction,
-							Title: "Run Code",
-							Page: &types.PageRef{
-								Type:    "dynamic",
-								Command: "sunbeam eval",
+							Title: "Edit Prompt",
+							Page: &types.Target{
+								Type:    types.DynamicTarget,
+								Input:   code,
+								Command: "sunbeam ask ${input:prompt}",
 							},
-							Input: code,
+							Inputs: []types.Input{
+								{Type: types.TextFieldInput, Name: "prompt", Title: "Prompt", Default: prompt},
+							},
 						},
 						{
 							Type:      types.RunAction,

@@ -47,7 +47,7 @@ func NewReadCmd() *cobra.Command {
 							return nil, err
 						}
 
-						if err := schemas.Validate(bytes); err != nil {
+						if err := schemas.Validate(v); err != nil {
 							return nil, err
 						}
 
@@ -60,7 +60,7 @@ func NewReadCmd() *cobra.Command {
 							return nil, err
 						}
 
-						if err := schemas.Validate(bytes); err != nil {
+						if err := schemas.Validate(v); err != nil {
 							return nil, err
 						}
 

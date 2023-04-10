@@ -107,7 +107,7 @@ The preview to show in the detail view.
 - `emptyView`: object
   - `text`: string - The text to show when the list is empty.
   - `actions`: [Action](#action)[] - The actions to show when the list is empty.
-- `showPreview`: boolean - Whether to show details on the right side of the list.
+- `showPreview`: boolean - Whether to show the preview on the right side of the list.
 - `items`: [Listitem](#listitem)[] - The items in the list.
 
 ## Listitem

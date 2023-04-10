@@ -54,7 +54,10 @@ func NewTriggerCmd() *cobra.Command {
 				return nil
 			}
 
-			action = internal.ExpandAction(action, inputs)
+			for name, value := range inputs {
+				action = internal.ExpandAction(action, fmt.Sprintf("${input:%s}", name), value)
+			}
+
 			switch action.Type {
 			case types.PushPageAction:
 				var generator internal.PageGenerator

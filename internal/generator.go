@@ -20,28 +20,13 @@ import (
 
 type PageGenerator func() ([]byte, error)
 
-func ExpandAction(action types.Action, inputs map[string]string) types.Action {
-	for key, value := range inputs {
-		action.Command = strings.ReplaceAll(action.Command, fmt.Sprintf("${input:%s}", key), shellescape.Quote(value))
-		action.Url = strings.ReplaceAll(action.Url, fmt.Sprintf("${input:%s}", key), url.QueryEscape(value))
-		action.Text = strings.ReplaceAll(action.Text, fmt.Sprintf("${input:%s}", key), value)
-		action.Path = strings.ReplaceAll(action.Path, fmt.Sprintf("${input:%s}", key), value)
-	}
-
-	for _, env := range os.Environ() {
-		tokens := strings.SplitN(env, "=", 2)
-		if len(tokens) != 2 {
-			continue
-		}
-		action.Command = strings.ReplaceAll(action.Command, fmt.Sprintf("${env:%s}", tokens[0]), shellescape.Quote(tokens[1]))
-		action.Url = strings.ReplaceAll(action.Url, fmt.Sprintf("${env:%s}", tokens[0]), url.QueryEscape(tokens[1]))
-		action.Text = strings.ReplaceAll(action.Text, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1])
-		action.Path = strings.ReplaceAll(action.Path, fmt.Sprintf("${env:%s}", tokens[0]), tokens[1])
-	}
-
-	if strings.HasPrefix(action.Path, "~/") {
-		homeDir, _ := os.UserHomeDir()
-		action.Path = filepath.Join(homeDir, action.Path[2:])
+func ExpandAction(action types.Action, old, new string) types.Action {
+	action.Command = strings.ReplaceAll(action.Command, old, shellescape.Quote(new))
+	action.Url = strings.ReplaceAll(action.Url, old, url.QueryEscape(new))
+	action.Text = strings.ReplaceAll(action.Text, old, new)
+	action.Path = strings.ReplaceAll(action.Path, old, new)
+	if action.Page != nil {
+		action.Page.Command = strings.ReplaceAll(action.Page.Command, old, shellescape.Quote(new))
 	}
 
 	return action

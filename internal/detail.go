@@ -73,24 +73,20 @@ func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
 func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyRunes:
-			switch msg.String() {
-			case "q", "Q":
-				return c, tea.Quit
-			case "tab":
-				if !c.actions.Focused() {
-					return c, c.actions.Focus()
-				}
+		switch msg.String() {
+		case "q", "Q":
+			return c, tea.Quit
+		case "tab":
+			if !c.actions.Focused() {
+				return c, c.actions.Focus()
 			}
-		case tea.KeyEscape:
+		case "esc":
 			if c.actions.Focused() {
 				break
 			}
 			return c, func() tea.Msg {
 				return PopPageMsg{}
 			}
-
 		}
 	case ContentMsg:
 		if c.Language != "" {
