@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -166,7 +165,6 @@ func (paginator *Paginator) Draw() (err error) {
 	}
 
 	if o := model.output; o != nil {
-		log.Println(o)
 		switch o.(type) {
 		case string:
 			fmt.Print(o)
