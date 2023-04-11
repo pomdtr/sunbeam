@@ -64,7 +64,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 		Use:   "browse",
 		Short: "Browse extensions",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() ([]byte, error) {
+			generator := func() (*types.Page, error) {
 				repos, err := utils.SearchSunbeamExtensions("")
 				if err != nil {
 					return nil, err
@@ -104,15 +104,17 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 					Items: listItems,
 				}
 
-				return json.Marshal(page)
+				return &page, nil
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
-				fmt.Print(string(output))
+				if err := json.NewEncoder(os.Stderr).Encode(output); err != nil {
+					return fmt.Errorf("could not encode page: %s", err)
+				}
 				return nil
 			}
 
@@ -152,7 +154,7 @@ func NewExtensionViewCmd() *cobra.Command {
 				return fmt.Errorf("could not parse repository: %s", err)
 			}
 
-			generator := func() ([]byte, error) {
+			generator := func() (*types.Page, error) {
 				res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/readme", repo.FullName()))
 				if err != nil {
 					return nil, fmt.Errorf("could not fetch readme: %s", err)
@@ -160,12 +162,12 @@ func NewExtensionViewCmd() *cobra.Command {
 				defer res.Body.Close()
 
 				if res.StatusCode != http.StatusOK {
-					return json.Marshal(types.Page{
+					return &types.Page{
 						Type: types.DetailPage,
 						Preview: &types.Preview{
 							Text: fmt.Sprintf("Could not fetch readme: %s", res.Status),
 						},
-					})
+					}, nil
 				}
 
 				content, err := io.ReadAll(res.Body)
@@ -185,7 +187,7 @@ func NewExtensionViewCmd() *cobra.Command {
 					return nil, fmt.Errorf("could not decode readme: %s", err)
 				}
 
-				return json.Marshal(types.Page{
+				return &types.Page{
 					Type: types.DetailPage,
 					Preview: &types.Preview{
 						Text: string(payload),
@@ -193,16 +195,18 @@ func NewExtensionViewCmd() *cobra.Command {
 					Actions: []types.Action{
 						newExtensionInstallAction(repo.Url().String(), "i"),
 					},
-				})
+				}, nil
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				content, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				fmt.Print(string(content))
+				if err := json.NewEncoder(os.Stderr).Encode(content); err != nil {
+					return fmt.Errorf("could not encode page: %s", err)
+				}
 				return nil
 			}
 
@@ -220,7 +224,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 		Short: "Manage installed extensions",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() ([]byte, error) {
+			generator := func() (*types.Page, error) {
 				extensions, err := ListExtensions(extensionDir)
 				if err != nil {
 					return nil, fmt.Errorf("could not list extensions: %s", err)
@@ -268,20 +272,21 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 					})
 				}
 
-				page := types.Page{
+				return &types.Page{
 					Type:  types.ListPage,
 					Items: listItems,
-				}
+				}, nil
 
-				return json.Marshal(page)
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
-				fmt.Print(string(output))
+				if err := json.NewEncoder(os.Stderr).Encode(output); err != nil {
+					return fmt.Errorf("could not encode page: %s", err)
+				}
 				return nil
 			}
 
@@ -343,13 +348,15 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 			cwd, _ := os.Getwd()
 			generator := internal.NewCommandGenerator(command, "", cwd)
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				fmt.Print(string(output))
+				if err := json.NewEncoder(os.Stderr).Encode(output); err != nil {
+					return fmt.Errorf("could not encode page: %s", err)
+				}
 				return nil
 			}
 

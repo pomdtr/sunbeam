@@ -18,7 +18,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type PageGenerator func() ([]byte, error)
+type PageGenerator func() (*types.Page, error)
 
 func ExpandAction(action types.Action, old, new string) types.Action {
 	action.Command = strings.ReplaceAll(action.Command, old, shellescape.Quote(new))
@@ -33,7 +33,7 @@ func ExpandAction(action types.Action, old, new string) types.Action {
 }
 
 func NewCommandGenerator(command string, input string, dir string) PageGenerator {
-	return func() ([]byte, error) {
+	return func() (*types.Page, error) {
 		output, err := utils.RunCommand(command, strings.NewReader(input), dir)
 		if err != nil {
 			return nil, err
@@ -58,12 +58,12 @@ func NewCommandGenerator(command string, input string, dir string) PageGenerator
 			return nil, err
 		}
 
-		return json.Marshal(page)
+		return &page, nil
 	}
 }
 
 func NewFileGenerator(name string) PageGenerator {
-	return func() ([]byte, error) {
+	return func() (*types.Page, error) {
 		var page types.Page
 		if path.Ext(name) == ".json" {
 			bytes, err := os.ReadFile(name)
@@ -110,7 +110,7 @@ func NewFileGenerator(name string) PageGenerator {
 			return nil, err
 		}
 
-		return json.Marshal(page)
+		return &page, nil
 	}
 }
 

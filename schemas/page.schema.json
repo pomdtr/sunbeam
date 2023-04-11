@@ -121,6 +121,10 @@
                     "type": "string",
                     "description": "The id of the item."
                 },
+                "data": {
+                    "type": "object",
+                    "description": "The data associated with the item. Used when the is piped to another command."
+                },
                 "subtitle": {
                     "type": "string",
                     "description": "The subtitle of the item."

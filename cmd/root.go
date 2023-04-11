@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -9,11 +10,14 @@ import (
 
 	_ "embed"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/joho/godotenv"
 	"github.com/mattn/go-isatty"
+	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 
 	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/types"
 )
 
 //go:embed templates/sunbeam.yml
@@ -56,6 +60,8 @@ func NewRootCmd() (*cobra.Command, error) {
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args: cobra.NoArgs,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			lipgloss.SetColorProfile(termenv.ANSI)
+
 			dotenv := path.Join(cwd, ".env")
 			if _, err := os.Stat(dotenv); !os.IsNotExist(err) {
 				err := godotenv.Load(dotenv)
@@ -86,20 +92,27 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 			var generator internal.PageGenerator
 			if len(input) > 0 {
-				generator = func() ([]byte, error) {
-					return input, nil
+				generator = func() (*types.Page, error) {
+					var page types.Page
+					if err := json.Unmarshal(input, &page); err != nil {
+						return nil, fmt.Errorf("could not unmarshal page: %s", err)
+					}
+
+					return &page, nil
 				}
 			} else {
 				generator = internal.NewFileGenerator(configFile)
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				fmt.Print(string(output))
+				if err := json.NewEncoder(os.Stderr).Encode(output); err != nil {
+					return fmt.Errorf("could not encode page: %s", err)
+				}
 				return nil
 			}
 
@@ -163,13 +176,16 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 			cwd, _ := os.Getwd()
 			generator := internal.NewCommandGenerator(command, "", cwd)
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				fmt.Print(string(output))
+				if err := json.NewDecoder(os.Stderr).Decode(output); err != nil {
+					return fmt.Errorf("could not decode page: %s", err)
+				}
+
 				return nil
 			}
 

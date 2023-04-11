@@ -333,6 +333,12 @@ export interface Listitem {
    */
   id?: string;
   /**
+   * The data associated with the item. Used when the is piped to another command.
+   */
+  data?: {
+    [k: string]: unknown;
+  };
+  /**
    * The subtitle of the item.
    */
   subtitle?: string;

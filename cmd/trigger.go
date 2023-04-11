@@ -67,13 +67,15 @@ func NewTriggerCmd() *cobra.Command {
 				case types.DynamicTarget:
 					generator = internal.NewCommandGenerator(action.Page.Command, action.Page.Input, action.Page.Dir)
 				}
-				if !isatty.IsTerminal(os.Stdout.Fd()) {
+				if !isatty.IsTerminal(os.Stderr.Fd()) {
 					output, err := generator()
 					if err != nil {
 						return fmt.Errorf("could not generate page: %s", err)
 					}
 
-					fmt.Println(string(output))
+					if err := json.NewDecoder(os.Stderr).Decode(output); err != nil {
+						return fmt.Errorf("could not decode page: %s", err)
+					}
 					return nil
 				}
 

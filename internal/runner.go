@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-isatty"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
@@ -23,7 +23,7 @@ type CommandRunner struct {
 	header Header
 	footer Footer
 
-	currentPage types.Page
+	currentPage *types.Page
 
 	form   *Form
 	list   *List
@@ -56,12 +56,12 @@ func (c *CommandRunner) Init() tea.Cmd {
 type CommandOutput []byte
 
 func (runner *CommandRunner) Refresh() tea.Msg {
-	output, err := runner.Generator()
+	page, err := runner.Generator()
 	if err != nil {
 		return err
 	}
 
-	return CommandOutput(output)
+	return page
 }
 
 func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
@@ -72,6 +72,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		}
 		action = ExpandAction(action, fmt.Sprintf("${env:%s}", pair[0]), pair[1])
 	}
+
 	switch action.Type {
 	case types.ReloadAction:
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
@@ -215,17 +216,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 		}
-	case CommandOutput:
+	case *types.Page:
 		runner.SetIsloading(false)
-
-		var page types.Page
-		err := json.Unmarshal(msg, &page)
-		if err != nil {
-			return runner, func() tea.Msg {
-				return err
-			}
-		}
-
+		page := msg
 		if page.Title == "" {
 			page.Title = "Sunbeam"
 		}
@@ -252,6 +245,10 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				page.Actions = nil
+			}
+
 			runner.currentView = RunnerViewDetail
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
 			runner.detail.Language = page.Preview.Language
@@ -271,12 +268,17 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				items[i] = item
 			}
 
-			runner.form, err = NewForm(*page.SubmitAction)
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				page.SubmitAction = nil
+			}
+
+			form, err := NewForm(page.SubmitAction)
 			if err != nil {
 				return runner, func() tea.Msg {
 					return err
 				}
 			}
+			runner.form = form
 			runner.form.SetSize(runner.width, runner.height)
 			return runner, runner.form.Init()
 		case types.ListPage:
@@ -300,6 +302,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			for i, scriptItem := range page.Items {
 				scriptItem := scriptItem
 				listItem := ParseScriptItem(scriptItem)
+				if !isatty.IsTerminal(os.Stdout.Fd()) {
+					listItem.Actions = nil
+				}
 				listItems[i] = listItem
 			}
 
@@ -313,7 +318,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		if len(msg.Inputs) > 0 {
 			runner.currentView = RunnerViewForm
 
-			form, err := NewForm(msg)
+			form, err := NewForm(&msg)
 			if err != nil {
 				return runner, func() tea.Msg {
 					return err

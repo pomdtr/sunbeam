@@ -84,7 +84,7 @@ func NewCmdAsk() *cobra.Command {
 				},
 			}
 
-			generator := func() ([]byte, error) {
+			generator := func() (*types.Page, error) {
 				client := openai.NewClient(token)
 				res, err := client.CreateChatCompletion(
 					context.Background(),
@@ -147,16 +147,16 @@ func NewCmdAsk() *cobra.Command {
 					},
 				}
 
-				return json.Marshal(page)
+				return &page, nil
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				fmt.Print(string(output))
+				json.NewEncoder(os.Stderr).Encode(output)
 				return nil
 			}
 

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -17,13 +18,13 @@ func NewReadCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			generator := internal.NewFileGenerator(args[0])
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				fmt.Println(string(output))
+				json.NewDecoder(os.Stderr).Decode(output)
 				return nil
 			}
 

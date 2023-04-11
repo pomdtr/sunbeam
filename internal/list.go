@@ -95,11 +95,7 @@ type List struct {
 	previewContent string
 }
 
-func (c *List) SetTitle(title string) {
-	c.footer.title = title
-}
-
-func NewList(page types.Page) *List {
+func NewList(page *types.Page) *List {
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
 
@@ -278,15 +274,55 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 		case "tab":
-			if !c.actionList.Focused() {
-				return c, c.actionList.Focus()
+			if c.actionList.Focused() {
+				break
 			}
+
+			if c.filter.Selection() == nil {
+				break
+			}
+
+			item := c.filter.Selection().(ListItem)
+			if len(item.Actions) == 1 {
+				break
+			}
+
+			return c, c.actionList.Focus()
 		case "shift+down":
 			c.viewport.LineDown(1)
 			return c, nil
 		case "shift+up":
 			c.viewport.LineUp(1)
 			return c, nil
+		case "enter":
+			if c.actionList.Focused() {
+				break
+			}
+
+			if c.filter.Selection() == nil {
+				break
+			}
+
+			item := c.filter.Selection().(ListItem)
+			if len(item.Actions) > 0 {
+				return c, func() tea.Msg {
+					return item.Actions[0]
+				}
+			}
+
+			if item.Data != nil {
+				return c, func() tea.Msg {
+					return OutputMsg{
+						data: item.Data,
+					}
+				}
+			}
+
+			return c, func() tea.Msg {
+				return OutputMsg{
+					data: item.Title,
+				}
+			}
 		}
 	case SelectionChangeMsg:
 		if !c.ShowPreview {

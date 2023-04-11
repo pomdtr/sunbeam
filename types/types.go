@@ -54,6 +54,7 @@ type ListItem struct {
 	Id          string   `json:"id,omitempty" yaml:"id,omitempty"`
 	Title       string   `json:"title" yaml:"title"`
 	Subtitle    string   `json:"subtitle,omitempty" yaml:"subtitle,omitempty"`
+	Data        any      `json:"data,omitempty" yaml:"data,omitempty"`
 	Preview     *Preview `json:"preview,omitempty" yaml:"preview,omitempty"`
 	Accessories []string `json:"accessories,omitempty" yaml:"accessories,omitempty"`
 	Actions     []Action `json:"actions,omitempty" yaml:"actions,omitempty"`

@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/json"
 	"io"
 	"os"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
@@ -19,7 +20,7 @@ func NewCmdEval() *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		Short: "Evaluate a file or stdin as a page",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() ([]byte, error) {
+			generator := func() (*types.Page, error) {
 				buffer := bytes.Buffer{}
 				i := interp.New(interp.Options{
 					Stdout: &buffer,
@@ -41,16 +42,23 @@ func NewCmdEval() *cobra.Command {
 					}
 				}
 
-				return buffer.Bytes(), nil
+				var page types.Page
+				if err := json.Unmarshal(buffer.Bytes(), &page); err != nil {
+					return nil, err
+				}
+
+				return &page, nil
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if !isatty.IsTerminal(os.Stderr.Fd()) {
 				b, err := generator()
 				if err != nil {
 					return err
 				}
-				fmt.Print(string(b))
-				return nil
+
+				if err := json.NewEncoder(os.Stderr).Encode(b); err != nil {
+					return err
+				}
 			}
 
 			runner := internal.NewRunner(generator)

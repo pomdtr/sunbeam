@@ -116,6 +116,8 @@ The preview to show in the detail view.
 
 - `title`: string - The title of the item.
 - `id`: string - The id of the item.
+- `data`: object - The data associated with the item. Used when the is piped to another command.
+  - `__index`: any
 - `subtitle`: string - The subtitle of the item.
 - `preview`: [Preview](#preview)
 - `accessories`: string[] - The accessories to show on the right side of the item.

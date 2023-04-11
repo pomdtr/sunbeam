@@ -1,7 +1,10 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -29,9 +32,9 @@ type SunbeamOptions struct {
 type Paginator struct {
 	width, height int
 	options       SunbeamOptions
+	output        any
 
-	pages []Page
-
+	pages  []Page
 	hidden bool
 }
 
@@ -50,6 +53,10 @@ func (m *Paginator) Init() tea.Cmd {
 	}
 
 	return m.pages[0].Init()
+}
+
+type OutputMsg struct {
+	data any
 }
 
 func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -75,6 +82,9 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.hidden = true
+		return m, tea.Quit
+	case OutputMsg:
+		m.output = msg.data
 		return m, tea.Quit
 	}
 
@@ -137,17 +147,36 @@ func (m *Paginator) Pop() {
 	}
 }
 
-func (m *Paginator) Draw() (err error) {
-	// Background detection before we start the program
-	lipgloss.SetHasDarkBackground(lipgloss.HasDarkBackground())
-
+func (paginator *Paginator) Draw() (err error) {
 	var p *tea.Program
-	if m.options.MaxHeight == 0 {
-		p = tea.NewProgram(m, tea.WithAltScreen())
+	if paginator.options.MaxHeight == 0 {
+		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	} else {
-		p = tea.NewProgram(m)
+		p = tea.NewProgram(paginator)
 	}
 
-	_, err = p.Run()
-	return err
+	m, err := p.Run()
+	if err != nil {
+		return err
+	}
+
+	model, ok := m.(*Paginator)
+	if !ok {
+		return fmt.Errorf("could not convert model to paginator")
+	}
+
+	if o := model.output; o != nil {
+		log.Println(o)
+		switch o.(type) {
+		case string:
+			fmt.Print(o)
+			return nil
+		default:
+			if err := json.NewEncoder(os.Stdout).Encode(o); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

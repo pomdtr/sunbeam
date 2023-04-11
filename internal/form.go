@@ -12,7 +12,7 @@ import (
 
 type Form struct {
 	items        []FormItem
-	submitAction types.Action
+	submitAction *types.Action
 
 	width    int
 	header   Header
@@ -23,7 +23,7 @@ type Form struct {
 	focusIndex   int
 }
 
-func NewForm(submitAction types.Action) (*Form, error) {
+func NewForm(submitAction *types.Action) (*Form, error) {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter("Sunbeam")
@@ -131,7 +131,20 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return &c, tea.Batch(cmds...)
 		case tea.KeyCtrlS:
-			action := c.submitAction
+			if c.submitAction == nil {
+				return &c, func() tea.Msg {
+					data := make(map[string]string)
+					for _, item := range c.items {
+						data[item.Name] = item.Value()
+					}
+
+					return OutputMsg{
+						data: data,
+					}
+				}
+			}
+
+			action := *c.submitAction
 			action.Inputs = []types.Input{}
 			for _, input := range c.items {
 				action = ExpandAction(action, fmt.Sprintf("${input:%s}", input.Name), input.Value())
