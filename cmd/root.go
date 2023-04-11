@@ -65,11 +65,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			if _, err := os.Stat(configFile); os.IsNotExist(err) {
-				if err := os.MkdirAll(configDir, 0644); err != nil {
+				if err := os.MkdirAll(configDir, 0755); err != nil {
 					return fmt.Errorf("could not create config directory: %s", err)
 				}
 
-				if err := os.WriteFile(configFile, []byte(defaultConfig), 0644); err != nil {
+				if err := os.WriteFile(configFile, []byte(defaultConfig), 0755); err != nil {
 					return fmt.Errorf("could not create config file: %s", err)
 				}
 			}
