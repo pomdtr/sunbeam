@@ -66,10 +66,15 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 		// If the config file does not exist, create it
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var generator func() ([]byte, error)
+			var input []byte
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				input, _ = io.ReadAll(os.Stdin)
+			}
+
+			var generator internal.PageGenerator
+			if len(input) > 0 {
 				generator = func() ([]byte, error) {
-					return io.ReadAll(os.Stdin)
+					return input, nil
 				}
 			} else if _, err := os.Stat(configFile); !os.IsNotExist(err) {
 				generator = internal.NewFileGenerator(configFile)

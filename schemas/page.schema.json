@@ -180,7 +180,8 @@
                 },
                 {
                     "required": [
-                        "type"
+                        "type",
+                        "path"
                     ],
                     "additionalProperties": false,
                     "properties": {
@@ -211,7 +212,8 @@
                 },
                 {
                     "required": [
-                        "type"
+                        "type",
+                        "url"
                     ],
                     "additionalProperties": false,
                     "properties": {

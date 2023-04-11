@@ -49,7 +49,7 @@ export type Action =
       /**
        * The path to open.
        */
-      path?: string;
+      path: string;
     }
   | {
       /**
@@ -71,7 +71,7 @@ export type Action =
       /**
        * The url to open.
        */
-      url?: string;
+      url: string;
     }
   | {
       /**

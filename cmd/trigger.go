@@ -65,7 +65,7 @@ func NewTriggerCmd() *cobra.Command {
 				case types.StaticTarget:
 					generator = internal.NewFileGenerator(action.Path)
 				case types.DynamicTarget:
-					generator = internal.NewCommandGenerator(action.Command, action.Input, action.Dir)
+					generator = internal.NewCommandGenerator(action.Page.Command, action.Page.Input, action.Page.Dir)
 				}
 				if !isatty.IsTerminal(os.Stdout.Fd()) {
 					output, err := generator()
