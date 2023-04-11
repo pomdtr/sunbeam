@@ -358,7 +358,7 @@ export interface Detail {
    * The title of the page.
    */
   title?: string;
-  preview?: Preview;
+  preview: Preview;
   /**
    * The actions attached to the detail view.
    */
@@ -369,5 +369,5 @@ export interface Form {
    * The type of the response.
    */
   type: "form";
-  submitAction: Action[];
+  submitAction: Action;
 }

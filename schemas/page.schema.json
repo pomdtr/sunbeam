@@ -65,7 +65,8 @@
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "type"
+                "type",
+                "preview"
             ],
             "description": "A detail view displayign a preview and actions.",
             "properties": {
@@ -102,9 +103,7 @@
                     "const": "form"
                 },
                 "submitAction": {
-                    "items": {
-                        "$ref": "#/$defs/action"
-                    }
+                    "$ref": "#/$defs/action"
                 }
             }
         },

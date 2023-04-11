@@ -137,4 +137,4 @@ A detail view displayign a preview and actions.
 **PROPERTIES**
 
 - `type`: `'form'` - The type of the response.
-- `submitAction`: [Action](#action)[]
+- `submitAction`: [Action](#action)
