@@ -15,8 +15,9 @@ import (
 
 func NewCmdEval() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "eval [file]",
-		Args: cobra.MaximumNArgs(1),
+		Use:   "eval [file]",
+		Args:  cobra.MaximumNArgs(1),
+		Short: "Evaluate a file or stdin as a page",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			generator := func() ([]byte, error) {
 				buffer := bytes.Buffer{}

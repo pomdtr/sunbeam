@@ -250,6 +250,20 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								OnSuccess: types.ReloadOnSuccess,
 								Command:   fmt.Sprintf("sunbeam extension remove %s", extension),
 							},
+							{
+								Type:      types.RunAction,
+								OnSuccess: types.ExitOnSuccess,
+								Title:     "Create Extension",
+								Command:   "sunbeam extension create ${input:extensionName}",
+								Inputs: []types.Input{
+									{
+										Type:        types.TextFieldInput,
+										Name:        "extensionName",
+										Title:       "Extension Name",
+										Placeholder: "my-extension",
+									},
+								},
+							},
 						},
 					})
 				}
@@ -257,22 +271,6 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 				page := types.Page{
 					Type:  types.ListPage,
 					Items: listItems,
-					Actions: []types.Action{
-						{
-							Type:      types.RunAction,
-							OnSuccess: types.ExitOnSuccess,
-							Title:     "Create Extension",
-							Command:   "sunbeam extension create ${input:extensionName}",
-							Inputs: []types.Input{
-								{
-									Type:        types.TextFieldInput,
-									Name:        "extensionName",
-									Title:       "Extension Name",
-									Placeholder: "my-extension",
-								},
-							},
-						},
-					},
 				}
 
 				return json.Marshal(page)

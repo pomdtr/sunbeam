@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -12,10 +12,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 
 	"github.com/pomdtr/sunbeam/internal"
-	"github.com/pomdtr/sunbeam/types"
 )
 
 var (
@@ -29,10 +27,6 @@ var (
 	}
 )
 
-type SunbeamConfig struct {
-	RootActions []types.Action `yaml:"rootActions"`
-}
-
 func NewRootCmd() (*cobra.Command, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -44,23 +38,12 @@ func NewRootCmd() (*cobra.Command, error) {
 		return nil, fmt.Errorf("could not get current working directory: %s", err)
 	}
 
+	configDir := path.Join(homeDir, ".config", "sunbeam")
 	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
 
-	configDir := path.Join(homeDir, ".config", "sunbeam")
-	envFile := path.Join(configDir, "sunbeam.env")
 	configFile := path.Join(configDir, "sunbeam.yml")
 
-	var config SunbeamConfig
-	if _, err := os.Stat(configFile); !os.IsNotExist(err) {
-		bytes, err := os.ReadFile(configFile)
-		if err != nil {
-			return nil, fmt.Errorf("could not read config file: %s", err)
-		}
-		if yaml.Unmarshal(bytes, &config); err != nil {
-			return nil, fmt.Errorf("could not parse config file: %s", err)
-		}
-	}
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "sunbeam",
@@ -70,13 +53,6 @@ func NewRootCmd() (*cobra.Command, error) {
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args: cobra.NoArgs,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if _, err := os.Stat(envFile); !os.IsNotExist(err) {
-				err := godotenv.Load(envFile)
-				if err != nil {
-					return fmt.Errorf("could not load env file: %s", err)
-				}
-			}
-
 			dotenv := path.Join(cwd, ".env")
 			if _, err := os.Stat(dotenv); !os.IsNotExist(err) {
 				err := godotenv.Load(dotenv)
@@ -90,100 +66,15 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 		// If the config file does not exist, create it
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() ([]byte, error) {
-				items := make([]types.ListItem, 0)
-
-				for _, ext := range []string{"yaml", "yml", "json"} {
-					manifestPath := path.Join(cwd, fmt.Sprintf("sunbeam.%s", ext))
-					if _, err := os.Stat(manifestPath); !os.IsNotExist(err) {
-						items = append(items, types.ListItem{
-							Title:    "Read Current Dir Manifest",
-							Subtitle: "Sunbeam",
-							Actions: []types.Action{
-								{
-									Type: types.PushPageAction, Title: "Read", Page: &types.Target{
-										Type: types.StaticTarget,
-										Path: manifestPath,
-									},
-								},
-							},
-						})
-
-						break
-					}
+			var generator func() ([]byte, error)
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				generator = func() ([]byte, error) {
+					return io.ReadAll(os.Stdin)
 				}
-
-				binaryPath := path.Join(cwd, extensionBinaryName)
-				if _, err := os.Stat(binaryPath); !os.IsNotExist(err) {
-					items = append(items, types.ListItem{
-						Title:    "Run Current Directory Extension",
-						Subtitle: "Sunbeam",
-						Actions: []types.Action{
-							{Type: types.PushPageAction, Title: "Run",
-								Page: &types.Target{
-									Type:    "dynamic",
-									Command: binaryPath,
-								},
-							},
-						},
-					})
-				}
-
-				items = append(items, []types.ListItem{
-					{
-						Title:    "Browse Available Extensions",
-						Subtitle: "Sunbeam",
-						Actions: []types.Action{
-							{Type: types.PushPageAction, Title: "Run", Page: &types.Target{
-								Type:    "dynamic",
-								Command: "sunbeam extension browse",
-							}},
-						},
-					},
-					{
-						Title:    "Manage Extensions",
-						Subtitle: "Sunbeam",
-						Actions: []types.Action{
-							{Type: types.PushPageAction, Title: "Run", Page: &types.Target{
-								Type:    "dynamic",
-								Command: "sunbeam extension manage",
-							}},
-						},
-					},
-					{
-						Title:    "Create Extension",
-						Subtitle: "Sunbeam",
-						Actions: []types.Action{
-							{
-								Type:  types.PushPageAction,
-								Title: "Run",
-
-								Page: &types.Target{
-									Type:    "dynamic",
-									Command: "sunbeam extension create ${input:name}",
-								},
-								Inputs: []types.Input{
-									{Name: "name", Type: types.TextFieldInput, Title: "Extension name", Placeholder: "Extension Name"},
-								},
-							},
-						},
-					},
-				}...)
-
-				for _, item := range config.RootActions {
-					items = append(items, types.ListItem{
-						Title:    item.Title,
-						Subtitle: "Root Action",
-						Actions: []types.Action{
-							item,
-						},
-					})
-				}
-
-				return json.Marshal(types.Page{
-					Type:  types.ListPage,
-					Items: items,
-				})
+			} else if _, err := os.Stat(configFile); !os.IsNotExist(err) {
+				generator = internal.NewFileGenerator(configFile)
+			} else {
+				return cmd.Usage()
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
