@@ -16,6 +16,9 @@ import (
 	"github.com/pomdtr/sunbeam/internal"
 )
 
+//go:embed templates/sunbeam.yml
+var defaultConfig string
+
 var (
 	coreCommandsGroup = &cobra.Group{
 		ID:    "core",
@@ -61,6 +64,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				}
 			}
 
+			if _, err := os.Stat(configFile); os.IsNotExist(err) {
+				if err := os.MkdirAll(configDir, 0644); err != nil {
+					return fmt.Errorf("could not create config directory: %s", err)
+				}
+
+				if err := os.WriteFile(configFile, []byte(defaultConfig), 0644); err != nil {
+					return fmt.Errorf("could not create config file: %s", err)
+				}
+			}
+
 			os.Setenv("SUNBEAM", "1")
 			return nil
 		},
@@ -76,10 +89,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				generator = func() ([]byte, error) {
 					return input, nil
 				}
-			} else if _, err := os.Stat(configFile); !os.IsNotExist(err) {
-				generator = internal.NewFileGenerator(configFile)
 			} else {
-				return cmd.Usage()
+				generator = internal.NewFileGenerator(configFile)
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {

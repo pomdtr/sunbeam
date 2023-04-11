@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/pomdtr/sunbeam/main/schemas/page.schema.json
+type: list
+items:
+  - title: Manage Extension
+    subtitle: sunbeam extension manage
+    actions:
+      - type: push-page
+        title: Run
+        page:
+          type: dynamic
+          command: sunbeam extension manage
+  - title: Browse Available Extension
+    subtitle: sunbeam extension browse
+    actions:
+      - type: push-page
+        title: Browse Available Extension
+        page:
+          type: dynamic
+          command: sunbeam extension browse
+  - title: Ask AI
+    subtitle: sunbeam ask
+    actions:
+      - type: push-page
+        title: Ask AI
+        page:
+          type: dynamic
+          command: sunbeam ask ${input:prompt}
+        inputs:
+          - type: textfield
+            name: "prompt"
+            title: "Prompt"
+            placeholder: "What is the meaning of life?"
