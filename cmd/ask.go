@@ -11,7 +11,6 @@ import (
 
 	_ "embed"
 
-	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/sashabaranov/go-openai"
@@ -150,13 +149,13 @@ func NewCmdAsk() *cobra.Command {
 				return &page, nil
 			}
 
-			if !isatty.IsTerminal(os.Stderr.Fd()) {
+			if !isOutputInteractive() {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				json.NewEncoder(os.Stderr).Encode(output)
+				json.NewEncoder(os.Stdout).Encode(output)
 				return nil
 			}
 

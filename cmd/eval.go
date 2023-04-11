@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
@@ -50,13 +49,13 @@ func NewCmdEval() *cobra.Command {
 				return &page, nil
 			}
 
-			if !isatty.IsTerminal(os.Stderr.Fd()) {
+			if !isOutputInteractive() {
 				b, err := generator()
 				if err != nil {
 					return err
 				}
 
-				if err := json.NewEncoder(os.Stderr).Encode(b); err != nil {
+				if err := json.NewEncoder(os.Stdout).Encode(b); err != nil {
 					return err
 				}
 			}

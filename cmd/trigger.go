@@ -67,7 +67,7 @@ func NewTriggerCmd() *cobra.Command {
 				case types.DynamicTarget:
 					generator = internal.NewCommandGenerator(action.Page.Command, action.Page.Input, action.Page.Dir)
 				}
-				if !isatty.IsTerminal(os.Stderr.Fd()) {
+				if !isOutputInteractive() {
 					output, err := generator()
 					if err != nil {
 						return fmt.Errorf("could not generate page: %s", err)

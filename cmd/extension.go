@@ -19,7 +19,6 @@ import (
 	"github.com/pomdtr/sunbeam/types"
 	"gopkg.in/yaml.v3"
 
-	"github.com/mattn/go-isatty"
 	cp "github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
@@ -107,12 +106,12 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 				return &page, nil
 			}
 
-			if !isatty.IsTerminal(os.Stderr.Fd()) {
+			if !isOutputInteractive() {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
-				if err := json.NewEncoder(os.Stderr).Encode(output); err != nil {
+				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 					return fmt.Errorf("could not encode page: %s", err)
 				}
 				return nil
@@ -198,13 +197,13 @@ func NewExtensionViewCmd() *cobra.Command {
 				}, nil
 			}
 
-			if !isatty.IsTerminal(os.Stderr.Fd()) {
+			if !isOutputInteractive() {
 				content, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				if err := json.NewEncoder(os.Stderr).Encode(content); err != nil {
+				if err := json.NewEncoder(os.Stdout).Encode(content); err != nil {
 					return fmt.Errorf("could not encode page: %s", err)
 				}
 				return nil
@@ -279,12 +278,12 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 
 			}
 
-			if !isatty.IsTerminal(os.Stderr.Fd()) {
+			if !isOutputInteractive() {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
-				if err := json.NewEncoder(os.Stderr).Encode(output); err != nil {
+				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 					return fmt.Errorf("could not encode page: %s", err)
 				}
 				return nil
@@ -348,13 +347,13 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 			cwd, _ := os.Getwd()
 			generator := internal.NewCommandGenerator(command, "", cwd)
 
-			if !isatty.IsTerminal(os.Stderr.Fd()) {
+			if !isOutputInteractive() {
 				output, err := generator()
 				if err != nil {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				if err := json.NewEncoder(os.Stderr).Encode(output); err != nil {
+				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 					return fmt.Errorf("could not encode page: %s", err)
 				}
 				return nil
