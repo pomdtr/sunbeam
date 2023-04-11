@@ -93,8 +93,7 @@
         "form": {
             "type": "object",
             "required": [
-                "type",
-                "submitAction"
+                "type"
             ],
             "additionalProperties": false,
             "properties": {
