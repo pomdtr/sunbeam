@@ -20,7 +20,8 @@ type triggerPayload struct {
 
 func NewCmdServe() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "serve",
+		Use:   "serve",
+		Short: "Start a web server to serve sunbeam",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				command := exec.Command("sunbeam")
@@ -74,15 +75,12 @@ func NewCmdServe() *cobra.Command {
 				w.Write(output)
 			})
 
-			host, _ := cmd.Flags().GetString("host")
 			port, _ := cmd.Flags().GetInt("port")
-			addr := fmt.Sprintf("%s:%d", host, port)
-			log.Printf("Listening on http://%s", addr)
-			return http.ListenAndServe(addr, nil)
+			log.Printf("Listening on http://localhost:%d", port)
+			return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 		},
 	}
 
-	cmd.Flags().StringP("host", "H", "localhost", "host to listen on")
 	cmd.Flags().IntP("port", "p", 8080, "port to listen on")
 
 	return cmd
