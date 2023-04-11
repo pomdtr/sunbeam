@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/types"
 )
 
 //go:embed templates/sunbeam.yml
@@ -87,24 +89,24 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 		// If the config file does not exist, create it
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// var input []byte
-			// if !isatty.IsTerminal(os.Stdin.Fd()) {
-			// 	input, _ = io.ReadAll(os.Stdin)
-			// }
+			var input []byte
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				input, _ = io.ReadAll(os.Stdin)
+			}
 
 			var generator internal.PageGenerator
-			// if len(input) > 0 {
-			// 	generator = func() (*types.Page, error) {
-			// 		var page types.Page
-			// 		if err := json.Unmarshal(input, &page); err != nil {
-			// 			return nil, fmt.Errorf("could not unmarshal page: %s", err)
-			// 		}
+			if len(input) > 0 {
+				generator = func() (*types.Page, error) {
+					var page types.Page
+					if err := json.Unmarshal(input, &page); err != nil {
+						return nil, fmt.Errorf("could not unmarshal page: %s", err)
+					}
 
-			// 		return &page, nil
-			// 	}
-			// } else {
-			generator = internal.NewFileGenerator(configFile)
-			// }
+					return &page, nil
+				}
+			} else {
+				generator = internal.NewFileGenerator(configFile)
+			}
 
 			if !isOutputInteractive() {
 				output, err := generator()
@@ -184,7 +186,7 @@ func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.C
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				if err := json.NewDecoder(os.Stderr).Decode(output); err != nil {
+				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 					return fmt.Errorf("could not decode page: %s", err)
 				}
 

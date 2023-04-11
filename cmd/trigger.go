@@ -73,9 +73,10 @@ func NewTriggerCmd() *cobra.Command {
 						return fmt.Errorf("could not generate page: %s", err)
 					}
 
-					if err := json.NewDecoder(os.Stderr).Decode(output); err != nil {
+					if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 						return fmt.Errorf("could not decode page: %s", err)
 					}
+
 					return nil
 				}
 

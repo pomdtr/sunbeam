@@ -23,7 +23,10 @@ func NewReadCmd() *cobra.Command {
 					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				json.NewDecoder(os.Stderr).Decode(output)
+				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
+					return fmt.Errorf("could not encode page: %s", err)
+				}
+
 				return nil
 			}
 
