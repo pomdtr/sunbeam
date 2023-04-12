@@ -20,9 +20,6 @@ import (
 	"github.com/pomdtr/sunbeam/types"
 )
 
-//go:embed templates/sunbeam.yml
-var defaultConfig string
-
 var (
 	coreCommandsGroup = &cobra.Group{
 		ID:    "core",
@@ -38,6 +35,24 @@ func isOutputInteractive() bool {
 	return isatty.IsTerminal(os.Stderr.Fd())
 }
 
+func Draw(generator internal.PageGenerator) error {
+	if !isOutputInteractive() {
+		output, err := generator()
+		if err != nil {
+			return fmt.Errorf("could not generate page: %s", err)
+		}
+
+		if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
+			return fmt.Errorf("could not encode page: %s", err)
+		}
+		return nil
+	}
+
+	runner := internal.NewRunner(generator)
+	internal.NewPaginator(runner).Draw()
+	return nil
+}
+
 func NewRootCmd() (*cobra.Command, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -49,11 +64,8 @@ func NewRootCmd() (*cobra.Command, error) {
 		return nil, fmt.Errorf("could not get current working directory: %s", err)
 	}
 
-	configDir := path.Join(homeDir, ".config", "sunbeam")
 	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
-
-	configFile := path.Join(configDir, "sunbeam.yml")
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -74,16 +86,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				}
 			}
 
-			if _, err := os.Stat(configFile); os.IsNotExist(err) {
-				if err := os.MkdirAll(configDir, 0755); err != nil {
-					return fmt.Errorf("could not create config directory: %s", err)
-				}
-
-				if err := os.WriteFile(configFile, []byte(defaultConfig), 0755); err != nil {
-					return fmt.Errorf("could not create config file: %s", err)
-				}
-			}
-
 			os.Setenv("SUNBEAM", "1")
 			return nil
 		},
@@ -94,35 +96,19 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				input, _ = io.ReadAll(os.Stdin)
 			}
 
-			var generator internal.PageGenerator
-			if len(input) > 0 {
-				generator = func() (*types.Page, error) {
-					var page types.Page
-					if err := json.Unmarshal(input, &page); err != nil {
-						return nil, fmt.Errorf("could not unmarshal page: %s", err)
-					}
-
-					return &page, nil
-				}
-			} else {
-				generator = internal.NewFileGenerator(configFile)
+			if len(input) == 0 {
+				return cmd.Usage()
 			}
 
-			if !isOutputInteractive() {
-				output, err := generator()
-				if err != nil {
-					return fmt.Errorf("could not generate page: %s", err)
+			return Draw(func() (*types.Page, error) {
+				var page types.Page
+				if err := json.Unmarshal(input, &page); err != nil {
+					return nil, fmt.Errorf("could not unmarshal page: %s", err)
 				}
 
-				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-					return fmt.Errorf("could not encode page: %s", err)
-				}
-				return nil
-			}
+				return &page, nil
+			})
 
-			runner := internal.NewRunner(generator)
-			internal.NewPaginator(runner).Draw()
-			return nil
 		},
 	}
 
