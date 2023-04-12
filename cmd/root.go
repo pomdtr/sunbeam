@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strings"
 
 	_ "embed"
 
@@ -126,64 +125,5 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdAsk())
 	rootCmd.AddCommand(NewCmdEval())
 
-	coreCommands := map[string]struct{}{}
-	for _, coreCommand := range rootCmd.Commands() {
-		coreCommand.GroupID = coreCommandsGroup.ID
-		coreCommands[coreCommand.Name()] = struct{}{}
-	}
-
-	// Add the extension commands
-	extensions, err := ListExtensions(extensionDir)
-	if err != nil {
-		return nil, fmt.Errorf("could not list extensions: %s", err)
-	}
-
-	for _, extension := range extensions {
-		// Skip if the extension name conflicts with a core command
-		if _, ok := coreCommands[extension]; ok {
-			continue
-		}
-
-		rootCmd.AddCommand(NewExtensionShortcutCmd(extensionDir, extension))
-	}
-
 	return rootCmd, nil
-}
-
-func NewExtensionShortcutCmd(extensionDir string, extensionName string) *cobra.Command {
-	return &cobra.Command{
-		Use:                extensionName,
-		DisableFlagParsing: true,
-		GroupID:            extensionCommandsGroup.ID,
-		Args:               cobra.ArbitraryArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			binPath := path.Join(extensionDir, extensionName, extensionBinaryName)
-			if _, err := os.Stat(binPath); os.IsNotExist(err) {
-				return fmt.Errorf("extension not found: %s", extensionName)
-			}
-
-			command := fmt.Sprintf("%s %s", binPath, strings.Join(args, " "))
-
-			cwd, _ := os.Getwd()
-			generator := internal.NewCommandGenerator(command, "", cwd)
-
-			if !isOutputInteractive() {
-				output, err := generator()
-				if err != nil {
-					return fmt.Errorf("could not generate page: %s", err)
-				}
-
-				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-					return fmt.Errorf("could not decode page: %s", err)
-				}
-
-				return nil
-			}
-
-			runner := internal.NewRunner(generator)
-
-			internal.NewPaginator(runner).Draw()
-			return nil
-		},
-	}
 }
