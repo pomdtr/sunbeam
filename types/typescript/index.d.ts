@@ -90,18 +90,7 @@ export type Action =
        * The key used as a shortcut.
        */
       key?: string;
-      /**
-       * The command to run.
-       */
-      command: string;
-      /**
-       * The input to pass to the command stdin.
-       */
-      input?: string;
-      /**
-       * The directory where the command should be run.
-       */
-      dir?: string;
+      command: Command;
       /**
        * The action to take when the command succeeds.
        */
@@ -140,18 +129,7 @@ export type Action =
              * The type of the page.
              */
             type: "dynamic";
-            /**
-             * The command to run.
-             */
-            command: string;
-            /**
-             * The input to pass to the command stdin.
-             */
-            input?: string;
-            /**
-             * The directory where the command should be run.
-             */
-            dir?: string;
+            command: Command;
           };
     };
 export type Input =
@@ -282,17 +260,10 @@ export type Preview =
   | {
       type: "dynamic";
       /**
-       * The command used to generate the preview.
-       */
-      command: string;
-      /**
-       * The directory where the command should be run.
-       */
-      dir?: string;
-      /**
        * The language of the preview text.
        */
       language?: string;
+      command: Command;
     };
 
 export interface List {
@@ -322,6 +293,24 @@ export interface List {
    * The items in the list.
    */
   items?: Listitem[];
+}
+export interface Command {
+  /**
+   * The type of the command.
+   */
+  name: string;
+  /**
+   * The arguments to pass to the command.
+   */
+  args?: string[];
+  /**
+   * The input to pass to the command stdin.
+   */
+  input?: string;
+  /**
+   * The directory where the command should be run.
+   */
+  dir?: string;
 }
 export interface Listitem {
   /**
@@ -375,5 +364,5 @@ export interface Form {
    * The type of the response.
    */
   type: "form";
-  submitAction: Action;
+  submitAction?: Action;
 }

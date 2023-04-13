@@ -248,8 +248,7 @@
                 {
                     "required": [
                         "type",
-                        "command",
-                        "onSuccess"
+                        "command"
                     ],
                     "additionalProperties": false,
                     "properties": {
@@ -273,24 +272,11 @@
                             "description": "The key used as a shortcut."
                         },
                         "command": {
-                            "type": "string",
-                            "description": "The command to run."
+                            "$ref": "#/$defs/command"
                         },
-                        "input": {
-                            "type": "string",
-                            "description": "The input to pass to the command stdin."
-                        },
-                        "dir": {
-                            "type": "string",
-                            "description": "The directory where the command should be run."
-                        },
-                        "onSuccess": {
-                            "type": "string",
-                            "enum": [
-                                "reload",
-                                "exit"
-                            ],
-                            "description": "The action to take when the command succeeds."
+                        "reloadOnSuccess": {
+                            "type": "boolean",
+                            "description": "Whether to reload the page after the command has been run."
                         }
                     }
                 },
@@ -353,16 +339,7 @@
                                             "description": "The type of the page."
                                         },
                                         "command": {
-                                            "type": "string",
-                                            "description": "The command to run."
-                                        },
-                                        "input": {
-                                            "type": "string",
-                                            "description": "The input to pass to the command stdin."
-                                        },
-                                        "dir": {
-                                            "type": "string",
-                                            "description": "The directory where the command should be run."
+                                            "$ref": "#/$defs/command"
                                         }
                                     }
                                 }
@@ -531,6 +508,41 @@
                 }
             ]
         },
+        "command": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "name"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The type of the command."
+                        },
+                        "args": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "The arguments to pass to the command."
+                        },
+                        "input": {
+                            "type": "string",
+                            "description": "The input to pass to the command stdin."
+                        },
+                        "dir": {
+                            "type": "string",
+                            "description": "The directory where the command should be run."
+                        }
+                    }
+                }
+            ]
+        },
         "preview": {
             "description": "The preview to show in the detail view.",
             "oneOf": [
@@ -566,17 +578,12 @@
                         "type": {
                             "const": "dynamic"
                         },
-                        "command": {
-                            "description": "The command used to generate the preview.",
-                            "type": "string"
-                        },
-                        "dir": {
-                            "description": "The directory where the command should be run.",
-                            "type": "string"
-                        },
                         "language": {
-                            "description": "The language of the preview text.",
-                            "type": "string"
+                            "type": "string",
+                            "description": "The language of the preview text."
+                        },
+                        "command": {
+                            "$ref": "#/$defs/command"
                         }
                     }
                 }

@@ -5,8 +5,18 @@
             "type": "go",
             "request": "launch",
             "console": "integratedTerminal",
-            "mode": "auto",
             "program": "${workspaceFolder}",
+        },
+        {
+            "name": "sunbeam extension browse",
+            "type": "go",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}",
+            "args": [
+                "extension",
+                "browse",
+            ]
         }
     ]
 }

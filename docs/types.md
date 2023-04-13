@@ -37,9 +37,7 @@ and run json-schema-to-typescript to regenerate this file.
   - `title`: string - The title of the action.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
-  - `command`: string - The command to run.
-  - `input`: string - The input to pass to the command stdin.
-  - `dir`: string - The directory where the command should be run.
+  - `command`: [Command](#command)
   - `onSuccess`: `'reload'` | `'exit'` - The action to take when the command succeeds.
 - object
   - `type`: `'push-page'` - The type of the action.
@@ -94,9 +92,8 @@ The preview to show in the detail view.
   - `language`: string - The language of the preview text.
 - object
   - `type`: `'dynamic'`
-  - `command`: string - The command used to generate the preview.
-  - `dir`: string - The directory where the command should be run.
   - `language`: string - The language of the preview text.
+  - `command`: [Command](#command)
 
 ## List
 
@@ -109,6 +106,15 @@ The preview to show in the detail view.
   - `actions`: [Action](#action)[] - The actions to show when the list is empty.
 - `showPreview`: boolean - Whether to show the preview on the right side of the list.
 - `items`: [Listitem](#listitem)[] - The items in the list.
+
+## Command
+
+**PROPERTIES**
+
+- `name`: string - The type of the command.
+- `args`: string[] - The arguments to pass to the command.
+- `input`: string - The input to pass to the command stdin.
+- `dir`: string - The directory where the command should be run.
 
 ## Listitem
 

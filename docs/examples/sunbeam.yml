@@ -9,7 +9,8 @@ items:
         title: Run
         page:
           type: dynamic
-          command: "./bitwarden/bitwarden.sh"
+          command:
+            name: "./bitwarden/bitwarden.sh"
   - title: Highlight Example
     subtitle: Highlight
     actions:
@@ -17,7 +18,8 @@ items:
         type: push-page
         page:
           type: dynamic
-          command: "./highlight/highlight.sh"
+          command:
+            name: "./highlight/highlight.sh"
       - title: Highlight List
         type: push-page
         page:
@@ -93,7 +95,6 @@ items:
       - type: run-command
         title: Show
         command: echo ${input:text}
-        onSuccess: exit
         inputs:
           - type: textfield
             name: text

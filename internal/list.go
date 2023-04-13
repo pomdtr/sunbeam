@@ -129,7 +129,7 @@ func NewList(page *types.Page) *List {
 			return builder.String()
 		}
 
-		output, err := utils.RunCommand(item.Preview.Command, strings.NewReader(""), item.Preview.Dir)
+		output, err := item.Preview.Command.Output()
 		if err != nil {
 			return err.Error()
 		}

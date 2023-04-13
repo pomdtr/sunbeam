@@ -13,7 +13,6 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/types"
-	"github.com/pomdtr/sunbeam/utils"
 
 	"gopkg.in/yaml.v3"
 )
@@ -21,20 +20,36 @@ import (
 type PageGenerator func() ([]byte, error)
 
 func ExpandAction(action types.Action, old, new string) types.Action {
-	action.Command = strings.ReplaceAll(action.Command, old, shellescape.Quote(new))
+	expandCommad := func(command *types.Command) *types.Command {
+		if command == nil {
+			return nil
+		}
+
+		command.Name = strings.ReplaceAll(command.Name, old, shellescape.Quote(new))
+		for i, arg := range command.Args {
+			command.Args[i] = strings.ReplaceAll(arg, old, shellescape.Quote(new))
+		}
+
+		command.Dir = strings.ReplaceAll(command.Dir, old, new)
+		command.Input = strings.ReplaceAll(command.Input, old, new)
+
+		return command
+	}
+
+	action.Command = expandCommad(action.Command)
 	action.Url = strings.ReplaceAll(action.Url, old, url.QueryEscape(new))
 	action.Text = strings.ReplaceAll(action.Text, old, new)
 	action.Path = strings.ReplaceAll(action.Path, old, new)
 	if action.Page != nil {
-		action.Page.Command = strings.ReplaceAll(action.Page.Command, old, shellescape.Quote(new))
+		expandCommad(action.Page.Command)
 	}
 
 	return action
 }
 
-func NewCommandGenerator(command string, input string, dir string) PageGenerator {
+func NewCommandGenerator(command *types.Command) PageGenerator {
 	return func() ([]byte, error) {
-		output, err := utils.RunCommand(command, strings.NewReader(input), dir)
+		output, err := command.Output()
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +68,7 @@ func NewCommandGenerator(command string, input string, dir string) PageGenerator
 			return nil, err
 		}
 
-		page, err = expandPage(page, dir)
+		page, err = expandPage(page, command.Dir)
 		if err != nil {
 			return nil, err
 		}
@@ -126,16 +141,16 @@ func expandPage(page types.Page, dir string) (types.Page, error) {
 			if action.Title == "" {
 				action.Title = "Run"
 			}
-			if action.Dir == "" {
-				action.Dir = dir
+			if action.Command.Dir == "" {
+				action.Command.Dir = dir
 			}
 		case types.PushPageAction:
 			if action.Title == "" {
 				action.Title = "Push"
 			}
 
-			if action.Page.Dir == "" {
-				action.Page.Dir = dir
+			if action.Page.Command.Dir == "" {
+				action.Page.Command.Dir = dir
 			}
 
 			if !filepath.IsAbs(action.Page.Path) {
@@ -169,8 +184,8 @@ func expandPage(page types.Page, dir string) (types.Page, error) {
 
 	switch page.Type {
 	case types.DetailPage:
-		if page.Preview.Dir == "" {
-			page.Preview.Dir = dir
+		if page.Preview.Command.Dir == "" {
+			page.Preview.Command.Dir = dir
 		}
 
 	case types.ListPage:

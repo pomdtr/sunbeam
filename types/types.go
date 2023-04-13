@@ -2,6 +2,12 @@ package types
 
 import (
 	_ "embed"
+	"encoding/json"
+	"fmt"
+	"os/exec"
+	"strings"
+
+	"github.com/google/shlex"
 )
 
 //go:embed typescript/index.d.ts
@@ -35,6 +41,68 @@ type Page struct {
 	Items []ListItem `json:"items,omitempty" yaml:"items,omitempty"`
 }
 
+type Command struct {
+	Name  string   `json:"name" yaml:"name"`
+	Args  []string `json:"args,omitempty" yaml:"args,omitempty"`
+	Input string   `json:"input,omitempty" yaml:"input,omitempty"`
+	Dir   string   `json:"dir,omitempty" yaml:"dir,omitempty"`
+}
+
+func (c *Command) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		args, err := shlex.Split(s)
+		if err != nil {
+			return err
+		}
+		c.Name = args[0]
+		c.Args = args[1:]
+		return nil
+	}
+
+	var v any
+	if err := json.Unmarshal(data, &v); err == nil {
+		if v, ok := v.(map[string]interface{}); ok {
+			if name, ok := v["name"].(string); ok {
+				c.Name = name
+			}
+			if args, ok := v["args"].([]interface{}); ok {
+				for _, arg := range args {
+					c.Args = append(c.Args, arg.(string))
+				}
+			}
+			if input, ok := v["input"].(string); ok {
+				c.Input = input
+			}
+			if dir, ok := v["dir"].(string); ok {
+				c.Dir = dir
+			}
+			return nil
+		}
+
+	}
+
+	return fmt.Errorf("invalid command: %s", string(data))
+}
+
+func (c Command) cmd() *exec.Cmd {
+	cmd := exec.Command(c.Name, c.Args...)
+	cmd.Dir = c.Dir
+	cmd.Stdin = strings.NewReader(c.Input)
+
+	return cmd
+}
+
+func (c Command) Run() error {
+	cmd := c.cmd()
+	return cmd.Run()
+}
+
+func (c Command) Output() ([]byte, error) {
+	cmd := c.cmd()
+	return cmd.Output()
+}
+
 type PreviewType string
 
 const (
@@ -46,8 +114,7 @@ type Preview struct {
 	Type     PreviewType `json:"type,omitempty" yaml:"type,omitempty"`
 	Language string      `json:"language,omitempty" yaml:"language,omitempty"`
 	Text     string      `json:"text,omitempty" yaml:"text,omitempty"`
-	Command  string      `json:"command,omitempty" yaml:"command,omitempty"`
-	Dir      string      `json:"dir,omitempty" yaml:"dir,omitempty"`
+	Command  *Command    `json:"command,omitempty" yaml:"command,omitempty"`
 }
 
 type ListItem struct {
@@ -101,13 +168,6 @@ const (
 	ReloadAction   = "reload-page"
 )
 
-type OnSuccessType string
-
-const (
-	ReloadOnSuccess OnSuccessType = "reload"
-	ExitOnSuccess   OnSuccessType = "exit"
-)
-
 type TargetType string
 
 const (
@@ -118,9 +178,7 @@ const (
 type Target struct {
 	Type    TargetType `json:"type" yaml:"type"`
 	Path    string     `json:"path,omitempty" yaml:"path,omitempty"`
-	Input   string     `json:"input,omitempty" yaml:"input,omitempty"`
-	Command string     `json:"command,omitempty" yaml:"command,omitempty"`
-	Dir     string     `json:"dir,omitempty" yaml:"dir,omitempty"`
+	Command *Command   `json:"command,omitempty" yaml:"command,omitempty"`
 }
 
 type Action struct {
@@ -142,8 +200,6 @@ type Action struct {
 	Url string `json:"url,omitempty" yaml:"url,omitempty"`
 
 	// run
-	Command   string        `json:"command,omitempty" yaml:"command,omitempty"`
-	Input     string        `json:"input,omitempty" yaml:"input,omitempty"`
-	Dir       string        `json:"dir,omitempty" yaml:"dir,omitempty"`
-	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
+	Command         *Command `json:"command,omitempty" yaml:"command,omitempty"`
+	ReloadOnSuccess bool     `json:"reloadOnSuccess,omitempty" yaml:"reloadOnSuccess,omitempty"`
 }

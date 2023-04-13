@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
-	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -65,11 +64,11 @@ func NewTriggerCmd() *cobra.Command {
 				case types.StaticTarget:
 					generator = internal.NewFileGenerator(action.Path)
 				case types.DynamicTarget:
-					generator = internal.NewCommandGenerator(action.Page.Command, action.Page.Input, action.Page.Dir)
+					generator = internal.NewCommandGenerator(action.Page.Command)
 				}
 				return Draw(generator)
 			case types.RunAction:
-				if _, err := utils.RunCommand(action.Command, strings.NewReader(action.Input), action.Dir); err != nil {
+				if err := action.Command.Run(); err != nil {
 					return fmt.Errorf("unable to run command")
 				}
 				return nil

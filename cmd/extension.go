@@ -11,11 +11,9 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	_ "embed"
 
-	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"gopkg.in/yaml.v3"
 
@@ -48,7 +46,6 @@ func NewExtensionCmd(extensionDir string) *cobra.Command {
 	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
 	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionDir))
-	extensionCmd.AddCommand(NewExtensionExecCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionListCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionDir))
@@ -83,8 +80,11 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								Type:  types.PushPageAction,
 								Title: "View Readme",
 								Page: &types.Target{
-									Type:    "dynamic",
-									Command: fmt.Sprintf("sunbeam extension view %s", repo.HtmlUrl),
+									Type: types.DynamicTarget,
+									Command: &types.Command{
+										Name: "sunbeam",
+										Args: []string{"extension", "view", repo.HtmlUrl},
+									},
 								},
 							},
 							newExtensionInstallAction(repo.HtmlUrl, "i"),
@@ -113,11 +113,13 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 
 func newExtensionInstallAction(extensionUrl string, key string) types.Action {
 	return types.Action{
-		Type:      types.RunAction,
-		Title:     "Install",
-		OnSuccess: types.ExitOnSuccess,
-		Key:       key,
-		Command:   fmt.Sprintf("sunbeam extension install ${input:name} %s", extensionUrl),
+		Type:  types.RunAction,
+		Title: "Install",
+		Key:   key,
+		Command: &types.Command{
+			Name: "sunbeam",
+			Args: []string{"extension", "install", extensionUrl},
+		},
 		Inputs: []types.Input{
 			{
 				Type:        types.TextFieldInput,
@@ -214,26 +216,36 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								Type:  types.PushPageAction,
 								Title: "Run Command",
 								Page: &types.Target{
-									Command: fmt.Sprintf("sunbeam extension exec %s", extension),
+									Command: &types.Command{
+										Name: "sunbeam",
+										Args: []string{"extension", "exec", extension},
+									},
 								},
 							},
 							{
-								Title:     "Upgrade Extension",
-								Type:      types.RunAction,
-								OnSuccess: types.ExitOnSuccess,
-								Command:   fmt.Sprintf("sunbeam extension upgrade %s", extension),
+								Title: "Upgrade Extension",
+								Type:  types.RunAction,
+								Command: &types.Command{
+									Name: "sunbeam",
+									Args: []string{"extension", "upgrade", extension},
+								},
 							},
 							{
-								Type:      types.RunAction,
-								Title:     "Remove Extension",
-								OnSuccess: types.ReloadOnSuccess,
-								Command:   fmt.Sprintf("sunbeam extension remove %s", extension),
+								Type:            types.RunAction,
+								Title:           "Remove Extension",
+								ReloadOnSuccess: true,
+								Command: &types.Command{
+									Name: "sunbeam",
+									Args: []string{"extension", "remove", extension},
+								},
 							},
 							{
-								Type:      types.RunAction,
-								OnSuccess: types.ExitOnSuccess,
-								Title:     "Create Extension",
-								Command:   "sunbeam extension create ${input:extensionName}",
+								Type:  types.RunAction,
+								Title: "Create Extension",
+								Command: &types.Command{
+									Name: "sunbeam",
+									Args: []string{"extension", "create", "${input:extensionName}"},
+								},
 								Inputs: []types.Input{
 									{
 										Type:        types.TextFieldInput,
@@ -288,32 +300,6 @@ func NewExtensionCreateCmd() *cobra.Command {
 
 	cmd.Flags().StringP("name", "n", "", "Extension name")
 	return cmd
-}
-
-func NewExtensionExecCmd(extensionDir string) *cobra.Command {
-	validArgs, _ := ListExtensions(extensionDir)
-	return &cobra.Command{
-		Use:       "exec",
-		Short:     "Execute an installed extension",
-		Args:      cobra.MinimumNArgs(1),
-		ValidArgs: validArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionName := args[0]
-
-			binPath := path.Join(extensionDir, extensionName, extensionBinaryName)
-
-			if _, err := os.Stat(binPath); os.IsNotExist(err) {
-				return fmt.Errorf("extension not found: %s", extensionName)
-			}
-
-			command := fmt.Sprintf("%s %s", binPath, strings.Join(args[1:], " "))
-
-			cwd, _ := os.Getwd()
-			generator := internal.NewCommandGenerator(command, "", cwd)
-
-			return Draw(generator)
-		},
-	}
 }
 
 func NewExtensionInstallCmd(extensionDir string) *cobra.Command {

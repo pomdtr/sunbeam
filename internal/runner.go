@@ -121,7 +121,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			if action.Page.Type == types.StaticTarget {
 				generator = NewFileGenerator(action.Page.Path)
 			} else if action.Page.Type == types.DynamicTarget {
-				generator = NewCommandGenerator(action.Page.Command, action.Page.Input, action.Page.Dir)
+				generator = NewCommandGenerator(action.Page.Command)
 			} else {
 				return fmt.Errorf("unknown page type")
 			}
@@ -131,11 +131,10 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		}
 
 	case types.RunAction:
-		switch action.OnSuccess {
-		case types.ReloadOnSuccess:
+		if action.ReloadOnSuccess {
+
 			return func() tea.Msg {
-				_, err := utils.RunCommand(action.Command, strings.NewReader(action.Input), action.Dir)
-				if err != nil {
+				if err := action.Command.Run(); err != nil {
 					return err
 				}
 
@@ -143,19 +142,13 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 					Type: types.ReloadAction,
 				}
 			}
-		case types.ExitOnSuccess:
-			return func() tea.Msg {
-				_, err := utils.RunCommand(action.Command, strings.NewReader(action.Input), action.Dir)
-				if err != nil {
-					return err
-				}
+		}
+		return func() tea.Msg {
+			if err := action.Command.Run(); err != nil {
+				return err
+			}
 
-				return tea.Quit()
-			}
-		default:
-			return func() tea.Msg {
-				return fmt.Errorf("unsupported onSuccess")
-			}
+			return tea.Quit()
 		}
 	default:
 		return func() tea.Msg {
@@ -237,9 +230,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				detailFunc = func() string {
 					return page.Preview.Text
 				}
-			} else if page.Preview.Command != "" {
+			} else if command := page.Preview.Command; command != nil {
 				detailFunc = func() string {
-					output, err := utils.RunCommand(page.Preview.Command, strings.NewReader(""), page.Preview.Dir)
+					output, err := command.Output()
 					if err != nil {
 						return err.Error()
 					}

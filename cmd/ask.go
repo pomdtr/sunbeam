@@ -110,9 +110,12 @@ func NewCmdAsk() *cobra.Command {
 							Type:  types.PushPageAction,
 							Title: "Eval Code",
 							Page: &types.Target{
-								Input:   code,
-								Type:    types.DynamicTarget,
-								Command: "sunbeam eval",
+								Type: types.DynamicTarget,
+								Command: &types.Command{
+									Name:  "sunbeam",
+									Args:  []string{"eval"},
+									Input: code,
+								},
 							},
 						},
 						{
@@ -125,19 +128,20 @@ func NewCmdAsk() *cobra.Command {
 							Title: "Edit Prompt",
 							Page: &types.Target{
 								Type:    types.DynamicTarget,
-								Input:   code,
-								Command: "sunbeam ask ${input:prompt}",
+								Command: &types.Command{Name: "sunbeam", Args: []string{"ask", "${input:prompt}"}},
 							},
 							Inputs: []types.Input{
 								{Type: types.TextFieldInput, Name: "prompt", Title: "Prompt", Default: prompt},
 							},
 						},
 						{
-							Type:      types.RunAction,
-							Title:     "Save Code",
-							Command:   "cp /dev/stdin ${input:filepath}",
-							OnSuccess: types.ExitOnSuccess,
-							Input:     code,
+							Type:  types.RunAction,
+							Title: "Save Code",
+							Command: &types.Command{
+								Name:  "cp",
+								Args:  []string{"/dev/stdin", "${input:filepath}"},
+								Input: code,
+							},
 							Inputs: []types.Input{
 								{Type: types.TextFieldInput, Name: "filepath", Title: "Filepath"},
 							},
