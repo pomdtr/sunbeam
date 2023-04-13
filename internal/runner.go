@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -56,12 +57,17 @@ func (c *CommandRunner) Init() tea.Cmd {
 type CommandOutput []byte
 
 func (runner *CommandRunner) Refresh() tea.Msg {
-	page, err := runner.Generator()
+	b, err := runner.Generator()
 	if err != nil {
 		return err
 	}
 
-	return page
+	var page types.Page
+	if err := json.Unmarshal(b, &page); err != nil {
+		return err
+	}
+
+	return &page
 }
 
 func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {

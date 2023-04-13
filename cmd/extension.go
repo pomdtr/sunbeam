@@ -63,7 +63,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 		Use:   "browse",
 		Short: "Browse extensions",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() (*types.Page, error) {
+			generator := func() ([]byte, error) {
 				repos, err := utils.SearchSunbeamExtensions("")
 				if err != nil {
 					return nil, err
@@ -103,23 +103,10 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 					Items: listItems,
 				}
 
-				return &page, nil
+				return json.Marshal(page)
 			}
 
-			if !isOutputInteractive() {
-				output, err := generator()
-				if err != nil {
-					return fmt.Errorf("could not generate page: %s", err)
-				}
-				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-					return fmt.Errorf("could not encode page: %s", err)
-				}
-				return nil
-			}
-
-			runner := internal.NewRunner(generator)
-			internal.NewPaginator(runner).Draw()
-			return nil
+			return Draw(generator)
 		},
 	}
 }
@@ -153,7 +140,7 @@ func NewExtensionViewCmd() *cobra.Command {
 				return fmt.Errorf("could not parse repository: %s", err)
 			}
 
-			generator := func() (*types.Page, error) {
+			generator := func() ([]byte, error) {
 				res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/readme", repo.FullName()))
 				if err != nil {
 					return nil, fmt.Errorf("could not fetch readme: %s", err)
@@ -161,12 +148,13 @@ func NewExtensionViewCmd() *cobra.Command {
 				defer res.Body.Close()
 
 				if res.StatusCode != http.StatusOK {
-					return &types.Page{
+					page := types.Page{
 						Type: types.DetailPage,
 						Preview: &types.Preview{
 							Text: fmt.Sprintf("Could not fetch readme: %s", res.Status),
 						},
-					}, nil
+					}
+					return json.Marshal(page)
 				}
 
 				content, err := io.ReadAll(res.Body)
@@ -186,7 +174,7 @@ func NewExtensionViewCmd() *cobra.Command {
 					return nil, fmt.Errorf("could not decode readme: %s", err)
 				}
 
-				return &types.Page{
+				page := types.Page{
 					Type: types.DetailPage,
 					Preview: &types.Preview{
 						Type: types.StaticPreviewType,
@@ -195,25 +183,12 @@ func NewExtensionViewCmd() *cobra.Command {
 					Actions: []types.Action{
 						newExtensionInstallAction(repo.Url().String(), "i"),
 					},
-				}, nil
-			}
-
-			if !isOutputInteractive() {
-				content, err := generator()
-				if err != nil {
-					return fmt.Errorf("could not generate page: %s", err)
 				}
 
-				if err := json.NewEncoder(os.Stdout).Encode(content); err != nil {
-					return fmt.Errorf("could not encode page: %s", err)
-				}
-				return nil
+				return json.Marshal(page)
 			}
 
-			runner := internal.NewRunner(generator)
-			internal.NewPaginator(runner).Draw()
-
-			return nil
+			return Draw(generator)
 		},
 	}
 }
@@ -224,7 +199,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 		Short: "Manage installed extensions",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() (*types.Page, error) {
+			generator := func() ([]byte, error) {
 				extensions, err := ListExtensions(extensionDir)
 				if err != nil {
 					return nil, fmt.Errorf("could not list extensions: %s", err)
@@ -272,27 +247,15 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 					})
 				}
 
-				return &types.Page{
+				page := types.Page{
 					Type:  types.ListPage,
 					Items: listItems,
-				}, nil
+				}
 
+				return json.Marshal(page)
 			}
 
-			if !isOutputInteractive() {
-				output, err := generator()
-				if err != nil {
-					return fmt.Errorf("could not generate page: %s", err)
-				}
-				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-					return fmt.Errorf("could not encode page: %s", err)
-				}
-				return nil
-			}
-
-			runner := internal.NewRunner(generator)
-			internal.NewPaginator(runner).Draw()
-			return nil
+			return Draw(generator)
 		},
 	}
 }
@@ -348,22 +311,7 @@ func NewExtensionExecCmd(extensionDir string) *cobra.Command {
 			cwd, _ := os.Getwd()
 			generator := internal.NewCommandGenerator(command, "", cwd)
 
-			if !isOutputInteractive() {
-				output, err := generator()
-				if err != nil {
-					return fmt.Errorf("could not generate page: %s", err)
-				}
-
-				if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-					return fmt.Errorf("could not encode page: %s", err)
-				}
-				return nil
-			}
-
-			runner := internal.NewRunner(generator)
-
-			internal.NewPaginator(runner).Draw()
-			return nil
+			return Draw(generator)
 		},
 	}
 }

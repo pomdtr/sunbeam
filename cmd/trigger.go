@@ -67,22 +67,7 @@ func NewTriggerCmd() *cobra.Command {
 				case types.DynamicTarget:
 					generator = internal.NewCommandGenerator(action.Page.Command, action.Page.Input, action.Page.Dir)
 				}
-				if !isOutputInteractive() {
-					output, err := generator()
-					if err != nil {
-						return fmt.Errorf("could not generate page: %s", err)
-					}
-
-					if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-						return fmt.Errorf("could not decode page: %s", err)
-					}
-
-					return nil
-				}
-
-				runner := internal.NewRunner(generator)
-				internal.NewPaginator(runner).Draw()
-				return nil
+				return Draw(generator)
 			case types.RunAction:
 				if _, err := utils.RunCommand(action.Command, strings.NewReader(action.Input), action.Dir); err != nil {
 					return fmt.Errorf("unable to run command")

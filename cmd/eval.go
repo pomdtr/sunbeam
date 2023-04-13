@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 	"github.com/traefik/yaegi/interp"
@@ -19,7 +18,7 @@ func NewCmdEval() *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		Short: "Evaluate a file or stdin as a page",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() (*types.Page, error) {
+			generator := func() ([]byte, error) {
 				buffer := bytes.Buffer{}
 				i := interp.New(interp.Options{
 					Stdout: &buffer,
@@ -46,22 +45,10 @@ func NewCmdEval() *cobra.Command {
 					return nil, err
 				}
 
-				return &page, nil
+				return json.Marshal(page)
 			}
 
-			if !isOutputInteractive() {
-				b, err := generator()
-				if err != nil {
-					return err
-				}
-
-				if err := json.NewEncoder(os.Stdout).Encode(b); err != nil {
-					return err
-				}
-			}
-
-			runner := internal.NewRunner(generator)
-			return internal.NewPaginator(runner).Draw()
+			return Draw(generator)
 		},
 	}
 

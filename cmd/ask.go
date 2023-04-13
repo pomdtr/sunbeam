@@ -11,7 +11,6 @@ import (
 
 	_ "embed"
 
-	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/sashabaranov/go-openai"
 	"github.com/spf13/cobra"
@@ -83,7 +82,7 @@ func NewCmdAsk() *cobra.Command {
 				},
 			}
 
-			generator := func() (*types.Page, error) {
+			generator := func() ([]byte, error) {
 				client := openai.NewClient(token)
 				res, err := client.CreateChatCompletion(
 					context.Background(),
@@ -146,22 +145,10 @@ func NewCmdAsk() *cobra.Command {
 					},
 				}
 
-				return &page, nil
+				return json.Marshal(page)
 			}
 
-			if !isOutputInteractive() {
-				output, err := generator()
-				if err != nil {
-					return fmt.Errorf("could not generate page: %s", err)
-				}
-
-				json.NewEncoder(os.Stdout).Encode(output)
-				return nil
-			}
-
-			runner := internal.NewRunner(generator)
-			internal.NewPaginator(runner).Draw()
-			return nil
+			return Draw(generator)
 		},
 	}
 

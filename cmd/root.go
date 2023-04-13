@@ -9,6 +9,7 @@ import (
 
 	_ "embed"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/joho/godotenv"
 	"github.com/mattn/go-isatty"
@@ -48,7 +49,30 @@ func Draw(generator internal.PageGenerator) error {
 	}
 
 	runner := internal.NewRunner(generator)
-	internal.NewPaginator(runner).Draw()
+	paginator := internal.NewPaginator(runner)
+	p := tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
+	m, err := p.Run()
+	if err != nil {
+		return err
+	}
+
+	model, ok := m.(*internal.Paginator)
+	if !ok {
+		return fmt.Errorf("could not convert model to paginator")
+	}
+
+	if o := model.Output; o != nil {
+		switch o.(type) {
+		case string:
+			fmt.Print(o)
+			return nil
+		default:
+			if err := json.NewEncoder(os.Stdout).Encode(o); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -99,13 +123,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return cmd.Usage()
 			}
 
-			return Draw(func() (*types.Page, error) {
+			return Draw(func() ([]byte, error) {
 				var page types.Page
 				if err := json.Unmarshal(input, &page); err != nil {
 					return nil, fmt.Errorf("could not unmarshal page: %s", err)
 				}
 
-				return &page, nil
+				return json.Marshal(page)
 			})
 
 		},

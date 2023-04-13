@@ -31,7 +31,7 @@ type SunbeamOptions struct {
 type Paginator struct {
 	width, height int
 	options       SunbeamOptions
-	output        any
+	Output        any
 
 	pages  []Page
 	hidden bool
@@ -83,7 +83,7 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.hidden = true
 		return m, tea.Quit
 	case OutputMsg:
-		m.output = msg.data
+		m.Output = msg.data
 		return m, tea.Quit
 	}
 
@@ -164,7 +164,7 @@ func (paginator *Paginator) Draw() (err error) {
 		return fmt.Errorf("could not convert model to paginator")
 	}
 
-	if o := model.output; o != nil {
+	if o := model.Output; o != nil {
 		switch o.(type) {
 		case string:
 			fmt.Print(o)
