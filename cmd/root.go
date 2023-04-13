@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path"
 
@@ -17,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/pomdtr/sunbeam/internal"
-	"github.com/pomdtr/sunbeam/types"
 )
 
 var (
@@ -61,16 +59,12 @@ func Draw(generator internal.PageGenerator) error {
 		return fmt.Errorf("could not convert model to paginator")
 	}
 
-	if o := model.Output; o != nil {
-		switch o.(type) {
-		case string:
-			fmt.Print(o)
-			return nil
-		default:
-			if err := json.NewEncoder(os.Stdout).Encode(o); err != nil {
-				return err
-			}
-		}
+	if model.Output.Stdout != "" {
+		fmt.Print(model.Output.Stdout)
+	}
+
+	if model.Output.Stderr != "" {
+		fmt.Fprint(os.Stderr, model.Output.Stderr)
 	}
 
 	return nil
@@ -112,27 +106,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			os.Setenv("SUNBEAM", "1")
 			return nil
 		},
-		// If the config file does not exist, create it
-		RunE: func(cmd *cobra.Command, args []string) error {
-			var input []byte
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				input, _ = io.ReadAll(os.Stdin)
-			}
-
-			if len(input) == 0 {
-				return cmd.Usage()
-			}
-
-			return Draw(func() ([]byte, error) {
-				var page types.Page
-				if err := json.Unmarshal(input, &page); err != nil {
-					return nil, fmt.Errorf("could not unmarshal page: %s", err)
-				}
-
-				return json.Marshal(page)
-			})
-
-		},
 	}
 
 	rootCmd.AddGroup(coreCommandsGroup, extensionCommandsGroup)
@@ -148,6 +121,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewCmdAsk())
 	rootCmd.AddCommand(NewCmdEval())
+	rootCmd.AddCommand(NewCmdRun())
 
 	return rootCmd, nil
 }

@@ -92,9 +92,9 @@ export type Action =
       key?: string;
       command: Command;
       /**
-       * The action to take when the command succeeds.
+       * Whether to reload the page after the command has been run.
        */
-      onSuccess: "reload" | "exit";
+      reloadOnSuccess?: boolean;
     }
   | {
       /**
@@ -242,6 +242,22 @@ export type Input =
        */
       default?: string;
     };
+export type Command =
+  | string
+  | {
+      /**
+       * The arguments to pass to the command.
+       */
+      args: string[];
+      /**
+       * The input to pass to the command stdin.
+       */
+      input?: string;
+      /**
+       * The directory where the command should be run.
+       */
+      dir?: string;
+    };
 /**
  * The preview to show in the detail view.
  */
@@ -293,24 +309,6 @@ export interface List {
    * The items in the list.
    */
   items?: Listitem[];
-}
-export interface Command {
-  /**
-   * The type of the command.
-   */
-  name: string;
-  /**
-   * The arguments to pass to the command.
-   */
-  args?: string[];
-  /**
-   * The input to pass to the command stdin.
-   */
-  input?: string;
-  /**
-   * The directory where the command should be run.
-   */
-  dir?: string;
 }
 export interface Listitem {
   /**

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -138,8 +139,13 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 						data[item.Name] = item.Value()
 					}
 
-					return OutputMsg{
-						data: data,
+					js, err := json.Marshal(data)
+					if err != nil {
+						return err
+					}
+
+					return ExitMsg{
+						Stdout: string(js),
 					}
 				}
 			}

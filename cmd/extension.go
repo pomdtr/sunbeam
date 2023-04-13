@@ -82,8 +82,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								Page: &types.Target{
 									Type: types.DynamicTarget,
 									Command: &types.Command{
-										Name: "sunbeam",
-										Args: []string{"extension", "view", repo.HtmlUrl},
+										Args: []string{"sunbeam", "extension", "view", repo.HtmlUrl},
 									},
 								},
 							},
@@ -117,8 +116,7 @@ func newExtensionInstallAction(extensionUrl string, key string) types.Action {
 		Title: "Install",
 		Key:   key,
 		Command: &types.Command{
-			Name: "sunbeam",
-			Args: []string{"extension", "install", extensionUrl},
+			Args: []string{"sunbeam", "extension", "install", extensionUrl},
 		},
 		Inputs: []types.Input{
 			{
@@ -217,8 +215,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								Title: "Run Command",
 								Page: &types.Target{
 									Command: &types.Command{
-										Name: "sunbeam",
-										Args: []string{"extension", "exec", extension},
+										Args: []string{"sunbeam", "extension", "exec", extension},
 									},
 								},
 							},
@@ -226,8 +223,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								Title: "Upgrade Extension",
 								Type:  types.RunAction,
 								Command: &types.Command{
-									Name: "sunbeam",
-									Args: []string{"extension", "upgrade", extension},
+									Args: []string{"sunbeam", "extension", "upgrade", extension},
 								},
 							},
 							{
@@ -235,16 +231,14 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								Title:           "Remove Extension",
 								ReloadOnSuccess: true,
 								Command: &types.Command{
-									Name: "sunbeam",
-									Args: []string{"extension", "remove", extension},
+									Args: []string{"sunbeam", "extension", "remove", extension},
 								},
 							},
 							{
 								Type:  types.RunAction,
 								Title: "Create Extension",
 								Command: &types.Command{
-									Name: "sunbeam",
-									Args: []string{"extension", "create", "${input:extensionName}"},
+									Args: []string{"sunbeam", "extension", "create", "${input:extensionName}"},
 								},
 								Inputs: []types.Input{
 									{

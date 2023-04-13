@@ -8,14 +8,28 @@ Sunbeam is a command line launcher for your terminal, inspired by fzf and raycas
 
 See https://pomdtr.github.io/sunbeam for more information.
 
+### Options
+
 ```
-sunbeam [flags]
+  -h, --help   help for sunbeam
+```
+
+## sunbeam ask
+
+Ask a question
+
+### Synopsis
+
+Ask a question
+
+```
+sunbeam ask [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for sunbeam
+  -h, --help   help for ask
 ```
 
 ## sunbeam copy
@@ -30,6 +44,20 @@ sunbeam copy [flags]
 
 ```
   -h, --help   help for copy
+```
+
+## sunbeam eval
+
+Evaluate a file or stdin as a page
+
+```
+sunbeam eval [file] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for eval
 ```
 
 ## sunbeam extension
@@ -67,21 +95,8 @@ sunbeam extension create [flags]
 ### Options
 
 ```
-  -h, --help   help for create
-```
-
-## sunbeam extension exec
-
-Execute an installed extension
-
-```
-sunbeam extension exec [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for exec
+  -h, --help          help for create
+  -n, --name string   Extension name
 ```
 
 ## sunbeam extension help
@@ -114,7 +129,8 @@ sunbeam extension install [flags]
 ### Options
 
 ```
-  -h, --help   help for install
+  -h, --help          help for install
+  -n, --name string   Extension name (defaults to repository name)
 ```
 
 ## sunbeam extension list
@@ -215,23 +231,6 @@ sunbeam extension view <repo> [flags]
   -h, --help   help for view
 ```
 
-## sunbeam fetch
-
-fetch a page and push it's output
-
-```
-sunbeam fetch <url> [flags]
-```
-
-### Options
-
-```
-  -d, --data string          HTTP data
-  -H, --header stringArray   HTTP header
-  -h, --help                 help for fetch
-  -X, --method string        HTTP method (default "GET")
-```
-
 ## sunbeam help
 
 Help about any command
@@ -265,6 +264,20 @@ sunbeam open <url> [flags]
   -h, --help   help for open
 ```
 
+## sunbeam paste
+
+Paste system clipboard to stdout
+
+```
+sunbeam paste [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for paste
+```
+
 ## sunbeam query
 
 Transform or generate JSON using a jq query
@@ -287,31 +300,45 @@ sunbeam query <query> [flags]
 
 ## sunbeam read
 
-Read page from file or stdin, and push it's content
+Read page from file, and push it's content
 
 ```
-sunbeam read [page] [flags]
+sunbeam read <page> [flags]
 ```
 
 ### Options
 
 ```
-  -f, --format string   Format of the input file. Can be json or yaml. (default "json")
-  -h, --help            help for read
+  -h, --help   help for read
 ```
 
 ## sunbeam run
 
-Run a script and push it's output
+Run page from file
 
 ```
-sunbeam run <script> [flags]
+sunbeam run <page> [flags]
 ```
 
 ### Options
 
 ```
   -h, --help   help for run
+```
+
+## sunbeam serve
+
+Start a web server to serve sunbeam
+
+```
+sunbeam serve [flags]
+```
+
+### Options
+
+```
+  -h, --help       help for serve
+  -p, --port int   port to listen on (default 8080)
 ```
 
 ## sunbeam trigger

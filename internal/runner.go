@@ -3,17 +3,72 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-isatty"
 	"github.com/pkg/browser"
+	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
+	"gopkg.in/yaml.v3"
 )
+
+type PageGenerator func() ([]byte, error)
+
+func NewFileGenerator(name string) PageGenerator {
+	return func() ([]byte, error) {
+		extension := filepath.Ext(name)
+		bytes, err := os.ReadFile(name)
+		if err != nil {
+			return nil, err
+		}
+
+		var page types.Page
+		if extension == ".yaml" || extension == ".yml" {
+			if err := yaml.Unmarshal(bytes, &page); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := json.Unmarshal(bytes, &page); err != nil {
+				return nil, err
+			}
+		}
+
+		page, err = ExpandPage(page, filepath.Dir(name))
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(page)
+	}
+}
+
+func NewCommandGenerator(command *types.Command) PageGenerator {
+	return func() ([]byte, error) {
+		output, err := command.Output()
+		if err != nil {
+			return nil, err
+		}
+
+		var page types.Page
+		if err := json.Unmarshal(output, &page); err != nil {
+			return nil, err
+		}
+
+		page, err = ExpandPage(page, command.Dir)
+		if err != nil {
+			return nil, err
+		}
+
+		return json.Marshal(page)
+	}
+}
 
 type CommandRunner struct {
 	width, height int
@@ -59,6 +114,15 @@ type CommandOutput []byte
 func (runner *CommandRunner) Refresh() tea.Msg {
 	b, err := runner.Generator()
 	if err != nil {
+		return err
+	}
+
+	var v any
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+
+	if err := schemas.Validate(v); err != nil {
 		return err
 	}
 
@@ -117,17 +181,18 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			if action.Page == nil {
 				return fmt.Errorf("page is nil")
 			}
-			var generator PageGenerator
 			if action.Page.Type == types.StaticTarget {
-				generator = NewFileGenerator(action.Page.Path)
+				return PushPageMsg{
+					runner: NewRunner(NewFileGenerator(action.Page.Path)),
+				}
 			} else if action.Page.Type == types.DynamicTarget {
-				generator = NewCommandGenerator(action.Page.Command)
+				return PushPageMsg{
+					runner: NewRunner(NewCommandGenerator(action.Page.Command)),
+				}
 			} else {
 				return fmt.Errorf("unknown page type")
 			}
-			return PushPageMsg{
-				runner: NewRunner(generator),
-			}
+
 		}
 
 	case types.RunAction:
@@ -395,4 +460,87 @@ func (c *CommandRunner) View() string {
 	default:
 		return ""
 	}
+}
+
+func ExpandAction(action types.Action, old, new string) types.Action {
+	expandCommad := func(command *types.Command) *types.Command {
+		if command == nil {
+			return nil
+		}
+
+		for i, arg := range command.Args {
+			command.Args[i] = strings.ReplaceAll(arg, old, shellescape.Quote(new))
+		}
+
+		command.Dir = strings.ReplaceAll(command.Dir, old, new)
+		command.Input = strings.ReplaceAll(command.Input, old, new)
+
+		return command
+	}
+
+	action.Command = expandCommad(action.Command)
+	action.Url = strings.ReplaceAll(action.Url, old, url.QueryEscape(new))
+	action.Text = strings.ReplaceAll(action.Text, old, new)
+	action.Path = strings.ReplaceAll(action.Path, old, new)
+	if action.Page != nil {
+		expandCommad(action.Page.Command)
+	}
+
+	return action
+}
+
+func ExpandPage(page types.Page, dir string) (types.Page, error) {
+	var err error
+	expandAction := func(action types.Action) (types.Action, error) {
+		switch action.Type {
+
+		case types.RunAction:
+			if action.Command.Dir == "" {
+				action.Command.Dir = dir
+			}
+		case types.PushPageAction:
+			if action.Page.Command.Dir == "" {
+				action.Page.Command.Dir = dir
+			}
+
+			if !filepath.IsAbs(action.Page.Path) {
+				action.Path = filepath.Join(dir, action.Path)
+			}
+		case types.OpenPathAction:
+			if action.Path != "" && !filepath.IsAbs(action.Path) {
+				action.Path = filepath.Join(dir, action.Path)
+			}
+		}
+
+		return action, nil
+	}
+
+	for i, action := range page.Actions {
+		action, err = expandAction(action)
+		if err != nil {
+			return page, err
+		}
+
+		page.Actions[i] = action
+	}
+
+	switch page.Type {
+	case types.DetailPage:
+		if page.Preview.Command.Dir == "" {
+			page.Preview.Command.Dir = dir
+		}
+
+	case types.ListPage:
+		for i, item := range page.Items {
+			for j, action := range item.Actions {
+				action, err := expandAction(action)
+				if err != nil {
+					return page, err
+				}
+				page.Items[i].Actions[j] = action
+			}
+		}
+	}
+
+	return page, nil
 }

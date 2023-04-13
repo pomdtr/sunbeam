@@ -38,7 +38,7 @@ and run json-schema-to-typescript to regenerate this file.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
   - `command`: [Command](#command)
-  - `onSuccess`: `'reload'` | `'exit'` - The action to take when the command succeeds.
+  - `reloadOnSuccess`: boolean - Whether to reload the page after the command has been run.
 - object
   - `type`: `'push-page'` - The type of the action.
   - `title`: string - The title of the action.
@@ -80,6 +80,16 @@ and run json-schema-to-typescript to regenerate this file.
 - `value`: string - The value of the item.
   - `default`: string - The default value of the input.
 
+## Command
+
+**POSSIBLE VALUES**
+
+- string
+- object
+  - `args`: string[] - The arguments to pass to the command.
+  - `input`: string - The input to pass to the command stdin.
+  - `dir`: string - The directory where the command should be run.
+
 ## Preview
 
 The preview to show in the detail view.
@@ -106,15 +116,6 @@ The preview to show in the detail view.
   - `actions`: [Action](#action)[] - The actions to show when the list is empty.
 - `showPreview`: boolean - Whether to show the preview on the right side of the list.
 - `items`: [Listitem](#listitem)[] - The items in the list.
-
-## Command
-
-**PROPERTIES**
-
-- `name`: string - The type of the command.
-- `args`: string[] - The arguments to pass to the command.
-- `input`: string - The input to pass to the command stdin.
-- `dir`: string - The directory where the command should be run.
 
 ## Listitem
 

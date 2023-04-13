@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/shlex"
+	"gopkg.in/yaml.v3"
 )
 
 //go:embed typescript/index.d.ts
@@ -42,10 +43,27 @@ type Page struct {
 }
 
 type Command struct {
-	Name  string   `json:"name" yaml:"name"`
 	Args  []string `json:"args,omitempty" yaml:"args,omitempty"`
 	Input string   `json:"input,omitempty" yaml:"input,omitempty"`
 	Dir   string   `json:"dir,omitempty" yaml:"dir,omitempty"`
+}
+
+func (c Command) cmd() *exec.Cmd {
+	cmd := exec.Command(c.Args[0], c.Args[1:]...)
+	cmd.Dir = c.Dir
+	cmd.Stdin = strings.NewReader(c.Input)
+
+	return cmd
+}
+
+func (c Command) Run() error {
+	cmd := c.cmd()
+	return cmd.Run()
+}
+
+func (c Command) Output() ([]byte, error) {
+	cmd := c.cmd()
+	return cmd.Output()
 }
 
 func (c *Command) UnmarshalJSON(data []byte) error {
@@ -55,17 +73,13 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		c.Name = args[0]
-		c.Args = args[1:]
+		c.Args = args
 		return nil
 	}
 
 	var v any
 	if err := json.Unmarshal(data, &v); err == nil {
 		if v, ok := v.(map[string]interface{}); ok {
-			if name, ok := v["name"].(string); ok {
-				c.Name = name
-			}
 			if args, ok := v["args"].([]interface{}); ok {
 				for _, arg := range args {
 					c.Args = append(c.Args, arg.(string))
@@ -85,22 +99,50 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 	return fmt.Errorf("invalid command: %s", string(data))
 }
 
-func (c Command) cmd() *exec.Cmd {
-	cmd := exec.Command(c.Name, c.Args...)
-	cmd.Dir = c.Dir
-	cmd.Stdin = strings.NewReader(c.Input)
+func (c *Command) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		args, err := shlex.Split(value.Value)
+		if err != nil {
+			return err
+		}
 
-	return cmd
-}
+		c.Args = args
+		return nil
+	}
 
-func (c Command) Run() error {
-	cmd := c.cmd()
-	return cmd.Run()
-}
+	if value.Kind == yaml.MappingNode {
+		for i := 0; i < len(value.Content); i += 2 {
+			key := value.Content[i].Value
+			val := value.Content[i+1]
 
-func (c Command) Output() ([]byte, error) {
-	cmd := c.cmd()
-	return cmd.Output()
+			switch key {
+			case "args":
+				if val.Kind != yaml.SequenceNode {
+					return fmt.Errorf("invalid command args: %s", val.Value)
+				}
+
+				for _, arg := range val.Content {
+					c.Args = append(c.Args, arg.Value)
+				}
+			case "input":
+				if val.Kind != yaml.ScalarNode {
+					return fmt.Errorf("invalid command input: %s", val.Value)
+				}
+
+				c.Input = val.Value
+			case "dir":
+				if val.Kind != yaml.ScalarNode {
+					return fmt.Errorf("invalid command dir: %s", val.Value)
+				}
+
+				c.Dir = val.Value
+			default:
+				return fmt.Errorf("invalid command key: %s", key)
+			}
+		}
+	}
+
+	return fmt.Errorf("invalid command: %s", value.Value)
 }
 
 type PreviewType string

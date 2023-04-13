@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -310,19 +311,24 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 
-			if item.Data != nil {
+			if item.Data == nil {
 				return c, func() tea.Msg {
-					return OutputMsg{
-						data: item.Data,
+					return ExitMsg{
+						Stdout: item.Title,
 					}
 				}
 			}
 
 			return c, func() tea.Msg {
-				return OutputMsg{
-					data: item.Title,
+				js, err := json.Marshal(item.Data)
+				if err != nil {
+					return err
+				}
+				return ExitMsg{
+					Stdout: string(js),
 				}
 			}
+
 		}
 	case SelectionChangeMsg:
 		if !c.ShowPreview {

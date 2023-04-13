@@ -59,14 +59,14 @@ func NewTriggerCmd() *cobra.Command {
 
 			switch action.Type {
 			case types.PushPageAction:
-				var generator internal.PageGenerator
 				switch action.Page.Type {
 				case types.StaticTarget:
-					generator = internal.NewFileGenerator(action.Path)
+					return Draw(internal.NewFileGenerator(action.Page.Path))
 				case types.DynamicTarget:
-					generator = internal.NewCommandGenerator(action.Page.Command)
+					return Draw(internal.NewCommandGenerator(action.Page.Command))
+				default:
+					return fmt.Errorf("unknown page type: %s", action.Page.Type)
 				}
-				return Draw(generator)
 			case types.RunAction:
 				if err := action.Command.Run(); err != nil {
 					return fmt.Errorf("unable to run command")

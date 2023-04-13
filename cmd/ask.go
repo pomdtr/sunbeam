@@ -112,8 +112,7 @@ func NewCmdAsk() *cobra.Command {
 							Page: &types.Target{
 								Type: types.DynamicTarget,
 								Command: &types.Command{
-									Name:  "sunbeam",
-									Args:  []string{"eval"},
+									Args:  []string{"sunbeam", "eval"},
 									Input: code,
 								},
 							},
@@ -128,7 +127,7 @@ func NewCmdAsk() *cobra.Command {
 							Title: "Edit Prompt",
 							Page: &types.Target{
 								Type:    types.DynamicTarget,
-								Command: &types.Command{Name: "sunbeam", Args: []string{"ask", "${input:prompt}"}},
+								Command: &types.Command{Args: []string{"sunbeam", "ask", "${input:prompt}"}},
 							},
 							Inputs: []types.Input{
 								{Type: types.TextFieldInput, Name: "prompt", Title: "Prompt", Default: prompt},
@@ -138,8 +137,7 @@ func NewCmdAsk() *cobra.Command {
 							Type:  types.RunAction,
 							Title: "Save Code",
 							Command: &types.Command{
-								Name:  "cp",
-								Args:  []string{"/dev/stdin", "${input:filepath}"},
+								Args:  []string{"cp", "/dev/stdin", "${input:filepath}"},
 								Input: code,
 							},
 							Inputs: []types.Input{

@@ -17,6 +17,17 @@
                 "extension",
                 "browse",
             ]
+        },
+        {
+            "name": "run examples",
+            "type": "go",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}",
+            "args": [
+                "read",
+                "./sunbeam.yml"
+            ]
         }
     ]
 }
