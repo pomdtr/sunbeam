@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -41,10 +42,7 @@ func NewFileGenerator(name string) PageGenerator {
 			}
 		}
 
-		page, err = ExpandPage(page, filepath.Dir(name))
-		if err != nil {
-			return nil, err
-		}
+		page = expandPage(page, filepath.Dir(name))
 		return json.Marshal(page)
 	}
 }
@@ -61,11 +59,7 @@ func NewCommandGenerator(command *types.Command) PageGenerator {
 			return nil, err
 		}
 
-		page, err = ExpandPage(page, command.Dir)
-		if err != nil {
-			return nil, err
-		}
-
+		page = expandPage(page, command.Dir)
 		return json.Marshal(page)
 	}
 }
@@ -140,24 +134,15 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		if len(pair) != 2 {
 			continue
 		}
-		action = ExpandAction(action, fmt.Sprintf("${env:%s}", pair[0]), pair[1])
+		action = RenderAction(action, fmt.Sprintf("${env:%s}", pair[0]), pair[1])
 	}
 
 	switch action.Type {
 	case types.ReloadAction:
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
-	case types.OpenPathAction:
+	case types.OpenAction:
 		return func() tea.Msg {
-			if err := browser.OpenURL(action.Path); err != nil {
-				return func() tea.Msg {
-					return err
-				}
-			}
-			return tea.Quit()
-		}
-	case types.OpenUrlAction:
-		return func() tea.Msg {
-			if err := browser.OpenURL(action.Url); err != nil {
+			if err := browser.OpenURL(action.Target); err != nil {
 				return func() tea.Msg {
 					return err
 				}
@@ -176,48 +161,67 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			return tea.Quit()
 		}
 
-	case types.PushPageAction:
+	case types.PushAction:
 		return func() tea.Msg {
-			if action.Page == nil {
-				return fmt.Errorf("page is nil")
+			return PushPageMsg{
+				runner: NewRunner(NewFileGenerator(action.Page)),
 			}
-			if action.Page.Type == types.StaticTarget {
-				return PushPageMsg{
-					runner: NewRunner(NewFileGenerator(action.Page.Path)),
-				}
-			} else if action.Page.Type == types.DynamicTarget {
-				return PushPageMsg{
-					runner: NewRunner(NewCommandGenerator(action.Page.Command)),
-				}
-			} else {
-				return fmt.Errorf("unknown page type")
-			}
-
 		}
 
 	case types.RunAction:
-		if action.ReloadOnSuccess {
-
+		switch action.OnSuccess {
+		case types.OpenOnSuccess:
 			return func() tea.Msg {
-				if err := action.Command.Run(); err != nil {
+				output, err := action.Command.Output()
+				if err != nil {
+					return err
+				}
+				if err := browser.OpenURL(string(output)); err != nil {
+					return fmt.Errorf("failed to open url: %s", err)
+				}
+				return tea.Quit()
+			}
+		case types.CopyOnSuccess:
+			return func() tea.Msg {
+				output, err := action.Command.Output()
+				if err != nil {
 					return err
 				}
 
-				return types.Action{
-					Type: types.ReloadAction,
+				if err := clipboard.WriteAll(string(output)); err != nil {
+					return fmt.Errorf("failed to copy text to clipboard: %s", err)
 				}
-			}
-		}
-		return func() tea.Msg {
-			if err := action.Command.Run(); err != nil {
-				return err
+				return tea.Quit()
 			}
 
-			return tea.Quit()
+		case types.PushOnSuccess:
+			return func() tea.Msg {
+				return PushPageMsg{
+					runner: NewRunner(NewCommandGenerator(action.Command)),
+				}
+			}
+
+		case types.ReloadOnSuccess:
+			return func() tea.Msg {
+				err := action.Command.Run()
+				if err != nil {
+					return err
+				}
+				return types.ReloadAction
+			}
+		default:
+			return func() tea.Msg {
+				err := action.Command.Run()
+				if err != nil {
+					return err
+				}
+				return tea.Quit()
+			}
 		}
+
 	default:
 		return func() tea.Msg {
-			return fmt.Errorf("unknown action type")
+			return fmt.Errorf("unknown action type: %s", action.Type)
 		}
 	}
 }
@@ -295,17 +299,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				detailFunc = func() string {
 					return page.Preview.Text
 				}
-			} else if command := page.Preview.Command; command != nil {
+			} else {
 				detailFunc = func() string {
-					output, err := command.Output()
+					output, err := page.Preview.Command.Output()
 					if err != nil {
 						return err.Error()
 					}
 					return string(output)
-				}
-			} else {
-				return runner, func() tea.Msg {
-					return fmt.Errorf("detail page must have either text or command")
 				}
 			}
 
@@ -462,85 +462,96 @@ func (c *CommandRunner) View() string {
 	}
 }
 
-func ExpandAction(action types.Action, old, new string) types.Action {
-	expandCommad := func(command *types.Command) *types.Command {
-		if command == nil {
-			return nil
+func RenderAction(action types.Action, old, new string) types.Action {
+	if action.Command != nil {
+		for i, arg := range action.Command.Args {
+			action.Command.Args[i] = strings.ReplaceAll(arg, old, shellescape.Quote(new))
 		}
-
-		for i, arg := range command.Args {
-			command.Args[i] = strings.ReplaceAll(arg, old, shellescape.Quote(new))
-		}
-
-		command.Dir = strings.ReplaceAll(command.Dir, old, new)
-		command.Input = strings.ReplaceAll(command.Input, old, new)
-
-		return command
+		action.Command.Input = strings.ReplaceAll(action.Command.Input, old, new)
+		action.Command.Dir = strings.ReplaceAll(action.Command.Dir, old, new)
 	}
 
-	action.Command = expandCommad(action.Command)
-	action.Url = strings.ReplaceAll(action.Url, old, url.QueryEscape(new))
+	action.Target = strings.ReplaceAll(action.Target, old, url.QueryEscape(new))
 	action.Text = strings.ReplaceAll(action.Text, old, new)
-	action.Path = strings.ReplaceAll(action.Path, old, new)
-	if action.Page != nil {
-		expandCommad(action.Page.Command)
-	}
-
+	action.Page = strings.ReplaceAll(action.Page, old, new)
 	return action
 }
 
-func ExpandPage(page types.Page, dir string) (types.Page, error) {
-	var err error
-	expandAction := func(action types.Action) (types.Action, error) {
-		switch action.Type {
+func expandPage(page types.Page, dir string) types.Page {
+	expandUrl := func(target string) string {
+		targetUrl, err := url.Parse(target)
+		if err != nil {
+			return target
+		}
 
-		case types.RunAction:
-			if action.Command.Dir == "" {
-				action.Command.Dir = dir
-			}
-		case types.PushPageAction:
-			if action.Page.Command.Dir == "" {
-				action.Page.Command.Dir = dir
-			}
+		if targetUrl.Scheme != "" && targetUrl.Scheme != "file" {
+			return target
+		}
 
-			if !filepath.IsAbs(action.Page.Path) {
-				action.Path = filepath.Join(dir, action.Path)
-			}
-		case types.OpenPathAction:
-			if action.Path != "" && !filepath.IsAbs(action.Path) {
-				action.Path = filepath.Join(dir, action.Path)
+		if path.IsAbs(targetUrl.Path) {
+			return target
+		}
+
+		return path.Join(dir, targetUrl.Path)
+	}
+
+	expandAction := func(action types.Action) types.Action {
+		if action.Command != nil && !path.IsAbs(action.Command.Dir) {
+			action.Command.Dir = path.Join(dir, action.Command.Dir)
+		}
+
+		if action.Page != "" && !path.IsAbs(action.Page) {
+			action.Page = path.Join(dir, action.Page)
+		}
+
+		if action.Target != "" {
+			action.Target = expandUrl(action.Target)
+		}
+
+		if action.Title == "" {
+			switch action.Type {
+			case types.OpenAction:
+				action.Title = "Open"
+			case types.CopyAction:
+				action.Title = "Copy"
+			case types.RunAction:
+				action.Title = "Run"
+			case types.PushAction:
+				action.Title = "Push"
+			case types.ExitAction:
+				action.Title = "Exit"
+			case types.ReloadAction:
+				action.Title = "Reload"
 			}
 		}
 
-		return action, nil
+		return action
 	}
 
 	for i, action := range page.Actions {
-		action, err = expandAction(action)
-		if err != nil {
-			return page, err
-		}
-
-		page.Actions[i] = action
+		page.Actions[i] = expandAction(action)
 	}
 
-	switch page.Type {
-	case types.DetailPage:
-		if page.Preview.Command.Dir == "" {
+	if page.Preview != nil {
+		if page.Preview.Command != nil {
 			page.Preview.Command.Dir = dir
 		}
-
-	case types.ListPage:
-		for i, item := range page.Items {
-			for j, action := range item.Actions {
-				action, err := expandAction(action)
-				if err != nil {
-					return page, err
-				}
-				page.Items[i].Actions[j] = action
-			}
-		}
 	}
 
-	return page, nil
+	for i, item := range page.Items {
+		if item.Preview != nil {
+			if item.Preview.Command != nil {
+				item.Preview.Command.Dir = dir
+			}
+		}
+
+		for j, action := range item.Actions {
+
+			item.Actions[j] = expandAction(action)
+		}
+
+		page.Items[i] = item
+	}
+
+	return page
 }

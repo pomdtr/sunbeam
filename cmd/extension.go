@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	_ "embed"
 
@@ -45,7 +46,6 @@ func NewExtensionCmd(extensionDir string) *cobra.Command {
 	extensionCmd.AddCommand(NewExtensionViewCmd())
 	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
-	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionListCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionDir))
@@ -77,21 +77,26 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 						},
 						Actions: []types.Action{
 							{
-								Type:  types.PushPageAction,
+								Type:  types.PushAction,
 								Title: "View Readme",
-								Page: &types.Target{
-									Type: types.DynamicTarget,
-									Command: &types.Command{
-										Args: []string{"sunbeam", "extension", "view", repo.HtmlUrl},
-									},
+								Command: &types.Command{
+									Args: []string{os.Args[0], "extension", "view", repo.FullName},
+								},
+								OnSuccess: types.PushOnSuccess,
+							},
+							{
+								Type:  types.RunAction,
+								Title: "Install",
+								Key:   "i",
+								Command: &types.Command{
+									Args: []string{os.Args[0], "extension", "install", repo.HtmlUrl},
 								},
 							},
-							newExtensionInstallAction(repo.HtmlUrl, "i"),
 							{
-								Type:  types.OpenUrlAction,
-								Title: "Open in Browser",
-								Url:   repo.HtmlUrl,
-								Key:   "o",
+								Type:   types.OpenAction,
+								Title:  "Open in Browser",
+								Target: repo.HtmlUrl,
+								Key:    "o",
 							},
 						},
 					})
@@ -106,25 +111,6 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 			}
 
 			return Draw(generator)
-		},
-	}
-}
-
-func newExtensionInstallAction(extensionUrl string, key string) types.Action {
-	return types.Action{
-		Type:  types.RunAction,
-		Title: "Install",
-		Key:   key,
-		Command: &types.Command{
-			Args: []string{"sunbeam", "extension", "install", extensionUrl},
-		},
-		Inputs: []types.Input{
-			{
-				Type:        types.TextFieldInput,
-				Name:        "name",
-				Title:       "Extension Name",
-				Placeholder: "Extension Name",
-			},
 		},
 	}
 }
@@ -151,7 +137,8 @@ func NewExtensionViewCmd() *cobra.Command {
 					page := types.Page{
 						Type: types.DetailPage,
 						Preview: &types.Preview{
-							Text: fmt.Sprintf("Could not fetch readme: %s", res.Status),
+							Language: "markdown",
+							Text:     fmt.Sprintf("Could not fetch readme: %s", res.Status),
 						},
 					}
 					return json.Marshal(page)
@@ -181,7 +168,14 @@ func NewExtensionViewCmd() *cobra.Command {
 						Text: string(payload),
 					},
 					Actions: []types.Action{
-						newExtensionInstallAction(repo.Url().String(), "i"),
+						{
+							Type:  types.RunAction,
+							Title: "Install",
+							Key:   "i",
+							Command: &types.Command{
+								Args: []string{cmd.Root().Name(), "extension", "install", args[0]},
+							},
+						},
 					},
 				}
 
@@ -211,34 +205,25 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 						Title: extension,
 						Actions: []types.Action{
 							{
-								Type:  types.PushPageAction,
-								Title: "Run Command",
-								Page: &types.Target{
-									Command: &types.Command{
-										Args: []string{"sunbeam", "extension", "exec", extension},
-									},
-								},
-							},
-							{
 								Title: "Upgrade Extension",
 								Type:  types.RunAction,
 								Command: &types.Command{
-									Args: []string{"sunbeam", "extension", "upgrade", extension},
+									Args: []string{os.Args[0], "extension", "upgrade", "extension"},
 								},
 							},
 							{
-								Type:            types.RunAction,
-								Title:           "Remove Extension",
-								ReloadOnSuccess: true,
+								Type:      types.RunAction,
+								Title:     "Remove Extension",
+								OnSuccess: types.ReloadOnSuccess,
 								Command: &types.Command{
-									Args: []string{"sunbeam", "extension", "remove", extension},
+									Args: []string{os.Args[0], "extension", "remove", "extension"},
 								},
 							},
 							{
 								Type:  types.RunAction,
 								Title: "Create Extension",
 								Command: &types.Command{
-									Args: []string{"sunbeam", "extension", "create", "${input:extensionName}"},
+									Args: []string{os.Args[0], "extension", "create", "extension"},
 								},
 								Inputs: []types.Input{
 									{
@@ -300,88 +285,60 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install a sunbeam extension from a repository",
-		Args:  cobra.ExactArgs(2),
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			extensionOrigin := args[1]
-			if extensionOrigin == "." {
-				cwd, _ := os.Getwd()
-
-				bin := path.Join(cwd, extensionBinaryName)
-				if _, err := os.Stat(bin); os.IsNotExist(err) {
-					return fmt.Errorf("extension binary not found: %s", bin)
-				}
-
-				return nil
-			}
-
-			_, err := url.Parse(extensionOrigin)
-			if err != nil {
-				return fmt.Errorf("invalid extension URL: %s", args[0])
-			}
-			return nil
-		},
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionName, _ := cmd.Flags().GetString("name")
-			extensionOrigin := args[0]
-			if extensionOrigin == "." {
-				cwd, _ := os.Getwd()
-				targetDir := path.Join(extensionDir, extensionName)
-				err := os.Symlink(cwd, targetDir)
-				if err != nil {
-					return fmt.Errorf("unable to install local extension: %s", err)
-				}
-
-				fmt.Sprintln("Extension installed:", path.Base(cwd))
-				return nil
-			}
-
-			repository, err := utils.RepositoryFromString(extensionOrigin)
+			repository, err := utils.RepositoryFromString(args[0])
 			if err != nil {
 				return fmt.Errorf("unable to parse repository: %s", err)
 			}
 
-			targetDir := path.Join(extensionDir, extensionName)
-			if _, err := os.Stat(targetDir); !os.IsNotExist(err) {
-				return fmt.Errorf("extension already installed")
+			if err := installExtension(repository, extensionDir); err != nil {
+				return fmt.Errorf("could not install extension: %s", err)
 			}
 
-			if release, err := utils.GetLatestRelease(repository); err == nil {
-				if err := releaseInstall(release, targetDir); err != nil {
-					return fmt.Errorf("unable to install extension: %s", err)
-				}
-				manifest := ExtensionManifest{
-					Name:  repository.Name(),
-					Owner: repository.Owner(),
-					Host:  "github.com",
-					Tag:   release.TagName,
-					Path:  targetDir,
-				}
-				bytes, err := yaml.Marshal(manifest)
-				if err != nil {
-					return fmt.Errorf("unable to write extension manifest: %s", err)
-				}
-
-				manifestPath := path.Join(targetDir, "manifest.yml")
-				if err := os.WriteFile(manifestPath, bytes, 0644); err != nil {
-					return fmt.Errorf("unable to write extension manifest: %s", err)
-				}
-
-				fmt.Println("Extension installed!")
-				return nil
-			}
-
-			if err := gitInstall(repository, targetDir); err != nil {
-				return fmt.Errorf("unable to install extension: %s", err)
-			}
-
-			fmt.Println("Extension installed!")
+			fmt.Println("Extension installed successfully!")
 			return nil
 		},
 	}
 
-	cmd.Flags().StringP("name", "n", "", "Extension name (defaults to repository name)")
-	cmd.MarkFlagRequired("name")
 	return cmd
+}
+
+func installExtension(repository *utils.Repository, extensionDir string) error {
+	targetDir := filepath.Join(extensionDir, repository.Owner(), repository.Name())
+	if _, err := os.Stat(filepath.Join(targetDir, extensionBinaryName)); !os.IsNotExist(err) {
+		return fmt.Errorf("extension already installed")
+	}
+
+	if release, err := utils.GetLatestRelease(repository); err == nil {
+		if err := releaseInstall(release, targetDir); err != nil {
+			return fmt.Errorf("unable to install extension: %s", err)
+		}
+		manifest := ExtensionManifest{
+			Name:  repository.Name(),
+			Owner: repository.Owner(),
+			Host:  "github.com",
+			Tag:   release.TagName,
+			Path:  targetDir,
+		}
+		bytes, err := yaml.Marshal(manifest)
+		if err != nil {
+			return fmt.Errorf("unable to write extension manifest: %s", err)
+		}
+
+		manifestPath := path.Join(targetDir, "manifest.yml")
+		if err := os.WriteFile(manifestPath, bytes, 0644); err != nil {
+			return fmt.Errorf("unable to write extension manifest: %s", err)
+		}
+
+		return nil
+	}
+
+	if err := gitInstall(repository, targetDir); err != nil {
+		return fmt.Errorf("unable to install extension: %s", err)
+	}
+
+	return nil
 }
 
 func releaseInstall(release *utils.Release, targetDir string) error {
@@ -392,7 +349,9 @@ func releaseInstall(release *utils.Release, targetDir string) error {
 	}
 	defer res.Body.Close()
 
-	os.MkdirAll(targetDir, 0755)
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return fmt.Errorf("unable to install extension: %s", err)
+	}
 	out, err := os.OpenFile(path.Join(targetDir, extensionBinaryName), os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		return fmt.Errorf("unable to install extension: %s", err)
@@ -422,30 +381,6 @@ func gitInstall(repository *utils.Repository, targetDir string) error {
 	return cp.Copy(tempDir, targetDir)
 }
 
-func NewExtensionRenameCmd(extensionDir string) *cobra.Command {
-	return &cobra.Command{
-		Use:   "rename <old-name> <new-name>",
-		Short: "Rename an installed extension",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			src := path.Join(extensionDir, args[0])
-			if _, err := os.Stat(src); os.IsNotExist(err) {
-				return fmt.Errorf("source directory not found: %s", src)
-			}
-
-			dst := path.Join(extensionDir, args[1])
-			if _, err := os.Stat(dst); !os.IsNotExist(err) {
-				return fmt.Errorf("destination directory already exists: %s", dst)
-			}
-
-			if err := os.Rename(src, dst); err != nil {
-				return fmt.Errorf("unable to rename extension: %s", err)
-			}
-			return nil
-		},
-	}
-}
-
 func NewExtensionListCmd(extensionDir string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
@@ -473,17 +408,21 @@ func NewExtensionRemoveCmd(extensionDir string) *cobra.Command {
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: validArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionName := args[0]
-			targetDir := path.Join(extensionDir, extensionName)
+			parts := strings.Split(args[0], "/")
+			if len(parts) != 2 {
+				return fmt.Errorf("invalid extension name: %s", args[0])
+			}
+
+			targetDir := path.Join(extensionDir, parts[0], parts[1])
 			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
-				return fmt.Errorf("extension not installed: %s", extensionName)
+				return fmt.Errorf("extension %s not installed", args[0])
 			}
 
 			if err := os.RemoveAll(targetDir); err != nil {
 				return fmt.Errorf("unable to remove extension: %s", err)
 			}
 
-			fmt.Println("Extension removed:", extensionName)
+			fmt.Println("extension removed")
 			return nil
 		},
 	}
@@ -581,20 +520,22 @@ func ListExtensions(extensionDir string) ([]string, error) {
 		return nil, nil
 	}
 
-	entries, err := os.ReadDir(extensionDir)
+	owners, err := os.ReadDir(extensionDir)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to list extensions: %s", err)
 	}
 
 	extensions := make([]string, 0)
-	for _, entry := range entries {
-		binary := path.Join(extensionDir, entry.Name(), extensionBinaryName)
-		if _, err := os.Stat(binary); os.IsNotExist(err) {
-			continue
+	for _, owner := range owners {
+		names, err := os.ReadDir(path.Join(extensionDir, owner.Name()))
+		if err != nil {
+			return nil, fmt.Errorf("unable to list extensions: %s", err)
 		}
 
-		extensions = append(extensions, entry.Name())
+		for _, name := range names {
+			extensions = append(extensions, fmt.Sprintf("%s/%s", owner.Name(), name.Name()))
+		}
 	}
 
 	return extensions, nil

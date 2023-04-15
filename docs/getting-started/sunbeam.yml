@@ -3,29 +3,24 @@ type: list
 items:
   - title: Static List
     actions:
-      - type: push-page
+      - type: push
         title: Static List
-        page:
-          type: static
-          path: "./static-list.json"
+        page: ./static-list.json
   - title: Dynamic List
     actions:
-      - type: push-page
+      - type: run
+        onSuccess: push
         title: Dynamic List
-        page:
-          type: dynamic
-          command: "./dynamic-list.py"
+        command: ./dynamic-list.py
   - title: Dynamic List with Args
     actions:
-      - type: push-page
+      - type: run
+        onSuccess: push
         title: Dynamic List with Args
-        page:
-          type: dynamic
-          command: "./dynamic-list-with-args.py /"
+        command: ./dynamic-list-with-args.py /
   - title: Full-Blown File Browser
     actions:
-      - type: push-page
+      - type: run
+        onSuccess: push
         title: Browse Current Dir
-        page:
-          type: dynamic
-          command: "../examples/file-browser/file-browser.py"
+        command: ../examples/file-browser/file-browser.py

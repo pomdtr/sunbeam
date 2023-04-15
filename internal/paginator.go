@@ -29,19 +29,15 @@ type SunbeamOptions struct {
 type Paginator struct {
 	width, height int
 	options       SunbeamOptions
-	Output        ExitMsg
 
 	pages  []Page
 	hidden bool
 }
 
-func NewPaginator(root Page) *Paginator {
+func NewPaginator(root Page, options SunbeamOptions) *Paginator {
 	return &Paginator{pages: []Page{
 		root,
-	}, options: SunbeamOptions{
-		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
-		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
-	}}
+	}, options: options}
 }
 
 func (m *Paginator) Init() tea.Cmd {
@@ -50,11 +46,6 @@ func (m *Paginator) Init() tea.Cmd {
 	}
 
 	return m.pages[0].Init()
-}
-
-type ExitMsg struct {
-	Stdout string
-	Stderr string
 }
 
 func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -80,9 +71,6 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.hidden = true
-		return m, tea.Quit
-	case ExitMsg:
-		m.Output = msg
 		return m, tea.Quit
 	}
 

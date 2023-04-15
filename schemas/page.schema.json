@@ -93,7 +93,8 @@
         "form": {
             "type": "object",
             "required": [
-                "type"
+                "type",
+                "submitAction"
             ],
             "additionalProperties": false,
             "properties": {
@@ -119,10 +120,6 @@
                 "id": {
                     "type": "string",
                     "description": "The id of the item."
-                },
-                "data": {
-                    "type": "object",
-                    "description": "The data associated with the item. Used when the is piped to another command."
                 },
                 "subtitle": {
                     "type": "string",
@@ -157,7 +154,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "copy-text",
+                            "const": "copy",
                             "description": "The type of the action."
                         },
                         "title": {
@@ -184,21 +181,17 @@
                 {
                     "required": [
                         "type",
-                        "path"
+                        "target"
                     ],
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "open-path",
+                            "const": "open",
                             "description": "The type of the action."
                         },
                         "title": {
                             "type": "string",
                             "description": "The title of the action."
-                        },
-                        "key": {
-                            "type": "string",
-                            "description": "The key used as a shortcut."
                         },
                         "inputs": {
                             "type": "array",
@@ -207,41 +200,53 @@
                             },
                             "description": "The inputs to show when the action is run."
                         },
-                        "path": {
+                        "key": {
                             "type": "string",
-                            "description": "The path to open."
+                            "description": "The key used as a shortcut."
+                        },
+                        "target": {
+                            "type": "string",
+                            "description": "The target to open."
                         }
                     }
                 },
                 {
                     "required": [
-                        "type",
-                        "url"
+                        "type"
                     ],
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "open-url",
+                            "const": "exit",
                             "description": "The type of the action."
                         },
                         "title": {
                             "type": "string",
                             "description": "The title of the action."
                         },
-                        "inputs": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/$defs/input"
-                            },
-                            "description": "The inputs to show when the action is run."
+                        "key": {
+                            "type": "string",
+                            "description": "The key used as a shortcut."
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "const": "reload",
+                            "description": "The type of the action."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
                         },
                         "key": {
                             "type": "string",
                             "description": "The key used as a shortcut."
-                        },
-                        "url": {
-                            "type": "string",
-                            "description": "The url to open."
                         }
                     }
                 },
@@ -253,7 +258,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "run-command",
+                            "const": "run",
                             "description": "The type of the action."
                         },
                         "title": {
@@ -274,9 +279,15 @@
                         "command": {
                             "$ref": "#/$defs/command"
                         },
-                        "reloadOnSuccess": {
-                            "type": "boolean",
-                            "description": "Whether to reload the page after the command has been run."
+                        "onSuccess": {
+                            "type": "string",
+                            "enum": [
+                                "reload",
+                                "copy",
+                                "open",
+                                "exit",
+                                "push"
+                            ]
                         }
                     }
                 },
@@ -288,7 +299,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "push-page",
+                            "const": "push",
                             "description": "The type of the action."
                         },
                         "title": {
@@ -307,43 +318,7 @@
                             "description": "The inputs to show when the action is run."
                         },
                         "page": {
-                            "oneOf": [
-                                {
-                                    "type": "object",
-                                    "required": [
-                                        "type",
-                                        "path"
-                                    ],
-                                    "additionalProperties": false,
-                                    "properties": {
-                                        "type": {
-                                            "const": "static",
-                                            "description": "The type of the page."
-                                        },
-                                        "path": {
-                                            "type": "string",
-                                            "description": "The path of the page."
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "object",
-                                    "required": [
-                                        "type",
-                                        "command"
-                                    ],
-                                    "additionalProperties": false,
-                                    "properties": {
-                                        "type": {
-                                            "const": "dynamic",
-                                            "description": "The type of the page."
-                                        },
-                                        "command": {
-                                            "$ref": "#/$defs/command"
-                                        }
-                                    }
-                                }
-                            ]
+                            "type": "string"
                         }
                     }
                 }
@@ -511,29 +486,30 @@
         "command": {
             "oneOf": [
                 {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1
                 },
                 {
                     "type": "object",
-                    "required": [
-                        "args"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
+                    "items": {
                         "args": {
                             "type": "array",
                             "items": {
                                 "type": "string"
-                            },
-                            "description": "The arguments to pass to the command."
+                            }
                         },
                         "input": {
-                            "type": "string",
-                            "description": "The input to pass to the command stdin."
+                            "type": "string"
                         },
                         "dir": {
-                            "type": "string",
-                            "description": "The directory where the command should be run."
+                            "type": "string"
                         }
                     }
                 }

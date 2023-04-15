@@ -25,22 +25,23 @@ json.dump(
                 "actions": [
                     (
                         {
-                            "type": "open-path",
+                            "type": "open",
                             "title": "Open File",
-                            "path": str(path.absolute()),
+                            "target": str(path.absolute()),
                         }
                         if path.is_file()
                         else {
-                            "type": "push-page",
+                            "type": "run",
                             "title": "Browse Directory",
+                            "onSuccess": "push",
+                            "command": [sys.argv[0], path.absolute()],
                             "page": {
                                 "type": "dynamic",
-                                "command": f"{sys.argv[0]} {path.absolute()}",
                             }
                         }
                     ),
                     {
-                        "type": "copy-text",
+                        "type": "copy",
                         "title": "Copy Path",
                         "key": "y",
                         "text": str(path.absolute()),

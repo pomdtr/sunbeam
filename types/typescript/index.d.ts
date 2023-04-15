@@ -11,7 +11,7 @@ export type Action =
       /**
        * The type of the action.
        */
-      type: "copy-text";
+      type: "copy";
       /**
        * The title of the action.
        */
@@ -33,74 +33,77 @@ export type Action =
       /**
        * The type of the action.
        */
-      type: "open-path";
+      type: "open";
       /**
        * The title of the action.
        */
       title?: string;
       /**
-       * The key used as a shortcut.
-       */
-      key?: string;
-      /**
        * The inputs to show when the action is run.
        */
       inputs?: Input[];
       /**
-       * The path to open.
+       * The key used as a shortcut.
        */
-      path: string;
+      key?: string;
+      /**
+       * The target to open.
+       */
+      target: string;
     }
   | {
       /**
        * The type of the action.
        */
-      type: "open-url";
+      type: "exit";
       /**
        * The title of the action.
        */
       title?: string;
       /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
-      /**
        * The key used as a shortcut.
        */
       key?: string;
-      /**
-       * The url to open.
-       */
-      url: string;
     }
   | {
       /**
        * The type of the action.
        */
-      type: "run-command";
+      type: "reload";
       /**
        * The title of the action.
        */
       title?: string;
       /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
-      /**
        * The key used as a shortcut.
        */
       key?: string;
-      command: Command;
-      /**
-       * Whether to reload the page after the command has been run.
-       */
-      reloadOnSuccess?: boolean;
     }
   | {
       /**
        * The type of the action.
        */
-      type: "push-page";
+      type: "run";
+      /**
+       * The title of the action.
+       */
+      title?: string;
+      /**
+       * The inputs to show when the action is run.
+       */
+      inputs?: Input[];
+      /**
+       * The key used as a shortcut.
+       */
+      key?: string;
+      command: string;
+      onSuccess?: "reload" | "copy" | "open" | "exit" | "push";
+    }
+  | {
+      /**
+       * The type of the action.
+       */
+      type: "push";
       /**
        * The title of the action.
        */
@@ -113,24 +116,7 @@ export type Action =
        * The inputs to show when the action is run.
        */
       inputs?: Input[];
-      page:
-        | {
-            /**
-             * The type of the page.
-             */
-            type: "static";
-            /**
-             * The path of the page.
-             */
-            path: string;
-          }
-        | {
-            /**
-             * The type of the page.
-             */
-            type: "dynamic";
-            command: Command;
-          };
+      page: string;
     };
 export type Input =
   | {
@@ -242,22 +228,6 @@ export type Input =
        */
       default?: string;
     };
-export type Command =
-  | string
-  | {
-      /**
-       * The arguments to pass to the command.
-       */
-      args: string[];
-      /**
-       * The input to pass to the command stdin.
-       */
-      input?: string;
-      /**
-       * The directory where the command should be run.
-       */
-      dir?: string;
-    };
 /**
  * The preview to show in the detail view.
  */
@@ -280,7 +250,12 @@ export type Preview =
        */
       language?: string;
       command: Command;
+      /**
+       * The direction of the preview command
+       */
+      dir?: string;
     };
+export type Command = string | [string, ...string[]];
 
 export interface List {
   /**
@@ -320,12 +295,6 @@ export interface Listitem {
    */
   id?: string;
   /**
-   * The data associated with the item. Used when the is piped to another command.
-   */
-  data?: {
-    [k: string]: unknown;
-  };
-  /**
    * The subtitle of the item.
    */
   subtitle?: string;
@@ -362,5 +331,5 @@ export interface Form {
    * The type of the response.
    */
   type: "form";
-  submitAction?: Action;
+  submitAction: Action;
 }

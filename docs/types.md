@@ -15,36 +15,38 @@ and run json-schema-to-typescript to regenerate this file.
 **POSSIBLE VALUES**
 
 - object
-  - `type`: `'copy-text'` - The type of the action.
+  - `type`: `'copy'` - The type of the action.
   - `title`: string - The title of the action.
   - `text`: string - The text to copy.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
 - object
-  - `type`: `'open-path'` - The type of the action.
+  - `type`: `'open'` - The type of the action.
   - `title`: string - The title of the action.
-  - `key`: string - The key used as a shortcut.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
-  - `path`: string - The path to open.
+  - `key`: string - The key used as a shortcut.
+  - `target`: string - The target to open.
 - object
-  - `type`: `'open-url'` - The type of the action.
+  - `type`: `'exit'` - The type of the action.
   - `title`: string - The title of the action.
-  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
-  - `url`: string - The url to open.
 - object
-  - `type`: `'run-command'` - The type of the action.
+  - `type`: `'reload'` - The type of the action.
   - `title`: string - The title of the action.
-  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
-  - `command`: [Command](#command)
-  - `reloadOnSuccess`: boolean - Whether to reload the page after the command has been run.
 - object
-  - `type`: `'push-page'` - The type of the action.
+  - `type`: `'run'` - The type of the action.
+  - `title`: string - The title of the action.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
+  - `key`: string - The key used as a shortcut.
+  - `command`: string
+  - `onSuccess`: `'copy'` | `'open'` | `'exit'` | `'reload'` | `'push'`
+- object
+  - `type`: `'push'` - The type of the action.
   - `title`: string - The title of the action.
   - `key`: string - The key used as a shortcut.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
-  - `page`: object | object
+  - `page`: string
 
 ## Input
 
@@ -80,16 +82,6 @@ and run json-schema-to-typescript to regenerate this file.
 - `value`: string - The value of the item.
   - `default`: string - The default value of the input.
 
-## Command
-
-**POSSIBLE VALUES**
-
-- string
-- object
-  - `args`: string[] - The arguments to pass to the command.
-  - `input`: string - The input to pass to the command stdin.
-  - `dir`: string - The directory where the command should be run.
-
 ## Preview
 
 The preview to show in the detail view.
@@ -104,6 +96,14 @@ The preview to show in the detail view.
   - `type`: `'dynamic'`
   - `language`: string - The language of the preview text.
   - `command`: [Command](#command)
+  - `dir`: string - The direction of the preview command
+
+## Command
+
+**POSSIBLE VALUES**
+
+- string
+- &lt;string, string&gt;
 
 ## List
 
@@ -123,8 +123,6 @@ The preview to show in the detail view.
 
 - `title`: string - The title of the item.
 - `id`: string - The id of the item.
-- `data`: object - The data associated with the item. Used when the is piped to another command.
-  - `__index`: any
 - `subtitle`: string - The subtitle of the item.
 - `preview`: [Preview](#preview)
 - `accessories`: string[] - The accessories to show on the right side of the item.

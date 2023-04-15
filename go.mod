@@ -3,6 +3,7 @@ module github.com/pomdtr/sunbeam
 go 1.19
 
 require (
+	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/chroma v0.10.0
 	github.com/alessio/shellescape v1.4.1
 	github.com/charmbracelet/bubbles v0.15.0
@@ -10,8 +11,8 @@ require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.12
-	github.com/joho/godotenv v1.5.1
 	github.com/junegunn/fzf v0.0.0-20230406044318-f1a962965259
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/otiai10/copy v1.10.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
@@ -42,7 +43,7 @@ require (
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0
-	github.com/muesli/termenv v0.15.1
+	github.com/muesli/termenv v0.15.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/term v0.7.0 // indirect

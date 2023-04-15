@@ -6,6 +6,10 @@
             "request": "launch",
             "console": "integratedTerminal",
             "program": "${workspaceFolder}",
+            "args": [
+                "push",
+                "./sunbeam.yml"
+            ]
         },
         {
             "name": "sunbeam extension browse",
@@ -16,6 +20,30 @@
             "args": [
                 "extension",
                 "browse",
+            ]
+        },
+        {
+            "name": "sunbeam extension install",
+            "type": "go",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}",
+            "args": [
+                "extension",
+                "install",
+                "pomdtr/sunbeam-tldr",
+            ]
+        },
+        {
+            "name": "sunbeam extension run",
+            "type": "go",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}",
+            "args": [
+                "extension",
+                "run",
+                "pomdtr/sunbeam-vscode",
             ]
         },
         {

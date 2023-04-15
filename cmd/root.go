@@ -1,21 +1,20 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path"
 
 	_ "embed"
 
+	"github.com/adrg/xdg"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/joho/godotenv"
 	"github.com/mattn/go-isatty"
-	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 
 	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 var (
@@ -29,59 +28,41 @@ var (
 	}
 )
 
-func isOutputInteractive() bool {
-	return isatty.IsTerminal(os.Stderr.Fd())
-}
-
 func Draw(generator internal.PageGenerator) error {
-	if !isOutputInteractive() {
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
 		output, err := generator()
 		if err != nil {
 			return fmt.Errorf("could not generate page: %s", err)
 		}
 
-		if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-			return fmt.Errorf("could not encode page: %s", err)
-		}
+		fmt.Print(string(output))
 		return nil
 	}
 
 	runner := internal.NewRunner(generator)
-	paginator := internal.NewPaginator(runner)
-	p := tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
-	m, err := p.Run()
+	options := internal.SunbeamOptions{
+		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
+		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
+	}
+	paginator := internal.NewPaginator(runner, options)
+
+	var p *tea.Program
+	if options.MaxHeight == 0 {
+		p = tea.NewProgram(paginator, tea.WithAltScreen())
+	} else {
+		p = tea.NewProgram(paginator)
+	}
+
+	_, err := p.Run()
 	if err != nil {
 		return err
 	}
-
-	model, ok := m.(*internal.Paginator)
-	if !ok {
-		return fmt.Errorf("could not convert model to paginator")
-	}
-
-	if model.Output.Stdout != "" {
-		fmt.Print(model.Output.Stdout)
-	}
-
-	if model.Output.Stderr != "" {
-		fmt.Fprint(os.Stderr, model.Output.Stderr)
-	}
-
 	return nil
 }
 
 func NewRootCmd() (*cobra.Command, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("could not get user home directory: %s", err)
-	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("could not get current working directory: %s", err)
-	}
-
-	dataDir := path.Join(homeDir, ".local", "share", "sunbeam")
+	dataDir := path.Join(xdg.DataHome, "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
 
 	// rootCmd represents the base command when called without any subcommands
@@ -92,19 +73,17 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args: cobra.NoArgs,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			lipgloss.SetColorProfile(termenv.ANSI)
-
-			dotenv := path.Join(cwd, ".env")
-			if _, err := os.Stat(dotenv); !os.IsNotExist(err) {
-				err := godotenv.Load(dotenv)
-				if err != nil {
-					return fmt.Errorf("could not load env file: %s", err)
-				}
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			os.Setenv("SUNBEAM", "true")
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if isatty.IsTerminal(os.Stdin.Fd()) {
+				return Draw(func() ([]byte, error) {
+					return io.ReadAll(os.Stdin)
+				})
 			}
 
-			os.Setenv("SUNBEAM", "1")
-			return nil
+			return cmd.Usage()
 		},
 	}
 
@@ -115,13 +94,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
 	rootCmd.AddCommand(NewOpenCmd())
 	rootCmd.AddCommand(NewQueryCmd())
-	rootCmd.AddCommand(NewReadCmd())
+	rootCmd.AddCommand(NewPushCmd())
 	rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewCmdAsk())
 	rootCmd.AddCommand(NewCmdEval())
-	rootCmd.AddCommand(NewCmdRun())
+	rootCmd.AddCommand(NewCmdRun(extensionDir))
 
 	return rootCmd, nil
 }

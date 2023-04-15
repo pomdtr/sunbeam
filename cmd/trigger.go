@@ -21,16 +21,6 @@ func NewTriggerCmd() *cobra.Command {
 		Short: "Trigger an action",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inputsFlag, _ := cmd.Flags().GetStringArray("inputs")
-			inputs := make(map[string]string)
-			for _, input := range inputsFlag {
-				parts := strings.SplitN(input, "=", 2)
-				if len(parts) != 2 {
-					return fmt.Errorf("invalid input: %s", input)
-				}
-				inputs[parts[0]] = parts[1]
-			}
-
 			if isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no input provided")
 			}
@@ -45,34 +35,55 @@ func NewTriggerCmd() *cobra.Command {
 				return fmt.Errorf("could not parse input: %s", err)
 			}
 
-			if action.Type == types.CopyAction {
-				err := clipboard.WriteAll(action.Text)
-				if err != nil {
-					return fmt.Errorf("could not copy to clipboard: %s", err)
+			inputsFlag, _ := cmd.Flags().GetStringArray("inputs")
+			if len(inputsFlag) < len(action.Inputs) {
+				return fmt.Errorf("not enough inputs provided")
+			}
+
+			inputs := make(map[string]string)
+			for _, input := range inputsFlag {
+				parts := strings.SplitN(input, "=", 2)
+				if len(parts) != 2 {
+					return fmt.Errorf("invalid input: %s", input)
 				}
-				return nil
+				inputs[parts[0]] = parts[1]
 			}
 
 			for name, value := range inputs {
-				action = internal.ExpandAction(action, fmt.Sprintf("${input:%s}", name), value)
+				action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
 			}
 
 			switch action.Type {
-			case types.PushPageAction:
-				switch action.Page.Type {
-				case types.StaticTarget:
-					return Draw(internal.NewFileGenerator(action.Page.Path))
-				case types.DynamicTarget:
-					return Draw(internal.NewCommandGenerator(action.Page.Command))
-				default:
-					return fmt.Errorf("unknown page type: %s", action.Page.Type)
-				}
+			case types.PushAction:
+				return Draw(internal.NewFileGenerator(action.Page))
 			case types.RunAction:
-				if err := action.Command.Run(); err != nil {
-					return fmt.Errorf("unable to run command")
+				if action.OnSuccess == types.PushOnSuccess {
+					return Draw(internal.NewCommandGenerator(action.Command))
 				}
-				return nil
-			case types.OpenPathAction, types.OpenUrlAction:
+
+				if _, err := action.Command.Output(); err != nil {
+					return fmt.Errorf("command failed: %s", err)
+				}
+
+				switch action.OnSuccess {
+				case types.ExitOnSuccess, types.ReloadOnSuccess:
+					return nil
+				case types.CopyOnSuccess:
+					if err := clipboard.WriteAll(action.Text); err != nil {
+						return fmt.Errorf("unable to write to clipboard: %s", err)
+					}
+					return nil
+				case types.OpenOnSuccess:
+					err := browser.OpenURL(action.Text)
+					if err != nil {
+						return fmt.Errorf("unable to open link: %s", err)
+					}
+					return nil
+				default:
+					return nil
+				}
+
+			case types.OpenAction:
 				err := browser.OpenURL(args[0])
 				if err != nil {
 					return fmt.Errorf("unable to open link: %s", err)

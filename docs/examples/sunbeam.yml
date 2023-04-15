@@ -5,56 +5,48 @@ items:
   - title: Search Bitwarden Items
     subtitle: Bitwarden
     actions:
-      - type: push-page
+      - type: run
         title: Run
-        page:
-          type: dynamic
-          command: "./bitwarden/bitwarden.sh"
+        command: ./bitwarden/bitwarden.sh
+        onSuccess: push
   - title: Highlight Example
     subtitle: Highlight
     actions:
       - title: Highlight Detail
-        type: push-page
-        page:
-          type: dynamic
-          command: "./highlight/highlight.sh"
+        type: run
+        onSuccess: push
+        command: ./highlight/highlight.sh
       - title: Highlight List
-        type: push-page
-        page:
-          type: dynamic
-          command: "./highlight/list.sh"
+        type: run
+        onSuccess: push
+        command: ./highlight/list.sh
   - title: DevDocs
     subtitle: Examples
     actions:
-      - type: push-page
+      - type: run
+        onSuccess: push
 
         title: Search Docsets
-        page:
-          type: dynamic
-          command: "./devdocs/devdocs.sh"
-      - type: push-page
+        command: ./devdocs/devdocs.sh
+      - type: run
+        onSuccess: push
         title: Search Go Docs
-        page:
-          type: dynamic
-          command: "./devdocs/devdocs.sh go"
+        command: ./devdocs/devdocs.sh go
   - title: File Browser
     subtitle: Examples
     actions:
-      - type: push-page
+      - type: run
+        onSuccess: push
         title: Browse Current Dir
-        page:
-          type: dynamic
-          command: "./file-browser/file-browser.py"
-      - type: push-page
+        command: ./file-browser/file-browser.py
+      - type: run
+        onSuccess: push
         title: Browse Root Dir
-        page:
-          type: dynamic
-          command: "./file-browser/file-browser.py /"
-      - type: push-page
+        command: ./file-browser/file-browser.py /
+      - type: run
+        onSuccess: push
         title: Browse Custom Dir
-        page:
-          type: dynamic
-          command: "./file-browser/file-browser.py {{dir}}"
+        command: ./file-browser/file-browser.py ${input:dir}
         inputs:
           - name: dir
             title: Directory
@@ -62,35 +54,31 @@ items:
   - title: Github
     subtitle: Examples
     actions:
-      - type: push-page
+      - type: run
+        onSuccess: push
         title: Search Repositories
-        page:
-          type: dynamic
-          command: "./github/github.sh"
-      - type: push-page
+        command: ./github/github.sh list-repos
+      - type: run
+        onSuccess: push
         title: Search Excalidraw Pull Requests
-        page:
-          type: dynamic
-          command: "./github/github.sh list-prs pomdtr/excalidraw"
+        command: ./github/github.sh list-prs pomdtr/excalidraw
   - title: TLDR Pages
     subtitle: Examples
     actions:
-      - type: push-page
+      - type: run
+        onSuccess: push
         title: Search
-        page:
-          type: dynamic
-          command: "./tldr/tldr.sh"
+        command: ./tldr/tldr.sh
   - title: List Todos
     subtitle: Todo
     actions:
-      - type: push-page
+      - type: run
+        onSuccess: push
         title: List Todos
-        page:
-          type: dynamic
-          command: "./todo/todo.py"
+        command: ./todo/todo.py
   - title: Show Form
     actions:
-      - type: run-command
+      - type: run
         title: Show
         command: echo ${input:text}
         inputs:

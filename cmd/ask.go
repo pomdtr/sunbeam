@@ -60,10 +60,11 @@ func extractMarkdownCodeblock(markdown string) string {
 
 func NewCmdAsk() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ask",
-		Short: "Ask a question",
-		Long:  `Ask a question`,
-		Args:  cobra.ExactArgs(1),
+		Use:    "ask",
+		Short:  "Ask a question",
+		Long:   `Ask a question`,
+		Args:   cobra.ExactArgs(1),
+		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			prompt := args[0]
 			token, ok := os.LookupEnv("OPENAI_API_KEY")
@@ -107,41 +108,19 @@ func NewCmdAsk() *cobra.Command {
 					},
 					Actions: []types.Action{
 						{
-							Type:  types.PushPageAction,
-							Title: "Eval Code",
-							Page: &types.Target{
-								Type: types.DynamicTarget,
-								Command: &types.Command{
-									Args:  []string{"sunbeam", "eval"},
-									Input: code,
-								},
-							},
-						},
-						{
 							Type:  types.CopyAction,
 							Title: "Copy Code",
 							Text:  code,
 						},
 						{
-							Type:  types.PushPageAction,
+							Type:  types.PushAction,
 							Title: "Edit Prompt",
-							Page: &types.Target{
-								Type:    types.DynamicTarget,
-								Command: &types.Command{Args: []string{"sunbeam", "ask", "${input:prompt}"}},
+							Command: &types.Command{
+								Args: []string{"sunbeam", "ask", "${input:prompt}"},
 							},
+							OnSuccess: types.PushOnSuccess,
 							Inputs: []types.Input{
 								{Type: types.TextFieldInput, Name: "prompt", Title: "Prompt", Default: prompt},
-							},
-						},
-						{
-							Type:  types.RunAction,
-							Title: "Save Code",
-							Command: &types.Command{
-								Args:  []string{"cp", "/dev/stdin", "${input:filepath}"},
-								Input: code,
-							},
-							Inputs: []types.Input{
-								{Type: types.TextFieldInput, Name: "filepath", Title: "Filepath"},
 							},
 						},
 					},

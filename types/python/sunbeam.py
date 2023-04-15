@@ -44,7 +44,6 @@ class ActionReadFile(TypedDict):
 
 
 Action = Union[
-    ActionFetchUrl,
     ActionCopyText,
     ActionOpenFile,
     ActionOpenUrl,

@@ -14,15 +14,13 @@ if [[ $COMMAND == "list-repos" ]]; then
                 "\(.stargazers_count) *"
             ],
             actions: [
-                {type: "open-url", url: .html_url},
+                {type: "open", target: .html_url},
                 {
-                    type: "push-page",
+                    type: "run",
                     title: "List Pull Requests",
                     key: "p",
-                    page: {
-                        type: "dynamic",
-                        command: "\($command) list-prs \(.full_name)",
-                    }
+                    onSuccess: "push",
+                    command: "\($command) list-prs \(.full_name)",
                 }
             ]
         }
@@ -45,8 +43,8 @@ elif [[ $COMMAND == "list-prs" ]]; then
             "#\(.number)"
         ],
         actions: [
-            {type: "open-url", title: "Open in Browser", url: .url},
-            {type: "copy-text", text: .url}
+            {type: "open", title: "Open in Browser", target: .url},
+            {type: "copy", text: .url}
         ]
     }
     ' | sunbeam query --slurp '{

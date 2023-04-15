@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -26,7 +27,7 @@ func SearchSunbeamExtensions(query string) ([]GithubRepo, error) {
 		Host:   "api.github.com",
 		Path:   "/search/repositories",
 		RawQuery: url.Values{
-			"q":     []string{"topic:sunbeam-extension"},
+			"q":     []string{fmt.Sprintf("%s topic:sunbeam-extension", query)},
 			"sort":  []string{"stars"},
 			"order": []string{"desc"},
 		}.Encode(),

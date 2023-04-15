@@ -37,8 +37,14 @@ func prettifyValidationError(err *jsonschema.ValidationError, prefix string) str
 }
 
 func (e *PrettyValidationError) Error() string {
+	msg := prettifyValidationError(e.ValidationError, "")
+	lines := strings.Split(msg, "\n")
 
-	return prettifyValidationError(e.ValidationError, "")
+	if len(lines) > 30 {
+		lines = append(lines[:30], "...")
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 func Validate(v any) error {

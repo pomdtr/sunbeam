@@ -3,18 +3,14 @@ type: list
 items:
   - title: Show Examples
     actions:
-      - type: push-page
+      - type: push
         title: Examples
-        page:
-          type: static
-          path: "./docs/examples/sunbeam.yml"
+        page: "./docs/examples/sunbeam.yml"
   - title: Show Getting Started
     actions:
-      - type: push-page
+      - type: push
         title: Getting Started
-        page:
-          type: static
-          path: "./docs/getting-started/sunbeam.yml ${input:dir}"
+        page: "./docs/getting-started/sunbeam.yml ${input:dir}"
         inputs:
           - type: textfield
             name: "dir"
