@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -296,10 +297,19 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 				return fmt.Errorf("could not install extension: %s", err)
 			}
 
+			open, _ := cmd.Flags().GetBool("open")
+			if open {
+				return Draw(func() ([]byte, error) {
+					return exec.Command(os.Args[0], "run", repository.FullName()).Output()
+				})
+			}
+
 			fmt.Println("Extension installed successfully!")
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolP("open", "o", false, "Open extension after installation")
 
 	return cmd
 }

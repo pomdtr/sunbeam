@@ -45,7 +45,7 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 					SubmitAction: &types.Action{
 						Type: types.RunAction,
 						Command: &types.Command{
-							Args: []string{os.Args[0], "extension", "install", repository.String()},
+							Args: []string{os.Args[0], "extension", "install", "--open", repository.String()},
 						},
 						Inputs: []types.Input{
 							{
