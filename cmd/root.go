@@ -17,17 +17,6 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-var (
-	coreCommandsGroup = &cobra.Group{
-		ID:    "core",
-		Title: "Core Commands",
-	}
-	extensionCommandsGroup = &cobra.Group{
-		ID:    "extension",
-		Title: "Extension Commands",
-	}
-)
-
 func Draw(generator internal.PageGenerator) error {
 	if !isatty.IsTerminal(os.Stdout.Fd()) {
 		output, err := generator()
@@ -77,7 +66,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			os.Setenv("SUNBEAM", "true")
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if isatty.IsTerminal(os.Stdin.Fd()) {
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
 				return Draw(func() ([]byte, error) {
 					return io.ReadAll(os.Stdin)
 				})
@@ -86,8 +75,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			return cmd.Usage()
 		},
 	}
-
-	rootCmd.AddGroup(coreCommandsGroup, extensionCommandsGroup)
 
 	rootCmd.AddCommand(NewCopyCmd())
 	rootCmd.AddCommand(NewPasteCmd())

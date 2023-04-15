@@ -45,7 +45,7 @@ def handle(args: argparse.Namespace):
                         "text": "No items",
                         "actions": [
                             {
-                                "type": "run-command",
+                                "type": "run",
                                 "title": "Add Item",
                                 "command": f"{sys.argv[0]} add ${{input:title}}",
                                 "key": "n",
@@ -68,13 +68,13 @@ def handle(args: argparse.Namespace):
                             "accessories": [key],
                             "actions": [
                                 {
-                                    "type": "run-command",
+                                    "type": "run",
                                     "title": "Toggle Completion",
                                     "command": f"{sys.argv[0]} toggle {key}",
                                     "onSuccess": "reload",
                                 },
                                 {
-                                    "type": "run-command",
+                                    "type": "run",
                                     "title": "Edit Title",
                                     "onSuccess": "reload",
                                     "command": f"{sys.argv[0]} edit-title {key} ${{input:title}}",
@@ -87,13 +87,13 @@ def handle(args: argparse.Namespace):
                                     ],
                                 },
                                 {
-                                    "type": "run-command",
+                                    "type": "run",
                                     "title": "Delete",
                                     "onSuccess": "reload",
                                     "command": f"{sys.argv[0]} delete {key}",
                                 },
                                 {
-                                    "type": "run-command",
+                                    "type": "run",
                                     "title": "Add Item",
                                     "command": f"{sys.argv[0]} add ${{input:title}}",
                                     "key": "n",

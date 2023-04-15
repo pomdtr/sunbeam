@@ -10,9 +10,4 @@ items:
     actions:
       - type: push
         title: Getting Started
-        page: "./docs/getting-started/sunbeam.yml ${input:dir}"
-        inputs:
-          - type: textfield
-            name: "dir"
-            title: "Directory"
-            default: "/"
+        page: "./docs/getting-started/sunbeam.yml"

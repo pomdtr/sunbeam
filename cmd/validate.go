@@ -17,27 +17,31 @@ func NewValidateCmd() *cobra.Command {
 		Short: "Validate a page against the schema",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-			var page []byte
+			var input []byte
 
 			if len(args) == 1 {
-				if page, err = os.ReadFile(args[0]); err != nil {
+				c, err := os.ReadFile(args[0])
+				if err != nil {
 					return fmt.Errorf("unable to read file: %s", err)
 				}
+				input = c
 			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
-				if page, err = io.ReadAll(os.Stdin); err != nil {
+				c, err := io.ReadAll(os.Stdin)
+				if err != nil {
 					return fmt.Errorf("unable to read stdin: %s", err)
 				}
+
+				input = c
 			} else {
 				return fmt.Errorf("no input provided")
 			}
 
 			var v any
-			if err := json.Unmarshal(page, &v); err != nil {
+			if err := json.Unmarshal(input, &v); err != nil {
 				return fmt.Errorf("unable to parse input: %s", err)
 			}
 
-			if err := schemas.Validate(page); err != nil {
+			if err := schemas.Validate(v); err != nil {
 				return fmt.Errorf("input is not valid: %s", err)
 			}
 

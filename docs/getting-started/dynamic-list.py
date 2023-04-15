@@ -9,12 +9,12 @@ items = [
         "subtitle": str(path),
         "actions": [
             {
-                "type": "open-path",
+                "type": "open",
                 "title": "Open File",
-                "path": str(path),
+                "target": str(path),
             },
             {
-                "type": "copy-text",
+                "type": "copy",
                 "title": "Copy Path",
                 "key": "y",
                 "text": str(path),

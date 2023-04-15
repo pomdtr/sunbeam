@@ -321,7 +321,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, runner.detail.Init()
 		case types.FormPage:
 			runner.currentView = RunnerViewForm
-			var items []FormItem
+			items := make([]FormItem, len(page.SubmitAction.Inputs))
 			for i, input := range page.SubmitAction.Inputs {
 				item, err := NewFormItem(input)
 				if err != nil {

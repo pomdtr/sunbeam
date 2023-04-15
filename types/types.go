@@ -3,6 +3,7 @@ package types
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -152,11 +153,29 @@ func (c Command) Cmd() *exec.Cmd {
 }
 
 func (c Command) Run() error {
-	return c.Cmd().Run()
+	err := c.Cmd().Run()
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		return fmt.Errorf("command exited with %d: %s", exitErr.ExitCode(), string(exitErr.Stderr))
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 func (c Command) Output() ([]byte, error) {
-	return c.Cmd().Output()
+	output, err := c.Cmd().Output()
+
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		return nil, fmt.Errorf("command exited with %d: %s", exitErr.ExitCode(), string(exitErr.Stderr))
+	} else if err != nil {
+		return nil, err
+	}
+
+	return output, nil
 }
 
 func (c *Command) UnmarshalJSON(data []byte) error {

@@ -34,10 +34,7 @@ json.dump(
                             "type": "run",
                             "title": "Browse Directory",
                             "onSuccess": "push",
-                            "command": [sys.argv[0], path.absolute()],
-                            "page": {
-                                "type": "dynamic",
-                            }
+                            "command": [sys.argv[0], str(path.absolute())],
                         }
                     ),
                     {

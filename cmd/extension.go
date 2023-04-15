@@ -77,7 +77,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 						},
 						Actions: []types.Action{
 							{
-								Type:  types.PushAction,
+								Type:  types.RunAction,
 								Title: "View Readme",
 								Command: &types.Command{
 									Args: []string{os.Args[0], "extension", "view", repo.FullName},
