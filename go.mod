@@ -16,9 +16,7 @@ require (
 	github.com/otiai10/copy v1.10.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
-	github.com/sashabaranov/go-openai v1.7.0
 	github.com/spf13/cobra v1.7.0
-	github.com/traefik/yaegi v0.15.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 

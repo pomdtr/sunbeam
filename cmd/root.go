@@ -98,8 +98,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
-	rootCmd.AddCommand(NewCmdAsk())
-	rootCmd.AddCommand(NewCmdEval())
 	rootCmd.AddCommand(NewCmdRun(extensionDir))
 
 	return rootCmd, nil
