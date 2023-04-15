@@ -209,6 +209,14 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				}
 				return types.ReloadAction
 			}
+		case types.ExitOnSuccess:
+			return func() tea.Msg {
+				err := action.Command.Run()
+				if err != nil {
+					return err
+				}
+				return tea.Quit()
+			}
 		default:
 			return func() tea.Msg {
 				err := action.Command.Run()

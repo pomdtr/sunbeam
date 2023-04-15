@@ -12,6 +12,17 @@
             ]
         },
         {
+            "name": "sunbeam run pomdtr/sunbeam-file-browser",
+            "type": "go",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}",
+            "args": [
+                "run",
+                "pomdtr/sunbeam-file-browser"
+            ]
+        },
+        {
             "name": "sunbeam extension browse",
             "type": "go",
             "request": "launch",
