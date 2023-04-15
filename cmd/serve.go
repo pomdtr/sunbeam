@@ -20,8 +20,9 @@ type triggerPayload struct {
 
 func NewCmdServe() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "serve",
-		Short: "Start a web server to serve sunbeam",
+		Use:    "serve",
+		Short:  "Start a web server to serve sunbeam",
+		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				command := exec.Command("sunbeam")
