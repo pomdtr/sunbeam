@@ -174,6 +174,8 @@
                         },
                         "key": {
                             "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1,
                             "description": "The key used as a shortcut."
                         }
                     }
@@ -498,7 +500,8 @@
                 },
                 {
                     "type": "object",
-                    "items": {
+                    "additionalProperties": false,
+                    "properties": {
                         "args": {
                             "type": "array",
                             "items": {

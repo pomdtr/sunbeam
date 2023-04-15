@@ -39,7 +39,7 @@ and run json-schema-to-typescript to regenerate this file.
   - `title`: string - The title of the action.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
-  - `command`: string
+  - `command`: [Command](#command)
   - `onSuccess`: `'copy'` | `'open'` | `'exit'` | `'reload'` | `'push'`
 - object
   - `type`: `'push'` - The type of the action.
@@ -82,6 +82,17 @@ and run json-schema-to-typescript to regenerate this file.
 - `value`: string - The value of the item.
   - `default`: string - The default value of the input.
 
+## Command
+
+**POSSIBLE VALUES**
+
+- string
+- &lt;string, string&gt;
+- object
+  - `args`: string[]
+  - `input`: string
+  - `dir`: string
+
 ## Preview
 
 The preview to show in the detail view.
@@ -96,14 +107,6 @@ The preview to show in the detail view.
   - `type`: `'dynamic'`
   - `language`: string - The language of the preview text.
   - `command`: [Command](#command)
-  - `dir`: string - The direction of the preview command
-
-## Command
-
-**POSSIBLE VALUES**
-
-- string
-- &lt;string, string&gt;
 
 ## List
 

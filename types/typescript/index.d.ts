@@ -96,7 +96,7 @@ export type Action =
        * The key used as a shortcut.
        */
       key?: string;
-      command: string;
+      command: Command;
       onSuccess?: "reload" | "copy" | "open" | "exit" | "push";
     }
   | {
@@ -228,6 +228,14 @@ export type Input =
        */
       default?: string;
     };
+export type Command =
+  | string
+  | [string, ...string[]]
+  | {
+      args?: string[];
+      input?: string;
+      dir?: string;
+    };
 /**
  * The preview to show in the detail view.
  */
@@ -250,12 +258,7 @@ export type Preview =
        */
       language?: string;
       command: Command;
-      /**
-       * The direction of the preview command
-       */
-      dir?: string;
     };
-export type Command = string | [string, ...string[]];
 
 export interface List {
   /**
