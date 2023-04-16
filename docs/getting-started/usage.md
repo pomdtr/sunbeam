@@ -79,7 +79,7 @@ Let's update our file browser to support navigation.
 
 This is just the tip of the iceberg. Sunbeam can show detail pages, prompt the user for input, and much more.
 
-To learn more, check out the [Sunbeam types](../types.md) and the provided [examples](../examples).
+To learn more, check out the [Sunbeam types](../types.md) and the provided [examples](../examples/index.md).
 
 In order to run the examples, just clone the sunbeam repository and run `sunbeam` from the root directory.
 
