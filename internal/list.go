@@ -118,6 +118,10 @@ func NewList(page *types.Page) *List {
 	list.filter = filter
 
 	list.DetailFunc = func(item types.ListItem) string {
+		if item.Preview == nil {
+			return ""
+		}
+
 		if item.Preview.Text != "" {
 			if item.Preview.Language == "" {
 				return item.Preview.Text
