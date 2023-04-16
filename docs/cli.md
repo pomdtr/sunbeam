@@ -309,20 +309,6 @@ sunbeam extension view <repo> [flags]
   -h, --help   help for view
 ```
 
-## sunbeam push
-
-Read page from file, and push it's content
-
-```
-sunbeam push <page> [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for push
-```
-
 ## sunbeam query
 
 Transform or generate JSON using a jq query
@@ -343,12 +329,26 @@ sunbeam query <query> [flags]
   -s, --slurp                 read all inputs into an array
 ```
 
-## sunbeam run
+## sunbeam read
 
-Run page from file
+Read page from file, and push it
 
 ```
-sunbeam run <page> [flags]
+sunbeam read <page> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for read
+```
+
+## sunbeam run
+
+Generate a page from a command or a script, and push it
+
+```
+sunbeam run [flags]
 ```
 
 ### Options
@@ -375,7 +375,7 @@ sunbeam trigger <action> [flags]
 
 ## sunbeam validate
 
-Validate a page against the schema
+Validate a page
 
 ```
 sunbeam validate [file] [flags]
