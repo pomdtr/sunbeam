@@ -6,6 +6,12 @@
         "cmd/templates/system-message.md"
     ],
     "browse-lite.startUrl": "http://localhost:3000",
+    "yaml.schemas": {
+        "./schemas/page.schema.json": [
+            "sunbeam.yml",
+            "sunbeam.yaml"
+        ]
+    },
     "search.exclude": {
         "book": true
     },
