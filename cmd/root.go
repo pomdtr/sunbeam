@@ -11,8 +11,10 @@ import (
 
 	"github.com/adrg/xdg"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/google/shlex"
 	"github.com/mattn/go-isatty"
+	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
@@ -36,6 +38,7 @@ func NewRootCmd() (*cobra.Command, error) {
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args: cobra.NoArgs,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			lipgloss.SetColorProfile(termenv.ANSI)
 			os.Setenv("SUNBEAM", "true")
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
