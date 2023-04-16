@@ -29,5 +29,11 @@ brews:
     tap:
       owner: pomdtr
       name: homebrew-tap
-furies:
-  - account: pomdtr
+scoop:
+  bucket:
+    owner: pomdtr
+    name: scoop-bucket
+  folder: bucket
+  homepage: https://pomdtr.github.io/sunbeam
+  description: Generate powerful UIs from simple scripts written in any language.
+  license: MIT
