@@ -39,6 +39,8 @@ github.com/itchyny/timefmt-go v0.1.5 h1:G0INE2la8S6ru/ZI5JecgyzbbJNs5lG1RcBqa7Jm
 github.com/itchyny/timefmt-go v0.1.5/go.mod h1:nEP7L+2YmAbT2kZ2HfSs1d8Xtw9LY8D2stDBckWakZ8=
 github.com/junegunn/fzf v0.0.0-20230406044318-f1a962965259 h1:by2FmFUvVCc/0h46Kmu0hJ5IDjLLcUhOn894RGTwJVE=
 github.com/junegunn/fzf v0.0.0-20230406044318-f1a962965259/go.mod h1:jsMTIqqr5HOEPlNtUDehOyido1n1g3Pn9rGdqegXO44=
+github.com/junegunn/fzf v0.0.0-20230412042310-96670d5f16dc h1:4gKZwTS3sQBRw4tT6dHNH8dAM/3cxxMyzli4ypDPeDc=
+github.com/junegunn/fzf v0.0.0-20230412042310-96670d5f16dc/go.mod h1:jsMTIqqr5HOEPlNtUDehOyido1n1g3Pn9rGdqegXO44=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
 github.com/lucasb-eyer/go-colorful v1.2.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
