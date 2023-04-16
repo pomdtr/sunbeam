@@ -11,7 +11,6 @@ builds:
       - windows
       - linux
       - darwin
-      - android
 archives:
   - name_template: >-
       {{ .ProjectName }}_
