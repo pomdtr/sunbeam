@@ -12,44 +12,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
 
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/utils"
 )
-
-func Draw(generator internal.PageGenerator) error {
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
-		output, err := generator()
-		if err != nil {
-			return fmt.Errorf("could not generate page: %s", err)
-		}
-
-		if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-			return fmt.Errorf("could not encode page: %s", err)
-		}
-		return nil
-	}
-
-	runner := internal.NewRunner(generator)
-	options := internal.SunbeamOptions{
-		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
-		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
-	}
-	paginator := internal.NewPaginator(runner, options)
-
-	var p *tea.Program
-	if options.MaxHeight == 0 {
-		p = tea.NewProgram(paginator, tea.WithAltScreen())
-	} else {
-		p = tea.NewProgram(paginator)
-	}
-
-	_, err := p.Run()
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 func NewRootCmd() (*cobra.Command, error) {
 
@@ -84,5 +51,42 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewCmdRun(extensionDir))
 
+	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
+	rootCmd.AddCommand(NewGeneratorDocsCmd())
+
 	return rootCmd, nil
+}
+
+func Draw(generator internal.PageGenerator) error {
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		output, err := generator()
+		if err != nil {
+			return fmt.Errorf("could not generate page: %s", err)
+		}
+
+		if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
+			return fmt.Errorf("could not encode page: %s", err)
+		}
+		return nil
+	}
+
+	runner := internal.NewRunner(generator)
+	options := internal.SunbeamOptions{
+		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
+		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
+	}
+	paginator := internal.NewPaginator(runner, options)
+
+	var p *tea.Program
+	if options.MaxHeight == 0 {
+		p = tea.NewProgram(paginator, tea.WithAltScreen())
+	} else {
+		p = tea.NewProgram(paginator)
+	}
+
+	_, err := p.Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
