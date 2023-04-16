@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	_ "embed"
 
@@ -12,6 +13,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
 
 	"github.com/pomdtr/sunbeam/internal"
@@ -52,7 +54,41 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdRun(extensionDir))
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
-	rootCmd.AddCommand(NewGeneratorDocsCmd())
+	docCmd := &cobra.Command{
+		Use:    "generate-docs",
+		Short:  "Generate documentation for sunbeam",
+		Hidden: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			doc, err := buildDoc(rootCmd)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(doc)
+			return nil
+		},
+	}
+	rootCmd.AddCommand(docCmd)
+
+	manCmd := &cobra.Command{
+		Use:    "generate-man-pages [path]",
+		Short:  "Generate Man Pages for sunbeam",
+		Hidden: true,
+		Args:   cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			header := &doc.GenManHeader{
+				Title:   "MINE",
+				Section: "3",
+			}
+			err := doc.GenManTree(rootCmd, header, args[0])
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+	rootCmd.AddCommand(manCmd)
 
 	return rootCmd, nil
 }
@@ -89,4 +125,38 @@ func Draw(generator internal.PageGenerator) error {
 		return err
 	}
 	return nil
+}
+
+func buildDoc(command *cobra.Command) (string, error) {
+	if command.Hidden {
+		return "", nil
+	}
+	if command.Name() == "help" {
+		return "", nil
+	}
+
+	var page strings.Builder
+	err := doc.GenMarkdown(command, &page)
+	if err != nil {
+		return "", err
+	}
+
+	out := strings.Builder{}
+	for _, line := range strings.Split(page.String(), "\n") {
+		if strings.Contains(line, "SEE ALSO") {
+			break
+		}
+
+		out.WriteString(line + "\n")
+	}
+
+	for _, child := range command.Commands() {
+		childPage, err := buildDoc(child)
+		if err != nil {
+			return "", err
+		}
+		out.WriteString(childPage)
+	}
+
+	return out.String(), nil
 }
