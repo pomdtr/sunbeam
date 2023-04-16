@@ -8,56 +8,14 @@ Sunbeam is a command line launcher for your terminal, inspired by fzf and raycas
 
 See https://pomdtr.github.io/sunbeam for more information.
 
+```
+sunbeam [flags]
+```
+
 ### Options
 
 ```
   -h, --help   help for sunbeam
-```
-
-## sunbeam ask
-
-Ask a question
-
-### Synopsis
-
-Ask a question
-
-```
-sunbeam ask [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for ask
-```
-
-## sunbeam copy
-
-Copy stdin to system clipboard
-
-```
-sunbeam copy [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for copy
-```
-
-## sunbeam eval
-
-Evaluate a file or stdin as a page
-
-```
-sunbeam eval [file] [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for eval
 ```
 
 ## sunbeam extension
@@ -129,8 +87,8 @@ sunbeam extension install [flags]
 ### Options
 
 ```
-  -h, --help          help for install
-  -n, --name string   Extension name (defaults to repository name)
+  -h, --help   help for install
+  -o, --open   Open extension after installation
 ```
 
 ## sunbeam extension list
@@ -173,20 +131,6 @@ sunbeam extension remove [flags]
 
 ```
   -h, --help   help for remove
-```
-
-## sunbeam extension rename
-
-Rename an installed extension
-
-```
-sunbeam extension rename <old-name> <new-name> [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for rename
 ```
 
 ## sunbeam extension search
@@ -250,32 +194,18 @@ sunbeam help [command] [flags]
   -h, --help   help for help
 ```
 
-## sunbeam open
+## sunbeam push
 
-Open file or url in default application
-
-```
-sunbeam open <url> [flags]
-```
-
-### Options
+Read page from file, and push it's content
 
 ```
-  -h, --help   help for open
-```
-
-## sunbeam paste
-
-Paste system clipboard to stdout
-
-```
-sunbeam paste [flags]
+sunbeam push <page> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for paste
+  -h, --help   help for push
 ```
 
 ## sunbeam query
@@ -298,20 +228,6 @@ sunbeam query <query> [flags]
   -s, --slurp                 read all inputs into an array
 ```
 
-## sunbeam read
-
-Read page from file, and push it's content
-
-```
-sunbeam read <page> [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for read
-```
-
 ## sunbeam run
 
 Run page from file
@@ -323,7 +239,8 @@ sunbeam run <page> [flags]
 ### Options
 
 ```
-  -h, --help   help for run
+  -h, --help                help for run
+      --on-success string   action to trigger when the command is successful (default "push")
 ```
 
 ## sunbeam serve
