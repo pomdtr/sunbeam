@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
 
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
@@ -34,42 +34,51 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 				if extension != args[0] {
 					continue
 				}
-				bin := path.Join(extensionDir, extension, extensionBinaryName)
-				command := exec.Command(bin, args[1:]...)
-				return Draw(command.Output)
+				var cmdArgs []string
+				cmdArgs = append(cmdArgs, path.Join(extensionDir, extension, extensionBinaryName))
+				cmdArgs = append(cmdArgs, args[1:]...)
+				return Draw(internal.NewCommandGenerator(&types.Command{
+					Args: cmdArgs,
+				}))
 			}
 
 			if repository, err := utils.RepositoryFromString(args[0]); err == nil {
 				page := types.Page{
-					Type: types.FormPage,
+					Type:  types.FormPage,
+					Title: "Install Extension?",
 					SubmitAction: &types.Action{
-						Type: types.RunAction,
+						Type:  types.RunAction,
+						Title: "Install",
 						Command: &types.Command{
-							Args: []string{os.Args[0], "extension", "install", "--open", repository.FullName()},
+							Args: []string{os.Args[0], "extension", "install", "--open", "${input:repository}"},
 						},
-						OnSuccess: types.PushOnSuccess,
 						Inputs: []types.Input{
 							{
-								Type:  types.CheckboxInput,
-								Title: "Confirm",
-								Label: fmt.Sprintf("Install extension %s?", repository.FullName()),
+								Name:        "repository",
+								Type:        types.TextFieldInput,
+								Title:       "Repository",
+								Placeholder: "Repository",
+								Default:     repository.FullName(),
 							},
 						},
+						OnSuccess: types.PushOnSuccess,
 					},
 				}
-				return Draw(func() ([]byte, error) {
-					return json.Marshal(page)
+				return Draw(func() (*types.Page, error) {
+					return &page, nil
 				})
 			}
 
 			if _, err := os.Stat(args[0]); err == nil {
-				command := exec.Command(args[0], args[1:]...)
-				return Draw(command.Output)
+				return Draw(internal.NewCommandGenerator(&types.Command{
+					Args: args,
+				}))
 			}
 
 			if _, err := exec.LookPath(args[0]); err == nil {
-				command := exec.Command(args[0], args[1:]...)
-				return Draw(command.Output)
+				return Draw(internal.NewCommandGenerator(&types.Command{
+					Args: args,
+				}))
 			}
 
 			return fmt.Errorf("file or command not found: %s", args[0])

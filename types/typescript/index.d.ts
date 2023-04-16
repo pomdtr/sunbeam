@@ -334,5 +334,9 @@ export interface Form {
    * The type of the response.
    */
   type: "form";
+  /**
+   * The title of the page.
+   */
+  title?: string;
   submitAction: Action;
 }

@@ -134,6 +134,7 @@ type Action struct {
 
 	// run
 	Command   *Command      `json:"command,omitempty" yaml:"command,omitempty"`
+	Confirm   bool          `json:"confirm,omitempty" yaml:"confirm,omitempty"`
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
 }
 

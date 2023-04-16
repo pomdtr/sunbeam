@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -16,6 +15,7 @@ import (
 
 	_ "embed"
 
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"gopkg.in/yaml.v3"
 
@@ -61,7 +61,7 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 		Use:   "browse",
 		Short: "Browse extensions",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() ([]byte, error) {
+			generator := func() (*types.Page, error) {
 				repos, err := utils.SearchSunbeamExtensions("")
 				if err != nil {
 					return nil, err
@@ -103,12 +103,10 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 					})
 				}
 
-				page := types.Page{
+				return &types.Page{
 					Type:  types.ListPage,
 					Items: listItems,
-				}
-
-				return json.Marshal(page)
+				}, nil
 			}
 
 			return Draw(generator)
@@ -127,7 +125,7 @@ func NewExtensionViewCmd() *cobra.Command {
 				return fmt.Errorf("could not parse repository: %s", err)
 			}
 
-			generator := func() ([]byte, error) {
+			generator := func() (*types.Page, error) {
 				res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/readme", repo.FullName()))
 				if err != nil {
 					return nil, fmt.Errorf("could not fetch readme: %s", err)
@@ -135,14 +133,13 @@ func NewExtensionViewCmd() *cobra.Command {
 				defer res.Body.Close()
 
 				if res.StatusCode != http.StatusOK {
-					page := types.Page{
+					return &types.Page{
 						Type: types.DetailPage,
 						Preview: &types.Preview{
 							Language: "markdown",
 							Text:     fmt.Sprintf("Could not fetch readme: %s", res.Status),
 						},
-					}
-					return json.Marshal(page)
+					}, nil
 				}
 
 				content, err := io.ReadAll(res.Body)
@@ -180,7 +177,7 @@ func NewExtensionViewCmd() *cobra.Command {
 					},
 				}
 
-				return json.Marshal(page)
+				return &page, nil
 			}
 
 			return Draw(generator)
@@ -194,7 +191,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 		Short: "Manage installed extensions",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() ([]byte, error) {
+			generator := func() (*types.Page, error) {
 				extensions, err := ListExtensions(extensionDir)
 				if err != nil {
 					return nil, fmt.Errorf("could not list extensions: %s", err)
@@ -239,12 +236,10 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 					})
 				}
 
-				page := types.Page{
+				return &types.Page{
 					Type:  types.ListPage,
 					Items: listItems,
-				}
-
-				return json.Marshal(page)
+				}, nil
 			}
 
 			return Draw(generator)
@@ -299,9 +294,9 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 
 			open, _ := cmd.Flags().GetBool("open")
 			if open {
-				return Draw(func() ([]byte, error) {
-					return exec.Command(os.Args[0], "run", repository.FullName()).Output()
-				})
+				return Draw(internal.NewCommandGenerator(&types.Command{
+					Args: []string{os.Args[0], "run", repository.FullName()},
+				}))
 			}
 
 			fmt.Println("Extension installed successfully!")

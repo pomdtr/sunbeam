@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path"
@@ -21,36 +22,106 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type PageGenerator func() ([]byte, error)
+type PageGenerator func() (*types.Page, error)
 
 func NewFileGenerator(name string) PageGenerator {
-	return func() ([]byte, error) {
-		extension := filepath.Ext(name)
-		bytes, err := os.ReadFile(name)
+	extension := filepath.Ext(name)
+	if extension == ".yaml" || extension == ".yml" {
+		return func() (*types.Page, error) {
+			b, err := os.ReadFile(name)
+			if err != nil {
+				return nil, err
+			}
+
+			var v any
+			if err := yaml.Unmarshal(b, &v); err != nil {
+				return nil, err
+			}
+
+			if err := schemas.Validate(v); err != nil {
+				return nil, err
+			}
+
+			var page types.Page
+			if err := yaml.Unmarshal(b, &page); err != nil {
+				return nil, err
+			}
+
+			page = expandPage(page, filepath.Dir(name))
+			return &page, nil
+		}
+	} else {
+		return func() (*types.Page, error) {
+			b, err := os.ReadFile(name)
+			if err != nil {
+				return nil, err
+			}
+
+			var v any
+			if err := json.Unmarshal(b, &v); err != nil {
+				return nil, err
+			}
+
+			if err := schemas.Validate(v); err != nil {
+				return nil, err
+			}
+
+			var page types.Page
+			if err := json.Unmarshal(b, &page); err != nil {
+				return nil, err
+			}
+
+			page = expandPage(page, filepath.Dir(name))
+			return &page, nil
+		}
+	}
+}
+
+func NewStaticGenerator(reader io.Reader) PageGenerator {
+	var pageRef *types.Page
+	return func() (*types.Page, error) {
+		if pageRef != nil {
+			return pageRef, nil
+		}
+
+		b, err := io.ReadAll(reader)
 		if err != nil {
 			return nil, err
 		}
 
-		var page types.Page
-		if extension == ".yaml" || extension == ".yml" {
-			if err := yaml.Unmarshal(bytes, &page); err != nil {
-				return nil, err
-			}
-		} else {
-			if err := json.Unmarshal(bytes, &page); err != nil {
-				return nil, err
-			}
+		var v any
+		if err := json.Unmarshal(b, &v); err != nil {
+			return nil, err
 		}
 
-		page = expandPage(page, filepath.Dir(name))
-		return json.Marshal(page)
+		if err := schemas.Validate(v); err != nil {
+			return nil, err
+		}
+
+		var page types.Page
+		if err := json.NewDecoder(reader).Decode(&page); err != nil {
+			return nil, err
+		}
+
+		page = expandPage(page, "")
+		pageRef = &page
+		return &page, nil
 	}
 }
 
 func NewCommandGenerator(command *types.Command) PageGenerator {
-	return func() ([]byte, error) {
+	return func() (*types.Page, error) {
 		output, err := command.Output()
 		if err != nil {
+			return nil, err
+		}
+
+		var v any
+		if err := json.Unmarshal(output, &v); err != nil {
+			return nil, err
+		}
+
+		if err := schemas.Validate(v); err != nil {
 			return nil, err
 		}
 
@@ -59,8 +130,8 @@ func NewCommandGenerator(command *types.Command) PageGenerator {
 			return nil, err
 		}
 
-		page = expandPage(page, command.Dir)
-		return json.Marshal(page)
+		page = expandPage(page, "")
+		return &page, nil
 	}
 }
 
@@ -106,26 +177,12 @@ func (c *CommandRunner) Init() tea.Cmd {
 type CommandOutput []byte
 
 func (runner *CommandRunner) Refresh() tea.Msg {
-	b, err := runner.Generator()
+	page, err := runner.Generator()
 	if err != nil {
 		return err
 	}
 
-	var v any
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-
-	if err := schemas.Validate(v); err != nil {
-		return err
-	}
-
-	var page types.Page
-	if err := json.Unmarshal(b, &page); err != nil {
-		return err
-	}
-
-	return &page
+	return page
 }
 
 func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
@@ -344,7 +401,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				page.SubmitAction = nil
 			}
 
-			form, err := NewForm(page.SubmitAction)
+			form, err := NewForm(page.Title, page.SubmitAction)
 			if err != nil {
 				return runner, func() tea.Msg {
 					return err
@@ -390,7 +447,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		if len(msg.Inputs) > 0 {
 			runner.currentView = RunnerViewForm
 
-			form, err := NewForm(&msg)
+			form, err := NewForm(msg.Title, &msg)
 			if err != nil {
 				return runner, func() tea.Msg {
 					return err
@@ -406,7 +463,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return runner, cmd
 	case error:
 		errorView := NewDetail("Error", func() string {
-			return fmt.Sprintf("%s", msg)
+			return msg.Error()
 		}, []types.Action{
 			{
 				Type:  types.CopyAction,
@@ -423,12 +480,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmd tea.Cmd
 	var container Page
 
-	if runner.currentView == RunnerViewForm {
-		container, cmd = runner.form.Update(msg)
-		runner.form, _ = container.(*Form)
-		return runner, cmd
-	}
-
 	if runner.err != nil {
 		container, cmd = runner.err.Update(msg)
 		runner.err, _ = container.(*Detail)
@@ -436,6 +487,10 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 
 	switch runner.currentView {
+	case RunnerViewForm:
+		container, cmd = runner.form.Update(msg)
+		runner.form, _ = container.(*Form)
+		return runner, cmd
 	case RunnerViewList:
 		container, cmd = runner.list.Update(msg)
 		runner.list, _ = container.(*List)

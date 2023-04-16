@@ -23,14 +23,17 @@ type Form struct {
 	focusIndex   int
 }
 
-func NewForm(submitAction *types.Action) (*Form, error) {
+func NewForm(title string, submitAction *types.Action) (*Form, error) {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
-	footer := NewFooter("Sunbeam")
+	footer := NewFooter(title)
 	footer.SetBindings(
-		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Focus Next")),
+		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", submitAction.Title)),
 	)
+
+	if len(submitAction.Inputs) > 0 {
+		footer.bindings = append(footer.bindings, key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Next Input")))
+	}
 
 	formItems := make([]FormItem, len(submitAction.Inputs))
 	for i, input := range submitAction.Inputs {
@@ -57,7 +60,7 @@ func (c *Form) SetIsLoading(isLoading bool) tea.Cmd {
 
 func (c Form) Init() tea.Cmd {
 	if len(c.items) == 0 {
-		return func() tea.Msg { return fmt.Errorf("form has no items") }
+		return nil
 	}
 	return c.items[0].Focus()
 }
@@ -75,6 +78,9 @@ func (c *Form) ScrollViewport() {
 		cursorOffset += c.items[i].Height() + 2
 	}
 
+	if c.CurrentItem() == nil {
+		return
+	}
 	maxRequiredVisibleHeight := cursorOffset + c.CurrentItem().Height() + 2
 	for maxRequiredVisibleHeight > c.viewport.Height+c.scrollOffset {
 		c.viewport.LineDown(1)

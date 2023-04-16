@@ -102,6 +102,10 @@
                     "description": "The type of the response.",
                     "const": "form"
                 },
+                "title": {
+                    "description": "The title of the page.",
+                    "type": "string"
+                },
                 "submitAction": {
                     "$ref": "#/$defs/action"
                 }

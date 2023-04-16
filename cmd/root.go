@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path"
 
@@ -24,7 +24,9 @@ func Draw(generator internal.PageGenerator) error {
 			return fmt.Errorf("could not generate page: %s", err)
 		}
 
-		fmt.Print(string(output))
+		if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
+			return fmt.Errorf("could not encode page: %s", err)
+		}
 		return nil
 	}
 
@@ -67,9 +69,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				return Draw(func() ([]byte, error) {
-					return io.ReadAll(os.Stdin)
-				})
+				return Draw(internal.NewStaticGenerator(os.Stdin))
 			}
 
 			return cmd.Usage()

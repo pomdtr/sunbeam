@@ -147,4 +147,5 @@ A detail view displayign a preview and actions.
 **PROPERTIES**
 
 - `type`: `'form'` - The type of the response.
+- `title`: string - The title of the page.
 - `submitAction`: [Action](#action)
