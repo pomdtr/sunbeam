@@ -11,12 +11,14 @@ import (
 
 	"github.com/adrg/xdg"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/google/shlex"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
 
 	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -41,7 +43,20 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return Draw(internal.NewStaticGenerator(os.Stdin))
 			}
 
-			return cmd.Usage()
+			defaultCommand, ok := os.LookupEnv("SUNBEAM_DEFAULT_CMD")
+			if !ok {
+				return cmd.Usage()
+			}
+
+			commandArgs, err := shlex.Split(defaultCommand)
+			if err != nil {
+				return err
+			}
+
+			return Draw(internal.NewCommandGenerator(&types.Command{
+				Args: commandArgs,
+			}))
+
 		},
 	}
 
