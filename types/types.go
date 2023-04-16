@@ -43,18 +43,50 @@ type Page struct {
 	Items []ListItem `json:"items,omitempty" yaml:"items,omitempty"`
 }
 
-type PreviewType string
-
-const (
-	StaticPreviewType PreviewType = "static"
-	DynamicPageType   PreviewType = "dynamic"
-)
-
 type Preview struct {
-	Type     PreviewType `json:"type,omitempty" yaml:"type,omitempty"`
-	Language string      `json:"language,omitempty" yaml:"language,omitempty"`
-	Text     string      `json:"text,omitempty" yaml:"text,omitempty"`
-	Command  *Command    `json:"command,omitempty" yaml:"command,omitempty"`
+	Language string   `json:"language,omitempty" yaml:"language,omitempty"`
+	Text     string   `json:"text,omitempty" yaml:"text,omitempty"`
+	Command  *Command `json:"command,omitempty" yaml:"command,omitempty"`
+}
+
+func (p *Preview) UnmarshalJSON(data []byte) error {
+	var raw interface{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	switch raw := raw.(type) {
+	case string:
+		p.Text = raw
+	case map[string]interface{}:
+		if err := mapstructure.Decode(raw, p); err != nil {
+			return err
+		}
+	default:
+		return errors.New("invalid preview")
+	}
+
+	return nil
+}
+
+func (p *Preview) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw interface{}
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+
+	switch raw := raw.(type) {
+	case string:
+		p.Text = raw
+	case map[interface{}]interface{}:
+		if err := mapstructure.Decode(raw, p); err != nil {
+			return err
+		}
+	default:
+		return errors.New("invalid preview")
+	}
+
+	return nil
 }
 
 type ListItem struct {

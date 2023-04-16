@@ -101,12 +101,11 @@ The preview to show in the detail view.
 
 **POSSIBLE VALUES**
 
+- string
 - object
-  - `type`: `'static'`
   - `text`: string - The text to show in the preview.
   - `language`: string - The language of the preview text.
 - object
-  - `type`: `'dynamic'`
   - `language`: string - The language of the preview text.
   - `command`: [Command](#command)
 

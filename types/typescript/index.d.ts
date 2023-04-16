@@ -248,8 +248,8 @@ export type Command =
  * The preview to show in the detail view.
  */
 export type Preview =
+  | string
   | {
-      type: "static";
       /**
        * The text to show in the preview.
        */
@@ -260,7 +260,6 @@ export type Preview =
       language?: string;
     }
   | {
-      type: "dynamic";
       /**
        * The language of the preview text.
        */

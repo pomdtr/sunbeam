@@ -540,16 +540,15 @@
             "description": "The preview to show in the detail view.",
             "oneOf": [
                 {
+                    "type": "string"
+                },
+                {
                     "type": "object",
                     "required": [
-                        "type",
                         "text"
                     ],
                     "additionalProperties": false,
                     "properties": {
-                        "type": {
-                            "const": "static"
-                        },
                         "text": {
                             "type": "string",
                             "description": "The text to show in the preview."
@@ -563,14 +562,10 @@
                 {
                     "type": "object",
                     "required": [
-                        "type",
                         "command"
                     ],
                     "additionalProperties": false,
                     "properties": {
-                        "type": {
-                            "const": "dynamic"
-                        },
                         "language": {
                             "type": "string",
                             "description": "The language of the preview text."

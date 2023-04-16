@@ -162,8 +162,8 @@ func NewExtensionViewCmd() *cobra.Command {
 				page := types.Page{
 					Type: types.DetailPage,
 					Preview: &types.Preview{
-						Type: types.StaticPreviewType,
-						Text: string(payload),
+						Language: "markdown",
+						Text:     string(payload),
 					},
 					Actions: []types.Action{
 						{
