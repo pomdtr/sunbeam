@@ -14,7 +14,8 @@
         "./schemas/page.schema.json": [
             "sunbeam.yml",
             "sunbeam.yaml"
-        ]
+        ],
+        ".goreleaser.yaml": "https://goreleaser.com/static/schema.json"
     },
     "search.exclude": {
         "book": true
