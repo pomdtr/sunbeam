@@ -10,6 +10,22 @@ It allows you to build interactives UIs from simple scripts.
 
 ![sunbeam demo gif](./static/demo.gif)
 
+## Installation
+
+### Brew (macOS/Linux)
+
+```bash
+brew install pomdtr/tap/sunbeam
+```
+
+### From source
+
+```bash
+go install github.com/pomdtr/sunbeam@latest
+```
+
+You can also download the latest release from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).
+
 ## Why sunbeam?
 
 I love TUIs, but I spent way to much time writing them.
