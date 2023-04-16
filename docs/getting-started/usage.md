@@ -24,7 +24,7 @@ Depending on the action, sunbeam may:
 
 Sunbeam is designed to be extended. You can write your own commands in any language, as long as they can output JSON.
 
-Basically, a sunbeam script is written like a classic CLI app. However, instead of writing human-readable text to stdout, it writes JSON payload following the [Sunbeam JSON Schema](../schema.md).
+Basically, a sunbeam script is written like a classic CLI app. However, instead of writing human-readable text to stdout, it writes JSON payload confirm to the [Sunbeam JSON Schema](https://raw.githubusercontent.com/pomdtr/sunbeam/main/schemas/page.schema.json).
 
 ### Writing a static list
 
@@ -79,7 +79,7 @@ Let's update our file browser to support navigation.
 
 This is just the tip of the iceberg. Sunbeam can show detail pages, prompt the user for input, and much more.
 
-To learn more, check out the [Sunbeam JSON Schema](../schema.md) and the provided [examples](../examples).
+To learn more, check out the [Sunbeam types](../types.md) and the provided [examples](../examples).
 
 In order to run the examples, just clone the sunbeam repository and run `sunbeam` from the root directory.
 
