@@ -38,7 +38,11 @@ func NewRootCmd() (*cobra.Command, error) {
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args: cobra.NoArgs,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			lipgloss.SetColorProfile(termenv.ANSI)
+			if os.Getenv("NO_COLOR") != "" {
+				lipgloss.SetColorProfile(termenv.Ascii)
+			} else {
+				lipgloss.SetColorProfile(termenv.ANSI)
+			}
 			os.Setenv("SUNBEAM", "true")
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
