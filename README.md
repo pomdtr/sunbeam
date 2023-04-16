@@ -18,6 +18,13 @@ It allows you to build interactives UIs from simple scripts.
 brew install pomdtr/tap/sunbeam
 ```
 
+### Scoop (Windows)
+
+```bash
+scoop bucket add pomdtr https://github.com/pomdtr/scoop-bucket.git
+scoop install pomdtr/sunbeam
+```
+
 ### From source
 
 ```bash
