@@ -5,10 +5,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewPushCmd() *cobra.Command {
+func NewReadCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "push <page>",
-		Short: "Read page from file, and push it's content",
+		Use:   "read <page>",
+		Short: "Read page from file, and push it",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return Draw(internal.NewFileGenerator(args[0]))

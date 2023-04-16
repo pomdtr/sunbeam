@@ -14,7 +14,7 @@ import (
 func NewValidateCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "validate [file]",
-		Short: "Validate a page against the schema",
+		Short: "Validate a page",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var input []byte

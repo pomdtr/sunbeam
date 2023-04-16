@@ -14,7 +14,8 @@ import (
 
 func NewCmdRun(extensionDir string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "run <page>",
+		Use:   "run",
+		Short: "Generate a page from a command or a script, and push it",
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			extension, err := ListExtensions(extensionDir)
 			if err != nil {
@@ -22,8 +23,7 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 			}
 			return extension, cobra.ShellCompDirectiveDefault
 		},
-		Short: "Run page from file",
-		Args:  cobra.MinimumNArgs(1),
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extensions, err := ListExtensions(extensionDir)
 			if err != nil {
