@@ -28,11 +28,13 @@ and run json-schema-to-typescript to regenerate this file.
   - `target`: string - The target to open.
 - object
   - `type`: `'exit'` - The type of the action.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `title`: string - The title of the action.
   - `key`: string - The key used as a shortcut.
 - object
   - `type`: `'reload'` - The type of the action.
   - `title`: string - The title of the action.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
 - object
   - `type`: `'run'` - The type of the action.

@@ -57,6 +57,10 @@ export type Action =
        */
       type: "exit";
       /**
+       * The inputs to show when the action is run.
+       */
+      inputs?: Input[];
+      /**
        * The title of the action.
        */
       title?: string;
@@ -74,6 +78,10 @@ export type Action =
        * The title of the action.
        */
       title?: string;
+      /**
+       * The inputs to show when the action is run.
+       */
+      inputs?: Input[];
       /**
        * The key used as a shortcut.
        */
