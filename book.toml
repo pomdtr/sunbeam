@@ -6,6 +6,5 @@ language = "en"
 src = "docs"
 
 [output.html]
-site-url = "/sunbeam/"
 git-repository-url = "https://github.com/pomdtr/sunbeam"
 edit-url-template = "https://github.com/pomdtr/sunbeam/edit/main/docs/{path}"
