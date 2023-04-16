@@ -67,7 +67,7 @@ In sunbeam, we can push a new page by using a `run` action associated with the`o
 
 This schema describe the sunbeam event loop.
 
-![Sunbeam Event Loop](./event-loop.png)
+![Sunbeam Event Loop](./event-loop.excalidraw.png)
 
 Let's update our file browser to support navigation.
 
