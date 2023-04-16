@@ -29,3 +29,5 @@ brews:
     tap:
       owner: pomdtr
       name: homebrew-tap
+furies:
+  - account: pomdtr
