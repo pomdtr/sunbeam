@@ -80,3 +80,4 @@ go.work
 book
 
 .env
+public/

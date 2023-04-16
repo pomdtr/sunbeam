@@ -5,6 +5,10 @@
         "docs/types.md",
         "cmd/templates/system-message.md"
     ],
+    "markdownlint.config": {
+        "MD033": false,
+        "MD041": false,
+    },
     "browse-lite.startUrl": "http://localhost:3000",
     "yaml.schemas": {
         "./schemas/page.schema.json": [
