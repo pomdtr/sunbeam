@@ -15,7 +15,7 @@
             "sunbeam.yml",
             "sunbeam.yaml"
         ],
-        ".goreleaser.yaml": "https://goreleaser.com/static/schema.json"
+        "https://goreleaser.com/static/schema.json": ".goreleaser.yaml"
     },
     "search.exclude": {
         "book": true

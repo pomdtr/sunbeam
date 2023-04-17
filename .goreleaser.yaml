@@ -2,6 +2,11 @@
 before:
   hooks:
     - go mod tidy
+    - rm -rf completions
+    - mkdir completions
+    - sh -c 'go run . completion "bash" >./completions/{{ .ProjectName }}.bash'
+    - sh -c 'go run . completion "zsh" >./completions/{{ .ProjectName }}.zsh'
+    - sh -c 'go run . completion "fish" >./completions/{{ .ProjectName }}.fish'
 changelog:
   skip: true
 builds:
@@ -18,6 +23,10 @@ archives:
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - README.md
+      - LICENSE-MIT
+      - completions/*
 checksum:
   name_template: "checksums.txt"
 snapshot:
@@ -28,6 +37,11 @@ brews:
     tap:
       owner: pomdtr
       name: homebrew-tap
+    install: |-
+      bin.install "sunbeam"
+      bash_completion.install "completions/sunbeam.bash"
+      zsh_completion.install "completions/sunbeam.zsh"
+      fish_completion.install "completions/sunbeam.fish"
 scoop:
   bucket:
     owner: pomdtr
