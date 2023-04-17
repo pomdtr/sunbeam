@@ -29,6 +29,9 @@ archives:
       - completions/*
 checksum:
   name_template: "checksums.txt"
+release:
+  extra_files:
+    - glob: ./dist/artifacts.json
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
