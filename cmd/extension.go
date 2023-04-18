@@ -136,8 +136,8 @@ func NewExtensionViewCmd() *cobra.Command {
 					return &types.Page{
 						Type: types.DetailPage,
 						Preview: &types.Preview{
-							Language: "markdown",
-							Text:     fmt.Sprintf("Could not fetch readme: %s", res.Status),
+							Hightlight: "markdown",
+							Text:       fmt.Sprintf("Could not fetch readme: %s", res.Status),
 						},
 					}, nil
 				}
@@ -162,8 +162,8 @@ func NewExtensionViewCmd() *cobra.Command {
 				page := types.Page{
 					Type: types.DetailPage,
 					Preview: &types.Preview{
-						Language: "markdown",
-						Text:     string(payload),
+						Hightlight: "markdown",
+						Text:       string(payload),
 					},
 					Actions: []types.Action{
 						{

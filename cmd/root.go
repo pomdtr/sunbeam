@@ -77,7 +77,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	docCmd := &cobra.Command{
-		Use:    "generate-docs",
+		Use:    "docs",
 		Short:  "Generate documentation for sunbeam",
 		Hidden: true,
 		RunE: func(cmd *cobra.Command, args []string) error {

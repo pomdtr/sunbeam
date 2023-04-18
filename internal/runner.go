@@ -380,7 +380,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			runner.currentView = RunnerViewDetail
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
-			runner.detail.Language = page.Preview.Language
+			runner.detail.Language = page.Preview.Hightlight
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()

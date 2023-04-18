@@ -44,9 +44,9 @@ type Page struct {
 }
 
 type Preview struct {
-	Language string   `json:"language,omitempty" yaml:"language,omitempty"`
-	Text     string   `json:"text,omitempty" yaml:"text,omitempty"`
-	Command  *Command `json:"command,omitempty" yaml:"command,omitempty"`
+	Hightlight string   `json:"highlight,omitempty" yaml:"highlight,omitempty"`
+	Text       string   `json:"text,omitempty" yaml:"text,omitempty"`
+	Command    *Command `json:"command,omitempty" yaml:"command,omitempty"`
 }
 
 func (p *Preview) UnmarshalJSON(data []byte) error {

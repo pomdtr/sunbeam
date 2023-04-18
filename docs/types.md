@@ -104,9 +104,9 @@ The preview to show in the detail view.
 - string
 - object
   - `text`: string - The text to show in the preview.
-  - `language`: string - The language of the preview text.
+  - `highlight`: string - The highlight of the preview text.
 - object
-  - `language`: string - The language of the preview text.
+  - `highlight`: string - The highlighting of the preview text.
   - `command`: [Command](#command)
 
 ## List

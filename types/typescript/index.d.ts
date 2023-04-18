@@ -255,15 +255,15 @@ export type Preview =
        */
       text: string;
       /**
-       * The language of the preview text.
+       * The highlight of the preview text.
        */
-      language?: string;
+      highlight?: string;
     }
   | {
       /**
-       * The language of the preview text.
+       * The highlighting of the preview text.
        */
-      language?: string;
+      highlight?: string;
       command: Command;
     };
 
