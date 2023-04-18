@@ -7,14 +7,10 @@ There is two ways to wire sunbeam to your programs:
 - Wrap your command in sunbeam: `sunbeam run <my-command>`
 - Pipe data to sunbeam: `<my-command> | sunbeam read -`
 
-Both methods have advantages and drawbacks:
-
-- Using the wrap method, sunbeam controls the whole process. However, it requires your user to invoke sunbeam instead of your command, so you will loose completions.
-- The pipe method is more flexible and easier to integrate with existing programs, but you loose the ability to reload your script since sunbeam is not responsible for generating the data.
-
 ## Detecting that a script is running in sunbeam
 
-Sunbeam set the `SUNBEAM` environment variable to `1` when it's running a script. You can use it to adapt the output of your script depending on the context.
+Sunbeam set the `SUNBEAM` environment variable to `true` when it's running a script.
+You can use it to adapt the output of your script depending on the context.
 
 ## Configuring sunbeam appearance
 
@@ -26,7 +22,7 @@ You can configure the appearance of sunbeam by setting the following environment
 You can also set these options using the `--height` and `--padding` flags.
 
 ```bash
-sunbeam --height 20 --padding 2 ./github.sh
+sunbeam ./github.sh
 ```
 
 ## Validating the output of a script
