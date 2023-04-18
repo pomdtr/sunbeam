@@ -27,11 +27,25 @@ archives:
       - README.md
       - LICENSE-MIT
       - completions/*
+nfpms:
+  - vendor: pomdtr
+    homepage: https://pomdtr.github.io/sunbeam
+    maintainer: Achille Lacoin
+    description: Generate powerful UIs from simple scripts written in any language.
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
+    contents:
+      - src: ./completions/{{ .ProjectName }}.bash
+        dst: /etc/bash_completion.d/{{ .ProjectName }}
+      - src: ./completions/{{ .ProjectName }}.fish
+        dst: /usr/share/fish/vendor_completions.d/{{ .ProjectName }}.fish
+      - src: ./completions/{{ .ProjectName }}.zsh
+        dst: /usr/share/zsh/site-functions/_{{ .ProjectName }}
 checksum:
   name_template: "checksums.txt"
-release:
-  extra_files:
-    - glob: ./dist/artifacts.json
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
