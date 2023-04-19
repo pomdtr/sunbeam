@@ -274,6 +274,7 @@ func NewExtensionCreateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("name", "n", "", "Extension name")
+	cmd.MarkFlagRequired("name")
 	return cmd
 }
 

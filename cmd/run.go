@@ -69,12 +69,6 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 				})
 			}
 
-			if _, err := os.Stat(args[0]); err == nil {
-				return Draw(internal.NewCommandGenerator(&types.Command{
-					Args: args,
-				}))
-			}
-
 			if _, err := exec.LookPath(args[0]); err == nil {
 				return Draw(internal.NewCommandGenerator(&types.Command{
 					Args: args,
