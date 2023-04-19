@@ -359,19 +359,18 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		runner.currentPage = page
 		switch page.Type {
 		case types.DetailPage:
-			var detailFunc func() string
-			if page.Preview.Text != "" {
-				detailFunc = func() string {
+			detailFunc := func() string {
+				if page.Preview == nil {
+					return ""
+				}
+				if page.Preview.Text != "" {
 					return page.Preview.Text
 				}
-			} else {
-				detailFunc = func() string {
-					output, err := page.Preview.Command.Output()
-					if err != nil {
-						return err.Error()
-					}
-					return string(output)
+				output, err := page.Preview.Command.Output()
+				if err != nil {
+					return err.Error()
 				}
+				return string(output)
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
@@ -380,7 +379,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			runner.currentView = RunnerViewDetail
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
-			runner.detail.Language = page.Preview.Hightlight
+			if page.Preview != nil && page.Preview.Hightlight != "" {
+				runner.detail.Language = page.Preview.Hightlight
+			}
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()

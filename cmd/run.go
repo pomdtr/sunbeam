@@ -44,24 +44,19 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 
 			if repository, err := utils.RepositoryFromString(args[0]); err == nil {
 				page := types.Page{
-					Type:  types.FormPage,
-					Title: "Install Extension?",
-					SubmitAction: &types.Action{
-						Type:  types.RunAction,
-						Title: "Install",
-						Command: &types.Command{
-							Args: []string{os.Args[0], "extension", "install", "--open", "${input:repository}"},
-						},
-						Inputs: []types.Input{
-							{
-								Name:        "repository",
-								Type:        types.TextFieldInput,
-								Title:       "Repository",
-								Placeholder: "Repository",
-								Default:     repository.FullName(),
+					Type: types.DetailPage,
+					Preview: &types.Preview{
+						Text: fmt.Sprintf("Install %s ?", repository.FullName()),
+					},
+					Actions: []types.Action{
+						{
+							Type:  types.RunAction,
+							Title: "Install",
+							Command: &types.Command{
+								Args: []string{os.Args[0], "extension", "install", "--open", repository.FullName()},
 							},
+							OnSuccess: types.PushOnSuccess,
 						},
-						OnSuccess: types.PushOnSuccess,
 					},
 				}
 				return Draw(func() (*types.Page, error) {
