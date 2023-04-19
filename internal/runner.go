@@ -592,6 +592,11 @@ func expandPage(page types.Page, dir string) types.Page {
 		return action
 	}
 
+	if page.SubmitAction != nil {
+		submitAction := expandAction(*page.SubmitAction)
+		page.SubmitAction = &submitAction
+	}
+
 	for i, action := range page.Actions {
 		page.Actions[i] = expandAction(action)
 	}
