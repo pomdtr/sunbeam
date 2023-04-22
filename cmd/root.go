@@ -24,15 +24,18 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
-func NewRootCmd() (*cobra.Command, error) {
+func NewRootCmd(version string) *cobra.Command {
 
 	dataDir := path.Join(xdg.DataHome, "sunbeam")
 	extensionDir := path.Join(dataDir, "extensions")
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
-		Use:   "sunbeam",
-		Short: "Command Line Launcher",
+		Use:           "sunbeam",
+		Short:         "Command Line Launcher",
+		Version:       version,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
@@ -57,13 +60,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 			commandArgs, err := shlex.Split(defaultCommand)
 			if err != nil {
+				fmt.Fprintf(os.Stderr, "Could not parse default command: %s", err)
 				return err
 			}
 
 			return Draw(internal.NewCommandGenerator(&types.Command{
 				Args: commandArgs,
 			}))
-
 		},
 	}
 
@@ -112,7 +115,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	return rootCmd, nil
+	return rootCmd
 }
 
 func Draw(generator internal.PageGenerator) error {

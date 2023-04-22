@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	_ "embed"
@@ -12,15 +11,7 @@ import (
 var version = "dev"
 
 func main() {
-	cmd, err := cmd.NewRootCmd()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not create root command: %s", err)
-		os.Exit(1)
-	}
-
-	cmd.Version = version
-	cmd.SilenceUsage = true
-
+	cmd := cmd.NewRootCmd(version)
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
