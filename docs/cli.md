@@ -329,20 +329,6 @@ sunbeam query <query> [flags]
   -s, --slurp                 read all inputs into an array
 ```
 
-## sunbeam read
-
-Read page from file, and push it
-
-```
-sunbeam read <page> [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for read
-```
-
 ## sunbeam run
 
 Generate a page from a command or a script, and push it

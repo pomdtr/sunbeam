@@ -5,7 +5,7 @@
 There is two ways to wire sunbeam to your programs:
 
 - Wrap your command in sunbeam: `sunbeam run <my-command>`
-- Pipe data to sunbeam: `<my-command> | sunbeam read -`
+- Pipe data to sunbeam: `<my-command> | sunbeam`
 
 ## Detecting that a script is running in sunbeam
 

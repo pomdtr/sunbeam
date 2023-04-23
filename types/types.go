@@ -24,29 +24,29 @@ const (
 )
 
 type Page struct {
-	Type    PageType `json:"type" yaml:"type"`
-	Title   string   `json:"title,omitempty" yaml:"title,omitempty"`
-	Actions []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
+	Type    PageType `json:"type"`
+	Title   string   `json:"title,omitempty"`
+	Actions []Action `json:"actions,omitempty"`
 
 	// Form page
-	SubmitAction *Action `json:"submitAction,omitempty" yaml:"submitAction,omitempty"`
+	SubmitAction *Action `json:"submitAction,omitempty"`
 
 	// Detail page
-	Preview *Preview `json:"preview,omitempty" yaml:"preview,omitempty"`
+	Preview *Preview `json:"preview,omitempty"`
 
 	// List page
-	ShowPreview bool `json:"showPreview,omitempty" yaml:"showPreview,omitempty"`
+	ShowPreview bool `json:"showPreview,omitempty"`
 	EmptyView   *struct {
-		Text    string   `json:"text,omitempty" yaml:"text,omitempty"`
-		Actions []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
-	} `json:"emptyView,omitempty" yaml:"emptyView,omitempty"`
-	Items []ListItem `json:"items,omitempty" yaml:"items,omitempty"`
+		Text    string   `json:"text,omitempty"`
+		Actions []Action `json:"actions,omitempty"`
+	} `json:"emptyView,omitempty"`
+	Items []ListItem `json:"items,omitempty"`
 }
 
 type Preview struct {
-	Hightlight string   `json:"highlight,omitempty" yaml:"highlight,omitempty"`
-	Text       string   `json:"text,omitempty" yaml:"text,omitempty"`
-	Command    *Command `json:"command,omitempty" yaml:"command,omitempty"`
+	Hightlight string   `json:"highlight,omitempty"`
+	Text       string   `json:"text,omitempty"`
+	Command    *Command `json:"command,omitempty"`
 }
 
 func (p *Preview) UnmarshalJSON(data []byte) error {
@@ -69,33 +69,13 @@ func (p *Preview) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *Preview) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var raw interface{}
-	if err := unmarshal(&raw); err != nil {
-		return err
-	}
-
-	switch raw := raw.(type) {
-	case string:
-		p.Text = raw
-	case map[interface{}]interface{}:
-		if err := mapstructure.Decode(raw, p); err != nil {
-			return err
-		}
-	default:
-		return errors.New("invalid preview")
-	}
-
-	return nil
-}
-
 type ListItem struct {
-	Id          string   `json:"id,omitempty" yaml:"id,omitempty"`
-	Title       string   `json:"title" yaml:"title"`
-	Subtitle    string   `json:"subtitle,omitempty" yaml:"subtitle,omitempty"`
-	Preview     *Preview `json:"preview,omitempty" yaml:"preview,omitempty"`
-	Accessories []string `json:"accessories,omitempty" yaml:"accessories,omitempty"`
-	Actions     []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
+	Id          string   `json:"id,omitempty"`
+	Title       string   `json:"title"`
+	Subtitle    string   `json:"subtitle,omitempty"`
+	Preview     *Preview `json:"preview,omitempty"`
+	Accessories []string `json:"accessories,omitempty"`
+	Actions     []Action `json:"actions,omitempty"`
 }
 
 type FormInputType string
@@ -108,24 +88,24 @@ const (
 )
 
 type DropDownItem struct {
-	Title string `json:"title" yaml:"title"`
-	Value string `json:"value" yaml:"value"`
+	Title string `json:"title"`
+	Value string `json:"value"`
 }
 
 type Input struct {
-	Name        string        `json:"name" yaml:"name"`
-	Type        FormInputType `json:"type" yaml:"type"`
-	Title       string        `json:"title" yaml:"title"`
-	Placeholder string        `json:"placeholder,omitempty" yaml:"placeholder,omitempty"`
-	Default     any           `json:"default,omitempty" yaml:"default,omitempty"`
+	Name        string        `json:"name"`
+	Type        FormInputType `json:"type"`
+	Title       string        `json:"title"`
+	Placeholder string        `json:"placeholder,omitempty"`
+	Default     any           `json:"default,omitempty"`
 
 	// Only for dropdown
-	Items []DropDownItem `json:"items,omitempty" yaml:"items,omitempty"`
+	Items []DropDownItem `json:"items,omitempty"`
 
 	// Only for checkbox
-	Label             string `json:"label,omitempty" yaml:"label,omitempty"`
-	TrueSubstitution  string `json:"trueSubstitution,omitempty" yaml:"trueSubstitution,omitempty"`
-	FalseSubstitution string `json:"falseSubstitution,omitempty" yaml:"falseSubstitution,omitempty"`
+	Label             string `json:"label,omitempty"`
+	TrueSubstitution  string `json:"trueSubstitution,omitempty"`
+	FalseSubstitution string `json:"falseSubstitution,omitempty"`
 }
 
 type ActionType string
@@ -150,30 +130,30 @@ var (
 )
 
 type Action struct {
-	Title  string     `json:"title,omitempty" yaml:"title,omitempty"`
-	Type   ActionType `json:"type" yaml:"type"`
-	Key    string     `json:"key,omitempty" yaml:"key,omitempty"`
-	Inputs []Input    `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Title  string     `json:"title,omitempty"`
+	Type   ActionType `json:"type"`
+	Key    string     `json:"key,omitempty"`
+	Inputs []Input    `json:"inputs,omitempty"`
 
 	// copy
-	Text string `json:"text,omitempty" yaml:"text,omitempty"`
+	Text string `json:"text,omitempty"`
 
 	// open
-	Target string `json:"target,omitempty" yaml:"target,omitempty"`
+	Target string `json:"target,omitempty"`
 
 	// push
-	Page string `json:"page,omitempty" yaml:"page,omitempty"`
+	Page string `json:"page,omitempty"`
 
 	// run
-	Command   *Command      `json:"command,omitempty" yaml:"command,omitempty"`
-	Confirm   bool          `json:"confirm,omitempty" yaml:"confirm,omitempty"`
-	OnSuccess OnSuccessType `json:"onSuccess,omitempty" yaml:"onSuccess,omitempty"`
+	Command   *Command      `json:"command,omitempty"`
+	Confirm   bool          `json:"confirm,omitempty"`
+	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
 }
 
 type Command struct {
-	Args  []string `json:"args" yaml:"args"`
-	Input string   `json:"input,omitempty" yaml:"input,omitempty"`
-	Dir   string   `json:"dir,omitempty" yaml:"dir,omitempty"`
+	Args  []string `json:"args"`
+	Input string   `json:"input,omitempty"`
+	Dir   string   `json:"dir,omitempty"`
 }
 
 func (c Command) Cmd() *exec.Cmd {
@@ -243,42 +223,6 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 		}
 
 		return nil
-	}
-
-	return fmt.Errorf("invalid command")
-}
-
-func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var sa []string
-	if err := unmarshal(&sa); err == nil {
-		if len(sa) == 0 {
-			return fmt.Errorf("empty command")
-		}
-		c.Args = sa
-		return nil
-	}
-
-	var s string
-	if err := unmarshal(&s); err == nil {
-
-		args, err := shlex.Split(s)
-		if err != nil {
-			return err
-		}
-
-		if len(args) == 0 {
-			return fmt.Errorf("empty command")
-		}
-
-		c.Args = args
-		return nil
-	}
-
-	var m map[string]interface{}
-	if err := unmarshal(&m); err == nil {
-		if err := mapstructure.Decode(m, c); err != nil {
-			return err
-		}
 	}
 
 	return fmt.Errorf("invalid command")

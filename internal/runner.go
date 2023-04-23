@@ -19,61 +19,33 @@ import (
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
-	"gopkg.in/yaml.v3"
 )
 
 type PageGenerator func() (*types.Page, error)
 
 func NewFileGenerator(name string) PageGenerator {
-	extension := filepath.Ext(name)
-	if extension == ".yaml" || extension == ".yml" {
-		return func() (*types.Page, error) {
-			b, err := os.ReadFile(name)
-			if err != nil {
-				return nil, err
-			}
-
-			var v any
-			if err := yaml.Unmarshal(b, &v); err != nil {
-				return nil, err
-			}
-
-			if err := schemas.Validate(v); err != nil {
-				return nil, err
-			}
-
-			var page types.Page
-			if err := yaml.Unmarshal(b, &page); err != nil {
-				return nil, err
-			}
-
-			page = expandPage(page, filepath.Dir(name))
-			return &page, nil
+	return func() (*types.Page, error) {
+		b, err := os.ReadFile(name)
+		if err != nil {
+			return nil, err
 		}
-	} else {
-		return func() (*types.Page, error) {
-			b, err := os.ReadFile(name)
-			if err != nil {
-				return nil, err
-			}
 
-			var v any
-			if err := json.Unmarshal(b, &v); err != nil {
-				return nil, err
-			}
-
-			if err := schemas.Validate(v); err != nil {
-				return nil, err
-			}
-
-			var page types.Page
-			if err := json.Unmarshal(b, &page); err != nil {
-				return nil, err
-			}
-
-			page = expandPage(page, filepath.Dir(name))
-			return &page, nil
+		var v any
+		if err := json.Unmarshal(b, &v); err != nil {
+			return nil, err
 		}
+
+		if err := schemas.Validate(v); err != nil {
+			return nil, err
+		}
+
+		var page types.Page
+		if err := json.Unmarshal(b, &page); err != nil {
+			return nil, err
+		}
+
+		page = expandPage(page, filepath.Dir(name))
+		return &page, nil
 	}
 }
 

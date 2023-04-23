@@ -1,0 +1,25 @@
+{
+  "type": "list",
+  "items": [
+    {
+      "title": "Show Examples",
+      "actions": [
+        {
+          "type": "push",
+          "title": "Examples",
+          "page": "./docs/examples/sunbeam.json"
+        }
+      ]
+    },
+    {
+      "title": "Show Getting Started",
+      "actions": [
+        {
+          "type": "push",
+          "title": "Getting Started",
+          "page": "./docs/getting-started/sunbeam.json"
+        }
+      ]
+    }
+  ]
+}

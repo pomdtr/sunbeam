@@ -17,7 +17,6 @@ import (
 
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
-	"gopkg.in/yaml.v3"
 
 	cp "github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/utils"
@@ -327,7 +326,7 @@ func installExtension(repository *utils.Repository, extensionDir string) error {
 			Tag:   release.TagName,
 			Path:  targetDir,
 		}
-		bytes, err := yaml.Marshal(manifest)
+		bytes, err := json.Marshal(manifest)
 		if err != nil {
 			return fmt.Errorf("unable to write extension manifest: %s", err)
 		}
@@ -456,7 +455,7 @@ func NewExtensionUpgradeCmd(extensionDir string) *cobra.Command {
 					return fmt.Errorf("unable to upgrade extension: %s", err)
 				}
 				var manifest ExtensionManifest
-				if err := yaml.Unmarshal(bytes, &manifest); err != nil {
+				if err := json.Unmarshal(bytes, &manifest); err != nil {
 					return fmt.Errorf("unable to upgrade extension: %s", err)
 				}
 
@@ -548,9 +547,9 @@ func ListExtensions(extensionDir string) ([]string, error) {
 }
 
 type ExtensionManifest struct {
-	Owner string `yaml:"owner"`
-	Name  string `yaml:"name"`
-	Host  string `yaml:"host"`
-	Tag   string `yaml:"tag"`
-	Path  string `yaml:"path"`
+	Owner string `json:"owner"`
+	Name  string `json:"name"`
+	Host  string `json:"host"`
+	Tag   string `json:"tag"`
+	Path  string `json:"path"`
 }
