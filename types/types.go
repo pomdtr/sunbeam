@@ -1,7 +1,6 @@
 package types
 
 import (
-	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,9 +10,6 @@ import (
 	"github.com/google/shlex"
 	"github.com/mitchellh/mapstructure"
 )
-
-//go:embed typescript/index.d.ts
-var TypeScript string
 
 type PageType string
 

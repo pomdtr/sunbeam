@@ -7,8 +7,6 @@ import (
 	"path"
 	"strings"
 
-	_ "embed"
-
 	"github.com/adrg/xdg"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

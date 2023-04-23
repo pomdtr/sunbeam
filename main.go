@@ -3,8 +3,6 @@ package main
 import (
 	"os"
 
-	_ "embed"
-
 	"github.com/pomdtr/sunbeam/cmd"
 )
 
