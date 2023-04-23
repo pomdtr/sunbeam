@@ -29,11 +29,10 @@ func NewRootCmd(version string) *cobra.Command {
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
-		Use:           "sunbeam",
-		Short:         "Command Line Launcher",
-		Version:       version,
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		Use:          "sunbeam",
+		Short:        "Command Line Launcher",
+		Version:      version,
+		SilenceUsage: true,
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
@@ -111,6 +110,27 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 	rootCmd.AddCommand(manCmd)
+
+	extensions, err := ListExtensions(extensionDir)
+	if err != nil {
+		return rootCmd
+	}
+
+	for _, extension := range extensions {
+		rootCmd.AddCommand(&cobra.Command{
+			Use:                extension,
+			DisableFlagParsing: true,
+			RunE: func(cmd *cobra.Command, args []string) error {
+				extensionPath := path.Join(extensionDir, extension, extensionBinaryName)
+				commandArgs := []string{extensionPath}
+				commandArgs = append(commandArgs, args...)
+
+				return Draw(internal.NewCommandGenerator(&types.Command{
+					Args: commandArgs,
+				}))
+			},
+		})
+	}
 
 	return rootCmd
 }

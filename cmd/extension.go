@@ -11,7 +11,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	_ "embed"
 
@@ -279,16 +278,18 @@ func NewExtensionCreateCmd() *cobra.Command {
 
 func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install",
+		Use:   "install [alias] [extension]",
 		Short: "Install a sunbeam extension from a repository",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			repository, err := utils.RepositoryFromString(args[0])
+			targetDir := filepath.Join(extensionDir, args[0])
+
+			repository, err := utils.RepositoryFromString(args[1])
 			if err != nil {
 				return fmt.Errorf("unable to parse repository: %s", err)
 			}
 
-			if err := installExtension(repository, extensionDir); err != nil {
+			if err := installExtension(repository, targetDir); err != nil {
 				return fmt.Errorf("could not install extension: %s", err)
 			}
 
@@ -309,8 +310,7 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 	return cmd
 }
 
-func installExtension(repository *utils.Repository, extensionDir string) error {
-	targetDir := filepath.Join(extensionDir, repository.Owner(), repository.Name())
+func installExtension(repository *utils.Repository, targetDir string) error {
 	if _, err := os.Stat(filepath.Join(targetDir, extensionBinaryName)); !os.IsNotExist(err) {
 		return fmt.Errorf("extension already installed")
 	}
@@ -413,12 +413,7 @@ func NewExtensionRemoveCmd(extensionDir string) *cobra.Command {
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: validArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			parts := strings.Split(args[0], "/")
-			if len(parts) != 2 {
-				return fmt.Errorf("invalid extension name: %s", args[0])
-			}
-
-			targetDir := path.Join(extensionDir, parts[0], parts[1])
+			targetDir := path.Join(extensionDir, args[0])
 			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
 				return fmt.Errorf("extension %s not installed", args[0])
 			}
@@ -525,22 +520,19 @@ func ListExtensions(extensionDir string) ([]string, error) {
 		return nil, nil
 	}
 
-	owners, err := os.ReadDir(extensionDir)
-
+	extensionDirs, err := os.ReadDir(extensionDir)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list extensions: %s", err)
 	}
 
 	extensions := make([]string, 0)
-	for _, owner := range owners {
-		names, err := os.ReadDir(path.Join(extensionDir, owner.Name()))
-		if err != nil {
-			return nil, fmt.Errorf("unable to list extensions: %s", err)
+	for _, dir := range extensionDirs {
+		binPath := path.Join(extensionDir, dir.Name(), extensionBinaryName)
+		if _, err := os.Stat(binPath); os.IsNotExist(err) {
+			continue
 		}
 
-		for _, name := range names {
-			extensions = append(extensions, fmt.Sprintf("%s/%s", owner.Name(), name.Name()))
-		}
+		extensions = append(extensions, dir.Name())
 	}
 
 	return extensions, nil
