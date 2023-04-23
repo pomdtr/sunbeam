@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -509,20 +508,20 @@ func expandPage(page types.Page, dir string) types.Page {
 			return target
 		}
 
-		if path.IsAbs(targetUrl.Path) {
+		if filepath.IsAbs(targetUrl.Path) {
 			return target
 		}
 
-		return path.Join(dir, targetUrl.Path)
+		return filepath.Join(dir, targetUrl.Path)
 	}
 
 	expandAction := func(action types.Action) types.Action {
-		if action.Command != nil && !path.IsAbs(action.Command.Dir) {
-			action.Command.Dir = path.Join(dir, action.Command.Dir)
+		if action.Command != nil && !filepath.IsAbs(action.Command.Dir) {
+			action.Command.Dir = filepath.Join(dir, action.Command.Dir)
 		}
 
-		if action.Page != "" && !path.IsAbs(action.Page) {
-			action.Page = path.Join(dir, action.Page)
+		if action.Page != "" && !filepath.IsAbs(action.Page) {
+			action.Page = filepath.Join(dir, action.Page)
 		}
 
 		if action.Target != "" {

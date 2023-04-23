@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 
@@ -252,7 +251,7 @@ func NewExtensionCreateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extensionName, _ := cmd.Flags().GetString("name")
 			cwd, _ := os.Getwd()
-			extensionDir := path.Join(cwd, extensionName)
+			extensionDir := filepath.Join(cwd, extensionName)
 			if _, err := os.Stat(extensionDir); !os.IsNotExist(err) {
 				return fmt.Errorf("extension already exists: %s", extensionDir)
 			}
@@ -261,7 +260,7 @@ func NewExtensionCreateCmd() *cobra.Command {
 				return fmt.Errorf("could not create extension directory: %s", err)
 			}
 
-			extensionScriptPath := path.Join(extensionDir, extensionBinaryName)
+			extensionScriptPath := filepath.Join(extensionDir, extensionBinaryName)
 			if err := os.WriteFile(extensionScriptPath, extensionTemplate, 0755); err != nil {
 				return fmt.Errorf("could not write extension script: %s", err)
 			}
@@ -331,7 +330,7 @@ func installExtension(repository *utils.Repository, targetDir string) error {
 			return fmt.Errorf("unable to write extension manifest: %s", err)
 		}
 
-		manifestPath := path.Join(targetDir, "manifest.yml")
+		manifestPath := filepath.Join(targetDir, "manifest.yml")
 		if err := os.WriteFile(manifestPath, bytes, 0644); err != nil {
 			return fmt.Errorf("unable to write extension manifest: %s", err)
 		}
@@ -357,7 +356,7 @@ func releaseInstall(release *utils.Release, targetDir string) error {
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("unable to install extension: %s", err)
 	}
-	out, err := os.OpenFile(path.Join(targetDir, extensionBinaryName), os.O_CREATE|os.O_WRONLY, 0755)
+	out, err := os.OpenFile(filepath.Join(targetDir, extensionBinaryName), os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		return fmt.Errorf("unable to install extension: %s", err)
 	}
@@ -378,7 +377,7 @@ func gitInstall(repository *utils.Repository, targetDir string) error {
 		return fmt.Errorf("unable to install extension: %s", err)
 	}
 
-	binPath := path.Join(tempDir, extensionBinaryName)
+	binPath := filepath.Join(tempDir, extensionBinaryName)
 	if os.Stat(binPath); os.IsNotExist(err) {
 		return fmt.Errorf("extension binary not found: %s", binPath)
 	}
@@ -413,7 +412,7 @@ func NewExtensionRemoveCmd(extensionDir string) *cobra.Command {
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: validArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			targetDir := path.Join(extensionDir, args[0])
+			targetDir := filepath.Join(extensionDir, args[0])
 			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
 				return fmt.Errorf("extension %s not installed", args[0])
 			}
@@ -438,12 +437,12 @@ func NewExtensionUpgradeCmd(extensionDir string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extensionName := args[0]
 
-			extensionPath := path.Join(extensionDir, extensionName)
+			extensionPath := filepath.Join(extensionDir, extensionName)
 			if _, err := os.Stat(extensionPath); os.IsNotExist(err) {
 				return fmt.Errorf("extension not installed: %s", args[0])
 			}
 
-			manifestPath := path.Join(extensionPath, "manifest.yml")
+			manifestPath := filepath.Join(extensionPath, "manifest.yml")
 			if _, err := os.Stat(manifestPath); err == nil {
 				bytes, err := os.ReadFile(manifestPath)
 				if err != nil {
@@ -527,7 +526,7 @@ func ListExtensions(extensionDir string) ([]string, error) {
 
 	extensions := make([]string, 0)
 	for _, dir := range extensionDirs {
-		binPath := path.Join(extensionDir, dir.Name(), extensionBinaryName)
+		binPath := filepath.Join(extensionDir, dir.Name(), extensionBinaryName)
 		if _, err := os.Stat(binPath); os.IsNotExist(err) {
 			continue
 		}

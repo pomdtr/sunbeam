@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/adrg/xdg"
@@ -24,8 +24,8 @@ import (
 
 func NewRootCmd(version string) *cobra.Command {
 
-	dataDir := path.Join(xdg.DataHome, "sunbeam")
-	extensionDir := path.Join(dataDir, "extensions")
+	dataDir := filepath.Join(xdg.DataHome, "sunbeam")
+	extensionDir := filepath.Join(dataDir, "extensions")
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -121,7 +121,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			Use:                extension,
 			DisableFlagParsing: true,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				extensionPath := path.Join(extensionDir, extension, extensionBinaryName)
+				extensionPath := filepath.Join(extensionDir, extension, extensionBinaryName)
 				commandArgs := []string{extensionPath}
 				commandArgs = append(commandArgs, args...)
 

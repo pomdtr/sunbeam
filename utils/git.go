@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"regexp"
 )
 
@@ -28,11 +28,11 @@ func (r *Repository) FullName() string {
 }
 
 func (r *Repository) Owner() string {
-	return path.Base(path.Dir(r.url.Path))
+	return filepath.Base(filepath.Dir(r.url.Path))
 }
 
 func (r *Repository) Name() string {
-	return path.Base(r.url.Path)
+	return filepath.Base(r.url.Path)
 }
 
 var ownerNameRegex = regexp.MustCompile(`^([a-zA-Z0-9-]+)\/([a-zA-Z0-9-]+)$`)
