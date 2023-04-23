@@ -81,6 +81,6 @@ This is just the tip of the iceberg. Sunbeam can show detail pages, prompt the u
 
 To learn more, check out the [Sunbeam types](../types.md) and the provided [examples](../examples/index.md).
 
-In order to run the examples, you can either copy/paste them or just clone the sunbeam repository and run `sunbeam read docs/examples/sunbeam.yml` from the root directory.
+In order to run the examples, you can either copy/paste them or just clone the sunbeam repository, go to the `docs/examples` directory and run `sunbeam < sunbeam.json`.
 
 > **Warning** Some examples require external dependencies. Please refer to the README of each example for more information.

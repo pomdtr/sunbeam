@@ -1,17 +1,6 @@
 {
     "configurations": [
         {
-            "name": "sunbeam",
-            "type": "go",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "program": "${workspaceFolder}",
-            "args": [
-                "push",
-                "./sunbeam.yml"
-            ]
-        },
-        {
             "name": "sunbeam run pomdtr/sunbeam-file-browser",
             "type": "go",
             "request": "launch",
