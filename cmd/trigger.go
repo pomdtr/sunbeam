@@ -17,9 +17,10 @@ import (
 
 func NewTriggerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "trigger <action>",
-		Short: "Trigger an action",
-		Args:  cobra.NoArgs,
+		Use:    "trigger <action>",
+		Short:  "Trigger an action",
+		Hidden: true,
+		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no input provided")
