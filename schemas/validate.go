@@ -2,6 +2,7 @@ package schemas
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -47,7 +48,12 @@ func (e *PrettyValidationError) Error() string {
 	return strings.Join(lines, "\n")
 }
 
-func Validate(v any) error {
+func Validate(b []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+
 	if err := schema.Validate(v); err != nil {
 		if ve, ok := err.(*jsonschema.ValidationError); ok {
 			return NewPrettyValidationError(ve)

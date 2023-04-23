@@ -30,12 +30,7 @@ func NewFileGenerator(name string) PageGenerator {
 			return nil, err
 		}
 
-		var v any
-		if err := json.Unmarshal(b, &v); err != nil {
-			return nil, err
-		}
-
-		if err := schemas.Validate(v); err != nil {
+		if err := schemas.Validate(b); err != nil {
 			return nil, err
 		}
 
@@ -61,17 +56,12 @@ func NewStaticGenerator(reader io.Reader) PageGenerator {
 			return nil, err
 		}
 
-		var v any
-		if err := json.Unmarshal(b, &v); err != nil {
-			return nil, err
-		}
-
-		if err := schemas.Validate(v); err != nil {
+		if err := schemas.Validate(b); err != nil {
 			return nil, err
 		}
 
 		var page types.Page
-		if err := json.NewDecoder(reader).Decode(&page); err != nil {
+		if err := json.Unmarshal(b, &page); err != nil {
 			return nil, err
 		}
 
@@ -88,12 +78,7 @@ func NewCommandGenerator(command *types.Command) PageGenerator {
 			return nil, err
 		}
 
-		var v any
-		if err := json.Unmarshal(output, &v); err != nil {
-			return nil, err
-		}
-
-		if err := schemas.Validate(v); err != nil {
+		if err := schemas.Validate(output); err != nil {
 			return nil, err
 		}
 

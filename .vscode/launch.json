@@ -64,8 +64,9 @@
             "console": "integratedTerminal",
             "program": "${workspaceFolder}",
             "args": [
-                "read",
-                "./sunbeam.yml"
+                "run",
+                "cat",
+                "sunbeam.json"
             ]
         }
     ]

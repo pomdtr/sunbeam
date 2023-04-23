@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -36,12 +35,7 @@ func NewValidateCmd() *cobra.Command {
 				return fmt.Errorf("no input provided")
 			}
 
-			var v any
-			if err := json.Unmarshal(input, &v); err != nil {
-				return fmt.Errorf("unable to parse input: %s", err)
-			}
-
-			if err := schemas.Validate(v); err != nil {
+			if err := schemas.Validate(input); err != nil {
 				return fmt.Errorf("input is not valid: %s", err)
 			}
 
