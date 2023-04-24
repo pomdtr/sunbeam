@@ -51,7 +51,7 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 	for i, action := range actions {
 		subtitle := ""
 		if action.Key != "" {
-			subtitle = fmt.Sprintf("ctrl+%s", action.Key)
+			subtitle = fmt.Sprintf("alt+%s", action.Key)
 		}
 		if i == 0 {
 			subtitle = "enter"
@@ -97,7 +97,7 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			}
 		default:
 			for _, action := range al.actions {
-				if fmt.Sprintf("ctrl+%s", action.Key) == msg.String() {
+				if msg.String() == action.Key && msg.Alt {
 					return al, func() tea.Msg {
 						return action
 					}
