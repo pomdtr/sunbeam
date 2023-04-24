@@ -45,6 +45,7 @@ func NewExtensionCmd(extensionDir string) *cobra.Command {
 	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionDir))
+	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionListCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionDir))
 	extensionCmd.AddCommand(NewExtensionUpgradeCmd(extensionDir))
@@ -273,6 +274,24 @@ func NewExtensionCreateCmd() *cobra.Command {
 	cmd.Flags().StringP("name", "n", "", "Extension name")
 	cmd.MarkFlagRequired("name")
 	return cmd
+}
+
+func NewExtensionRenameCmd(extensionDir string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "rename [old] [new]",
+		Short: "Rename an extension",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			oldPath := filepath.Join(extensionDir, args[0])
+			newPath := filepath.Join(extensionDir, args[1])
+
+			if err := os.Rename(oldPath, newPath); err != nil {
+				return fmt.Errorf("could not rename extension: %s", err)
+			}
+
+			return nil
+		},
+	}
 }
 
 func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
