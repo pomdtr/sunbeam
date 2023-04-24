@@ -3,8 +3,6 @@ package schemas
 import (
 	_ "embed"
 	"encoding/json"
-	"fmt"
-	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
@@ -13,41 +11,6 @@ import (
 var schemaString string
 var schema = jsonschema.MustCompileString("", schemaString)
 
-type PrettyValidationError struct {
-	*jsonschema.ValidationError
-}
-
-func NewPrettyValidationError(err *jsonschema.ValidationError) *PrettyValidationError {
-	return &PrettyValidationError{err}
-}
-
-func prettifyValidationError(err *jsonschema.ValidationError, prefix string) string {
-	var msg string
-	if err.InstanceLocation == "" {
-		msg = fmt.Sprintf("%s%s", prefix, err.Message)
-	} else {
-		msg = fmt.Sprintf("%s%s: %s", prefix, err.InstanceLocation, err.Message)
-	}
-	for _, c := range err.Causes {
-		for _, line := range strings.Split(prettifyValidationError(c, "L "), "\n") {
-			msg += "\n  " + line
-		}
-	}
-
-	return msg
-}
-
-func (e *PrettyValidationError) Error() string {
-	msg := prettifyValidationError(e.ValidationError, "")
-	lines := strings.Split(msg, "\n")
-
-	if len(lines) > 30 {
-		lines = append(lines[:30], "...")
-	}
-
-	return strings.Join(lines, "\n")
-}
-
 func Validate(b []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -55,9 +18,6 @@ func Validate(b []byte) error {
 	}
 
 	if err := schema.Validate(v); err != nil {
-		if ve, ok := err.(*jsonschema.ValidationError); ok {
-			return NewPrettyValidationError(ve)
-		}
 		return err
 	}
 
