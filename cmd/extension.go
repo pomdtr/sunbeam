@@ -88,7 +88,15 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								Title: "Install",
 								Key:   "i",
 								Command: &types.Command{
-									Args: []string{os.Args[0], "extension", "install", repo.HtmlUrl},
+									Args: []string{os.Args[0], "extension", "install", "${input:alias}", repo.HtmlUrl},
+								},
+								Inputs: []types.Input{
+									{
+										Name:        "alias",
+										Type:        types.TextFieldInput,
+										Title:       "Alias",
+										Placeholder: "my-command-alias",
+									},
 								},
 							},
 							{
@@ -169,7 +177,15 @@ func NewExtensionViewCmd() *cobra.Command {
 							Title: "Install",
 							Key:   "i",
 							Command: &types.Command{
-								Args: []string{cmd.Root().Name(), "extension", "install", args[0]},
+								Args: []string{os.Args[0], "extension", "install", "${input:alias}", repo.Url().String()},
+							},
+							Inputs: []types.Input{
+								{
+									Name:        "alias",
+									Type:        types.TextFieldInput,
+									Title:       "Alias",
+									Placeholder: "my-command-alias",
+								},
 							},
 						},
 					},
