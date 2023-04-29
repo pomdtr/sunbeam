@@ -495,21 +495,6 @@ sunbeam serve [flags]
   -p, --port int   port to listen on (default 8080)
 ```
 
-## sunbeam trigger
-
-Trigger an action
-
-```
-sunbeam trigger <action> [flags]
-```
-
-### Options
-
-```
-  -h, --help                 help for trigger
-      --inputs stringArray   inputs to pass to the action
-```
-
 ## sunbeam validate
 
 Validate a page

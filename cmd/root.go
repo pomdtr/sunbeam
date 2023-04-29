@@ -3,16 +3,19 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/adrg/xdg"
+	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/shlex"
 	"github.com/mattn/go-isatty"
 	"github.com/muesli/termenv"
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
@@ -51,7 +54,31 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				return Draw(internal.NewStaticGenerator(os.Stdin))
+				input, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return fmt.Errorf("could not read input: %s", err)
+				}
+
+				var action types.Action
+				if err := json.Unmarshal(input, &action); err != nil {
+					return fmt.Errorf("could not parse input: %s", err)
+				}
+
+				inputsFlag, _ := cmd.Flags().GetStringArray("inputs")
+				if len(inputsFlag) < len(action.Inputs) {
+					return fmt.Errorf("not enough inputs provided")
+				}
+
+				inputs := make(map[string]string)
+				for _, input := range inputsFlag {
+					parts := strings.SplitN(input, "=", 2)
+					if len(parts) != 2 {
+						return fmt.Errorf("invalid input: %s", input)
+					}
+					inputs[parts[0]] = parts[1]
+				}
+
+				return triggerAction(action, inputs)
 			}
 
 			defaultCommand, ok := os.LookupEnv("SUNBEAM_DEFAULT_CMD")
@@ -71,6 +98,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 
+	rootCmd.Flags().StringArrayP("input", "i", nil, "input to pass to the action")
+	rootCmd.Flags().MarkHidden("input")
+
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
@@ -80,7 +110,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewValidateCmd())
-	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewCmdRun(extensionDir))
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
@@ -156,7 +185,9 @@ func Draw(generator internal.PageGenerator) error {
 		if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 			return fmt.Errorf("could not encode page: %s", err)
 		}
+
 		return nil
+
 	}
 
 	runner := internal.NewRunner(generator)
@@ -219,4 +250,55 @@ func buildDoc(command *cobra.Command) (string, error) {
 	}
 
 	return out.String(), nil
+}
+
+func triggerAction(action types.Action, inputs map[string]string) error {
+	for name, value := range inputs {
+		action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
+	}
+
+	switch action.Type {
+	case types.PushAction:
+		return Draw(internal.NewFileGenerator(action.Page))
+	case types.RunAction:
+		if action.OnSuccess == types.PushOnSuccess {
+			return Draw(internal.NewCommandGenerator(action.Command))
+		}
+
+		if _, err := action.Command.Output(); err != nil {
+			return fmt.Errorf("command failed: %s", err)
+		}
+
+		switch action.OnSuccess {
+		case types.ExitOnSuccess, types.ReloadOnSuccess:
+			return nil
+		case types.CopyOnSuccess:
+			if err := clipboard.WriteAll(action.Text); err != nil {
+				return fmt.Errorf("unable to write to clipboard: %s", err)
+			}
+			return nil
+		case types.OpenOnSuccess:
+			err := browser.OpenURL(action.Text)
+			if err != nil {
+				return fmt.Errorf("unable to open link: %s", err)
+			}
+			return nil
+		default:
+			return nil
+		}
+
+	case types.OpenAction:
+		err := browser.OpenURL(action.Target)
+		if err != nil {
+			return fmt.Errorf("unable to open link: %s", err)
+		}
+		return nil
+	case types.CopyAction:
+		if err := clipboard.WriteAll(action.Text); err != nil {
+			return fmt.Errorf("unable to write to clipboard: %s", err)
+		}
+		return nil
+	default:
+		return fmt.Errorf("unknown action type: %s", action.Type)
+	}
 }
