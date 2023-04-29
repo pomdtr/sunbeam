@@ -127,6 +127,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	for _, extension := range extensions {
+		extension := extension
 		rootCmd.AddCommand(&cobra.Command{
 			Use:                extension,
 			DisableFlagParsing: true,

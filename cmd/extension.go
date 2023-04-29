@@ -319,6 +319,25 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			targetDir := filepath.Join(extensionDir, args[0])
 
+			if args[1] == "." {
+				// Return an error on Windows, as symlinks are not supported
+				if runtime.GOOS == "windows" {
+					return fmt.Errorf("local install are not supported on Windows")
+				}
+
+				cwd, err := os.Getwd()
+				if err != nil {
+					return fmt.Errorf("could not get current working directory: %s", err)
+				}
+
+				if err := os.Symlink(cwd, targetDir); err != nil {
+					return fmt.Errorf("could not symlink extension: %s", err)
+				}
+
+				fmt.Println("Extension installed successfully!")
+				return nil
+			}
+
 			repository, err := utils.RepositoryFromString(args[1])
 			if err != nil {
 				return fmt.Errorf("unable to parse repository: %s", err)
