@@ -4,12 +4,6 @@
 
 - [tealdeer](https://github.com/dbrgn/tealdeer)
 
-## Usage
-
-```bash
-sunbeam run ./tldr.sh
-```
-
 ## Code
 
 ```javascript

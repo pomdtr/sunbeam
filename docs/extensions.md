@@ -29,6 +29,8 @@ Alternatively, you can use the `list`, `remove`, `upgrade` and `rename` commands
 Any directory containing a `sunbeam-extension` executable is a valid sunbeam extension.
 Use the `sunbeam extension create` command to bootstrap a new extension.
 
+To test your extension, use the `sunbeam run ./sunbeam-extension` command, or the shorthand `sunbeam run .`.
+
 You can install the current directory as an extension using the `sunbeam extension install <alias> .` command.
 
 To publish an extension, you can create a github repository containing the `sunbeam-extension` executable, and push it to github.

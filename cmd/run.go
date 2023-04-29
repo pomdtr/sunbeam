@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
@@ -23,6 +25,20 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 		},
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if args[0] == "." {
+				if _, err := os.Stat(extensionBinaryName); err != nil {
+					return fmt.Errorf("no extension found in current directory")
+				}
+
+				abs, err := filepath.Abs(extensionBinaryName)
+				if err != nil {
+					return fmt.Errorf("unable to get absolute path: %s", err)
+				}
+
+				return Draw(internal.NewCommandGenerator(&types.Command{
+					Args: append([]string{abs}, args[1:]...),
+				}))
+			}
 			if _, err := exec.LookPath(args[0]); err == nil {
 				return Draw(internal.NewCommandGenerator(&types.Command{
 					Args: args,
