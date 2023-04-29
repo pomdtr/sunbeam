@@ -130,8 +130,6 @@ func (c *CommandRunner) Init() tea.Cmd {
 	return tea.Batch(c.SetIsloading(true), c.Refresh)
 }
 
-type CommandOutput []byte
-
 func (runner *CommandRunner) Refresh() tea.Msg {
 	page, err := runner.Generator()
 	if err != nil {
@@ -152,6 +150,15 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	switch action.Type {
 	case types.ReloadAction:
+		if runner.currentView == RunnerViewForm {
+			switch runner.currentPage.Type {
+			case types.ListPage:
+				runner.currentView = RunnerViewList
+			case types.DetailPage:
+				runner.currentView = RunnerViewDetail
+			}
+		}
+
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.OpenAction:
 		return func() tea.Msg {
@@ -220,7 +227,9 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				if err != nil {
 					return err
 				}
-				return types.ReloadAction
+				return types.Action{
+					Type: types.ReloadAction,
+				}
 			}
 		case types.ExitOnSuccess:
 			return func() tea.Msg {
@@ -339,8 +348,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			runner.currentView = RunnerViewDetail
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
-			if page.Preview != nil && page.Preview.Hightlight != "" {
-				runner.detail.Language = page.Preview.Hightlight
+			if page.Preview != nil && page.Preview.HighLight != "" {
+				runner.detail.Language = page.Preview.HighLight
 			}
 			runner.detail.SetSize(runner.width, runner.height)
 

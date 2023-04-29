@@ -143,8 +143,8 @@ func NewExtensionViewCmd() *cobra.Command {
 					return &types.Page{
 						Type: types.DetailPage,
 						Preview: &types.Preview{
-							Hightlight: "markdown",
-							Text:       fmt.Sprintf("Could not fetch readme: %s", res.Status),
+							HighLight: "markdown",
+							Text:      fmt.Sprintf("Could not fetch readme: %s", res.Status),
 						},
 					}, nil
 				}
@@ -169,8 +169,8 @@ func NewExtensionViewCmd() *cobra.Command {
 				page := types.Page{
 					Type: types.DetailPage,
 					Preview: &types.Preview{
-						Hightlight: "markdown",
-						Text:       string(payload),
+						HighLight: "markdown",
+						Text:      string(payload),
 					},
 					Actions: []types.Action{
 						{
@@ -218,33 +218,45 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 						Title: extension,
 						Actions: []types.Action{
 							{
+								Title:     "Run Extension",
+								Type:      types.RunAction,
+								OnSuccess: types.PushOnSuccess,
+								Command: &types.Command{
+									Args: []string{os.Args[0], extension},
+								},
+							},
+							{
 								Title: "Upgrade Extension",
 								Type:  types.RunAction,
+								Key:   "u",
 								Command: &types.Command{
-									Args: []string{os.Args[0], "extension", "upgrade", "extension"},
+									Args: []string{os.Args[0], "extension", "upgrade", extension},
+								},
+							},
+							{
+								Type:      types.RunAction,
+								Title:     "Rename Extension",
+								OnSuccess: types.ReloadOnSuccess,
+								Key:       "r",
+								Command: &types.Command{
+									Args: []string{os.Args[0], "extension", "rename", extension, "${input:name}"},
+								},
+								Inputs: []types.Input{
+									{
+										Name:        "name",
+										Type:        types.TextFieldInput,
+										Title:       "Name",
+										Placeholder: "my-alias",
+									},
 								},
 							},
 							{
 								Type:      types.RunAction,
 								Title:     "Remove Extension",
+								Key:       "d",
 								OnSuccess: types.ReloadOnSuccess,
 								Command: &types.Command{
 									Args: []string{os.Args[0], "extension", "remove", "extension"},
-								},
-							},
-							{
-								Type:  types.RunAction,
-								Title: "Create Extension",
-								Command: &types.Command{
-									Args: []string{os.Args[0], "extension", "create", "extension"},
-								},
-								Inputs: []types.Input{
-									{
-										Type:        types.TextFieldInput,
-										Name:        "extensionName",
-										Title:       "Extension Name",
-										Placeholder: "my-extension",
-									},
 								},
 							},
 						},

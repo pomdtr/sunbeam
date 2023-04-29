@@ -20,13 +20,16 @@ sunbeam file-browser
 
 The `subeam extension manage` command can be used to manage installed extensions.
 
-Alternatively, you can use the `list`, `remove` and `upgrade` commands directly.
+Alternatively, you can use the `list`, `remove`, `upgrade` and `rename` commands directly.
 
 ## Writing Extensions
 
 ### Script Extensions
 
 Any directory containing a `sunbeam-extension` executable is a valid sunbeam extension.
+Use the `sunbeam extension create` command to bootstrap a new extension.
+
+You can install the current directory as an extension using the `sunbeam extension install <alias> .` command.
 
 To publish an extension, you can create a github repository containing the `sunbeam-extension` executable, and push it to github.
 
@@ -35,3 +38,10 @@ If you want your extension to be listed in the `sunbeam extension browse` comman
 ### Binary Extensions
 
 Sunbeam also supports binary extensions. In this case, sunbeam will download the binary from a github release instead of cloning the extension repository. The [sunbeam-extension-precompile](https://github.com/pomdtr/sunbeam-extension-precompile) github action can be used to automatically compile and publish your extension as a binary.
+
+### Sunbeam Types
+
+Types packages are available for the following languages:
+
+- [go](https://pkg.go.dev/github.com/pomdtr/sunbeam/types)
+- [typescript](https://www.npmjs.com/package/sunbeam-types)

@@ -43,10 +43,14 @@ func (h Header) Value() string {
 type IsLoadingMsg struct{}
 
 func (h Header) Update(msg tea.Msg) (Header, tea.Cmd) {
-	switch msg.(type) {
+	switch msg := msg.(type) {
 	case IsLoadingMsg:
 		cmd := h.SetIsLoading(true)
 		return h, cmd
+	case tea.KeyMsg:
+		if msg.Alt {
+			return h, nil
+		}
 	}
 
 	var cmds []tea.Cmd

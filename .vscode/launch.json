@@ -1,62 +1,52 @@
 {
-    "configurations": [
-        {
-            "name": "sunbeam run pomdtr/sunbeam-file-browser",
-            "type": "go",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "program": "${workspaceFolder}",
-            "args": [
-                "run",
-                "pomdtr/sunbeam-file-browser"
-            ]
-        },
-        {
-            "name": "sunbeam extension browse",
-            "type": "go",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "program": "${workspaceFolder}",
-            "args": [
-                "extension",
-                "browse",
-            ]
-        },
-        {
-            "name": "sunbeam extension install",
-            "type": "go",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "program": "${workspaceFolder}",
-            "args": [
-                "extension",
-                "install",
-                "pomdtr/sunbeam-tldr",
-            ]
-        },
-        {
-            "name": "sunbeam extension run",
-            "type": "go",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "program": "${workspaceFolder}",
-            "args": [
-                "extension",
-                "run",
-                "pomdtr/sunbeam-vscode",
-            ]
-        },
-        {
-            "name": "run examples",
-            "type": "go",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "program": "${workspaceFolder}",
-            "args": [
-                "run",
-                "cat",
-                "sunbeam.json"
-            ]
-        }
-    ]
+  "configurations": [
+    {
+      "name": "sunbeam run pomdtr/sunbeam-file-browser",
+      "type": "go",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "program": "${workspaceFolder}",
+      "args": ["run", "pomdtr/sunbeam-file-browser"]
+    },
+    {
+      "name": "sunbeam extension browse",
+      "type": "go",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "program": "${workspaceFolder}",
+      "args": ["extension", "browse"]
+    },
+    {
+      "name": "sunbeam extension manage",
+      "type": "go",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "program": "${workspaceFolder}",
+      "args": ["extension", "manage"]
+    },
+    {
+      "name": "sunbeam extension install",
+      "type": "go",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "program": "${workspaceFolder}",
+      "args": ["extension", "install", "pomdtr/sunbeam-tldr"]
+    },
+    {
+      "name": "sunbeam extension run",
+      "type": "go",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "program": "${workspaceFolder}",
+      "args": ["extension", "run", "pomdtr/sunbeam-vscode"]
+    },
+    {
+      "name": "run examples",
+      "type": "go",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "program": "${workspaceFolder}",
+      "args": ["run", "cat", "sunbeam.json"]
+    }
+  ]
 }

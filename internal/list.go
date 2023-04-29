@@ -123,11 +123,11 @@ func NewList(page *types.Page) *List {
 		}
 
 		if item.Preview.Text != "" {
-			if item.Preview.Hightlight == "" {
+			if item.Preview.HighLight == "" {
 				return item.Preview.Text
 			}
 			builder := strings.Builder{}
-			if err := quick.Highlight(&builder, item.Preview.Text, item.Preview.Hightlight, "terminal16", "github"); err != nil {
+			if err := quick.Highlight(&builder, item.Preview.Text, item.Preview.HighLight, "terminal16", "github"); err != nil {
 				return item.Preview.Text
 			}
 			return builder.String()
@@ -140,12 +140,12 @@ func NewList(page *types.Page) *List {
 
 		content := string(output)
 
-		if item.Preview.Hightlight == "" {
+		if item.Preview.HighLight == "" {
 			return content
 		}
 
 		builder := strings.Builder{}
-		if err := quick.Highlight(&builder, content, item.Preview.Hightlight, "terminal16", "github"); err != nil {
+		if err := quick.Highlight(&builder, content, item.Preview.HighLight, "terminal16", "github"); err != nil {
 			return content
 		}
 		return builder.String()

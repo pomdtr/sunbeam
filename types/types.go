@@ -40,9 +40,9 @@ type Page struct {
 }
 
 type Preview struct {
-	Hightlight string   `json:"highlight,omitempty"`
-	Text       string   `json:"text,omitempty"`
-	Command    *Command `json:"command,omitempty"`
+	HighLight string   `json:"highlight,omitempty"`
+	Text      string   `json:"text,omitempty"`
+	Command   *Command `json:"command,omitempty"`
 }
 
 func (p *Preview) UnmarshalJSON(data []byte) error {
