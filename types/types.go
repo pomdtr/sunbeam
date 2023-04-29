@@ -142,8 +142,42 @@ type Action struct {
 
 	// run
 	Command   *Command      `json:"command,omitempty"`
-	Confirm   bool          `json:"confirm,omitempty"`
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
+}
+
+func NewCopyAction(title string, text string) Action {
+	return Action{
+		Title: title,
+		Type:  CopyAction,
+		Text:  text,
+	}
+}
+
+func NewOpenAction(title string, target string) Action {
+	return Action{
+		Title:  title,
+		Type:   OpenAction,
+		Target: target,
+	}
+}
+
+func NewPushAction(title string, page string) Action {
+	return Action{
+		Title: title,
+		Type:  PushAction,
+		Page:  page,
+	}
+}
+
+func NewRunAction(title string, onSuccess OnSuccessType, args ...string) Action {
+	return Action{
+		Title:     title,
+		Type:      RunAction,
+		OnSuccess: onSuccess,
+		Command: &Command{
+			Args: args,
+		},
+	}
 }
 
 type Command struct {
