@@ -70,12 +70,12 @@ Alternatively, you can use a Form Page. Most of the time, adding inputs to actio
   "type": "form",
   "submitAction": {
     "type": "run",
-    "command": "echo ${input:name}",
+    "command": "git commit -m ${input:message}",
     "inputs": [
       {
-        "name": "name",
-        "type": "textfield",
-        "title": "Name"
+        "name": "message",
+        "type": "textarea",
+        "title": "Commit Message"
       }
     ]
   }
