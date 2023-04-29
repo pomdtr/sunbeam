@@ -224,19 +224,23 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			}
 		case types.ExitOnSuccess:
 			return func() tea.Msg {
-				err := action.Command.Run()
+				output, err := action.Command.Output()
 				if err != nil {
 					return err
 				}
-				return tea.Quit()
+				return ExitMsg{
+					Output: string(output),
+				}
 			}
 		default:
 			return func() tea.Msg {
-				err := action.Command.Run()
+				output, err := action.Command.Output()
 				if err != nil {
 					return err
 				}
-				return tea.Quit()
+				return ExitMsg{
+					Output: string(output),
+				}
 			}
 		}
 

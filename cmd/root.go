@@ -45,9 +45,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if os.Getenv("NO_COLOR") != "" {
 				lipgloss.SetColorProfile(termenv.Ascii)
-			} else {
-				lipgloss.SetColorProfile(termenv.ANSI)
 			}
+
 			os.Setenv("SUNBEAM", "true")
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -174,10 +173,20 @@ func Draw(generator internal.PageGenerator) error {
 		p = tea.NewProgram(paginator)
 	}
 
-	_, err := p.Run()
+	m, err := p.Run()
 	if err != nil {
 		return err
 	}
+
+	paginator, ok := m.(*internal.Paginator)
+	if !ok {
+		return fmt.Errorf("could not cast model to paginator")
+	}
+
+	if paginator.Output != "" {
+		fmt.Print(paginator.Output)
+	}
+
 	return nil
 }
 

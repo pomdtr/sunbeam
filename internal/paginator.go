@@ -26,9 +26,14 @@ type SunbeamOptions struct {
 	Padding   int
 }
 
+type ExitMsg struct {
+	Output string
+}
+
 type Paginator struct {
 	width, height int
 	options       SunbeamOptions
+	Output        string
 
 	pages  []Page
 	hidden bool
@@ -71,6 +76,10 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		m.hidden = true
+		return m, tea.Quit
+	case ExitMsg:
+		m.hidden = true
+		m.Output = msg.Output
 		return m, tea.Quit
 	}
 
