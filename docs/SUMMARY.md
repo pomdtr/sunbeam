@@ -4,6 +4,7 @@
 
 - [Installation](./installation.md)
 - [Usage](./getting-started/usage.md)
+- [Advanced](./advanced.md)
 - [Extending Sunbeam](./extensions.md)
 - [Examples](./examples/index.md)
   - [File Browser (Python)](./examples/file-browser/file-browser.md)

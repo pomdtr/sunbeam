@@ -5,7 +5,7 @@
 To run sunbeam, you need to provide a command as the first argument. Sunbeam will run the command and interpret it's output as a page.
 
 ```bash
-sunbeam run file-browser.py
+sunbeam run ./file-browser.py
 ```
 
 Once the output is shown, you can use the arrow keys to navigate the UI, and press enter to select an item.
@@ -65,9 +65,11 @@ Notice that we used the `--` argument separator to pass arguments to the script.
 This is nice, but we can do better. A full-blown file browser would allow us to navigate through directories.
 In sunbeam, we can push a new page by using a `run` action associated with the`onSuccess` event.
 
-This schema describe the sunbeam event loop.
+Sunbeam will run the command, and push the output to the navigation stack.
+You can repeat this process to create a navigation tree.
+The user can then use the escape key to go back to the previous page.
 
-![Sunbeam Event Loop](./event-loop.excalidraw.png)
+![Navigation](./navigation.excalidraw.png)
 
 Let's update our file browser to support navigation.
 
