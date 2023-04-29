@@ -278,7 +278,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 		case "tab":
-			if c.actionList.Focused() {
+			if c.actionList.Focused() && len(c.actionList.actions) > 0 {
 				break
 			}
 
