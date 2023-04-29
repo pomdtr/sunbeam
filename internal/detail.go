@@ -31,7 +31,7 @@ func NewDetail(title string, contentCmd func() string, actions []types.Action) *
 		footer.SetBindings(
 			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
 		)
-	} else {
+	} else if len(actions) > 1 {
 		footer.SetBindings(
 			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
 			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
@@ -73,7 +73,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case "q", "Q":
 			return c, tea.Quit
 		case "tab":
-			if !c.actions.Focused() {
+			if !c.actions.Focused() && len(c.actions.actions) > 0 {
 				return c, c.actions.Focus()
 			}
 		case "esc":
