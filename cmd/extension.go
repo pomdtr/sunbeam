@@ -30,8 +30,9 @@ var extensionTemplate []byte
 
 func NewExtensionCmd(extensionDir string) *cobra.Command {
 	extensionCmd := &cobra.Command{
-		Use:   "extension",
-		Short: "Extension commands",
+		Use:     "extension",
+		Short:   "Extension commands",
+		GroupID: coreGroupID,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if _, err := os.Stat(extensionDir); os.IsNotExist(err) {
 				os.MkdirAll(extensionDir, 0755)

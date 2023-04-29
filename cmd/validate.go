@@ -12,9 +12,10 @@ import (
 
 func NewValidateCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "validate [file]",
-		Short: "Validate a page",
-		Args:  cobra.MaximumNArgs(1),
+		Use:     "validate [file]",
+		Short:   "Validate a page",
+		GroupID: coreGroupID,
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var input []byte
 

@@ -11,8 +11,9 @@ import (
 
 func NewCmdRun(extensionDir string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "Generate a page from a command or a script, and push it",
+		Use:     "run",
+		Short:   "Generate a page from a command or a script, and push it",
+		GroupID: coreGroupID,
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			extension, err := ListExtensions(extensionDir)
 			if err != nil {

@@ -103,6 +103,25 @@ sunbeam completion fish [flags]
       --no-descriptions   disable completion descriptions
 ```
 
+## sunbeam completion help
+
+Help about any command
+
+### Synopsis
+
+Help provides help for any command in the application.
+Simply type completion help [path to command] for full details.
+
+```
+sunbeam completion help [command] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for help
+```
+
 ## sunbeam completion powershell
 
 Generate the autocompletion script for powershell
@@ -171,6 +190,20 @@ sunbeam completion zsh [flags]
       --no-descriptions   disable completion descriptions
 ```
 
+## sunbeam docs
+
+Generate documentation for sunbeam
+
+```
+sunbeam docs [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for docs
+```
+
 ## sunbeam extension
 
 Extension commands
@@ -210,12 +243,31 @@ sunbeam extension create [flags]
   -n, --name string   Extension name
 ```
 
+## sunbeam extension help
+
+Help about any command
+
+### Synopsis
+
+Help provides help for any command in the application.
+Simply type extension help [path to command] for full details.
+
+```
+sunbeam extension help [command] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for help
+```
+
 ## sunbeam extension install
 
 Install a sunbeam extension from a repository
 
 ```
-sunbeam extension install [flags]
+sunbeam extension install [alias] [extension] [flags]
 ```
 
 ### Options
@@ -267,6 +319,20 @@ sunbeam extension remove [flags]
   -h, --help   help for remove
 ```
 
+## sunbeam extension rename
+
+Rename an extension
+
+```
+sunbeam extension rename [old] [new] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for rename
+```
+
 ## sunbeam extension search
 
 Search for repositories with the sunbeam-extension topic
@@ -309,6 +375,62 @@ sunbeam extension view <repo> [flags]
   -h, --help   help for view
 ```
 
+## sunbeam generate-fig-spec
+
+Generate a fig spec
+
+### Synopsis
+
+
+Fig is a tool for your command line that adds autocomplete.
+This command generates a TypeScript file with the skeleton
+Fig autocomplete spec for your Cobra CLI.
+
+
+```
+sunbeam generate-fig-spec [flags]
+```
+
+### Options
+
+```
+  -h, --help             help for generate-fig-spec
+      --include-hidden   Include hidden commands in generated Fig autocomplete spec
+```
+
+## sunbeam generate-man-pages
+
+Generate Man Pages for sunbeam
+
+```
+sunbeam generate-man-pages [path] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for generate-man-pages
+```
+
+## sunbeam help
+
+Help about any command
+
+### Synopsis
+
+Help provides help for any command in the application.
+Simply type sunbeam help [path to command] for full details.
+
+```
+sunbeam help [command] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for help
+```
+
 ## sunbeam query
 
 Transform or generate JSON using a jq query
@@ -329,6 +451,20 @@ sunbeam query <query> [flags]
   -s, --slurp                 read all inputs into an array
 ```
 
+## sunbeam read
+
+Read a file and push it
+
+```
+sunbeam read [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for read
+```
+
 ## sunbeam run
 
 Generate a page from a command or a script, and push it
@@ -342,6 +478,21 @@ sunbeam run [flags]
 ```
   -h, --help                help for run
       --on-success string   action to trigger when the command is successful (default "push")
+```
+
+## sunbeam serve
+
+Start a web server to serve sunbeam
+
+```
+sunbeam serve [flags]
+```
+
+### Options
+
+```
+  -h, --help       help for serve
+  -p, --port int   port to listen on (default 8080)
 ```
 
 ## sunbeam trigger

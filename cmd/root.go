@@ -22,6 +22,11 @@ import (
 	"github.com/pomdtr/sunbeam/utils"
 )
 
+const (
+	coreGroupID      = "core"
+	extensionGroupID = "extension"
+)
+
 func NewRootCmd(version string) *cobra.Command {
 
 	dataDir := filepath.Join(xdg.DataHome, "sunbeam")
@@ -67,9 +72,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 
+	rootCmd.AddGroup(
+		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
+		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
+	)
 	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewCmdServe())
+	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewCmdRun(extensionDir))
@@ -120,6 +130,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		rootCmd.AddCommand(&cobra.Command{
 			Use:                extension,
 			DisableFlagParsing: true,
+			GroupID:            extensionGroupID,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionPath := filepath.Join(extensionDir, extension, extensionBinaryName)
 				commandArgs := []string{extensionPath}
@@ -170,10 +181,7 @@ func Draw(generator internal.PageGenerator) error {
 }
 
 func buildDoc(command *cobra.Command) (string, error) {
-	if command.Hidden {
-		return "", nil
-	}
-	if command.Name() == "help" {
+	if command.GroupID == extensionGroupID {
 		return "", nil
 	}
 
