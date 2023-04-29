@@ -45,26 +45,6 @@ type Preview struct {
 	Command   *Command `json:"command,omitempty"`
 }
 
-func (p *Preview) UnmarshalJSON(data []byte) error {
-	var raw interface{}
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
-	}
-
-	switch raw := raw.(type) {
-	case string:
-		p.Text = raw
-	case map[string]interface{}:
-		if err := mapstructure.Decode(raw, p); err != nil {
-			return err
-		}
-	default:
-		return errors.New("invalid preview")
-	}
-
-	return nil
-}
-
 type ListItem struct {
 	Id          string   `json:"id,omitempty"`
 	Title       string   `json:"title"`
