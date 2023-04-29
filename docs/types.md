@@ -101,7 +101,6 @@ The preview to show in the detail view.
 
 **POSSIBLE VALUES**
 
-- string
 - object
   - `text`: string - The text to show in the preview.
   - `highlight`: string - The highlight of the preview text.

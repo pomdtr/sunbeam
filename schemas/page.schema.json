@@ -540,9 +540,6 @@
             "description": "The preview to show in the detail view.",
             "oneOf": [
                 {
-                    "type": "string"
-                },
-                {
                     "type": "object",
                     "required": [
                         "text"

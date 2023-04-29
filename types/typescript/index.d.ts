@@ -248,7 +248,6 @@ export type Command =
  * The preview to show in the detail view.
  */
 export type Preview =
-  | string
   | {
       /**
        * The text to show in the preview.
