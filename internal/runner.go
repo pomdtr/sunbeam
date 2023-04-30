@@ -100,8 +100,6 @@ type CommandRunner struct {
 	header Header
 	footer Footer
 
-	currentPage *types.Page
-
 	form   *Form
 	list   *List
 	detail *Detail
@@ -114,7 +112,6 @@ const (
 	RunnerViewList RunnerView = iota
 	RunnerViewDetail
 	RunnerViewLoading
-	RunnerViewForm
 )
 
 func NewRunner(generator PageGenerator) *CommandRunner {
@@ -150,15 +147,6 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	switch action.Type {
 	case types.ReloadAction:
-		if runner.currentView == RunnerViewForm {
-			switch runner.currentPage.Type {
-			case types.ListPage:
-				runner.currentView = RunnerViewList
-			case types.DetailPage:
-				runner.currentView = RunnerViewDetail
-			}
-		}
-
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.OpenAction:
 		return func() tea.Msg {
@@ -183,76 +171,31 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	case types.PushAction:
 		return func() tea.Msg {
+			if action.Command != nil {
+				return PushPageMsg{
+					runner: NewRunner(NewCommandGenerator(action.Command)),
+				}
+			}
+
 			return PushPageMsg{
 				runner: NewRunner(NewFileGenerator(action.Page)),
 			}
 		}
 
 	case types.RunAction:
-		switch action.OnSuccess {
-		case types.OpenOnSuccess:
-			return func() tea.Msg {
-				output, err := action.Command.Output()
-				if err != nil {
-					return err
-				}
-				if err := browser.OpenURL(string(output)); err != nil {
-					return fmt.Errorf("failed to open url: %s", err)
-				}
-				return tea.Quit()
+		return func() tea.Msg {
+			output, err := action.Command.Output()
+			if err != nil {
+				return err
 			}
-		case types.CopyOnSuccess:
-			return func() tea.Msg {
-				output, err := action.Command.Output()
-				if err != nil {
-					return err
-				}
-
-				if err := clipboard.WriteAll(string(output)); err != nil {
-					return fmt.Errorf("failed to copy text to clipboard: %s", err)
-				}
-				return tea.Quit()
+			if action.ReloadOnSuccess {
+				return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 			}
 
-		case types.PushOnSuccess:
-			return func() tea.Msg {
-				return PushPageMsg{
-					runner: NewRunner(NewCommandGenerator(action.Command)),
-				}
-			}
-
-		case types.ReloadOnSuccess:
-			return func() tea.Msg {
-				err := action.Command.Run()
-				if err != nil {
-					return err
-				}
-				return types.Action{
-					Type: types.ReloadAction,
-				}
-			}
-		case types.ExitOnSuccess:
-			return func() tea.Msg {
-				output, err := action.Command.Output()
-				if err != nil {
-					return err
-				}
-				return ExitMsg{
-					Output: string(output),
-				}
-			}
-		default:
-			return func() tea.Msg {
-				output, err := action.Command.Output()
-				if err != nil {
-					return err
-				}
-				return ExitMsg{
-					Output: string(output),
-				}
+			return ExitMsg{
+				Output: string(output),
 			}
 		}
-
 	default:
 		return func() tea.Msg {
 			return fmt.Errorf("unknown action type: %s", action.Type)
@@ -262,8 +205,6 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
 	switch c.currentView {
-	case RunnerViewForm:
-		return c.form.SetIsLoading(isLoading)
 	case RunnerViewList:
 		return c.list.SetIsLoading(isLoading)
 	case RunnerViewDetail:
@@ -283,15 +224,17 @@ func (c *CommandRunner) SetSize(width, height int) {
 
 	if c.err != nil {
 		c.err.SetSize(width, height)
-		return
 	}
 
-	switch c.currentView {
-	case RunnerViewForm:
+	if c.form != nil {
 		c.form.SetSize(width, height)
-	case RunnerViewList:
+	}
+
+	if c.list != nil {
 		c.list.SetSize(width, height)
-	case RunnerViewDetail:
+	}
+
+	if c.detail != nil {
 		c.detail.SetSize(width, height)
 	}
 }
@@ -301,21 +244,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if runner.currentView == RunnerViewForm {
-				switch runner.currentPage.Type {
-				case types.ListPage:
-					runner.currentView = RunnerViewList
-					return runner, nil
-				case types.DetailPage:
-					runner.currentView = RunnerViewDetail
-					return runner, nil
-				}
+			if runner.form != nil {
+				runner.form = nil
+				return runner, nil
 			}
 
-			if runner.currentView == RunnerViewLoading {
-				return runner, func() tea.Msg {
-					return PopPageMsg{}
-				}
+			return runner, func() tea.Msg {
+				return PopPageMsg{}
 			}
 		}
 	case *types.Page:
@@ -325,7 +260,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			page.Title = "Sunbeam"
 		}
 
-		runner.currentPage = page
 		switch page.Type {
 		case types.DetailPage:
 			detailFunc := func() string {
@@ -354,32 +288,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()
-		case types.FormPage:
-			runner.currentView = RunnerViewForm
-			items := make([]FormItem, len(page.SubmitAction.Inputs))
-			for i, input := range page.SubmitAction.Inputs {
-				item, err := NewFormItem(input)
-				if err != nil {
-					return runner, func() tea.Msg {
-						return err
-					}
-				}
-				items[i] = item
-			}
-
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				page.SubmitAction = nil
-			}
-
-			form, err := NewForm(page.Title, page.SubmitAction)
-			if err != nil {
-				return runner, func() tea.Msg {
-					return err
-				}
-			}
-			runner.form = form
-			runner.form.SetSize(runner.width, runner.height)
-			return runner, runner.form.Init()
 		case types.ListPage:
 			runner.currentView = RunnerViewList
 
@@ -415,8 +323,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	case types.Action:
 		if len(msg.Inputs) > 0 {
-			runner.currentView = RunnerViewForm
-
 			form, err := NewForm(msg.Title, &msg)
 			if err != nil {
 				return runner, func() tea.Msg {
@@ -429,6 +335,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, form.Init()
 		}
 
+		runner.form = nil
 		cmd := runner.handleAction(msg)
 		return runner, cmd
 	case error:
@@ -456,11 +363,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return runner, cmd
 	}
 
-	switch runner.currentView {
-	case RunnerViewForm:
+	if runner.form != nil {
 		container, cmd = runner.form.Update(msg)
 		runner.form, _ = container.(*Form)
 		return runner, cmd
+	}
+
+	switch runner.currentView {
 	case RunnerViewList:
 		container, cmd = runner.list.Update(msg)
 		runner.list, _ = container.(*List)
@@ -478,9 +387,11 @@ func (c *CommandRunner) View() string {
 		return c.err.View()
 	}
 
-	switch c.currentView {
-	case RunnerViewForm:
+	if c.form != nil {
 		return c.form.View()
+	}
+
+	switch c.currentView {
 	case RunnerViewList:
 		return c.list.View()
 	case RunnerViewDetail:

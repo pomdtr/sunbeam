@@ -7,10 +7,9 @@
       "subtitle": "Bitwarden",
       "actions": [
         {
-          "type": "run",
+          "type": "push",
           "title": "Run",
-          "command": "./bitwarden/bitwarden.sh",
-          "onSuccess": "push"
+          "command": "./bitwarden/bitwarden.sh"
         }
       ]
     },
@@ -20,14 +19,12 @@
       "actions": [
         {
           "title": "Highlight Detail",
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "command": "./highlight/highlight.sh"
         },
         {
           "title": "Highlight List",
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "command": "./highlight/list.sh"
         }
       ]
@@ -37,14 +34,12 @@
       "subtitle": "Examples",
       "actions": [
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Search Docsets",
           "command": "./devdocs/devdocs.sh"
         },
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Search Go Docs",
           "command": "./devdocs/devdocs.sh go"
         }
@@ -55,20 +50,17 @@
       "subtitle": "Examples",
       "actions": [
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Browse Current Dir",
           "command": "./file-browser/file-browser.py"
         },
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Browse Root Dir",
           "command": "./file-browser/file-browser.py /"
         },
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Browse Custom Dir",
           "command": "./file-browser/file-browser.py ${input:dir}",
           "inputs": [
@@ -86,14 +78,12 @@
       "subtitle": "Examples",
       "actions": [
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Search Repositories",
           "command": "./github/github.sh list-repos"
         },
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Search Excalidraw Pull Requests",
           "command": "./github/github.sh list-prs pomdtr/excalidraw"
         }
@@ -104,10 +94,9 @@
       "subtitle": "Examples",
       "actions": [
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Search",
-          "command": "./tldr/tldr.sh"
+          "command": "./tldr/sunbeam-extension"
         }
       ]
     },
@@ -116,8 +105,7 @@
       "subtitle": "Todo",
       "actions": [
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "List Todos",
           "command": "./todo/todo.py"
         }

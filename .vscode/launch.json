@@ -46,7 +46,7 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "args": ["run", "cat", "sunbeam.json"]
+      "args": ["read", "docs/examples/sunbeam.json"]
     }
   ]
 }

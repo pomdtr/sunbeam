@@ -77,13 +77,12 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 						},
 						Actions: []types.Action{
 							{
-								Type:  types.RunAction,
+								Type:  types.PushAction,
 								Title: "View Readme",
 								Command: &types.Command{
 									Name: os.Args[0],
 									Args: []string{"extension", "view", repo.FullName},
 								},
-								OnSuccess: types.PushOnSuccess,
 							},
 							{
 								Type:  types.RunAction,
@@ -221,9 +220,8 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 						Title: extension,
 						Actions: []types.Action{
 							{
-								Title:     "Run Extension",
-								Type:      types.RunAction,
-								OnSuccess: types.PushOnSuccess,
+								Title: "Run Extension",
+								Type:  types.PushAction,
 								Command: &types.Command{
 									Name: os.Args[0],
 									Args: []string{extension},
@@ -239,10 +237,10 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								},
 							},
 							{
-								Type:      types.RunAction,
-								Title:     "Rename Extension",
-								OnSuccess: types.ReloadOnSuccess,
-								Key:       "r",
+								Type:            types.RunAction,
+								Title:           "Rename Extension",
+								Key:             "r",
+								ReloadOnSuccess: true,
 								Command: &types.Command{
 									Name: os.Args[0],
 									Args: []string{"extension", "rename", extension, "${input:name}"},
@@ -257,10 +255,10 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								},
 							},
 							{
-								Type:      types.RunAction,
-								Title:     "Remove Extension",
-								Key:       "d",
-								OnSuccess: types.ReloadOnSuccess,
+								Type:            types.RunAction,
+								Title:           "Remove Extension",
+								Key:             "d",
+								ReloadOnSuccess: true,
 								Command: &types.Command{
 									Name: os.Args[0],
 									Args: []string{"extension", "remove", "extension"},

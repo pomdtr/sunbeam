@@ -263,34 +263,16 @@ func triggerAction(action types.Action, inputs map[string]string) error {
 
 	switch action.Type {
 	case types.PushAction:
-		return Draw(internal.NewFileGenerator(action.Page))
-	case types.RunAction:
-		if action.OnSuccess == types.PushOnSuccess {
+		if action.Command != nil {
 			return Draw(internal.NewCommandGenerator(action.Command))
 		}
-
+		return Draw(internal.NewFileGenerator(action.Page))
+	case types.RunAction:
 		if _, err := action.Command.Output(); err != nil {
 			return fmt.Errorf("command failed: %s", err)
 		}
 
-		switch action.OnSuccess {
-		case types.ExitOnSuccess, types.ReloadOnSuccess:
-			return nil
-		case types.CopyOnSuccess:
-			if err := clipboard.WriteAll(action.Text); err != nil {
-				return fmt.Errorf("unable to write to clipboard: %s", err)
-			}
-			return nil
-		case types.OpenOnSuccess:
-			err := browser.OpenURL(action.Text)
-			if err != nil {
-				return fmt.Errorf("unable to open link: %s", err)
-			}
-			return nil
-		default:
-			return nil
-		}
-
+		return nil
 	case types.OpenAction:
 		err := browser.OpenURL(action.Target)
 		if err != nil {

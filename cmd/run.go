@@ -14,7 +14,7 @@ import (
 func NewCmdRun(extensionDir string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "run",
-		Short:   "Generate a page from a command or a script, and push it",
+		Short:   "Generate a page from a command or a script, and push it's output",
 		GroupID: coreGroupID,
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			extension, err := ListExtensions(extensionDir)
@@ -50,8 +50,6 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 			return fmt.Errorf("file or command not found: %s", args[0])
 		},
 	}
-
-	cmd.Flags().String("on-success", "push", "action to trigger when the command is successful")
 
 	return cmd
 }

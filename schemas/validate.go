@@ -3,6 +3,7 @@ package schemas
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
@@ -18,7 +19,7 @@ func Validate(b []byte) error {
 	}
 
 	if err := schema.Validate(v); err != nil {
-		return err
+		return fmt.Errorf("invalid schema: %#v", err)
 	}
 
 	return nil

@@ -4,7 +4,6 @@
 
 - [List](#list)
 - [Detail](#detail)
-- [Form](#form)
 
 ## Action
 
@@ -38,12 +37,13 @@
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
   - `command`: [Command](#command)
-  - `onSuccess`: `'copy'` | `'open'` | `'exit'` | `'reload'` | `'push'`
+  - `reloadOnSuccess`: boolean - Whether to reload the page when the command succeeds.
 - object
   - `type`: `'push'` - The type of the action.
   - `title`: string - The title of the action.
   - `key`: string - The key used as a shortcut.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
+  - `command`: [Command](#command)
   - `page`: string
 
 ## Input
@@ -135,11 +135,3 @@ A detail view displayign a preview and actions.
 - `title`: string - The title of the page.
 - `preview`: [Preview](#preview)
 - `actions`: [Action](#action)[] - The actions attached to the detail view.
-
-## Form
-
-**PROPERTIES**
-
-- `type`: `'form'` - The type of the response.
-- `title`: string - The title of the page.
-- `submitAction`: [Action](#action)

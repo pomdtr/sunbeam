@@ -1,4 +1,4 @@
-export type Page = List | Detail | Form;
+export type Page = List | Detail;
 export type Action =
   | {
       /**
@@ -98,7 +98,10 @@ export type Action =
        */
       key?: string;
       command: Command;
-      onSuccess?: "reload" | "copy" | "open" | "exit" | "push";
+      /**
+       * Whether to reload the page when the command succeeds.
+       */
+      reloadOnSuccess?: boolean;
     }
   | {
       /**
@@ -117,7 +120,8 @@ export type Action =
        * The inputs to show when the action is run.
        */
       inputs?: Input[];
-      page: string;
+      command?: Command;
+      page?: string;
     };
 export type Input =
   | {
@@ -321,15 +325,4 @@ export interface Detail {
    * The actions attached to the detail view.
    */
   actions?: Action[];
-}
-export interface Form {
-  /**
-   * The type of the response.
-   */
-  type: "form";
-  /**
-   * The title of the page.
-   */
-  title?: string;
-  submitAction: Action;
 }

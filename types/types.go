@@ -16,7 +16,6 @@ type PageType string
 const (
 	DetailPage PageType = "detail"
 	ListPage   PageType = "list"
-	FormPage   PageType = "form"
 )
 
 type Page struct {
@@ -95,16 +94,6 @@ const (
 	ReloadAction = "reload"
 )
 
-type OnSuccessType string
-
-var (
-	OpenOnSuccess   OnSuccessType = "open"
-	PushOnSuccess   OnSuccessType = "push"
-	ExitOnSuccess   OnSuccessType = "exit"
-	ReloadOnSuccess OnSuccessType = "reload"
-	CopyOnSuccess   OnSuccessType = "copy"
-)
-
 type Action struct {
 	Title  string     `json:"title,omitempty"`
 	Type   ActionType `json:"type"`
@@ -121,8 +110,8 @@ type Action struct {
 	Page string `json:"page,omitempty"`
 
 	// run
-	Command   *Command      `json:"command,omitempty"`
-	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
+	Command         *Command `json:"command,omitempty"`
+	ReloadOnSuccess bool     `json:"reloadOnSuccess,omitempty"`
 }
 
 func NewCopyAction(title string, text string) Action {
@@ -149,13 +138,11 @@ func NewPushAction(title string, page string) Action {
 	}
 }
 
-func NewRunAction(title string, onSuccess OnSuccessType, name string, args ...string) Action {
+func NewRunAction(title string, name string, args ...string) Action {
 	return Action{
-		Title:     title,
-		Type:      RunAction,
-		OnSuccess: onSuccess,
+		Title: title,
+		Type:  RunAction,
 		Command: &Command{
-
 			Args: args,
 		},
 	}
@@ -204,12 +191,13 @@ func (c Command) Output() ([]byte, error) {
 }
 
 func (c *Command) UnmarshalJSON(data []byte) error {
-	var sa []string
-	if err := json.Unmarshal(data, &sa); err == nil {
-		if len(sa) == 0 {
+	var args []string
+	if err := json.Unmarshal(data, &args); err == nil {
+		if len(args) == 0 {
 			return fmt.Errorf("empty command")
 		}
-		c.Args = sa
+		c.Name = args[0]
+		c.Args = args[1:]
 		return nil
 	}
 
