@@ -36,12 +36,14 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 				}
 
 				return Draw(internal.NewCommandGenerator(&types.Command{
-					Args: append([]string{abs}, args[1:]...),
+					Name: abs,
+					Args: args[1:],
 				}))
 			}
 			if _, err := exec.LookPath(args[0]); err == nil {
 				return Draw(internal.NewCommandGenerator(&types.Command{
-					Args: args,
+					Name: args[0],
+					Args: args[1:],
 				}))
 			}
 

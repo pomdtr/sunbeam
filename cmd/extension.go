@@ -80,7 +80,8 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								Type:  types.RunAction,
 								Title: "View Readme",
 								Command: &types.Command{
-									Args: []string{os.Args[0], "extension", "view", repo.FullName},
+									Name: os.Args[0],
+									Args: []string{"extension", "view", repo.FullName},
 								},
 								OnSuccess: types.PushOnSuccess,
 							},
@@ -89,7 +90,8 @@ func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
 								Title: "Install",
 								Key:   "i",
 								Command: &types.Command{
-									Args: []string{os.Args[0], "extension", "install", "${input:alias}", repo.FullName},
+									Name: os.Args[0],
+									Args: []string{"extension", "install", "${input:alias}", repo.FullName},
 								},
 								Inputs: []types.Input{
 									{
@@ -178,7 +180,8 @@ func NewExtensionViewCmd() *cobra.Command {
 							Title: "Install",
 							Key:   "i",
 							Command: &types.Command{
-								Args: []string{os.Args[0], "extension", "install", "${input:alias}", repo.FullName()},
+								Name: os.Args[0],
+								Args: []string{"extension", "install", "${input:alias}", repo.FullName()},
 							},
 							Inputs: []types.Input{
 								{
@@ -222,7 +225,8 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								Type:      types.RunAction,
 								OnSuccess: types.PushOnSuccess,
 								Command: &types.Command{
-									Args: []string{os.Args[0], extension},
+									Name: os.Args[0],
+									Args: []string{extension},
 								},
 							},
 							{
@@ -230,7 +234,8 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								Type:  types.RunAction,
 								Key:   "u",
 								Command: &types.Command{
-									Args: []string{os.Args[0], "extension", "upgrade", extension},
+									Name: os.Args[0],
+									Args: []string{"extension", "upgrade", extension},
 								},
 							},
 							{
@@ -239,7 +244,8 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								OnSuccess: types.ReloadOnSuccess,
 								Key:       "r",
 								Command: &types.Command{
-									Args: []string{os.Args[0], "extension", "rename", extension, "${input:name}"},
+									Name: os.Args[0],
+									Args: []string{"extension", "rename", extension, "${input:name}"},
 								},
 								Inputs: []types.Input{
 									{
@@ -256,7 +262,8 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								Key:       "d",
 								OnSuccess: types.ReloadOnSuccess,
 								Command: &types.Command{
-									Args: []string{os.Args[0], "extension", "remove", "extension"},
+									Name: os.Args[0],
+									Args: []string{"extension", "remove", "extension"},
 								},
 							},
 						},
@@ -362,7 +369,8 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 			open, _ := cmd.Flags().GetBool("open")
 			if open {
 				return Draw(internal.NewCommandGenerator(&types.Command{
-					Args: []string{os.Args[0], "run", repository.FullName()},
+					Name: os.Args[0],
+					Args: []string{"run", repository.FullName()},
 				}))
 			}
 

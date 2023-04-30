@@ -92,8 +92,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return err
 			}
 
+			if len(commandArgs) == 0 {
+				return cmd.Usage()
+			}
+
 			return Draw(internal.NewCommandGenerator(&types.Command{
-				Args: commandArgs,
+				Name: commandArgs[0],
+				Args: commandArgs[1:],
 			}))
 		},
 	}
@@ -162,11 +167,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			GroupID:            extensionGroupID,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				extensionPath := filepath.Join(extensionDir, extension, extensionBinaryName)
-				commandArgs := []string{extensionPath}
-				commandArgs = append(commandArgs, args...)
 
 				return Draw(internal.NewCommandGenerator(&types.Command{
-					Args: commandArgs,
+					Name: extensionPath,
+					Args: args,
 				}))
 			},
 		})

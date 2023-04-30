@@ -149,25 +149,27 @@ func NewPushAction(title string, page string) Action {
 	}
 }
 
-func NewRunAction(title string, onSuccess OnSuccessType, args ...string) Action {
+func NewRunAction(title string, onSuccess OnSuccessType, name string, args ...string) Action {
 	return Action{
 		Title:     title,
 		Type:      RunAction,
 		OnSuccess: onSuccess,
 		Command: &Command{
+
 			Args: args,
 		},
 	}
 }
 
 type Command struct {
-	Args  []string `json:"args"`
+	Name  string   `json:"name"`
+	Args  []string `json:"args,omitempty"`
 	Input string   `json:"input,omitempty"`
 	Dir   string   `json:"dir,omitempty"`
 }
 
 func (c Command) Cmd() *exec.Cmd {
-	cmd := exec.Command(c.Args[0], c.Args[1:]...)
+	cmd := exec.Command(c.Name, c.Args...)
 	cmd.Dir = c.Dir
 	cmd.Stdin = strings.NewReader(c.Input)
 
@@ -222,7 +224,8 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("empty command")
 		}
 
-		c.Args = args
+		c.Name = args[0]
+		c.Args = args[1:]
 		return nil
 	}
 

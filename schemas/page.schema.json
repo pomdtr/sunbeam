@@ -519,7 +519,13 @@
                 {
                     "type": "object",
                     "additionalProperties": false,
+                    "required": [
+                        "name"
+                    ],
                     "properties": {
+                        "name": {
+                            "type": "string"
+                        },
                         "args": {
                             "type": "array",
                             "items": {
@@ -538,41 +544,21 @@
         },
         "preview": {
             "description": "The preview to show in the detail view.",
-            "oneOf": [
-                {
-                    "type": "object",
-                    "required": [
-                        "text"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "text": {
-                            "type": "string",
-                            "description": "The text to show in the preview."
-                        },
-                        "highlight": {
-                            "type": "string",
-                            "description": "The highlight of the preview text."
-                        }
-                    }
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "highlight": {
+                    "type": "string",
+                    "description": "The highlighting of the preview text."
                 },
-                {
-                    "type": "object",
-                    "required": [
-                        "command"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "highlight": {
-                            "type": "string",
-                            "description": "The highlighting of the preview text."
-                        },
-                        "command": {
-                            "$ref": "#/$defs/command"
-                        }
-                    }
+                "text": {
+                    "type": "string",
+                    "description": "The text of the preview."
+                },
+                "command": {
+                    "$ref": "#/$defs/command"
                 }
-            ]
+            }
         }
     }
 }
