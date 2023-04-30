@@ -249,9 +249,12 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return runner, nil
 			}
 
-			return runner, func() tea.Msg {
-				return PopPageMsg{}
+			if runner.currentView == RunnerViewLoading {
+				return runner, func() tea.Msg {
+					return PopPageMsg{}
+				}
 			}
+
 		}
 	case *types.Page:
 		runner.SetIsloading(false)
