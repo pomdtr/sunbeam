@@ -411,6 +411,10 @@ func installExtension(repository *utils.Repository, targetDir string) error {
 		return nil
 	}
 
+	if runtime.GOOS == "windows" {
+		return fmt.Errorf("script based extensions are not supported on Windows")
+	}
+
 	if err := gitInstall(repository, targetDir); err != nil {
 		return fmt.Errorf("unable to install extension: %s", err)
 	}
