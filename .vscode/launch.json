@@ -30,7 +30,12 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "args": ["extension", "install", "pomdtr/sunbeam-tldr"]
+      "args": [
+        "extension",
+        "install",
+        "tldr",
+        "https://github.com/pomdtr/sunbeam-tldr"
+      ]
     },
     {
       "name": "sunbeam extension run",

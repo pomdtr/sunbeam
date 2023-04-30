@@ -49,8 +49,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			if os.Getenv("NO_COLOR") != "" {
 				lipgloss.SetColorProfile(termenv.Ascii)
 			}
-
-			os.Setenv("SUNBEAM", "true")
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -112,7 +110,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	)
 	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
 	rootCmd.AddCommand(NewQueryCmd())
-	rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdRun(extensionDir))

@@ -35,27 +35,16 @@ func (r *Repository) Name() string {
 	return filepath.Base(r.url.Path)
 }
 
-var ownerNameRegex = regexp.MustCompile(`^([a-zA-Z0-9-]+)\/([a-zA-Z0-9-]+)$`)
-var hostOwnerNameRegex = regexp.MustCompile(`^[^:\/\s]+\/\w+\/\w+$`)
-var urlRegexp = regexp.MustCompile(`^https?:\/\/\S+\/\w+\/\w+$`)
+var ownerNameRegexp = regexp.MustCompile(`^([a-zA-Z0-9-]+)\/([a-zA-Z0-9-]+)$`)
+var urlRegexp = regexp.MustCompile(`^https?://github\.com/[a-zA-Z0-9][a-zA-Z0-9-]+/[a-zA-Z0-9_.-]+$`)
 
 func RepositoryFromString(pattern string) (*Repository, error) {
-	if ownerNameRegex.MatchString(pattern) {
+	if ownerNameRegexp.MatchString(pattern) {
 		return NewRepository(&url.URL{
 			Scheme: "https",
 			Host:   "github.com",
 			Path:   pattern,
 		}), nil
-	}
-
-	if hostOwnerNameRegex.MatchString(pattern) {
-		repoUrl, err := url.Parse(pattern)
-		if err != nil {
-			return nil, err
-		}
-		repoUrl.Scheme = "https"
-
-		return NewRepository(repoUrl), nil
 	}
 
 	if urlRegexp.MatchString(pattern) {
