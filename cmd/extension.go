@@ -267,7 +267,7 @@ func NewExtensionManageCmd(extensionDir string) *cobra.Command {
 								ReloadOnSuccess: true,
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"extension", "remove", "extension"},
+									Args: []string{"extension", "remove", extension},
 								},
 							},
 						},
