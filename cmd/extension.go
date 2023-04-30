@@ -21,9 +21,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
+var (
 	extensionBinaryName = "sunbeam-extension"
 )
+
+func init() {
+	if runtime.GOOS == "windows" {
+		extensionBinaryName += ".exe"
+	}
+}
 
 //go:embed templates/sunbeam-extension
 var extensionTemplate []byte

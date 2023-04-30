@@ -62,7 +62,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return fmt.Errorf("could not parse input: %s", err)
 				}
 
-				inputsFlag, _ := cmd.Flags().GetStringArray("inputs")
+				inputsFlag, _ := cmd.Flags().GetStringArray("input")
 				if len(inputsFlag) < len(action.Inputs) {
 					return fmt.Errorf("not enough inputs provided")
 				}
