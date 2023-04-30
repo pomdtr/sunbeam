@@ -321,7 +321,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			cmd := runner.list.SetItems(listItems, selectedId)
 
 			runner.list.SetSize(runner.width, runner.height)
-			return runner, tea.Sequence(runner.list.Init(), cmd)
+			return runner, tea.Batch(runner.list.Init(), cmd)
 		}
 
 	case types.Action:
