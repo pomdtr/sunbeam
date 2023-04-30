@@ -150,14 +150,19 @@ func (runner *CommandRunner) handleAction(action types.Action, secondary bool) t
 		return tea.Batch(runner.SetIsloading(true), runner.Refresh)
 	case types.OpenAction:
 		return func() tea.Msg {
+			if secondary {
+				err := clipboard.WriteAll(action.Target)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}
+
 			if err := browser.OpenURL(action.Target); err != nil {
 				return func() tea.Msg {
 					return err
 				}
-			}
-
-			if secondary {
-				return nil
 			}
 
 			return tea.Quit()
@@ -166,10 +171,9 @@ func (runner *CommandRunner) handleAction(action types.Action, secondary bool) t
 		return func() tea.Msg {
 			err := clipboard.WriteAll(action.Text)
 			if err != nil {
-				return func() tea.Msg {
-					return fmt.Errorf("failed to copy text to clipboard: %s", err)
-				}
+				return err
 			}
+
 			if secondary {
 				return nil
 			}
@@ -180,11 +184,26 @@ func (runner *CommandRunner) handleAction(action types.Action, secondary bool) t
 	case types.PushAction:
 		return func() tea.Msg {
 			if action.Command != nil {
+				if secondary {
+					err := clipboard.WriteAll(action.Command.Cmd().String())
+					if err != nil {
+						return err
+					}
+
+					return nil
+				}
+
 				return PushPageMsg{
 					runner: NewRunner(NewCommandGenerator(action.Command)),
 				}
 			}
 
+			if secondary {
+				err := clipboard.WriteAll(action.Page)
+				return func() tea.Msg {
+					return err
+				}
+			}
 			return PushPageMsg{
 				runner: NewRunner(NewFileGenerator(action.Page)),
 			}
@@ -192,10 +211,19 @@ func (runner *CommandRunner) handleAction(action types.Action, secondary bool) t
 
 	case types.RunAction:
 		return func() tea.Msg {
+			if secondary {
+				err := clipboard.WriteAll(action.Command.Cmd().String())
+				if err != nil {
+					return err
+
+				}
+			}
+
 			output, err := action.Command.Output()
 			if err != nil {
 				return err
 			}
+
 			if action.ReloadOnSuccess {
 				return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 			}
