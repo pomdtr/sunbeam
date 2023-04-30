@@ -11,9 +11,9 @@ require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.12
-	github.com/junegunn/fzf v0.0.0-20230412042310-96670d5f16dc
+	github.com/junegunn/fzf v0.0.0-20230430165921-fb76893e18fd
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/otiai10/copy v1.10.0
+	github.com/otiai10/copy v1.11.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/spf13/cobra v1.7.0
