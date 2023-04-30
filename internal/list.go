@@ -267,9 +267,13 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.header.input.SetValue("")
 				c.filter.FilterItems("")
 				c.updateSelection(c.filter)
+				selection := c.filter.Selection()
+				if selection == nil {
+					return c, nil
+				}
 				return c, tea.Sequence(func() tea.Msg {
 					return SelectionChangeMsg{
-						SelectionId: c.filter.Selection().ID(),
+						SelectionId: selection.ID(),
 					}
 				})
 			} else {
