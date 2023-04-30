@@ -37,9 +37,14 @@ To publish an extension, you can create a github repository containing the `sunb
 
 If you want your extension to be listed in the `sunbeam extension browse` command, you can add the `sunbeam-extension` topic to your repository.
 
+> **Warning**: Script extensions are not supported on Windows (yet).
+
 ### Binary Extensions
 
-Sunbeam also supports binary extensions. In this case, sunbeam will download the binary from a github release instead of cloning the extension repository. The [sunbeam-extension-precompile](https://github.com/pomdtr/sunbeam-extension-precompile) github action can be used to automatically compile and publish your extension as a binary.
+Sunbeam also supports binary extensions.
+In this case, sunbeam will download the binary from a github release instead of cloning the extension repository.
+
+The [sunbeam-extension-precompile](https://github.com/pomdtr/sunbeam-extension-precompile) github action can be used to automatically compile your extension for all systems and publish it as a github release.
 
 ### Sunbeam Types
 

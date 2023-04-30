@@ -424,6 +424,9 @@ func installExtension(repository *utils.Repository, targetDir string) error {
 
 func releaseInstall(release *utils.Release, targetDir string) error {
 	downloadUrl := fmt.Sprintf("https://github.com/pomdtr/sunbeam-vscode/releases/download/%s/sunbeam-extension-%s-%s", release.TagName, runtime.GOOS, runtime.GOARCH)
+	if runtime.GOOS == "windows" {
+		downloadUrl += ".exe"
+	}
 	res, err := http.Get(downloadUrl)
 	if err != nil {
 		return fmt.Errorf("unable to install extension: %s", err)
