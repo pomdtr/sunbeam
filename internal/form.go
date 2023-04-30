@@ -7,12 +7,11 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/types"
 )
 
 type Form struct {
-	items        []FormItem
-	submitAction *types.Action
+	items     []FormItem
+	submitCmd func(values map[string]string) tea.Cmd
 
 	width    int
 	header   Header
@@ -23,35 +22,24 @@ type Form struct {
 	focusIndex   int
 }
 
-func NewForm(title string, submitAction *types.Action) (*Form, error) {
+func NewForm(title string, items []FormItem, submitCmd func(values map[string]string) tea.Cmd) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
 	footer.SetBindings(
-		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", submitAction.Title)),
+		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
 	)
-
-	if len(submitAction.Inputs) > 0 {
+	if len(items) > 0 {
 		footer.bindings = append(footer.bindings, key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Next Input")))
 	}
 
-	formItems := make([]FormItem, len(submitAction.Inputs))
-	for i, input := range submitAction.Inputs {
-		item, err := NewFormItem(input)
-		if err != nil {
-			return nil, err
-		}
-
-		formItems[i] = item
-	}
-
 	return &Form{
-		header:       header,
-		submitAction: submitAction,
-		footer:       footer,
-		viewport:     viewport,
-		items:        formItems,
-	}, nil
+		header:    header,
+		submitCmd: submitCmd,
+		footer:    footer,
+		viewport:  viewport,
+		items:     items,
+	}
 }
 
 func (c *Form) SetIsLoading(isLoading bool) tea.Cmd {
@@ -137,15 +125,12 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return &c, tea.Batch(cmds...)
 		case tea.KeyCtrlS:
-			action := *c.submitAction
-			action.Inputs = []types.Input{}
+			values := make(map[string]string)
 			for _, input := range c.items {
-				action = RenderAction(action, fmt.Sprintf("${input:%s}", input.Name), input.Value())
+				values[input.Name] = input.Value()
 			}
 
-			return &c, func() tea.Msg {
-				return action
-			}
+			return &c, c.submitCmd(values)
 		}
 	}
 

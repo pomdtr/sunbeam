@@ -17,7 +17,7 @@ type ActionList struct {
 }
 
 type ActionMsg struct {
-	Secondary bool
+	Copy bool
 	types.Action
 }
 
@@ -56,7 +56,7 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 	for i, action := range actions {
 		subtitle := ""
 		if action.Key != "" {
-			subtitle = fmt.Sprintf("mod+%s", action.Key)
+			subtitle = fmt.Sprintf("alt+%s", action.Key)
 		}
 		if i == 0 {
 			subtitle = "enter"
@@ -90,7 +90,7 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			}
 
 			return al, nil
-		case "enter", "alt+enter":
+		case "enter", "ctrl+y":
 			selectedItem := al.filter.Selection()
 			if selectedItem == nil {
 				return al, nil
@@ -98,18 +98,18 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			listItem, _ := selectedItem.(ListItem)
 			al.Blur()
 			return al, func() tea.Msg {
-				var keepOpen bool
-				if msg.String() == "alt+enter" {
-					keepOpen = true
+				var Copy bool
+				if msg.String() == "ctrl+y" {
+					Copy = true
 				}
 				return ActionMsg{
-					Secondary: keepOpen,
-					Action:    listItem.Actions[0],
+					Copy:   Copy,
+					Action: listItem.Actions[0],
 				}
 			}
 		default:
 			for _, action := range al.actions {
-				if msg.String() == fmt.Sprintf("mod+%s", action.Key) {
+				if msg.String() == fmt.Sprintf("alt+%s", action.Key) {
 					return al, func() tea.Msg {
 						return ActionMsg{
 							Action: action,
