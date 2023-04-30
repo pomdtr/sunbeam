@@ -23,9 +23,6 @@ type Page struct {
 	Title   string   `json:"title,omitempty"`
 	Actions []Action `json:"actions,omitempty"`
 
-	// Form page
-	SubmitAction *Action `json:"submitAction,omitempty"`
-
 	// Detail page
 	Preview *Preview `json:"preview,omitempty"`
 

@@ -302,21 +302,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case "shift+up":
 			c.viewport.LineUp(1)
 			return c, nil
-		case "enter":
-			if c.actionList.Focused() {
-				break
-			}
-
-			if c.filter.Selection() == nil {
-				break
-			}
-
-			item := c.filter.Selection().(ListItem)
-			if len(item.Actions) > 0 {
-				return c, func() tea.Msg {
-					return item.Actions[0]
-				}
-			}
 		}
 	case SelectionChangeMsg:
 		if !c.ShowPreview {

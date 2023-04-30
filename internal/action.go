@@ -16,6 +16,11 @@ type ActionList struct {
 	footer  Footer
 }
 
+type ActionMsg struct {
+	Secondary bool
+	types.Action
+}
+
 func NewActionList() ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
@@ -51,7 +56,7 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 	for i, action := range actions {
 		subtitle := ""
 		if action.Key != "" {
-			subtitle = fmt.Sprintf("alt+%s", action.Key)
+			subtitle = fmt.Sprintf("mod+%s", action.Key)
 		}
 		if i == 0 {
 			subtitle = "enter"
@@ -85,7 +90,7 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			}
 
 			return al, nil
-		case "enter":
+		case "enter", "alt+enter":
 			selectedItem := al.filter.Selection()
 			if selectedItem == nil {
 				return al, nil
@@ -93,13 +98,22 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			listItem, _ := selectedItem.(ListItem)
 			al.Blur()
 			return al, func() tea.Msg {
-				return listItem.Actions[0]
+				var keepOpen bool
+				if msg.String() == "alt+enter" {
+					keepOpen = true
+				}
+				return ActionMsg{
+					Secondary: keepOpen,
+					Action:    listItem.Actions[0],
+				}
 			}
 		default:
 			for _, action := range al.actions {
-				if msg.String() == fmt.Sprintf("alt+%s", action.Key) {
+				if msg.String() == fmt.Sprintf("mod+%s", action.Key) {
 					return al, func() tea.Msg {
-						return action
+						return ActionMsg{
+							Action: action,
+						}
 					}
 				}
 			}

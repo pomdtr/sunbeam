@@ -136,7 +136,7 @@ func (runner *CommandRunner) Refresh() tea.Msg {
 	return page
 }
 
-func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
+func (runner *CommandRunner) handleAction(action types.Action, secondary bool) tea.Cmd {
 	for _, env := range os.Environ() {
 		pair := strings.SplitN(env, "=", 2)
 		if len(pair) != 2 {
@@ -147,13 +147,17 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	switch action.Type {
 	case types.ReloadAction:
-		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
+		return tea.Batch(runner.SetIsloading(true), runner.Refresh)
 	case types.OpenAction:
 		return func() tea.Msg {
 			if err := browser.OpenURL(action.Target); err != nil {
 				return func() tea.Msg {
 					return err
 				}
+			}
+
+			if secondary {
+				return nil
 			}
 
 			return tea.Quit()
@@ -166,6 +170,10 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 					return fmt.Errorf("failed to copy text to clipboard: %s", err)
 				}
 			}
+			if secondary {
+				return nil
+			}
+
 			return tea.Quit()
 		}
 
@@ -324,9 +332,9 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, tea.Batch(runner.list.Init(), cmd)
 		}
 
-	case types.Action:
+	case ActionMsg:
 		if len(msg.Inputs) > 0 {
-			form, err := NewForm(msg.Title, &msg)
+			form, err := NewForm(msg.Title, &msg.Action)
 			if err != nil {
 				return runner, func() tea.Msg {
 					return err
@@ -339,7 +347,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		runner.form = nil
-		cmd := runner.handleAction(msg)
+		cmd := runner.handleAction(msg.Action, msg.Secondary)
 		return runner, cmd
 	case error:
 		errorView := NewDetail("Error", func() string {
@@ -473,11 +481,6 @@ func expandPage(page types.Page, dir string) types.Page {
 		}
 
 		return action
-	}
-
-	if page.SubmitAction != nil {
-		submitAction := expandAction(*page.SubmitAction)
-		page.SubmitAction = &submitAction
 	}
 
 	for i, action := range page.Actions {
