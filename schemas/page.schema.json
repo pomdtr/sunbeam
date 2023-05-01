@@ -246,6 +246,9 @@
                         "key": {
                             "type": "string",
                             "description": "The key used as a shortcut."
+                        },
+                        "command": {
+                            "$ref": "#/$defs/command"
                         }
                     }
                 },

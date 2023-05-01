@@ -88,6 +88,7 @@ export type Action =
        * The key used as a shortcut.
        */
       key?: string;
+      command?: Command;
     }
   | {
       /**

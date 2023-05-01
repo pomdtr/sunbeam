@@ -138,6 +138,10 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 
 	switch action.Type {
 	case types.ReloadAction:
+		if action.Command != nil {
+			runner.Generator = NewCommandGenerator(action.Command)
+		}
+
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.OpenAction:
 		return func() tea.Msg {
