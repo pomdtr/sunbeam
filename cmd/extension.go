@@ -379,6 +379,8 @@ func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
 					return fmt.Errorf("could not install extension: %s", err)
 				}
 
+				fmt.Println("Extension installed successfully!")
+				return nil
 			}
 
 			if url.Host == "github.com" {
