@@ -1,4 +1,13 @@
 export type Page = List | Detail;
+export type Command =
+  | string
+  | [string, ...string[]]
+  | {
+      name: string;
+      args?: string[];
+      input?: string;
+      dir?: string;
+    };
 export type Action =
   | {
       /**
@@ -233,15 +242,6 @@ export type Input =
        */
       default?: string;
     };
-export type Command =
-  | string
-  | [string, ...string[]]
-  | {
-      name: string;
-      args?: string[];
-      input?: string;
-      dir?: string;
-    };
 
 export interface List {
   /**
@@ -252,6 +252,7 @@ export interface List {
    * The title of the page.
    */
   title?: string;
+  onQueryChange?: Command;
   emptyView?: {
     /**
      * The text to show when the list is empty.

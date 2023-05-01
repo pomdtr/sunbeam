@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
@@ -40,6 +41,18 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 					Args: args[1:],
 				}))
 			}
+
+			if strings.HasPrefix(args[0], ".") {
+				if _, err := os.Stat(args[0]); err != nil {
+					return fmt.Errorf("%s: no such file or directory", args[0])
+				}
+
+				return Draw(internal.NewCommandGenerator(&types.Command{
+					Name: args[0],
+					Args: args[1:],
+				}))
+			}
+
 			if _, err := exec.LookPath(args[0]); err == nil {
 				return Draw(internal.NewCommandGenerator(&types.Command{
 					Name: args[0],

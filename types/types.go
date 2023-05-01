@@ -27,8 +27,9 @@ type Page struct {
 	Preview *Preview `json:"preview,omitempty"`
 
 	// List page
-	ShowPreview bool `json:"showPreview,omitempty"`
-	EmptyView   *struct {
+	ShowPreview   bool     `json:"showPreview,omitempty"`
+	OnQueryChange *Command `json:"onQueryChange,omitempty"`
+	EmptyView     *struct {
 		Text    string   `json:"text,omitempty"`
 		Actions []Action `json:"actions,omitempty"`
 	} `json:"emptyView,omitempty"`
@@ -109,6 +110,12 @@ type Action struct {
 	// run
 	Command         *Command `json:"command,omitempty"`
 	ReloadOnSuccess bool     `json:"reloadOnSuccess,omitempty"`
+}
+
+func NewReloadAction() Action {
+	return Action{
+		Type: ReloadAction,
+	}
 }
 
 func NewCopyAction(title string, text string) Action {

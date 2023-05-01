@@ -5,6 +5,18 @@
 - [List](#list)
 - [Detail](#detail)
 
+## Command
+
+**POSSIBLE VALUES**
+
+- string
+- &lt;string, string&gt;
+- object
+  - `name`: string
+  - `args`: string[]
+  - `input`: string
+  - `dir`: string
+
 ## Action
 
 **POSSIBLE VALUES**
@@ -80,24 +92,13 @@
 - `value`: string - The value of the item.
   - `default`: string - The default value of the input.
 
-## Command
-
-**POSSIBLE VALUES**
-
-- string
-- &lt;string, string&gt;
-- object
-  - `name`: string
-  - `args`: string[]
-  - `input`: string
-  - `dir`: string
-
 ## List
 
 **PROPERTIES**
 
 - `type`: `'list'` - The type of the response.
 - `title`: string - The title of the page.
+- `onQueryChange`: [Command](#command)
 - `emptyView`: object
   - `text`: string - The text to show when the list is empty.
   - `actions`: [Action](#action)[] - The actions to show when the list is empty.

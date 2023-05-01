@@ -93,7 +93,7 @@ func NewCommandGenerator(command *types.Command) PageGenerator {
 
 type CommandRunner struct {
 	width, height int
-	currentView   RunnerView
+	currentPage   *types.Page
 
 	Generator PageGenerator
 
@@ -106,20 +106,11 @@ type CommandRunner struct {
 	err    *Detail
 }
 
-type RunnerView int
-
-const (
-	RunnerViewList RunnerView = iota
-	RunnerViewDetail
-	RunnerViewLoading
-)
-
 func NewRunner(generator PageGenerator) *CommandRunner {
 	return &CommandRunner{
-		header:      NewHeader(),
-		footer:      NewFooter("Sunbeam"),
-		currentView: RunnerViewLoading,
-		Generator:   generator,
+		header:    NewHeader(),
+		footer:    NewFooter("Sunbeam"),
+		Generator: generator,
 	}
 
 }
@@ -244,13 +235,15 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 }
 
 func (c *CommandRunner) SetIsloading(isLoading bool) tea.Cmd {
-	switch c.currentView {
-	case RunnerViewList:
-		return c.list.SetIsLoading(isLoading)
-	case RunnerViewDetail:
-		return c.detail.SetIsLoading(isLoading)
-	case RunnerViewLoading:
+	if c.currentPage == nil {
 		return c.header.SetIsLoading(isLoading)
+	}
+
+	switch c.currentPage.Type {
+	case types.ListPage:
+		return c.list.SetIsLoading(isLoading)
+	case types.DetailPage:
+		return c.detail.SetIsLoading(isLoading)
 	default:
 		return nil
 	}
@@ -289,12 +282,11 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return runner, nil
 			}
 
-			if runner.currentView == RunnerViewLoading {
+			if runner.currentPage == nil {
 				return runner, func() tea.Msg {
 					return PopPageMsg{}
 				}
 			}
-
 		}
 	case *types.Page:
 		runner.SetIsloading(false)
@@ -302,6 +294,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		if page.Title == "" {
 			page.Title = "Sunbeam"
 		}
+
+		runner.currentPage = page
 
 		switch page.Type {
 		case types.DetailPage:
@@ -323,7 +317,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				page.Actions = nil
 			}
 
-			runner.currentView = RunnerViewDetail
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
 			if page.Preview != nil && page.Preview.HighLight != "" {
 				runner.detail.Language = page.Preview.HighLight
@@ -332,7 +325,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return runner, runner.detail.Init()
 		case types.ListPage:
-			runner.currentView = RunnerViewList
 
 			// Save query string
 			var query string
@@ -364,6 +356,15 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, tea.Batch(runner.list.Init(), cmd)
 		}
 
+	case QueryChangeMsg:
+		if runner.currentPage == nil || runner.currentPage.Type != types.ListPage {
+			return runner, nil
+		}
+
+		queryCmd := RenderCommand(runner.currentPage.OnQueryChange, "${query}", msg.Query)
+		runner.Generator = NewCommandGenerator(queryCmd)
+
+		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case ActionMsg:
 		if len(msg.Inputs) > 0 {
 
@@ -432,16 +433,20 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return runner, cmd
 	}
 
-	switch runner.currentView {
-	case RunnerViewList:
+	if runner.currentPage == nil {
+		runner.header, cmd = runner.header.Update(msg)
+		return runner, cmd
+	}
+
+	switch runner.currentPage.Type {
+	case types.ListPage:
 		container, cmd = runner.list.Update(msg)
 		runner.list, _ = container.(*List)
-	case RunnerViewDetail:
+	case types.DetailPage:
 		container, cmd = runner.detail.Update(msg)
 		runner.detail, _ = container.(*Detail)
-	default:
-		runner.header, cmd = runner.header.Update(msg)
 	}
+
 	return runner, cmd
 }
 
@@ -454,28 +459,38 @@ func (c *CommandRunner) View() string {
 		return c.form.View()
 	}
 
-	switch c.currentView {
-	case RunnerViewList:
-		return c.list.View()
-	case RunnerViewDetail:
-		return c.detail.View()
-	case RunnerViewLoading:
+	if c.currentPage == nil {
 		headerView := c.header.View()
 		footerView := c.footer.View()
 		padding := make([]string, utils.Max(0, c.height-lipgloss.Height(headerView)-lipgloss.Height(footerView)))
 		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), strings.Join(padding, "\n"), c.footer.View())
+	}
+
+	switch c.currentPage.Type {
+	case types.ListPage:
+		return c.list.View()
+	case types.DetailPage:
+		return c.detail.View()
 	default:
 		return ""
 	}
 }
 
+func RenderCommand(command *types.Command, old, new string) *types.Command {
+	rendered := types.Command{}
+	rendered.Name = strings.ReplaceAll(command.Name, old, new)
+	for _, arg := range command.Args {
+		rendered.Args = append(rendered.Args, strings.ReplaceAll(arg, old, shellescape.Quote(new)))
+	}
+	rendered.Input = strings.ReplaceAll(command.Input, old, new)
+	rendered.Dir = strings.ReplaceAll(command.Dir, old, new)
+
+	return &rendered
+}
+
 func RenderAction(action types.Action, old, new string) types.Action {
 	if action.Command != nil {
-		for i, arg := range action.Command.Args {
-			action.Command.Args[i] = strings.ReplaceAll(arg, old, shellescape.Quote(new))
-		}
-		action.Command.Input = strings.ReplaceAll(action.Command.Input, old, new)
-		action.Command.Dir = strings.ReplaceAll(action.Command.Dir, old, new)
+		RenderCommand(action.Command, old, new)
 	}
 
 	action.Target = strings.ReplaceAll(action.Target, old, url.QueryEscape(new))

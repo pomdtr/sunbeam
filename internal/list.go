@@ -82,11 +82,12 @@ func (i ListItem) Render(width int, selected bool) string {
 }
 
 type List struct {
-	header       Header
-	footer       Footer
-	actionList   ActionList
-	emptyActions []types.Action
-	DetailFunc   func(types.ListItem) string
+	header              Header
+	footer              Footer
+	actionList          ActionList
+	emptyActions        []types.Action
+	DetailFunc          func(types.ListItem) string
+	ReloadOnQueryChange bool
 
 	ShowPreview bool
 
@@ -116,6 +117,9 @@ func NewList(page *types.Page) *List {
 	}
 
 	list.filter = filter
+	if page.OnQueryChange != nil {
+		list.ReloadOnQueryChange = true
+	}
 
 	list.DetailFunc = func(item types.ListItem) string {
 		if item.Preview == nil {
@@ -348,7 +352,13 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 
 	if header.Value() != c.header.Value() {
-		filter.FilterItems(header.Value())
+		if c.ReloadOnQueryChange {
+			cmds = append(cmds, func() tea.Msg {
+				return QueryChangeMsg{Query: header.Value()}
+			})
+		} else {
+			filter.FilterItems(header.Value())
+		}
 	}
 
 	if c.filter.Selection() != nil && filter.Selection() != nil && filter.Selection().ID() != c.filter.Selection().ID() {
@@ -363,6 +373,10 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	c.updateSelection(c.filter)
 
 	return c, tea.Batch(cmds...)
+}
+
+type QueryChangeMsg struct {
+	Query string
 }
 
 type SelectionChangeMsg struct {

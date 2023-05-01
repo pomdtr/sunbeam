@@ -25,6 +25,9 @@
                     "description": "The title of the page.",
                     "type": "string"
                 },
+                "onQueryChange": {
+                    "$ref": "#/$defs/command"
+                },
                 "emptyView": {
                     "type": "object",
                     "required": [
