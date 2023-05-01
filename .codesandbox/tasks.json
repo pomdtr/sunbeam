@@ -6,6 +6,7 @@
   "tasks": {
     "examples": {
       "name": "Show Examples",
+      "runAtStart": true,
       "command": "go run main.go read ./docs/examples/sunbeam.json"
     }
   }
