@@ -8,11 +8,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 )
 
 type Repository struct {
 	url *url.URL
+}
+
+func RepositoryUrl(pattern string) (*url.URL, error) {
+	return url.Parse(pattern)
 }
 
 func NewRepository(url *url.URL) *Repository {
@@ -33,30 +36,6 @@ func (r *Repository) Owner() string {
 
 func (r *Repository) Name() string {
 	return filepath.Base(r.url.Path)
-}
-
-var ownerNameRegexp = regexp.MustCompile(`^([a-zA-Z0-9-]+)\/([a-zA-Z0-9-]+)$`)
-var urlRegexp = regexp.MustCompile(`^https?://github\.com/[a-zA-Z0-9][a-zA-Z0-9-]+/[a-zA-Z0-9_.-]+$`)
-
-func RepositoryFromString(pattern string) (*Repository, error) {
-	if ownerNameRegexp.MatchString(pattern) {
-		return NewRepository(&url.URL{
-			Scheme: "https",
-			Host:   "github.com",
-			Path:   pattern,
-		}), nil
-	}
-
-	if urlRegexp.MatchString(pattern) {
-		repoUrl, err := url.Parse(pattern)
-		if err != nil {
-			return nil, err
-		}
-
-		return NewRepository(repoUrl), nil
-	}
-
-	return nil, fmt.Errorf("invalid repository pattern: %s", pattern)
 }
 
 func (r *Repository) Url() *url.URL {
@@ -105,4 +84,33 @@ func GitPull(localDir string) error {
 	command.Stdin = os.Stdin
 
 	return command.Run()
+}
+
+type GithubGist struct {
+	Url         string `json:"url"`
+	Description string `json:"description"`
+	Files       map[string]struct {
+		Filename string `json:"filename"`
+		Content  string `json:"content"`
+	} `json:"files"`
+}
+
+func FetchGist(id string) (*GithubGist, error) {
+	res, err := http.Get(fmt.Sprintf("https://api.github.com/gists/%s", id))
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get gist: %s", res.Status)
+	}
+
+	var gist GithubGist
+	if err := json.NewDecoder(res.Body).Decode(&gist); err != nil {
+		return nil, err
+	}
+
+	return &gist, nil
 }

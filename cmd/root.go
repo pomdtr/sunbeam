@@ -76,7 +76,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					inputs[parts[0]] = parts[1]
 				}
 
-				return triggerAction(action, inputs)
+				query, _ := cmd.Flags().GetString("query")
+				return triggerAction(action, inputs, query)
 			}
 
 			defaultCommand, ok := os.LookupEnv("SUNBEAM_DEFAULT_CMD")
@@ -102,7 +103,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.Flags().StringArrayP("input", "i", nil, "input to pass to the action")
+	rootCmd.Flags().String("query", "", "query to pass to the action")
 	rootCmd.Flags().MarkHidden("input")
+	rootCmd.Flags().MarkHidden("query")
 
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
@@ -253,10 +256,12 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func triggerAction(action types.Action, inputs map[string]string) error {
+func triggerAction(action types.Action, inputs map[string]string, query string) error {
 	for name, value := range inputs {
 		action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
 	}
+
+	action = internal.RenderAction(action, "${query}", query)
 
 	switch action.Type {
 	case types.PushAction:
