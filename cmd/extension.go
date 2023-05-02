@@ -26,12 +26,6 @@ var (
 	extensionBinaryName = "sunbeam-extension"
 )
 
-func init() {
-	if runtime.GOOS == "windows" {
-		extensionBinaryName += ".exe"
-	}
-}
-
 //go:embed templates/sunbeam-extension
 var extensionTemplate []byte
 
@@ -441,10 +435,6 @@ func installExtension(repository *utils.Repository, targetDir string) error {
 		}
 
 		return nil
-	}
-
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("script based extensions are not supported on Windows")
 	}
 
 	if err := gitInstall(repository, targetDir); err != nil {

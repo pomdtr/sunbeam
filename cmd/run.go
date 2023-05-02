@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/pomdtr/sunbeam/internal"
@@ -26,20 +25,17 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 		},
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
 			if args[0] == "." {
 				if _, err := os.Stat(extensionBinaryName); err != nil {
 					return fmt.Errorf("no extension found in current directory")
 				}
 
-				abs, err := filepath.Abs(extensionBinaryName)
-				if err != nil {
-					return fmt.Errorf("unable to get absolute path: %s", err)
-				}
-
-				return Draw(internal.NewCommandGenerator(&types.Command{
-					Name: abs,
-					Args: args[1:],
-				}))
+				return runExtension(cwd, args)
 			}
 
 			if strings.HasPrefix(args[0], ".") {
