@@ -195,7 +195,7 @@ func runExtension(extensionDir string, args []string) error {
 			Args: args,
 		}
 
-	} else if runtime.GOOS == "windows" {
+	} else {
 		shExe, err := findsh.Find()
 		if err != nil {
 			if errors.Is(err, exec.ErrNotFound) {
@@ -203,7 +203,7 @@ func runExtension(extensionDir string, args []string) error {
 			}
 			return err
 		}
-		forwardArgs := append([]string{"-c", `command "$@"`, "--", extensionBinaryName}, args...)
+		forwardArgs := append([]string{"-c", `command "$@"`, "--", extensionBinary}, args...)
 
 		command = types.Command{
 			Name: shExe,
