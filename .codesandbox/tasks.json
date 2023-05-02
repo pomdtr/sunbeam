@@ -1,4 +1,10 @@
 {
   // These tasks will run in order when initializing your CodeSandbox project.
-  "setupTasks": ["go install"]
+  "tasks": {
+    "install": {
+      "name": "go install",
+      "command": "go install",
+      "runAtStart": true
+    }
+  }
 }
