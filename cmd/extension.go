@@ -29,34 +29,34 @@ var (
 //go:embed templates/sunbeam-extension
 var extensionTemplate []byte
 
-func NewExtensionCmd(extensionDir string) *cobra.Command {
+func NewExtensionCmd(extensionRoot string) *cobra.Command {
 	extensionCmd := &cobra.Command{
 		Use:     "extension",
 		Short:   "Extension commands",
 		GroupID: coreGroupID,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if _, err := os.Stat(extensionDir); os.IsNotExist(err) {
-				os.MkdirAll(extensionDir, 0755)
+			if _, err := os.Stat(extensionRoot); os.IsNotExist(err) {
+				os.MkdirAll(extensionRoot, 0755)
 			}
 			return nil
 		},
 	}
 
-	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionDir))
+	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionRoot))
 	extensionCmd.AddCommand(NewExtensionViewCmd())
-	extensionCmd.AddCommand(NewExtensionManageCmd(extensionDir))
+	extensionCmd.AddCommand(NewExtensionManageCmd(extensionRoot))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
-	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionDir))
-	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionDir))
-	extensionCmd.AddCommand(NewExtensionListCmd(extensionDir))
-	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionDir))
-	extensionCmd.AddCommand(NewExtensionUpgradeCmd(extensionDir))
+	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionRoot))
+	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionRoot))
+	extensionCmd.AddCommand(NewExtensionListCmd(extensionRoot))
+	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionRoot))
+	extensionCmd.AddCommand(NewExtensionUpgradeCmd(extensionRoot))
 	extensionCmd.AddCommand(NewExtensionSearchCmd())
 
 	return extensionCmd
 }
 
-func NewExtensionBrowseCmd(extensionDir string) *cobra.Command {
+func NewExtensionBrowseCmd(extensionRoot string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "browse",
 		Short: "Browse extensions",
@@ -204,14 +204,14 @@ func NewExtensionViewCmd() *cobra.Command {
 	}
 }
 
-func NewExtensionManageCmd(extensionDir string) *cobra.Command {
+func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "manage",
 		Short: "Manage installed extensions",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			generator := func() (*types.Page, error) {
-				extensions, err := ListExtensions(extensionDir)
+				extensions, err := ListExtensions(extensionRoot)
 				if err != nil {
 					return nil, fmt.Errorf("could not list extensions: %s", err)
 				}
@@ -312,14 +312,14 @@ func NewExtensionCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func NewExtensionRenameCmd(extensionDir string) *cobra.Command {
+func NewExtensionRenameCmd(extensionRoot string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "rename [old] [new]",
 		Short: "Rename an extension",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			oldPath := filepath.Join(extensionDir, args[0])
-			newPath := filepath.Join(extensionDir, args[1])
+			oldPath := filepath.Join(extensionRoot, args[0])
+			newPath := filepath.Join(extensionRoot, args[1])
 
 			if err := os.Rename(oldPath, newPath); err != nil {
 				return fmt.Errorf("could not rename extension: %s", err)
@@ -330,13 +330,13 @@ func NewExtensionRenameCmd(extensionDir string) *cobra.Command {
 	}
 }
 
-func NewExtensionInstallCmd(extensionDir string) *cobra.Command {
+func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install [alias] [extension]",
 		Short: "Install a sunbeam extension from a folder/gist/repository",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			targetDir := filepath.Join(extensionDir, args[0])
+			targetDir := filepath.Join(extensionRoot, args[0])
 
 			if args[1] == "." {
 				// Return an error on Windows, as symlinks are not supported
@@ -509,12 +509,12 @@ func gitInstall(repository *utils.Repository, targetDir string) error {
 	return cp.Copy(tempDir, targetDir)
 }
 
-func NewExtensionListCmd(extensionDir string) *cobra.Command {
+func NewExtensionListCmd(extensionRoot string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List installed extension commands",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensions, err := ListExtensions(extensionDir)
+			extensions, err := ListExtensions(extensionRoot)
 			if err != nil {
 				return fmt.Errorf("unable to list extensions: %s", err)
 			}
@@ -528,15 +528,15 @@ func NewExtensionListCmd(extensionDir string) *cobra.Command {
 	}
 }
 
-func NewExtensionRemoveCmd(extensionDir string) *cobra.Command {
-	validArgs, _ := ListExtensions(extensionDir)
+func NewExtensionRemoveCmd(extensionRoot string) *cobra.Command {
+	validArgs, _ := ListExtensions(extensionRoot)
 	return &cobra.Command{
 		Use:       "remove",
 		Short:     "Remove an installed extension",
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: validArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			targetDir := filepath.Join(extensionDir, args[0])
+			targetDir := filepath.Join(extensionRoot, args[0])
 			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
 				return fmt.Errorf("extension %s not installed", args[0])
 			}
@@ -551,8 +551,8 @@ func NewExtensionRemoveCmd(extensionDir string) *cobra.Command {
 	}
 }
 
-func NewExtensionUpgradeCmd(extensionDir string) *cobra.Command {
-	validArgs, _ := ListExtensions(extensionDir)
+func NewExtensionUpgradeCmd(extensionRoot string) *cobra.Command {
+	validArgs, _ := ListExtensions(extensionRoot)
 	return &cobra.Command{
 		Use:       "upgrade",
 		Short:     "Upgrade an installed extension",
@@ -561,7 +561,7 @@ func NewExtensionUpgradeCmd(extensionDir string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extensionName := args[0]
 
-			extensionPath := filepath.Join(extensionDir, extensionName)
+			extensionPath := filepath.Join(extensionRoot, extensionName)
 			if _, err := os.Stat(extensionPath); os.IsNotExist(err) {
 				return fmt.Errorf("extension not installed: %s", args[0])
 			}
@@ -638,24 +638,24 @@ func NewExtensionSearchCmd() *cobra.Command {
 	}
 }
 
-func ListExtensions(extensionDir string) ([]string, error) {
-	if _, err := os.Stat(extensionDir); os.IsNotExist(err) {
+func ListExtensions(extensionRoot string) ([]string, error) {
+	if _, err := os.Stat(extensionRoot); os.IsNotExist(err) {
 		return nil, nil
 	}
 
-	extensionDirs, err := os.ReadDir(extensionDir)
+	extensionDirs, err := os.ReadDir(extensionRoot)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list extensions: %s", err)
 	}
 
 	extensions := make([]string, 0)
-	for _, dir := range extensionDirs {
-		binPath := filepath.Join(extensionDir, dir.Name(), extensionBinaryName)
+	for _, extensionDir := range extensionDirs {
+		binPath := filepath.Join(extensionRoot, extensionDir.Name(), extensionBinaryName)
 		if _, err := os.Stat(binPath); os.IsNotExist(err) {
 			continue
 		}
 
-		extensions = append(extensions, dir.Name())
+		extensions = append(extensions, extensionDir.Name())
 	}
 
 	return extensions, nil

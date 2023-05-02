@@ -120,6 +120,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdRun(extensionRoot))
+	rootCmd.AddCommand(NewInfoCmd(extensionRoot, version))
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	docCmd := &cobra.Command{
@@ -323,4 +324,24 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 	default:
 		return fmt.Errorf("unknown action type: %s", action.Type)
 	}
+}
+
+func NewInfoCmd(extensionRoot string, version string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "info",
+		Short: "Print information about sunbeam",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return Draw(func() (*types.Page, error) {
+				return types.NewList("Info", []types.ListItem{
+					{Title: "Version", Subtitle: version, Actions: []types.Action{
+						types.NewCopyAction("Copy", version),
+					}},
+					{Title: "Extension Root", Subtitle: extensionRoot, Actions: []types.Action{
+						types.NewCopyAction("Copy", extensionRoot),
+					}},
+				}), nil
+			})
+		},
+	}
+
 }
