@@ -1,13 +1,4 @@
 {
   // These tasks will run in order when initializing your CodeSandbox project.
-  "setupTasks": ["go install"],
-
-  // These tasks can be run from CodeSandbox. Running one will open a log in the app.
-  "tasks": {
-    "examples": {
-      "name": "Show Examples",
-      "runAtStart": true,
-      "command": "go run main.go read ./docs/examples/sunbeam.json"
-    }
-  }
+  "setupTasks": ["go install"]
 }

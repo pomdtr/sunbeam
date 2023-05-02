@@ -2,16 +2,20 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cli/cli/v2/pkg/findsh"
 	"github.com/google/shlex"
 	"github.com/mattn/go-isatty"
 	"github.com/muesli/termenv"
@@ -33,7 +37,7 @@ const (
 func NewRootCmd(version string) *cobra.Command {
 
 	dataDir := filepath.Join(xdg.DataHome, "sunbeam")
-	extensionDir := filepath.Join(dataDir, "extensions")
+	extensionRoot := filepath.Join(dataDir, "extensions")
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -111,11 +115,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
 	)
-	rootCmd.AddCommand(NewExtensionCmd(extensionDir))
+	rootCmd.AddCommand(NewExtensionCmd(extensionRoot))
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewValidateCmd())
-	rootCmd.AddCommand(NewCmdRun(extensionDir))
+	rootCmd.AddCommand(NewCmdRun(extensionRoot))
+	rootCmd.AddCommand(NewInfoCmd(extensionRoot, version))
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	docCmd := &cobra.Command{
@@ -154,7 +159,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	extensions, err := ListExtensions(extensionDir)
+	extensions, err := ListExtensions(extensionRoot)
 	if err != nil {
 		return rootCmd
 	}
@@ -166,17 +171,47 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			DisableFlagParsing: true,
 			GroupID:            extensionGroupID,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				extensionPath := filepath.Join(extensionDir, extension, extensionBinaryName)
-
-				return Draw(internal.NewCommandGenerator(&types.Command{
-					Name: extensionPath,
-					Args: args,
-				}))
+				return runExtension(filepath.Join(extensionRoot, extension), args)
 			},
 		})
 	}
 
 	return rootCmd
+}
+
+func runExtension(extensionDir string, args []string) error {
+	extensionBinary := filepath.Join(extensionDir, extensionBinaryName)
+	extensionBinaryWin := fmt.Sprintf("%s.exe", extensionBinary)
+
+	var command types.Command
+	if runtime.GOOS != "windows" {
+		command = types.Command{
+			Name: extensionBinary,
+			Args: args,
+		}
+	} else if _, err := os.Stat(extensionBinaryWin); err == nil {
+		command = types.Command{
+			Name: extensionBinaryWin,
+			Args: args,
+		}
+
+	} else {
+		shExe, err := findsh.Find()
+		if err != nil {
+			if errors.Is(err, exec.ErrNotFound) {
+				return errors.New("the `sh.exe` interpreter is required. Please install Git for Windows and try again")
+			}
+			return err
+		}
+		forwardArgs := append([]string{"-c", `command "$@"`, "--", extensionBinary}, args...)
+
+		command = types.Command{
+			Name: shExe,
+			Args: forwardArgs,
+		}
+	}
+
+	return Draw(internal.NewCommandGenerator(&command))
 }
 
 func Draw(generator internal.PageGenerator) error {
@@ -289,4 +324,24 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 	default:
 		return fmt.Errorf("unknown action type: %s", action.Type)
 	}
+}
+
+func NewInfoCmd(extensionRoot string, version string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "info",
+		Short: "Print information about sunbeam",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return Draw(func() (*types.Page, error) {
+				return types.NewList("Info", []types.ListItem{
+					{Title: "Version", Subtitle: version, Actions: []types.Action{
+						types.NewCopyAction("Copy", version),
+					}},
+					{Title: "Extension Root", Subtitle: extensionRoot, Actions: []types.Action{
+						types.NewCopyAction("Copy", extensionRoot),
+					}},
+				}), nil
+			})
+		},
+	}
+
 }
