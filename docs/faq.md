@@ -39,6 +39,12 @@ sunbeam read sunbeam.json | sunbeam validate
 
 The validate command will exit with a non-zero exit code if the output is invalid.
 
+## I want to use sunbeam as a launcher
+
+On macOS, you can integrate sunbeam with raycast using the [sunbeam raycast extension](https://github.com/pomdtr/sunbeam-raycast).
+
+On Windows/Linux, there is no official integration yet, but you can [configure alacritty to launch sunbeam on startup](https://github.com/pomdtr/sunbeam/tree/main/assets/alacritty.yml), and use it as a launcher.
+
 ## Building a custom sunbeam frontend
 
 Sunbeam use stdout to display pages, and stdin to receive actions.

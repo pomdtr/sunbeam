@@ -45,6 +45,8 @@ Sunbeam try to address these limitations:
 
 Sunbeam is written is distributed as a single binary, so you can run it on any platform. The sunbeam extension system is also designed to be cross-platform.
 
+![sunbeam running in alacritty](./static/alacritty.png)
+
 ### Sunbeam is language agnostic
 
 Sunbeam communicates with your extensions using JSON, so you can use any language you want to build your scripts.
