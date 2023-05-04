@@ -11,7 +11,7 @@ import (
 )
 
 type Repository struct {
-	url *url.URL
+	URL *url.URL
 }
 
 func RepositoryUrl(pattern string) (*url.URL, error) {
@@ -19,11 +19,11 @@ func RepositoryUrl(pattern string) (*url.URL, error) {
 }
 
 func NewRepository(url *url.URL) *Repository {
-	return &Repository{url: url}
+	return &Repository{URL: url}
 }
 
 func (r *Repository) String() string {
-	return r.url.String()
+	return r.URL.String()
 }
 
 func (r *Repository) FullName() string {
@@ -31,15 +31,11 @@ func (r *Repository) FullName() string {
 }
 
 func (r *Repository) Owner() string {
-	return filepath.Base(filepath.Dir(r.url.Path))
+	return filepath.Base(filepath.Dir(r.URL.Path))
 }
 
 func (r *Repository) Name() string {
-	return filepath.Base(r.url.Path)
-}
-
-func (r *Repository) Url() *url.URL {
-	return r.url
+	return filepath.Base(r.URL.Path)
 }
 
 type Release struct {
@@ -47,6 +43,10 @@ type Release struct {
 }
 
 func GetLatestRelease(repo *Repository) (*Release, error) {
+	if repo.URL.Host != "github.com" {
+		return nil, fmt.Errorf("unsupported host: %s", repo.URL.Host)
+	}
+
 	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repo.FullName())
 
 	resp, err := http.Get(apiUrl)
@@ -68,7 +68,7 @@ func GetLatestRelease(repo *Repository) (*Release, error) {
 }
 
 func GitClone(repo *Repository, targetDir string) error {
-	command := exec.Command("git", "clone", repo.Url().String(), targetDir)
+	command := exec.Command("git", "clone", repo.URL.String(), targetDir)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
@@ -77,40 +77,16 @@ func GitClone(repo *Repository, targetDir string) error {
 }
 
 func GitPull(localDir string) error {
-	command := exec.Command("git", "pull")
-	command.Dir = localDir
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-	command.Stdin = os.Stdin
-
-	return command.Run()
-}
-
-type GithubGist struct {
-	Url         string `json:"url"`
-	Description string `json:"description"`
-	Files       map[string]struct {
-		Filename string `json:"filename"`
-		Content  string `json:"content"`
-	} `json:"files"`
-}
-
-func FetchGist(id string) (*GithubGist, error) {
-	res, err := http.Get(fmt.Sprintf("https://api.github.com/gists/%s", id))
-	if err != nil {
-		return nil, err
+	resetCmd := exec.Command("git", "reset", "--hard")
+	resetCmd.Dir = localDir
+	if err := resetCmd.Run(); err != nil {
+		return err
 	}
 
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get gist: %s", res.Status)
+	pullCmd := exec.Command("git", "pull", "--ff-only")
+	pullCmd.Dir = localDir
+	if err := pullCmd.Run(); err != nil {
+		return err
 	}
-
-	var gist GithubGist
-	if err := json.NewDecoder(res.Body).Decode(&gist); err != nil {
-		return nil, err
-	}
-
-	return &gist, nil
+	return nil
 }

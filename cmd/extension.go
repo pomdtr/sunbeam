@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	_ "embed"
 
@@ -362,44 +361,26 @@ func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 				return fmt.Errorf("could not parse extension url: %s", err)
 			}
 
-			if url.Host == "gist.github.com" {
-				parts := strings.Split(url.Path, "/")
-				if len(parts) < 2 {
-					return fmt.Errorf("invalid gist url")
-				}
-
-				gistID := parts[len(parts)-1]
-				if err := gistInstall(gistID, targetDir); err != nil {
-					return fmt.Errorf("could not install extension: %s", err)
-				}
-
-				fmt.Println("Extension installed successfully!")
-				return nil
+			repository := utils.NewRepository(url)
+			if err != nil {
+				return fmt.Errorf("unable to parse repository: %s", err)
 			}
 
-			if url.Host == "github.com" {
-				repository := utils.NewRepository(url)
-				if err != nil {
-					return fmt.Errorf("unable to parse repository: %s", err)
-				}
-
-				if err := installExtension(repository, targetDir); err != nil {
-					return fmt.Errorf("could not install extension: %s", err)
-				}
-
-				open, _ := cmd.Flags().GetBool("open")
-				if open {
-					return Draw(internal.NewCommandGenerator(&types.Command{
-						Name: os.Args[0],
-						Args: []string{"run", repository.FullName()},
-					}))
-				}
-
-				fmt.Println("Extension installed successfully!")
-				return nil
+			if err := installExtension(repository, targetDir); err != nil {
+				return fmt.Errorf("could not install extension: %s", err)
 			}
 
-			return fmt.Errorf("unsupported extension url")
+			open, _ := cmd.Flags().GetBool("open")
+			if open {
+				return Draw(internal.NewCommandGenerator(&types.Command{
+					Name: os.Args[0],
+					Args: []string{"run", repository.FullName()},
+				}))
+			}
+
+			fmt.Println("Extension installed successfully!")
+			return nil
+
 		},
 	}
 
@@ -466,28 +447,6 @@ func releaseInstall(release *utils.Release, targetDir string) error {
 
 	_, err = io.Copy(out, res.Body)
 	return err
-}
-
-func gistInstall(gistID string, targetDir string) error {
-	gist, err := utils.FetchGist(gistID)
-	if err != nil {
-		return fmt.Errorf("could not fetch gist: %s", err)
-	}
-
-	sunbeamFile, ok := gist.Files["sunbeam-extension"]
-	if !ok {
-		return fmt.Errorf("gist does not contain a sunbeam-extension file")
-	}
-
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return fmt.Errorf("unable to install extension: %s", err)
-	}
-
-	if err := os.WriteFile(filepath.Join(targetDir, extensionBinaryName), []byte(sunbeamFile.Content), 0755); err != nil {
-		return fmt.Errorf("unable to install extension: %s", err)
-	}
-
-	return nil
 }
 
 func gitInstall(repository *utils.Repository, targetDir string) error {
@@ -606,6 +565,13 @@ func NewExtensionUpgradeCmd(extensionRoot string) *cobra.Command {
 
 			if err := utils.GitPull(extensionPath); err != nil {
 				return fmt.Errorf("unable to upgrade extension: %s", err)
+			}
+
+			binPath := filepath.Join(extensionPath, extensionBinaryName)
+			if runtime.GOOS != "windows" {
+				if err := os.Chmod(binPath, 0755); err != nil {
+					return fmt.Errorf("unable to upgrade extension: %s", err)
+				}
 			}
 
 			fmt.Sprintln("Extension upgraded:", args[0])
