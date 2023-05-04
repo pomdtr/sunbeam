@@ -465,6 +465,12 @@ func gitInstall(repository *utils.Repository, targetDir string) error {
 		return fmt.Errorf("extension binary not found: %s", binPath)
 	}
 
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(binPath, 0755); err != nil {
+			return fmt.Errorf("unable to install extension: %s", err)
+		}
+	}
+
 	return cp.Copy(tempDir, targetDir)
 }
 
