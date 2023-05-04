@@ -7,13 +7,11 @@
 - [Advanced](./advanced.md)
 - [Extending Sunbeam](./extensions.md)
 - [Examples](./examples/index.md)
-  - [File Browser (Python)](./examples/file-browser/file-browser.md)
-  - [Todo List (Python)](./examples/todo/todo.md)
-  - [Git History (Bash)](./examples/git-history/git-history.md)
-  - [TLDR Pages (Bash)](./examples/tldr/tldr.md)
-  - [Github (Bash)](./examples/github/github.md)
-  - [Bitwarden (Bash)](./examples/bitwarden/bitwarden.md)
-  - [Devdocs (Bash)](./examples/devdocs/devdocs.md)
+  - [File Browser (Python)](./examples/file-browser.md)
+  - [TLDR Pages (Bash)](./examples/tldr.md)
+  - [Github (Bash)](./examples/github.md)
+  - [Bitwarden (Bash)](./examples/bitwarden.md)
+  - [Devdocs (Bash)](./examples/devdocs.md)
 - [FAQ](./faq.md)
 
 # Reference

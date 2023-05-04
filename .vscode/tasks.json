@@ -1,14 +1,12 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "start mdbook",
-            "type": "process",
-            "command": "mdbook",
-            "args": [
-                "serve"
-            ],
-            "problemMatcher": []
-        },
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "start mdbook",
+      "type": "process",
+      "command": "mdbook",
+      "args": ["serve"],
+      "problemMatcher": []
+    }
+  ]
 }

@@ -1,20 +1,21 @@
 {
-    "markdownlint.ignore": [
-        "docs/src/SUMMARY.md",
-        "docs/cli.md",
-        "docs/types.md",
-        "cmd/templates/system-message.md"
-    ],
-    "json.schemas": [
-        {
-            "fileMatch": [
-                "sunbeam.json"
-            ],
-            "url": "./schemas/page.schema.json"
-        }
-    ],
-    "search.exclude": {
-        "book": true,
-        "public": true,
-    },
+  "markdownlint.ignore": [
+    "docs/src/SUMMARY.md",
+    "docs/cli.md",
+    "docs/types.md",
+    "cmd/templates/system-message.md"
+  ],
+  "markdownlint.config": {
+    "MD033": false
+  },
+  "json.schemas": [
+    {
+      "fileMatch": ["sunbeam.json"],
+      "url": "./schemas/page.schema.json"
+    }
+  ],
+  "search.exclude": {
+    "book": true,
+    "public": true
+  }
 }
