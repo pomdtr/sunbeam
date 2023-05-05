@@ -71,11 +71,7 @@ The user can then use the escape key to go back to the previous page.
 
 ![Navigation](./navigation.excalidraw.png)
 
-Let's update our file browser to support navigation.
-
-```python
-{{#include ../examples/file-browser/file-browser.py}}
-```
+You can find a working file browser example [here](../examples/file-browser.md).
 
 ### What's next?
 

@@ -15,8 +15,7 @@
       "title": "Dynamic List",
       "actions": [
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Dynamic List",
           "command": "./dynamic-list.py"
         }
@@ -26,21 +25,9 @@
       "title": "Dynamic List with Args",
       "actions": [
         {
-          "type": "run",
-          "onSuccess": "push",
+          "type": "push",
           "title": "Dynamic List with Args",
           "command": "./dynamic-list-with-args.py /"
-        }
-      ]
-    },
-    {
-      "title": "Full-Blown File Browser",
-      "actions": [
-        {
-          "type": "run",
-          "onSuccess": "push",
-          "title": "Browse Current Dir",
-          "command": "../examples/file-browser/file-browser.py"
         }
       ]
     }

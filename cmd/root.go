@@ -253,11 +253,19 @@ func Draw(generator internal.PageGenerator) error {
 		return fmt.Errorf("could not cast model to paginator")
 	}
 
-	if paginator.Output != "" {
-		fmt.Print(paginator.Output)
+	cmd := paginator.OutputCmd
+	if cmd == nil {
+		return nil
 	}
 
-	return nil
+	if cmd.Stdin == nil {
+		cmd.Stdin = os.Stdin
+	}
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	return cmd.Run()
 }
 
 func buildDoc(command *cobra.Command) (string, error) {

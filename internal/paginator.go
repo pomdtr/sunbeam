@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -27,13 +28,13 @@ type SunbeamOptions struct {
 }
 
 type ExitMsg struct {
-	Output string
+	Cmd *exec.Cmd
 }
 
 type Paginator struct {
 	width, height int
 	options       SunbeamOptions
-	Output        string
+	OutputCmd     *exec.Cmd
 
 	pages  []Page
 	hidden bool
@@ -79,7 +80,7 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	case ExitMsg:
 		m.hidden = true
-		m.Output = msg.Output
+		m.OutputCmd = msg.Cmd
 		return m, tea.Quit
 	}
 

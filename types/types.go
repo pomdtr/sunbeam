@@ -179,7 +179,9 @@ type Command struct {
 func (c Command) Cmd() *exec.Cmd {
 	cmd := exec.Command(c.Name, c.Args...)
 	cmd.Dir = c.Dir
-	cmd.Stdin = strings.NewReader(c.Input)
+	if c.Input != "" {
+		cmd.Stdin = strings.NewReader(c.Input)
+	}
 
 	return cmd
 

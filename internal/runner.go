@@ -214,22 +214,22 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 				return nil
 			}
 
-			output, err := action.Command.Output()
-			if err != nil {
-				return err
-			}
-
-			if action.ReloadOnSuccess {
-				return ActionMsg{
-					Action: types.Action{
-						Type: types.ReloadAction,
-					},
+			if !action.ReloadOnSuccess {
+				return ExitMsg{
+					Cmd: action.Command.Cmd(),
 				}
 			}
 
-			return ExitMsg{
-				Output: string(output),
+			if err := action.Command.Run(); err != nil {
+				return err
 			}
+
+			return ActionMsg{
+				Action: types.Action{
+					Type: types.ReloadAction,
+				},
+			}
+
 		}
 	default:
 		return func() tea.Msg {
