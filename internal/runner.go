@@ -494,7 +494,7 @@ func RenderCommand(command *types.Command, old, new string) *types.Command {
 
 func RenderAction(action types.Action, old, new string) types.Action {
 	if action.Command != nil {
-		RenderCommand(action.Command, old, new)
+		action.Command = RenderCommand(action.Command, old, new)
 	}
 
 	action.Target = strings.ReplaceAll(action.Target, old, url.QueryEscape(new))
