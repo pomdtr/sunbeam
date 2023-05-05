@@ -1,4 +1,4 @@
-# Extending Subeam
+# Extending Sunbeam
 
 The sunbeam extension system is heavily inspired by [gh](https://cli.github.com). Most of the [documentation](https://docs.github.com/en/github-cli/github-cli/creating-github-cli-extensions) from gh can be applied to sunbeam.
 
