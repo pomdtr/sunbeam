@@ -87,7 +87,7 @@ func NewExtensionCmd(extensionRoot string, extensions map[string]*ExtensionManif
 	}
 
 	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionRoot))
-	extensionCmd.AddCommand(NewExtensionManageCmd(extensionRoot, extensions))
+	extensionCmd.AddCommand(NewExtensionManageCmd(extensionRoot))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionRoot))
 	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionRoot, extensions))
@@ -119,14 +119,6 @@ func NewExtensionBrowseCmd(extensionRoot string) *cobra.Command {
 							fmt.Sprintf("%d *", repo.StargazersCount),
 						},
 						Actions: []types.Action{
-							{
-								Type:  types.PushAction,
-								Title: "View Readme",
-								Command: &types.Command{
-									Name: os.Args[0],
-									Args: []string{"extension", "view", repo.FullName},
-								},
-							},
 							{
 								Type:  types.RunAction,
 								Title: "Install",
@@ -165,13 +157,18 @@ func NewExtensionBrowseCmd(extensionRoot string) *cobra.Command {
 	}
 }
 
-func NewExtensionManageCmd(extensionRoot string, extensions map[string]*ExtensionManifest) *cobra.Command {
+func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "manage",
 		Short: "Manage installed extensions",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			generator := func() (*types.Page, error) {
+				extensions, err := ListExtensions(extensionRoot)
+				if err != nil {
+					return nil, fmt.Errorf("unable to list extensions: %s", err)
+				}
+
 				listItems := make([]types.ListItem, 0)
 				for extension, manifest := range extensions {
 					listItems = append(listItems, types.ListItem{
@@ -230,7 +227,20 @@ func NewExtensionManageCmd(extensionRoot string, extensions map[string]*Extensio
 				}
 
 				return &types.Page{
-					Type:  types.ListPage,
+					Type: types.ListPage,
+					EmptyView: &types.EmptyView{
+						Text: "No extensions installed",
+						Actions: []types.Action{
+							{
+								Type:  types.PushAction,
+								Title: "Browse Extensions",
+								Command: &types.Command{
+									Name: os.Args[0],
+									Args: []string{"extension", "browse"},
+								},
+							},
+						},
+					},
 					Items: listItems,
 				}, nil
 			}
@@ -424,10 +434,11 @@ func installExtension(origin string, targetDir string) error {
 		}
 
 		manifest := ExtensionManifest{
-			Type:       ExtensionTypeBinary,
-			Remote:     origin,
-			Entrypoint: binaryName,
-			Version:    release.TagName,
+			Type:        ExtensionTypeBinary,
+			Remote:      origin,
+			Description: repository.Description,
+			Entrypoint:  binaryName,
+			Version:     release.TagName,
 		}
 
 		if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {

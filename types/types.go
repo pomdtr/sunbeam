@@ -27,13 +27,15 @@ type Page struct {
 	Preview *Preview `json:"preview,omitempty"`
 
 	// List page
-	ShowPreview   bool     `json:"showPreview,omitempty"`
-	OnQueryChange *Command `json:"onQueryChange,omitempty"`
-	EmptyView     *struct {
-		Text    string   `json:"text,omitempty"`
-		Actions []Action `json:"actions,omitempty"`
-	} `json:"emptyView,omitempty"`
-	Items []ListItem `json:"items,omitempty"`
+	ShowPreview   bool       `json:"showPreview,omitempty"`
+	OnQueryChange *Command   `json:"onQueryChange,omitempty"`
+	EmptyView     *EmptyView `json:"emptyView,omitempty"`
+	Items         []ListItem `json:"items,omitempty"`
+}
+
+type EmptyView struct {
+	Text    string   `json:"text,omitempty"`
+	Actions []Action `json:"actions,omitempty"`
 }
 
 func NewList(title string, items []ListItem) *Page {
