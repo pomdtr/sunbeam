@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -25,7 +26,13 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
-			return extension, cobra.ShellCompDirectiveDefault
+
+			completions := make([]string, 0, len(extension))
+			for extension := range extension {
+				completions = append(completions, extension)
+			}
+
+			return completions, cobra.ShellCompDirectiveDefault
 		},
 		DisableFlagParsing: true,
 		Args:               cobra.MinimumNArgs(1),
@@ -40,16 +47,16 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 			}
 
 			if args[0] == "." {
+				if _, err := os.Stat(extensionBinaryName); err != nil {
+					return fmt.Errorf("no extension found in current directory")
+				}
+
 				cwd, err := os.Getwd()
 				if err != nil {
 					return err
 				}
 
-				if _, err := os.Stat(extensionBinaryName); err != nil {
-					return fmt.Errorf("no extension found in current directory")
-				}
-
-				return runExtension(cwd, args[1:], input)
+				return runExtension(filepath.Join(cwd, extensionBinaryName), args[1:], input)
 			}
 
 			if strings.HasPrefix(args[0], ".") {

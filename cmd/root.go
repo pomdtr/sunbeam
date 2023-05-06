@@ -32,8 +32,7 @@ const (
 	extensionGroupID = "extension"
 )
 
-func NewRootCmd(version string) *cobra.Command {
-
+func Execute(version string) error {
 	dataDir := filepath.Join(xdg.DataHome, "sunbeam")
 	extensionRoot := filepath.Join(dataDir, "extensions")
 
@@ -86,11 +85,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.Flags().MarkHidden("input")
 	rootCmd.Flags().MarkHidden("query")
 
+	extensions, err := ListExtensions(extensionRoot)
+	if err != nil {
+		return fmt.Errorf("could not list extensions: %w", err)
+	}
+
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
 	)
-	rootCmd.AddCommand(NewExtensionCmd(extensionRoot))
+	rootCmd.AddCommand(NewExtensionCmd(extensionRoot, extensions))
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
@@ -135,65 +139,61 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	extensions, err := ListExtensions(extensionRoot)
-	if err != nil {
-		return rootCmd
+	for extension, manifest := range extensions {
+		rootCmd.AddCommand(NewExtensionExecCmd(extensionRoot, extension, manifest))
 	}
 
-	for _, extension := range extensions {
-		extension := extension
-		rootCmd.AddCommand(&cobra.Command{
-			Use:                extension,
-			DisableFlagParsing: true,
-			GroupID:            extensionGroupID,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				var input string
-				if !isatty.IsTerminal(os.Stdin.Fd()) {
-					inputBytes, err := io.ReadAll(os.Stdin)
-					if err != nil {
-						return err
-					}
-
-					input = string(inputBytes)
-				}
-				return runExtension(filepath.Join(extensionRoot, extension), args, input)
-			},
-		})
-	}
-
-	return rootCmd
+	return rootCmd.Execute()
 }
 
-func runExtension(extensionDir string, args []string, input string) error {
-	extensionBinary := filepath.Join(extensionDir, extensionBinaryName)
-	extensionBinaryWin := fmt.Sprintf("%s.exe", extensionBinary)
+func NewExtensionExecCmd(extensionRoot string, extensionName string, manifest *ExtensionManifest) *cobra.Command {
+	return &cobra.Command{
+		Use:                extensionName,
+		Short:              manifest.Description,
+		DisableFlagParsing: true,
+		GroupID:            extensionGroupID,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var input string
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				inputBytes, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
 
+				input = string(inputBytes)
+			}
+
+			if manifest.Type == ExtentionTypeLocal {
+				return runExtension(manifest.Entrypoint, args, input)
+			}
+
+			return runExtension(filepath.Join(extensionRoot, extensionName, manifest.Entrypoint), args, input)
+		},
+	}
+}
+
+func runExtension(extensionBin string, args []string, input string) error {
 	var command types.Command
 	if runtime.GOOS != "windows" {
 		command = types.Command{
-			Name: extensionBinary,
+			Name: extensionBin,
 			Args: args,
 		}
-	} else if _, err := os.Stat(extensionBinaryWin); err == nil {
-		command = types.Command{
-			Name: extensionBinaryWin,
-			Args: args,
-		}
+		return Draw(internal.NewCommandGenerator(&command))
+	}
 
-	} else {
-		shExe, err := findsh.Find()
-		if err != nil {
-			if errors.Is(err, exec.ErrNotFound) {
-				return errors.New("the `sh.exe` interpreter is required. Please install Git for Windows and try again")
-			}
-			return err
+	shExe, err := findsh.Find()
+	if err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			return errors.New("the `sh.exe` interpreter is required. Please install Git for Windows and try again")
 		}
-		forwardArgs := append([]string{"-c", `command "$@"`, "--", extensionBinary}, args...)
+		return err
+	}
+	forwardArgs := append([]string{"-c", `command "$@"`, "--", extensionBin}, args...)
 
-		command = types.Command{
-			Name: shExe,
-			Args: forwardArgs,
-		}
+	command = types.Command{
+		Name: shExe,
+		Args: forwardArgs,
 	}
 
 	return Draw(internal.NewCommandGenerator(&command))

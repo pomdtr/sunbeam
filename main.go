@@ -9,8 +9,7 @@ import (
 var version = "dev"
 
 func main() {
-	cmd := cmd.NewRootCmd(version)
-	if err := cmd.Execute(); err != nil {
+	if err := cmd.Execute(version); err != nil {
 		os.Exit(1)
 	}
 }

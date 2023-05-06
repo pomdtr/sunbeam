@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 )
 
 type GithubRepo struct {
@@ -13,6 +14,71 @@ type GithubRepo struct {
 	Description     string
 	HtmlUrl         string `json:"html_url"`
 	StargazersCount int    `json:"stargazers_count"`
+}
+
+var repoRegex = regexp.MustCompile(`^https?://github\.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)$`)
+
+func FetchGithubRepository(repoUrl string) (*GithubRepo, error) {
+	matches := repoRegex.FindStringSubmatch(repoUrl)
+
+	if len(matches) != 3 {
+		return nil, fmt.Errorf("invalid repo url: %s", repoUrl)
+	}
+
+	owner := matches[1]
+	name := matches[2]
+
+	res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/%s", owner, name))
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get repo metadata: %s", res.Status)
+	}
+
+	var repo GithubRepo
+	if err := json.NewDecoder(res.Body).Decode(&repo); err != nil {
+		return nil, err
+	}
+
+	return &repo, nil
+}
+
+type GithubGist struct {
+	Description string `json:"description"`
+}
+
+var gistRegex = regexp.MustCompile(`^https?://gist\.github\.com/[A-Za-z0-9_-]+/([A-Za-z0-9_-]+)$`)
+
+func FetchGithubGist(rawGistUrl string) (*GithubGist, error) {
+	matches := gistRegex.FindStringSubmatch(rawGistUrl)
+	if len(matches) != 2 {
+		return nil, fmt.Errorf("invalid gist url: %s", rawGistUrl)
+	}
+
+	gistId := matches[1]
+	if gistId == "" {
+		return nil, fmt.Errorf("invalid gist url: %s", rawGistUrl)
+	}
+
+	res, err := http.Get(fmt.Sprintf("https://api.github.com/gists/%s", gistId))
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get gist metadata: %s", res.Status)
+	}
+
+	var gist GithubGist
+	if err := json.NewDecoder(res.Body).Decode(&gist); err != nil {
+		return nil, err
+	}
+
+	return &gist, nil
 }
 
 type SearchBody struct {
@@ -50,4 +116,38 @@ func SearchSunbeamExtensions(query string) ([]GithubRepo, error) {
 	}
 
 	return body.Items, nil
+}
+
+type Release struct {
+	TagName string `json:"tag_name"`
+}
+
+func GetLatestRelease(repoUrl string) (*Release, error) {
+	matches := repoRegex.FindStringSubmatch(repoUrl)
+
+	if len(matches) != 3 {
+		return nil, fmt.Errorf("invalid repo url: %s", repoUrl)
+	}
+
+	owner := matches[1]
+	name := matches[2]
+
+	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, name)
+
+	resp, err := http.Get(apiUrl)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get latest release: %s", resp.Status)
+	}
+
+	var release Release
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return nil, err
+	}
+
+	return &release, nil
 }
