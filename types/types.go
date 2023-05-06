@@ -98,6 +98,42 @@ type Input struct {
 	FalseSubstitution string `json:"falseSubstitution,omitempty"`
 }
 
+func NewTextInput(name string, title string, placeholder string) Input {
+	return Input{
+		Name:        name,
+		Type:        TextFieldInput,
+		Title:       title,
+		Placeholder: placeholder,
+	}
+}
+
+func NewTextAreaInput(name string, title string, placeholder string) Input {
+	return Input{
+		Name:        name,
+		Type:        TextAreaInput,
+		Title:       title,
+		Placeholder: placeholder,
+	}
+}
+
+func NewCheckbox(name string, title string, label string) Input {
+	return Input{
+		Name:  name,
+		Type:  CheckboxInput,
+		Title: title,
+		Label: label,
+	}
+}
+
+func NewDropDown(name string, title string, items ...DropDownItem) Input {
+	return Input{
+		Name:  name,
+		Type:  DropDownInput,
+		Title: title,
+		Items: items,
+	}
+}
+
 type ActionType string
 
 const (
