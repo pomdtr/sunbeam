@@ -5,7 +5,7 @@
 There is two ways to wire sunbeam to your programs:
 
 - Wrap your command in sunbeam: `sunbeam run <my-command>`
-- Pipe a page to sunbeam: `<my-command> | sunbeam read`
+- Pipe a page to sunbeam: `<my-command> | sunbeam`
 - Pipe an action to sunbeam: `<my-action> | sunbeam trigger`
 
 ## Configuring sunbeam appearance
@@ -31,10 +31,6 @@ sunbeam validate sunbeam.json
 
 # validate a dynamic page
 ./github.sh | sunbeam validate
-
-# You can even chain it with other sunbeam commands !
-sunbeam run ./github.sh | sunbeam validate
-sunbeam read sunbeam.json | sunbeam validate
 ```
 
 The validate command will exit with a non-zero exit code if the output is invalid.

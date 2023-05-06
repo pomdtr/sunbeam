@@ -55,12 +55,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var input string
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				b, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-
-				input = string(b)
+				return Draw(internal.NewStaticGenerator(os.Stdin))
 			}
 
 			defaultCommand, ok := os.LookupEnv("SUNBEAM_DEFAULT_CMD")
@@ -152,7 +147,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			DisableFlagParsing: true,
 			GroupID:            extensionGroupID,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				return runExtension(filepath.Join(extensionRoot, extension), args)
+				var input string
+				if !isatty.IsTerminal(os.Stdin.Fd()) {
+					inputBytes, err := io.ReadAll(os.Stdin)
+					if err != nil {
+						return err
+					}
+
+					input = string(inputBytes)
+				}
+				return runExtension(filepath.Join(extensionRoot, extension), args, input)
 			},
 		})
 	}
@@ -160,7 +164,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	return rootCmd
 }
 
-func runExtension(extensionDir string, args []string) error {
+func runExtension(extensionDir string, args []string, input string) error {
 	extensionBinary := filepath.Join(extensionDir, extensionBinaryName)
 	extensionBinaryWin := fmt.Sprintf("%s.exe", extensionBinary)
 

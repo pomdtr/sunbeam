@@ -49,7 +49,7 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 					return fmt.Errorf("no extension found in current directory")
 				}
 
-				return runExtension(cwd, args[1:])
+				return runExtension(cwd, args[1:], input)
 			}
 
 			if strings.HasPrefix(args[0], ".") {
