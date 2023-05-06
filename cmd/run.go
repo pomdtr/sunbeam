@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
@@ -29,6 +30,15 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 		DisableFlagParsing: true,
 		Args:               cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var input string
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				b, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+				input = string(b)
+			}
+
 			if args[0] == "." {
 				cwd, err := os.Getwd()
 				if err != nil {
@@ -48,15 +58,17 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 				}
 
 				return Draw(internal.NewCommandGenerator(&types.Command{
-					Name: args[0],
-					Args: args[1:],
+					Name:  args[0],
+					Args:  args[1:],
+					Input: input,
 				}))
 			}
 
 			if _, err := exec.LookPath(args[0]); err == nil {
 				return Draw(internal.NewCommandGenerator(&types.Command{
-					Name: args[0],
-					Args: args[1:],
+					Name:  args[0],
+					Args:  args[1:],
+					Input: input,
 				}))
 			}
 
@@ -90,8 +102,9 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 				}
 
 				return Draw(internal.NewCommandGenerator(&types.Command{
-					Name: tempfile.Name(),
-					Args: args[1:],
+					Name:  tempfile.Name(),
+					Args:  args[1:],
+					Input: input,
 				}))
 			}
 

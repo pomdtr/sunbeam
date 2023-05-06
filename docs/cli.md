@@ -264,7 +264,7 @@ sunbeam extension help [command] [flags]
 
 ## sunbeam extension install
 
-Install a sunbeam extension from a repository
+Install a sunbeam extension from a folder/gist/repository
 
 ```
 sunbeam extension install [alias] [extension] [flags]
@@ -431,6 +431,20 @@ sunbeam help [command] [flags]
   -h, --help   help for help
 ```
 
+## sunbeam info
+
+Print information about sunbeam
+
+```
+sunbeam info [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for info
+```
+
 ## sunbeam query
 
 Transform or generate JSON using a jq query
@@ -467,7 +481,7 @@ sunbeam read [flags]
 
 ## sunbeam run
 
-Generate a page from a command or a script, and push it
+Generate a page from a command or a script, and push it's output
 
 ```
 sunbeam run [flags]
@@ -476,23 +490,23 @@ sunbeam run [flags]
 ### Options
 
 ```
-  -h, --help                help for run
-      --on-success string   action to trigger when the command is successful (default "push")
+  -h, --help   help for run
 ```
 
-## sunbeam serve
+## sunbeam trigger
 
-Start a web server to serve sunbeam
+Trigger an action
 
 ```
-sunbeam serve [flags]
+sunbeam trigger [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help       help for serve
-  -p, --port int   port to listen on (default 8080)
+  -h, --help                help for trigger
+  -i, --input stringArray   Input values
+  -q, --query string        Query
 ```
 
 ## sunbeam validate

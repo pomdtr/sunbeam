@@ -250,6 +250,7 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 									{
 										Name:        "name",
 										Type:        types.TextFieldInput,
+										Default:     extension,
 										Title:       "Name",
 										Placeholder: "my-alias",
 									},
