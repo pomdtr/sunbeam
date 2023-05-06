@@ -16,9 +16,10 @@ import (
 
 func NewTriggerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "trigger",
-		Args:  cobra.NoArgs,
-		Short: "Trigger an action",
+		Use:     "trigger",
+		Args:    cobra.NoArgs,
+		GroupID: coreGroupID,
+		Short:   "Trigger an action",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			input, err := io.ReadAll(os.Stdin)
 			if err != nil {

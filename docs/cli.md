@@ -467,7 +467,7 @@ sunbeam query <query> [flags]
 
 ## sunbeam read
 
-Read a file and push it
+Read a a page from a file and push it
 
 ```
 sunbeam read [flags]

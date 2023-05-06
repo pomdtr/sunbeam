@@ -12,7 +12,7 @@ import (
 func NewReadCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "read",
-		Short:   "Read a file and push it",
+		Short:   "Read a a page from a file and push it",
 		GroupID: coreGroupID,
 		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
