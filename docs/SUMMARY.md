@@ -11,7 +11,6 @@
   - [Github (Bash)](./examples/github.md)
   - [Bitwarden (Bash)](./examples/bitwarden.md)
   - [Devdocs (Bash)](./examples/devdocs.md)
-- [Advanced](./advanced.md)
 - [FAQ](./faq.md)
 
 # Reference

@@ -73,6 +73,65 @@ The user can then use the escape key to go back to the previous page.
 
 You can find a working file browser example [here](../examples/file-browser.md).
 
+## Displaying Text
+
+If you want to display a block of text to the user, you can use the `detail` page type:
+
+```json
+{
+  "type": "detail",
+  "preview": {
+    "text": "Hello World!"
+  }
+}
+```
+
+Detail view support actions, so you can add a button to the page:
+
+```json
+{
+  "type": "detail",
+  "preview": {
+    "text": "Hello World!"
+  },
+  "actions": [
+    {
+      "type": "run",
+      "command": "echo Hello World!"
+    }
+  ]
+}
+```
+
+## Handling User Input
+
+You may want to ask the user for some input before running a command.
+
+You can add an array of inputs to every sunbeam actions, and reference their value in the command.
+
+```json
+{
+  "type": "run",
+  "command": "echo ${input:name}",
+  "inputs": [
+    {
+      "name": "name",
+      "type": "textfield",
+      "title": "Name",
+      "title": "What's your name?"
+    }
+  ]
+}
+```
+
+When activating the action, the user will be prompted for the input value.
+Sunbeam support the following input types:
+
+- `textfield`: A simple text input
+- `textarea`: A multiline text input
+- `checkbox`: A checkbox
+- `dropdown`: A dropdown menu
+
 ### What's next?
 
 This is just the tip of the iceberg. Sunbeam can show detail pages, prompt the user for input, and much more.

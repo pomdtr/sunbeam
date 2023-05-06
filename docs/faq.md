@@ -6,7 +6,7 @@ There is two ways to wire sunbeam to your programs:
 
 - Wrap your command in sunbeam: `sunbeam run <my-command>`
 - Pipe a page to sunbeam: `<my-command> | sunbeam read`
-- Pipe an action to sunbeam: `<my-command> | sunbeam`
+- Pipe an action to sunbeam: `<my-action> | sunbeam trigger`
 
 ## Configuring sunbeam appearance
 
@@ -52,7 +52,7 @@ If stdout is not interactive, sunbeam will dump the raw json to stdout instead.
 
 You can use this to build your own frontend for sunbeam.
 
-- Call sunbeam with a root action, and read the output
+- Call `sunbeam trigger` with a root action, and read the output
 - Display the page to the user
 - If the user trigger an action, spawn a new sunbeam process with the JSON action as stdin
   - if the actions has inputs, you need to prompt the user for the input values, and pass them to sunbeam with the --input flag
