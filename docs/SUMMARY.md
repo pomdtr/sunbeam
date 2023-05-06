@@ -4,7 +4,6 @@
 
 - [Installation](./installation.md)
 - [Usage](./getting-started/usage.md)
-- [Advanced](./advanced.md)
 - [Extending Sunbeam](./extensions.md)
 - [Examples](./examples/index.md)
   - [File Browser (Python)](./examples/file-browser.md)
@@ -12,6 +11,7 @@
   - [Github (Bash)](./examples/github.md)
   - [Bitwarden (Bash)](./examples/bitwarden.md)
   - [Devdocs (Bash)](./examples/devdocs.md)
+- [Advanced](./advanced.md)
 - [FAQ](./faq.md)
 
 # Reference

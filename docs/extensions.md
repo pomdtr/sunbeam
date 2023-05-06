@@ -45,6 +45,7 @@ You have three alternatives distribute sunbeam extensions:
 
 The easiest way to write a sunbeam extension is to create a [github gist](https://gist.github.com/) containing a `sunbeam-extension` executable.
 You will then be able to run the extension using the `sunbeam run <gist-url>` command, or install it using the `sunbeam extension install <alias> <gist-url>` command.
+
 All the examples from the docs are available as gists.
 
 ### Git Repositories
@@ -67,3 +68,5 @@ See the [sunbeam-vscode](https://github.com/pomdtr/sunbeam-vscode) extension for
 > **Warning**: This feature is only available for extensions published as github repositories.
 
 Set the `sunbeam-extension` topic on your repository to have it listed in the `sunbeam extension browse` command.
+
+Be sure to test your extension before publishing it.
