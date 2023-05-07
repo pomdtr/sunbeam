@@ -23,16 +23,12 @@ func NewKvCmd(extensionRoot string) *cobra.Command {
 		Short:   "Key/Value operations",
 		GroupID: coreGroupID,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			extensionName := cmd.Flag("extension").Value.String()
-			if extensionName == "" {
-				return fmt.Errorf("extension name is required outside of an extension context")
+			kvPath, _ := cmd.Flags().GetString("db")
+			if kvPath != "" {
+				return nil
 			}
 
-			if _, err := os.Stat(filepath.Join(extensionRoot, extensionName)); os.IsNotExist(err) {
-				return fmt.Errorf("extension %s does not exist", extensionName)
-			}
-
-			return nil
+			return fmt.Errorf("db flag is required if not set in environment")
 		},
 	}
 
@@ -41,7 +37,7 @@ func NewKvCmd(extensionRoot string) *cobra.Command {
 	cmd.AddCommand(NewKvListCmd(extensionRoot))
 	cmd.AddCommand(NewKvDeleteCmd(extensionRoot))
 
-	cmd.PersistentFlags().StringP("extension", "e", os.Getenv("SUNBEAM_EXTENSION_NAME"), "Extension name")
+	cmd.PersistentFlags().String("db", os.Getenv("SUNBEAM_KV_PATH"), "Path to the key/value store")
 
 	return cmd
 }
@@ -52,10 +48,9 @@ func NewKvGetCmd(extensionRoot string) *cobra.Command {
 		Short: "Get a value from the key/value store",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extension, _ := cmd.Flags().GetString("extension")
-			dbPath := filepath.Join(extensionRoot, extension, kvFile)
+			kvPath, _ := cmd.Flags().GetString("db")
 
-			db, err := OpenDB(dbPath)
+			db, err := OpenDB(kvPath)
 			if err != nil {
 				return err
 			}
@@ -77,10 +72,9 @@ func NewKvSetCmd(extensionRoot string) *cobra.Command {
 		Short: "Set a value in the key/value store",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extension, _ := cmd.Flags().GetString("extension")
-			dbPath := filepath.Join(extensionRoot, extension, kvFile)
+			kvPath, _ := cmd.Flags().GetString("db")
 
-			db, err := OpenDB(dbPath)
+			db, err := OpenDB(kvPath)
 			if err != nil {
 				return err
 			}
@@ -118,10 +112,9 @@ func NewKvListCmd(extensionRoot string) *cobra.Command {
 		Use:   "list",
 		Short: "List all key/value pairs",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extension, _ := cmd.Flags().GetString("extension")
-			dbPath := filepath.Join(extensionRoot, extension, kvFile)
+			kvPath, _ := cmd.Flags().GetString("db")
 
-			db, err := OpenDB(dbPath)
+			db, err := OpenDB(kvPath)
 			if err != nil {
 				return err
 			}
@@ -156,10 +149,9 @@ func NewKvDeleteCmd(extensionRoot string) *cobra.Command {
 		Short: "Delete a key/value pair",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extension, _ := cmd.Flags().GetString("extension")
-			dbPath := filepath.Join(extensionRoot, extension, kvFile)
+			kvPath, _ := cmd.Flags().GetString("db")
 
-			db, err := OpenDB(dbPath)
+			db, err := OpenDB(kvPath)
 			if err != nil {
 				return err
 			}
@@ -209,7 +201,12 @@ func OpenDB(path string) (*DB, error) {
 
 // Save writes db.Data back to disk.
 func (db DB) Save() error {
-	bs, err := json.Marshal(db.Data)
+	kvDir := filepath.Dir(db.path)
+	if err := os.MkdirAll(kvDir, 0700); err != nil {
+		return err
+	}
+
+	bs, err := json.MarshalIndent(db.Data, "", "  ")
 	if err != nil {
 		return err
 	}

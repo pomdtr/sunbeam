@@ -58,6 +58,9 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 					return err
 				}
 
+				os.Setenv("SUNBEAM_KV_PATH", filepath.Join(cwd, ".sunbeam", kvFile))
+				os.Setenv("SUNBEAM_EXTENSION_BIN", filepath.Join(cwd, extensionBinaryName))
+
 				return runExtension(filepath.Join(cwd, extensionBinaryName), args[1:], input)
 			}
 

@@ -155,16 +155,12 @@ func NewExtensionExecCmd(extensionRoot string, extensionName string, manifest *E
 		DisableFlagParsing: true,
 		GroupID:            extensionGroupID,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := os.Setenv("SUNBEAM_EXTENSION_NAME", extensionName); err != nil {
-				return err
-			}
-
-			if err := os.Setenv("SUNBEAM_EXTENSION_ROOT", extensionRoot); err != nil {
-				return err
-			}
-
-			if err := os.Setenv("SUNBEAM_EXTENSION_BIN", filepath.Join(extensionRoot, extensionName, manifest.Entrypoint)); err != nil {
-				return err
+			if manifest.Type == ExtentionTypeLocal {
+				os.Setenv("SUNBEAM_EXTENSION_BIN", manifest.Entrypoint)
+				os.Setenv("SUNBEAM_KV_PATH", filepath.Join(filepath.Dir(manifest.Entrypoint), ".sunbeam", kvFile))
+			} else {
+				os.Setenv("SUNBEAM_EXTENSION_BIN", filepath.Join(extensionRoot, extensionName, manifest.Entrypoint))
+				os.Setenv("SUNBEAM_KV_PATH", filepath.Join(extensionRoot, extensionName, kvFile))
 			}
 
 			return nil
