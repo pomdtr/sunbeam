@@ -6,12 +6,12 @@ set -eo pipefail
 
 sunbeam query --null-input '{
     type: "detail",
-    title: "Hello, world!",
-    preview: "Hello, world!",
+    title: "Hello, Sunbeam!",
+    preview: "Hello, Sunbeam!",
     actions: [
         {
             type: "copy",
-            text: "Hello, world!",
+            text: "Hello, sunbeam!",
         }
     ]
 }'

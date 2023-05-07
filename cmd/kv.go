@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
@@ -132,13 +133,19 @@ func NewKvListCmd(extensionRoot string) *cobra.Command {
 			delimiter, _ := cmd.Flags().GetString("delimiter")
 			keysOnly, _ := cmd.Flags().GetBool("keys-only")
 			valuesOnly, _ := cmd.Flags().GetBool("values-only")
-			for k, v := range db.Data {
+
+			var keys []string
+			sort.SliceStable(keys, func(i, j int) bool {
+				return keys[i] < keys[j]
+			})
+
+			for _, key := range keys {
 				if keysOnly {
-					fmt.Println(k)
+					fmt.Println(key)
 				} else if valuesOnly {
-					fmt.Println(v)
+					fmt.Println(db.Data[key])
 				} else {
-					fmt.Printf("%s%s%s\n", k, delimiter, v)
+					fmt.Printf("%s%s%s\n", key, delimiter, db.Data[key])
 				}
 			}
 

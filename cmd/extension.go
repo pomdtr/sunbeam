@@ -26,7 +26,7 @@ var (
 	manifestName        = "sunbeam.json"
 )
 
-//go:embed templates/sunbeam-extension
+//go:embed templates/bash/sunbeam-extension
 var extensionTemplate []byte
 
 type ExtensionType string
