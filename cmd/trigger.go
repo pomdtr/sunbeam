@@ -9,6 +9,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mattn/go-isatty"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
@@ -33,6 +34,10 @@ func NewTriggerCmd() *cobra.Command {
 			}
 
 			inputsFlag, _ := cmd.Flags().GetStringArray("input")
+
+			if len(inputsFlag) < len(action.Inputs) && !isatty.IsTerminal(os.Stdout.Fd()) {
+				return fmt.Errorf("not enough inputs provided")
+			}
 
 			inputs := make(map[string]string)
 			for _, input := range inputsFlag {
