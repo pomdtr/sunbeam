@@ -189,7 +189,7 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 				}
 
 				return PushPageMsg{
-					runner: NewRunner(NewCommandGenerator(action.Command)),
+					Page: NewRunner(NewCommandGenerator(action.Command)),
 				}
 			}
 
@@ -200,7 +200,7 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 				}
 			}
 			return PushPageMsg{
-				runner: NewRunner(NewFileGenerator(action.Page)),
+				Page: NewRunner(NewFileGenerator(action.Page)),
 			}
 		}
 

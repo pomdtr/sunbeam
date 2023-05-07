@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/atotto/clipboard"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
@@ -32,9 +33,6 @@ func NewTriggerCmd() *cobra.Command {
 			}
 
 			inputsFlag, _ := cmd.Flags().GetStringArray("input")
-			if len(inputsFlag) < len(action.Inputs) {
-				return fmt.Errorf("not enough inputs provided")
-			}
 
 			inputs := make(map[string]string)
 			for _, input := range inputsFlag {
@@ -62,6 +60,71 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 	}
 
 	action = internal.RenderAction(action, "${query}", query)
+
+	if len(inputs) < len(action.Inputs) {
+		items := make([]internal.FormItem, 0)
+		for _, input := range action.Inputs {
+			if _, ok := inputs[input.Name]; !ok {
+				item, err := internal.NewFormItem(input)
+				if err != nil {
+					return err
+				}
+
+				items = append(items, item)
+			}
+		}
+
+		return Run(internal.NewForm(action.Title, items, func(values map[string]string) tea.Cmd {
+			action := action
+			for name, value := range values {
+				action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
+			}
+
+			switch action.Type {
+			case types.PushAction:
+				return func() tea.Msg {
+					var page internal.Page
+					if action.Command != nil {
+						page = internal.NewRunner(internal.NewCommandGenerator(action.Command))
+					} else {
+						page = internal.NewRunner(internal.NewFileGenerator(action.Page))
+					}
+
+					return internal.PushPageMsg{
+						Page: page,
+					}
+				}
+			case types.RunAction:
+				return func() tea.Msg {
+					return internal.ExitMsg{
+						Cmd: action.Command.Cmd(),
+					}
+				}
+			case types.OpenAction:
+				return func() tea.Msg {
+					err := browser.OpenURL(action.Target)
+					if err != nil {
+						return fmt.Errorf("unable to open link: %s", err)
+					}
+					return tea.Quit()
+				}
+
+			case types.CopyAction:
+				return func() tea.Msg {
+					if err := clipboard.WriteAll(action.Text); err != nil {
+						return fmt.Errorf("unable to write to clipboard: %s", err)
+					}
+					return tea.Quit()
+				}
+
+			default:
+				return func() tea.Msg {
+					return fmt.Errorf("unknown action type: %s", action.Type)
+				}
+			}
+		}))
+
+	}
 
 	switch action.Type {
 	case types.PushAction:

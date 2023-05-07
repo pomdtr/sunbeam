@@ -216,11 +216,16 @@ func Draw(generator internal.PageGenerator) error {
 	}
 
 	runner := internal.NewRunner(generator)
+
+	return Run(runner)
+}
+
+func Run(page internal.Page) error {
 	options := internal.SunbeamOptions{
 		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
 		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
 	}
-	paginator := internal.NewPaginator(runner, options)
+	paginator := internal.NewPaginator(page, options)
 
 	var p *tea.Program
 	if options.MaxHeight == 0 {

@@ -12,7 +12,7 @@ import (
 type PopPageMsg struct{}
 
 type PushPageMsg struct {
-	runner Page
+	Page Page
 }
 
 type Page interface {
@@ -68,7 +68,7 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SetSize(msg.Width, msg.Height)
 		return m, nil
 	case PushPageMsg:
-		cmd := m.Push(msg.runner)
+		cmd := m.Push(msg.Page)
 		return m, cmd
 	case PopPageMsg:
 		if len(m.pages) > 1 {
