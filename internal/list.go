@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/chroma/quick"
+	"github.com/atotto/clipboard"
 	"github.com/pomdtr/sunbeam/types"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -300,6 +301,57 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return c, c.actionList.Focus()
+		case "enter":
+			if c.actionList.Focused() {
+				break
+			}
+
+			return c, func() tea.Msg {
+				var actions []types.Action
+				if c.filter.Selection() != nil {
+					item := c.filter.Selection().(ListItem)
+					actions = item.Actions
+				} else {
+					actions = c.emptyActions
+				}
+
+				if len(actions) == 0 {
+					return nil
+				}
+
+				return actions[0]
+			}
+		case "alt+enter":
+			return c, func() tea.Msg {
+				var actions []types.Action
+				if c.filter.Selection() != nil {
+					item := c.filter.Selection().(ListItem)
+					actions = item.Actions
+				} else {
+					actions = c.emptyActions
+				}
+
+				if len(actions) < 2 {
+					return nil
+				}
+
+				return actions[1]
+			}
+		case "ctlr+y":
+			if c.actionList.Focused() {
+				break
+			}
+
+			return c, func() tea.Msg {
+				if c.filter.Selection() == nil {
+					return nil
+				}
+
+				item := c.filter.Selection().(ListItem)
+
+				return clipboard.WriteAll(item.Title)
+			}
+
 		case "shift+down":
 			c.viewport.LineDown(1)
 			return c, nil

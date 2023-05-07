@@ -127,7 +127,7 @@ func (runner *CommandRunner) Refresh() tea.Msg {
 	return page
 }
 
-func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) tea.Cmd {
+func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 	for _, env := range os.Environ() {
 		pair := strings.SplitN(env, "=", 2)
 		if len(pair) != 2 {
@@ -145,15 +145,6 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 		return tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.OpenAction:
 		return func() tea.Msg {
-			if copyAction {
-				err := clipboard.WriteAll(action.Target)
-				if err != nil {
-					return err
-				}
-
-				return nil
-			}
-
 			if err := browser.OpenURL(action.Target); err != nil {
 				return func() tea.Msg {
 					return err
@@ -169,36 +160,17 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 				return err
 			}
 
-			if copyAction {
-				return nil
-			}
-
 			return tea.Quit()
 		}
 
 	case types.PushAction:
 		return func() tea.Msg {
 			if action.Command != nil {
-				if copyAction {
-					err := clipboard.WriteAll(action.Command.Cmd().String())
-					if err != nil {
-						return err
-					}
-
-					return nil
-				}
-
 				return PushPageMsg{
 					Page: NewRunner(NewCommandGenerator(action.Command)),
 				}
 			}
 
-			if copyAction {
-				err := clipboard.WriteAll(action.Page)
-				return func() tea.Msg {
-					return err
-				}
-			}
 			return PushPageMsg{
 				Page: NewRunner(NewFileGenerator(action.Page)),
 			}
@@ -206,14 +178,6 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 
 	case types.RunAction:
 		return func() tea.Msg {
-			if copyAction {
-				err := clipboard.WriteAll(action.Command.Cmd().String())
-				if err != nil {
-					return err
-				}
-				return nil
-			}
-
 			if !action.ReloadOnSuccess {
 				return ExitMsg{
 					Cmd: action.Command.Cmd(),
@@ -224,12 +188,7 @@ func (runner *CommandRunner) handleAction(action types.Action, copyAction bool) 
 				return err
 			}
 
-			return ActionMsg{
-				Action: types.Action{
-					Type: types.ReloadAction,
-				},
-			}
-
+			return types.NewReloadAction()
 		}
 	default:
 		return func() tea.Msg {
@@ -369,7 +328,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		runner.Generator = NewCommandGenerator(queryCmd)
 
 		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh)
-	case ActionMsg:
+	case types.Action:
 		if len(msg.Inputs) > 0 {
 
 			formItems := make([]FormItem, len(msg.Inputs))
@@ -385,16 +344,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			form := NewForm(msg.Title, formItems, func(values map[string]string) tea.Cmd {
 				return func() tea.Msg {
-					action := msg.Action
+					submitAction := msg
 					for key, value := range values {
-						action = RenderAction(action, fmt.Sprintf("${input:%s}", key), value)
+						submitAction = RenderAction(submitAction, fmt.Sprintf("${input:%s}", key), value)
 					}
-					action.Inputs = nil
+					submitAction.Inputs = nil
 
-					return ActionMsg{
-						Action: action,
-						Copy:   msg.Copy,
-					}
+					return submitAction
 				}
 			})
 
@@ -404,7 +360,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		runner.form = nil
-		cmd := runner.handleAction(msg.Action, msg.Copy)
+		cmd := runner.handleAction(msg)
 		return runner, cmd
 	case error:
 		errorView := NewDetail("Error", func() string {

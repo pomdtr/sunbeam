@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -14,11 +15,6 @@ type ActionList struct {
 	header  Header
 	filter  Filter
 	footer  Footer
-}
-
-type ActionMsg struct {
-	Copy bool
-	types.Action
 }
 
 func NewActionList() ActionList {
@@ -54,13 +50,15 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 	al.actions = actions
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
-		subtitle := ""
-		if action.Key != "" {
-			subtitle = fmt.Sprintf("alt+%s", action.Key)
-		}
+		var subtitle string
 		if i == 0 {
 			subtitle = "enter"
+		} else if i == 1 {
+			subtitle = "alt+enter"
+		} else if action.Key != "" {
+			subtitle = fmt.Sprintf("alt+%s", action.Key)
 		}
+
 		filterItems[i] = ListItem{
 			ListItem: types.ListItem{
 				Title:    action.Title,
@@ -90,30 +88,57 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			}
 
 			return al, nil
-		case "enter", "ctrl+y":
+		case "enter":
 			selectedItem := al.filter.Selection()
 			if selectedItem == nil {
 				return al, nil
 			}
 			listItem, _ := selectedItem.(ListItem)
 			al.Blur()
+
 			return al, func() tea.Msg {
-				var Copy bool
-				if msg.String() == "ctrl+y" {
-					Copy = true
+				if len(listItem.Actions) == 0 {
+					return nil
 				}
-				return ActionMsg{
-					Copy:   Copy,
-					Action: listItem.Actions[0],
+
+				return listItem.Actions[0]
+			}
+		case "ctrl+y":
+			selectedItem := al.filter.Selection()
+			if selectedItem == nil {
+				return al, nil
+			}
+			listItem, _ := selectedItem.(ListItem)
+			al.Blur()
+
+			return al, func() tea.Msg {
+				if len(listItem.Actions) == 0 {
+					return nil
 				}
+				action := listItem.Actions[0]
+				var content string
+				switch action.Type {
+				case types.CopyAction:
+					content = action.Text
+				case types.OpenAction:
+					content = action.Target
+				case types.RunAction:
+					content = action.Command.Cmd().String()
+				case types.PushAction:
+					if action.Command != nil {
+						content = action.Command.Cmd().String()
+					} else {
+						content = action.Page
+					}
+				}
+
+				return clipboard.WriteAll(content)
 			}
 		default:
 			for _, action := range al.actions {
 				if msg.String() == fmt.Sprintf("alt+%s", action.Key) {
 					return al, func() tea.Msg {
-						return ActionMsg{
-							Action: action,
-						}
+						return action
 					}
 				}
 			}
