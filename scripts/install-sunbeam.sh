@@ -5,7 +5,7 @@ fi
 
 set -e
 
-TMP_DIR=$(mktemp -d -t jpillora-installer-XXXXXXXXXX)
+TMP_DIR=$(mktemp -d -t sunbeam-installer-XXXXXXXXXX)
 function cleanup {
 	rm -rf "$TMP_DIR" > /dev/null
 }
@@ -20,7 +20,6 @@ function install {
 	#settings
 	USER="pomdtr"
 	PROG="sunbeam"
-	ASPROG=""
 	RELEASE="latest"
 	INSECURE="false"
 	OUT_DIR="$HOME/.local/bin"
@@ -81,37 +80,29 @@ function install {
 	FTYPE=""
 	case "${OS}_${ARCH}" in
 	"darwin_arm64")
-		URL="https://github.com/pomdtr/sunbeam/releases/download/v1.0.0-rc.1/sunbeam_Darwin_arm64.tar.gz"
+		URL="https://github.com/pomdtr/sunbeam/releases/latest/download/sunbeam_Darwin_arm64.tar.gz"
 		FTYPE=".tar.gz"
 		;;
 	"darwin_amd64")
-		URL="https://github.com/pomdtr/sunbeam/releases/download/v1.0.0-rc.1/sunbeam_Darwin_x86_64.tar.gz"
+		URL="https://github.com/pomdtr/sunbeam/releases/latest/download/sunbeam_Darwin_x86_64.tar.gz"
 		FTYPE=".tar.gz"
 		;;
 	"linux_arm64")
-		URL="https://github.com/pomdtr/sunbeam/releases/download/v1.0.0-rc.1/sunbeam_Linux_arm64.tar.gz"
+		URL="https://github.com/pomdtr/sunbeam/releases/latest/download/sunbeam_Linux_arm64.tar.gz"
 		FTYPE=".tar.gz"
 		;;
 	"linux_386")
-		URL="https://github.com/pomdtr/sunbeam/releases/download/v1.0.0-rc.1/sunbeam_Linux_i386.tar.gz"
+		URL="https://github.com/pomdtr/sunbeam/releases/latest/download/sunbeam_Linux_i386.tar.gz"
 		FTYPE=".tar.gz"
 		;;
 	"linux_amd64")
-		URL="https://github.com/pomdtr/sunbeam/releases/download/v1.0.0-rc.1/sunbeam_Linux_x86_64.tar.gz"
+		URL="https://github.com/pomdtr/sunbeam/releases/latest/download/sunbeam_Linux_x86_64.tar.gz"
 		FTYPE=".tar.gz"
 		;;
 	*) fail "No asset for platform ${OS}-${ARCH}";;
 	esac
 	#got URL! download it...
-	echo -n "Downloading"
-	echo -n " $USER/$PROG"
-	if [ ! -z "$RELEASE" ]; then
-		echo -n " $RELEASE"
-	fi
-	if [ ! -z "$ASPROG" ]; then
-		echo -n " as $ASPROG"
-	fi
-	echo -n " (${OS}/${ARCH})"
+	echo "Downloading $USER/$PROG $RELEASE (${OS}/${ARCH})"
 
 	echo "....."
 
@@ -155,20 +146,9 @@ function install {
 	if [ ! -z "$ASPROG" ]; then
 		DEST="$OUT_DIR/$ASPROG"
 	fi
-	#move without sudo
-	OUT=$(mv "$TMP_BIN" "$DEST" 2>&1)
-	STATUS=$?
-	# failed and string contains "Permission denied"
-	if [ $STATUS -ne 0 ]; then
-		if [[ $OUT =~ "Permission denied" ]]; then
-			echo "mv with sudo..."
-			sudo mv "$TMP_BIN" "$DEST" || fail "sudo mv failed"
-		else
-			fail "mv failed ($OUT)"
-		fi
-	fi
+
+	mv "$TMP_BIN" "$DEST" 2>&1
 	echo "Downloaded to $DEST"
-	#done
 	cleanup
 }
 install

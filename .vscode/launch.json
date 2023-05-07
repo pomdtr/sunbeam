@@ -1,12 +1,23 @@
 {
   "configurations": [
     {
-      "name": "sunbeam extension manage",
+      "name": "sunbeam",
       "type": "go",
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "args": ["extension", "manage"]
+      "args": [
+        "extension",
+        "install",
+        "kv",
+        "https://github.com/pomdtr/sunbeam"
+      ]
+    },
+    {
+      "name": "install script",
+      "type": "bashdb",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/sunbeam-installer.sh"
     }
   ]
 }
