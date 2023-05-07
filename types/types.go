@@ -38,7 +38,7 @@ type EmptyView struct {
 	Actions []Action `json:"actions,omitempty"`
 }
 
-func NewList(title string, items []ListItem) *Page {
+func NewList(title string, items ...ListItem) *Page {
 	return &Page{
 		Type:  ListPage,
 		Title: title,
@@ -46,7 +46,7 @@ func NewList(title string, items []ListItem) *Page {
 	}
 }
 
-func NewDetail(title string, preview *Preview, actions []Action) *Page {
+func NewDetail(title string, preview *Preview, actions ...Action) *Page {
 	return &Page{
 		Type:    DetailPage,
 		Title:   title,
