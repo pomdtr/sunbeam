@@ -293,12 +293,18 @@ func NewExtensionRenameCmd(extensionRoot string, extensions map[string]*Extensio
 		Args:      cobra.ExactArgs(2),
 		ValidArgs: validArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if _, ok := extensions[args[0]]; !ok {
+			commands := cmd.Root().Commands()
+			commandMap := make(map[string]struct{}, len(commands))
+			for _, command := range commands {
+				commandMap[command.Name()] = struct{}{}
+			}
+
+			if _, ok := commandMap[args[0]]; !ok {
 				return fmt.Errorf("extension does not exist: %s", args[0])
 			}
 
-			if _, ok := extensions[args[1]]; ok {
-				return fmt.Errorf("extension already exists: %s", args[1])
+			if _, ok := commandMap[args[1]]; ok {
+				return fmt.Errorf("alias conflicts with existing command: %s", args[0])
 			}
 
 			return nil
@@ -322,15 +328,16 @@ func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 		Short: "Install a sunbeam extension from a folder/gist/repository",
 		Args:  cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if _, err := os.Stat(filepath.Join(extensionRoot, args[0])); !os.IsNotExist(err) {
-				return fmt.Errorf("extension already exists: %s", args[0])
+			commands := cmd.Root().Commands()
+			commandMap := make(map[string]struct{}, len(commands))
+			for _, command := range commands {
+				commandMap[command.Name()] = struct{}{}
 			}
 
-			if _, err := os.Stat(extensionRoot); os.IsNotExist(err) {
-				if err := os.MkdirAll(extensionRoot, 0755); err != nil {
-					return fmt.Errorf("could not create extension directory: %s", err)
-				}
+			if _, ok := commandMap[args[0]]; ok {
+				return fmt.Errorf("alias conflicts with existing command: %s", args[0])
 			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
