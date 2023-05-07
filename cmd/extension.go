@@ -594,17 +594,22 @@ func gitInstall(extensionUrl string, targetDir string) error {
 }
 
 func NewExtensionListCmd(extensionRoot string, extensions map[string]*ExtensionManifest) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List installed extension commands",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			delimiter, _ := cmd.Flags().GetString("delimiter")
 			for extension, manifest := range extensions {
-				fmt.Printf("%s: %s\n", extension, manifest.Description)
+				fmt.Printf("%s%s%s\n", extension, delimiter, manifest.Description)
 			}
 
 			return nil
 		},
 	}
+
+	cmd.Flags().StringP("delimiter", "d", "\t", "Delimiter to use between extension name and description")
+
+	return cmd
 }
 
 func NewExtensionRemoveCmd(extensionRoot string) *cobra.Command {
