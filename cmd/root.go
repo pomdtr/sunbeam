@@ -57,12 +57,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return Draw(internal.NewStaticGenerator(os.Stdin))
 			}
 
-			defaultCommand, ok := os.LookupEnv("SUNBEAM_DEFAULT_CMD")
+			rootCommand, ok := os.LookupEnv("SUNBEAM_ROOT_CMD")
 			if !ok {
 				return cmd.Usage()
 			}
 
-			commandArgs, err := shlex.Split(defaultCommand)
+			commandArgs, err := shlex.Split(rootCommand)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Could not parse default command: %s", err)
 				return err

@@ -21,6 +21,14 @@ You can also set these options using the `--height` and `--padding` flags.
 sunbeam ./github.sh
 ```
 
+## Set Sunbeam Root View
+
+By default, running `sunbeam` will display the usage string. You can set a root view to display instead by setting the `SUNBEAM_ROOT_CMD` environment variable.
+
+```bash
+SUNBEAM_ROOT_CMD="sunbeam extension manage" sunbeam
+```
+
 ## Validating the output of a script
 
 To validate the output of a script, you can use the validate command:
