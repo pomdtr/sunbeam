@@ -331,28 +331,15 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.Action:
 		if len(msg.Inputs) > 0 {
 
-			formItems := make([]FormItem, len(msg.Inputs))
-			for i, input := range msg.Inputs {
-				item, err := NewFormItem(input)
-				if err != nil {
-					return nil, func() tea.Msg {
-						return err
-					}
+			form := NewForm(msg.Title, func(values map[string]string) tea.Msg {
+				submitAction := msg
+				for key, value := range values {
+					submitAction = RenderAction(submitAction, fmt.Sprintf("${input:%s}", key), value)
 				}
+				submitAction.Inputs = nil
 
-				formItems[i] = item
-			}
-			form := NewForm(msg.Title, formItems, func(values map[string]string) tea.Cmd {
-				return func() tea.Msg {
-					submitAction := msg
-					for key, value := range values {
-						submitAction = RenderAction(submitAction, fmt.Sprintf("${input:%s}", key), value)
-					}
-					submitAction.Inputs = nil
-
-					return submitAction
-				}
-			})
+				return submitAction
+			}, msg.Inputs...)
 
 			runner.form = form
 			runner.SetSize(runner.width, runner.height)

@@ -292,6 +292,7 @@ func NewDropDown(formItem types.Input) *DropDown {
 	}
 
 	ti := textinput.New()
+	ti.SetValue(defaultValue)
 	ti.Prompt = ""
 
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)

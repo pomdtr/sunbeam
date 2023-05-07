@@ -54,7 +54,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var input string
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				return Draw(internal.NewStaticGenerator(os.Stdin))
+				return Run(internal.NewStaticGenerator(os.Stdin))
 			}
 
 			rootCommand, ok := os.LookupEnv("SUNBEAM_ROOT_CMD")
@@ -72,7 +72,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return cmd.Usage()
 			}
 
-			return Draw(internal.NewCommandGenerator(&types.Command{
+			return Run(internal.NewCommandGenerator(&types.Command{
 				Name:  commandArgs[0],
 				Args:  commandArgs[1:],
 				Input: input,
@@ -192,7 +192,7 @@ func runExtension(extensionBin string, args []string, input string) error {
 			Name: extensionBin,
 			Args: args,
 		}
-		return Draw(internal.NewCommandGenerator(&command))
+		return Run(internal.NewCommandGenerator(&command))
 	}
 
 	shExe, err := findsh.Find()
@@ -209,10 +209,10 @@ func runExtension(extensionBin string, args []string, input string) error {
 		Args: forwardArgs,
 	}
 
-	return Draw(internal.NewCommandGenerator(&command))
+	return Run(internal.NewCommandGenerator(&command))
 }
 
-func Draw(generator internal.PageGenerator) error {
+func Run(generator internal.PageGenerator) error {
 	if !isatty.IsTerminal(os.Stdout.Fd()) {
 		output, err := generator()
 		if err != nil {
@@ -229,10 +229,10 @@ func Draw(generator internal.PageGenerator) error {
 
 	runner := internal.NewRunner(generator)
 
-	return Run(runner)
+	return Draw(runner)
 }
 
-func Run(page internal.Page) error {
+func Draw(page internal.Page) error {
 	options := internal.SunbeamOptions{
 		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
 		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
@@ -307,7 +307,7 @@ func NewInfoCmd(extensionRoot string, version string) *cobra.Command {
 		Use:   "info",
 		Short: "Print information about sunbeam",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return Draw(func() (*types.Page, error) {
+			return Run(func() (*types.Page, error) {
 				return types.NewList("Info", []types.ListItem{
 					{Title: "Version", Subtitle: version, Actions: []types.Action{
 						types.NewCopyAction("Copy", version),
@@ -315,7 +315,7 @@ func NewInfoCmd(extensionRoot string, version string) *cobra.Command {
 					{Title: "Extension Root", Subtitle: extensionRoot, Actions: []types.Action{
 						types.NewCopyAction("Copy", extensionRoot),
 					}},
-				}), nil
+				}...), nil
 			})
 		},
 	}

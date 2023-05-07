@@ -17,11 +17,11 @@ func NewReadCmd() *cobra.Command {
 		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
-				return Draw(internal.NewFileGenerator(args[0]))
+				return Run(internal.NewFileGenerator(args[0]))
 			}
 
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				return Draw(internal.NewStaticGenerator(os.Stdin))
+				return Run(internal.NewStaticGenerator(os.Stdin))
 			}
 
 			return fmt.Errorf("no input provided")

@@ -67,19 +67,14 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 	action = internal.RenderAction(action, "${query}", query)
 
 	if len(inputs) < len(action.Inputs) {
-		items := make([]internal.FormItem, 0)
+		missing := make([]types.Input, 0)
 		for _, input := range action.Inputs {
 			if _, ok := inputs[input.Name]; !ok {
-				item, err := internal.NewFormItem(input)
-				if err != nil {
-					return err
-				}
-
-				items = append(items, item)
+				missing = append(missing, input)
 			}
 		}
 
-		return Run(internal.NewForm(action.Title, items, func(values map[string]string) tea.Cmd {
+		return Draw(internal.NewForm(action.Title, func(values map[string]string) tea.Msg {
 			action := action
 			for name, value := range values {
 				action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
@@ -87,56 +82,45 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 
 			switch action.Type {
 			case types.PushAction:
-				return func() tea.Msg {
-					var page internal.Page
-					if action.Command != nil {
-						page = internal.NewRunner(internal.NewCommandGenerator(action.Command))
-					} else {
-						page = internal.NewRunner(internal.NewFileGenerator(action.Page))
-					}
+				var page internal.Page
+				if action.Command != nil {
+					page = internal.NewRunner(internal.NewCommandGenerator(action.Command))
+				} else {
+					page = internal.NewRunner(internal.NewFileGenerator(action.Page))
+				}
 
-					return internal.PushPageMsg{
-						Page: page,
-					}
+				return internal.PushPageMsg{
+					Page: page,
 				}
 			case types.RunAction:
-				return func() tea.Msg {
-					return internal.ExitMsg{
-						Cmd: action.Command.Cmd(),
-					}
+				return internal.ExitMsg{
+					Cmd: action.Command.Cmd(),
 				}
 			case types.OpenAction:
-				return func() tea.Msg {
-					err := browser.OpenURL(action.Target)
-					if err != nil {
-						return fmt.Errorf("unable to open link: %s", err)
-					}
-					return tea.Quit()
+				err := browser.OpenURL(action.Target)
+				if err != nil {
+					return fmt.Errorf("unable to open link: %s", err)
 				}
-
+				return tea.Quit()
 			case types.CopyAction:
-				return func() tea.Msg {
-					if err := clipboard.WriteAll(action.Text); err != nil {
-						return fmt.Errorf("unable to write to clipboard: %s", err)
-					}
-					return tea.Quit()
+				if err := clipboard.WriteAll(action.Text); err != nil {
+					return fmt.Errorf("unable to write to clipboard: %s", err)
 				}
+				return tea.Quit()
 
 			default:
-				return func() tea.Msg {
-					return fmt.Errorf("unknown action type: %s", action.Type)
-				}
+				return fmt.Errorf("unknown action type: %s", action.Type)
 			}
-		}))
+		}, missing...))
 
 	}
 
 	switch action.Type {
 	case types.PushAction:
 		if action.Command != nil {
-			return Draw(internal.NewCommandGenerator(action.Command))
+			return Run(internal.NewCommandGenerator(action.Command))
 		}
-		return Draw(internal.NewFileGenerator(action.Page))
+		return Run(internal.NewFileGenerator(action.Page))
 	case types.RunAction:
 		if _, err := action.Command.Output(); err != nil {
 			return fmt.Errorf("command failed: %s", err)

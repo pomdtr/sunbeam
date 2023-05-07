@@ -66,7 +66,7 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 					return fmt.Errorf("%s: no such file or directory", args[0])
 				}
 
-				return Draw(internal.NewCommandGenerator(&types.Command{
+				return Run(internal.NewCommandGenerator(&types.Command{
 					Name:  args[0],
 					Args:  args[1:],
 					Input: input,
@@ -74,7 +74,7 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 			}
 
 			if _, err := exec.LookPath(args[0]); err == nil {
-				return Draw(internal.NewCommandGenerator(&types.Command{
+				return Run(internal.NewCommandGenerator(&types.Command{
 					Name:  args[0],
 					Args:  args[1:],
 					Input: input,

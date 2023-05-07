@@ -7,11 +7,12 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/types"
 )
 
 type Form struct {
 	items     []FormItem
-	submitCmd func(values map[string]string) tea.Cmd
+	submitCmd func(values map[string]string) tea.Msg
 
 	width    int
 	header   Header
@@ -22,13 +23,24 @@ type Form struct {
 	focusIndex   int
 }
 
-func NewForm(title string, items []FormItem, submitCmd func(values map[string]string) tea.Cmd) *Form {
+func NewForm(title string, submitCmd func(values map[string]string) tea.Msg, inputs ...types.Input) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
 	footer.SetBindings(
 		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
 	)
+
+	var items []FormItem
+	for _, input := range inputs {
+		item, err := NewFormItem(input)
+		if err != nil {
+			continue
+		}
+
+		items = append(items, item)
+	}
+
 	if len(items) > 0 {
 		footer.bindings = append(footer.bindings, key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Next Input")))
 	}
@@ -130,7 +142,9 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 				values[input.Name] = input.Value()
 			}
 
-			return &c, c.submitCmd(values)
+			return &c, func() tea.Msg {
+				return c.submitCmd(values)
+			}
 		}
 	}
 
