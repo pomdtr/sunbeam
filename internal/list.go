@@ -289,16 +289,16 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		case "tab":
 			if c.actionList.Focused() && len(c.actionList.actions) > 0 {
-				break
+				return c, nil
 			}
 
 			if c.filter.Selection() == nil {
-				break
+				return c, nil
 			}
 
 			item := c.filter.Selection().(ListItem)
-			if len(item.Actions) == 1 {
-				break
+			if len(item.Actions) == 0 {
+				return c, nil
 			}
 
 			return c, c.actionList.Focus()

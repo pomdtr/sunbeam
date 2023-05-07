@@ -46,11 +46,6 @@ func Execute(version string) error {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args: cobra.NoArgs,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if os.Getenv("NO_COLOR") != "" {
-				lipgloss.SetColorProfile(termenv.Ascii)
-			}
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var input string
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -211,7 +206,7 @@ func runExtension(extensionBin string, args []string, input string) error {
 }
 
 func Run(generator internal.PageGenerator) error {
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
+	if !isatty.IsTerminal(os.Stderr.Fd()) {
 		output, err := generator()
 		if err != nil {
 			return fmt.Errorf("could not generate page: %s", err)
@@ -225,6 +220,11 @@ func Run(generator internal.PageGenerator) error {
 
 	}
 
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		lipgloss.SetColorProfile(termenv.Ascii)
+	} else {
+		lipgloss.SetColorProfile(termenv.NewOutput(os.Stderr).Profile)
+	}
 	runner := internal.NewRunner(generator)
 
 	return Draw(runner)
@@ -239,9 +239,9 @@ func Draw(page internal.Page) error {
 
 	var p *tea.Program
 	if options.MaxHeight == 0 {
-		p = tea.NewProgram(paginator, tea.WithAltScreen())
+		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	} else {
-		p = tea.NewProgram(paginator)
+		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr))
 	}
 
 	m, err := p.Run()
