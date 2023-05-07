@@ -308,14 +308,17 @@ func NewInfoCmd(extensionRoot string, version string) *cobra.Command {
 		Short: "Print information about sunbeam",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return Run(func() (*types.Page, error) {
-				return types.NewList("Info", []types.ListItem{
-					{Title: "Version", Subtitle: version, Actions: []types.Action{
-						types.NewCopyAction("Copy", version),
-					}},
-					{Title: "Extension Root", Subtitle: extensionRoot, Actions: []types.Action{
-						types.NewCopyAction("Copy", extensionRoot),
-					}},
-				}...), nil
+				return &types.Page{
+					Title: "Info",
+					Type:  types.ListPage,
+					Items: []types.ListItem{
+						{Title: "Version", Subtitle: version, Actions: []types.Action{
+							types.NewCopyAction("Copy", version),
+						}},
+						{Title: "Extension Root", Subtitle: extensionRoot, Actions: []types.Action{
+							types.NewCopyAction("Copy", extensionRoot),
+						}},
+					}}, nil
 			})
 		},
 	}
