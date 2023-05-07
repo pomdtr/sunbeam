@@ -48,16 +48,17 @@ func (i ListItem) Render(width int, selected bool) string {
 		return ""
 	}
 
-	var title string
+	title := strings.Split(i.Title, "\n")[0]
 	titleStyle := lipgloss.NewStyle().Bold(true)
 	if selected {
-		title = fmt.Sprintf("> %s", i.Title)
+		title = fmt.Sprintf("> %s", title)
 		titleStyle = titleStyle.Foreground(lipgloss.Color("13"))
 	} else {
-		title = fmt.Sprintf("  %s", i.Title)
+		title = fmt.Sprintf("  %s", title)
 	}
 
-	subtitle := fmt.Sprintf(" %s", i.Subtitle)
+	subtitle := strings.Split(i.Subtitle, "\n")[0]
+	subtitle = fmt.Sprintf(" %s", subtitle)
 	var blanks string
 	accessories := fmt.Sprintf(" %s", strings.Join(i.Accessories, " · "))
 
