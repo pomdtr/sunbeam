@@ -28,7 +28,17 @@ func NewKvCmd(extensionRoot string) *cobra.Command {
 				return nil
 			}
 
-			return fmt.Errorf("db flag is required if not set in environment")
+			cwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+
+			if _, err := os.Stat(filepath.Join(cwd, extensionBinaryName)); err == nil {
+				cmd.Flags().Set("db", filepath.Join(cwd, ".sunbeam", kvFile))
+				return nil
+			}
+
+			return fmt.Errorf("db flag is required")
 		},
 	}
 
