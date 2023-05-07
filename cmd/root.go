@@ -95,6 +95,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
 	)
 	rootCmd.AddCommand(NewExtensionCmd(extensionRoot, extensions))
+	rootCmd.AddCommand(NewKvCmd(extensionRoot))
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewReadCmd())
@@ -153,6 +154,21 @@ func NewExtensionExecCmd(extensionRoot string, extensionName string, manifest *E
 		Short:              manifest.Description,
 		DisableFlagParsing: true,
 		GroupID:            extensionGroupID,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := os.Setenv("SUNBEAM_EXTENSION_NAME", extensionName); err != nil {
+				return err
+			}
+
+			if err := os.Setenv("SUNBEAM_EXTENSION_ROOT", extensionRoot); err != nil {
+				return err
+			}
+
+			if err := os.Setenv("SUNBEAM_EXTENSION_BIN", filepath.Join(extensionRoot, extensionName, manifest.Entrypoint)); err != nil {
+				return err
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var input string
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
