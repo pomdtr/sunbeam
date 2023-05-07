@@ -55,14 +55,14 @@
                 "items": {
                     "oneOf": [
                         {
-                            "type": "null"
-                        },
-                        {
                             "description": "The items in the list.",
                             "type": "array",
                             "items": {
                                 "$ref": "#/$defs/listitem"
                             }
+                        },
+                        {
+                            "type": "null"
                         }
                     ]
                 }
