@@ -268,10 +268,7 @@ export interface List {
    * Whether to show the preview on the right side of the list.
    */
   showPreview?: boolean;
-  /**
-   * The items in the list.
-   */
-  items?: Listitem[];
+  items?: null | Listitem[];
 }
 export interface Listitem {
   /**
