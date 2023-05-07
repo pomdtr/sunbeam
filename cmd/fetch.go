@@ -26,12 +26,8 @@ func NewFetchCmd() *cobra.Command {
 				body = os.Stdin
 			}
 
-			if method == "" {
-				if body != nil {
-					method = "POST"
-				} else {
-					method = "GET"
-				}
+			if !cmd.Flags().Changed("method") && body != nil {
+				method = "POST"
 			}
 
 			req, err := http.NewRequest(method, args[0], body)
