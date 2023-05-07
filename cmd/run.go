@@ -56,6 +56,10 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 					return err
 				}
 
+				if err := os.Chmod(filepath.Join(cwd, extensionBinaryName), 0755); err != nil {
+					return err
+				}
+
 				return runExtension(filepath.Join(cwd, extensionBinaryName), args[1:], input)
 			}
 

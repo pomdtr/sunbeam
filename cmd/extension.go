@@ -376,6 +376,10 @@ func installExtension(origin string, targetDir string) error {
 			return fmt.Errorf("no extension found in current directory")
 		}
 
+		if err := os.Chmod(entrypoint, 0755); err != nil {
+			return fmt.Errorf("could not make extension executable: %s", err)
+		}
+
 		if err := os.MkdirAll(targetDir, 0755); err != nil {
 			return fmt.Errorf("could not create extension directory: %s", err)
 		}
