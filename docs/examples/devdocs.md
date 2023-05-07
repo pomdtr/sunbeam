@@ -4,12 +4,6 @@
 
 - [curl](https://curl.haxx.se/)
 
-## Try it out
-
-```bash
-sunbeam run https://gist.github.com/pomdtr/287f173468d1d0e43a43972729d513ec
-```
-
 ## Install
 
 ```bash

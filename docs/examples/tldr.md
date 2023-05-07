@@ -4,12 +4,6 @@
 
 - [tealdeer](https://github.com/dbrgn/tealdeer)
 
-## Try it out
-
-```bash
-sunbeam run https://gist.github.com/pomdtr/ec9cc6b505f973f924bf025e1998cbf9
-```
-
 ## Install
 
 ```bash

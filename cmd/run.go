@@ -3,8 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -78,42 +76,6 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 			if _, err := exec.LookPath(args[0]); err == nil {
 				return Draw(internal.NewCommandGenerator(&types.Command{
 					Name:  args[0],
-					Args:  args[1:],
-					Input: input,
-				}))
-			}
-
-			url, err := url.Parse(args[0])
-			if err == nil && url.Host == "gist.github.com" {
-				rawUrl := fmt.Sprintf("%s/raw/sunbeam-extension", url.String())
-
-				tempfile, err := os.CreateTemp("", "sunbeam-extension")
-				if err != nil {
-					return err
-				}
-				defer os.Remove(tempfile.Name())
-
-				res, err := http.Get(rawUrl)
-				if err != nil {
-					return err
-				}
-				defer res.Body.Close()
-
-				body, err := io.ReadAll(res.Body)
-				if err != nil {
-					return err
-				}
-
-				if _, err := tempfile.Write(body); err != nil {
-					return err
-				}
-
-				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
-					return err
-				}
-
-				return Draw(internal.NewCommandGenerator(&types.Command{
-					Name:  tempfile.Name(),
 					Args:  args[1:],
 					Input: input,
 				}))

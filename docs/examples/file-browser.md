@@ -4,12 +4,6 @@
 
 - [python](https://www.python.org/)
 
-## Try it out
-
-```bash
-sunbeam run https://gist.github.com/pomdtr/59cac008e26986dcfe9e8661d084bca5
-```
-
 ## Install
 
 ```bash

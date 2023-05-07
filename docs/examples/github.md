@@ -6,12 +6,6 @@
 
 > **Note** You should be authenticated with GitHub using the `gh auth login` command before running the scripts.
 
-## Try it out
-
-```bash
-sunbeam run https://gist.github.com/pomdtr/dc1363d8f641928893ca8d3e670c9c3d
-```
-
 ## Install
 
 ```bash
