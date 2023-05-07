@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -319,10 +320,13 @@ func NewExtensionCreateCmd() *cobra.Command {
 				return fmt.Errorf("unknown template: %s", language)
 			}
 
-			templateDir := gosod.New(template)
+			sub, err := fs.Sub(template, fmt.Sprint("templates/", language))
+			if err != nil {
+				return fmt.Errorf("unable to load template: %s", err)
+			}
 
+			templateDir := gosod.New(sub)
 			templateDir.SetTemplateFilters([]string{".tmpl"})
-
 			if err := templateDir.Extract(name, nil); err != nil {
 				return fmt.Errorf("unable to extract template: %s", err)
 			}
