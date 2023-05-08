@@ -252,7 +252,7 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
-		c.Name = args[0]
+		c.Name = s
 		c.Shell = true
 		return nil
 	}
