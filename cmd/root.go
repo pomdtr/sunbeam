@@ -12,19 +12,14 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cli/cli/v2/pkg/findsh"
-	"github.com/google/shlex"
 	"github.com/mattn/go-isatty"
-	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
 
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 const (
@@ -47,31 +42,27 @@ func Execute(version string) error {
 See https://pomdtr.github.io/sunbeam for more information.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("could not get current working dir: %w", err)
+			}
+
+			extensionPath := filepath.Join(cwd, extensionBinaryName)
+			if _, err := os.Stat(extensionPath); err != nil {
+				return cmd.Usage()
+			}
+
 			var input string
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				return Run(internal.NewStaticGenerator(os.Stdin))
+				bs, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+
+				input = string(bs)
 			}
 
-			rootCommand, ok := os.LookupEnv("SUNBEAM_ROOT_CMD")
-			if !ok {
-				return cmd.Usage()
-			}
-
-			commandArgs, err := shlex.Split(rootCommand)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Could not parse default command: %s", err)
-				return err
-			}
-
-			if len(commandArgs) == 0 {
-				return cmd.Usage()
-			}
-
-			return Run(internal.NewCommandGenerator(&types.Command{
-				Name:  commandArgs[0],
-				Args:  commandArgs[1:],
-				Input: input,
-			}))
+			return runExtension(extensionPath, args, input)
 		},
 	}
 
@@ -167,6 +158,10 @@ func NewExtensionExecCmd(extensionRoot string, extensionName string, manifest *E
 func runExtension(extensionBin string, args []string, input string) error {
 	var command types.Command
 	if runtime.GOOS != "windows" {
+		if err := os.Chmod(extensionBin, 0755); err != nil {
+			return err
+		}
+
 		command = types.Command{
 			Name: extensionBin,
 			Args: args,
@@ -203,56 +198,10 @@ func Run(generator internal.PageGenerator) error {
 		}
 
 		return nil
-
 	}
 
-	if _, ok := os.LookupEnv("NO_COLOR"); ok {
-		lipgloss.SetColorProfile(termenv.Ascii)
-	} else {
-		lipgloss.SetColorProfile(termenv.NewOutput(os.Stderr).Profile)
-	}
 	runner := internal.NewRunner(generator)
-
-	return Draw(runner)
-}
-
-func Draw(page internal.Page) error {
-	options := internal.SunbeamOptions{
-		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
-		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
-	}
-	paginator := internal.NewPaginator(page, options)
-
-	var p *tea.Program
-	if options.MaxHeight == 0 {
-		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
-	} else {
-		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr))
-	}
-
-	m, err := p.Run()
-	if err != nil {
-		return err
-	}
-
-	paginator, ok := m.(*internal.Paginator)
-	if !ok {
-		return fmt.Errorf("could not cast model to paginator")
-	}
-
-	cmd := paginator.OutputCmd
-	if cmd == nil {
-		return nil
-	}
-
-	if cmd.Stdin == nil {
-		cmd.Stdin = os.Stdin
-	}
-
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-
-	return cmd.Run()
+	return internal.Draw(runner)
 }
 
 func buildDoc(command *cobra.Command) (string, error) {

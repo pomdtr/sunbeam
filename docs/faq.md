@@ -5,7 +5,7 @@
 There is two ways to wire sunbeam to your programs:
 
 - Wrap your command in sunbeam: `sunbeam run <my-command>`
-- Pipe a page to sunbeam: `<my-command> | sunbeam`
+- Pipe a page to sunbeam: `<my-command> | sunbeam read`
 - Pipe an action to sunbeam: `<my-action> | sunbeam trigger`
 
 ## Configuring sunbeam appearance

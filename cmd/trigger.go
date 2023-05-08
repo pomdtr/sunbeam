@@ -74,7 +74,7 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 			}
 		}
 
-		return Draw(internal.NewForm(action.Title, func(values map[string]string) tea.Msg {
+		return internal.Draw(internal.NewForm(action.Title, func(values map[string]string) tea.Msg {
 			action := action
 			for name, value := range values {
 				action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
@@ -112,7 +112,6 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 				return fmt.Errorf("unknown action type: %s", action.Type)
 			}
 		}, missing...))
-
 	}
 
 	switch action.Type {

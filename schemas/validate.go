@@ -3,14 +3,44 @@ package schemas
 import (
 	_ "embed"
 	"encoding/json"
-	"fmt"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 //go:embed page.schema.json
 var schemaString string
 var schema = jsonschema.MustCompileString("", schemaString)
+
+type ValidationError struct {
+	err error
+	v   any
+}
+
+func (ve ValidationError) Error() string {
+	return ve.err.Error()
+}
+
+func (ve ValidationError) Unwrap() error {
+	return ve.err
+}
+
+func (ve ValidationError) Message() string {
+	bs, err := json.MarshalIndent(ve.v, "", "  ")
+	if err != nil {
+		return err.Error()
+	}
+
+	codeblock := "```json\n" + string(bs) + "\n```"
+	return heredoc.Docf(`
+			## Page validation error
+
+			%s
+
+			Current page:
+
+			%s`, ve, codeblock)
+}
 
 func Validate(b []byte) error {
 	var v interface{}
@@ -19,14 +49,9 @@ func Validate(b []byte) error {
 	}
 
 	if err := schema.Validate(v); err != nil {
-		if ve, ok := err.(*jsonschema.ValidationError); ok {
-			leaf := ve
-			for len(leaf.Causes) > 0 {
-				leaf = leaf.Causes[0]
-			}
-			return fmt.Errorf("%s does not validate with sunbeam schema", leaf.InstanceLocation)
-		} else {
-			return fmt.Errorf("invalid schema: %s", err)
+		return ValidationError{
+			err: err,
+			v:   v,
 		}
 	}
 

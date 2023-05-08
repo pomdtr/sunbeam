@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -42,23 +41,6 @@ func NewCmdRun(extensionDir string) *cobra.Command {
 					return err
 				}
 				input = string(b)
-			}
-
-			if args[0] == "." {
-				if _, err := os.Stat(extensionBinaryName); err != nil {
-					return fmt.Errorf("no extension found in current directory")
-				}
-
-				cwd, err := os.Getwd()
-				if err != nil {
-					return err
-				}
-
-				if err := os.Chmod(filepath.Join(cwd, extensionBinaryName), 0755); err != nil {
-					return err
-				}
-
-				return runExtension(filepath.Join(cwd, extensionBinaryName), args[1:], input)
 			}
 
 			if strings.HasPrefix(args[0], ".") {

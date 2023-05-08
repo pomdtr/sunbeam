@@ -24,7 +24,7 @@ Alternatively, use the `list`, `remove`, `upgrade` and `rename` commands directl
 
 Any directory containing a `sunbeam-extension` executable is a valid sunbeam extension.
 
-To test your extension, use the `sunbeam run ./sunbeam-extension` command, or the shorthand `sunbeam run .`.
+To test your extension, use the `sunbeam run ./sunbeam-extension` command, or just `sunbeam`.
 You can install the current directory as an extension using the `sunbeam extension install <alias> .` command.
 
 > **Warning**: Installing local extension is not yet supported on windows.

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -350,8 +351,16 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		cmd := runner.handleAction(msg)
 		return runner, cmd
 	case error:
+		var ve schemas.ValidationError
+		var content string
+		if errors.As(msg, &ve) {
+			content = ve.Message()
+		} else {
+			content = msg.Error()
+		}
+
 		errorView := NewDetail("Error", func() string {
-			return msg.Error()
+			return content
 		}, []types.Action{
 			{
 				Type:  types.CopyAction,
@@ -359,6 +368,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				Text:  msg.Error(),
 			},
 		})
+
+		errorView.Language = "markdown"
 
 		runner.err = errorView
 		runner.err.SetSize(runner.width, runner.height)

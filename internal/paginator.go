@@ -2,10 +2,12 @@ package internal
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/utils"
 )
 
@@ -141,4 +143,49 @@ func (m *Paginator) Pop() {
 	if len(m.pages) > 0 {
 		m.pages = m.pages[:len(m.pages)-1]
 	}
+}
+
+func Draw(page Page) error {
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		lipgloss.SetColorProfile(termenv.Ascii)
+	} else {
+		lipgloss.SetColorProfile(termenv.NewOutput(os.Stderr).Profile)
+	}
+
+	options := SunbeamOptions{
+		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
+		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
+	}
+	paginator := NewPaginator(page, options)
+
+	var p *tea.Program
+	if options.MaxHeight == 0 {
+		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
+	} else {
+		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr))
+	}
+
+	m, err := p.Run()
+	if err != nil {
+		return err
+	}
+
+	paginator, ok := m.(*Paginator)
+	if !ok {
+		return fmt.Errorf("could not cast model to paginator")
+	}
+
+	cmd := paginator.OutputCmd
+	if cmd == nil {
+		return nil
+	}
+
+	if cmd.Stdin == nil {
+		cmd.Stdin = os.Stdin
+	}
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	return cmd.Run()
 }

@@ -23,6 +23,7 @@ require (
 )
 
 require (
+	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cli/safeexec v1.0.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
