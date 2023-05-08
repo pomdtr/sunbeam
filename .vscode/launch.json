@@ -9,8 +9,8 @@
       "args": [
         "extension",
         "install",
-        "kv",
-        "https://github.com/pomdtr/sunbeam"
+        "deno",
+        "https://github.com/pomdtr/sunbeam-deno-deploy"
       ]
     },
     {

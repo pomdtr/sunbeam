@@ -2,8 +2,7 @@
 
 ## Requirements
 
-- git (used to download extensions)
-- bash (used to run scripts extensions)
+- bash (used to run most script extensions)
 
 On windows, you can get both by installing [git for windows](https://gitforwindows.org/).
 
