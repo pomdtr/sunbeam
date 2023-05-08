@@ -23,19 +23,21 @@ Alternatively, use the `list`, `remove`, `upgrade` and `rename` commands directl
 ## Writing Extensions
 
 Any directory containing a `sunbeam-extension` executable is a valid sunbeam extension.
-Use the `sunbeam extension create` command to bootstrap a new extension.
 
 To test your extension, use the `sunbeam run ./sunbeam-extension` command, or the shorthand `sunbeam run .`.
 You can install the current directory as an extension using the `sunbeam extension install <alias> .` command.
 
 > **Warning**: Installing local extension is not yet supported on windows.
 
-### Sunbeam Types
+You can write extension using any language. If you want to distribute your extension, make sure that you provide instructions on how to install the required dependencies.
 
-Types packages are available for the following languages:
+Here are some suggestions if you don't know what language to use:
 
-- [go](https://pkg.go.dev/github.com/pomdtr/sunbeam/types)
-- [typescript](https://www.npmjs.com/package/sunbeam-types)
+- Bash is already installed on most systems, and is a good choice for simple extensions. The `sunbeam fetch` and `sunbeam query` commands can be used instead of `curl` and `jq`.
+- Go is a good choice for more complex extensions. The [sunbeam/types](https://pkg.go.dev/github.com/pomdtr/sunbeam/types) package provides types for all sunbeam commands. Go binaries can be distributed as github releases.
+- If you are more confortable with javascript/typescript, take a look at [deno](https://deno.land/). Types are available both on [npm](https://npmjs.com/package/sunbeam-types) and [deno.land](https://deno.land/x/sunbeam/index.d.ts).
+
+Use the `sunbeam extension create` command to bootstrap a new extension.
 
 ## Distributing Extensions
 

@@ -1,25 +1,32 @@
 # Installation
 
+## Requirements
+
+- git (used to download extensions)
+- bash (used to run scripts extensions)
+
+On windows, you can get both by installing [git for windows](https://gitforwindows.org/).
+
 ## Installation
 
 You can use a package manager
 
 ```bash
-# macOs or Linux
+# brew (macos and linux)
 brew install pomdtr/tap/sunbeam
 
-# Scoop
+# scoop (windows)
 scoop bucket add pomdtr https://github.com/pomdtr/scoop-bucket.git
 scoop install pomdtr/sunbeam
 
-# install script
+# install script (all platforms)
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/pomdtr/sunbeam/main/scripts/install-sunbeam.sh | sh
 
 # from source
 go install github.com/pomdtr/sunbeam@latest
 ```
 
-or download the binary from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).
+or use binaries / packages from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).
 
 ## Completions
 
