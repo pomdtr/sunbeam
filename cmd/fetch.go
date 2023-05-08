@@ -15,7 +15,7 @@ func NewFetchCmd() *cobra.Command {
 		Use:     "fetch",
 		GroupID: coreGroupID,
 		Args:    cobra.ExactArgs(1),
-		Short:   "fetch http using a curl-like syntax",
+		Short:   "Fetch http using a curl-like syntax",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			method, _ := cmd.Flags().GetString("method")
 			headers, _ := cmd.Flags().GetStringArray("header")
@@ -65,9 +65,9 @@ func NewFetchCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("method", "GET", "HTTP method")
-	cmd.Flags().StringArrayP("header", "H", []string{}, "HTTP header")
-	cmd.Flags().String("user", "", "HTTP user")
+	cmd.Flags().String("method", "GET", "http method")
+	cmd.Flags().StringArrayP("header", "H", []string{}, "http header")
+	cmd.Flags().String("user", "", "http user")
 
 	return cmd
 }

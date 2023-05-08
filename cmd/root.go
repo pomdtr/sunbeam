@@ -75,11 +75,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 
-	rootCmd.Flags().StringArrayP("input", "i", nil, "input to pass to the action")
-	rootCmd.Flags().String("query", "", "query to pass to the action")
-	rootCmd.Flags().MarkHidden("input")
-	rootCmd.Flags().MarkHidden("query")
-
 	extensions, err := ListExtensions(extensionRoot)
 	if err != nil {
 		return fmt.Errorf("could not list extensions: %w", err)

@@ -336,8 +336,8 @@ func NewExtensionCreateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("name", "n", "", "Extension name")
-	cmd.Flags().StringP("language", "l", "", "Extension language")
+	cmd.Flags().StringP("name", "n", "", "extension name")
+	cmd.Flags().StringP("language", "l", "", "extension language")
 
 	return cmd
 }
@@ -422,7 +422,7 @@ func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolP("open", "o", false, "Open extension after installation")
+	cmd.Flags().BoolP("open", "o", false, "open extension after installation")
 
 	return cmd
 }
@@ -607,7 +607,7 @@ func NewExtensionListCmd(extensionRoot string, extensions map[string]*ExtensionM
 		},
 	}
 
-	cmd.Flags().StringP("delimiter", "d", "\t", "Delimiter to use between extension name and description")
+	cmd.Flags().StringP("delimiter", "d", "\t", "delimiter to use between extension name and description")
 
 	return cmd
 }

@@ -53,8 +53,8 @@ func NewTriggerCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringArrayP("input", "i", nil, "Input values")
-	cmd.Flags().StringP("query", "q", "", "Query")
+	cmd.Flags().StringArrayP("input", "i", nil, "input values")
+	cmd.Flags().StringP("query", "q", "", "query value")
 
 	return cmd
 }
