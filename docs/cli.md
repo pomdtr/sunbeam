@@ -239,8 +239,9 @@ sunbeam extension create [flags]
 ### Options
 
 ```
-  -h, --help          help for create
-  -n, --name string   Extension name
+  -h, --help              help for create
+  -l, --language string   extension language
+  -n, --name string       extension name
 ```
 
 ## sunbeam extension help
@@ -274,7 +275,7 @@ sunbeam extension install [alias] [extension] [flags]
 
 ```
   -h, --help   help for install
-  -o, --open   Open extension after installation
+  -o, --open   open extension after installation
 ```
 
 ## sunbeam extension list
@@ -288,7 +289,8 @@ sunbeam extension list [flags]
 ### Options
 
 ```
-  -h, --help   help for list
+  -d, --delimiter string   delimiter to use between extension name and description (default "\t")
+  -h, --help               help for list
 ```
 
 ## sunbeam extension manage
@@ -333,20 +335,6 @@ sunbeam extension rename [old] [new] [flags]
   -h, --help   help for rename
 ```
 
-## sunbeam extension search
-
-Search for repositories with the sunbeam-extension topic
-
-```
-sunbeam extension search [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for search
-```
-
 ## sunbeam extension upgrade
 
 Upgrade an installed extension
@@ -361,18 +349,21 @@ sunbeam extension upgrade [flags]
   -h, --help   help for upgrade
 ```
 
-## sunbeam extension view
+## sunbeam fetch
 
-View extension
+Fetch http using a curl-like syntax
 
 ```
-sunbeam extension view <repo> [flags]
+sunbeam fetch [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for view
+  -H, --header stringArray   http header
+  -h, --help                 help for fetch
+      --method string        http method (default "GET")
+      --user string          http user
 ```
 
 ## sunbeam generate-fig-spec
@@ -450,7 +441,7 @@ sunbeam info [flags]
 Transform or generate JSON using a jq query
 
 ```
-sunbeam query <query> [flags]
+sunbeam query [flags]
 ```
 
 ### Options
@@ -505,8 +496,8 @@ sunbeam trigger [flags]
 
 ```
   -h, --help                help for trigger
-  -i, --input stringArray   Input values
-  -q, --query string        Query
+  -i, --input stringArray   input values
+  -q, --query string        query value
 ```
 
 ## sunbeam validate
