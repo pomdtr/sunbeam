@@ -100,6 +100,10 @@ export type Action =
        */
       title?: string;
       /**
+       * Whether to run the command in a shell.
+       */
+      shell?: boolean;
+      /**
        * The inputs to show when the action is run.
        */
       inputs?: Input[];

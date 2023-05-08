@@ -47,6 +47,7 @@
 - object
   - `type`: `'run'` - The type of the action.
   - `title`: string - The title of the action.
+  - `shell`: boolean - Whether to run the command in a shell.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
   - `command`: [Command](#command)

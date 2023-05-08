@@ -3,6 +3,7 @@ module github.com/pomdtr/sunbeam
 go 1.19
 
 require (
+	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/chroma v0.10.0
 	github.com/alessio/shellescape v1.4.1
@@ -10,7 +11,6 @@ require (
 	github.com/charmbracelet/bubbletea v0.23.2
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/cli/cli/v2 v2.28.0
-	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.12
 	github.com/junegunn/fzf v0.0.0-20230430165921-fb76893e18fd
 	github.com/leaanthony/gosod v1.0.3
@@ -23,7 +23,6 @@ require (
 )
 
 require (
-	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cli/safeexec v1.0.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
