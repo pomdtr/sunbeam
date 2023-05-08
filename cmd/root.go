@@ -48,21 +48,26 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			extensionPath := filepath.Join(cwd, extensionBinaryName)
-			if _, err := os.Stat(extensionPath); err != nil {
-				return cmd.Usage()
-			}
+			if _, err := os.Stat(extensionPath); err == nil {
+				var input string
+				if !isatty.IsTerminal(os.Stdin.Fd()) {
+					bs, err := io.ReadAll(os.Stdin)
+					if err != nil {
+						return err
+					}
 
-			var input string
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				bs, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
+					input = string(bs)
 				}
 
-				input = string(bs)
+				return runExtension(extensionPath, args, input)
 			}
 
-			return runExtension(extensionPath, args, input)
+			manifestPath := filepath.Join(cwd, "sunbeam.json")
+			if _, err := os.Stat(manifestPath); err == nil {
+				return Run(internal.NewFileGenerator(manifestPath))
+			}
+
+			return cmd.Usage()
 		},
 	}
 
