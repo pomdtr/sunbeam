@@ -158,7 +158,7 @@ func (c *List) Focus() tea.Cmd {
 
 func (c *List) RefreshDetail() {
 	c.viewport.SetYOffset(0)
-	detailWidth := c.viewport.Width - 3 // take padding into account
+	detailWidth := c.viewport.Width - 2 // take padding into account
 	detailContent := wrap.String(wordwrap.String(c.previewContent, detailWidth), detailWidth)
 
 	c.viewport.SetContent(detailContent)
