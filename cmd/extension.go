@@ -662,26 +662,52 @@ func NewExtensionUpgradeCmd(extensionRoot string, extensions map[string]*Extensi
 		validArgs = append(validArgs, extension)
 	}
 
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:       "upgrade",
 		Short:     "Upgrade an installed extension",
-		Args:      cobra.ExactArgs(1),
+		Args:      cobra.MaximumNArgs(1),
 		ValidArgs: validArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			all, _ := cmd.Flags().GetBool("all")
+			if all && len(args) > 0 {
+				return fmt.Errorf("cannot specify both --all and an extension name")
+			}
+
+			if !all && len(args) == 0 {
+				return fmt.Errorf("must specify either --all or an extension name")
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionName := args[0]
-			extensionPath := filepath.Join(extensionRoot, extensionName)
-			if _, err := os.Stat(extensionPath); os.IsNotExist(err) {
-				return fmt.Errorf("extension not installed: %s", args[0])
+			all, _ := cmd.Flags().GetBool("all")
+			if !all {
+				_, ok := extensions[args[0]]
+				if !ok {
+					return fmt.Errorf("extension not installed: %s", args[0])
+				}
+
+				if err := upgradeExtension(filepath.Join(extensionRoot, args[0])); err != nil {
+					return fmt.Errorf("unable to upgrade extension: %s", err)
+				}
+
+				return nil
 			}
 
-			if err := upgradeExtension(extensionPath); err != nil {
-				return fmt.Errorf("unable to upgrade extension: %s", err)
+			for extension := range extensions {
+				extensionPath := filepath.Join(extensionRoot, extension)
+				if err := upgradeExtension(extensionPath); err != nil {
+					return fmt.Errorf("unable to upgrade extension: %s", err)
+				}
 			}
 
-			fmt.Println("✓ Extension upgraded")
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolP("all", "a", false, "upgrade all extensions")
+
+	return cmd
 }
 
 func upgradeExtension(extensionPath string) error {
@@ -726,7 +752,7 @@ func upgradeExtension(extensionPath string) error {
 		}
 
 		if commit.Sha == manifest.Version {
-			fmt.Println("Extension already up to date")
+			fmt.Printf("✓ Extension %s already up to date\n", filepath.Base(extensionPath))
 			return nil
 		}
 
@@ -749,6 +775,11 @@ func upgradeExtension(extensionPath string) error {
 		if err := cp.Copy(tempdir, srcDir); err != nil {
 			return fmt.Errorf("unable to upgrade extension: %s", err)
 		}
+
+		manifest.Version = commit.Sha
+		if err := manifest.Write(manifestPath); err != nil {
+			return fmt.Errorf("unable to upgrade extension: %s", err)
+		}
 	case ExtensionTypeGist:
 		commit, err := utils.GetLastGistCommit(manifest.Remote)
 		if err != nil {
@@ -756,7 +787,7 @@ func upgradeExtension(extensionPath string) error {
 		}
 
 		if commit.Version == manifest.Version {
-			fmt.Println("Extension already up to date")
+			fmt.Printf("✓ Extension %s already up to date\n", filepath.Base(extensionPath))
 			return nil
 		}
 
@@ -779,10 +810,17 @@ func upgradeExtension(extensionPath string) error {
 		if err := cp.Copy(tempdir, srcDir); err != nil {
 			return fmt.Errorf("unable to upgrade extension: %s", err)
 		}
+
+		manifest.Version = commit.Version
+		if err := manifest.Write(manifestPath); err != nil {
+			return fmt.Errorf("unable to upgrade extension: %s", err)
+		}
 	case ExtentionTypeLocal:
-		return fmt.Errorf("upgrade not supported for local extensions")
+		fmt.Println("Extension is local, skipping upgrade")
+		return nil
 	}
 
+	fmt.Printf("✓ Upgraded extension %s\n", filepath.Base(extensionPath))
 	return nil
 }
 
