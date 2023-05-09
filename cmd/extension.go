@@ -65,6 +65,21 @@ type ExtensionManifest struct {
 	Pinned      bool          `json:"pinned,omitempty"`
 }
 
+func (m *ExtensionManifest) PrettyVersion() string {
+	switch m.Type {
+	case ExtensionTypeBinary:
+		return m.Version
+	case ExtensionTypeGit:
+		return m.Version[:8]
+	case ExtensionTypeGist:
+		return m.Version[:8]
+	case ExtentionTypeLocal:
+		return "local"
+	default:
+		return "unknown"
+	}
+}
+
 func ReadManifest(manifestPath string) (*ExtensionManifest, error) {
 	bytes, err := os.ReadFile(manifestPath)
 	if err != nil {
@@ -193,7 +208,7 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 					listItems = append(listItems, types.ListItem{
 						Title:       extension,
 						Subtitle:    manifest.Description,
-						Accessories: []string{manifest.Version},
+						Accessories: []string{manifest.PrettyVersion()},
 						Actions: []types.Action{
 							{
 								Title: "Run Extension",
@@ -598,13 +613,7 @@ func NewExtensionListCmd(extensionRoot string, extensions map[string]*ExtensionM
 		RunE: func(cmd *cobra.Command, args []string) error {
 			delimiter, _ := cmd.Flags().GetString("delimiter")
 			for extension, manifest := range extensions {
-				var version string
-				if len(manifest.Version) > 8 {
-					version = manifest.Version[:8]
-				} else {
-					version = manifest.Version
-				}
-				fmt.Printf("%s%s%s%s%s\n", extension, delimiter, manifest.Description, delimiter, version)
+				fmt.Printf("%s%s%s%s%s\n", extension, delimiter, manifest.Description, delimiter, manifest.PrettyVersion())
 			}
 
 			return nil
