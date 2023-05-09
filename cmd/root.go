@@ -20,12 +20,24 @@ import (
 
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
+	"github.com/pomdtr/sunbeam/utils"
 )
 
 const (
 	coreGroupID      = "core"
 	extensionGroupID = "extension"
 )
+
+var options internal.SunbeamOptions
+
+func init() {
+	options = internal.SunbeamOptions{
+		MaxHeight:  utils.LookupIntEnv("SUNBEAM_HEIGHT", 30),
+		MaxWidth:   utils.LookupIntEnv("SUNBEAM_WIDTH", 110),
+		FullScreen: utils.LookupBoolEnv("SUNBEAM_FULLSCREEN", true),
+		Border:     utils.LookupBoolEnv("SUNBEAM_BORDER", true),
+	}
+}
 
 func NewCmdRoot(version string) (*cobra.Command, error) {
 	dataDir := filepath.Join(xdg.DataHome, "sunbeam")
@@ -206,7 +218,7 @@ func Run(generator internal.PageGenerator) error {
 	}
 
 	runner := internal.NewRunner(generator)
-	return internal.Draw(runner)
+	return internal.Draw(runner, options)
 }
 
 func buildDoc(command *cobra.Command) (string, error) {

@@ -8,7 +8,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type PopPageMsg struct{}
@@ -26,8 +25,10 @@ type Page interface {
 }
 
 type SunbeamOptions struct {
-	MaxHeight int
-	Padding   int
+	MaxHeight  int
+	MaxWidth   int
+	Border     bool
+	FullScreen bool
 }
 
 type ExitMsg struct {
@@ -111,7 +112,22 @@ func (m *Paginator) View() string {
 		pageView = currentPage.View()
 	}
 
-	return lipgloss.NewStyle().Padding(m.options.Padding).Render(pageView)
+	style := lipgloss.NewStyle()
+	if m.options.Border {
+		style = style.Border(lipgloss.RoundedBorder())
+	}
+
+	marginHorizontal := 0
+	if m.options.MaxWidth != 0 && m.options.MaxWidth < m.width {
+		marginHorizontal = (m.width - lipgloss.Width(pageView) - 1) / 2
+	}
+
+	marginVertical := 0
+	if m.options.MaxHeight != 0 && m.options.MaxHeight < m.height && m.options.FullScreen {
+		marginVertical = (m.height - lipgloss.Height(pageView) - 1) / 2
+	}
+
+	return style.Margin(marginVertical, marginHorizontal).Render(pageView)
 }
 
 func (m *Paginator) SetSize(width, height int) {
@@ -124,14 +140,31 @@ func (m *Paginator) SetSize(width, height int) {
 }
 
 func (m *Paginator) pageWidth() int {
-	return m.width - 2*m.options.Padding
+	pageWidth := m.width
+
+	if m.options.MaxWidth > 0 && m.options.MaxWidth < pageWidth {
+		pageWidth = m.options.MaxWidth
+	}
+
+	if m.options.Border {
+		pageWidth -= 2
+	}
+
+	return pageWidth
 }
 
 func (m *Paginator) pageHeight() int {
-	if m.options.MaxHeight > 0 {
-		return utils.Min(m.options.MaxHeight, m.height) - 2*m.options.Padding
+	height := m.height
+
+	if m.options.MaxHeight > 0 && m.options.MaxHeight < height {
+		height = m.options.MaxHeight
 	}
-	return m.height - 2*m.options.Padding
+
+	if m.options.Border {
+		height -= 2
+	}
+
+	return height
 }
 
 func (m *Paginator) Push(page Page) tea.Cmd {
@@ -149,21 +182,17 @@ func (m *Paginator) Pop() tea.Cmd {
 	return page.Focus()
 }
 
-func Draw(page Page) error {
+func Draw(page Page, options SunbeamOptions) error {
 	if _, ok := os.LookupEnv("NO_COLOR"); ok {
 		lipgloss.SetColorProfile(termenv.Ascii)
 	} else {
 		lipgloss.SetColorProfile(termenv.NewOutput(os.Stderr).Profile)
 	}
 
-	options := SunbeamOptions{
-		MaxHeight: utils.LookupInt("SUNBEAM_HEIGHT", 0),
-		Padding:   utils.LookupInt("SUNBEAM_PADDING", 0),
-	}
 	paginator := NewPaginator(page, options)
 
 	var p *tea.Program
-	if options.MaxHeight == 0 {
+	if options.FullScreen {
 		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	} else {
 		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr))

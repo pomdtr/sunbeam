@@ -330,7 +330,7 @@ func NewExtensionCreateCmd() *cobra.Command {
 					},
 					missingInputs...)
 
-				return internal.Draw(form)
+				return internal.Draw(form, options)
 			}
 
 			template, ok := templates[language]

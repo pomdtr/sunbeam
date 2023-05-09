@@ -111,7 +111,7 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 			default:
 				return fmt.Errorf("unknown action type: %s", action.Type)
 			}
-		}, missing...))
+		}, missing...), options)
 	}
 
 	switch action.Type {
