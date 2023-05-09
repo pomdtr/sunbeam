@@ -62,6 +62,7 @@ type ExtensionManifest struct {
 	Description string        `json:"description"`
 	Remote      string        `json:"remote,omitempty"`
 	Version     string        `json:"version,omitempty"`
+	Pinned      bool          `json:"pinned,omitempty"`
 }
 
 func ReadManifest(manifestPath string) (*ExtensionManifest, error) {
@@ -387,9 +388,9 @@ func NewExtensionRenameCmd(extensionRoot string, extensions map[string]*Extensio
 
 func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install [alias] [extension]",
+		Use:   "install",
 		Short: "Install a sunbeam extension from a folder/gist/repository",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			commands := cmd.Root().Commands()
 			commandMap := make(map[string]struct{}, len(commands))
@@ -404,32 +405,27 @@ func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			targetDir := filepath.Join(extensionRoot, args[0])
+			alias, _ := cmd.Flags().GetString("alias")
+			version, _ := cmd.Flags().GetString("pin")
 
-			if err := installExtension(args[1], targetDir); err != nil {
+			targetDir := filepath.Join(extensionRoot, alias)
+			if err := installExtension(args[0], targetDir, version); err != nil {
 				return fmt.Errorf("could not install extension: %s", err)
 			}
 
-			open, _ := cmd.Flags().GetBool("open")
-			if open {
-				return Run(internal.NewCommandGenerator(&types.Command{
-					Name: os.Args[0],
-					Args: []string{args[0]},
-				}))
-			} else {
-				fmt.Printf("Installed extension %s\n", args[0])
-			}
-
+			fmt.Printf("✓ Installed extension %s\n", alias)
 			return nil
 		},
 	}
 
-	cmd.Flags().BoolP("open", "o", false, "open extension after installation")
+	cmd.Flags().String("alias", "", "extension alias")
+	cmd.MarkFlagRequired("alias")
+	cmd.Flags().String("pin", "", "pin extension to a specific version")
 
 	return cmd
 }
 
-func installExtension(origin string, targetDir string) error {
+func installExtension(origin string, targetDir string, version string) error {
 	if origin == "." {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -478,22 +474,28 @@ func installExtension(origin string, targetDir string) error {
 			return fmt.Errorf("unable to install extension: %s", err)
 		}
 
-		commit, err := utils.GetLastGistCommit(origin)
-		if err != nil {
-			return fmt.Errorf("unable to install extension: %s", err)
-		}
-
-		zipUrl := fmt.Sprintf("%s/archive/%s.zip", origin, commit.Version)
-		if err := downloadAndExtractZip(zipUrl, filepath.Join(targetDir, "src")); err != nil {
-			return fmt.Errorf("unable to install extension: %s", err)
-		}
-
 		manifest := ExtensionManifest{
 			Type:        ExtensionTypeGist,
 			Remote:      origin,
 			Description: gist.Description,
-			Version:     commit.Version,
 			Entrypoint:  filepath.Join("src", "sunbeam-extension"),
+		}
+
+		if version != "" {
+			manifest.Version = version
+			manifest.Pinned = true
+		} else {
+			commit, err := utils.GetLastGistCommit(origin)
+			if err != nil {
+				return fmt.Errorf("unable to install extension: %s", err)
+			}
+
+			manifest.Version = commit.Version
+		}
+
+		zipUrl := fmt.Sprintf("%s/archive/%s.zip", origin, manifest.Version)
+		if err := downloadAndExtractZip(zipUrl, filepath.Join(targetDir, "src")); err != nil {
+			return fmt.Errorf("unable to install extension: %s", err)
 		}
 
 		if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
@@ -529,21 +531,27 @@ func installExtension(origin string, targetDir string) error {
 		return nil
 	}
 
-	commit, err := utils.GetLastGitCommit(origin)
-	if err != nil {
-		return fmt.Errorf("could not fetch extension metadata: %s", err)
-	}
-
-	if err := downloadAndExtractZip(fmt.Sprintf("%s/archive/%s.zip", extensionUrl, commit.Sha), filepath.Join(targetDir, "src")); err != nil {
-		return fmt.Errorf("unable to download extension: %s", err)
-	}
-
 	manifest := ExtensionManifest{
 		Type:        ExtensionTypeGit,
 		Remote:      origin,
-		Version:     commit.Sha,
 		Description: repository.Description,
 		Entrypoint:  filepath.Join("src", extensionBinaryName),
+	}
+
+	if manifest.Version != "" {
+		manifest.Version = version
+		manifest.Pinned = true
+	} else {
+		commit, err := utils.GetLastGitCommit(origin)
+		if err != nil {
+			return fmt.Errorf("could not fetch extension metadata: %s", err)
+		}
+
+		manifest.Version = commit.Sha
+	}
+
+	if err := downloadAndExtractZip(fmt.Sprintf("%s/archive/%s.zip", extensionUrl, manifest.Version), filepath.Join(targetDir, "src")); err != nil {
+		return fmt.Errorf("unable to download extension: %s", err)
 	}
 
 	if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
@@ -628,7 +636,7 @@ func NewExtensionRemoveCmd(extensionRoot string, extensions map[string]*Extensio
 				return fmt.Errorf("unable to remove extension: %s", err)
 			}
 
-			fmt.Printf("Extension %s removed\n", args[0])
+			fmt.Printf("✓ Removed extension %s\n", args[0])
 			return nil
 		},
 	}
@@ -656,7 +664,7 @@ func NewExtensionUpgradeCmd(extensionRoot string, extensions map[string]*Extensi
 				return fmt.Errorf("unable to upgrade extension: %s", err)
 			}
 
-			fmt.Sprintln("Extension upgraded:", args[0])
+			fmt.Sprintln("✓ Extension upgraded")
 			return nil
 
 		},
@@ -669,6 +677,11 @@ func upgradeExtension(extensionPath string) error {
 	manifest, err := ReadManifest(filepath.Join(extensionPath, manifestName))
 	if err != nil {
 		return fmt.Errorf("unable to upgrade extension: %s", err)
+	}
+
+	if manifest.Pinned {
+		fmt.Println("Extension is pinned, skipping upgrade")
+		return nil
 	}
 
 	switch manifest.Type {

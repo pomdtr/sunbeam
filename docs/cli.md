@@ -268,14 +268,15 @@ sunbeam extension help [command] [flags]
 Install a sunbeam extension from a folder/gist/repository
 
 ```
-sunbeam extension install [alias] [extension] [flags]
+sunbeam extension install [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for install
-  -o, --open   open extension after installation
+      --alias string   extension alias
+  -h, --help           help for install
+      --pin string     pin extension to a specific version
 ```
 
 ## sunbeam extension list
