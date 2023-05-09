@@ -61,6 +61,10 @@ func (d *Detail) Init() tea.Cmd {
 	}
 }
 
+func (d *Detail) Focus() tea.Cmd {
+	return nil
+}
+
 type DetailMsg string
 
 func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {

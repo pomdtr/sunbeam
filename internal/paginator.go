@@ -19,6 +19,7 @@ type PushPageMsg struct {
 
 type Page interface {
 	Init() tea.Cmd
+	Focus() tea.Cmd
 	Update(tea.Msg) (Page, tea.Cmd)
 	View() string
 	SetSize(width, height int)
@@ -74,8 +75,8 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case PopPageMsg:
 		if len(m.pages) > 1 {
-			m.Pop()
-			return m, nil
+			cmd := m.Pop()
+			return m, cmd
 		}
 
 		m.hidden = true
@@ -139,10 +140,13 @@ func (m *Paginator) Push(page Page) tea.Cmd {
 	return page.Init()
 }
 
-func (m *Paginator) Pop() {
+func (m *Paginator) Pop() tea.Cmd {
 	if len(m.pages) > 0 {
 		m.pages = m.pages[:len(m.pages)-1]
 	}
+
+	page := m.pages[len(m.pages)-1]
+	return page.Focus()
 }
 
 func Draw(page Page) error {

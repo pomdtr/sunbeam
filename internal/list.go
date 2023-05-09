@@ -164,6 +164,10 @@ func (c *List) Init() tea.Cmd {
 	return c.header.Focus()
 }
 
+func (c *List) Focus() tea.Cmd {
+	return c.header.Focus()
+}
+
 func (c *List) RefreshDetail() {
 	c.viewport.SetYOffset(0)
 	detailWidth := c.viewport.Width - 2 // take padding into account

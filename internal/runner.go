@@ -119,6 +119,20 @@ func (c *CommandRunner) Init() tea.Cmd {
 	return tea.Batch(c.SetIsloading(true), c.Refresh)
 }
 
+func (c *CommandRunner) Focus() tea.Cmd {
+	if c.currentPage == nil {
+		return nil
+	}
+	switch c.currentPage.Type {
+	case types.ListPage:
+		return c.list.Focus()
+	case types.DetailPage:
+		return c.detail.Focus()
+	}
+
+	return nil
+}
+
 func (runner *CommandRunner) Refresh() tea.Msg {
 	page, err := runner.Generator()
 	if err != nil {

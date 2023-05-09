@@ -65,6 +65,14 @@ func (c Form) Init() tea.Cmd {
 	return c.items[0].Focus()
 }
 
+func (c Form) Focus() tea.Cmd {
+	if len(c.items) == 0 {
+		return nil
+	}
+
+	return c.items[c.focusIndex].Focus()
+}
+
 func (c *Form) CurrentItem() FormInput {
 	if c.focusIndex >= len(c.items) {
 		return nil
