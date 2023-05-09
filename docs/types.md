@@ -98,6 +98,15 @@
 - `value`: string - The value of the item.
   - `default`: string - The default value of the input.
 
+## Color
+
+**POSSIBLE VALUES**
+
+- `'red'`
+- `'green'`
+- `'yellow'`
+- `'blue'`
+
 ## List
 
 **PROPERTIES**
@@ -119,7 +128,7 @@
 - `id`: string - The id of the item.
 - `subtitle`: string - The subtitle of the item.
 - `preview`: [Preview](#preview)
-- `accessories`: string[] - The accessories to show on the right side of the item.
+- `accessories`: string | object[] - The accessories to show on the right side of the item.
 - `actions`: [Action](#action)[] - The actions attached to the item.
 
 ## Preview

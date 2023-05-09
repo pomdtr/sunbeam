@@ -60,7 +60,24 @@ func (i ListItem) Render(width int, selected bool) string {
 	subtitle := strings.Split(i.Subtitle, "\n")[0]
 	subtitle = fmt.Sprintf(" %s", subtitle)
 	var blanks string
-	accessories := fmt.Sprintf(" %s", strings.Join(i.Accessories, " · "))
+
+	accessoryArr := make([]string, len(i.Accessories))
+	for i, accessory := range i.Accessories {
+		switch accessory.Color {
+		case types.RedColor:
+			accessoryArr[i] = lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(accessory.Text)
+		case types.GreenColor:
+			accessoryArr[i] = lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render(accessory.Text)
+		case types.YellowColor:
+			accessoryArr[i] = lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render(accessory.Text)
+		case types.BlueColor:
+			accessoryArr[i] = lipgloss.NewStyle().Foreground(lipgloss.Color("4")).Render(accessory.Text)
+		default:
+			accessoryArr[i] = lipgloss.NewStyle().Faint(true).Render(accessory.Text)
+		}
+	}
+
+	accessories := strings.Join(accessoryArr, " · ")
 
 	// If the width is too small, we need to truncate the subtitle, accessories, or title (in that order)
 	if width >= lipgloss.Width(title+subtitle+accessories) {
@@ -78,7 +95,6 @@ func (i ListItem) Render(width int, selected bool) string {
 
 	title = titleStyle.Render(title)
 	subtitle = lipgloss.NewStyle().Faint(true).Render(subtitle)
-	accessories = lipgloss.NewStyle().Faint(true).Render(accessories)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
 }

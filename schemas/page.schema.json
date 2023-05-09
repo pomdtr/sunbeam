@@ -121,7 +121,26 @@
                 "accessories": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "required": [
+                                    "text"
+                                ],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "text": {
+                                        "type": "string"
+                                    },
+                                    "color": {
+                                        "$ref": "#/$defs/color"
+                                    }
+                                }
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
                     },
                     "description": "The accessories to show on the right side of the item."
                 },
@@ -564,6 +583,15 @@
                     "$ref": "#/$defs/command"
                 }
             }
+        },
+        "color": {
+            "type": "string",
+            "enum": [
+                "red",
+                "green",
+                "yellow",
+                "blue"
+            ]
         }
     }
 }

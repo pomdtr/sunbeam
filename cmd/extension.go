@@ -149,8 +149,8 @@ func NewExtensionBrowseCmd(extensionRoot string) *cobra.Command {
 					listItems = append(listItems, types.ListItem{
 						Title:    repo.FullName,
 						Subtitle: repo.Description,
-						Accessories: []string{
-							fmt.Sprintf("%d *", repo.StargazersCount),
+						Accessories: []types.Accessory{
+							{Text: fmt.Sprintf("%d *", repo.StargazersCount), Color: types.YellowColor},
 						},
 						Actions: []types.Action{
 							{
@@ -206,9 +206,10 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 				listItems := make([]types.ListItem, 0)
 				for extension, manifest := range extensions {
 					listItems = append(listItems, types.ListItem{
-						Title:       extension,
-						Subtitle:    manifest.Description,
-						Accessories: []string{manifest.PrettyVersion()},
+						Title:    extension,
+						Subtitle: manifest.Description,
+						Accessories: []types.Accessory{
+							{Text: manifest.PrettyVersion()}},
 						Actions: []types.Action{
 							{
 								Title: "Run Extension",
