@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alecthomas/chroma/quick"
 	"github.com/atotto/clipboard"
 	"github.com/pomdtr/sunbeam/types"
 
@@ -145,14 +144,7 @@ func NewList(page *types.Page) *List {
 		}
 
 		if item.Preview.Text != "" {
-			if item.Preview.HighLight == "" {
-				return item.Preview.Text
-			}
-			builder := strings.Builder{}
-			if err := quick.Highlight(&builder, item.Preview.Text, item.Preview.HighLight, "terminal16", "github"); err != nil {
-				return item.Preview.Text
-			}
-			return builder.String()
+			return item.Preview.Text
 		}
 
 		output, err := item.Preview.Command.Output()
@@ -162,15 +154,7 @@ func NewList(page *types.Page) *List {
 
 		content := string(output)
 
-		if item.Preview.HighLight == "" {
-			return content
-		}
-
-		builder := strings.Builder{}
-		if err := quick.Highlight(&builder, content, item.Preview.HighLight, "terminal16", "github"); err != nil {
-			return content
-		}
-		return builder.String()
+		return content
 	}
 
 	return &list
@@ -186,7 +170,7 @@ func (c *List) Focus() tea.Cmd {
 
 func (c *List) RefreshDetail() {
 	c.viewport.SetYOffset(0)
-	detailWidth := c.viewport.Width - 2 // take padding into account
+	detailWidth := c.viewport.Width - 3 // take padding into account
 	detailContent := wrap.String(wordwrap.String(c.previewContent, detailWidth), detailWidth)
 
 	c.viewport.SetContent(detailContent)

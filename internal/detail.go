@@ -1,9 +1,6 @@
 package internal
 
 import (
-	"strings"
-
-	"github.com/alecthomas/chroma/quick"
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -18,7 +15,6 @@ type Detail struct {
 	header     Header
 	Style      lipgloss.Style
 	viewport   viewport.Model
-	Language   string
 	actionList ActionList
 	content    string
 	ready      bool
@@ -121,16 +117,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 	case ContentMsg:
-		if c.Language != "" {
-			builder := strings.Builder{}
-			if err := quick.Highlight(&builder, string(msg), c.Language, "terminal16", "github"); err != nil {
-				c.content = string(msg)
-			} else {
-				c.content = builder.String()
-			}
-		} else {
-			c.content = string(msg)
-		}
+		c.content = string(msg)
 		c.RefreshContent()
 	}
 	var cmds []tea.Cmd

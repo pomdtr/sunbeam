@@ -571,10 +571,6 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "highlight": {
-                    "type": "string",
-                    "description": "The highlighting of the preview text."
-                },
                 "text": {
                     "type": "string",
                     "description": "The text of the preview."

@@ -137,7 +137,6 @@ The preview to show in the detail view.
 
 **PROPERTIES**
 
-- `highlight`: string - The highlighting of the preview text.
 - `text`: string - The text of the preview.
 - `command`: [Command](#command)
 

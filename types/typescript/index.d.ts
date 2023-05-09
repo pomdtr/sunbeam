@@ -325,10 +325,6 @@ export interface Listitem {
  */
 export interface Preview {
   /**
-   * The highlighting of the preview text.
-   */
-  highlight?: string;
-  /**
    * The text of the preview.
    */
   text?: string;

@@ -296,9 +296,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
-			if page.Preview != nil && page.Preview.HighLight != "" {
-				runner.detail.Language = page.Preview.HighLight
-			}
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()
@@ -382,8 +379,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				Text:  msg.Error(),
 			},
 		})
-
-		errorView.Language = "markdown"
 
 		runner.err = errorView
 		runner.err.SetSize(runner.width, runner.height)

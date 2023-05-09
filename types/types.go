@@ -38,9 +38,8 @@ type EmptyView struct {
 }
 
 type Preview struct {
-	HighLight string   `json:"highlight,omitempty"`
-	Text      string   `json:"text,omitempty"`
-	Command   *Command `json:"command,omitempty"`
+	Text    string   `json:"text,omitempty"`
+	Command *Command `json:"command,omitempty"`
 }
 
 type ListItem struct {
