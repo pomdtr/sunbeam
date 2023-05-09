@@ -259,7 +259,6 @@ export type Input =
        */
       default?: string;
     };
-export type Color = "red" | "green" | "yellow" | "blue";
 
 export interface List {
   /**
@@ -304,13 +303,7 @@ export interface Listitem {
   /**
    * The accessories to show on the right side of the item.
    */
-  accessories?: (
-    | {
-        text: string;
-        color?: Color;
-      }
-    | string
-  )[];
+  accessories?: string[];
   /**
    * The actions attached to the item.
    */

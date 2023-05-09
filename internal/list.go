@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -57,26 +58,10 @@ func (i ListItem) Render(width int, selected bool) string {
 	}
 
 	subtitle := strings.Split(i.Subtitle, "\n")[0]
-	subtitle = fmt.Sprintf(" %s", subtitle)
+	subtitle = " " + subtitle
 	var blanks string
 
-	accessoryArr := make([]string, len(i.Accessories))
-	for i, accessory := range i.Accessories {
-		switch accessory.Color {
-		case types.RedColor:
-			accessoryArr[i] = lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(accessory.Text)
-		case types.GreenColor:
-			accessoryArr[i] = lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render(accessory.Text)
-		case types.YellowColor:
-			accessoryArr[i] = lipgloss.NewStyle().Foreground(lipgloss.Color("3")).Render(accessory.Text)
-		case types.BlueColor:
-			accessoryArr[i] = lipgloss.NewStyle().Foreground(lipgloss.Color("4")).Render(accessory.Text)
-		default:
-			accessoryArr[i] = lipgloss.NewStyle().Faint(true).Render(accessory.Text)
-		}
-	}
-
-	accessories := strings.Join(accessoryArr, " · ")
+	accessories := " " + strings.Join(i.Accessories, " · ")
 
 	// If the width is too small, we need to truncate the subtitle, accessories, or title (in that order)
 	if width >= lipgloss.Width(title+subtitle+accessories) {
@@ -86,14 +71,16 @@ func (i ListItem) Render(width int, selected bool) string {
 		subtitle = subtitle[:width-lipgloss.Width(title+accessories)]
 	} else if width >= lipgloss.Width(title) {
 		subtitle = ""
-		accessories = accessories[:width-lipgloss.Width(title)]
+		start_index := len(accessories) - (width - lipgloss.Width(title)) + 1
+		accessories = " " + accessories[start_index:]
 	} else {
 		accessories = ""
-		title = title[:utils.Min(len(title), width)]
+		title = title[:utils.Min(len(title), width-1)]
 	}
 
 	title = titleStyle.Render(title)
 	subtitle = lipgloss.NewStyle().Faint(true).Render(subtitle)
+	accessories = lipgloss.NewStyle().Faint(true).Render(accessories)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
 }
@@ -177,14 +164,14 @@ func (c *List) RefreshDetail() {
 }
 
 func (c *List) SetSize(width, height int) {
+	log.Println("List.SetSize", width, height)
 	availableHeight := utils.Max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
 	c.footer.Width = width
 	c.header.Width = width
 	c.actionList.SetSize(width, height)
 	if c.ShowPreview {
-		listWidth := width/3 - 1 // take separator into account
-		c.filter.SetSize(listWidth, availableHeight)
-		c.viewport.Width = width - listWidth
+		c.filter.SetSize(width/3, availableHeight)
+		c.viewport.Width = width - width/3 - (1 - width%3)
 		c.viewport.Height = availableHeight
 		c.RefreshDetail()
 	} else {

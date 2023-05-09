@@ -44,45 +44,12 @@ type Preview struct {
 }
 
 type ListItem struct {
-	Id          string      `json:"id,omitempty"`
-	Title       string      `json:"title"`
-	Subtitle    string      `json:"subtitle,omitempty"`
-	Preview     *Preview    `json:"preview,omitempty"`
-	Accessories []Accessory `json:"accessories,omitempty"`
-	Actions     []Action    `json:"actions,omitempty"`
-}
-
-type Color string
-
-const (
-	RedColor    Color = "red"
-	GreenColor  Color = "green"
-	BlueColor   Color = "blue"
-	YellowColor Color = "yellow"
-)
-
-type Accessory struct {
-	Text  string `json:"text"`
-	Color Color  `json:"color,omitempty"`
-}
-
-func (c *Accessory) UnmarshalJSON(data []byte) error {
-	var raw string
-	if err := json.Unmarshal(data, &raw); err == nil {
-		c.Text = raw
-		return nil
-	}
-
-	var m map[string]interface{}
-	if err := json.Unmarshal(data, &m); err == nil {
-		if err := mapstructure.Decode(m, c); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	return errors.New("could not unmarshal accessory")
+	Id          string   `json:"id,omitempty"`
+	Title       string   `json:"title"`
+	Subtitle    string   `json:"subtitle,omitempty"`
+	Preview     *Preview `json:"preview,omitempty"`
+	Accessories []string `json:"accessories,omitempty"`
+	Actions     []Action `json:"actions,omitempty"`
 }
 
 type FormInputType string
