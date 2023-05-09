@@ -159,7 +159,7 @@ func NewExtensionBrowseCmd(extensionRoot string) *cobra.Command {
 								Key:   "i",
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"extension", "install", "--alias=${input:alias}", repo.FullName},
+									Args: []string{"extension", "install", "--alias=${input:alias}", repo.HtmlUrl},
 								},
 								Inputs: []types.Input{
 									{
@@ -673,9 +673,8 @@ func NewExtensionUpgradeCmd(extensionRoot string, extensions map[string]*Extensi
 				return fmt.Errorf("unable to upgrade extension: %s", err)
 			}
 
-			fmt.Sprintln("✓ Extension upgraded")
+			fmt.Println("✓ Extension upgraded")
 			return nil
-
 		},
 	}
 }
