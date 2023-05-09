@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -74,8 +73,10 @@ func (i ListItem) Render(width int, selected bool) string {
 		start_index := len(accessories) - (width - lipgloss.Width(title)) + 1
 		accessories = " " + accessories[start_index:]
 	} else {
+		subtitle = ""
 		accessories = ""
-		title = title[:utils.Min(len(title), width-1)]
+		// Why is this -1? I don't know, but it works
+		title = title[:utils.Min(len(title), width)]
 	}
 
 	title = titleStyle.Render(title)
@@ -164,7 +165,6 @@ func (c *List) RefreshDetail() {
 }
 
 func (c *List) SetSize(width, height int) {
-	log.Println("List.SetSize", width, height)
 	availableHeight := utils.Max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
 	c.footer.Width = width
 	c.header.Width = width
