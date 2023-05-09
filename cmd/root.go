@@ -71,11 +71,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 
-	extensions, err := ListExtensions(extensionRoot)
-	if err != nil {
-		return fmt.Errorf("could not list extensions: %w", err)
-	}
-
+	extensions, _ := ListExtensions(extensionRoot)
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},

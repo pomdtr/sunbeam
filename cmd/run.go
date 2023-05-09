@@ -15,22 +15,9 @@ import (
 
 func NewCmdRun(extensionDir string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "run",
-		Short:   "Generate a page from a command or a script, and push it's output",
-		GroupID: coreGroupID,
-		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			extension, err := ListExtensions(extensionDir)
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveError
-			}
-
-			completions := make([]string, 0, len(extension))
-			for extension := range extension {
-				completions = append(completions, extension)
-			}
-
-			return completions, cobra.ShellCompDirectiveDefault
-		},
+		Use:                "run",
+		Short:              "Generate a page from a command or a script, and push it's output",
+		GroupID:            coreGroupID,
 		DisableFlagParsing: true,
 		Args:               cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

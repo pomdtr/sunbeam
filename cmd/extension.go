@@ -110,7 +110,7 @@ func NewExtensionCmd(extensionRoot string, extensions map[string]*ExtensionManif
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionRoot))
 	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionRoot, extensions))
 	extensionCmd.AddCommand(NewExtensionListCmd(extensionRoot, extensions))
-	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionRoot))
+	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionRoot, extensions))
 	extensionCmd.AddCommand(NewExtensionUpgradeCmd(extensionRoot, extensions))
 
 	return extensionCmd
@@ -483,7 +483,7 @@ func installExtension(origin string, targetDir string) error {
 			return fmt.Errorf("unable to install extension: %s", err)
 		}
 
-		zipUrl := fmt.Sprintf("%s/archive/%s.zip", origin, commit)
+		zipUrl := fmt.Sprintf("%s/archive/%s.zip", origin, commit.Version)
 		if err := downloadAndExtractZip(zipUrl, filepath.Join(targetDir, "src")); err != nil {
 			return fmt.Errorf("unable to install extension: %s", err)
 		}
@@ -608,8 +608,7 @@ func NewExtensionListCmd(extensionRoot string, extensions map[string]*ExtensionM
 	return cmd
 }
 
-func NewExtensionRemoveCmd(extensionRoot string) *cobra.Command {
-	extensions, _ := ListExtensions(extensionRoot)
+func NewExtensionRemoveCmd(extensionRoot string, extensions map[string]*ExtensionManifest) *cobra.Command {
 	validArgs := make([]string, 0, len(extensions))
 	for extension := range extensions {
 		validArgs = append(validArgs, extension)
@@ -792,7 +791,7 @@ func downloadAndExtractZip(zipUrl string, dst string) error {
 		}
 
 		mode := file.Mode()
-		if fpath == "sunbeam-extension" {
+		if filepath.Base(fpath) == "sunbeam-extension" {
 			mode = 0755
 		}
 
