@@ -4,14 +4,5 @@
     "description": "Generate complex TUIs from simple scripts written in any language.",
     "repository": "https://github.com/pomdtr/sunbeam",
     "md_book": "./book",
-    "artifacts": {
-        "cargo_dist": false,
-        "package_managers": {
-            "brew": "brew install pomdtr/tap/sunbeam",
-            "scoop": "scoop bucket add pomdtr https://github.com/pomdtr/scoop-bucket.git && scoop install pomdtr/sunbeam",
-            "go": "go install github.com/pomdtr/sunbeam@latest",
-            "script": "curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/pomdtr/sunbeam/main/scripts/install-sunbeam.sh | sh"
-        }
-    },
     "path_prefix": "sunbeam"
 }
