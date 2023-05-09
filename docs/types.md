@@ -9,7 +9,6 @@
 
 **POSSIBLE VALUES**
 
-- string
 - &lt;string, string&gt;
 - object
   - `name`: string

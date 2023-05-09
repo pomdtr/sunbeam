@@ -1,6 +1,5 @@
 export type Page = List | Detail;
 export type Command =
-  | string
   | [string, ...string[]]
   | {
       name: string;

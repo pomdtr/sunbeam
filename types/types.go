@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/google/shlex"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -240,22 +239,6 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 		if len(args) == 0 {
 			return fmt.Errorf("empty command")
 		}
-		c.Name = args[0]
-		c.Args = args[1:]
-		return nil
-	}
-
-	var s string
-	if err := json.Unmarshal(data, &s); err == nil {
-		args, err := shlex.Split(s)
-		if err != nil {
-			return err
-		}
-
-		if len(args) == 0 {
-			return fmt.Errorf("empty command")
-		}
-
 		c.Name = args[0]
 		c.Args = args[1:]
 		return nil
