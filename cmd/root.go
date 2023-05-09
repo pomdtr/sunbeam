@@ -27,7 +27,7 @@ const (
 	extensionGroupID = "extension"
 )
 
-func Execute(version string) error {
+func NewCmdRoot(version string) (*cobra.Command, error) {
 	dataDir := filepath.Join(xdg.DataHome, "sunbeam")
 	extensionRoot := filepath.Join(dataDir, "extensions")
 
@@ -71,7 +71,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 
-	extensions, _ := ListExtensions(extensionRoot)
+	extensions, err := ListExtensions(extensionRoot)
+	if err != nil {
+		return nil, fmt.Errorf("could not list extensions: %w", err)
+	}
+
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
@@ -126,7 +130,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		rootCmd.AddCommand(NewExtensionExecCmd(extensionRoot, extension, manifest))
 	}
 
-	return rootCmd.Execute()
+	return rootCmd, nil
 }
 
 func NewExtensionExecCmd(extensionRoot string, extensionName string, manifest *ExtensionManifest) *cobra.Command {
