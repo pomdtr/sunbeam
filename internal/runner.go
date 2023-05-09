@@ -166,7 +166,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				}
 			}
 
-			return tea.Quit()
+			return ExitMsg{}
 		}
 	case types.CopyAction:
 		return func() tea.Msg {
@@ -175,7 +175,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return err
 			}
 
-			return tea.Quit()
+			return ExitMsg{}
 		}
 
 	case types.PushAction:
