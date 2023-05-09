@@ -159,7 +159,7 @@ func NewExtensionBrowseCmd(extensionRoot string) *cobra.Command {
 								Key:   "i",
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"extension", "install", "${input:alias}", repo.FullName},
+									Args: []string{"extension", "install", "--alias=${input:alias}", repo.FullName},
 								},
 								Inputs: []types.Input{
 									{
