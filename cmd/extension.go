@@ -829,6 +829,9 @@ func ListExtensions(extensionRoot string) (map[string]*ExtensionManifest, error)
 
 	extensions := make(map[string]*ExtensionManifest)
 	for _, extensionDir := range extensionDirs {
+		if !extensionDir.IsDir() {
+			continue
+		}
 		manifestPath := filepath.Join(extensionRoot, extensionDir.Name(), manifestName)
 		if _, err := os.Stat(filepath.Join(extensionRoot, extensionDir.Name(), manifestName)); os.IsNotExist(err) {
 			return nil, fmt.Errorf("unable to list extensions: %s", err)
