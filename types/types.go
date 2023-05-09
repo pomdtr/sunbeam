@@ -72,6 +72,7 @@ type Input struct {
 	Title       string        `json:"title"`
 	Placeholder string        `json:"placeholder,omitempty"`
 	Default     any           `json:"default,omitempty"`
+	Optional    bool          `json:"optional,omitempty"`
 
 	// Only for dropdown
 	Items []DropDownItem `json:"items,omitempty"`

@@ -28,11 +28,12 @@ type FormInput interface {
 
 type FormItem struct {
 	FormInput
-	Title string
-	Name  string
+	Optional bool
+	Title    string
+	Name     string
 }
 
-func NewFormItem(input types.Input) (FormItem, error) {
+func NewFormItem(input types.Input) (*FormItem, error) {
 	var item FormInput
 	switch input.Type {
 	case types.TextFieldInput:
@@ -44,12 +45,13 @@ func NewFormItem(input types.Input) (FormItem, error) {
 	case types.DropDownInput:
 		item = NewDropDown(input)
 	default:
-		return FormItem{}, fmt.Errorf("invalid form input type")
+		return nil, fmt.Errorf("invalid form input type")
 	}
 
-	return FormItem{
+	return &FormItem{
 		Name:      input.Name,
 		Title:     input.Title,
+		Optional:  input.Optional,
 		FormInput: item,
 	}, nil
 }

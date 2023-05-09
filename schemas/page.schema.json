@@ -360,6 +360,10 @@
                             "type": "string",
                             "description": "The placeholder of the input."
                         },
+                        "optional": {
+                            "type": "boolean",
+                            "description": "Whether the input is optional."
+                        },
                         "default": {
                             "type": "string",
                             "description": "The default value of the input."
@@ -386,6 +390,10 @@
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
+                        },
+                        "optional": {
+                            "type": "boolean",
+                            "description": "Whether the input is optional."
                         },
                         "type": {
                             "const": "checkbox",
@@ -430,6 +438,10 @@
                             "const": "textarea",
                             "description": "The type of the input."
                         },
+                        "optional": {
+                            "type": "boolean",
+                            "description": "Whether the input is optional."
+                        },
                         "placeholder": {
                             "type": "string",
                             "description": "The placeholder of the input."
@@ -457,6 +469,10 @@
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
+                        },
+                        "optional": {
+                            "type": "boolean",
+                            "description": "Whether the input is optional."
                         },
                         "type": {
                             "const": "dropdown",

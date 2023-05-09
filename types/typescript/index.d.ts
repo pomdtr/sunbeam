@@ -156,6 +156,10 @@ export type Input =
        */
       placeholder?: string;
       /**
+       * Whether the input is optional.
+       */
+      optional?: boolean;
+      /**
        * The default value of the input.
        */
       default?: string;
@@ -173,6 +177,10 @@ export type Input =
        * The title of the input.
        */
       title: string;
+      /**
+       * Whether the input is optional.
+       */
+      optional?: boolean;
       /**
        * The type of the input.
        */
@@ -208,6 +216,10 @@ export type Input =
        */
       type: "textarea";
       /**
+       * Whether the input is optional.
+       */
+      optional?: boolean;
+      /**
        * The placeholder of the input.
        */
       placeholder?: string;
@@ -225,6 +237,10 @@ export type Input =
        * The title of the input.
        */
       title: string;
+      /**
+       * Whether the input is optional.
+       */
+      optional?: boolean;
       /**
        * The type of the input.
        */

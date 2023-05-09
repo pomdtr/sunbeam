@@ -69,11 +69,13 @@
   - `title`: string - The title of the input.
   - `type`: `'textfield'` - The type of the input.
   - `placeholder`: string - The placeholder of the input.
+  - `optional`: boolean - Whether the input is optional.
   - `default`: string - The default value of the input.
   - `secure`: boolean - Whether the input should be secure.
 - object
   - `name`: string - The name of the input.
   - `title`: string - The title of the input.
+  - `optional`: boolean - Whether the input is optional.
   - `type`: `'checkbox'` - The type of the input.
   - `default`: boolean - The default value of the input.
   - `label`: string - The label of the input.
@@ -83,11 +85,13 @@
   - `name`: string - The name of the input.
   - `title`: string - The title of the input.
   - `type`: `'textarea'` - The type of the input.
+  - `optional`: boolean - Whether the input is optional.
   - `placeholder`: string - The placeholder of the input.
   - `default`: string - The default value of the input.
 - object
   - `name`: string - The name of the input.
   - `title`: string - The title of the input.
+  - `optional`: boolean - Whether the input is optional.
   - `type`: `'dropdown'` - The type of the input.
   - `items`: object[] - The items of the input.
 - `title`: string - The title of the item.

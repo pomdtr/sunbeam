@@ -11,7 +11,7 @@ import (
 )
 
 type Form struct {
-	items     []FormItem
+	items     []*FormItem
 	submitCmd func(values map[string]string) tea.Msg
 
 	width    int
@@ -31,7 +31,7 @@ func NewForm(title string, submitCmd func(values map[string]string) tea.Msg, inp
 		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
 	)
 
-	var items []FormItem
+	var items []*FormItem
 	for _, input := range inputs {
 		item, err := NewFormItem(input)
 		if err != nil {
@@ -139,6 +139,11 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case tea.KeyCtrlS:
 			values := make(map[string]string)
 			for _, input := range c.items {
+				if input.Value() == "" && !input.Optional {
+					return &c, func() tea.Msg {
+						return fmt.Errorf("required field %s is empty", input.Name)
+					}
+				}
 				values[input.Name] = input.Value()
 			}
 
@@ -176,7 +181,15 @@ func (c *Form) renderInputs() {
 			inputView = normalBorder.Render(inputView)
 		}
 
-		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("%s: ", input.Title)), inputView)
+		var titleView string
+		if input.Optional {
+			titleView = fmt.Sprintf("%s ", input.Title)
+		} else {
+			asterisk := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render("*")
+			titleView = fmt.Sprintf("%s%s ", input.Title, asterisk)
+		}
+
+		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(titleView), inputView)
 		if lipgloss.Width(itemViews[i]) > maxWidth {
 			maxWidth = lipgloss.Width(itemViews[i])
 		}
