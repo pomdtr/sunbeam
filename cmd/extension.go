@@ -206,10 +206,9 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 				listItems := make([]types.ListItem, 0)
 				for extension, manifest := range extensions {
 					listItems = append(listItems, types.ListItem{
-						Title:    extension,
-						Subtitle: manifest.Description,
-						Accessories: []types.Accessory{
-							{Text: manifest.PrettyVersion()}},
+						Title:       extension,
+						Subtitle:    manifest.Description,
+						Accessories: []types.Accessory{{Text: manifest.PrettyVersion()}},
 						Actions: []types.Action{
 							{
 								Title: "Run Extension",
@@ -218,6 +217,11 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 									Name: os.Args[0],
 									Args: []string{extension},
 								},
+							},
+							{
+								Title:  "Open Extension Remote",
+								Type:   types.OpenAction,
+								Target: manifest.Remote,
 							},
 							{
 								Title: "Upgrade Extension",

@@ -14,7 +14,6 @@
 - object
   - `name`: string
   - `args`: string[]
-  - `shell`: boolean - Whether to run the command in a shell.
   - `input`: string
   - `dir`: string
 

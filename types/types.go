@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/google/shlex"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -224,19 +225,13 @@ func NewRunAction(title string, name string, args ...string) Action {
 
 type Command struct {
 	Name  string   `json:"name"`
-	Shell bool     `json:"shell,omitempty"`
 	Args  []string `json:"args,omitempty"`
 	Input string   `json:"input,omitempty"`
 	Dir   string   `json:"dir,omitempty"`
 }
 
 func (c Command) Cmd() *exec.Cmd {
-	var cmd *exec.Cmd
-	if c.Shell {
-		cmd = exec.Command("bash", "-c", c.Name)
-	} else {
-		cmd = exec.Command(c.Name, c.Args...)
-	}
+	cmd := exec.Command(c.Name, c.Args...)
 	cmd.Dir = c.Dir
 	if c.Input != "" {
 		cmd.Stdin = strings.NewReader(c.Input)
@@ -285,8 +280,17 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
-		c.Name = s
-		c.Shell = true
+		args, err := shlex.Split(s)
+		if err != nil {
+			return err
+		}
+
+		if len(args) == 0 {
+			return fmt.Errorf("empty command")
+		}
+
+		c.Name = args[0]
+		c.Args = args[1:]
 		return nil
 	}
 

@@ -451,7 +451,6 @@ func RenderCommand(command *types.Command, old, new string) *types.Command {
 	}
 	rendered.Input = strings.ReplaceAll(command.Input, old, new)
 	rendered.Dir = strings.ReplaceAll(command.Dir, old, new)
-	rendered.Shell = command.Shell
 
 	return &rendered
 }

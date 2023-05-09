@@ -5,10 +5,6 @@ export type Command =
   | {
       name: string;
       args?: string[];
-      /**
-       * Whether to run the command in a shell.
-       */
-      shell?: boolean;
       input?: string;
       dir?: string;
     };

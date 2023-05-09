@@ -552,10 +552,6 @@
                                 "type": "string"
                             }
                         },
-                        "shell": {
-                            "type": "boolean",
-                            "description": "Whether to run the command in a shell."
-                        },
                         "input": {
                             "type": "string"
                         },
