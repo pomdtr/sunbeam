@@ -731,7 +731,7 @@ func upgradeExtension(extensionPath string) error {
 		}
 
 		if release.TagName == manifest.Version {
-			fmt.Println("Extension already up to date")
+			fmt.Printf("✓ Extension %s already up to date\n", filepath.Base(extensionPath))
 			return nil
 		}
 
