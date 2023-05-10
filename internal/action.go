@@ -125,10 +125,10 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 				case types.RunAction:
 					content = action.Command.Cmd().String()
 				case types.PushAction:
-					if action.Command != nil {
+					if action.Page.Command != nil {
 						content = action.Command.Cmd().String()
 					} else {
-						content = action.Page
+						content = action.Page.Text
 					}
 				}
 

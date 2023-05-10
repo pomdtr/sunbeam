@@ -86,7 +86,7 @@
                     "type": "string"
                 },
                 "preview": {
-                    "$ref": "#/$defs/preview"
+                    "$ref": "#/$defs/textOrCommand"
                 },
                 "actions": {
                     "type": "array",
@@ -116,7 +116,7 @@
                     "description": "The subtitle of the item."
                 },
                 "preview": {
-                    "$ref": "#/$defs/preview"
+                    "$ref": "#/$defs/textOrCommand"
                 },
                 "accessories": {
                     "type": "array",
@@ -296,7 +296,8 @@
                 },
                 {
                     "required": [
-                        "type"
+                        "type",
+                        "page"
                     ],
                     "additionalProperties": false,
                     "properties": {
@@ -319,11 +320,8 @@
                             },
                             "description": "The inputs to show when the action is run."
                         },
-                        "command": {
-                            "$ref": "#/$defs/command"
-                        },
                         "page": {
-                            "type": "string"
+                            "$ref": "#/$defs/textOrCommand"
                         }
                     }
                 }
@@ -507,6 +505,9 @@
         "command": {
             "oneOf": [
                 {
+                    "type": "string"
+                },
+                {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -539,19 +540,36 @@
                 }
             ]
         },
-        "preview": {
-            "description": "The preview to show in the detail view.",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "text": {
-                    "type": "string",
-                    "description": "The text of the preview."
+        "textOrCommand": {
+            "oneOf": [
+                {
+                    "type": "string"
                 },
-                "command": {
-                    "$ref": "#/$defs/command"
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "command"
+                    ],
+                    "properties": {
+                        "command": {
+                            "$ref": "#/$defs/command"
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "text"
+                    ],
+                    "properties": {
+                        "text": {
+                            "type": "string"
+                        }
+                    }
                 }
-            }
+            ]
         }
     }
 }

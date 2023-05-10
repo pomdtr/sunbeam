@@ -1,5 +1,6 @@
 export type Page = List | Detail;
 export type Command =
+  | string
   | [string, ...string[]]
   | {
       name: string;
@@ -129,8 +130,7 @@ export type Action =
        * The inputs to show when the action is run.
        */
       inputs?: Input[];
-      command?: Command;
-      page?: string;
+      page: TextOrCommand;
     };
 export type Input =
   | {
@@ -258,6 +258,14 @@ export type Input =
        */
       default?: string;
     };
+export type TextOrCommand =
+  | string
+  | {
+      command: Command;
+    }
+  | {
+      text: string;
+    };
 
 export interface List {
   /**
@@ -298,7 +306,7 @@ export interface Listitem {
    * The subtitle of the item.
    */
   subtitle?: string;
-  preview?: Preview;
+  preview?: TextOrCommand;
   /**
    * The accessories to show on the right side of the item.
    */
@@ -307,16 +315,6 @@ export interface Listitem {
    * The actions attached to the item.
    */
   actions?: Action[];
-}
-/**
- * The preview to show in the detail view.
- */
-export interface Preview {
-  /**
-   * The text of the preview.
-   */
-  text?: string;
-  command?: Command;
 }
 /**
  * A detail view displayign a preview and actions.
@@ -330,7 +328,7 @@ export interface Detail {
    * The title of the page.
    */
   title?: string;
-  preview: Preview;
+  preview: TextOrCommand;
   /**
    * The actions attached to the detail view.
    */

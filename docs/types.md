@@ -9,6 +9,7 @@
 
 **POSSIBLE VALUES**
 
+- string
 - &lt;string, string&gt;
 - object
   - `name`: string
@@ -55,8 +56,7 @@
   - `title`: string - The title of the action.
   - `key`: string - The key used as a shortcut.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
-  - `command`: [Command](#command)
-  - `page`: string
+  - `page`: [TextOrCommand](#textorcommand)
 
 ## Input
 
@@ -96,6 +96,16 @@
 - `value`: string - The value of the item.
   - `default`: string - The default value of the input.
 
+## TextOrCommand
+
+**POSSIBLE VALUES**
+
+- string
+- object
+  - `command`: [Command](#command)
+- object
+  - `text`: string
+
 ## List
 
 **PROPERTIES**
@@ -116,18 +126,9 @@
 - `title`: string - The title of the item.
 - `id`: string - The id of the item.
 - `subtitle`: string - The subtitle of the item.
-- `preview`: [Preview](#preview)
+- `preview`: [TextOrCommand](#textorcommand)
 - `accessories`: string[] - The accessories to show on the right side of the item.
 - `actions`: [Action](#action)[] - The actions attached to the item.
-
-## Preview
-
-The preview to show in the detail view.
-
-**PROPERTIES**
-
-- `text`: string - The text of the preview.
-- `command`: [Command](#command)
 
 ## Detail
 
@@ -137,5 +138,5 @@ A detail view displayign a preview and actions.
 
 - `type`: `'detail'` - The type of the response.
 - `title`: string - The title of the page.
-- `preview`: [Preview](#preview)
+- `preview`: [TextOrCommand](#textorcommand)
 - `actions`: [Action](#action)[] - The actions attached to the detail view.

@@ -23,7 +23,7 @@ type Page struct {
 	Actions []Action `json:"actions,omitempty"`
 
 	// Detail page
-	Preview *Preview `json:"preview,omitempty"`
+	Preview *TextOrCommand `json:"preview,omitempty"`
 
 	// List page
 	ShowPreview   bool       `json:"showPreview,omitempty"`
@@ -37,18 +37,13 @@ type EmptyView struct {
 	Actions []Action `json:"actions,omitempty"`
 }
 
-type Preview struct {
-	Text    string   `json:"text,omitempty"`
-	Command *Command `json:"command,omitempty"`
-}
-
 type ListItem struct {
-	Id          string   `json:"id,omitempty"`
-	Title       string   `json:"title"`
-	Subtitle    string   `json:"subtitle,omitempty"`
-	Preview     *Preview `json:"preview,omitempty"`
-	Accessories []string `json:"accessories,omitempty"`
-	Actions     []Action `json:"actions,omitempty"`
+	Id          string         `json:"id,omitempty"`
+	Title       string         `json:"title"`
+	Subtitle    string         `json:"subtitle,omitempty"`
+	Preview     *TextOrCommand `json:"preview,omitempty"`
+	Accessories []string       `json:"accessories,omitempty"`
+	Actions     []Action       `json:"actions,omitempty"`
 }
 
 type FormInputType string
@@ -142,11 +137,37 @@ type Action struct {
 	Target string `json:"target,omitempty"`
 
 	// push
-	Page string `json:"page,omitempty"`
+	Page *TextOrCommand `json:"page,omitempty"`
 
 	// run
 	Command         *Command `json:"command,omitempty"`
 	ReloadOnSuccess bool     `json:"reloadOnSuccess,omitempty"`
+}
+
+type TextOrCommand struct {
+	Text    string   `json:"text,omitempty"`
+	Command *Command `json:"command,omitempty"`
+}
+
+func (p *TextOrCommand) UnmarshalJSON(data []byte) error {
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		p.Text = text
+		return nil
+	}
+
+	var v struct {
+		Text    string   `json:"text"`
+		Command *Command `json:"command"`
+	}
+
+	if err := json.Unmarshal(data, &v); err == nil {
+		p.Text = v.Text
+		p.Command = v.Command
+		return nil
+	}
+
+	return errors.New("page must be a string or a command")
 }
 
 func NewReloadAction() Action {
@@ -175,7 +196,9 @@ func NewPushAction(title string, page string) Action {
 	return Action{
 		Title: title,
 		Type:  PushAction,
-		Page:  page,
+		Page: &TextOrCommand{
+			Text: page,
+		},
 	}
 }
 

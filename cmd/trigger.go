@@ -83,10 +83,15 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 			switch action.Type {
 			case types.PushAction:
 				var page internal.Page
-				if action.Command != nil {
+
+				if action.Page == nil {
+					return fmt.Errorf("no page provided")
+				}
+
+				if action.Page.Command != nil {
 					page = internal.NewRunner(internal.NewCommandGenerator(action.Command))
 				} else {
-					page = internal.NewRunner(internal.NewFileGenerator(action.Page))
+					page = internal.NewRunner(internal.NewFileGenerator(action.Page.Text))
 				}
 
 				return internal.PushPageMsg{
@@ -116,10 +121,10 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 
 	switch action.Type {
 	case types.PushAction:
-		if action.Command != nil {
-			return Run(internal.NewCommandGenerator(action.Command))
+		if action.Page.Command != nil {
+			return Run(internal.NewCommandGenerator(action.Page.Command))
 		}
-		return Run(internal.NewFileGenerator(action.Page))
+		return Run(internal.NewFileGenerator(action.Page.Text))
 	case types.RunAction:
 		if _, err := action.Command.Output(); err != nil {
 			return fmt.Errorf("command failed: %s", err)

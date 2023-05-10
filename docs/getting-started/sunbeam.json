@@ -17,7 +17,9 @@
         {
           "type": "push",
           "title": "Dynamic List",
-          "command": "./dynamic-list.py"
+          "page": {
+            "command": "./dynamic-list.py"
+          }
         }
       ]
     },
@@ -27,7 +29,9 @@
         {
           "type": "push",
           "title": "Dynamic List with Args",
-          "command": "./dynamic-list-with-args.py /"
+          "page": {
+            "command": "./dynamic-list-with-args.py /"
+          }
         }
       ]
     }

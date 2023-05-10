@@ -180,14 +180,14 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	case types.PushAction:
 		return func() tea.Msg {
-			if action.Command != nil {
+			if action.Page.Command != nil {
 				return PushPageMsg{
-					Page: NewRunner(NewCommandGenerator(action.Command)),
+					Page: NewRunner(NewCommandGenerator(action.Page.Command)),
 				}
 			}
 
 			return PushPageMsg{
-				Page: NewRunner(NewFileGenerator(action.Page)),
+				Page: NewRunner(NewFileGenerator(action.Page.Text)),
 			}
 		}
 
@@ -462,7 +462,13 @@ func RenderAction(action types.Action, old, new string) types.Action {
 
 	action.Target = strings.ReplaceAll(action.Target, old, url.QueryEscape(new))
 	action.Text = strings.ReplaceAll(action.Text, old, new)
-	action.Page = strings.ReplaceAll(action.Page, old, new)
+	if action.Page != nil {
+		if action.Page.Command != nil {
+			action.Page.Command = RenderCommand(action.Page.Command, old, new)
+		} else {
+			action.Page.Text = strings.ReplaceAll(action.Page.Text, old, new)
+		}
+	}
 	return action
 }
 
@@ -489,8 +495,8 @@ func expandPage(page types.Page, dir string) types.Page {
 			action.Command.Dir = filepath.Join(dir, action.Command.Dir)
 		}
 
-		if action.Page != "" && !filepath.IsAbs(action.Page) {
-			action.Page = filepath.Join(dir, action.Page)
+		if action.Page != nil && action.Page.Text != "" && !filepath.IsAbs(action.Page.Text) {
+			action.Page.Text = filepath.Join(dir, action.Page.Text)
 		}
 
 		if action.Target != "" {
