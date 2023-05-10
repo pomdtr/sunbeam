@@ -213,10 +213,11 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 							{
 								Title: "Run Extension",
 								Type:  types.PushAction,
-								Command: &types.Command{
-									Name: os.Args[0],
-									Args: []string{extension},
-								},
+								Page: &types.TextOrCommand{
+									Command: &types.Command{
+										Name: os.Args[0],
+										Args: []string{extension},
+									}},
 							},
 							{
 								Title:  "Open Extension Remote",
@@ -273,9 +274,11 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 							{
 								Type:  types.PushAction,
 								Title: "Browse Extensions",
-								Command: &types.Command{
-									Name: os.Args[0],
-									Args: []string{"extension", "browse"},
+								Page: &types.TextOrCommand{
+									Command: &types.Command{
+										Name: os.Args[0],
+										Args: []string{"extension", "browse"},
+									},
 								},
 							},
 						},

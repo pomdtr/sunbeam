@@ -180,6 +180,10 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	case types.PushAction:
 		return func() tea.Msg {
+			if action.Page == nil {
+				return errors.New("page is nil")
+			}
+
 			if action.Page.Command != nil {
 				return PushPageMsg{
 					Page: NewRunner(NewCommandGenerator(action.Page.Command)),
