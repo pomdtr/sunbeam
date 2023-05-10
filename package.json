@@ -1,0 +1,29 @@
+{
+    "name": "sunbeam-cli",
+    "displayName": "Sunbeam",
+    "version": "0.9.25",
+    "description": "Generate powerful UIs from simple scripts written in any language.",
+    "scripts": {
+        "postinstall": "go-npm install",
+        "preuninstall": "go-npm uninstall"
+    },
+    "goBinary": {
+        "name": "sunbeam",
+        "path": "./bin",
+        "url": "https://github.com/pomdtr/sunbeam/releases/download/v{{version}}/sunbeam-{{version}}-{{platform}}_{{arch}}{{archive_ext}}"
+    },
+    "files": [],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/pomdtr/sunbeam.git"
+    },
+    "author": "Achille Lacoin",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/pomdtr/sunbeam/issues"
+    },
+    "homepage": "pomdtr.github.io/sunbeam",
+    "dependencies": {
+        "@go-task/go-npm": "^0.1.17"
+    }
+}
