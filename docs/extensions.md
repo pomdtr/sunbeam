@@ -33,7 +33,11 @@ You can write extension using any language. If you want to distribute your exten
 
 Here are some suggestions if you don't know what language to use:
 
-- Bash is already installed on most systems, and is a good choice for simple extensions. The `sunbeam fetch` and `sunbeam query` commands can be used instead of `curl` and `jq`.
+- Bash is already installed on most systems. Sunbeam provides multiple commands to help you write bash extensions.
+  - sunbeam argparse: parse command line arguments
+  - sunbeam check: check if a command is available
+  - sunbeam query: Transform or generate JSON
+  - sunbeam fetch: Perform HTTP requests
 - Go is a good choice for more complex extensions. The [sunbeam/types](https://pkg.go.dev/github.com/pomdtr/sunbeam/types) package provides types for all sunbeam commands. Go binaries can be distributed as github releases.
 - If you are more confortable with javascript/typescript, take a look at [deno](https://deno.land/). Types are available both on [npm](https://npmjs.com/package/sunbeam-types) and [deno.land](https://deno.land/x/sunbeam/index.d.ts).
 
