@@ -58,7 +58,10 @@ while (( "$#" )); do
   esac
 done
 
-set -- "${ARGV[@]}" "$@"
+if [ ${#ARGV[@]} -ne 0 ]; then
+  set -- "${ARGV[@]}"
+fi
+
 
 # Cleanup non-exported things (since this will be sourced)
 unset ARGV
