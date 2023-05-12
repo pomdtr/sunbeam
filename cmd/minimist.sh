@@ -59,7 +59,9 @@ while (( "$#" )); do
 done
 
 if [ ${#ARGV[@]} -ne 0 ]; then
-  set -- "${ARGV[@]}"
+  set -- "${ARGV[@]}" "$@"
+else
+  set -- "$@"
 fi
 
 
