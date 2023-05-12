@@ -18,6 +18,9 @@ brew install pomdtr/tap/sunbeam
 scoop bucket add pomdtr https://github.com/pomdtr/scoop-bucket.git
 scoop install pomdtr/sunbeam
 
+# npm (all platforms)
+npm install -g sunbeam-cli
+
 # install script (all platforms)
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/pomdtr/sunbeam/main/scripts/install-sunbeam.sh | sh
 
