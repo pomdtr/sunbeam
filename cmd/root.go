@@ -96,6 +96,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdArgParse())
 	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewReadCmd())
+	rootCmd.AddCommand(NewCheckCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdRun(extensionRoot))
