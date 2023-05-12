@@ -232,7 +232,7 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 		if len(l.emptyActions) > 0 {
 			l.footer.SetBindings(
 				key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", l.emptyActions[0].Title)),
-				key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+				key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
 			)
 		}
 	} else {
@@ -242,7 +242,7 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 		if len(item.Actions) > 0 {
 			l.footer.SetBindings(
 				key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", item.Actions[0].Title)),
-				key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Show Actions")),
+				key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
 			)
 		}
 	}
