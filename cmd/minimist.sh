@@ -10,9 +10,6 @@
 # Value to set for truthy flags
 TRUTHY=y
 
-# Prefix of flags
-PREFIX=FLAG_
-
 function __handleInvalidKey() {
   __handleError "Invalid key: '$1', as part of '${2:-$1}'"
   exit 1
@@ -34,27 +31,26 @@ while (( "$#" )); do
     ;;
     --*=*) # --abc=123
       KEY=${1%=*}
-      KEY=${KEY:2}
       KEY=$(__sanitize "$KEY")
-      declare "${PREFIX}${KEY^^}=${1#*=}" 2>/dev/null || __handleInvalidKey "$KEY"
+      KEY=${KEY:2}
+      declare "${KEY^^}=${1#*=}" 2>/dev/null || __handleInvalidKey "$KEY"
       shift
     ;;
     --*) # --abc OR --abc 123
       KEY=$(__sanitize "$1")
-      KEY=${KEY^^}
       shift
       if [[ ! -z $1 && ${1:0:1} != '-' ]]; then
-        declare "${PREFIX}${KEY:2}=$1" 2>/dev/null || __handleInvalidKey "$KEY"
+        declare "${KEY:2}=$1" 2>/dev/null || __handleInvalidKey "$KEY"
         shift
       else
-        declare "${PREFIX}${KEY:2}=$TRUTHY" 2>/dev/null || __handleInvalidKey "$KEY"
+        declare "${KEY:2}=$TRUTHY" 2>/dev/null || __handleInvalidKey "$KEY"
       fi
     ;;
     -*) # Multi-flag single-char args; -abc -a -b -C
       KEY=$1
       KEY=${KEY^^}
       for (( i=1; i<${#KEY}; i++ )); do
-        declare "${PREFIX}${KEY:$i:1}=$TRUTHY" 2>/dev/null || __handleInvalidKey "${KEY:$i:1}" "$KEY"
+        declare "${KEY:$i:1}=$TRUTHY" 2>/dev/null || __handleInvalidKey "${KEY:$i:1}" "$KEY"
       done
       shift
     ;;

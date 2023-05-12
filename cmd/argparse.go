@@ -10,9 +10,9 @@ import (
 //go:embed minimist.sh
 var minimist string
 
-func NewArgsCmd() *cobra.Command {
+func NewCmdArgParse() *cobra.Command {
 	return &cobra.Command{
-		Use:   "args",
+		Use:   "argparse",
 		Short: "Parse command line arguments",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -93,7 +93,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	)
 	rootCmd.AddCommand(NewExtensionCmd(extensionRoot, extensions))
 	rootCmd.AddCommand(NewQueryCmd())
-	rootCmd.AddCommand(NewArgsCmd())
+	rootCmd.AddCommand(NewCmdArgParse())
 	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
