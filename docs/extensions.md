@@ -35,7 +35,7 @@ Here are some suggestions if you don't know what language to use:
 
 - Bash is already installed on most systems. Sunbeam provides multiple commands to help you write bash extensions.
   - sunbeam argparse: parse command line arguments
-  - sunbeam check: check if a command is available
+  - sunbeam require: check if a command is available
   - sunbeam query: Transform or generate JSON
   - sunbeam fetch: Perform HTTP requests
 - Go is a good choice for more complex extensions. The [sunbeam/types](https://pkg.go.dev/github.com/pomdtr/sunbeam/types) package provides types for all sunbeam commands. Go binaries can be distributed as github releases.

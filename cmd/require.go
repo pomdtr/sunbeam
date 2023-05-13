@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCheckCmd() *cobra.Command {
+func NewRequireCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "check",
+		Use:   "require",
 		Short: "Check if command is installed",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
