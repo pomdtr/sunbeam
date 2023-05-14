@@ -819,7 +819,7 @@ func upgradeExtension(extensionPath string) error {
 			return fmt.Errorf("unable to upgrade extension: %s", err)
 		}
 	case ExtentionTypeLocal:
-		fmt.Println("Extension is local, skipping upgrade")
+		fmt.Printf("Extension %s is local, skipping upgrade\n", filepath.Base(extensionPath))
 		return nil
 	}
 
