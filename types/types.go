@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -122,6 +123,7 @@ const (
 	PushAction   = "push"
 	RunAction    = "run"
 	ExitAction   = "exit"
+	PasteAction  = "paste"
 	ReloadAction = "reload"
 )
 
@@ -220,8 +222,8 @@ type Command struct {
 	Dir   string   `json:"dir,omitempty"`
 }
 
-func (c Command) Cmd() *exec.Cmd {
-	cmd := exec.Command(c.Name, c.Args...)
+func (c Command) Cmd(ctx context.Context) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, c.Name, c.Args...)
 	cmd.Dir = c.Dir
 	if c.Input != "" {
 		cmd.Stdin = strings.NewReader(c.Input)
@@ -231,10 +233,11 @@ func (c Command) Cmd() *exec.Cmd {
 
 }
 
-func (c Command) Run() error {
-	err := c.Cmd().Run()
+func (c Command) Run(ctx context.Context) error {
+	cmd := c.Cmd(ctx)
+
 	var exitErr *exec.ExitError
-	if errors.As(err, &exitErr) {
+	if err := cmd.Run(); errors.As(err, &exitErr) {
 		return fmt.Errorf("command exited with %d: %s", exitErr.ExitCode(), string(exitErr.Stderr))
 	} else if err != nil {
 		return err
@@ -244,8 +247,8 @@ func (c Command) Run() error {
 
 }
 
-func (c Command) Output() ([]byte, error) {
-	output, err := c.Cmd().Output()
+func (c Command) Output(ctx context.Context) ([]byte, error) {
+	output, err := c.Cmd(ctx).Output()
 
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) {

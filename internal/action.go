@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/atotto/clipboard"
@@ -123,10 +124,10 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 				case types.OpenAction:
 					content = action.Target
 				case types.RunAction:
-					content = action.Command.Cmd().String()
+					content = action.Command.Cmd(context.TODO()).String()
 				case types.PushAction:
 					if action.Page.Command != nil {
-						content = action.Command.Cmd().String()
+						content = action.Command.Cmd(context.TODO()).String()
 					} else {
 						content = action.Page.Text
 					}

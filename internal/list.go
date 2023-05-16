@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -135,7 +136,7 @@ func NewList(page *types.Page) *List {
 			return item.Preview.Text
 		}
 
-		output, err := item.Preview.Command.Output()
+		output, err := item.Preview.Command.Output(context.TODO())
 		if err != nil {
 			return err.Error()
 		}

@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdRun(extensionDir string) *cobra.Command {
+func NewRunCmd(extensionDir string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                "run",
 		Short:              "Generate a page from a command or a script, and push it's output",

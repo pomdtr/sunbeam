@@ -10,7 +10,7 @@ import (
 //go:embed minimist.sh
 var minimist string
 
-func NewCmdArgParse() *cobra.Command {
+func NewArgParseCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "argparse",
 		Short: "Parse command line arguments",

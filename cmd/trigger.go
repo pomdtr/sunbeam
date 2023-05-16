@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -99,7 +100,7 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 				}
 			case types.RunAction:
 				return internal.ExitMsg{
-					Cmd: action.Command.Cmd(),
+					Cmd: action.Command.Cmd(context.TODO()),
 				}
 			case types.OpenAction:
 				err := browser.OpenURL(action.Target)
@@ -126,7 +127,7 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 		}
 		return Run(internal.NewFileGenerator(action.Page.Text))
 	case types.RunAction:
-		if _, err := action.Command.Output(); err != nil {
+		if _, err := action.Command.Output(context.TODO()); err != nil {
 			return fmt.Errorf("command failed: %s", err)
 		}
 

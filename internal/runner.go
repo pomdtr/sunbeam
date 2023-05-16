@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -73,7 +74,7 @@ func NewStaticGenerator(reader io.Reader) PageGenerator {
 
 func NewCommandGenerator(command *types.Command) PageGenerator {
 	return func() (*types.Page, error) {
-		output, err := command.Output()
+		output, err := command.Output(context.TODO())
 		if err != nil {
 			return nil, err
 		}
@@ -97,6 +98,8 @@ type CommandRunner struct {
 	currentPage   *types.Page
 
 	Generator PageGenerator
+	ctx       context.Context
+	cancel    context.CancelFunc
 
 	header Header
 	footer Footer
@@ -108,10 +111,13 @@ type CommandRunner struct {
 }
 
 func NewRunner(generator PageGenerator) *CommandRunner {
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	return &CommandRunner{
 		header:    NewHeader(),
 		footer:    NewFooter("Sunbeam"),
 		Generator: generator,
+		ctx:       ctx,
+		cancel:    cancelFunc,
 	}
 
 }
@@ -177,6 +183,12 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 			return ExitMsg{}
 		}
+	case types.PasteAction:
+		return func() tea.Msg {
+			return ExitMsg{
+				Text: action.Text,
+			}
+		}
 
 	case types.PushAction:
 		return func() tea.Msg {
@@ -199,11 +211,11 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		return func() tea.Msg {
 			if !action.ReloadOnSuccess {
 				return ExitMsg{
-					Cmd: action.Command.Cmd(),
+					Cmd: action.Command.Cmd(context.TODO()),
 				}
 			}
 
-			if err := action.Command.Run(); err != nil {
+			if err := action.Command.Run(context.TODO()); err != nil {
 				return err
 			}
 
@@ -266,6 +278,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			if runner.currentPage == nil {
 				return runner, func() tea.Msg {
+					runner.cancel()
 					return PopPageMsg{}
 				}
 			}
@@ -288,7 +301,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				if page.Preview.Text != "" {
 					return page.Preview.Text
 				}
-				output, err := page.Preview.Command.Output()
+				output, err := page.Preview.Command.Output(context.TODO())
 				if err != nil {
 					return err.Error()
 				}
