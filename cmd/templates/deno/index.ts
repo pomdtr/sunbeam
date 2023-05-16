@@ -1,4 +1,4 @@
-import * as sunbeam from "https://deno.land/x/sunbeam@v0.9.23/index.d.ts";
+import * as sunbeam from "https://deno.land/x/sunbeam/index.d.ts";
 
 const page: sunbeam.Page = {
   type: "detail",
