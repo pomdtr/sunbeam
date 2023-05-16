@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-isatty"
 	"github.com/muesli/termenv"
 )
 
@@ -211,8 +213,13 @@ func Draw(page Page, options SunbeamOptions) error {
 		return fmt.Errorf("could not cast model to paginator")
 	}
 
-	if paginator.OutputMsg != "" {
-		fmt.Print(paginator.OutputMsg)
+	msg := paginator.OutputMsg
+	if msg != "" {
+		if isatty.IsTerminal(os.Stdout.Fd()) && !strings.HasSuffix(msg, "\n") {
+			msg += "\n"
+		}
+
+		fmt.Println(paginator.OutputMsg)
 		return nil
 	}
 

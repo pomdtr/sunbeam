@@ -15,7 +15,6 @@ import (
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/mattn/go-isatty"
 	"github.com/pkg/browser"
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/types"
@@ -308,10 +307,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return string(output)
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				page.Actions = nil
-			}
-
 			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
 			runner.detail.SetSize(runner.width, runner.height)
 
@@ -336,9 +331,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			for i, scriptItem := range page.Items {
 				scriptItem := scriptItem
 				listItem := ParseScriptItem(scriptItem)
-				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					listItem.Actions = nil
-				}
 				listItems[i] = listItem
 			}
 
