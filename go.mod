@@ -7,7 +7,7 @@ require (
 	github.com/adrg/xdg v0.4.0
 	github.com/alessio/shellescape v1.4.1
 	github.com/charmbracelet/bubbles v0.15.0
-	github.com/charmbracelet/bubbletea v0.23.2
+	github.com/charmbracelet/bubbletea v0.24.0
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/cli/cli/v2 v2.29.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510

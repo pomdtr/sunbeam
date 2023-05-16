@@ -198,9 +198,9 @@ func Draw(page Page, options SunbeamOptions) error {
 
 	var p *tea.Program
 	if options.FullScreen {
-		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
+		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr), tea.WithInputTTY())
 	} else {
-		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr))
+		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr), tea.WithInputTTY())
 	}
 
 	m, err := p.Run()
