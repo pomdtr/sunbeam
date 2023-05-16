@@ -28,6 +28,12 @@
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.
 - object
+  - `type`: `'paste'` - The type of the action.
+  - `title`: string - The title of the action.
+  - `text`: string - The text to paste.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
+  - `key`: string - The key used as a shortcut.
+- object
   - `type`: `'open'` - The type of the action.
   - `title`: string - The title of the action.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.

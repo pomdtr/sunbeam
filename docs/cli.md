@@ -18,6 +18,20 @@ sunbeam [flags]
   -h, --help   help for sunbeam
 ```
 
+## sunbeam argparse
+
+Parse command line arguments
+
+```
+sunbeam argparse [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for argparse
+```
+
 ## sunbeam completion
 
 Generate the autocompletion script for the specified shell
@@ -347,6 +361,7 @@ sunbeam extension upgrade [flags]
 ### Options
 
 ```
+  -a, --all    upgrade all extensions
   -h, --help   help for upgrade
 ```
 
@@ -365,6 +380,20 @@ sunbeam fetch [flags]
   -h, --help                 help for fetch
       --method string        http method (default "GET")
       --user string          http user
+```
+
+## sunbeam filter
+
+Filter stdin rows
+
+```
+sunbeam filter [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for filter
 ```
 
 ## sunbeam generate-fig-spec
@@ -469,6 +498,20 @@ sunbeam read [flags]
 
 ```
   -h, --help   help for read
+```
+
+## sunbeam require
+
+Check if command is installed
+
+```
+sunbeam require [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for require
 ```
 
 ## sunbeam run

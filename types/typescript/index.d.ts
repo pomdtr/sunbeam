@@ -35,6 +35,28 @@ export type Action =
       /**
        * The type of the action.
        */
+      type: "paste";
+      /**
+       * The title of the action.
+       */
+      title?: string;
+      /**
+       * The text to paste.
+       */
+      text: string;
+      /**
+       * The inputs to show when the action is run.
+       */
+      inputs?: Input[];
+      /**
+       * The key used as a shortcut.
+       */
+      key?: string;
+    }
+  | {
+      /**
+       * The type of the action.
+       */
       type: "open";
       /**
        * The title of the action.
