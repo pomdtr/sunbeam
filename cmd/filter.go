@@ -30,9 +30,12 @@ func NewFilterCmd() *cobra.Command {
 			rows := strings.Split(input, "\n")
 
 			return Run(func() (*types.Page, error) {
-				listItems := make([]types.ListItem, len(rows))
-				for i, row := range rows {
-					listItems[i] = types.ListItem{
+				listItems := make([]types.ListItem, 0)
+				for _, row := range rows {
+					if row == "" {
+						continue
+					}
+					listItems = append(listItems, types.ListItem{
 						Title: row,
 						Actions: []types.Action{
 							{
@@ -41,7 +44,7 @@ func NewFilterCmd() *cobra.Command {
 								Text:  row,
 							},
 						},
-					}
+					})
 				}
 
 				return &types.Page{
