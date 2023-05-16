@@ -7,15 +7,15 @@
 ## Install
 
 ```bash
-sunbeam extension install file-browser https://gist.github.com/pomdtr/59cac008e26986dcfe9e8661d084bca5
+sunbeam extension install --alias files https://gist.github.com/pomdtr/59cac008e26986dcfe9e8661d084bca5
 ```
 
 ## Usage
 
 ```bash
-sunbeam file-browser # Browse the current directory
-sunbeam file-browser /path/to/directory # Browse a specific directory
-sunbeam file-browser --show-hidden # Show hidden files
+sunbeam files # Browse the current directory
+sunbeam files /path/to/directory # Browse a specific directory
+sunbeam files --show-hidden # Show hidden files
 ```
 
 ## Code

@@ -7,7 +7,7 @@
 ## Install
 
 ```bash
-sunbeam extension install devdocs https://gist.github.com/pomdtr/287f173468d1d0e43a43972729d513ec
+sunbeam extension install --alias devdocs https://gist.github.com/pomdtr/287f173468d1d0e43a43972729d513ec
 ```
 
 ## Usage

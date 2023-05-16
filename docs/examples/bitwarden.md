@@ -10,13 +10,13 @@
 ## Install
 
 ```bash
-sunbeam extension install bitwarden https://gist.github.com/pomdtr/bf9781444318cd9a5845444a6ac4f467
+sunbeam extension install --alias bw https://gist.github.com/pomdtr/bf9781444318cd9a5845444a6ac4f467
 ```
 
 ## Usage
 
 ```bash
-sunbeam bitwarden
+sunbeam bw
 ```
 
 ## Code
