@@ -220,11 +220,6 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 									}},
 							},
 							{
-								Title:  "Open Extension Remote",
-								Type:   types.OpenAction,
-								Target: manifest.Remote,
-							},
-							{
 								Title: "Upgrade Extension",
 								Type:  types.RunAction,
 								Key:   "u",

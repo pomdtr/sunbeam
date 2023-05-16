@@ -13,6 +13,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/cli/cli/v2/pkg/findsh"
+	"github.com/google/shlex"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -53,29 +54,30 @@ func NewCmdRoot(version string) (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cwd, err := os.Getwd()
-			if err != nil {
-				return fmt.Errorf("could not get current working dir: %w", err)
-			}
-
-			extensionPath := filepath.Join(cwd, extensionBinaryName)
-			if _, err := os.Stat(extensionPath); err == nil {
+			if env, ok := os.LookupEnv("SUNBEAM_DEFAULT_COMMAND"); ok {
 				var input string
 				if !isatty.IsTerminal(os.Stdin.Fd()) {
-					bs, err := io.ReadAll(os.Stdin)
+					b, err := io.ReadAll(os.Stdin)
 					if err != nil {
-						return err
+						return fmt.Errorf("could not read from stdin: %w", err)
 					}
-
-					input = string(bs)
+					input = string(b)
 				}
 
-				return runExtension(extensionPath, args, input)
-			}
+				args, err := shlex.Split(env)
+				if err != nil {
+					return err
+				}
 
-			manifestPath := filepath.Join(cwd, "sunbeam.json")
-			if _, err := os.Stat(manifestPath); err == nil {
-				return Run(internal.NewFileGenerator(manifestPath))
+				if len(args) == 0 {
+					return fmt.Errorf("empty command")
+				}
+
+				return Run(internal.NewCommandGenerator(&types.Command{
+					Name:  args[0],
+					Args:  args[1:],
+					Input: input,
+				}))
 			}
 
 			return cmd.Usage()
