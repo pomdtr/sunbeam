@@ -73,6 +73,10 @@ func NewFetchCmd() *cobra.Command {
 			}
 			defer resp.Body.Close()
 
+			if resp.StatusCode >= 400 {
+				return fmt.Errorf("http error: %s", resp.Status)
+			}
+
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return err
