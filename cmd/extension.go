@@ -729,7 +729,7 @@ func upgradeExtension(extensionPath string) error {
 		}
 
 		if release.TagName == manifest.Version {
-			fmt.Printf("✓ Extension %s already up to date\n", filepath.Base(extensionPath))
+			fmt.Printf("Extension %s already up to date\n", filepath.Base(extensionPath))
 			return nil
 		}
 
@@ -750,7 +750,7 @@ func upgradeExtension(extensionPath string) error {
 		}
 
 		if commit.Sha == manifest.Version {
-			fmt.Printf("✓ Extension %s already up to date\n", filepath.Base(extensionPath))
+			fmt.Printf("Extension %s already up to date\n", filepath.Base(extensionPath))
 			return nil
 		}
 
@@ -785,7 +785,7 @@ func upgradeExtension(extensionPath string) error {
 		}
 
 		if commit.Version == manifest.Version {
-			fmt.Printf("✓ Extension %s already up to date\n", filepath.Base(extensionPath))
+			fmt.Printf("Extension %s already up to date\n", filepath.Base(extensionPath))
 			return nil
 		}
 

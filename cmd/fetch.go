@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -17,20 +19,32 @@ func NewFetchCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		Short:   "Fetch http using a curl-like syntax",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			method, _ := cmd.Flags().GetString("method")
 			headers, _ := cmd.Flags().GetStringArray("header")
 			user, _ := cmd.Flags().GetString("user")
 
-			var body io.Reader
+			var input []byte
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				body = os.Stdin
+				b, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+				input = b
 			}
 
-			if !cmd.Flags().Changed("method") && body != nil {
+			var method string
+			if cmd.Flags().Changed("method") {
+				method, _ = cmd.Flags().GetString("method")
+			} else if len(input) > 0 {
 				method = "POST"
+			} else {
+				method = "GET"
 			}
 
-			req, err := http.NewRequest(method, args[0], body)
+			if method == "GET" && len(input) > 0 {
+				return fmt.Errorf("cannot specify request body for GET request")
+			}
+
+			req, err := http.NewRequest(method, args[0], bytes.NewReader(input))
 			if err != nil {
 				return err
 			}
@@ -38,7 +52,7 @@ func NewFetchCmd() *cobra.Command {
 			for _, header := range headers {
 				parts := strings.SplitN(header, ":", 2)
 				if len(parts) != 2 {
-					return err
+					return fmt.Errorf("invalid header: %s", header)
 				}
 
 				req.Header.Set(parts[0], parts[1])
@@ -47,7 +61,7 @@ func NewFetchCmd() *cobra.Command {
 			if user != "" {
 				parts := strings.SplitN(user, ":", 2)
 				if len(parts) != 2 {
-					return err
+					return fmt.Errorf("invalid user: %s", user)
 				}
 
 				req.SetBasicAuth(parts[0], parts[1])
@@ -59,13 +73,17 @@ func NewFetchCmd() *cobra.Command {
 			}
 			defer resp.Body.Close()
 
-			io.Copy(os.Stdout, resp.Body)
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
 
+			fmt.Print(string(body))
 			return nil
 		},
 	}
 
-	cmd.Flags().String("method", "GET", "http method")
+	cmd.Flags().String("method", "", "http method")
 	cmd.Flags().StringArrayP("header", "H", []string{}, "http header")
 	cmd.Flags().String("user", "", "http user")
 
