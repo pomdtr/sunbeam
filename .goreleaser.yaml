@@ -10,7 +10,9 @@ before:
 changelog:
   skip: true
 builds:
-  - env:
+  - ldflags:
+      - -s -w -X github.com/pomdtr/sunbeam/cmd.Version={{.Version}} -X github.com/pomdtr/sunbeam/cmd.Date={{time "2006-01-02"}}
+    env:
       - CGO_ENABLED=0
     goos:
       - windows

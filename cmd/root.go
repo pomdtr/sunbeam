@@ -29,6 +29,11 @@ const (
 	extensionGroupID = "extension"
 )
 
+var (
+	Version = "dev"
+	Date    = "unknown"
+)
+
 var options internal.SunbeamOptions
 
 func init() {
@@ -40,7 +45,7 @@ func init() {
 	}
 }
 
-func NewCmdRoot(version string) (*cobra.Command, error) {
+func Execute() error {
 	dataDir := filepath.Join(xdg.DataHome, "sunbeam")
 	extensionRoot := filepath.Join(dataDir, "extensions")
 
@@ -48,7 +53,7 @@ func NewCmdRoot(version string) (*cobra.Command, error) {
 	var rootCmd = &cobra.Command{
 		Use:          "sunbeam",
 		Short:        "Command Line Launcher",
-		Version:      version,
+		Version:      fmt.Sprintf("%s (%s)", Version, Date),
 		SilenceUsage: true,
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
@@ -86,7 +91,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 	extensions, err := ListExtensions(extensionRoot)
 	if err != nil {
-		return nil, fmt.Errorf("could not list extensions: %w", err)
+		return fmt.Errorf("could not list extensions: %w", err)
 	}
 
 	rootCmd.AddGroup(
@@ -103,7 +108,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewRunCmd(extensionRoot))
-	rootCmd.AddCommand(NewInfoCmd(extensionRoot, version))
+	rootCmd.AddCommand(NewInfoCmd(extensionRoot, Version))
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	docCmd := &cobra.Command{
@@ -146,7 +151,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		rootCmd.AddCommand(NewExtensionExecCmd(extensionRoot, extension, manifest))
 	}
 
-	return rootCmd, nil
+	return rootCmd.Execute()
 }
 
 func NewExtensionExecCmd(extensionRoot string, extensionName string, manifest *ExtensionManifest) *cobra.Command {
