@@ -18,9 +18,12 @@ import (
 	"embed"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/leaanthony/gosod"
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
+	"golang.org/x/term"
 
 	cp "github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/utils"
@@ -614,16 +617,28 @@ func NewExtensionListCmd(extensionRoot string, extensions map[string]*ExtensionM
 		Use:   "list",
 		Short: "List installed extension commands",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			delimiter, _ := cmd.Flags().GetString("delimiter")
-			for extension, manifest := range extensions {
-				fmt.Printf("%s%s%s%s%s\n", extension, delimiter, manifest.Description, delimiter, manifest.PrettyVersion())
+			var isTTY bool
+			var width int
+			if isatty.IsTerminal(os.Stdout.Fd()) {
+				isTTY = true
+				w, _, err := term.GetSize(int(os.Stdout.Fd()))
+				if err != nil {
+					return err
+				}
+				width = w
 			}
 
-			return nil
+			printer := tableprinter.New(os.Stdout, isTTY, width)
+			for extensionName, extension := range extensions {
+				printer.AddField(extensionName)
+				printer.AddField(extension.Description)
+				printer.AddField(extension.Version)
+				printer.EndRow()
+			}
+
+			return printer.Render()
 		},
 	}
-
-	cmd.Flags().StringP("delimiter", "d", "\t", "delimiter to use between extension name and description")
 
 	return cmd
 }

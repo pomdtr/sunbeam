@@ -10,6 +10,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.24.0
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/cli/cli/v2 v2.29.0
+	github.com/cli/go-gh/v2 v2.0.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.12
 	github.com/junegunn/fzf v0.0.0-20230505063303-94999101e358
@@ -49,6 +50,6 @@ require (
 	github.com/muesli/termenv v0.15.1
 	github.com/rivo/uniseg v0.4.4 // indirect
 	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
+	golang.org/x/term v0.8.0
 	golang.org/x/text v0.9.0 // indirect
 )
