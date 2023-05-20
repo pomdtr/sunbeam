@@ -3,6 +3,8 @@ package schemas
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
+	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -18,7 +20,15 @@ type ValidationError struct {
 }
 
 func (ve ValidationError) Error() string {
-	return ve.err.Error()
+	var jve *jsonschema.ValidationError
+	if errors.As(ve.err, &jve) {
+		leaf := jve
+		for len(leaf.Causes) > 0 {
+			leaf = leaf.Causes[0]
+		}
+		return fmt.Errorf("validation error: %s", leaf.InstanceLocation).Error()
+	}
+	return fmt.Errorf("validation error: %s", ve.err).Error()
 }
 
 func (ve ValidationError) Unwrap() error {
