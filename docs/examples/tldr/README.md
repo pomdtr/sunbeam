@@ -18,4 +18,6 @@ sunbeam tldr # List all pages
 
 ## Code
 
-<script src="https://gist.github.com/pomdtr/ec9cc6b505f973f924bf025e1998cbf9.js"></script>
+```bash
+{{#include ./sunbeam-extension}}
+```

@@ -21,4 +21,6 @@ sunbeam github list-prs <repo> # List all pull requests for a repository
 
 ## Code
 
-<script src="https://gist.github.com/pomdtr/dc1363d8f641928893ca8d3e670c9c3d.js"></script>
+```bash
+{{#include ./sunbeam-extension}}
+```

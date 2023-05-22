@@ -21,4 +21,6 @@ sunbeam bw
 
 ## Code
 
-<script src="https://gist.github.com/pomdtr/bf9781444318cd9a5845444a6ac4f467.js"></script>
+```bash
+{{#include ./sunbeam-extension}}
+```

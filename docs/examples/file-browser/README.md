@@ -20,4 +20,6 @@ sunbeam files --show-hidden # Show hidden files
 
 ## Code
 
-<script src="https://gist.github.com/pomdtr/59cac008e26986dcfe9e8661d084bca5.js"></script>
+```python
+{{#include ./sunbeam-extension}}
+```

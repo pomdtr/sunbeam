@@ -6,11 +6,11 @@
 - [Usage](./getting-started/usage.md)
 - [Extending Sunbeam](./extensions.md)
 - [Examples](./examples/index.md)
-  - [File Browser (Python)](./examples/file-browser.md)
-  - [TLDR Pages (Bash)](./examples/tldr.md)
-  - [Github (Bash)](./examples/github.md)
-  - [Bitwarden (Bash)](./examples/bitwarden.md)
-  - [Devdocs (Bash)](./examples/devdocs.md)
+  - [File Browser (Python)](./examples/file-browser/README.md)
+  - [TLDR Pages (Bash)](./examples/tldr/README.md)
+  - [Github (Bash)](./examples/github/README.md)
+  - [Bitwarden (Bash)](./examples/bitwarden/README.md)
+  - [Devdocs (Bash)](./examples/devdocs/README.md)
 - [FAQ](./faq.md)
 
 # Reference
