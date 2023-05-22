@@ -3,6 +3,8 @@
     "favicon": "./assets/favicon.png",
     "description": "Generate complex TUIs from simple scripts written in any language.",
     "repository": "https://github.com/pomdtr/sunbeam",
-    "md_book": "./book",
+    "mdbook": {
+        "path": "."
+    },
     "path_prefix": "sunbeam"
 }
