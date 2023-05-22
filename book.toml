@@ -1,5 +1,4 @@
 [book]
-title = "Sunbeam Documentation"
 description = "Generate complex TUIs from simple scripts written in any language."
 authors = ["Achille Lacoin"]
 language = "en"
