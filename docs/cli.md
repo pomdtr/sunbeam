@@ -282,7 +282,7 @@ sunbeam extension help [command] [flags]
 Install a sunbeam extension from a folder/gist/repository
 
 ```
-sunbeam extension install [flags]
+sunbeam extension install <url> [flags]
 ```
 
 ### Options
@@ -304,8 +304,7 @@ sunbeam extension list [flags]
 ### Options
 
 ```
-  -d, --delimiter string   delimiter to use between extension name and description (default "\t")
-  -h, --help               help for list
+  -h, --help   help for list
 ```
 
 ## sunbeam extension manage
@@ -327,7 +326,7 @@ sunbeam extension manage [flags]
 Remove an installed extension
 
 ```
-sunbeam extension remove [flags]
+sunbeam extension remove <extension> [flags]
 ```
 
 ### Options
@@ -341,7 +340,7 @@ sunbeam extension remove [flags]
 Rename an extension
 
 ```
-sunbeam extension rename [old] [new] [flags]
+sunbeam extension rename <extension> <new-name> [flags]
 ```
 
 ### Options
@@ -355,7 +354,7 @@ sunbeam extension rename [old] [new] [flags]
 Upgrade an installed extension
 
 ```
-sunbeam extension upgrade [flags]
+sunbeam extension upgrade [--all] [<extension>] [flags]
 ```
 
 ### Options
@@ -370,7 +369,7 @@ sunbeam extension upgrade [flags]
 Fetch http using a curl-like syntax
 
 ```
-sunbeam fetch [flags]
+sunbeam fetch <url> [flags]
 ```
 
 ### Options
@@ -378,7 +377,7 @@ sunbeam fetch [flags]
 ```
   -H, --header stringArray   http header
   -h, --help                 help for fetch
-      --method string        http method (default "GET")
+      --method string        http method
       --user string          http user
 ```
 
@@ -471,7 +470,7 @@ sunbeam info [flags]
 Transform or generate JSON using a jq query
 
 ```
-sunbeam query [flags]
+sunbeam query <query> [file] [flags]
 ```
 
 ### Options
@@ -491,7 +490,7 @@ sunbeam query [flags]
 Read a a page from a file and push it
 
 ```
-sunbeam read [flags]
+sunbeam read [file] [flags]
 ```
 
 ### Options
@@ -505,7 +504,7 @@ sunbeam read [flags]
 Check if command is installed
 
 ```
-sunbeam require [flags]
+sunbeam require <command> [command...] [flags]
 ```
 
 ### Options
@@ -519,7 +518,7 @@ sunbeam require [flags]
 Generate a page from a command or a script, and push it's output
 
 ```
-sunbeam run [flags]
+sunbeam run <command> [args...] [flags]
 ```
 
 ### Options

@@ -9,9 +9,9 @@ import (
 
 func NewRequireCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "require",
+		Use:   "require <command> [command...]",
 		Short: "Check if command is installed",
-		Args:  cobra.ArbitraryArgs,
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, arg := range args {
 				if _, err := exec.LookPath(arg); err != nil {

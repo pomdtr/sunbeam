@@ -11,7 +11,7 @@ import (
 
 func NewReadCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:     "read",
+		Use:     "read [file]",
 		Short:   "Read a a page from a file and push it",
 		GroupID: coreGroupID,
 		Args:    cobra.MaximumNArgs(1),

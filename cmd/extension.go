@@ -373,7 +373,7 @@ func NewExtensionRenameCmd(extensionRoot string, extensions map[string]*Extensio
 	}
 
 	return &cobra.Command{
-		Use:       "rename [old] [new]",
+		Use:       "rename <extension> <new-name>",
 		Short:     "Rename an extension",
 		Args:      cobra.ExactArgs(2),
 		ValidArgs: validArgs,
@@ -409,7 +409,7 @@ func NewExtensionRenameCmd(extensionRoot string, extensions map[string]*Extensio
 
 func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install",
+		Use:   "install <url>",
 		Short: "Install a sunbeam extension from a folder/gist/repository",
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -649,7 +649,7 @@ func NewExtensionRemoveCmd(extensionRoot string, extensions map[string]*Extensio
 		validArgs = append(validArgs, extension)
 	}
 	return &cobra.Command{
-		Use:       "remove",
+		Use:       "remove <extension>",
 		Short:     "Remove an installed extension",
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: validArgs,
@@ -676,7 +676,7 @@ func NewExtensionUpgradeCmd(extensionRoot string, extensions map[string]*Extensi
 	}
 
 	cmd := &cobra.Command{
-		Use:       "upgrade",
+		Use:       "upgrade [--all] [<extension>]",
 		Short:     "Upgrade an installed extension",
 		Args:      cobra.MaximumNArgs(1),
 		ValidArgs: validArgs,

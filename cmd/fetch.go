@@ -14,7 +14,7 @@ import (
 
 func NewFetchCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "fetch",
+		Use:     "fetch <url>",
 		GroupID: coreGroupID,
 		Args:    cobra.ExactArgs(1),
 		Short:   "Fetch http using a curl-like syntax",

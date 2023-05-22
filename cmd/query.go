@@ -24,7 +24,7 @@ func NewQueryCmd() *cobra.Command {
 	}
 
 	queryCmd := &cobra.Command{
-		Use:     "query",
+		Use:     "query <query> [file]",
 		Short:   "Transform or generate JSON using a jq query",
 		Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 		GroupID: coreGroupID,

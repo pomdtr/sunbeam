@@ -15,7 +15,7 @@ import (
 
 func NewRunCmd(extensionDir string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                "run",
+		Use:                "run <command> [args...]",
 		Short:              "Generate a page from a command or a script, and push it's output",
 		GroupID:            coreGroupID,
 		DisableFlagParsing: true,
@@ -28,6 +28,17 @@ func NewRunCmd(extensionDir string) *cobra.Command {
 					return err
 				}
 				input = string(b)
+			}
+
+			if args[0] == "." {
+				if _, err := os.Stat(extensionBinaryName); err != nil {
+					return fmt.Errorf("%s: no such file or directory", extensionBinaryName)
+				}
+
+				return Run(internal.NewCommandGenerator(&types.Command{
+					Name: "./" + extensionBinaryName,
+					Args: args[1:],
+				}))
 			}
 
 			if strings.HasPrefix(args[0], ".") {
