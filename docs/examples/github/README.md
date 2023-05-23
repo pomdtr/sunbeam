@@ -9,7 +9,7 @@
 ## Install
 
 ```bash
-sunbeam extension install --alias github https://gist.github.com/pomdtr/dc1363d8f641928893ca8d3e670c9c3d
+sunbeam extension install github https://gist.github.com/pomdtr/dc1363d8f641928893ca8d3e670c9c3d
 ```
 
 ## Usage

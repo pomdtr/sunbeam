@@ -162,14 +162,14 @@ func NewExtensionBrowseCmd(extensionRoot string) *cobra.Command {
 								Key:   "i",
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"extension", "install", "--alias=${input:alias}", repo.HtmlUrl},
+									Args: []string{"extension", "install", "${input:name}", repo.HtmlUrl},
 								},
 								Inputs: []types.Input{
 									{
-										Name:        "alias",
+										Name:        "name",
 										Type:        types.TextFieldInput,
-										Title:       "Alias",
-										Placeholder: "my-command-alias",
+										Title:       "Name",
+										Placeholder: "my-command-name",
 									},
 								},
 							},
@@ -246,7 +246,7 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 										Type:        types.TextFieldInput,
 										Default:     extension,
 										Title:       "Name",
-										Placeholder: "my-alias",
+										Placeholder: "my-command-name",
 									},
 								},
 							},
@@ -389,7 +389,7 @@ func NewExtensionRenameCmd(extensionRoot string, extensions map[string]*Extensio
 			}
 
 			if _, ok := commandMap[args[1]]; ok {
-				return fmt.Errorf("alias conflicts with existing command: %s", args[0])
+				return fmt.Errorf("name conflicts with existing command: %s", args[0])
 			}
 
 			return nil
@@ -409,38 +409,38 @@ func NewExtensionRenameCmd(extensionRoot string, extensions map[string]*Extensio
 
 func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install <url>",
+		Use:   "install <name> <url>",
 		Short: "Install a sunbeam extension from a folder/gist/repository",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			commandName := args[0]
 			commands := cmd.Root().Commands()
+
 			commandMap := make(map[string]struct{}, len(commands))
 			for _, command := range commands {
 				commandMap[command.Name()] = struct{}{}
 			}
 
 			if _, ok := commandMap[args[0]]; ok {
-				return fmt.Errorf("alias conflicts with existing command: %s", args[0])
+				return fmt.Errorf("name conflicts with existing command: %s", commandName)
 			}
 
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			alias, _ := cmd.Flags().GetString("alias")
 			version, _ := cmd.Flags().GetString("pin")
+			commandName := args[0]
 
-			targetDir := filepath.Join(extensionRoot, alias)
+			targetDir := filepath.Join(extensionRoot, commandName)
 			if err := installExtension(args[0], targetDir, version); err != nil {
 				return fmt.Errorf("could not install extension: %s", err)
 			}
 
-			fmt.Printf("✓ Installed extension %s\n", alias)
+			fmt.Printf("✓ Installed extension %s\n", commandName)
 			return nil
 		},
 	}
 
-	cmd.Flags().String("alias", "", "extension alias")
-	cmd.MarkFlagRequired("alias")
 	cmd.Flags().String("pin", "", "pin extension to a specific version")
 
 	return cmd
