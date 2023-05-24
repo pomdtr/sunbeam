@@ -432,7 +432,7 @@ func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 			commandName := args[0]
 
 			targetDir := filepath.Join(extensionRoot, commandName)
-			if err := installExtension(args[0], targetDir, version); err != nil {
+			if err := installExtension(args[1], targetDir, version); err != nil {
 				return fmt.Errorf("could not install extension: %s", err)
 			}
 
