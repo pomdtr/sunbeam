@@ -649,22 +649,33 @@ func NewExtensionRemoveCmd(extensionRoot string, extensions map[string]*Extensio
 		validArgs = append(validArgs, extension)
 	}
 	return &cobra.Command{
-		Use:       "remove <extension>",
+		Use:       "remove <extension>...",
 		Short:     "Remove an installed extension",
-		Args:      cobra.ExactArgs(1),
+		Args:      cobra.MinimumNArgs(1),
 		ValidArgs: validArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			targetDir := filepath.Join(extensionRoot, args[0])
-			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
-				return fmt.Errorf("extension %s not installed", args[0])
+		Run: func(cmd *cobra.Command, args []string) {
+			var successRemoveNames []string
+
+			for _, name := range args {
+				targetDir := filepath.Join(extensionRoot, name)
+				if _, err := os.Stat(targetDir); os.IsNotExist(err) {
+					_, _ = fmt.Fprintf(os.Stderr, "extension %s not installed\n", name)
+					continue
+				}
+				if err := os.RemoveAll(targetDir); err != nil {
+					_, _ = fmt.Fprintf(os.Stderr, "unable to remove extension: %s\n", err)
+					continue
+				}
+
+				successRemoveNames = append(successRemoveNames, name)
 			}
 
-			if err := os.RemoveAll(targetDir); err != nil {
-				return fmt.Errorf("unable to remove extension: %s", err)
+			if len(successRemoveNames) == 0 {
+				fmt.Println("No extensions removed")
+				return
 			}
 
-			fmt.Printf("✓ Removed extension %s\n", args[0])
-			return nil
+			fmt.Printf("✓ Removed extension %s\n", strings.Join(successRemoveNames, ", "))
 		},
 	}
 }
