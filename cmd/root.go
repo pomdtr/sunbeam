@@ -38,10 +38,10 @@ var options internal.SunbeamOptions
 
 func init() {
 	options = internal.SunbeamOptions{
-		MaxHeight:  utils.LookupIntEnv("SUNBEAM_HEIGHT", 35),
-		MaxWidth:   utils.LookupIntEnv("SUNBEAM_WIDTH", 110),
+		MaxHeight:  utils.LookupIntEnv("SUNBEAM_HEIGHT", 0),
+		MaxWidth:   utils.LookupIntEnv("SUNBEAM_WIDTH", 0),
 		FullScreen: utils.LookupBoolEnv("SUNBEAM_FULLSCREEN", true),
-		Border:     utils.LookupBoolEnv("SUNBEAM_BORDER", true),
+		Border:     utils.LookupBoolEnv("SUNBEAM_BORDER", false),
 	}
 }
 
