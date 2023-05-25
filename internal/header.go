@@ -3,6 +3,7 @@ package internal
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,6 +20,7 @@ type Header struct {
 func NewHeader() Header {
 	ti := textinput.New()
 	ti.Prompt = ""
+	ti.Cursor.SetMode(cursor.CursorStatic)
 	ti.Placeholder = ""
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 	spinner := spinner.New()
