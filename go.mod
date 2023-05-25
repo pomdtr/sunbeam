@@ -7,13 +7,13 @@ require (
 	github.com/adrg/xdg v0.4.0
 	github.com/alessio/shellescape v1.4.1
 	github.com/charmbracelet/bubbles v0.15.0
-	github.com/charmbracelet/bubbletea v0.24.0
+	github.com/charmbracelet/bubbletea v0.24.1
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/cli/cli/v2 v2.29.0
 	github.com/cli/go-gh/v2 v2.0.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.12
-	github.com/junegunn/fzf v0.0.0-20230505063303-94999101e358
+	github.com/junegunn/fzf v0.0.0-20230523145557-d2bde205f0f7
 	github.com/leaanthony/gosod v1.0.3
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/otiai10/copy v1.11.0
@@ -41,7 +41,7 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-isatty v0.0.18
+	github.com/mattn/go-isatty v0.0.19
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
