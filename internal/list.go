@@ -171,6 +171,7 @@ func (c *List) SetSize(width, height int) {
 	c.header.Width = width
 	c.actionList.SetSize(width, height)
 	if c.ShowPreview {
+		width = width - 1 // take separator into account
 		c.filter.SetSize(width/3, availableHeight)
 		c.viewport.Width = width - width/3 - (1 - width%3)
 		c.viewport.Height = availableHeight
