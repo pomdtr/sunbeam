@@ -12,7 +12,7 @@ import (
 )
 
 func NewFilterCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:     "filter",
 		Args:    cobra.NoArgs,
 		GroupID: coreGroupID,
@@ -35,12 +35,31 @@ func NewFilterCmd() *cobra.Command {
 					if row == "" {
 						continue
 					}
+
+					delimiter, _ := cmd.Flags().GetString("delimiter")
+					tokens := strings.Split(row, delimiter)
+					var title string
+					var subtitle string
+					accessories := make([]string, 0)
+					if len(tokens) == 1 {
+						title = tokens[0]
+					} else if len(tokens) == 2 {
+						title = tokens[0]
+						subtitle = tokens[1]
+					} else {
+						title = tokens[0]
+						subtitle = tokens[1]
+						accessories = tokens[2:]
+					}
+
 					listItems = append(listItems, types.ListItem{
-						Title: row,
+						Title:       title,
+						Subtitle:    subtitle,
+						Accessories: accessories,
 						Actions: []types.Action{
 							{
 								Type:  types.PasteAction,
-								Title: "Paste",
+								Title: "Confirm",
 								Text:  row,
 							},
 						},
@@ -56,4 +75,7 @@ func NewFilterCmd() *cobra.Command {
 
 		},
 	}
+
+	cmd.Flags().StringP("delimiter", "d", "\t", "delimiter")
+	return cmd
 }

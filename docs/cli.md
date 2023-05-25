@@ -391,7 +391,8 @@ sunbeam filter [flags]
 ### Options
 
 ```
-  -h, --help   help for filter
+  -d, --delimiter string   delimiter (default "\t")
+  -h, --help               help for filter
 ```
 
 ## sunbeam generate-fig-spec
