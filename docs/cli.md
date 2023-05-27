@@ -392,7 +392,9 @@ sunbeam filter [flags]
 
 ```
   -d, --delimiter string   delimiter (default "\t")
+  -H, --header-line        treat the first line as the page title
   -h, --help               help for filter
+      --with-nth ints      indexes to show
 ```
 
 ## sunbeam generate-fig-spec

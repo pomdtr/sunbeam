@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -21,13 +22,31 @@ func NewFilterCmd() *cobra.Command {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no input provided")
 			}
+
 			b, err := io.ReadAll(os.Stdin)
 			if err != nil {
 				return fmt.Errorf("could not read input: %s", err)
 			}
 
-			input := string(b)
-			rows := strings.Split(input, "\n")
+			var rows []string
+			if runtime.GOOS == "windows" {
+				rows = strings.Split(string(b), "\r\n")
+			} else {
+				rows = strings.Split(string(b), "\n")
+			}
+
+			if len(rows) == 0 {
+				return fmt.Errorf("now rows in input")
+			}
+
+			var header string
+			headerLine, _ := cmd.Flags().GetBool("header-line")
+			if headerLine {
+				header = rows[0]
+				rows = rows[1:]
+			} else {
+				header = "Sunbeam"
+			}
 
 			return Run(func() (*types.Page, error) {
 				listItems := make([]types.ListItem, 0)
@@ -35,21 +54,30 @@ func NewFilterCmd() *cobra.Command {
 					if row == "" {
 						continue
 					}
-
 					delimiter, _ := cmd.Flags().GetString("delimiter")
 					tokens := strings.Split(row, delimiter)
-					var title string
-					var subtitle string
-					accessories := make([]string, 0)
-					if len(tokens) == 1 {
-						title = tokens[0]
-					} else if len(tokens) == 2 {
-						title = tokens[0]
-						subtitle = tokens[1]
+
+					var title, subtitle string
+					var accessories []string
+					if cmd.Flags().Changed("with-nth") {
+						nths, _ := cmd.Flags().GetIntSlice("with-nth")
+						title = safeGet(tokens, nths[0])
+						if len(nths) > 1 {
+							subtitle = safeGet(tokens, nths[1])
+						}
+						if len(nths) > 2 {
+							for _, nth := range nths[2:] {
+								accessories = append(accessories, safeGet(tokens, nth))
+							}
+						}
 					} else {
 						title = tokens[0]
-						subtitle = tokens[1]
-						accessories = tokens[2:]
+						if len(tokens) > 1 {
+							subtitle = tokens[1]
+						}
+						if len(tokens) > 2 {
+							accessories = tokens[2:]
+						}
 					}
 
 					listItems = append(listItems, types.ListItem{
@@ -68,7 +96,7 @@ func NewFilterCmd() *cobra.Command {
 
 				return &types.Page{
 					Type:  types.ListPage,
-					Title: "Filter",
+					Title: header,
 					Items: listItems,
 				}, nil
 			})
@@ -77,5 +105,18 @@ func NewFilterCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("delimiter", "d", "\t", "delimiter")
+	cmd.Flags().IntSlice("with-nth", nil, "indexes to show")
+	cmd.Flags().BoolP("header-line", "H", false, "treat the first line as the page title")
 	return cmd
+}
+
+func safeGet(tokens []string, idx int) string {
+	if idx == 0 {
+		return ""
+	}
+	if idx > len(tokens) {
+		return ""
+	}
+
+	return tokens[idx-1]
 }
