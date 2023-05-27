@@ -50,10 +50,16 @@ func (i ListItem) Render(width int, selected bool) string {
 
 	title := strings.Split(i.Title, "\n")[0]
 	titleStyle := lipgloss.NewStyle().Bold(true)
+	subtitleStyle := lipgloss.NewStyle()
+	accessoryStyle := lipgloss.NewStyle()
 	if selected {
 		title = fmt.Sprintf("> %s", title)
 		titleStyle = titleStyle.Foreground(lipgloss.Color("13"))
+		accessoryStyle = accessoryStyle.Foreground(lipgloss.Color("13"))
+		subtitleStyle = subtitleStyle.Foreground(lipgloss.Color("13"))
 	} else {
+		subtitleStyle = subtitleStyle.Faint(true)
+		accessoryStyle = accessoryStyle.Faint(true)
 		title = fmt.Sprintf("  %s", title)
 	}
 
@@ -81,8 +87,8 @@ func (i ListItem) Render(width int, selected bool) string {
 	}
 
 	title = titleStyle.Render(title)
-	subtitle = lipgloss.NewStyle().Faint(true).Render(subtitle)
-	accessories = lipgloss.NewStyle().Faint(true).Render(accessories)
+	subtitle = subtitleStyle.Render(subtitle)
+	accessories = accessoryStyle.Render(accessories)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
 }
