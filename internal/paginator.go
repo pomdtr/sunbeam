@@ -34,8 +34,9 @@ type SunbeamOptions struct {
 }
 
 type ExitMsg struct {
-	Cmd  *exec.Cmd
-	Text string
+	Cmd   *exec.Cmd
+	Text  string
+	Error error
 }
 
 type Paginator struct {
@@ -43,6 +44,7 @@ type Paginator struct {
 	options       SunbeamOptions
 	OutputCmd     *exec.Cmd
 	OutputMsg     string
+	Error         error
 
 	pages  []Page
 	hidden bool
@@ -84,6 +86,7 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
+		m.Error = fmt.Errorf("exited")
 		m.hidden = true
 		return m, tea.Quit
 	case ExitMsg:
@@ -211,6 +214,10 @@ func Draw(page Page, options SunbeamOptions) error {
 	paginator, ok := m.(*Paginator)
 	if !ok {
 		return fmt.Errorf("could not cast model to paginator")
+	}
+
+	if paginator.Error != nil {
+		return paginator.Error
 	}
 
 	msg := paginator.OutputMsg

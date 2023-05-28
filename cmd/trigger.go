@@ -113,7 +113,8 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 					return fmt.Errorf("unable to write to clipboard: %s", err)
 				}
 				return tea.Quit()
-
+			case types.ExitAction:
+				return tea.Quit()
 			default:
 				return fmt.Errorf("unknown action type: %s", action.Type)
 			}
@@ -142,6 +143,8 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 		if err := clipboard.WriteAll(action.Text); err != nil {
 			return fmt.Errorf("unable to write to clipboard: %s", err)
 		}
+		return nil
+	case types.ExitAction:
 		return nil
 	default:
 		return fmt.Errorf("unknown action type: %s", action.Type)

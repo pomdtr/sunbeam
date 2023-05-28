@@ -102,11 +102,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewQueryCmd())
 	rootCmd.AddCommand(NewArgParseCmd())
 	rootCmd.AddCommand(NewFetchCmd())
-	rootCmd.AddCommand(NewFilterCmd())
+	rootCmd.AddCommand(NewListCmd())
 	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewRequireCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewValidateCmd())
+	rootCmd.AddCommand(NewDetailCmd())
 	rootCmd.AddCommand(NewRunCmd(extensionRoot))
 	rootCmd.AddCommand(NewInfoCmd(extensionRoot, Version))
 

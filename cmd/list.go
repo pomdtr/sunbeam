@@ -14,12 +14,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewFilterCmd() *cobra.Command {
+func NewListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "filter",
+		Use:     "list",
 		Args:    cobra.NoArgs,
 		GroupID: coreGroupID,
-		Short:   "Parse filter from stdin",
+		Short:   "Parse items from stdin",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no input provided")
@@ -44,6 +44,11 @@ func NewFilterCmd() *cobra.Command {
 			}
 
 			title := "Sunbeam"
+			titleRow, _ := cmd.Flags().GetBool("title-row")
+			if titleRow {
+				title = string(rows[0])
+				rows = rows[1:]
+			}
 			if cmd.Flags().Changed("title") {
 				title, _ = cmd.Flags().GetString("title")
 			}
@@ -95,7 +100,7 @@ func NewFilterCmd() *cobra.Command {
 						Actions: []types.Action{
 							{
 								Type:  types.PasteAction,
-								Title: "Confirm",
+								Title: "Pipe",
 								Text:  row,
 							},
 						},
@@ -115,10 +120,13 @@ func NewFilterCmd() *cobra.Command {
 	cmd.Flags().StringP("delimiter", "d", "\t", "delimiter")
 	cmd.Flags().Bool("json", false, "json input")
 	cmd.Flags().IntSlice("with-nth", nil, "indexes to show")
-	cmd.Flags().String("title", "", "title")
-
 	cmd.MarkFlagsMutuallyExclusive("json", "delimiter")
 	cmd.MarkFlagsMutuallyExclusive("json", "with-nth")
+
+	cmd.Flags().String("title", "", "title")
+	cmd.Flags().Bool("title-row", false, "use first row as title")
+	cmd.MarkFlagsMutuallyExclusive("title", "title-row")
+
 	return cmd
 }
 

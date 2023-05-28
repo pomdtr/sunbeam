@@ -220,6 +220,10 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 			return types.NewReloadAction()
 		}
+	case types.ExitAction:
+		return func() tea.Msg {
+			return ExitMsg{}
+		}
 	default:
 		return func() tea.Msg {
 			return fmt.Errorf("unknown action type: %s", action.Type)
