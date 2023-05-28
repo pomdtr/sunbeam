@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -17,7 +19,7 @@ func NewFilterCmd() *cobra.Command {
 		Use:     "filter",
 		Args:    cobra.NoArgs,
 		GroupID: coreGroupID,
-		Short:   "Filter stdin rows",
+		Short:   "Parse filter from stdin",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no input provided")
@@ -28,33 +30,39 @@ func NewFilterCmd() *cobra.Command {
 				return fmt.Errorf("could not read input: %s", err)
 			}
 
-			var rows []string
+			b = bytes.TrimSpace(b)
+
+			var rows [][]byte
 			if runtime.GOOS == "windows" {
-				rows = strings.Split(string(b), "\r\n")
+				rows = bytes.Split(b, []byte("\r\n"))
 			} else {
-				rows = strings.Split(string(b), "\n")
+				rows = bytes.Split(b, []byte("\n"))
 			}
 
 			if len(rows) == 0 {
 				return fmt.Errorf("now rows in input")
 			}
 
-			var header string
-			headerLine, _ := cmd.Flags().GetBool("header-line")
-			if headerLine {
-				header = rows[0]
-				rows = rows[1:]
-			} else {
-				header = "Sunbeam"
+			title := "Sunbeam"
+			if cmd.Flags().Changed("title") {
+				title, _ = cmd.Flags().GetString("title")
 			}
 
 			return Run(func() (*types.Page, error) {
 				listItems := make([]types.ListItem, 0)
+				delimiter, _ := cmd.Flags().GetString("delimiter")
+				jsonInput, _ := cmd.Flags().GetBool("json")
 				for _, row := range rows {
-					if row == "" {
+					if jsonInput {
+						var v types.ListItem
+						if err := json.Unmarshal(row, &v); err != nil {
+							return nil, fmt.Errorf("invalid JSON: %s", err)
+						}
+						listItems = append(listItems, v)
 						continue
 					}
-					delimiter, _ := cmd.Flags().GetString("delimiter")
+
+					row := string(row)
 					tokens := strings.Split(row, delimiter)
 
 					var title, subtitle string
@@ -96,7 +104,7 @@ func NewFilterCmd() *cobra.Command {
 
 				return &types.Page{
 					Type:  types.ListPage,
-					Title: header,
+					Title: title,
 					Items: listItems,
 				}, nil
 			})
@@ -105,8 +113,12 @@ func NewFilterCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("delimiter", "d", "\t", "delimiter")
+	cmd.Flags().Bool("json", false, "json input")
 	cmd.Flags().IntSlice("with-nth", nil, "indexes to show")
-	cmd.Flags().BoolP("header-line", "H", false, "treat the first line as the page title")
+	cmd.Flags().String("title", "", "title")
+
+	cmd.MarkFlagsMutuallyExclusive("json", "delimiter")
+	cmd.MarkFlagsMutuallyExclusive("json", "with-nth")
 	return cmd
 }
 

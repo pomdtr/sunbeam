@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/itchyny/gojq"
-	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
@@ -116,10 +115,6 @@ func NewQueryCmd() *cobra.Command {
 			}
 
 			encoder := json.NewEncoder(os.Stdout)
-			if isatty.IsTerminal(os.Stdout.Fd()) {
-				encoder.SetIndent("", "  ")
-			}
-
 			for _, output := range outputs {
 				for {
 					v, ok := output.Next()
