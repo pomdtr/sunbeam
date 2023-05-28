@@ -31,4 +31,4 @@ sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query --arg command="$
       }
     ]
   }
-' | sunbeam query --slurp '{ type: "list", items: . }'
+' | sunbeam list --json --title "DevDocs"

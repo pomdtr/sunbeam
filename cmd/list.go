@@ -107,10 +107,12 @@ func NewListCmd() *cobra.Command {
 					})
 				}
 
+				showPreview, _ := cmd.Flags().GetBool("show-preview")
 				return &types.Page{
-					Type:  types.ListPage,
-					Title: title,
-					Items: listItems,
+					Type:        types.ListPage,
+					ShowPreview: showPreview,
+					Title:       title,
+					Items:       listItems,
 				}, nil
 			})
 
@@ -127,6 +129,7 @@ func NewListCmd() *cobra.Command {
 	cmd.Flags().Bool("title-row", false, "use first row as title")
 	cmd.MarkFlagsMutuallyExclusive("title", "title-row")
 
+	cmd.Flags().Bool("show-preview", false, "show preview")
 	return cmd
 }
 

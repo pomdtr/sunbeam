@@ -23,7 +23,4 @@ bw --nointeraction list items --session "$BW_SESSION" | sunbeam query '.[] | {
             key: "l"
         }
     ] | map(select(.text != null))
-}' | sunbeam query --slurp '{
-    type: "list",
-    items: .
-}'
+}' | sunbeam list --json --title "Bitwarden Vault"
