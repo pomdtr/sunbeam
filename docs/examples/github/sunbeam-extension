@@ -23,10 +23,7 @@ if [[ $COMMAND == "list-repos" ]]; then
                 }
             ]
         }
-    ' | sunbeam query --slurp '{
-        type: "list",
-        items: .
-    }'
+    ' | sunbeam list --json --title "List Repositories"
 elif [[ $COMMAND == "list-prs" ]]; then
     REPO=$2
     if [[ -z "$REPO" ]]; then
@@ -46,5 +43,5 @@ elif [[ $COMMAND == "list-prs" ]]; then
             {type: "copy", text: .url}
         ]
     }
-    ' | sunbeam list --json --title "Devdocs"
+    ' | sunbeam list --json --title "List Pull Requests"
 fi
