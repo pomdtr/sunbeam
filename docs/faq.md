@@ -4,16 +4,20 @@
 
 There is two ways to wire sunbeam to your programs:
 
-- Wrap your command in sunbeam: `sunbeam run <my-command>`
+- Run your command from sunbeam: `sunbeam run ./my-command.sh`
 - Pipe a page to sunbeam: `<my-command> | sunbeam read`
+- Pipe rows to sunbeam: `gh repo list | sunbeam list`
+- Pipe text to sunbeam: `echo "hello world" | sunbeam detail`
 - Pipe an action to sunbeam: `<my-action> | sunbeam trigger`
 
 ## Configuring sunbeam appearance
 
 You can configure the appearance of sunbeam by setting the following environment variables:
 
-- `SUNBEAM_HEIGHT`: The maximum height of the sunbeam window, in lines. Defaults to `0` (fullscreen).
-- `SUNBEAM_PADDING`: The padding around the sunbeam window. Defaults to `0`.
+- `SUNBEAM_HEIGHT`: The maximum height of the sunbeam window, in lines. Defaults to `0` (full-height).
+- `SUNBEAM_WIDTH`: The maximum width of the sunbeam window, in characters. Defaults to `0` (full-width).
+- `SUNBEAM_BORDER`: Wether to display a border around the window. Defaults to `false`.
+- `SUNBEAM_FULLSCREEN`: Wether to display the window in fullscreen. Defaults to `false`.
 
 You can also set these options using the `--height` and `--padding` flags.
 
