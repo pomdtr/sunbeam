@@ -4,6 +4,10 @@
 
 - [python](https://www.python.org/)
 
+## Demo
+
+![demo](./demo.gif)
+
 ## Install
 
 ```bash

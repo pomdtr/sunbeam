@@ -4,6 +4,10 @@
 
 - [tealdeer](https://github.com/dbrgn/tealdeer)
 
+## Demo
+
+![demo](./demo.gif)
+
 ## Install
 
 ```bash

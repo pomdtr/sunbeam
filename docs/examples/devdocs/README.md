@@ -4,6 +4,10 @@
 
 - [curl](https://curl.haxx.se/)
 
+## Demo
+
+![demo](./demo.gif)
+
 ## Install
 
 ```bash

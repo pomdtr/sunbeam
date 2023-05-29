@@ -6,6 +6,10 @@
 
 > **Note** You should be authenticated with GitHub using the `gh auth login` command before running the scripts.
 
+## Demo
+
+![demo](./demo.gif)
+
 ## Install
 
 ```bash

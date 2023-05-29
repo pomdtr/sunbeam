@@ -12,6 +12,13 @@ It allows you to build interactives UIs from simple scripts.
 
 ![sunbeam demo gif](./static/demo.gif)
 
+Other examples:
+
+- [File Browser](https://pomdtr.github.io/sunbeam/book/examples/file-browser)
+- [Github Extension](https://pomdtr.github.io/sunbeam/book/examples/github)
+- [TLDR Pages](https://pomdtr.github.io/sunbeam/book/examples/tldr)
+- [Devdocs](https://pomdtr.github.io/sunbeam/book/examples/devdocs)
+
 Visit the [documentation](https://pomdtr.github.io/sunbeam/book) for more information (including installation instructions).
 
 ## Why sunbeam?

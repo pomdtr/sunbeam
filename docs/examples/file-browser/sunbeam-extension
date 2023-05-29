@@ -10,6 +10,9 @@ parser.add_argument("root", nargs="?", type=str)
 parser.add_argument("--show-hidden", action="store_true")
 args = parser.parse_args()
 
+if args.root and args.root.startswith("~"):
+    args.root = str(pathlib.Path.home()) + args.root[1:]
+
 root: pathlib.Path = pathlib.Path(args.root) if args.root else pathlib.Path.cwd()
 entries = root.iterdir()
 if not args.show_hidden:
