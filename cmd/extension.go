@@ -56,6 +56,7 @@ const (
 	ExtensionTypeBinary ExtensionType = "binary"
 	ExtensionTypeGit    ExtensionType = "git"
 	ExtensionTypeGist   ExtensionType = "gist"
+	ExtensionTypeUrl    ExtensionType = "url"
 	ExtentionTypeLocal  ExtensionType = "local"
 )
 
@@ -490,6 +491,7 @@ func installExtension(origin string, targetDir string, version string) error {
 	}
 
 	if extensionUrl.Host == "gist.github.com" {
+		fmt.Fprintf(os.Stderr, "Installing extension from gist...\n")
 		gist, err := utils.FetchGithubGist(origin)
 		if err != nil {
 			return fmt.Errorf("unable to install extension: %s", err)
@@ -523,60 +525,97 @@ func installExtension(origin string, targetDir string, version string) error {
 			return fmt.Errorf("unable to write extension manifest: %s", err)
 		}
 
-		return nil
-	}
+	} else if extensionUrl.Host == "github.com" {
+		fmt.Fprintf(os.Stderr, "Installing extension from github...\n")
 
-	repository, err := utils.FetchGithubRepository(origin)
-	if err != nil {
-		return fmt.Errorf("could not fetch extension metadata: %s", err)
-	}
-
-	if release, err := utils.GetLatestRelease(origin); err == nil {
-		binaryName, err := downloadRelease(release, targetDir)
+		repository, err := utils.FetchGithubRepository(origin)
 		if err != nil {
-			return fmt.Errorf("unable to install extension: %s", err)
+			return fmt.Errorf("could not fetch extension metadata: %s", err)
+		}
+
+		if release, err := utils.GetLatestRelease(origin); err == nil {
+			binaryName, err := downloadRelease(release, targetDir)
+			if err != nil {
+				return fmt.Errorf("unable to install extension: %s", err)
+			}
+
+			manifest := ExtensionManifest{
+				Type:        ExtensionTypeBinary,
+				Remote:      origin,
+				Description: repository.Description,
+				Entrypoint:  binaryName,
+				Version:     release.TagName,
+			}
+
+			if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
+				return fmt.Errorf("unable to write extension manifest: %s", err)
+			}
+
+			return nil
 		}
 
 		manifest := ExtensionManifest{
-			Type:        ExtensionTypeBinary,
+			Type:        ExtensionTypeGit,
 			Remote:      origin,
 			Description: repository.Description,
-			Entrypoint:  binaryName,
-			Version:     release.TagName,
+			Entrypoint:  filepath.Join("src", extensionBinaryName),
+		}
+
+		if manifest.Version != "" {
+			manifest.Version = version
+			manifest.Pinned = true
+		} else {
+			commit, err := utils.GetLastGitCommit(origin)
+			if err != nil {
+				return fmt.Errorf("could not fetch extension metadata: %s", err)
+			}
+
+			manifest.Version = commit.Sha
+		}
+
+		if err := downloadAndExtractZip(fmt.Sprintf("%s/archive/%s.zip", extensionUrl, manifest.Version), filepath.Join(targetDir, "src")); err != nil {
+			return fmt.Errorf("unable to download extension: %s", err)
 		}
 
 		if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
 			return fmt.Errorf("unable to write extension manifest: %s", err)
 		}
-
-		return nil
-	}
-
-	manifest := ExtensionManifest{
-		Type:        ExtensionTypeGit,
-		Remote:      origin,
-		Description: repository.Description,
-		Entrypoint:  filepath.Join("src", extensionBinaryName),
-	}
-
-	if manifest.Version != "" {
-		manifest.Version = version
-		manifest.Pinned = true
 	} else {
-		commit, err := utils.GetLastGitCommit(origin)
+		fmt.Fprintf(os.Stderr, "Installing extension from url...\n")
+		res, err := http.Get(origin)
 		if err != nil {
-			return fmt.Errorf("could not fetch extension metadata: %s", err)
+			return fmt.Errorf("unable to install extension: %s", err)
+		}
+		defer res.Body.Close()
+
+		content, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("unable to install extension: %s", err)
 		}
 
-		manifest.Version = commit.Sha
-	}
+		manifest := ExtensionManifest{
+			Type:        ExtensionTypeUrl,
+			Remote:      origin,
+			Entrypoint:  filepath.Join("src", extensionBinaryName),
+			Description: origin,
+		}
 
-	if err := downloadAndExtractZip(fmt.Sprintf("%s/archive/%s.zip", extensionUrl, manifest.Version), filepath.Join(targetDir, "src")); err != nil {
-		return fmt.Errorf("unable to download extension: %s", err)
-	}
+		srcDir := filepath.Join(targetDir, "src")
+		if err := os.MkdirAll(srcDir, 0755); err != nil {
+			return fmt.Errorf("could not create extension directory: %s", err)
+		}
 
-	if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
-		return fmt.Errorf("unable to write extension manifest: %s", err)
+		if err := os.WriteFile(filepath.Join(srcDir, extensionBinaryName), content, 0755); err != nil {
+			return fmt.Errorf("could not write extension binary: %s", err)
+		}
+
+		if err := os.Chmod(filepath.Join(srcDir, extensionBinaryName), 0755); err != nil {
+			return fmt.Errorf("could not make extension binary executable: %s", err)
+		}
+
+		if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
+			return fmt.Errorf("unable to write extension manifest: %s", err)
+		}
 	}
 
 	return nil
@@ -831,6 +870,31 @@ func upgradeExtension(extensionPath string) error {
 	case ExtentionTypeLocal:
 		fmt.Printf("Extension %s is local, skipping upgrade\n", filepath.Base(extensionPath))
 		return nil
+	case ExtensionTypeUrl:
+		content, err := os.ReadFile(filepath.Join(extensionPath, manifest.Entrypoint))
+		if err != nil {
+			return fmt.Errorf("unable to upgrade extension: %s", err)
+		}
+
+		res, err := http.Get(manifest.Remote)
+		if err != nil {
+			return fmt.Errorf("unable to upgrade extension: %s", err)
+		}
+		defer res.Body.Close()
+
+		bs, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("unable to upgrade extension: %s", err)
+		}
+
+		if bytes.Equal(content, bs) {
+			fmt.Printf("Extension %s already up to date\n", filepath.Base(extensionPath))
+			return nil
+		}
+
+		if err := os.WriteFile(filepath.Join(extensionPath, manifest.Entrypoint), bs, 0644); err != nil {
+			return fmt.Errorf("unable to upgrade extension: %s", err)
+		}
 	}
 
 	fmt.Printf("✓ Upgraded extension %s\n", filepath.Base(extensionPath))
