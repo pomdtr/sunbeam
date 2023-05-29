@@ -40,7 +40,7 @@ elif [[ $COMMAND == "list-prs" ]]; then
         ],
         actions: [
             {type: "open", title: "Open in Browser", target: .url},
-            {type: "copy", title: "Copy URL" text: .url}
+            {type: "copy", title: "Copy URL", text: .url}
         ]
     }
     ' | sunbeam list --json --title "List Pull Requests"
