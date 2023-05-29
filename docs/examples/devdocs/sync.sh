@@ -2,4 +2,4 @@
 
 DIRNAME="$(dirname "$0")"
 
-curl https://gist.githubusercontent.com/pomdtr/287f173468d1d0e43a43972729d513ec/raw/sunbeam-extension -o "$DIRNAME/sunbeam-extension"
+gh gist view --filename sunbeam-extension 287f173468d1d0e43a43972729d513ec > "$DIRNAME/sunbeam-extension"
