@@ -36,7 +36,7 @@ while (( "$#" )); do
     --*) # --abc OR --abc 123
       KEY=$(__sanitize "$1")
       shift
-      if [[ ! -z $1 && ${1:0:1} != '-' ]]; then
+      if [[ ! -z ${1:-} && ${1:0:1} != '-' ]]; then
         declare "flag_${KEY:2}=$1" 2>/dev/null || __handleInvalidKey "$KEY"
         shift
       else
