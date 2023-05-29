@@ -7,6 +7,6 @@ src = "docs"
 
 [output.html]
 git-repository-url = "https://github.com/pomdtr/sunbeam"
-edit-url-template = "https://github.com/pomdtr/sunbeam/edit/main/docs/{path}"
+edit-url-template = "https://github.com/pomdtr/sunbeam/edit/main/{path}"
 default-theme = "axo"
 preferred-dark-theme = "axo"
