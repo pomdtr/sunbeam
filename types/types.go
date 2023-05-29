@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/google/shlex"
@@ -248,13 +250,22 @@ func (c Command) Run(ctx context.Context) error {
 }
 
 func (c Command) Output(ctx context.Context) ([]byte, error) {
-	output, err := c.Cmd(ctx).Output()
+	cmd := c.Cmd(ctx)
+	output, err := cmd.Output()
 
 	var exitErr *exec.ExitError
+	var pathErr *fs.PathError
 	if errors.As(err, &exitErr) {
 		return nil, fmt.Errorf("command exited with %d: %s", exitErr.ExitCode(), string(exitErr.Stderr))
-	} else if err != nil {
+
+	} else if errors.As(err, &pathErr) {
+		if strings.Contains(err.Error(), "permission denied") && runtime.GOOS != "windows" {
+			return nil, fmt.Errorf("permission denied, try running `chmod +x %s`", c.Name)
+		}
 		return nil, err
+	}
+	if err != nil {
+		return nil, fmt.Errorf("command failed: %T", err)
 	}
 
 	return output, nil
