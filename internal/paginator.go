@@ -73,6 +73,7 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fmt.Sprintln("Escape")
 		case tea.KeyCtrlC:
 			m.hidden = true
+			m.Error = fmt.Errorf("exited")
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
