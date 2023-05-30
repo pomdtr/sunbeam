@@ -31,6 +31,7 @@ type SunbeamOptions struct {
 	MaxWidth   int
 	Border     bool
 	FullScreen bool
+	Margin     int
 }
 
 type ExitMsg struct {
@@ -120,22 +121,41 @@ func (m *Paginator) View() string {
 		pageView = currentPage.View()
 	}
 
-	style := lipgloss.NewStyle()
+	style := lipgloss.NewStyle().Margin(m.MarginVertical(lipgloss.Height(pageView)), m.MarginHorizontal(lipgloss.Width(pageView)))
+
 	if m.options.Border {
 		style = style.Border(lipgloss.RoundedBorder())
 	}
 
-	marginHorizontal := 0
-	if m.options.MaxWidth != 0 && m.options.MaxWidth < m.width {
-		marginHorizontal = (m.width - lipgloss.Width(pageView) - 1) / 2
+	return style.Render(pageView)
+}
+
+func (m Paginator) MarginHorizontal(width int) int {
+	if m.options.MaxWidth == 0 {
+		return m.options.Margin
 	}
 
-	marginVertical := 0
-	if m.options.MaxHeight != 0 && m.options.MaxHeight < m.height && m.options.FullScreen {
-		marginVertical = (m.height - lipgloss.Height(pageView) - 1) / 2
+	if m.options.MaxWidth > m.width {
+		return m.options.Margin
 	}
 
-	return style.Margin(marginVertical, marginHorizontal).Render(pageView)
+	return (m.width - width - 1) / 2
+}
+
+func (m Paginator) MarginVertical(height int) int {
+	if !m.options.FullScreen {
+		return m.options.Margin
+	}
+
+	if m.options.MaxHeight == 0 {
+		return m.options.Margin
+	}
+
+	if m.options.MaxHeight > m.height {
+		return m.options.Margin
+	}
+
+	return (m.height - height - 1) / 2
 }
 
 func (m *Paginator) SetSize(width, height int) {
@@ -158,6 +178,10 @@ func (m *Paginator) pageWidth() int {
 		pageWidth -= 2
 	}
 
+	if m.options.Margin > 0 {
+		pageWidth -= 2 * m.options.Margin
+	}
+
 	return pageWidth
 }
 
@@ -170,6 +194,10 @@ func (m *Paginator) pageHeight() int {
 
 	if m.options.Border {
 		height -= 2
+	}
+
+	if m.options.Margin > 0 {
+		height -= 2 * m.options.Margin
 	}
 
 	return height

@@ -42,6 +42,7 @@ func init() {
 		MaxWidth:   utils.LookupIntEnv("SUNBEAM_WIDTH", 0),
 		FullScreen: utils.LookupBoolEnv("SUNBEAM_FULLSCREEN", true),
 		Border:     utils.LookupBoolEnv("SUNBEAM_BORDER", false),
+		Margin:     utils.LookupIntEnv("SUNBEAM_MARGIN", 0),
 	}
 }
 
