@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: install and run oranda
         run: |
-          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/oranda/releases/download/v0.1.0-prerelease.4/oranda-installer.sh | sh
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/oranda/releases/download/v0.1.0-prerelease.5/oranda-installer.sh | sh
           oranda build
 
       - name: Deploy
