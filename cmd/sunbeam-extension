@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck disable=SC2016
+find . | sunbeam query -R --arg "pwd=$PWD" '{
+    title: .,
+    accessories: [$pwd],
+    actions: [
+        {
+            type: "open",
+            title: "Open",
+            target: .
+        },
+        {
+            type: "copy",
+            title: "Copy Relative Path",
+            text: .
+        }
+    ]
+}' | sunbeam list --json --title "Filter Files"

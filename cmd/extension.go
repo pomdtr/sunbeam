@@ -3,25 +3,19 @@ package cmd
 import (
 	"archive/zip"
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"embed"
-
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
-	"github.com/leaanthony/gosod"
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"golang.org/x/term"
 
@@ -34,21 +28,6 @@ var (
 	extensionBinaryName = "sunbeam-extension"
 	manifestName        = "manifest.json"
 )
-
-//go:embed templates/bash/*
-var bashTemplate embed.FS
-
-//go:embed templates/go/*
-var golangTemplate embed.FS
-
-//go:embed templates/deno/*
-var denoTemplate embed.FS
-
-var templates = map[string]embed.FS{
-	"bash": bashTemplate,
-	"go":   golangTemplate,
-	"deno": denoTemplate,
-}
 
 type ExtensionType string
 
@@ -291,6 +270,9 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 	}
 }
 
+//go:embed sunbeam-extension
+var extensionTemplate string
+
 func NewExtensionCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -298,71 +280,35 @@ func NewExtensionCreateCmd() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name, _ := cmd.Flags().GetString("name")
-			language, _ := cmd.Flags().GetString("language")
-
-			var missingInputs []types.Input
-			createArgs := []string{"extension", "create"}
-
-			if !cmd.Flags().Changed("name") {
-				missingInputs = append(missingInputs, types.Input{Type: types.TextFieldInput, Name: "name", Title: "Extension Name", Placeholder: "my-extension"})
-			} else {
-				createArgs = append(createArgs, fmt.Sprintf("--name=%s", name))
+			if name == "" {
+				return fmt.Errorf("name is required")
 			}
 
-			if !cmd.Flags().Changed("language") {
-				missingInputs = append(missingInputs, types.Input{
-					Type:  types.DropDownInput,
-					Name:  "language",
-					Title: "Language",
-					Items: []types.DropDownItem{
-						{Title: "Bash", Value: "bash"},
-						{Title: "Deno", Value: "deno"},
-						{Title: "Go", Value: "go"},
-					}})
-			} else {
-				createArgs = append(createArgs, fmt.Sprintf("--language=%s", language))
-			}
-
-			if len(missingInputs) > 0 {
-				form := internal.NewForm(
-					"Create Extension",
-					func(values map[string]string) tea.Msg {
-						for name, value := range values {
-							createArgs = append(createArgs, fmt.Sprintf("--%s=%s", name, value))
-						}
-
-						return internal.ExitMsg{
-							Cmd: exec.Command(os.Args[0], createArgs...),
-						}
-					},
-					missingInputs...)
-
-				return internal.Draw(form, options)
-			}
-
-			template, ok := templates[language]
-			if !ok {
-				return fmt.Errorf("unknown template: %s", language)
-			}
-
-			sub, err := fs.Sub(template, fmt.Sprint("templates/", language))
+			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("unable to load template: %s", err)
+				return fmt.Errorf("unable to get current working directory: %s", err)
 			}
 
-			templateDir := gosod.New(sub)
-			templateDir.SetTemplateFilters([]string{".tmpl"})
-			if err := templateDir.Extract(name, nil); err != nil {
-				return fmt.Errorf("unable to extract template: %s", err)
+			extensionDir := filepath.Join(cwd, name)
+			if _, err := os.Stat(extensionDir); err == nil {
+				return fmt.Errorf("directory %s already exists", extensionDir)
 			}
 
-			fmt.Printf("Created extension %s\n", name)
+			if err := os.Mkdir(extensionDir, 0755); err != nil {
+				return fmt.Errorf("unable to create directory %s: %s", extensionDir, err)
+			}
+
+			if err := os.WriteFile(filepath.Join(extensionDir, extensionBinaryName), []byte(extensionTemplate), 0755); err != nil {
+				return fmt.Errorf("unable to write extension binary: %s", err)
+			}
+
+			cmd.Printf("Created extension %s\n", name)
 			return nil
 		},
 	}
 
 	cmd.Flags().StringP("name", "n", "", "extension name")
-	cmd.Flags().StringP("language", "l", "", "extension language")
+	cmd.MarkFlagRequired("name")
 
 	return cmd
 }

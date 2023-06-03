@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-DIRNAME=$(dirname "$0")
-
-deno run -A "$DIRNAME/index.ts" "$@"
