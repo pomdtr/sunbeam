@@ -329,17 +329,7 @@ export type Request =
        */
       body?: string;
     };
-export type TextOrCommandOrRequest =
-  | string
-  | {
-      command: Command;
-    }
-  | {
-      request: Request;
-    }
-  | {
-      text: string;
-    };
+export type TextOrCommandOrRequest = string | Command | Request;
 
 export interface List {
   /**

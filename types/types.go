@@ -184,7 +184,7 @@ func (p *PageGenerator) UnmarshalJSON(data []byte) error {
 	return errors.New("must be a command or a request")
 }
 
-func (p *PageGenerator) MarshalJSON() ([]byte, error) {
+func (p PageGenerator) MarshalJSON() ([]byte, error) {
 	if p.Command != nil {
 		return json.Marshal(p.Command)
 	}
@@ -269,20 +269,35 @@ func (p *TextOrCommandOrRequest) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	var v struct {
-		Text    string   `json:"text"`
-		Command *Command `json:"command"`
-		Request *Request `json:"request"`
-	}
-
-	if err := json.Unmarshal(data, &v); err == nil {
-		p.Text = v.Text
-		p.Command = v.Command
-		p.Request = v.Request
+	var c Command
+	if err := json.Unmarshal(data, &c); err == nil && c.Name != "" {
+		p.Command = &c
 		return nil
 	}
 
-	return errors.New("page must be a string or a command")
+	var r Request
+	if err := json.Unmarshal(data, &r); err == nil && r.Url != "" {
+		p.Request = &r
+		return nil
+	}
+
+	return errors.New("page must be a string, a command or a request")
+}
+
+func (p TextOrCommandOrRequest) MarshalJSON() ([]byte, error) {
+	if p.Text != "" {
+		return json.Marshal(p.Text)
+	}
+
+	if p.Command != nil {
+		return json.Marshal(p.Command)
+	}
+
+	if p.Request != nil {
+		return json.Marshal(p.Request)
+	}
+
+	return nil, errors.New("page must be a string, a command or a request")
 }
 
 func NewReloadAction() Action {

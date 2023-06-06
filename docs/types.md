@@ -125,12 +125,18 @@
 **POSSIBLE VALUES**
 
 - string
+- &lt;string, string&gt;
 - object
-  - `command`: [Command](#command)
+  - `name`: string
+  - `args`: string[]
+  - `input`: string
+  - `dir`: string
 - object
-  - `request`: [Request](#request)
-- object
-  - `text`: string
+  - `url`: string - The URL to request.
+  - `method`: string - The HTTP method to use.
+  - `headers`: object - The headers to send.
+    - `__index`: any
+  - `body`: string - The body to send.
 
 ## List
 

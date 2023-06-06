@@ -667,40 +667,10 @@
                     "type": "string"
                 },
                 {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                        "command"
-                    ],
-                    "properties": {
-                        "command": {
-                            "$ref": "#/$defs/command"
-                        }
-                    }
+                    "$ref": "#/$defs/command"
                 },
                 {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                        "request"
-                    ],
-                    "properties": {
-                        "request": {
-                            "$ref": "#/$defs/request"
-                        }
-                    }
-                },
-                {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                        "text"
-                    ],
-                    "properties": {
-                        "text": {
-                            "type": "string"
-                        }
-                    }
+                    "$ref": "#/$defs/request"
                 }
             ]
         }
