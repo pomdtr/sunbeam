@@ -588,6 +588,11 @@ func RenderAction(action types.Action, old, new string) types.Action {
 }
 
 func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
+	basePath := ""
+	if base != nil {
+		basePath = base.Path
+	}
+
 	expandUrl := func(target string) (string, error) {
 		if base == nil {
 			return target, nil
@@ -613,12 +618,12 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 
 	expandAction := func(action types.Action) (*types.Action, error) {
 		if action.Command != nil && !path.IsAbs(action.Command.Dir) {
-			action.Command.Dir = path.Join(base.Path, action.Command.Dir)
+			action.Command.Dir = path.Join(basePath, action.Command.Dir)
 		}
 
 		if action.Page != nil {
 			if action.Page.Command != nil {
-				action.Page.Command.Dir = path.Join(base.Path, action.Page.Command.Dir)
+				action.Page.Command.Dir = path.Join(basePath, action.Page.Command.Dir)
 			}
 
 			if action.Page.Request != nil {
@@ -689,14 +694,14 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 
 	if page.Preview != nil {
 		if page.Preview.Command != nil {
-			page.Preview.Command.Dir = base.Path
+			page.Preview.Command.Dir = basePath
 		}
 	}
 
 	for i, item := range page.Items {
 		if item.Preview != nil {
 			if item.Preview.Command != nil {
-				item.Preview.Command.Dir = base.Path
+				item.Preview.Command.Dir = basePath
 			}
 		}
 
