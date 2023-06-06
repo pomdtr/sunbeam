@@ -128,7 +128,14 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 		if action.Page.Command != nil {
 			return Run(internal.NewCommandGenerator(action.Page.Command))
 		}
-		return Run(internal.NewFileGenerator(action.Page.Path))
+		if action.Page.Request != nil {
+			return Run(internal.NewRequestGenerator(action.Page.Request))
+		}
+		if action.Page.Path != "" {
+			return Run(internal.NewFileGenerator(action.Page.Path))
+		}
+
+		return fmt.Errorf("no page provided")
 	case types.RunAction:
 		if _, err := action.Command.Output(context.TODO()); err != nil {
 			return fmt.Errorf("command failed: %s", err)
