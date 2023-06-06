@@ -300,6 +300,10 @@
                     ],
                     "additionalProperties": false,
                     "properties": {
+                        "type": {
+                            "const": "fetch",
+                            "description": "The type of the action."
+                        },
                         "title": {
                             "type": "string",
                             "description": "The title of the action."

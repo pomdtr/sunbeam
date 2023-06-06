@@ -51,6 +51,7 @@
   - `key`: string - The key used as a shortcut.
   - `command`: [Command](#command)
 - object
+  - `type`: `'fetch'` - The type of the action.
   - `title`: string - The title of the action.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
   - `key`: string - The key used as a shortcut.

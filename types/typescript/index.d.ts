@@ -114,6 +114,10 @@ export type Action =
     }
   | {
       /**
+       * The type of the action.
+       */
+      type: "fetch";
+      /**
        * The title of the action.
        */
       title?: string;
