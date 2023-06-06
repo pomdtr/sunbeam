@@ -114,6 +114,25 @@ export type Action =
     }
   | {
       /**
+       * The title of the action.
+       */
+      title?: string;
+      /**
+       * The inputs to show when the action is run.
+       */
+      inputs?: Input[];
+      /**
+       * The key used as a shortcut.
+       */
+      key?: string;
+      request: Request;
+      /**
+       * Whether to reload the page when the command succeeds.
+       */
+      reloadOnSuccess?: boolean;
+    }
+  | {
+      /**
        * The type of the action.
        */
       type: "run";
@@ -152,7 +171,15 @@ export type Action =
        * The inputs to show when the action is run.
        */
       inputs?: Input[];
-      page: TextOrCommand;
+      page:
+        | {
+            /**
+             * The path of the page to push.
+             */
+            path: string;
+          }
+        | Command
+        | Request;
     };
 export type Input =
   | {
@@ -280,10 +307,35 @@ export type Input =
        */
       default?: string;
     };
-export type TextOrCommand =
+export type Request =
+  | string
+  | {
+      /**
+       * The URL to request.
+       */
+      url: string;
+      /**
+       * The HTTP method to use.
+       */
+      method?: string;
+      /**
+       * The headers to send.
+       */
+      headers?: {
+        [k: string]: string;
+      };
+      /**
+       * The body to send.
+       */
+      body?: string;
+    };
+export type TextOrCommandOrRequest =
   | string
   | {
       command: Command;
+    }
+  | {
+      request: Request;
     }
   | {
       text: string;
@@ -328,7 +380,7 @@ export interface Listitem {
    * The subtitle of the item.
    */
   subtitle?: string;
-  preview?: TextOrCommand;
+  preview?: TextOrCommandOrRequest;
   /**
    * The accessories to show on the right side of the item.
    */
@@ -350,7 +402,7 @@ export interface Detail {
    * The title of the page.
    */
   title?: string;
-  preview: TextOrCommand;
+  preview: TextOrCommandOrRequest;
   /**
    * The actions attached to the detail view.
    */

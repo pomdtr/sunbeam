@@ -196,7 +196,7 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 							{
 								Title: "Run Extension",
 								Type:  types.PushAction,
-								Page: &types.TextOrCommand{
+								Page: &types.PageGenerator{
 									Command: &types.Command{
 										Name: os.Args[0],
 										Args: []string{extension},
@@ -252,7 +252,7 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 							{
 								Type:  types.PushAction,
 								Title: "Browse Extensions",
-								Page: &types.TextOrCommand{
+								Page: &types.PageGenerator{
 									Command: &types.Command{
 										Name: os.Args[0],
 										Args: []string{"extension", "browse"},

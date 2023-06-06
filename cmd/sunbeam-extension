@@ -8,6 +8,11 @@ find . | sunbeam query -R --arg "pwd=$PWD" '{
     accessories: [$pwd],
     actions: [
         {
+            type: "paste",
+            title: "Paste",
+            text: .
+        },
+        {
             type: "open",
             title: "Open",
             target: .

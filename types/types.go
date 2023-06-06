@@ -1,11 +1,14 @@
 package types
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -27,7 +30,7 @@ type Page struct {
 	Actions []Action `json:"actions,omitempty"`
 
 	// Detail page
-	Preview *TextOrCommand `json:"preview,omitempty"`
+	Preview *TextOrCommandOrRequest `json:"preview,omitempty"`
 
 	// List page
 	ShowPreview   bool       `json:"showPreview,omitempty"`
@@ -42,12 +45,12 @@ type EmptyView struct {
 }
 
 type ListItem struct {
-	Id          string         `json:"id,omitempty"`
-	Title       string         `json:"title"`
-	Subtitle    string         `json:"subtitle,omitempty"`
-	Preview     *TextOrCommand `json:"preview,omitempty"`
-	Accessories []string       `json:"accessories,omitempty"`
-	Actions     []Action       `json:"actions,omitempty"`
+	Id          string                  `json:"id,omitempty"`
+	Title       string                  `json:"title"`
+	Subtitle    string                  `json:"subtitle,omitempty"`
+	Preview     *TextOrCommandOrRequest `json:"preview,omitempty"`
+	Accessories []string                `json:"accessories,omitempty"`
+	Actions     []Action                `json:"actions,omitempty"`
 }
 
 type FormInputType string
@@ -127,6 +130,7 @@ const (
 	ExitAction   = "exit"
 	PasteAction  = "paste"
 	ReloadAction = "reload"
+	FetchAction  = "fetch"
 )
 
 type Action struct {
@@ -142,19 +146,123 @@ type Action struct {
 	Target string `json:"target,omitempty"`
 
 	// push
-	Page *TextOrCommand `json:"page,omitempty"`
+	Page *PageGenerator `json:"page,omitempty"`
+
+	// fetch
+	Request *Request `json:"request,omitempty"`
 
 	// run
 	Command         *Command `json:"command,omitempty"`
 	ReloadOnSuccess bool     `json:"reloadOnSuccess,omitempty"`
 }
 
-type TextOrCommand struct {
-	Text    string   `json:"text,omitempty"`
+type PageGenerator struct {
 	Command *Command `json:"command,omitempty"`
+	Request *Request `json:"request,omitempty"`
+	Path    string   `json:"path,omitempty"`
 }
 
-func (p *TextOrCommand) UnmarshalJSON(data []byte) error {
+func (p *PageGenerator) UnmarshalJSON(data []byte) error {
+	var c Command
+	if err := json.Unmarshal(data, &c); err == nil && c.Name != "" {
+		p.Command = &c
+		return nil
+	}
+
+	var r Request
+	if err := json.Unmarshal(data, &r); err == nil && r.Url != "" {
+		p.Request = &r
+		return nil
+	}
+
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		p.Path = s
+		return nil
+	}
+
+	return errors.New("must be a command or a request")
+}
+
+func (p *PageGenerator) MarshalJSON() ([]byte, error) {
+	if p.Command != nil {
+		return json.Marshal(p.Command)
+	}
+
+	if p.Request != nil {
+		return json.Marshal(p.Request)
+	}
+
+	if p.Path != "" {
+		return json.Marshal(p.Path)
+	}
+
+	return nil, errors.New("must be a command or a request")
+}
+
+type Request struct {
+	Url     string            `json:"url"`
+	Method  string            `json:"method,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Body    Body              `json:"body,omitempty"`
+}
+
+func (r Request) Do() ([]byte, error) {
+	if r.Method == "" {
+		r.Method = "GET"
+	}
+
+	req, err := http.NewRequest(r.Method, r.Url, bytes.NewReader(r.Body))
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range r.Headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, errors.New(resp.Status)
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
+type Body []byte
+
+func (b *Body) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*b = Body(s)
+		return nil
+	}
+
+	var v map[string]any
+	if err := json.Unmarshal(data, &v); err == nil {
+		bb, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		*b = Body(bb)
+		return nil
+	}
+
+	return errors.New("body must be a string or a map")
+}
+
+type TextOrCommandOrRequest struct {
+	Text    string   `json:"text,omitempty"`
+	Command *Command `json:"command,omitempty"`
+	Request *Request `json:"request,omitempty"`
+}
+
+func (p *TextOrCommandOrRequest) UnmarshalJSON(data []byte) error {
 	var text string
 	if err := json.Unmarshal(data, &text); err == nil {
 		p.Text = text
@@ -164,11 +272,13 @@ func (p *TextOrCommand) UnmarshalJSON(data []byte) error {
 	var v struct {
 		Text    string   `json:"text"`
 		Command *Command `json:"command"`
+		Request *Request `json:"request"`
 	}
 
 	if err := json.Unmarshal(data, &v); err == nil {
 		p.Text = v.Text
 		p.Command = v.Command
+		p.Request = v.Request
 		return nil
 	}
 
@@ -201,8 +311,8 @@ func NewPushAction(title string, page string) Action {
 	return Action{
 		Title: title,
 		Type:  PushAction,
-		Page: &TextOrCommand{
-			Text: page,
+		Page: &PageGenerator{
+			Path: page,
 		},
 	}
 }

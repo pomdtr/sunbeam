@@ -47,7 +47,7 @@ func NewDetailCmd() *cobra.Command {
 				return &types.Page{
 					Title: title,
 					Type:  "detail",
-					Preview: &types.TextOrCommand{
+					Preview: &types.TextOrCommandOrRequest{
 						Text: text,
 					},
 					Actions: []types.Action{

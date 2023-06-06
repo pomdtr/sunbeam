@@ -1,14 +1,16 @@
 package internal
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/alessio/shellescape"
@@ -39,8 +41,15 @@ func NewFileGenerator(name string) PageGenerator {
 			return nil, err
 		}
 
-		page = expandPage(page, filepath.Dir(name))
-		return &page, nil
+		p, err := expandPage(page, &url.URL{
+			Scheme: "file",
+			Path:   path.Dir(name),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return p, nil
 	}
 }
 
@@ -65,9 +74,13 @@ func NewStaticGenerator(reader io.Reader) PageGenerator {
 			return nil, err
 		}
 
-		page = expandPage(page, "")
-		pageRef = &page
-		return &page, nil
+		p, err := expandPage(page, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		pageRef = p
+		return p, nil
 	}
 }
 
@@ -87,8 +100,61 @@ func NewCommandGenerator(command *types.Command) PageGenerator {
 			return nil, err
 		}
 
-		page = expandPage(page, "")
-		return &page, nil
+		p, err := expandPage(page, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		return p, nil
+	}
+}
+
+func NewRequestGenerator(request *types.Request) PageGenerator {
+	return func() (*types.Page, error) {
+		req, err := http.NewRequest(request.Method, request.Url, bytes.NewReader(request.Body))
+		if err != nil {
+			return nil, err
+		}
+
+		for k, v := range request.Headers {
+			req.Header.Set(k, v)
+		}
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
+		}
+
+		bs, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := schemas.Validate(bs); err != nil {
+			return nil, err
+		}
+
+		var page types.Page
+		if err := json.Unmarshal(bs, &page); err != nil {
+			return nil, err
+		}
+
+		p, err := expandPage(page, &url.URL{
+			Scheme: res.Request.URL.Scheme,
+			Host:   res.Request.URL.Host,
+			Path:   path.Dir(res.Request.URL.Path),
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return p, nil
 	}
 }
 
@@ -195,6 +261,12 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return errors.New("page is nil")
 			}
 
+			if action.Page.Request != nil {
+				return PushPageMsg{
+					Page: NewRunner(NewRequestGenerator(action.Page.Request)),
+				}
+			}
+
 			if action.Page.Command != nil {
 				return PushPageMsg{
 					Page: NewRunner(NewCommandGenerator(action.Page.Command)),
@@ -202,7 +274,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			}
 
 			return PushPageMsg{
-				Page: NewRunner(NewFileGenerator(action.Page.Text)),
+				Page: NewRunner(NewFileGenerator(action.Page.Path)),
 			}
 		}
 
@@ -216,6 +288,21 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 			if err := action.Command.Run(context.TODO()); err != nil {
 				return err
+			}
+
+			return types.NewReloadAction()
+		}
+	case types.FetchAction:
+		return func() tea.Msg {
+			b, err := action.Request.Do()
+			if err != nil {
+				return err
+			}
+
+			if !action.ReloadOnSuccess {
+				return ExitMsg{
+					Text: string(b),
+				}
 			}
 
 			return types.NewReloadAction()
@@ -468,6 +555,19 @@ func RenderCommand(command *types.Command, old, new string) *types.Command {
 	return &rendered
 }
 
+func RenderRequest(request *types.Request, old, new string) *types.Request {
+	rendered := types.Request{}
+	rendered.Method = strings.ReplaceAll(request.Method, old, new)
+	rendered.Url = strings.ReplaceAll(request.Url, old, url.QueryEscape(new))
+	rendered.Body = bytes.ReplaceAll(request.Body, []byte(old), []byte(new))
+
+	for key, value := range request.Headers {
+		rendered.Headers[key] = strings.ReplaceAll(value, old, new)
+	}
+
+	return &rendered
+}
+
 func RenderAction(action types.Action, old, new string) types.Action {
 	if action.Command != nil {
 		action.Command = RenderCommand(action.Command, old, new)
@@ -478,42 +578,82 @@ func RenderAction(action types.Action, old, new string) types.Action {
 	if action.Page != nil {
 		if action.Page.Command != nil {
 			action.Page.Command = RenderCommand(action.Page.Command, old, new)
+		} else if action.Page.Request != nil {
+			action.Page.Request = RenderRequest(action.Page.Request, old, new)
 		} else {
-			action.Page.Text = strings.ReplaceAll(action.Page.Text, old, new)
+			action.Page.Path = strings.ReplaceAll(action.Page.Path, old, new)
 		}
 	}
 	return action
 }
 
-func expandPage(page types.Page, dir string) types.Page {
-	expandUrl := func(target string) string {
+func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
+	expandUrl := func(target string) (string, error) {
+		if base == nil {
+			return target, nil
+		}
+
 		targetUrl, err := url.Parse(target)
 		if err != nil {
-			return target
+			return "", err
 		}
 
-		if targetUrl.Scheme != "" && targetUrl.Scheme != "file" {
-			return target
+		switch targetUrl.Scheme {
+		case "http", "https":
+			return target, nil
+		case "file":
+			return target, nil
+		case "":
+			res := &url.URL{Scheme: base.Scheme, Host: base.Host, Path: path.Join(base.Path, targetUrl.Path)}
+			return res.String(), nil
+		default:
+			return "", fmt.Errorf("unsupported scheme: %s", targetUrl.Scheme)
 		}
-
-		if filepath.IsAbs(targetUrl.Path) {
-			return target
-		}
-
-		return filepath.Join(dir, targetUrl.Path)
 	}
 
-	expandAction := func(action types.Action) types.Action {
-		if action.Command != nil && !filepath.IsAbs(action.Command.Dir) {
-			action.Command.Dir = filepath.Join(dir, action.Command.Dir)
+	expandAction := func(action types.Action) (*types.Action, error) {
+		if action.Command != nil && !path.IsAbs(action.Command.Dir) {
+			action.Command.Dir = path.Join(base.Path, action.Command.Dir)
 		}
 
-		if action.Page != nil && action.Page.Text != "" && !filepath.IsAbs(action.Page.Text) {
-			action.Page.Text = filepath.Join(dir, action.Page.Text)
+		if action.Page != nil {
+			if action.Page.Command != nil {
+				action.Page.Command.Dir = path.Join(base.Path, action.Page.Command.Dir)
+			}
+
+			if action.Page.Request != nil {
+				u, err := expandUrl(action.Page.Request.Url)
+				if err != nil {
+					return nil, err
+				}
+				action.Page.Request.Url = u
+
+			}
+
+			if action.Page.Path != "" {
+				p, err := expandUrl(action.Page.Path)
+				if err != nil {
+					return nil, err
+				}
+				action.Page.Path = p
+			}
 		}
 
 		if action.Target != "" {
-			action.Target = expandUrl(action.Target)
+			t, err := expandUrl(action.Target)
+			if err != nil {
+				return nil, err
+			}
+
+			action.Target = t
+		}
+
+		if action.Request != nil {
+			u, err := expandUrl(action.Request.Url)
+			if err != nil {
+				return nil, err
+			}
+			action.Request.Url = u
 		}
 
 		if action.Title == "" {
@@ -530,36 +670,48 @@ func expandPage(page types.Page, dir string) types.Page {
 				action.Title = "Exit"
 			case types.ReloadAction:
 				action.Title = "Reload"
+			case types.FetchAction:
+				action.Title = "Fetch"
 			}
 		}
 
-		return action
+		return &action, nil
 	}
 
 	for i, action := range page.Actions {
-		page.Actions[i] = expandAction(action)
+		a, err := expandAction(action)
+		if err != nil {
+			return nil, err
+		}
+
+		page.Actions[i] = *a
 	}
 
 	if page.Preview != nil {
 		if page.Preview.Command != nil {
-			page.Preview.Command.Dir = dir
+			page.Preview.Command.Dir = base.Path
 		}
 	}
 
 	for i, item := range page.Items {
 		if item.Preview != nil {
 			if item.Preview.Command != nil {
-				item.Preview.Command.Dir = dir
+				item.Preview.Command.Dir = base.Path
 			}
 		}
 
 		for j, action := range item.Actions {
 
-			item.Actions[j] = expandAction(action)
+			action, err := expandAction(action)
+			if err != nil {
+				return nil, err
+			}
+
+			item.Actions[j] = *action
 		}
 
 		page.Items[i] = item
 	}
 
-	return page
+	return &page, nil
 }

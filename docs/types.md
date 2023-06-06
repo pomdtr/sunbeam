@@ -51,6 +51,12 @@
   - `key`: string - The key used as a shortcut.
   - `command`: [Command](#command)
 - object
+  - `title`: string - The title of the action.
+  - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
+  - `key`: string - The key used as a shortcut.
+  - `request`: [Request](#request)
+  - `reloadOnSuccess`: boolean - Whether to reload the page when the command succeeds.
+- object
   - `type`: `'run'` - The type of the action.
   - `title`: string - The title of the action.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
@@ -62,7 +68,7 @@
   - `title`: string - The title of the action.
   - `key`: string - The key used as a shortcut.
   - `inputs`: [Input](#input)[] - The inputs to show when the action is run.
-  - `page`: [TextOrCommand](#textorcommand)
+  - `page`: string | &lt;string, string&gt; | object | object | object
 
 ## Input
 
@@ -102,13 +108,27 @@
 - `value`: string - The value of the item.
   - `default`: string - The default value of the input.
 
-## TextOrCommand
+## Request
+
+**POSSIBLE VALUES**
+
+- string
+- object
+  - `url`: string - The URL to request.
+  - `method`: string - The HTTP method to use.
+  - `headers`: object - The headers to send.
+    - `__index`: any
+  - `body`: string - The body to send.
+
+## TextOrCommandOrRequest
 
 **POSSIBLE VALUES**
 
 - string
 - object
   - `command`: [Command](#command)
+- object
+  - `request`: [Request](#request)
 - object
   - `text`: string
 
@@ -132,7 +152,7 @@
 - `title`: string - The title of the item.
 - `id`: string - The id of the item.
 - `subtitle`: string - The subtitle of the item.
-- `preview`: [TextOrCommand](#textorcommand)
+- `preview`: [TextOrCommandOrRequest](#textorcommandorrequest)
 - `accessories`: string[] - The accessories to show on the right side of the item.
 - `actions`: [Action](#action)[] - The actions attached to the item.
 
@@ -144,5 +164,5 @@ A detail view displayign a preview and actions.
 
 - `type`: `'detail'` - The type of the response.
 - `title`: string - The title of the page.
-- `preview`: [TextOrCommand](#textorcommand)
+- `preview`: [TextOrCommandOrRequest](#textorcommandorrequest)
 - `actions`: [Action](#action)[] - The actions attached to the detail view.

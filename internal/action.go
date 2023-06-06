@@ -129,7 +129,7 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 					if action.Page.Command != nil {
 						content = action.Command.Cmd(context.TODO()).String()
 					} else {
-						content = action.Page.Text
+						content = action.Page.Path
 					}
 				}
 
