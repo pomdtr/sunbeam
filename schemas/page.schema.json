@@ -666,7 +666,7 @@
             ]
         },
         "textOrCommandOrRequest": {
-            "oneOf": [
+            "anyOf": [
                 {
                     "type": "string"
                 },
