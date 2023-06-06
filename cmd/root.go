@@ -13,7 +13,6 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/cli/cli/v2/pkg/findsh"
-	"github.com/google/shlex"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -60,7 +59,7 @@ func Execute() error {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if env, ok := os.LookupEnv("SUNBEAM_DEFAULT_COMMAND"); ok {
+			if env, ok := os.LookupEnv("SUNBEAM_DEFAULT_COMMAND"); ok && env != "" {
 				var input string
 				if !isatty.IsTerminal(os.Stdin.Fd()) {
 					b, err := io.ReadAll(os.Stdin)
@@ -70,18 +69,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					input = string(b)
 				}
 
-				args, err := shlex.Split(env)
-				if err != nil {
-					return err
-				}
-
-				if len(args) == 0 {
-					return fmt.Errorf("empty command")
-				}
-
 				return Run(internal.NewCommandGenerator(&types.Command{
-					Name:  args[0],
-					Args:  args[1:],
+					Name:  "bash",
+					Args:  []string{"-c", env},
 					Input: input,
 				}))
 			}
