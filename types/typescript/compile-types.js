@@ -6,4 +6,4 @@ json2ts
   .compileFromFile("../../schemas/page.schema.json", {
     bannerComment: "",
   })
-  .then((ts) => fs.writeFileSync("index.d.ts", ts));
+  .then((ts) => fs.writeFileSync("types.ts", ts));

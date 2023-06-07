@@ -9,14 +9,18 @@
     "files": [
         "index.d.ts"
     ],
-    "types": "./index.d.ts",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "scripts": {
         "compile-types": "node compile-types.js",
-        "generate-docs": "typescript-documentation --entry ./index.d.ts --output ../../docs/types.md",
-        "build": "npm run compile-types && npm run generate-docs"
+        "generate-docs": "typescript-documentation --entry ./types.ts --output ../../docs/types.md",
+        "compile": "tsc",
+        "build": "npm run compile-types && npm run compile",
+        "docs": "npm run compile-types && npm run generate-docs"
     },
     "devDependencies": {
         "json-schema-to-typescript": "^12.0.0",
+        "typescript": "^5.1.3",
         "typescript-documentation": "^3.0.2"
     }
 }
