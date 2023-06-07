@@ -1,4 +1,4 @@
-import * as sunbeam from "./types";
+import * as sunbeam from "./types.ts";
 
 export function List(list: sunbeam.List) {
   return list;
