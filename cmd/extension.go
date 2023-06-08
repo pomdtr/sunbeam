@@ -64,13 +64,13 @@ func (m *ExtensionManifest) PrettyVersion() string {
 }
 
 func ReadManifest(manifestPath string) (*ExtensionManifest, error) {
-	bytes, err := os.ReadFile(manifestPath)
+	bs, err := os.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load extension manifest: %s", err)
 	}
 
 	var manifest ExtensionManifest
-	if err := json.Unmarshal(bytes, &manifest); err != nil {
+	if err := json.Unmarshal(bs, &manifest); err != nil {
 		return nil, fmt.Errorf("unable to load extension manifest: %s", err)
 	}
 
@@ -78,12 +78,12 @@ func ReadManifest(manifestPath string) (*ExtensionManifest, error) {
 }
 
 func (m *ExtensionManifest) Write(manifestPath string) error {
-	bytes, err := json.MarshalIndent(m, "", "  ")
+	bs, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		return fmt.Errorf("unable to write extension manifest: %s", err)
 	}
 
-	if err := os.WriteFile(manifestPath, bytes, 0644); err != nil {
+	if err := os.WriteFile(manifestPath, bs, 0644); err != nil {
 		return fmt.Errorf("unable to write extension manifest: %s", err)
 	}
 
@@ -97,25 +97,27 @@ func NewExtensionCmd(extensionRoot string, extensions map[string]*ExtensionManif
 		GroupID: coreGroupID,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if _, err := os.Stat(extensionRoot); os.IsNotExist(err) {
-				os.MkdirAll(extensionRoot, 0755)
+				if err := os.MkdirAll(extensionRoot, 0755); err != nil {
+					return fmt.Errorf("unable to create extension directory: %s", err)
+				}
 			}
 			return nil
 		},
 	}
 
-	extensionCmd.AddCommand(NewExtensionBrowseCmd(extensionRoot))
+	extensionCmd.AddCommand(NewExtensionBrowseCmd())
 	extensionCmd.AddCommand(NewExtensionManageCmd(extensionRoot))
 	extensionCmd.AddCommand(NewExtensionCreateCmd())
 	extensionCmd.AddCommand(NewExtensionInstallCmd(extensionRoot))
 	extensionCmd.AddCommand(NewExtensionRenameCmd(extensionRoot, extensions))
-	extensionCmd.AddCommand(NewExtensionListCmd(extensionRoot, extensions))
+	extensionCmd.AddCommand(NewExtensionListCmd(extensions))
 	extensionCmd.AddCommand(NewExtensionRemoveCmd(extensionRoot, extensions))
 	extensionCmd.AddCommand(NewExtensionUpgradeCmd(extensionRoot, extensions))
 
 	return extensionCmd
 }
 
-func NewExtensionBrowseCmd(extensionRoot string) *cobra.Command {
+func NewExtensionBrowseCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "browse",
 		Short: "Browse extensions",
@@ -308,7 +310,7 @@ func NewExtensionCreateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringP("name", "n", "", "extension name")
-	cmd.MarkFlagRequired("name")
+	cmd.MarkFlagRequired("name") //nolint:errcheck
 
 	return cmd
 }
@@ -597,7 +599,7 @@ func downloadRelease(release *utils.Release, targetDir string) (string, error) {
 	return binaryName, err
 }
 
-func NewExtensionListCmd(extensionRoot string, extensions map[string]*ExtensionManifest) *cobra.Command {
+func NewExtensionListCmd(extensions map[string]*ExtensionManifest) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List installed extension commands",
@@ -709,7 +711,6 @@ func NewExtensionUpgradeCmd(extensionRoot string, extensions map[string]*Extensi
 }
 
 func upgradeExtension(extensionPath string) error {
-
 	manifestPath := filepath.Join(extensionPath, manifestName)
 	manifest, err := ReadManifest(filepath.Join(extensionPath, manifestName))
 	if err != nil {
@@ -873,7 +874,9 @@ func downloadAndExtractZip(zipUrl string, dst string) error {
 		fpath := filepath.Join(dst, strings.TrimPrefix(file.Name, rootDir))
 
 		if file.FileInfo().IsDir() {
-			os.MkdirAll(fpath, file.Mode())
+			if err := os.MkdirAll(fpath, file.Mode()); err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -886,19 +889,20 @@ func downloadAndExtractZip(zipUrl string, dst string) error {
 		if err != nil {
 			return err
 		}
-		defer outFile.Close()
 
 		// Copy the file contents
 		rc, err := file.Open()
 		if err != nil {
 			return err
 		}
-		defer rc.Close()
 
 		_, err = io.Copy(outFile, rc)
 		if err != nil {
 			return err
 		}
+
+		outFile.Close()
+		rc.Close()
 	}
 
 	return nil
@@ -924,13 +928,13 @@ func ListExtensions(extensionRoot string) (map[string]*ExtensionManifest, error)
 			return nil, fmt.Errorf("unable to list extensions: %s", err)
 		}
 
-		bytes, err := os.ReadFile(manifestPath)
+		bs, err := os.ReadFile(manifestPath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to list extensions: %s", err)
 		}
 
 		var manifest ExtensionManifest
-		if err := json.Unmarshal(bytes, &manifest); err != nil {
+		if err := json.Unmarshal(bs, &manifest); err != nil {
 			return nil, fmt.Errorf("unable to list extensions: %s", err)
 		}
 

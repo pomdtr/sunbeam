@@ -252,10 +252,10 @@ func Draw(page Page, options SunbeamOptions) error {
 	msg := paginator.OutputMsg
 	if msg != "" {
 		if isatty.IsTerminal(os.Stdout.Fd()) && !strings.HasSuffix(msg, "\n") {
-			msg += "\n"
+			fmt.Println(msg)
+		} else {
+			fmt.Print(msg)
 		}
-
-		fmt.Println(paginator.OutputMsg)
 		return nil
 	}
 
