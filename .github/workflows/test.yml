@@ -17,3 +17,14 @@ jobs:
       - run: |
           tldr --update
           ./docs/examples/tldr/sunbeam-extension | sunbeam validate
+  test-devdocs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: 1.19
+      - run: |
+          go build -o /usr/local/bin/sunbeam
+      - run: |
+          ./docs/examples/devdocs/sunbeam-extension | sunbeam validate
