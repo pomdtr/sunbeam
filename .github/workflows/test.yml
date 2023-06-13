@@ -24,7 +24,8 @@ jobs:
           name: sunbeam
           path: /usr/local/bin/sunbeam
       - run: chmod +x /usr/local/bin/sunbeam
-      - run: ls -l /usr/local/bin
+      - run: |
+          ls -l /usr/local/bin
           echo $PATH
       - name: Install tldr
         run: |
