@@ -24,6 +24,8 @@ jobs:
           name: sunbeam
           path: /usr/local/bin/sunbeam
       - run: chmod +x /usr/local/bin/sunbeam
+      - run: ls -l /usr/local/bin
+          echo $PATH
       - name: Install tldr
         run: |
           curl -L https://github.com/dbrgn/tealdeer/releases/download/v1.6.1/tealdeer-linux-x86_64-musl -o /usr/local/bin/tldr
