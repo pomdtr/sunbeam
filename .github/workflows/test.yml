@@ -1,7 +1,7 @@
 on: [push]
 name: Test Extensions
 jobs:
-  build:
+  test-tldr:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -9,24 +9,7 @@ jobs:
         with:
           go-version: 1.19
       - run: |
-          go build -o sunbeam
-      - uses: actions/upload-artifact@v2
-        with:
-          name: sunbeam
-          path: sunbeam
-  test-tldr:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v2
-        with:
-          name: sunbeam
-          path: /usr/local/bin/sunbeam
-      - run: chmod +x /usr/local/bin/sunbeam
-      - run: |
-          ls -l /usr/local/bin
-          echo $PATH
+          go build -o /usr/local/bin/sunbeam
       - name: Install tldr
         run: |
           curl -L https://github.com/dbrgn/tealdeer/releases/download/v1.6.1/tealdeer-linux-x86_64-musl -o /usr/local/bin/tldr
@@ -36,25 +19,23 @@ jobs:
           ./docs/examples/tldr/sunbeam-extension | sunbeam validate
   test-devdocs:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v2
+      - uses: actions/setup-go@v4
         with:
-          name: sunbeam
-          path: /usr/local/bin/sunbeam
-      - run: chmod +x /usr/local/bin/sunbeam
+          go-version: 1.19
+      - run: |
+          go build -o /usr/local/bin/sunbeam
       - run: |
           ./docs/examples/devdocs/sunbeam-extension | sunbeam validate
   test-filebrowser:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v2
+      - uses: actions/setup-go@v4
         with:
-          name: sunbeam
-          path: /usr/local/bin/sunbeam
-      - run: chmod +x /usr/local/bin/sunbeam
+          go-version: 1.19
+      - run: |
+          go build -o /usr/local/bin/sunbeam
       - run: |
           ./docs/examples/file-browser/sunbeam-extension | sunbeam validate
