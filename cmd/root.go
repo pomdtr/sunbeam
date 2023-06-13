@@ -264,10 +264,16 @@ func NewInfoCmd(extensionRoot string, version string) *cobra.Command {
 					Type:  types.ListPage,
 					Items: []types.ListItem{
 						{Title: "Version", Subtitle: version, Actions: []types.Action{
-							types.NewCopyAction("Copy", version),
+							{
+								Type: types.CopyAction,
+								Text: version,
+							},
 						}},
 						{Title: "Extension Root", Subtitle: extensionRoot, Actions: []types.Action{
-							types.NewCopyAction("Copy", extensionRoot),
+							{
+								Type: types.CopyAction,
+								Text: extensionRoot,
+							},
 						}},
 					}}, nil
 			})

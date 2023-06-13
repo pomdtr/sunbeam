@@ -86,7 +86,7 @@
                     "type": "string"
                 },
                 "preview": {
-                    "$ref": "#/$defs/textOrCommandOrRequest"
+                    "$ref": "#/$defs/preview"
                 },
                 "actions": {
                     "type": "array",
@@ -116,7 +116,7 @@
                     "description": "The subtitle of the item."
                 },
                 "preview": {
-                    "$ref": "#/$defs/textOrCommandOrRequest"
+                    "$ref": "#/$defs/preview"
                 },
                 "accessories": {
                     "type": "array",
@@ -243,33 +243,6 @@
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "exit",
-                            "description": "The type of the action."
-                        },
-                        "inputs": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/$defs/input"
-                            },
-                            "description": "The inputs to show when the action is run."
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
-                        "key": {
-                            "type": "string",
-                            "description": "The key used as a shortcut."
-                        }
-                    }
-                },
-                {
-                    "required": [
-                        "type"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "type": {
                             "const": "reload",
                             "description": "The type of the action."
                         },
@@ -322,9 +295,8 @@
                         "request": {
                             "$ref": "#/$defs/request"
                         },
-                        "reloadOnSuccess": {
-                            "type": "boolean",
-                            "description": "Whether to reload the page when the command succeeds."
+                        "onSuccess": {
+                            "$ref": "#/$defs/onSuccess"
                         }
                     }
                 },
@@ -357,9 +329,8 @@
                         "command": {
                             "$ref": "#/$defs/command"
                         },
-                        "reloadOnSuccess": {
-                            "type": "boolean",
-                            "description": "Whether to reload the page when the command succeeds."
+                        "onSuccess": {
+                            "$ref": "#/$defs/onSuccess"
                         }
                     }
                 },
@@ -390,27 +361,7 @@
                             "description": "The inputs to show when the action is run."
                         },
                         "page": {
-                            "oneOf": [
-                                {
-                                    "type": "object",
-                                    "required": [
-                                        "path"
-                                    ],
-                                    "additionalProperties": false,
-                                    "properties": {
-                                        "path": {
-                                            "type": "string",
-                                            "description": "The path of the page to push."
-                                        }
-                                    }
-                                },
-                                {
-                                    "$ref": "#/$defs/command"
-                                },
-                                {
-                                    "$ref": "#/$defs/request"
-                                }
-                            ]
+                            "type": "string"
                         }
                     }
                 }
@@ -665,16 +616,34 @@
                 }
             ]
         },
-        "textOrCommandOrRequest": {
-            "anyOf": [
+        "onSuccess": {
+            "type": "string",
+            "enum": [
+                "copy",
+                "paste",
+                "open",
+                "reload",
+                "push"
+            ]
+        },
+        "preview": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "command": {
+                            "$ref": "#/$defs/command"
+                        },
+                        "request": {
+                            "$ref": "#/$defs/request"
+                        },
+                        "text": {
+                            "type": "string"
+                        }
+                    }
+                },
                 {
                     "type": "string"
-                },
-                {
-                    "$ref": "#/$defs/command"
-                },
-                {
-                    "$ref": "#/$defs/request"
                 }
             ]
         }

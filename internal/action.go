@@ -1,10 +1,8 @@
 package internal
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -103,37 +101,6 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 				}
 
 				return listItem.Actions[0]
-			}
-		case "ctrl+y":
-			selectedItem := al.filter.Selection()
-			if selectedItem == nil {
-				return al, nil
-			}
-			listItem, _ := selectedItem.(ListItem)
-			al.Blur()
-
-			return al, func() tea.Msg {
-				if len(listItem.Actions) == 0 {
-					return nil
-				}
-				action := listItem.Actions[0]
-				var content string
-				switch action.Type {
-				case types.CopyAction:
-					content = action.Text
-				case types.OpenAction:
-					content = action.Target
-				case types.RunAction:
-					content = action.Command.Cmd(context.TODO()).String()
-				case types.PushAction:
-					if action.Page.Command != nil {
-						content = action.Command.Cmd(context.TODO()).String()
-					} else {
-						content = action.Page.Path
-					}
-				}
-
-				return clipboard.WriteAll(content)
 			}
 		default:
 			for _, action := range al.actions {

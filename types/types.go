@@ -126,10 +126,19 @@ const (
 	OpenAction   = "open"
 	PushAction   = "push"
 	RunAction    = "run"
-	ExitAction   = "exit"
 	PasteAction  = "paste"
 	ReloadAction = "reload"
 	FetchAction  = "fetch"
+)
+
+type OnSuccessType string
+
+const (
+	CopyOnSuccess   OnSuccessType = "copy"
+	PasteOnSuccess  OnSuccessType = "paste"
+	OpenOnSuccess   OnSuccessType = "open"
+	ReloadOnSuccess OnSuccessType = "reload"
+	PushOnSuccess   OnSuccessType = "push"
 )
 
 type Action struct {
@@ -145,58 +154,14 @@ type Action struct {
 	Target string `json:"target,omitempty"`
 
 	// push
-	Page *PageGenerator `json:"page,omitempty"`
+	Page string `json:"page,omitempty"`
 
 	// fetch
 	Request *Request `json:"request,omitempty"`
 
 	// run
-	Command         *Command `json:"command,omitempty"`
-	ReloadOnSuccess bool     `json:"reloadOnSuccess,omitempty"`
-}
-
-type PageGenerator struct {
-	Command *Command `json:"command,omitempty"`
-	Request *Request `json:"request,omitempty"`
-	Path    string   `json:"path,omitempty"`
-}
-
-func (p *PageGenerator) UnmarshalJSON(data []byte) error {
-	var c Command
-	if err := json.Unmarshal(data, &c); err == nil && c.Name != "" {
-		p.Command = &c
-		return nil
-	}
-
-	var r Request
-	if err := json.Unmarshal(data, &r); err == nil && r.Url != "" {
-		p.Request = &r
-		return nil
-	}
-
-	var s string
-	if err := json.Unmarshal(data, &s); err == nil {
-		p.Path = s
-		return nil
-	}
-
-	return errors.New("must be a command or a request")
-}
-
-func (p PageGenerator) MarshalJSON() ([]byte, error) {
-	if p.Command != nil {
-		return json.Marshal(p.Command)
-	}
-
-	if p.Request != nil {
-		return json.Marshal(p.Request)
-	}
-
-	if p.Path != "" {
-		return json.Marshal(p.Path)
-	}
-
-	return nil, errors.New("must be a command or a request")
+	Command   *Command      `json:"command,omitempty"`
+	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
 }
 
 type Request struct {
@@ -206,7 +171,7 @@ type Request struct {
 	Body    Body              `json:"body,omitempty"`
 }
 
-func (r Request) Do() ([]byte, error) {
+func (r Request) Do(ctx context.Context) ([]byte, error) {
 	if r.Method == "" {
 		r.Method = "GET"
 	}
@@ -261,86 +226,6 @@ type TextOrCommandOrRequest struct {
 	Request *Request `json:"request,omitempty"`
 }
 
-func (p *TextOrCommandOrRequest) UnmarshalJSON(data []byte) error {
-	var text string
-	if err := json.Unmarshal(data, &text); err == nil {
-		p.Text = text
-		return nil
-	}
-
-	var c Command
-	if err := json.Unmarshal(data, &c); err == nil && c.Name != "" {
-		p.Command = &c
-		return nil
-	}
-
-	var r Request
-	if err := json.Unmarshal(data, &r); err == nil && r.Url != "" {
-		p.Request = &r
-		return nil
-	}
-
-	return errors.New("page must be a string, a command or a request")
-}
-
-func (p TextOrCommandOrRequest) MarshalJSON() ([]byte, error) {
-	if p.Text != "" {
-		return json.Marshal(p.Text)
-	}
-
-	if p.Command != nil {
-		return json.Marshal(p.Command)
-	}
-
-	if p.Request != nil {
-		return json.Marshal(p.Request)
-	}
-
-	return nil, errors.New("page must be a string, a command or a request")
-}
-
-func NewReloadAction() Action {
-	return Action{
-		Type: ReloadAction,
-	}
-}
-
-func NewCopyAction(title string, text string) Action {
-	return Action{
-		Title: title,
-		Type:  CopyAction,
-		Text:  text,
-	}
-}
-
-func NewOpenAction(title string, target string) Action {
-	return Action{
-		Title:  title,
-		Type:   OpenAction,
-		Target: target,
-	}
-}
-
-func NewPushAction(title string, page string) Action {
-	return Action{
-		Title: title,
-		Type:  PushAction,
-		Page: &PageGenerator{
-			Path: page,
-		},
-	}
-}
-
-func NewRunAction(title string, name string, args ...string) Action {
-	return Action{
-		Title: title,
-		Type:  RunAction,
-		Command: &Command{
-			Args: args,
-		},
-	}
-}
-
 type Command struct {
 	Name  string   `json:"name"`
 	Args  []string `json:"args,omitempty"`
@@ -370,7 +255,6 @@ func (c Command) Run(ctx context.Context) error {
 	}
 
 	return nil
-
 }
 
 func (c Command) Output(ctx context.Context) ([]byte, error) {

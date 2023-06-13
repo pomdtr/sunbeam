@@ -2,7 +2,7 @@
     "compilerOptions": {
         "outDir": "./dist/",
         "declaration": true,
-        "allowImportingTsExtensions": true
+        "allowImportingTsExtensions": false
     },
     "include": [
         "**/*.ts",

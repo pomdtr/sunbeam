@@ -85,17 +85,7 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 			case types.PushAction:
 				var page internal.Page
 
-				if action.Page == nil {
-					return fmt.Errorf("no page provided")
-				}
-
-				if action.Page.Command != nil {
-					page = internal.NewRunner(internal.NewCommandGenerator(action.Command))
-				} else if action.Page.Request != nil {
-					page = internal.NewRunner(internal.NewRequestGenerator(action.Page.Request))
-				} else if action.Page.Path != "" {
-					page = internal.NewRunner(internal.NewFileGenerator(action.Page.Path))
-				}
+				page = internal.NewRunner(internal.NewFileGenerator(action.Page))
 
 				return internal.PushPageMsg{
 					Page: page,
@@ -115,8 +105,6 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 					return fmt.Errorf("unable to write to clipboard: %s", err)
 				}
 				return tea.Quit()
-			case types.ExitAction:
-				return tea.Quit()
 			default:
 				return fmt.Errorf("unknown action type: %s", action.Type)
 			}
@@ -125,17 +113,7 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 
 	switch action.Type {
 	case types.PushAction:
-		if action.Page.Command != nil {
-			return Run(internal.NewCommandGenerator(action.Page.Command))
-		}
-		if action.Page.Request != nil {
-			return Run(internal.NewRequestGenerator(action.Page.Request))
-		}
-		if action.Page.Path != "" {
-			return Run(internal.NewFileGenerator(action.Page.Path))
-		}
-
-		return fmt.Errorf("no page provided")
+		return Run(internal.NewFileGenerator(action.Page))
 	case types.RunAction:
 		if _, err := action.Command.Output(context.TODO()); err != nil {
 			return fmt.Errorf("command failed: %s", err)
@@ -152,8 +130,6 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 		if err := clipboard.WriteAll(action.Text); err != nil {
 			return fmt.Errorf("unable to write to clipboard: %s", err)
 		}
-		return nil
-	case types.ExitAction:
 		return nil
 	default:
 		return fmt.Errorf("unknown action type: %s", action.Type)

@@ -7,12 +7,14 @@ PLATFORM="${1:-osx}"
 # shellcheck disable=SC2016
 tldr --list --platform="$PLATFORM" | sunbeam query --arg platform="$PLATFORM" -R '{
     title: .,
-    preview: ["tldr", "--raw", "--platform", $platform, .],
+    preview: {
+      command: ["tldr", "--raw", "--platform", $platform, .]
+    },
     actions: [
       {
         type: "open",
         title: "Open in browser",
         target: "https://tldr.inbrowser.app/pages/common/\(. | @uri)",
       }
-    ],
-}' | sunbeam list --show-preview --json
+    ]
+}' | sunbeam list --json --title "tldr" --show-preview

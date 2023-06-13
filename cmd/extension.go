@@ -197,12 +197,11 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 						Actions: []types.Action{
 							{
 								Title: "Run Extension",
-								Type:  types.PushAction,
-								Page: &types.PageGenerator{
-									Command: &types.Command{
-										Name: os.Args[0],
-										Args: []string{extension},
-									}},
+								Type:  types.RunAction,
+								Command: &types.Command{
+									Name: os.Args[0],
+									Args: []string{extension},
+								},
 							},
 							{
 								Title: "Upgrade Extension",
@@ -214,10 +213,9 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 								},
 							},
 							{
-								Type:            types.RunAction,
-								Title:           "Rename Extension",
-								Key:             "r",
-								ReloadOnSuccess: true,
+								Type:  types.RunAction,
+								Title: "Rename Extension",
+								Key:   "r",
 								Command: &types.Command{
 									Name: os.Args[0],
 									Args: []string{"extension", "rename", extension, "${input:name}"},
@@ -233,10 +231,9 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 								},
 							},
 							{
-								Type:            types.RunAction,
-								Title:           "Remove Extension",
-								Key:             "d",
-								ReloadOnSuccess: true,
+								Type:  types.RunAction,
+								Title: "Remove Extension",
+								Key:   "d",
 								Command: &types.Command{
 									Name: os.Args[0],
 									Args: []string{"extension", "remove", extension},
@@ -252,13 +249,12 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 						Text: "No extensions installed",
 						Actions: []types.Action{
 							{
-								Type:  types.PushAction,
-								Title: "Browse Extensions",
-								Page: &types.PageGenerator{
-									Command: &types.Command{
-										Name: os.Args[0],
-										Args: []string{"extension", "browse"},
-									},
+								Type:      types.RunAction,
+								Title:     "Browse Extensions",
+								OnSuccess: types.PushOnSuccess,
+								Command: &types.Command{
+									Name: os.Args[0],
+									Args: []string{"extension", "browse"},
 								},
 							},
 						},

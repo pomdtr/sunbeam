@@ -50,12 +50,6 @@ func NewDetailCmd() *cobra.Command {
 					Preview: &types.TextOrCommandOrRequest{
 						Text: text,
 					},
-					Actions: []types.Action{
-						{
-							Title: "Exit",
-							Type:  types.ExitAction,
-						},
-					},
 				}, nil
 			})
 		},

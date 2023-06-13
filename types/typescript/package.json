@@ -1,19 +1,19 @@
 {
     "name": "sunbeam-types",
-    "version": "0.10.2",
+    "version": "0.10.3",
     "description": "Types for sunbeam",
     "homepage": "https://pomdtr.github.io/sunbeam",
     "repository": {
         "url": "https://github.com/pomdtr/sunbeam"
     },
     "files": [
-        "index.d.ts"
+        "dist/"
     ],
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
         "compile-types": "node compile-types.js",
-        "generate-docs": "typescript-documentation --entry ./types.ts --output ../../docs/types.md",
+        "generate-docs": "typescript-documentation --entry ./index.ts --output ../../docs/types.md",
         "compile": "tsc",
         "build": "npm run compile-types && npm run compile",
         "docs": "npm run compile-types && npm run generate-docs"

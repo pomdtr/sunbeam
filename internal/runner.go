@@ -3,11 +3,8 @@ package internal
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -22,141 +19,6 @@ import (
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/pomdtr/sunbeam/utils"
 )
-
-type PageGenerator func() (*types.Page, error)
-
-func NewFileGenerator(name string) PageGenerator {
-	return func() (*types.Page, error) {
-		b, err := os.ReadFile(name)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := schemas.Validate(b); err != nil {
-			return nil, err
-		}
-
-		var page types.Page
-		if err := json.Unmarshal(b, &page); err != nil {
-			return nil, err
-		}
-
-		p, err := expandPage(page, &url.URL{
-			Scheme: "file",
-			Path:   path.Dir(name),
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return p, nil
-	}
-}
-
-func NewStaticGenerator(reader io.Reader) PageGenerator {
-	var pageRef *types.Page
-	return func() (*types.Page, error) {
-		if pageRef != nil {
-			return pageRef, nil
-		}
-
-		b, err := io.ReadAll(reader)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := schemas.Validate(b); err != nil {
-			return nil, err
-		}
-
-		var page types.Page
-		if err := json.Unmarshal(b, &page); err != nil {
-			return nil, err
-		}
-
-		p, err := expandPage(page, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		pageRef = p
-		return p, nil
-	}
-}
-
-func NewCommandGenerator(command *types.Command) PageGenerator {
-	return func() (*types.Page, error) {
-		output, err := command.Output(context.TODO())
-		if err != nil {
-			return nil, err
-		}
-
-		if err := schemas.Validate(output); err != nil {
-			return nil, err
-		}
-
-		var page types.Page
-		if err := json.Unmarshal(output, &page); err != nil {
-			return nil, err
-		}
-
-		p, err := expandPage(page, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		return p, nil
-	}
-}
-
-func NewRequestGenerator(request *types.Request) PageGenerator {
-	return func() (*types.Page, error) {
-		req, err := http.NewRequest(request.Method, request.Url, bytes.NewReader(request.Body))
-		if err != nil {
-			return nil, err
-		}
-
-		for k, v := range request.Headers {
-			req.Header.Set(k, v)
-		}
-
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
-		}
-
-		bs, err := io.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := schemas.Validate(bs); err != nil {
-			return nil, err
-		}
-
-		var page types.Page
-		if err := json.Unmarshal(bs, &page); err != nil {
-			return nil, err
-		}
-
-		p, err := expandPage(page, &url.URL{
-			Scheme: res.Request.URL.Scheme,
-			Host:   res.Request.URL.Host,
-			Path:   path.Dir(res.Request.URL.Path),
-		})
-
-		if err != nil {
-			return nil, err
-		}
-
-		return p, nil
-	}
-}
 
 type CommandRunner struct {
 	width, height int
@@ -257,59 +119,96 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	case types.PushAction:
 		return func() tea.Msg {
-			if action.Page == nil {
-				return errors.New("page is nil")
-			}
-
-			if action.Page.Request != nil {
-				return PushPageMsg{
-					Page: NewRunner(NewRequestGenerator(action.Page.Request)),
-				}
-			}
-
-			if action.Page.Command != nil {
-				return PushPageMsg{
-					Page: NewRunner(NewCommandGenerator(action.Page.Command)),
-				}
-			}
-
 			return PushPageMsg{
-				Page: NewRunner(NewFileGenerator(action.Page.Path)),
+				Page: NewRunner(NewFileGenerator(action.Page)),
 			}
 		}
 
 	case types.RunAction:
 		return func() tea.Msg {
-			if !action.ReloadOnSuccess {
+			if action.OnSuccess == "" || action.OnSuccess == "exit" {
 				return ExitMsg{
 					Cmd: action.Command.Cmd(context.TODO()),
 				}
 			}
 
-			if err := action.Command.Run(context.TODO()); err != nil {
-				return err
+			if action.OnSuccess == "push" {
+				return PushPageMsg{
+					Page: NewRunner(NewCommandGenerator(action.Command)),
+				}
 			}
 
-			return types.NewReloadAction()
-		}
-	case types.FetchAction:
-		return func() tea.Msg {
-			b, err := action.Request.Do()
+			output, err := action.Command.Output(context.Background())
 			if err != nil {
 				return err
 			}
 
-			if !action.ReloadOnSuccess {
+			switch action.OnSuccess {
+			case "copy":
+				if err := clipboard.WriteAll(string(output)); err != nil {
+					return err
+				}
+
+				return ExitMsg{}
+			case "paste":
 				return ExitMsg{
-					Text: string(b),
+					Text: string(output),
+				}
+			case "open":
+				if err := browser.OpenURL(string(output)); err != nil {
+					return err
+				}
+
+				return ExitMsg{}
+			case "reload":
+				return types.Action{
+					Type: types.ReloadAction,
+				}
+			default:
+				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)
+			}
+		}
+	case types.FetchAction:
+		return func() tea.Msg {
+			if action.OnSuccess == "push" {
+				return PushPageMsg{
+					Page: NewRunner(NewRequestGenerator(action.Request)),
 				}
 			}
 
-			return types.NewReloadAction()
-		}
-	case types.ExitAction:
-		return func() tea.Msg {
-			return ExitMsg{}
+			output, err := action.Request.Do(context.Background())
+			if err != nil {
+				return err
+			}
+
+			switch action.OnSuccess {
+			case "copy":
+				if err := clipboard.WriteAll(string(output)); err != nil {
+					return err
+				}
+
+				return ExitMsg{}
+			case "paste":
+				return ExitMsg{
+					Text: string(output),
+				}
+			case "open":
+				if err := browser.OpenURL(string(output)); err != nil {
+					return err
+				}
+
+				return ExitMsg{}
+			case "reload":
+				return types.Action{
+					Type: types.ReloadAction,
+				}
+			case "exit", "":
+				return ExitMsg{
+					Text: string(output),
+				}
+			default:
+				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)
+			}
 		}
 	default:
 		return func() tea.Msg {
@@ -575,15 +474,7 @@ func RenderAction(action types.Action, old, new string) types.Action {
 
 	action.Target = strings.ReplaceAll(action.Target, old, url.QueryEscape(new))
 	action.Text = strings.ReplaceAll(action.Text, old, new)
-	if action.Page != nil {
-		if action.Page.Command != nil {
-			action.Page.Command = RenderCommand(action.Page.Command, old, new)
-		} else if action.Page.Request != nil {
-			action.Page.Request = RenderRequest(action.Page.Request, old, new)
-		} else {
-			action.Page.Path = strings.ReplaceAll(action.Page.Path, old, new)
-		}
-	}
+	action.Page = strings.ReplaceAll(action.Page, old, new)
 	return action
 }
 
@@ -593,7 +484,7 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 		basePath = base.Path
 	}
 
-	expandUrl := func(target string) (string, error) {
+	expandUri := func(target string) (string, error) {
 		if base == nil {
 			return target, nil
 		}
@@ -621,31 +512,14 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 			action.Command.Dir = path.Join(basePath, action.Command.Dir)
 		}
 
-		if action.Page != nil {
-			if action.Page.Command != nil {
-				action.Page.Command.Dir = path.Join(basePath, action.Page.Command.Dir)
-			}
-
-			if action.Page.Request != nil {
-				u, err := expandUrl(action.Page.Request.Url)
-				if err != nil {
-					return nil, err
-				}
-				action.Page.Request.Url = u
-
-			}
-
-			if action.Page.Path != "" {
-				p, err := expandUrl(action.Page.Path)
-				if err != nil {
-					return nil, err
-				}
-				action.Page.Path = p
-			}
+		p, err := expandUri(action.Page)
+		if err != nil {
+			return nil, err
 		}
+		action.Page = p
 
 		if action.Target != "" {
-			t, err := expandUrl(action.Target)
+			t, err := expandUri(action.Target)
 			if err != nil {
 				return nil, err
 			}
@@ -654,7 +528,7 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 		}
 
 		if action.Request != nil {
-			u, err := expandUrl(action.Request.Url)
+			u, err := expandUri(action.Request.Url)
 			if err != nil {
 				return nil, err
 			}
@@ -668,15 +542,39 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 			case types.CopyAction:
 				action.Title = "Copy"
 			case types.RunAction:
-				action.Title = "Run"
+				switch action.OnSuccess {
+				case types.ReloadOnSuccess:
+					action.Title = "Reload"
+				case types.PushOnSuccess:
+					action.Title = "Push"
+				case types.PasteOnSuccess:
+					action.Title = "Paste"
+				case types.CopyOnSuccess:
+					action.Title = "Copy"
+				case types.OpenOnSuccess:
+					action.Title = "Open"
+				default:
+					action.Title = "Run"
+				}
 			case types.PushAction:
 				action.Title = "Push"
-			case types.ExitAction:
-				action.Title = "Exit"
 			case types.ReloadAction:
 				action.Title = "Reload"
 			case types.FetchAction:
-				action.Title = "Fetch"
+				switch action.OnSuccess {
+				case types.ReloadOnSuccess:
+					action.Title = "Reload"
+				case types.PushOnSuccess:
+					action.Title = "Push"
+				case types.PasteOnSuccess:
+					action.Title = "Paste"
+				case types.CopyOnSuccess:
+					action.Title = "Copy"
+				case types.OpenOnSuccess:
+					action.Title = "Open"
+				default:
+					action.Title = "Fetch"
+				}
 			}
 		}
 
