@@ -302,14 +302,6 @@ export type Request =
       body?: string;
     };
 export type OnSuccess = "copy" | "paste" | "open" | "reload" | "push";
-export type Preview =
-  | {
-      command?: Command;
-      request?: Request;
-      text?: string;
-      [k: string]: unknown;
-    }
-  | string;
 
 export interface List {
   /**
@@ -359,6 +351,12 @@ export interface Listitem {
    * The actions attached to the item.
    */
   actions?: Action[];
+}
+export interface Preview {
+  command?: Command;
+  request?: Request;
+  text?: string;
+  [k: string]: unknown;
 }
 /**
  * A detail view displayign a preview and actions.

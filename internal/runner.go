@@ -512,11 +512,13 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 			action.Command.Dir = path.Join(basePath, action.Command.Dir)
 		}
 
-		p, err := expandUri(action.Page)
-		if err != nil {
-			return nil, err
+		if action.Page != "" {
+			p, err := expandUri(action.Page)
+			if err != nil {
+				return nil, err
+			}
+			action.Page = p
 		}
-		action.Page = p
 
 		if action.Target != "" {
 			t, err := expandUri(action.Target)

@@ -627,25 +627,18 @@
             ]
         },
         "preview": {
-            "oneOf": [
-                {
-                    "type": "object",
-                    "properties": {
-                        "command": {
-                            "$ref": "#/$defs/command"
-                        },
-                        "request": {
-                            "$ref": "#/$defs/request"
-                        },
-                        "text": {
-                            "type": "string"
-                        }
-                    }
+            "type": "object",
+            "properties": {
+                "command": {
+                    "$ref": "#/$defs/command"
                 },
-                {
+                "request": {
+                    "$ref": "#/$defs/request"
+                },
+                "text": {
                     "type": "string"
                 }
-            ]
+            }
         }
     }
 }
