@@ -67,6 +67,16 @@
   - `input`: string
   - `dir`: string
 
+## OnSuccess
+
+**POSSIBLE VALUES**
+
+- `'copy'`
+- `'paste'`
+- `'open'`
+- `'reload'`
+- `'push'`
+
 ## Request
 
 **POSSIBLE VALUES**
@@ -78,16 +88,6 @@
   - `headers`: object - The headers to send.
     - `__index`: any
   - `body`: string - The body to send.
-
-## OnSuccess
-
-**POSSIBLE VALUES**
-
-- `'copy'`
-- `'paste'`
-- `'open'`
-- `'reload'`
-- `'push'`
 
 ## Listitem
 
