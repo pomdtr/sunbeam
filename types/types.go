@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -129,6 +130,7 @@ const (
 	PasteAction  = "paste"
 	ReloadAction = "reload"
 	FetchAction  = "fetch"
+	EvalAction   = "eval"
 )
 
 type OnSuccessType string
@@ -159,9 +161,33 @@ type Action struct {
 	// fetch
 	Request *Request `json:"request,omitempty"`
 
+	// eval
+	Expression *Expression `json:"expression,omitempty"`
+
 	// run
-	Command   *Command      `json:"command,omitempty"`
+	Command *Command `json:"command,omitempty"`
+
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
+}
+
+type Expression string
+
+func (e Expression) Request() *Request {
+	headers := make(map[string]string)
+	if env, ok := os.LookupEnv("VALTOWN_TOKEN"); ok {
+		headers["Authorization"] = fmt.Sprintf("Bearer %s", env)
+	}
+
+	body, _ := json.Marshal(map[string]string{
+		"code": string(e),
+	})
+
+	return &Request{
+		Url:     "https://api.val.town/v1/eval",
+		Method:  "POST",
+		Body:    body,
+		Headers: headers,
+	}
 }
 
 type Request struct {

@@ -168,15 +168,24 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)
 			}
 		}
-	case types.FetchAction:
+	case types.FetchAction, types.EvalAction:
 		return func() tea.Msg {
+			var request *types.Request
+			if action.Request != nil {
+				request = action.Request
+			} else if action.Expression != nil {
+				request = action.Expression.Request()
+			} else {
+				return fmt.Errorf("request or expression is required")
+			}
+
 			if action.OnSuccess == "push" {
 				return PushPageMsg{
-					Page: NewRunner(NewRequestGenerator(action.Request)),
+					Page: NewRunner(NewRequestGenerator(request)),
 				}
 			}
 
-			output, err := action.Request.Do(context.Background())
+			output, err := request.Do(context.Background())
 			if err != nil {
 				return err
 			}

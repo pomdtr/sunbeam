@@ -101,6 +101,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewDetailCmd())
 	rootCmd.AddCommand(NewRunCmd(extensionRoot))
 	rootCmd.AddCommand(NewInfoCmd(extensionRoot, Version))
+	rootCmd.AddCommand(NewEvalCmd())
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
 	docCmd := &cobra.Command{

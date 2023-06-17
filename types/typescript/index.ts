@@ -57,6 +57,29 @@ export type Action =
       /**
        * The type of the action.
        */
+      type: "eval";
+      /**
+       * The title of the action.
+       */
+      title?: string;
+      /**
+       * The expression to eval.
+       */
+      expression: string;
+      onSuccess?: OnSuccess;
+      /**
+       * The inputs to show when the action is run.
+       */
+      inputs?: Input[];
+      /**
+       * The key used as a shortcut.
+       */
+      key?: string;
+    }
+  | {
+      /**
+       * The type of the action.
+       */
       type: "open";
       /**
        * The title of the action.
@@ -92,7 +115,7 @@ export type Action =
        * The key used as a shortcut.
        */
       key?: string;
-      command?: Command;
+      command: Command;
     }
   | {
       /**
@@ -279,6 +302,7 @@ export type Input =
        */
       default?: string;
     };
+export type OnSuccess = "copy" | "paste" | "open" | "reload" | "push";
 export type Request =
   | string
   | {
@@ -301,7 +325,6 @@ export type Request =
        */
       body?: string;
     };
-export type OnSuccess = "copy" | "paste" | "open" | "reload" | "push";
 
 export interface List {
   /**

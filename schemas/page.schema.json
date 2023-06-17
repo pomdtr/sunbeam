@@ -207,6 +207,44 @@
                 {
                     "required": [
                         "type",
+                        "expression"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Eval an expression on val.town",
+                    "properties": {
+                        "type": {
+                            "const": "eval",
+                            "description": "The type of the action."
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
+                        },
+                        "expression": {
+                            "type": "string",
+                            "description": "The expression to eval."
+                        },
+                        "onSuccess": {
+                            "$ref": "#/$defs/onSuccess"
+                        },
+                        "inputs": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/input"
+                            },
+                            "description": "The inputs to show when the action is run."
+                        },
+                        "key": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1,
+                            "description": "The key used as a shortcut."
+                        }
+                    }
+                },
+                {
+                    "required": [
+                        "type",
                         "target"
                     ],
                     "additionalProperties": false,
@@ -238,7 +276,8 @@
                 },
                 {
                     "required": [
-                        "type"
+                        "type",
+                        "command"
                     ],
                     "additionalProperties": false,
                     "properties": {
