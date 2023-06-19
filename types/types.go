@@ -133,12 +133,13 @@ const (
 	EvalAction   = "eval"
 )
 
-type OutputActionType string
+type OnSuccessType string
 
 const (
-	CopyOutput  OutputActionType = "copy"
-	PasteOutput OutputActionType = "paste"
-	OpenOutput  OutputActionType = "open"
+	CopyOnSuccess   OnSuccessType = "copy"
+	PasteOnSuccess  OnSuccessType = "paste"
+	OpenOnSuccess   OnSuccessType = "open"
+	ReloadOnSuccess OnSuccessType = "reload"
 )
 
 type Action struct {
@@ -165,7 +166,7 @@ type Action struct {
 	// run
 	Command *Command `json:"command,omitempty"`
 
-	Output OutputActionType `json:"output,omitempty"`
+	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
 }
 
 type Expression string

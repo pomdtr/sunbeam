@@ -131,7 +131,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	case types.RunAction:
 		return func() tea.Msg {
-			if action.Output == "" || action.Output == "exit" {
+			if action.OnSuccess == "" {
 				return ExitMsg{
 					Cmd: action.Command.Cmd(context.TODO()),
 				}
@@ -142,25 +142,29 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return err
 			}
 
-			switch action.Output {
-			case "copy":
+			switch action.OnSuccess {
+			case types.CopyOnSuccess:
 				if err := clipboard.WriteAll(string(output)); err != nil {
 					return err
 				}
 
 				return ExitMsg{}
-			case "paste":
+			case types.PasteOnSuccess:
 				return ExitMsg{
 					Text: string(output),
 				}
-			case "open":
+			case types.OpenOnSuccess:
 				if err := browser.OpenURL(string(output)); err != nil {
 					return err
 				}
 
 				return ExitMsg{}
+			case types.ReloadOnSuccess:
+				return types.Action{
+					Type: types.ReloadAction,
+				}
 			default:
-				return fmt.Errorf("unknown on_success action: %s", action.Output)
+				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)
 			}
 		}
 	case types.FetchAction, types.EvalAction:
@@ -179,7 +183,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return err
 			}
 
-			switch action.Output {
+			switch action.OnSuccess {
 			case "copy":
 				if err := clipboard.WriteAll(string(output)); err != nil {
 					return err
@@ -200,12 +204,12 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return types.Action{
 					Type: types.ReloadAction,
 				}
-			case "exit", "":
+			case "":
 				return ExitMsg{
 					Text: string(output),
 				}
 			default:
-				return fmt.Errorf("unknown on_success action: %s", action.Output)
+				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)
 			}
 		}
 	default:
@@ -542,31 +546,15 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 			case types.CopyAction:
 				action.Title = "Copy"
 			case types.RunAction:
-				switch action.Output {
-				case types.PasteOutput:
-					action.Title = "Paste"
-				case types.CopyOutput:
-					action.Title = "Copy"
-				case types.OpenOutput:
-					action.Title = "Open"
-				default:
-					action.Title = "Run"
-				}
+				action.Title = "Run"
 			case types.PushAction:
 				action.Title = "Push"
+			case types.EvalAction:
+				action.Title = "Eval"
 			case types.ReloadAction:
 				action.Title = "Reload"
 			case types.FetchAction:
-				switch action.Output {
-				case types.PasteOutput:
-					action.Title = "Paste"
-				case types.CopyOutput:
-					action.Title = "Copy"
-				case types.OpenOutput:
-					action.Title = "Open"
-				default:
-					action.Title = "Fetch"
-				}
+				action.Title = "Fetch"
 			}
 		}
 

@@ -224,8 +224,8 @@
                             "type": "string",
                             "description": "The expression to eval."
                         },
-                        "output": {
-                            "$ref": "#/$defs/output"
+                        "onSuccess": {
+                            "$ref": "#/$defs/onSuccess"
                         },
                         "inputs": {
                             "type": "array",
@@ -334,8 +334,8 @@
                         "request": {
                             "$ref": "#/$defs/request"
                         },
-                        "output": {
-                            "$ref": "#/$defs/output"
+                        "onSuccess": {
+                            "$ref": "#/$defs/onSuccess"
                         }
                     }
                 },
@@ -368,8 +368,8 @@
                         "command": {
                             "$ref": "#/$defs/command"
                         },
-                        "output": {
-                            "$ref": "#/$defs/output"
+                        "onSuccess": {
+                            "$ref": "#/$defs/onSuccess"
                         }
                     }
                 },
@@ -666,12 +666,13 @@
                 }
             ]
         },
-        "output": {
+        "onSuccess": {
             "type": "string",
             "enum": [
                 "copy",
                 "paste",
-                "open"
+                "open",
+                "reload"
             ]
         },
         "preview": {

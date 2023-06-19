@@ -66,7 +66,7 @@ export type Action =
        * The expression to eval.
        */
       expression: string;
-      output?: Output;
+      onSuccess?: OnSuccess;
       /**
        * The inputs to show when the action is run.
        */
@@ -135,7 +135,7 @@ export type Action =
        */
       key?: string;
       request: Request;
-      output?: Output;
+      onSuccess?: OnSuccess;
     }
   | {
       /**
@@ -155,7 +155,7 @@ export type Action =
        */
       key?: string;
       command: Command;
-      output?: Output;
+      onSuccess?: OnSuccess;
     }
   | {
       /**
@@ -306,7 +306,7 @@ export type Input =
        */
       default?: string;
     };
-export type Output = "copy" | "paste" | "open";
+export type OnSuccess = "copy" | "paste" | "open" | "reload";
 export type Request =
   | string
   | {
