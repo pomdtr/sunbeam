@@ -249,9 +249,8 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 						Text: "No extensions installed",
 						Actions: []types.Action{
 							{
-								Type:      types.RunAction,
-								Title:     "Browse Extensions",
-								OnSuccess: types.PushOnSuccess,
+								Type:  types.PushAction,
+								Title: "Browse Extensions",
 								Command: &types.Command{
 									Name: os.Args[0],
 									Args: []string{"extension", "browse"},

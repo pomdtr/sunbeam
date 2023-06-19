@@ -63,7 +63,7 @@ Notice that we used the `--` argument separator to pass arguments to the script.
 ### Adding Navigation
 
 This is nice, but we can do better. A full-blown file browser would allow us to navigate through directories.
-In sunbeam, we can push a new page by using a `run` action associated with the`onSuccess` event.
+In sunbeam, we can push a new page by using a `push` action.
 
 Sunbeam will run the command, and push the output to the navigation stack.
 You can repeat this process to create a navigation tree.

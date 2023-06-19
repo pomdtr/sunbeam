@@ -224,8 +224,8 @@
                             "type": "string",
                             "description": "The expression to eval."
                         },
-                        "onSuccess": {
-                            "$ref": "#/$defs/onSuccess"
+                        "output": {
+                            "$ref": "#/$defs/output"
                         },
                         "inputs": {
                             "type": "array",
@@ -334,8 +334,8 @@
                         "request": {
                             "$ref": "#/$defs/request"
                         },
-                        "onSuccess": {
-                            "$ref": "#/$defs/onSuccess"
+                        "output": {
+                            "$ref": "#/$defs/output"
                         }
                     }
                 },
@@ -368,15 +368,14 @@
                         "command": {
                             "$ref": "#/$defs/command"
                         },
-                        "onSuccess": {
-                            "$ref": "#/$defs/onSuccess"
+                        "output": {
+                            "$ref": "#/$defs/output"
                         }
                     }
                 },
                 {
                     "required": [
-                        "type",
-                        "page"
+                        "type"
                     ],
                     "additionalProperties": false,
                     "properties": {
@@ -398,6 +397,18 @@
                                 "$ref": "#/$defs/input"
                             },
                             "description": "The inputs to show when the action is run."
+                        },
+                        "command": {
+                            "$ref": "#/$defs/command"
+                        },
+                        "request": {
+                            "$ref": "#/$defs/request"
+                        },
+                        "target": {
+                            "type": "string"
+                        },
+                        "expression": {
+                            "type": "string"
                         },
                         "page": {
                             "type": "string"
@@ -655,14 +666,12 @@
                 }
             ]
         },
-        "onSuccess": {
+        "output": {
             "type": "string",
             "enum": [
                 "copy",
                 "paste",
-                "open",
-                "reload",
-                "push"
+                "open"
             ]
         },
         "preview": {

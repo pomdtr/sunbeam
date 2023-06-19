@@ -119,22 +119,21 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	case types.PushAction:
 		return func() tea.Msg {
+			generator, err := GeneratorFromAction(action)
+			if err != nil {
+				return err
+			}
+
 			return PushPageMsg{
-				Page: NewRunner(NewFileGenerator(action.Page)),
+				Page: NewRunner(generator),
 			}
 		}
 
 	case types.RunAction:
 		return func() tea.Msg {
-			if action.OnSuccess == "" || action.OnSuccess == "exit" {
+			if action.Output == "" || action.Output == "exit" {
 				return ExitMsg{
 					Cmd: action.Command.Cmd(context.TODO()),
-				}
-			}
-
-			if action.OnSuccess == "push" {
-				return PushPageMsg{
-					Page: NewRunner(NewCommandGenerator(action.Command)),
 				}
 			}
 
@@ -143,7 +142,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return err
 			}
 
-			switch action.OnSuccess {
+			switch action.Output {
 			case "copy":
 				if err := clipboard.WriteAll(string(output)); err != nil {
 					return err
@@ -160,12 +159,8 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				}
 
 				return ExitMsg{}
-			case "reload":
-				return types.Action{
-					Type: types.ReloadAction,
-				}
 			default:
-				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)
+				return fmt.Errorf("unknown on_success action: %s", action.Output)
 			}
 		}
 	case types.FetchAction, types.EvalAction:
@@ -179,18 +174,12 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return fmt.Errorf("request or expression is required")
 			}
 
-			if action.OnSuccess == "push" {
-				return PushPageMsg{
-					Page: NewRunner(NewRequestGenerator(request)),
-				}
-			}
-
 			output, err := request.Do(context.Background())
 			if err != nil {
 				return err
 			}
 
-			switch action.OnSuccess {
+			switch action.Output {
 			case "copy":
 				if err := clipboard.WriteAll(string(output)); err != nil {
 					return err
@@ -216,7 +205,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 					Text: string(output),
 				}
 			default:
-				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)
+				return fmt.Errorf("unknown on_success action: %s", action.Output)
 			}
 		}
 	default:
@@ -553,16 +542,12 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 			case types.CopyAction:
 				action.Title = "Copy"
 			case types.RunAction:
-				switch action.OnSuccess {
-				case types.ReloadOnSuccess:
-					action.Title = "Reload"
-				case types.PushOnSuccess:
-					action.Title = "Push"
-				case types.PasteOnSuccess:
+				switch action.Output {
+				case types.PasteOutput:
 					action.Title = "Paste"
-				case types.CopyOnSuccess:
+				case types.CopyOutput:
 					action.Title = "Copy"
-				case types.OpenOnSuccess:
+				case types.OpenOutput:
 					action.Title = "Open"
 				default:
 					action.Title = "Run"
@@ -572,16 +557,12 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 			case types.ReloadAction:
 				action.Title = "Reload"
 			case types.FetchAction:
-				switch action.OnSuccess {
-				case types.ReloadOnSuccess:
-					action.Title = "Reload"
-				case types.PushOnSuccess:
-					action.Title = "Push"
-				case types.PasteOnSuccess:
+				switch action.Output {
+				case types.PasteOutput:
 					action.Title = "Paste"
-				case types.CopyOnSuccess:
+				case types.CopyOutput:
 					action.Title = "Copy"
-				case types.OpenOnSuccess:
+				case types.OpenOutput:
 					action.Title = "Open"
 				default:
 					action.Title = "Fetch"

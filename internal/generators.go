@@ -149,3 +149,18 @@ func NewRequestGenerator(request *types.Request) PageGenerator {
 		return p, nil
 	}
 }
+
+func GeneratorFromAction(action types.Action) (PageGenerator, error) {
+	switch {
+	case action.Page != "":
+		return NewFileGenerator(action.Page), nil
+	case action.Command != nil:
+		return NewCommandGenerator(action.Command), nil
+	case action.Request != nil:
+		return NewRequestGenerator(action.Request), nil
+	case action.Expression != nil:
+		return NewRequestGenerator(action.Expression.Request()), nil
+	default:
+		return nil, fmt.Errorf("invalid action")
+	}
+}

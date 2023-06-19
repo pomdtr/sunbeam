@@ -34,10 +34,9 @@ json.dump(
                         }
                         if path.is_file()
                         else {
-                            "type": "run",
+                            "type": "push",
                             "title": "Browse Directory",
                             "command": [sys.argv[0], str(path.absolute())],
-                            "onSuccess": "push"
                         }
                     ),
                     {

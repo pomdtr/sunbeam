@@ -67,15 +67,13 @@
   - `input`: string
   - `dir`: string
 
-## OnSuccess
+## Output
 
 **POSSIBLE VALUES**
 
 - `'copy'`
 - `'paste'`
 - `'open'`
-- `'reload'`
-- `'push'`
 
 ## Request
 

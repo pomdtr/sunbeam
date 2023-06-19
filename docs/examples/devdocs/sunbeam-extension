@@ -26,9 +26,8 @@ curl -s https://devdocs.io/docs/docs.json | sunbeam query --arg command="$0" '.[
     accessories: [ .slug ],
     actions: [
       {
-          type: "run",
+          type: "push",
           title: "Browse entries",
-          onSuccess: "push",
           command: [$command, .slug]
       }
     ]

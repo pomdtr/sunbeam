@@ -16,11 +16,10 @@ if [[ $COMMAND == "list-repos" ]]; then
             actions: [
                 {type: "open", target: .html_url},
                 {
-                    type: "run",
+                    type: "push",
                     title: "List Pull Requests",
                     key: "p",
                     command: [$command, "list-prs", .full_name],
-                    onSuccess: "push"
                 }
             ]
         }

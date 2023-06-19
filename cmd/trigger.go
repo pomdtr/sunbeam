@@ -85,28 +85,21 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 			case types.PushAction:
 				var page internal.Page
 
-				page = internal.NewRunner(internal.NewFileGenerator(action.Page))
+				generator, err := internal.GeneratorFromAction(action)
+				if err != nil {
+					return fmt.Errorf("could not create generator: %s", err)
+				}
+
+				page = internal.NewRunner(generator)
 
 				return internal.PushPageMsg{
 					Page: page,
 				}
 			case types.RunAction:
-				if action.OnSuccess == "push" {
-					return internal.PushPageMsg{
-						Page: internal.NewRunner(internal.NewCommandGenerator(action.Command)),
-					}
-				}
-
 				return internal.ExitMsg{
 					Cmd: action.Command.Cmd(context.TODO()),
 				}
 			case types.FetchAction:
-				if action.OnSuccess == "push" {
-					return internal.PushPageMsg{
-						Page: internal.NewRunner(internal.NewRequestGenerator(action.Request)),
-					}
-				}
-
 				output, err := action.Request.Do(context.Background())
 				if err != nil {
 					return fmt.Errorf("request failed: %s", err)
@@ -136,10 +129,6 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 	case types.PushAction:
 		return Run(internal.NewFileGenerator(action.Page))
 	case types.RunAction:
-		if action.OnSuccess == "push" {
-			return Run(internal.NewCommandGenerator(action.Command))
-		}
-
 		output, err := action.Command.Output(context.TODO())
 		if err != nil {
 			return fmt.Errorf("command failed: %s", err)
@@ -148,10 +137,6 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 		fmt.Print(string(output))
 		return nil
 	case types.FetchAction:
-		if action.OnSuccess == "push" {
-			return Run(internal.NewRequestGenerator(action.Request))
-		}
-
 		output, err := action.Request.Do(context.Background())
 		if err != nil {
 			return fmt.Errorf("request failed: %s", err)
