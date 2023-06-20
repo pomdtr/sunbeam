@@ -75,52 +75,54 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 			}
 		}
 
-		return internal.Draw(internal.NewForm(action.Title, func(values map[string]string) tea.Msg {
-			action := action
-			for name, value := range values {
-				action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
-			}
-
-			switch action.Type {
-			case types.PushAction:
-				var page internal.Page
-
-				generator, err := internal.GeneratorFromAction(action)
-				if err != nil {
-					return fmt.Errorf("could not create generator: %s", err)
+		return internal.Draw(internal.NewForm(action.Title, func(values map[string]string) tea.Cmd {
+			return func() tea.Msg {
+				action := action
+				for name, value := range values {
+					action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
 				}
 
-				page = internal.NewRunner(generator)
+				switch action.Type {
+				case types.PushAction:
+					var page internal.Page
 
-				return internal.PushPageMsg{
-					Page: page,
-				}
-			case types.RunAction:
-				return internal.ExitMsg{
-					Cmd: action.Command.Cmd(context.TODO()),
-				}
-			case types.FetchAction:
-				output, err := action.Request.Do(context.Background())
-				if err != nil {
-					return fmt.Errorf("request failed: %s", err)
-				}
+					generator, err := internal.GeneratorFromAction(action)
+					if err != nil {
+						return fmt.Errorf("could not create generator: %s", err)
+					}
 
-				return internal.ExitMsg{
-					Text: string(output),
+					page = internal.NewRunner(generator)
+
+					return internal.PushPageMsg{
+						Page: page,
+					}
+				case types.RunAction:
+					return internal.ExitMsg{
+						Cmd: action.Command.Cmd(context.TODO()),
+					}
+				case types.FetchAction:
+					output, err := action.Request.Do(context.Background())
+					if err != nil {
+						return fmt.Errorf("request failed: %s", err)
+					}
+
+					return internal.ExitMsg{
+						Text: string(output),
+					}
+				case types.OpenAction:
+					err := browser.OpenURL(action.Target)
+					if err != nil {
+						return fmt.Errorf("unable to open link: %s", err)
+					}
+					return tea.Quit()
+				case types.CopyAction:
+					if err := clipboard.WriteAll(action.Text); err != nil {
+						return fmt.Errorf("unable to write to clipboard: %s", err)
+					}
+					return tea.Quit()
+				default:
+					return fmt.Errorf("unknown action type: %s", action.Type)
 				}
-			case types.OpenAction:
-				err := browser.OpenURL(action.Target)
-				if err != nil {
-					return fmt.Errorf("unable to open link: %s", err)
-				}
-				return tea.Quit()
-			case types.CopyAction:
-				if err := clipboard.WriteAll(action.Text); err != nil {
-					return fmt.Errorf("unable to write to clipboard: %s", err)
-				}
-				return tea.Quit()
-			default:
-				return fmt.Errorf("unknown action type: %s", action.Type)
 			}
 		}, missing...), options)
 	}

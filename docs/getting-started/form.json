@@ -1,0 +1,15 @@
+{
+    "type": "form",
+    "title": "Hello World",
+    "submitAction": {
+        "type": "run",
+        "command": "echo 'hello ${input:name}'",
+        "inputs": [
+            {
+                "name": "name",
+                "title": "Name",
+                "type": "textfield"
+            }
+        ]
+    }
+}

@@ -12,7 +12,7 @@ import (
 
 type Form struct {
 	items     []*FormItem
-	submitCmd func(values map[string]string) tea.Msg
+	submitCmd func(values map[string]string) tea.Cmd
 
 	width    int
 	header   Header
@@ -23,7 +23,7 @@ type Form struct {
 	focusIndex   int
 }
 
-func NewForm(title string, submitCmd func(values map[string]string) tea.Msg, inputs ...types.Input) *Form {
+func NewForm(title string, submitCmd func(values map[string]string) tea.Cmd, inputs ...types.Input) *Form {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
@@ -155,9 +155,8 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 				values[input.Name] = input.Value()
 			}
 
-			return &c, func() tea.Msg {
-				return c.submitCmd(values)
-			}
+			return &c, c.submitCmd(values)
+
 		}
 	}
 

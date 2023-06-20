@@ -22,12 +22,16 @@ type PageType string
 const (
 	DetailPage PageType = "detail"
 	ListPage   PageType = "list"
+	FormPage   PageType = "form"
 )
 
 type Page struct {
 	Type    PageType `json:"type"`
 	Title   string   `json:"title,omitempty"`
 	Actions []Action `json:"actions,omitempty"`
+
+	// form
+	SubmitAction *Action `json:"submitAction,omitempty"`
 
 	// Detail page
 	Preview *TextOrCommandOrRequest `json:"preview,omitempty"`

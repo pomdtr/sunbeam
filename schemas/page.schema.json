@@ -7,9 +7,33 @@
         },
         {
             "$ref": "#/$defs/detail"
+        },
+        {
+            "$ref": "#/$defs/form"
         }
     ],
     "$defs": {
+        "form": {
+            "type": "object",
+            "required": [
+                "type",
+                "submitAction"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "description": "The type of the response.",
+                    "const": "form"
+                },
+                "title": {
+                    "description": "The title of the page.",
+                    "type": "string"
+                },
+                "submitAction": {
+                    "$ref": "#/$defs/action"
+                }
+            }
+        },
         "list": {
             "type": "object",
             "required": [

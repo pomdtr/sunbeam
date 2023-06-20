@@ -1,4 +1,4 @@
-export type Page = List | Detail;
+export type Page = List | Detail | Form;
 export type Command =
   | string
   | [string, ...string[]]
@@ -402,6 +402,17 @@ export interface Detail {
    * The actions attached to the detail view.
    */
   actions?: Action[];
+}
+export interface Form {
+  /**
+   * The type of the response.
+   */
+  type: "form";
+  /**
+   * The title of the page.
+   */
+  title?: string;
+  submitAction: Action;
 }
 
 

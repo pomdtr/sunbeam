@@ -54,6 +54,7 @@
 
 - [List](#list)
 - [Detail](#detail)
+- [Form](#form)
 
 ## Command
 
@@ -107,3 +108,11 @@
 - `request`: [Request](#request)
 - `text`: string
 - `__index`: any
+
+## Form
+
+**PROPERTIES**
+
+- `type`: `'form'` - The type of the response.
+- `title`: string - The title of the page.
+- `submitAction`: [Action](#action)

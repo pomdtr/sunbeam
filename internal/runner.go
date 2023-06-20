@@ -257,17 +257,22 @@ func (c *CommandRunner) SetSize(width, height int) {
 	}
 }
 
+func (runner CommandRunner) IsLoading() bool {
+	return runner.currentPage == nil
+}
+
 func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if runner.form != nil {
+			// if form is shown over a page, close it
+			if runner.form != nil && runner.currentPage.Type != types.FormPage {
 				runner.form = nil
 				return runner, nil
 			}
 
-			if runner.currentPage == nil {
+			if runner.IsLoading() {
 				return runner, func() tea.Msg {
 					runner.cancel()
 					return PopPageMsg{}
@@ -284,6 +289,20 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		runner.currentPage = page
 
 		switch page.Type {
+		case types.FormPage:
+			form := NewForm(page.Title, func(values map[string]string) tea.Cmd {
+				action := *page.SubmitAction
+				for key, value := range values {
+					action = RenderAction(action, fmt.Sprintf("${input:%s}", key), value)
+				}
+
+				return runner.handleAction(action)
+			}, page.SubmitAction.Inputs...)
+
+			runner.form = form
+			runner.form.SetSize(runner.width, runner.height)
+
+			return runner, runner.form.Init()
 		case types.DetailPage:
 			detailFunc := func() string {
 				if page.Preview == nil {
@@ -304,7 +323,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return runner, runner.detail.Init()
 		case types.ListPage:
-
 			// Save query string
 			var query string
 			var selectedId string
@@ -344,14 +362,16 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.Action:
 		if len(msg.Inputs) > 0 {
 
-			form := NewForm(msg.Title, func(values map[string]string) tea.Msg {
-				submitAction := msg
-				for key, value := range values {
-					submitAction = RenderAction(submitAction, fmt.Sprintf("${input:%s}", key), value)
-				}
-				submitAction.Inputs = nil
+			form := NewForm(msg.Title, func(values map[string]string) tea.Cmd {
+				return func() tea.Msg {
+					submitAction := msg
+					for key, value := range values {
+						submitAction = RenderAction(submitAction, fmt.Sprintf("${input:%s}", key), value)
+					}
+					submitAction.Inputs = nil
 
-				return submitAction
+					return submitAction
+				}
 			}, msg.Inputs...)
 
 			runner.form = form
