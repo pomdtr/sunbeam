@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -84,7 +83,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, func() tea.Msg {
 				return PopPageMsg{}
 			}
-		case "enter":
+		case "enter", "alt+enter":
 			if c.actionList.Focused() {
 				break
 			}
@@ -94,25 +93,13 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				if len(actions) == 0 {
 					return nil
 				}
+				action := actions[0]
 
-				return actions[0]
-			}
-		case "ctlr+y":
-			if c.actionList.Focused() {
-				break
-			}
-
-			return c, func() tea.Msg {
-				return clipboard.WriteAll(c.content)
-			}
-
-		case "alt+enter":
-			return c, func() tea.Msg {
-				if len(c.actionList.actions) < 2 {
-					return nil
+				if msg.String() != "alt+enter" {
+					action.Exit = true
 				}
 
-				return c.actionList.actions[1]
+				return actions[0]
 			}
 		}
 

@@ -156,7 +156,6 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return &c, c.submitCmd(values)
-
 		}
 	}
 

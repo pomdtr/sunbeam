@@ -52,8 +52,6 @@ func (al *ActionList) SetActions(actions ...types.Action) {
 		var subtitle string
 		if i == 0 {
 			subtitle = "enter"
-		} else if i == 1 {
-			subtitle = "alt+enter"
 		} else if action.Key != "" {
 			subtitle = fmt.Sprintf("alt+%s", action.Key)
 		}
@@ -87,7 +85,7 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 			}
 
 			return al, nil
-		case "enter":
+		case "enter", "alt+enter":
 			selectedItem := al.filter.Selection()
 			if selectedItem == nil {
 				return al, nil
@@ -100,7 +98,12 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 					return nil
 				}
 
-				return listItem.Actions[0]
+				action := listItem.Actions[0]
+				if msg.String() != "alt+enter" {
+					action.Exit = true
+				}
+
+				return action
 			}
 		default:
 			for _, action := range al.actions {

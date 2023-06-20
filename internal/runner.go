@@ -99,7 +99,11 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				}
 			}
 
-			return ExitMsg{}
+			if action.Exit {
+				return ExitMsg{}
+			}
+
+			return nil
 		}
 	case types.CopyAction:
 		return func() tea.Msg {
@@ -108,7 +112,11 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				return err
 			}
 
-			return ExitMsg{}
+			if action.Exit {
+				return ExitMsg{}
+			}
+
+			return nil
 		}
 	case types.PasteAction:
 		return func() tea.Msg {
@@ -116,7 +124,6 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				Text: action.Text,
 			}
 		}
-
 	case types.PushAction:
 		return func() tea.Msg {
 			generator, err := GeneratorFromAction(action)

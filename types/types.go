@@ -171,6 +171,8 @@ type Action struct {
 	Command *Command `json:"command,omitempty"`
 
 	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
+
+	Exit bool `json:"-"`
 }
 
 type Expression string
