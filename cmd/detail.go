@@ -37,7 +37,9 @@ func NewDetailCmd() *cobra.Command {
 				} else {
 					parts = strings.SplitN(text, "\n", 2)
 				}
-				title = string(parts[0])
+				if len(parts) > 0 {
+					title = string(parts[0])
+				}
 			}
 			if cmd.Flags().Changed("title") {
 				title, _ = cmd.Flags().GetString("title")

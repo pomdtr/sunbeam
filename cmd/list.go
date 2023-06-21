@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -32,15 +31,17 @@ func NewListCmd() *cobra.Command {
 
 			b = bytes.TrimSpace(b)
 
-			var rows [][]byte
-			if runtime.GOOS == "windows" {
-				rows = bytes.Split(b, []byte("\r\n"))
-			} else {
-				rows = bytes.Split(b, []byte("\n"))
+			var rows, lines [][]byte
+			lines = bytes.Split(b, []byte("\n"))
+			rows = make([][]byte, len(lines))
+			for index, line := range lines {
+				rows[index] = bytes.TrimRightFunc(line, func(r rune) bool {
+					return r == '\r' || r == '\n'
+				})
 			}
 
 			if len(rows) == 0 {
-				return fmt.Errorf("now rows in input")
+				return fmt.Errorf("no rows in input")
 			}
 
 			title := "Sunbeam"
