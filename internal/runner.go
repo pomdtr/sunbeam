@@ -136,15 +136,9 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			}
 		}
 
-	case types.RunAction:
+	case types.RunAction, types.FetchAction, types.EvalAction:
 		return func() tea.Msg {
-			if action.OnSuccess == "" {
-				return ExitMsg{
-					Cmd: action.Command.Cmd(context.TODO()),
-				}
-			}
-
-			output, err := action.Command.Output(context.Background())
+			output, err := action.Output(runner.ctx)
 			if err != nil {
 				return err
 			}
@@ -155,7 +149,11 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 					return err
 				}
 
-				return ExitMsg{}
+				if action.Exit {
+					return ExitMsg{}
+				}
+
+				return nil
 			case types.PasteOnSuccess:
 				return ExitMsg{
 					Text: string(output),
@@ -165,55 +163,14 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 					return err
 				}
 
-				return ExitMsg{}
+				if action.Exit {
+					return ExitMsg{}
+				}
+
+				return nil
 			case types.ReloadOnSuccess:
 				return types.Action{
 					Type: types.ReloadAction,
-				}
-			default:
-				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)
-			}
-		}
-	case types.FetchAction, types.EvalAction:
-		return func() tea.Msg {
-			var request *types.Request
-			if action.Request != nil {
-				request = action.Request
-			} else if action.Expression != nil {
-				request = action.Expression.Request()
-			} else {
-				return fmt.Errorf("request or expression is required")
-			}
-
-			output, err := request.Do(context.Background())
-			if err != nil {
-				return err
-			}
-
-			switch action.OnSuccess {
-			case "copy":
-				if err := clipboard.WriteAll(string(output)); err != nil {
-					return err
-				}
-
-				return ExitMsg{}
-			case "paste":
-				return ExitMsg{
-					Text: string(output),
-				}
-			case "open":
-				if err := browser.OpenURL(string(output)); err != nil {
-					return err
-				}
-
-				return ExitMsg{}
-			case "reload":
-				return types.Action{
-					Type: types.ReloadAction,
-				}
-			case "":
-				return ExitMsg{
-					Text: string(output),
 				}
 			default:
 				return fmt.Errorf("unknown on_success action: %s", action.OnSuccess)

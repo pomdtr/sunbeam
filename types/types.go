@@ -175,6 +175,18 @@ type Action struct {
 	Exit bool `json:"-"`
 }
 
+func (a Action) Output(ctx context.Context) ([]byte, error) {
+	if a.Command != nil {
+		return a.Command.Output(ctx)
+	} else if a.Request != nil {
+		return a.Request.Do(ctx)
+	} else if a.Expression != nil {
+		return a.Expression.Request().Do(ctx)
+	} else {
+		return nil, errors.New("invalid action")
+	}
+}
+
 type Expression string
 
 func (e Expression) Request() *Request {
