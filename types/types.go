@@ -34,13 +34,13 @@ type Page struct {
 	SubmitAction *Action `json:"submitAction,omitempty"`
 
 	// Detail page
-	Preview *TextOrCommandOrRequest `json:"preview,omitempty"`
+	Preview *PreviewProvider `json:"preview,omitempty"`
 
 	// List page
-	ShowPreview   bool       `json:"showPreview,omitempty"`
-	OnQueryChange *Command   `json:"onQueryChange,omitempty"`
-	EmptyView     *EmptyView `json:"emptyView,omitempty"`
-	Items         []ListItem `json:"items,omitempty"`
+	ShowPreview   bool          `json:"showPreview,omitempty"`
+	OnQueryChange *PageProvider `json:"onQueryChange,omitempty"`
+	EmptyView     *EmptyView    `json:"emptyView,omitempty"`
+	Items         []ListItem    `json:"items,omitempty"`
 }
 
 type EmptyView struct {
@@ -49,12 +49,12 @@ type EmptyView struct {
 }
 
 type ListItem struct {
-	Id          string                  `json:"id,omitempty"`
-	Title       string                  `json:"title"`
-	Subtitle    string                  `json:"subtitle,omitempty"`
-	Preview     *TextOrCommandOrRequest `json:"preview,omitempty"`
-	Accessories []string                `json:"accessories,omitempty"`
-	Actions     []Action                `json:"actions,omitempty"`
+	Id          string           `json:"id,omitempty"`
+	Title       string           `json:"title"`
+	Subtitle    string           `json:"subtitle,omitempty"`
+	Preview     *PreviewProvider `json:"preview,omitempty"`
+	Accessories []string         `json:"accessories,omitempty"`
+	Actions     []Action         `json:"actions,omitempty"`
 }
 
 type FormInputType string
@@ -187,6 +187,26 @@ func (a Action) Output(ctx context.Context) ([]byte, error) {
 	}
 }
 
+func (o PreviewProvider) Output(ctx context.Context) ([]byte, error) {
+	if o.Text != "" {
+		return []byte(o.Text), nil
+	} else if o.File != "" {
+		b, err := os.ReadFile(o.File)
+		if err != nil {
+			return nil, err
+		}
+		return b, nil
+	} else if o.Command != nil {
+		return o.Command.Output(ctx)
+	} else if o.Request != nil {
+		return o.Request.Do(ctx)
+	} else if o.Expression != nil {
+		return o.Expression.Request().Do(ctx)
+	} else {
+		return nil, errors.New("invalid action")
+	}
+}
+
 type Expression string
 
 func (e Expression) Request() *Request {
@@ -263,11 +283,15 @@ func (b *Body) UnmarshalJSON(data []byte) error {
 	return errors.New("body must be a string or a map")
 }
 
-type TextOrCommandOrRequest struct {
-	Text    string   `json:"text,omitempty"`
-	Command *Command `json:"command,omitempty"`
-	Request *Request `json:"request,omitempty"`
+type PreviewProvider struct {
+	Text       string      `json:"text,omitempty"`
+	File       string      `json:"file,omitempty"`
+	Command    *Command    `json:"command,omitempty"`
+	Request    *Request    `json:"request,omitempty"`
+	Expression *Expression `json:"expression,omitempty"`
 }
+
+type PageProvider PreviewProvider
 
 type Command struct {
 	Name  string   `json:"name"`

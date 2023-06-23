@@ -319,8 +319,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, nil
 		}
 
-		queryCmd := RenderCommand(runner.currentPage.OnQueryChange, "${query}", msg.Query)
-		runner.Generator = NewCommandGenerator(queryCmd)
+		queryCmd := RenderPageProvider(runner.currentPage.OnQueryChange, "${query}", msg.Query)
+		runner.Generator = NewPageProviderGenerator(queryCmd)
 
 		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.Action:
@@ -428,6 +428,42 @@ func (c *CommandRunner) View() string {
 	}
 }
 
+func RenderPreviewProvider(previewProvider *types.PreviewProvider, old, new string) *types.PreviewProvider {
+	if previewProvider.Text != "" {
+		previewProvider.Text = strings.ReplaceAll(previewProvider.Text, old, new)
+	} else if previewProvider.File != "" {
+		previewProvider.File = strings.ReplaceAll(previewProvider.File, old, new)
+	} else if previewProvider.Command != nil {
+		previewProvider.Command = RenderCommand(previewProvider.Command, old, new)
+	} else if previewProvider.Request != nil {
+		previewProvider.Request = RenderRequest(previewProvider.Request, old, new)
+	} else if previewProvider.Expression != nil {
+		previewProvider.Expression = RenderExpression(previewProvider.Expression, old, new)
+	}
+	return previewProvider
+}
+
+func RenderPageProvider(pageProvider *types.PageProvider, old, new string) *types.PageProvider {
+	if pageProvider.Text != "" {
+		pageProvider.Text = strings.ReplaceAll(pageProvider.Text, old, new)
+	} else if pageProvider.File != "" {
+		pageProvider.File = strings.ReplaceAll(pageProvider.File, old, new)
+	} else if pageProvider.Command != nil {
+		pageProvider.Command = RenderCommand(pageProvider.Command, old, new)
+	} else if pageProvider.Request != nil {
+		pageProvider.Request = RenderRequest(pageProvider.Request, old, new)
+	} else if pageProvider.Expression != nil {
+		pageProvider.Expression = RenderExpression(pageProvider.Expression, old, new)
+	}
+	return pageProvider
+}
+
+func RenderExpression(expression *types.Expression, old, new string) *types.Expression {
+	s := string(*expression)
+	rendered := types.Expression(strings.ReplaceAll(s, old, new))
+	return &rendered
+}
+
 func RenderCommand(command *types.Command, old, new string) *types.Command {
 	rendered := types.Command{}
 	rendered.Name = strings.ReplaceAll(command.Name, old, new)
@@ -456,6 +492,14 @@ func RenderRequest(request *types.Request, old, new string) *types.Request {
 func RenderAction(action types.Action, old, new string) types.Action {
 	if action.Command != nil {
 		action.Command = RenderCommand(action.Command, old, new)
+	}
+
+	if action.Request != nil {
+		action.Request = RenderRequest(action.Request, old, new)
+	}
+
+	if action.Expression != nil {
+		action.Expression = RenderExpression(action.Expression, old, new)
 	}
 
 	action.Target = strings.ReplaceAll(action.Target, old, url.QueryEscape(new))
