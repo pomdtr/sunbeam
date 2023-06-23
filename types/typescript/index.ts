@@ -8,6 +8,28 @@ export type Command =
       input?: string;
       dir?: string;
     };
+export type Request =
+  | string
+  | {
+      /**
+       * The URL to request.
+       */
+      url: string;
+      /**
+       * The HTTP method to use.
+       */
+      method?: string;
+      /**
+       * The headers to send.
+       */
+      headers?: {
+        [k: string]: string;
+      };
+      /**
+       * The body to send.
+       */
+      body?: string;
+    };
 export type Action =
   | {
       /**
@@ -307,28 +329,6 @@ export type Input =
       default?: string;
     };
 export type OnSuccess = "copy" | "paste" | "open" | "reload";
-export type Request =
-  | string
-  | {
-      /**
-       * The URL to request.
-       */
-      url: string;
-      /**
-       * The HTTP method to use.
-       */
-      method?: string;
-      /**
-       * The headers to send.
-       */
-      headers?: {
-        [k: string]: string;
-      };
-      /**
-       * The body to send.
-       */
-      body?: string;
-    };
 
 export interface List {
   /**
@@ -339,7 +339,7 @@ export interface List {
    * The title of the page.
    */
   title?: string;
-  onQueryChange?: Command;
+  onQueryChange?: PageProvider;
   emptyView?: {
     /**
      * The text to show when the list is empty.
@@ -355,6 +355,14 @@ export interface List {
    */
   showPreview?: boolean;
   items?: Listitem[] | null;
+}
+export interface PageProvider {
+  command?: Command;
+  request?: Request;
+  text?: string;
+  file?: string;
+  expression?: string;
+  [k: string]: unknown;
 }
 export interface Listitem {
   /**
@@ -383,10 +391,12 @@ export interface Preview {
   command?: Command;
   request?: Request;
   text?: string;
+  file?: string;
+  expression?: string;
   [k: string]: unknown;
 }
 /**
- * A detail view displayign a preview and actions.
+ * A detail view displaying a preview and actions.
  */
 export interface Detail {
   /**
