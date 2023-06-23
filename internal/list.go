@@ -138,11 +138,7 @@ func NewList(page *types.Page) *List {
 			return ""
 		}
 
-		if item.Preview.Text != "" {
-			return item.Preview.Text
-		}
-
-		output, err := item.Preview.Command.Output(context.TODO())
+		output, err := item.Preview.Output(context.TODO())
 		if err != nil {
 			return err.Error()
 		}

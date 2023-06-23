@@ -76,6 +76,23 @@ func NewStaticGenerator(reader io.Reader) PageGenerator {
 	}
 }
 
+func NewPageProviderGenerator(pageProvider *types.PageProvider) PageGenerator {
+	// TODO: Add Text/Static ?
+	if pageProvider.File != "" {
+		return NewFileGenerator(pageProvider.File)
+	} else if pageProvider.Command != nil {
+		return NewCommandGenerator(pageProvider.Command)
+	} else if pageProvider.Request != nil {
+		return NewRequestGenerator(pageProvider.Request)
+	} else if pageProvider.Expression != nil {
+		return NewRequestGenerator(pageProvider.Expression.Request())
+	} else {
+		return func() (*types.Page, error) {
+			return nil, fmt.Errorf("missing pageProvider")
+		}
+	}
+}
+
 func NewCommandGenerator(command *types.Command) PageGenerator {
 	return func() (*types.Page, error) {
 		output, err := command.Output(context.TODO())
