@@ -56,11 +56,16 @@ func (c *CommandRunner) Focus() tea.Cmd {
 	if c.currentPage == nil {
 		return nil
 	}
+
 	switch c.currentPage.Type {
 	case types.ListPage:
+		c.form = nil
 		return c.list.Focus()
 	case types.DetailPage:
+		c.form = nil
 		return c.detail.Focus()
+	case types.FormPage:
+		return c.form.Focus()
 	}
 
 	return nil
@@ -86,6 +91,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	switch action.Type {
 	case types.ReloadAction:
+		runner.form = nil
 		if action.Command != nil {
 			runner.Generator = NewCommandGenerator(action.Command)
 		}
@@ -138,9 +144,21 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 	case types.RunAction, types.FetchAction, types.EvalAction:
 		return func() tea.Msg {
+			if action.Command != nil && action.OnSuccess == "" {
+				return ExitMsg{
+					Cmd: action.Command.Cmd(context.TODO()),
+				}
+			}
+
 			output, err := action.Output(runner.ctx)
 			if err != nil {
 				return err
+			}
+
+			if action.OnSuccess == "" {
+				return ExitMsg{
+					Text: string(output),
+				}
 			}
 
 			switch action.OnSuccess {
@@ -325,17 +343,13 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.Action:
 		if len(msg.Inputs) > 0 {
-
 			form := NewForm(msg.Title, func(values map[string]string) tea.Cmd {
-				return func() tea.Msg {
-					submitAction := msg
-					for key, value := range values {
-						submitAction = RenderAction(submitAction, fmt.Sprintf("${input:%s}", key), value)
-					}
-					submitAction.Inputs = nil
-
-					return submitAction
+				submitAction := msg
+				for key, value := range values {
+					submitAction = RenderAction(submitAction, fmt.Sprintf("${input:%s}", key), value)
 				}
+
+				return runner.handleAction(submitAction)
 			}, msg.Inputs...)
 
 			runner.form = form
@@ -343,7 +357,6 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, form.Init()
 		}
 
-		runner.form = nil
 		cmd := runner.handleAction(msg)
 		return runner, cmd
 	case error:

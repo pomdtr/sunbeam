@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -67,6 +68,7 @@ func (ta *TextArea) Title() string {
 
 func NewTextArea(formItem types.Input) *TextArea {
 	ta := textarea.New()
+	ta.Cursor.SetMode(cursor.CursorStatic)
 	ta.Prompt = ""
 	if formItem.Default != nil {
 		ta.SetValue(formItem.Default.(string))
@@ -107,6 +109,7 @@ type TextInput struct {
 
 func NewTextInput(formItem types.Input) *TextInput {
 	ti := textinput.New()
+	ti.Cursor.SetMode(cursor.CursorStatic)
 	ti.Prompt = ""
 	if formItem.Default != nil {
 		ti.SetValue(formItem.Default.(string))
@@ -294,6 +297,7 @@ func NewDropDown(formItem types.Input) *DropDown {
 	}
 
 	ti := textinput.New()
+	ti.Cursor.SetMode(cursor.CursorStatic)
 	ti.SetValue(defaultValue)
 	ti.Prompt = ""
 
