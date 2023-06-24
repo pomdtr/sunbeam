@@ -16,6 +16,7 @@ jobs:
       - name: install and run oranda
         run: |
           curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/oranda/releases/download/v0.1.0-prerelease.8/oranda-installer.sh | sh
+          go run catalog/scripts/refresh-catalog.go > catalog.md
           oranda build
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

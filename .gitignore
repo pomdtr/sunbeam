@@ -85,3 +85,4 @@ book
 .env
 public/
 completions/
+catalog.md
