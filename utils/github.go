@@ -14,6 +14,7 @@ type GithubRepo struct {
 	Description     string
 	HtmlUrl         string `json:"html_url"`
 	StargazersCount int    `json:"stargazers_count"`
+	Topics          []string
 }
 
 var repoRegex = regexp.MustCompile(`^https?://github\.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)$`)

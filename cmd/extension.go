@@ -129,8 +129,25 @@ func NewExtensionBrowseCmd() *cobra.Command {
 				}
 
 				listItems := make([]types.ListItem, 0)
-
 				for _, repo := range repos {
+					supportedOs := map[string]struct{}{}
+					for _, topic := range repo.Topics {
+						switch topic {
+						case "windows":
+							supportedOs["windows"] = struct{}{}
+						case "linux":
+							supportedOs["linux"] = struct{}{}
+						case "macos", "darwin":
+							supportedOs["darwin"] = struct{}{}
+						}
+					}
+
+					if len(supportedOs) > 0 {
+						if _, ok := supportedOs[runtime.GOOS]; !ok {
+							continue
+						}
+					}
+
 					listItems = append(listItems, types.ListItem{
 						Title:    repo.FullName,
 						Subtitle: repo.Description,
