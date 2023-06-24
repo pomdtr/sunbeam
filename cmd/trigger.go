@@ -65,10 +65,10 @@ func NewTriggerCmd() *cobra.Command {
 
 func triggerAction(action types.Action, inputs map[string]string, query string) error {
 	for name, value := range inputs {
-		action = internal.RenderAction(action, fmt.Sprintf("${input:%s}", name), value)
+		action = internal.RenderAction(action, fmt.Sprintf("{{input:%s}}", name), value)
 	}
 
-	action = internal.RenderAction(action, "${query}", query)
+	action = internal.RenderAction(action, "{{query}}", query)
 	switch action.Type {
 	case types.PushAction:
 		return Run(internal.NewFileGenerator(action.Page))

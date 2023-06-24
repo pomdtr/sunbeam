@@ -162,7 +162,7 @@ func NewExtensionBrowseCmd() *cobra.Command {
 								Key:   "i",
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"extension", "install", "${input:name}", item.Origin},
+									Args: []string{"extension", "install", "{{input:name}}", item.Origin},
 								},
 								Inputs: []types.Input{
 									{
@@ -236,7 +236,7 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 								Key:   "r",
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"extension", "rename", extension, "${input:name}"},
+									Args: []string{"extension", "rename", extension, "{{input:name}}"},
 								},
 								Inputs: []types.Input{
 									{

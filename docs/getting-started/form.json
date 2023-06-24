@@ -3,7 +3,7 @@
     "title": "Hello World",
     "submitAction": {
         "type": "run",
-        "command": "echo 'hello ${input:name}'",
+        "command": "echo 'hello {{input:name}}'",
         "inputs": [
             {
                 "name": "name",

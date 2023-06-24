@@ -86,7 +86,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		if len(pair) != 2 {
 			continue
 		}
-		action = RenderAction(action, fmt.Sprintf("${env:%s}", pair[0]), pair[1])
+		action = RenderAction(action, fmt.Sprintf("{{env:%s}}", pair[0]), pair[1])
 	}
 
 	switch action.Type {
@@ -275,7 +275,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			form := NewForm(page.Title, func(values map[string]string) tea.Cmd {
 				action := *page.SubmitAction
 				for key, value := range values {
-					action = RenderAction(action, fmt.Sprintf("${input:%s}", key), value)
+					action = RenderAction(action, fmt.Sprintf("{{input:%s}}", key), value)
 				}
 
 				return runner.handleAction(action)
@@ -337,7 +337,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, nil
 		}
 
-		queryCmd := RenderPageProvider(runner.currentPage.OnQueryChange, "${query}", msg.Query)
+		queryCmd := RenderPageProvider(runner.currentPage.OnQueryChange, "{{query}}", msg.Query)
 		runner.Generator = NewPageProviderGenerator(queryCmd)
 
 		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh)
@@ -346,7 +346,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			form := NewForm(msg.Title, func(values map[string]string) tea.Cmd {
 				submitAction := msg
 				for key, value := range values {
-					submitAction = RenderAction(submitAction, fmt.Sprintf("${input:%s}", key), value)
+					submitAction = RenderAction(submitAction, fmt.Sprintf("{{input:%s}}", key), value)
 				}
 
 				return runner.handleAction(submitAction)

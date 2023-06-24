@@ -112,7 +112,7 @@ You can add an array of inputs to every sunbeam actions, and reference their val
 ```json
 {
   "type": "run",
-  "command": "echo ${input:name}",
+  "command": "echo {{input:name}}",
   "inputs": [
     {
       "name": "name",
