@@ -1,0 +1,40 @@
+{
+    "$schema": "./catalog-schema.json",
+    "extensions": [
+        {
+            "type": "script",
+            "author": "pomdtr",
+            "title": "Bitwarden",
+            "description": "Search your Bitwarden vault",
+            "origin": "https://pomdtr.github.io/sunbeam/book/examples/bitwarden/sunbeam-extension"
+        },
+        {
+            "type": "script",
+            "author": "pomdtr",
+            "title": "DevDocs",
+            "description": "Search DevDocs.io",
+            "origin": "https://pomdtr.github.io/sunbeam/book/examples/devdocs/sunbeam-extension"
+        },
+        {
+            "type": "script",
+            "author": "pomdtr",
+            "title": "file-browser",
+            "description": "Search your files",
+            "origin": "https://pomdtr.github.io/sunbeam/book/examples/file-browser/sunbeam-extension"
+        },
+        {
+            "type": "script",
+            "author": "pomdtr",
+            "title": "Search Github Repositories",
+            "description": "Search Github Repositories",
+            "origin": "https://pomdtr.github.io/sunbeam/book/examples/github/sunbeam-extension"
+        },
+        {
+            "type": "api",
+            "author": "pomdtr",
+            "title": "TLDR Pages",
+            "description": "Search TLDR Pages",
+            "origin": "https://pomdtr.github.io/sunbeam/book/examples/tldr/sunbeam-extension"
+        }
+    ]
+}
