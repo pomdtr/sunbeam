@@ -67,3 +67,29 @@ scoop:
   homepage: https://pomdtr.github.io/sunbeam
   description: Generate powerful UIs from simple scripts written in any language.
   license: MIT
+aurs:
+  - name: sunbeam-bin
+    homepage: https://pomdtr.github.io/sunbeam
+    description: Generate powerful UIs from simple scripts written in any language.
+    maintainers:
+      - 'Achille Lacoin  <achille@deta.sh>'
+    license: MIT
+    # IMPORTANT: the key must not be password-protected.
+    private_key: '{{ .Env.AUR_KEY }}'
+    git_url: 'ssh://aur@aur.archlinux.org/sunbeam-bin.git'
+    conflicts:
+      - sunbeam
+    package: |-
+      # bin
+      install -Dm755 "./sunbeam" "${pkgdir}/usr/bin/sunbeam"
+
+      # license
+      install -Dm644 "./LICENSE-MIT" "${pkgdir}/usr/share/licenses/sunbeam/LICENSE"
+
+      # completions
+      mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
+      mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
+      mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
+      install -Dm644 "./completions/sunbeam.bash" "${pkgdir}/usr/share/bash-completion/completions/sunbeam"
+      install -Dm644 "./completions/sunbeam.zsh" "${pkgdir}/usr/share/zsh/site-functions/_sunbeam"
+      install -Dm644 "./completions/sunbeam.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/sunbeam.fish"
