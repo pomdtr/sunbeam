@@ -50,7 +50,7 @@
                     "type": "string"
                 },
                 "onQueryChange": {
-                    "$ref": "#/$defs/command"
+                    "$ref": "#/$defs/pageProvider"
                 },
                 "emptyView": {
                     "type": "object",
@@ -99,7 +99,7 @@
                 "type",
                 "preview"
             ],
-            "description": "A detail view displayign a preview and actions.",
+            "description": "A detail view displaying a preview and actions.",
             "properties": {
                 "type": {
                     "description": "The type of the response.",
@@ -709,6 +709,32 @@
                     "$ref": "#/$defs/request"
                 },
                 "text": {
+                    "type": "string"
+                },
+                "file": {
+                    "type": "string"
+                },
+                "expression": {
+                    "type": "string"
+                }
+            }
+        },
+        "pageProvider": {
+            "type": "object",
+            "properties": {
+                "command": {
+                    "$ref": "#/$defs/command"
+                },
+                "request": {
+                    "$ref": "#/$defs/request"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "file": {
+                    "type": "string"
+                },
+                "expression": {
                     "type": "string"
                 }
             }

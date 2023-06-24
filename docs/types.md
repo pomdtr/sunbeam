@@ -107,6 +107,8 @@
 - `command`: [Command](#command)
 - `request`: [Request](#request)
 - `text`: string
+- `file`: string
+- `expression`: string
 - `__index`: any
 
 ## Form
