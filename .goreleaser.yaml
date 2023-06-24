@@ -19,8 +19,7 @@ builds:
       - linux
       - darwin
 archives:
-  - name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}_{{ .Arch }}"
-    format_overrides:
+  - format_overrides:
       - goos: windows
         format: zip
     files:
