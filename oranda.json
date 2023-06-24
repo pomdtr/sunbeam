@@ -1,10 +1,26 @@
 {
-    "name": "Sunbeam",
-    "favicon": "./assets/favicon.png",
-    "description": "Generate complex TUIs from simple scripts written in any language.",
-    "repository": "https://github.com/pomdtr/sunbeam",
-    "mdbook": {
-        "path": "."
+    "$schema": "https://github.com/axodotdev/oranda/releases/download/v0.1.0-prerelease.8/oranda-config-schema.json",
+    "project": {
+        "name": "sunbeam",
+        "description": "Generate complex TUIs from simple scripts written in any language.",
+        "homepage": "https://pomdtr.github.io/sunbeam/",
+        "repository": "https://github.com/pomdtr/sunbeam",
+        "license": "MIT",
+        "readme_path": "./README.md"
     },
-    "path_prefix": "sunbeam"
+    "build": {
+        "path_prefix": "sunbeam"
+    },
+    "marketing": {
+        "social": {
+            "twitter_account": "@pomdtrr"
+        }
+    },
+    "components": {
+        "changelog": false,
+        "mdbook": {
+            "path": "./",
+            "theme": true
+        }
+    }
 }

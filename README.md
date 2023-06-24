@@ -15,7 +15,8 @@ It allows you to build interactives UIs from simple scripts.
 Other examples:
 
 - [File Browser](https://pomdtr.github.io/sunbeam/book/examples/file-browser)
-- [Github Extension](https://pomdtr.github.io/sunbeam/book/examples/github)
+- [Bitwarden](https://pomdtr.github.io/sunbeam/book/examples/bitwarden)
+- [Github](https://pomdtr.github.io/sunbeam/book/examples/github)
 - [TLDR Pages](https://pomdtr.github.io/sunbeam/book/examples/tldr)
 - [Devdocs](https://pomdtr.github.io/sunbeam/book/examples/devdocs)
 
