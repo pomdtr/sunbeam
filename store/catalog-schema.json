@@ -27,8 +27,8 @@
                         "description": "The type of extension.",
                         "enum": [
                             "github-release",
-                            "git",
-                            "gist",
+                            "github-repository",
+                            "github-gist",
                             "script",
                             "api"
                         ]

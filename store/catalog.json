@@ -18,7 +18,7 @@
         {
             "type": "script",
             "author": "pomdtr",
-            "title": "file-browser",
+            "title": "File Browser",
             "description": "Search your files",
             "origin": "https://pomdtr.github.io/sunbeam/book/examples/file-browser/sunbeam-extension"
         },
