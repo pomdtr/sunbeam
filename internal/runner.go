@@ -538,6 +538,10 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 	}
 
 	expandAction := func(action types.Action) (*types.Action, error) {
+		if action.Type == types.RunAction && base != nil && base.Scheme != "file" && base.Scheme != "" {
+			return nil, fmt.Errorf("run action is not supported for remote pages")
+		}
+
 		if action.Command != nil && !path.IsAbs(action.Command.Dir) {
 			action.Command.Dir = path.Join(basePath, action.Command.Dir)
 		}
