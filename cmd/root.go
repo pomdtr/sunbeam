@@ -220,7 +220,12 @@ func Run(generator internal.PageGenerator) error {
 	}
 
 	runner := internal.NewRunner(generator)
-	return internal.Draw(runner, options)
+	err := internal.Draw(runner, options)
+	if errors.Is(err, internal.ErrInterrupted) && isatty.IsTerminal(os.Stdout.Fd()) {
+		return nil
+	}
+
+	return err
 }
 
 func buildDoc(command *cobra.Command) (string, error) {

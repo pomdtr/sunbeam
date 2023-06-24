@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -35,9 +36,8 @@ type SunbeamOptions struct {
 }
 
 type ExitMsg struct {
-	Cmd   *exec.Cmd
-	Text  string
-	Error error
+	Cmd  *exec.Cmd
+	Text string
 }
 
 type Paginator struct {
@@ -45,7 +45,7 @@ type Paginator struct {
 	options       SunbeamOptions
 	OutputCmd     *exec.Cmd
 	OutputMsg     string
-	Error         error
+	Cancelled     bool
 
 	pages  []Page
 	hidden bool
@@ -73,7 +73,7 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fmt.Sprintln("Escape")
 		case tea.KeyCtrlC:
 			m.hidden = true
-			m.Error = fmt.Errorf("exited")
+			m.Cancelled = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
@@ -88,7 +88,7 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		m.Error = fmt.Errorf("exited")
+		m.Cancelled = true
 		m.hidden = true
 		return m, tea.Quit
 	case ExitMsg:
@@ -219,6 +219,8 @@ func (m *Paginator) Pop() tea.Cmd {
 	return page.Focus()
 }
 
+var ErrInterrupted = errors.New("interrupted")
+
 func Draw(page Page, options SunbeamOptions) error {
 	if _, ok := os.LookupEnv("NO_COLOR"); ok {
 		lipgloss.SetColorProfile(termenv.Ascii)
@@ -245,8 +247,8 @@ func Draw(page Page, options SunbeamOptions) error {
 		return fmt.Errorf("could not cast model to paginator")
 	}
 
-	if paginator.Error != nil {
-		return paginator.Error
+	if paginator.Cancelled {
+		return ErrInterrupted
 	}
 
 	msg := paginator.OutputMsg
