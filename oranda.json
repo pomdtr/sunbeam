@@ -9,11 +9,9 @@
         "readme_path": "./README.md"
     },
     "build": {
-        "path_prefix": "sunbeam"
-    },
-    "marketing": {
-        "social": {
-            "twitter_account": "@pomdtrr"
+        "path_prefix": "sunbeam",
+        "additional_pages": {
+            "Extension Catalog": "./catalog/catalog.md"
         }
     },
     "components": {

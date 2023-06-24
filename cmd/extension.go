@@ -16,7 +16,7 @@ import (
 
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/store"
+	"github.com/pomdtr/sunbeam/catalog"
 	"github.com/pomdtr/sunbeam/types"
 	"golang.org/x/term"
 
@@ -124,7 +124,7 @@ func NewExtensionBrowseCmd() *cobra.Command {
 		Short: "Browse extensions",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			generator := func() (*types.Page, error) {
-				catalogItems, err := store.FetchCatalog()
+				catalogItems, err := catalog.FetchCatalog()
 				if err != nil {
 					return nil, err
 				}
