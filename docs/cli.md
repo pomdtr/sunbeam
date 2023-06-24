@@ -204,6 +204,22 @@ sunbeam completion zsh [flags]
       --no-descriptions   disable completion descriptions
 ```
 
+## sunbeam detail
+
+parse text from stdin
+
+```
+sunbeam detail [flags]
+```
+
+### Options
+
+```
+  -h, --help           help for detail
+  -t, --title string   title of the page (default "Sunbeam")
+      --title-row      use first row as title
+```
+
 ## sunbeam docs
 
 Generate documentation for sunbeam
@@ -216,6 +232,20 @@ sunbeam docs [flags]
 
 ```
   -h, --help   help for docs
+```
+
+## sunbeam eval
+
+Evaluate an expression with val.town
+
+```
+sunbeam eval <expression> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for eval
 ```
 
 ## sunbeam extension
@@ -253,9 +283,8 @@ sunbeam extension create [flags]
 ### Options
 
 ```
-  -h, --help              help for create
-  -l, --language string   extension language
-  -n, --name string       extension name
+  -h, --help          help for create
+  -n, --name string   extension name
 ```
 
 ## sunbeam extension help
@@ -325,7 +354,7 @@ sunbeam extension manage [flags]
 Remove an installed extension
 
 ```
-sunbeam extension remove <extension> [flags]
+sunbeam extension remove <extension> [extensions...] [flags]
 ```
 
 ### Options
@@ -377,24 +406,6 @@ sunbeam fetch <url> [flags]
   -H, --header stringArray   http header
   -h, --help                 help for fetch
       --method string        http method
-      --user string          http user
-```
-
-## sunbeam filter
-
-Filter stdin rows
-
-```
-sunbeam filter [flags]
-```
-
-### Options
-
-```
-  -d, --delimiter string   delimiter (default "\t")
-  -H, --header-line        treat the first line as the page title
-  -h, --help               help for filter
-      --with-nth ints      indexes to show
 ```
 
 ## sunbeam generate-fig-spec
@@ -465,6 +476,26 @@ sunbeam info [flags]
 
 ```
   -h, --help   help for info
+```
+
+## sunbeam list
+
+Parse items from stdin
+
+```
+sunbeam list [flags]
+```
+
+### Options
+
+```
+  -d, --delimiter string   delimiter (default "\t")
+  -h, --help               help for list
+      --json               json input
+      --show-preview       show preview
+      --title string       title
+      --title-row          use first row as title
+      --with-nth ints      indexes to show
 ```
 
 ## sunbeam query

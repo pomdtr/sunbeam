@@ -15,5 +15,4 @@
 
 # Reference
 
-- [Types](./types.md)
 - [CLI](./cli.md)
