@@ -17,6 +17,7 @@ import (
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/catalog"
+	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/types"
 	"golang.org/x/term"
 
@@ -36,7 +37,8 @@ const (
 	ExtensionTypeBinary ExtensionType = "binary"
 	ExtensionTypeGit    ExtensionType = "git"
 	ExtensionTypeGist   ExtensionType = "gist"
-	ExtensionTypeUrl    ExtensionType = "url"
+	ExtensionTypeRaw    ExtensionType = "raw"
+	ExtensionTypeRemote ExtensionType = "remote"
 	ExtentionTypeLocal  ExtensionType = "local"
 )
 
@@ -59,6 +61,10 @@ func (m *ExtensionManifest) PrettyVersion() string {
 		return m.Version[:8]
 	case ExtentionTypeLocal:
 		return "local"
+	case ExtensionTypeRaw:
+		return "raw"
+	case ExtensionTypeRemote:
+		return "remote"
 	default:
 		return "unknown"
 	}
@@ -541,7 +547,7 @@ func installExtension(origin string, targetDir string, version string) error {
 		if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
 			return fmt.Errorf("unable to write extension manifest: %s", err)
 		}
-	} else {
+	} else if extensionUrl.Host == "raw.githubusercontent.com" {
 		fmt.Fprintf(os.Stderr, "Installing extension from url...\n")
 		res, err := http.Get(origin)
 		if err != nil {
@@ -555,7 +561,7 @@ func installExtension(origin string, targetDir string, version string) error {
 		}
 
 		manifest := ExtensionManifest{
-			Type:        ExtensionTypeUrl,
+			Type:        ExtensionTypeRaw,
 			Remote:      origin,
 			Entrypoint:  filepath.Join("src", extensionBinaryName),
 			Description: origin,
@@ -566,6 +572,52 @@ func installExtension(origin string, targetDir string, version string) error {
 			return fmt.Errorf("could not create extension directory: %s", err)
 		}
 
+		if err := os.WriteFile(filepath.Join(srcDir, extensionBinaryName), content, 0755); err != nil {
+			return fmt.Errorf("could not write extension binary: %s", err)
+		}
+
+		if err := os.Chmod(filepath.Join(srcDir, extensionBinaryName), 0755); err != nil {
+			return fmt.Errorf("could not make extension binary executable: %s", err)
+		}
+
+		if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
+			return fmt.Errorf("unable to write extension manifest: %s", err)
+		}
+	} else {
+		// check if the url contains a valid sunbeam page
+		resp, err := http.Get(origin)
+		if err != nil {
+			return fmt.Errorf("unable to install extension: %s", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			return fmt.Errorf("unable to install extension: %s", resp.Status)
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("unable to install extension: %s", err)
+		}
+
+		if err := schemas.Validate(body); err != nil {
+			return fmt.Errorf("unable to install extension: %s", err)
+		}
+
+		manifest := ExtensionManifest{
+			Type:        ExtensionTypeRemote,
+			Remote:      origin,
+			Version:     "latest",
+			Entrypoint:  filepath.Join("src", extensionBinaryName),
+			Description: origin,
+		}
+
+		srcDir := filepath.Join(targetDir, "src")
+		if err := os.MkdirAll(srcDir, 0755); err != nil {
+			return fmt.Errorf("could not create extension directory: %s", err)
+		}
+
+		content := []byte(fmt.Sprintf("#!/bin/sh\n\nsunbeam fetch %s", origin))
 		if err := os.WriteFile(filepath.Join(srcDir, extensionBinaryName), content, 0755); err != nil {
 			return fmt.Errorf("could not write extension binary: %s", err)
 		}
@@ -832,7 +884,10 @@ func upgradeExtension(extensionPath string) error {
 	case ExtentionTypeLocal:
 		fmt.Printf("Extension %s is local, skipping upgrade\n", filepath.Base(extensionPath))
 		return nil
-	case ExtensionTypeUrl:
+	case ExtensionTypeRemote:
+		fmt.Printf("Extension %s is remote, skipping upgrade\n", filepath.Base(extensionPath))
+		return nil
+	case ExtensionTypeRaw:
 		content, err := os.ReadFile(filepath.Join(extensionPath, manifest.Entrypoint))
 		if err != nil {
 			return fmt.Errorf("unable to upgrade extension: %s", err)
