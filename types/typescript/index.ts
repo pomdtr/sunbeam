@@ -30,6 +30,12 @@ export type Request =
        */
       body?: string;
     };
+export type Expression =
+  | string
+  | {
+      code: string;
+      args?: unknown[];
+    };
 export type Action =
   | {
       /**
@@ -84,10 +90,7 @@ export type Action =
        * The title of the action.
        */
       title?: string;
-      /**
-       * The expression to eval.
-       */
-      expression: string;
+      expression: Expression;
       onSuccess?: OnSuccess;
       /**
        * The inputs to show when the action is run.
@@ -199,7 +202,7 @@ export type Action =
       command?: Command;
       request?: Request;
       target?: string;
-      expression?: string;
+      expression?: Expression;
       page?: string;
     };
 export type Input =
@@ -361,7 +364,7 @@ export interface PageProvider {
   request?: Request;
   text?: string;
   file?: string;
-  expression?: string;
+  expression?: Expression;
   [k: string]: unknown;
 }
 export interface Listitem {
@@ -392,7 +395,7 @@ export interface Preview {
   request?: Request;
   text?: string;
   file?: string;
-  expression?: string;
+  expression?: Expression;
   [k: string]: unknown;
 }
 /**

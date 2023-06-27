@@ -475,8 +475,8 @@ func RenderAction(action types.Action, old, new string) types.Action {
 		action.Request = RenderRequest(action.Request, old, new)
 	}
 
-	if action.Expression != nil {
-		action.Expression = RenderExpression(action.Expression, old, new)
+	if action.Code != nil {
+		action.Code = RenderExpression(action.Code, old, new)
 	}
 
 	action.Target = strings.ReplaceAll(action.Target, old, url.QueryEscape(new))
@@ -516,8 +516,16 @@ func RenderPageProvider(pageProvider *types.PageProvider, old, new string) *type
 }
 
 func RenderExpression(expression *types.Expression, old, new string) *types.Expression {
-	s := string(*expression)
-	rendered := types.Expression(strings.ReplaceAll(s, old, new))
+	var rendered types.Expression
+	rendered.Code = strings.ReplaceAll(expression.Code, old, new)
+	for _, arg := range expression.Args {
+		if arg, ok := arg.(string); ok {
+			rendered.Args = append(rendered.Args, strings.ReplaceAll(arg, old, new))
+			continue
+		}
+
+		rendered.Args = append(rendered.Args, arg)
+	}
 	return &rendered
 }
 

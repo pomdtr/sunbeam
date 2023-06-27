@@ -89,7 +89,7 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 		fmt.Print(string(output))
 		return nil
 	case types.EvalAction:
-		request := action.Expression.Request()
+		request := action.Code.Request()
 		output, err := request.Do(context.Background())
 		if err != nil {
 			return fmt.Errorf("request failed: %s", err)

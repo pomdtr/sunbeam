@@ -234,7 +234,7 @@
                         "expression"
                     ],
                     "additionalProperties": false,
-                    "description": "Eval an expression on val.town",
+                    "description": "Eval code on val.town",
                     "properties": {
                         "type": {
                             "const": "eval",
@@ -245,8 +245,7 @@
                             "description": "The title of the action."
                         },
                         "expression": {
-                            "type": "string",
-                            "description": "The expression to eval."
+                            "$ref": "#/$defs/expression"
                         },
                         "onSuccess": {
                             "$ref": "#/$defs/onSuccess"
@@ -432,7 +431,7 @@
                             "type": "string"
                         },
                         "expression": {
-                            "type": "string"
+                            "$ref": "#/$defs/expression"
                         },
                         "page": {
                             "type": "string"
@@ -654,6 +653,28 @@
                 }
             ]
         },
+        "expression": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "code"
+                    ],
+                    "properties": {
+                        "code": {
+                            "type": "string"
+                        },
+                        "args": {
+                            "type": "array"
+                        }
+                    }
+                }
+            ]
+        },
         "request": {
             "oneOf": [
                 {
@@ -715,7 +736,7 @@
                     "type": "string"
                 },
                 "expression": {
-                    "type": "string"
+                    "$ref": "#/$defs/expression"
                 }
             }
         },
@@ -735,7 +756,7 @@
                     "type": "string"
                 },
                 "expression": {
-                    "type": "string"
+                    "$ref": "#/$defs/expression"
                 }
             }
         }

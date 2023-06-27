@@ -165,7 +165,7 @@ type Action struct {
 	Request *Request `json:"request,omitempty"`
 
 	// eval
-	Expression *Expression `json:"expression,omitempty"`
+	Code *Expression `json:"expression,omitempty"`
 
 	// run
 	Command *Command `json:"command,omitempty"`
@@ -180,14 +180,37 @@ func (a Action) Output(ctx context.Context) ([]byte, error) {
 		return a.Command.Output(ctx)
 	} else if a.Request != nil {
 		return a.Request.Do(ctx)
-	} else if a.Expression != nil {
-		return a.Expression.Request().Do(ctx)
+	} else if a.Code != nil {
+		return a.Code.Request().Do(ctx)
 	} else {
 		return nil, errors.New("invalid action")
 	}
 }
 
-type Expression string
+type Expression struct {
+	Code string `json:"code"`
+	Args []any  `json:"args,omitempty"`
+}
+
+func (e *Expression) UnmarshalJSON(data []byte) error {
+	var code string
+	if err := json.Unmarshal(data, &code); err == nil {
+		e.Code = code
+		return nil
+	}
+
+	var expression map[string]any
+	if err := json.Unmarshal(data, &expression); err == nil {
+		if err := mapstructure.Decode(expression, e); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("invalid expression")
+
+}
 
 func (e Expression) Request() *Request {
 	headers := make(map[string]string)
@@ -195,10 +218,15 @@ func (e Expression) Request() *Request {
 		headers["Authorization"] = fmt.Sprintf("Bearer %s", env)
 	}
 
-	body, _ := json.Marshal(map[string]string{
-		"code": string(e),
-	})
+	payload := map[string]any{
+		"code": e.Code,
+	}
 
+	if len(e.Args) > 0 {
+		payload["args"] = e.Args
+	}
+
+	body, _ := json.Marshal(payload)
 	return &Request{
 		Url:     "https://api.val.town/v1/eval",
 		Method:  "POST",

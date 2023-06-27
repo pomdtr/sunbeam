@@ -8,11 +8,13 @@ import (
 
 func NewEvalCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "eval <expression>",
-		Short: "Evaluate an expression with val.town",
+		Use:   "eval <code>",
+		Short: "Evaluate code with val.town",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			expression := types.Expression(args[0])
+			expression := types.Expression{
+				Code: args[0],
+			}
 			return Run(internal.NewRequestGenerator(expression.Request()))
 		},
 	}

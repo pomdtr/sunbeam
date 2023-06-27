@@ -175,8 +175,8 @@ func GeneratorFromAction(action types.Action) (PageGenerator, error) {
 		return NewCommandGenerator(action.Command), nil
 	case action.Request != nil:
 		return NewRequestGenerator(action.Request), nil
-	case action.Expression != nil:
-		return NewRequestGenerator(action.Expression.Request()), nil
+	case action.Code != nil:
+		return NewRequestGenerator(action.Code.Request()), nil
 	default:
 		return nil, fmt.Errorf("invalid action")
 	}
