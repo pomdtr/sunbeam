@@ -49,9 +49,7 @@ func NewDetailCmd() *cobra.Command {
 				return &types.Page{
 					Title: title,
 					Type:  "detail",
-					Preview: &types.PreviewProvider{
-						Text: text,
-					},
+					Text:  text,
 				}, nil
 			})
 		},

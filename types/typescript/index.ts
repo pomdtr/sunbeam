@@ -354,9 +354,9 @@ export interface List {
     actions?: Action[];
   };
   /**
-   * Whether to show the preview on the right side of the list.
+   * Whether to show the detail on the right side of the list.
    */
-  showPreview?: boolean;
+  showDetail?: boolean;
   items?: Listitem[] | null;
 }
 export interface PageProvider {
@@ -380,7 +380,13 @@ export interface Listitem {
    * The subtitle of the item.
    */
   subtitle?: string;
-  preview?: Preview;
+  detail?: {
+    command?: Command;
+    request?: Request;
+    text?: string;
+    file?: string;
+    expression?: Expression;
+  };
   /**
    * The accessories to show on the right side of the item.
    */
@@ -389,14 +395,6 @@ export interface Listitem {
    * The actions attached to the item.
    */
   actions?: Action[];
-}
-export interface Preview {
-  command?: Command;
-  request?: Request;
-  text?: string;
-  file?: string;
-  expression?: Expression;
-  [k: string]: unknown;
 }
 /**
  * A detail view displaying a preview and actions.
@@ -410,7 +408,11 @@ export interface Detail {
    * The title of the page.
    */
   title?: string;
-  preview: Preview;
+  command?: Command;
+  request?: Request;
+  text?: string;
+  file?: string;
+  expression?: Expression;
   /**
    * The actions attached to the detail view.
    */

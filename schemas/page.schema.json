@@ -72,8 +72,8 @@
                         }
                     }
                 },
-                "showPreview": {
-                    "description": "Whether to show the preview on the right side of the list.",
+                "showDetail": {
+                    "description": "Whether to show the detail on the right side of the list.",
                     "type": "boolean"
                 },
                 "items": {
@@ -96,8 +96,7 @@
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "type",
-                "preview"
+                "type"
             ],
             "description": "A detail view displaying a preview and actions.",
             "properties": {
@@ -109,8 +108,20 @@
                     "description": "The title of the page.",
                     "type": "string"
                 },
-                "preview": {
-                    "$ref": "#/$defs/preview"
+                "command": {
+                    "$ref": "#/$defs/command"
+                },
+                "request": {
+                    "$ref": "#/$defs/request"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "file": {
+                    "type": "string"
+                },
+                "expression": {
+                    "$ref": "#/$defs/expression"
                 },
                 "actions": {
                     "type": "array",
@@ -139,8 +150,26 @@
                     "type": "string",
                     "description": "The subtitle of the item."
                 },
-                "preview": {
-                    "$ref": "#/$defs/preview"
+                "detail": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "command": {
+                            "$ref": "#/$defs/command"
+                        },
+                        "request": {
+                            "$ref": "#/$defs/request"
+                        },
+                        "text": {
+                            "type": "string"
+                        },
+                        "file": {
+                            "type": "string"
+                        },
+                        "expression": {
+                            "$ref": "#/$defs/expression"
+                        }
+                    }
                 },
                 "accessories": {
                     "type": "array",
@@ -719,26 +748,6 @@
                 "open",
                 "reload"
             ]
-        },
-        "preview": {
-            "type": "object",
-            "properties": {
-                "command": {
-                    "$ref": "#/$defs/command"
-                },
-                "request": {
-                    "$ref": "#/$defs/request"
-                },
-                "text": {
-                    "type": "string"
-                },
-                "file": {
-                    "type": "string"
-                },
-                "expression": {
-                    "$ref": "#/$defs/expression"
-                }
-            }
         },
         "pageProvider": {
             "type": "object",

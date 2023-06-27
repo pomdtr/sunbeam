@@ -34,11 +34,15 @@ type Page struct {
 	SubmitAction *Action `json:"submitAction,omitempty"`
 
 	// Detail page
-	Preview *PreviewProvider `json:"preview,omitempty"`
+	Text       string      `json:"text,omitempty"`
+	File       string      `json:"file,omitempty"`
+	Command    *Command    `json:"command,omitempty"`
+	Request    *Request    `json:"request,omitempty"`
+	Expression *Expression `json:"expression,omitempty"`
 
 	// List page
-	ShowPreview   bool          `json:"showPreview,omitempty"`
-	OnQueryChange *PageProvider `json:"onQueryChange,omitempty"`
+	ShowDetail    bool          `json:"showDetail,omitempty"`
+	OnQueryChange *TextProvider `json:"onQueryChange,omitempty"`
 	EmptyView     *EmptyView    `json:"emptyView,omitempty"`
 	Items         []ListItem    `json:"items,omitempty"`
 }
@@ -49,12 +53,12 @@ type EmptyView struct {
 }
 
 type ListItem struct {
-	Id          string           `json:"id,omitempty"`
-	Title       string           `json:"title"`
-	Subtitle    string           `json:"subtitle,omitempty"`
-	Preview     *PreviewProvider `json:"preview,omitempty"`
-	Accessories []string         `json:"accessories,omitempty"`
-	Actions     []Action         `json:"actions,omitempty"`
+	Id          string        `json:"id,omitempty"`
+	Title       string        `json:"title"`
+	Subtitle    string        `json:"subtitle,omitempty"`
+	Detail      *TextProvider `json:"detail,omitempty"`
+	Accessories []string      `json:"accessories,omitempty"`
+	Actions     []Action      `json:"actions,omitempty"`
 }
 
 type FormInputType string
@@ -291,15 +295,13 @@ func (b *Body) UnmarshalJSON(data []byte) error {
 	return errors.New("body must be a string or a map")
 }
 
-type PreviewProvider struct {
+type TextProvider struct {
 	Text       string      `json:"text,omitempty"`
 	File       string      `json:"file,omitempty"`
 	Command    *Command    `json:"command,omitempty"`
 	Request    *Request    `json:"request,omitempty"`
 	Expression *Expression `json:"expression,omitempty"`
 }
-
-type PageProvider PreviewProvider
 
 type Command struct {
 	Name  string   `json:"name"`
@@ -384,7 +386,7 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 	return fmt.Errorf("invalid command")
 }
 
-func (pp PreviewProvider) Output(ctx context.Context) ([]byte, error) {
+func (pp TextProvider) Output(ctx context.Context) ([]byte, error) {
 	if pp.Text != "" {
 		return []byte(pp.Text), nil
 	} else if pp.File != "" {
@@ -400,6 +402,6 @@ func (pp PreviewProvider) Output(ctx context.Context) ([]byte, error) {
 	} else if pp.Expression != nil {
 		return pp.Expression.Request().Do(ctx)
 	} else {
-		return nil, errors.New("invalid previewProvider")
+		return nil, errors.New("unknown text provider")
 	}
 }

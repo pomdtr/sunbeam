@@ -287,13 +287,10 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, runner.form.Init()
 		case types.DetailPage:
 			detailFunc := func() string {
-				if page.Preview == nil {
-					return ""
+				if page.Text != "" {
+					return page.Text
 				}
-				if page.Preview.Text != "" {
-					return page.Preview.Text
-				}
-				output, err := page.Preview.Command.Output(context.TODO())
+				output, err := page.Command.Output(context.TODO())
 				if err != nil {
 					return err.Error()
 				}
@@ -337,7 +334,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return runner, nil
 		}
 
-		queryCmd := RenderPageProvider(runner.currentPage.OnQueryChange, "{{query}}", msg.Query)
+		queryCmd := RenderTextProvider(runner.currentPage.OnQueryChange, "{{query}}", msg.Query)
 		runner.Generator = NewPageProviderGenerator(queryCmd)
 
 		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh)
@@ -485,22 +482,7 @@ func RenderAction(action types.Action, old, new string) types.Action {
 	return action
 }
 
-func RenderPreviewProvider(previewProvider *types.PreviewProvider, old, new string) *types.PreviewProvider {
-	if previewProvider.Text != "" {
-		previewProvider.Text = strings.ReplaceAll(previewProvider.Text, old, new)
-	} else if previewProvider.File != "" {
-		previewProvider.File = strings.ReplaceAll(previewProvider.File, old, new)
-	} else if previewProvider.Command != nil {
-		previewProvider.Command = RenderCommand(previewProvider.Command, old, new)
-	} else if previewProvider.Request != nil {
-		previewProvider.Request = RenderRequest(previewProvider.Request, old, new)
-	} else if previewProvider.Expression != nil {
-		previewProvider.Expression = RenderExpression(previewProvider.Expression, old, new)
-	}
-	return previewProvider
-}
-
-func RenderPageProvider(pageProvider *types.PageProvider, old, new string) *types.PageProvider {
+func RenderTextProvider(pageProvider *types.TextProvider, old, new string) *types.TextProvider {
 	if pageProvider.Text != "" {
 		pageProvider.Text = strings.ReplaceAll(pageProvider.Text, old, new)
 	} else if pageProvider.File != "" {
@@ -623,16 +605,14 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 		page.Actions[i] = *a
 	}
 
-	if page.Preview != nil {
-		if page.Preview.Command != nil {
-			page.Preview.Command.Dir = basePath
-		}
+	if page.Command != nil {
+		page.Command.Dir = basePath
 	}
 
 	for i, item := range page.Items {
-		if item.Preview != nil {
-			if item.Preview.Command != nil {
-				item.Preview.Command.Dir = basePath
+		if item.Detail != nil {
+			if item.Detail.Command != nil {
+				item.Detail.Command.Dir = basePath
 			}
 		}
 

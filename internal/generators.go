@@ -76,7 +76,7 @@ func NewStaticGenerator(reader io.Reader) PageGenerator {
 	}
 }
 
-func NewPageProviderGenerator(pageProvider *types.PageProvider) PageGenerator {
+func NewPageProviderGenerator(pageProvider *types.TextProvider) PageGenerator {
 	// TODO: Add Text/Static ?
 	if pageProvider.File != "" {
 		return NewFileGenerator(pageProvider.File)

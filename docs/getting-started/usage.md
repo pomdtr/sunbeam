@@ -80,9 +80,7 @@ If you want to display a block of text to the user, you can use the `detail` pag
 ```json
 {
   "type": "detail",
-  "preview": {
-    "text": "Hello World!"
-  }
+  "text": "Hello World!"
 }
 ```
 
@@ -91,9 +89,7 @@ Detail view support actions, so you can add a button to the page:
 ```json
 {
   "type": "detail",
-  "preview": {
-    "text": "Hello World!"
-  },
+  "text": "Hello World!",
   "actions": [
     {
       "type": "run",
