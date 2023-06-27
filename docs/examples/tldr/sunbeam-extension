@@ -17,4 +17,4 @@ tldr --list --platform="$PLATFORM" | sunbeam query --arg platform="$PLATFORM" -R
         target: "https://tldr.inbrowser.app/pages/common/\(. | @uri)",
       }
     ]
-}' | sunbeam list --json --title "tldr" --show-preview
+}' | sunbeam list --json --title "tldr" --show-detail
