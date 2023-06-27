@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam extension install devdocs https://pomdtr.github.io/sunbeam/book/examples/devdocs/sunbeam-extension
+sunbeam extension install devdocs https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/devdocs/sunbeam-extension
 ```
 
 ## Usage

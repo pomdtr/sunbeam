@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam extension install files https://pomdtr.github.io/sunbeam/book/examples/file-browser/sunbeam-extension
+sunbeam extension install files https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/file-browser/sunbeam-extension
 ```
 
 ## Usage

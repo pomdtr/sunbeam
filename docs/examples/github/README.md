@@ -13,7 +13,7 @@
 ## Install
 
 ```bash
-sunbeam extension install github https://pomdtr.github.io/sunbeam/book/examples/github/sunbeam-extension
+sunbeam extension install github https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/github/sunbeam-extension
 ```
 
 ## Usage
