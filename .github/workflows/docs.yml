@@ -13,13 +13,17 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19
       - name: Refresh extension catalog
         run: |
           go run catalog/scripts/refresh-catalog.go > catalog.md
       - name: Refresh Cli Docs
         run: |
           go build -o sunbeam
-          sunbeam docs > docs/cli.md
+          ./sunbeam docs > docs/cli.md
       - name: install and run oranda
         run: |
           curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/oranda/releases/download/v0.1.0-prerelease.8/oranda-installer.sh | sh
