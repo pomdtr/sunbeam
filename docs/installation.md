@@ -19,7 +19,7 @@ scoop bucket add pomdtr https://github.com/pomdtr/scoop-bucket.git
 scoop install pomdtr/sunbeam
 
 # from source
-go install github.com/pomdtr/sunbeam@latest
+go install github.com/pomdtr/sunbeam@main
 ```
 
 or use binaries / packages from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).
