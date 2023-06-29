@@ -221,7 +221,7 @@ func NewExtensionManageCmd(extensionRoot string) *cobra.Command {
 						Actions: []types.Action{
 							{
 								Title: "Run Extension",
-								Type:  types.RunAction,
+								Type:  types.PushAction,
 								Command: &types.Command{
 									Name: os.Args[0],
 									Args: []string{extension},
