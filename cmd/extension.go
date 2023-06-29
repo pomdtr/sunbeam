@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -414,6 +415,8 @@ func NewExtensionInstallCmd(extensionRoot string) *cobra.Command {
 	return cmd
 }
 
+var valRegxp = regexp.MustCompile(`/v/(.+)\.(.+)`)
+
 func installExtension(origin string, targetDir string, version string) error {
 	if origin == "." {
 		cwd, err := os.Getwd()
@@ -583,52 +586,66 @@ func installExtension(origin string, targetDir string, version string) error {
 		if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
 			return fmt.Errorf("unable to write extension manifest: %s", err)
 		}
+	} else if extensionUrl.Host == "val.town" || extensionUrl.Host == "www.val.town" {
+		matches := valRegxp.FindStringSubmatch(origin)
+		if len(matches) == 0 {
+			return fmt.Errorf("invalid val url")
+		}
+
+		valUrl := fmt.Sprintf("https://api.val.town/v1/run/%s.%s", matches[1], matches[2])
+		return installFromUrl(valUrl, targetDir)
 	} else {
-		// check if the url contains a valid sunbeam page
-		resp, err := http.Get(origin)
-		if err != nil {
-			return fmt.Errorf("unable to install extension: %s", err)
-		}
-		defer resp.Body.Close()
+		return installFromUrl(origin, targetDir)
+	}
 
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("unable to install extension: %s", resp.Status)
-		}
+	return nil
+}
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("unable to install extension: %s", err)
-		}
+func installFromUrl(origin string, targetDir string) error {
+	// check if the url contains a valid sunbeam page
+	resp, err := http.Get(origin)
+	if err != nil {
+		return fmt.Errorf("unable to install extension: %s", err)
+	}
+	defer resp.Body.Close()
 
-		if err := schemas.Validate(body); err != nil {
-			return fmt.Errorf("unable to install extension: %s", err)
-		}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("unable to install extension: %s", resp.Status)
+	}
 
-		manifest := ExtensionManifest{
-			Type:        ExtensionTypeRemote,
-			Remote:      origin,
-			Version:     "latest",
-			Entrypoint:  filepath.Join("src", extensionBinaryName),
-			Description: origin,
-		}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("unable to install extension: %s", err)
+	}
 
-		srcDir := filepath.Join(targetDir, "src")
-		if err := os.MkdirAll(srcDir, 0755); err != nil {
-			return fmt.Errorf("could not create extension directory: %s", err)
-		}
+	if err := schemas.Validate(body); err != nil {
+		return fmt.Errorf("unable to install extension: %s", err)
+	}
 
-		content := []byte(fmt.Sprintf("#!/bin/sh\n\nsunbeam fetch %s", origin))
-		if err := os.WriteFile(filepath.Join(srcDir, extensionBinaryName), content, 0755); err != nil {
-			return fmt.Errorf("could not write extension binary: %s", err)
-		}
+	manifest := ExtensionManifest{
+		Type:        ExtensionTypeRemote,
+		Remote:      origin,
+		Version:     "latest",
+		Entrypoint:  filepath.Join("src", extensionBinaryName),
+		Description: origin,
+	}
 
-		if err := os.Chmod(filepath.Join(srcDir, extensionBinaryName), 0755); err != nil {
-			return fmt.Errorf("could not make extension binary executable: %s", err)
-		}
+	srcDir := filepath.Join(targetDir, "src")
+	if err := os.MkdirAll(srcDir, 0755); err != nil {
+		return fmt.Errorf("could not create extension directory: %s", err)
+	}
 
-		if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
-			return fmt.Errorf("unable to write extension manifest: %s", err)
-		}
+	content := []byte(fmt.Sprintf("#!/bin/sh\n\nsunbeam fetch %s", origin))
+	if err := os.WriteFile(filepath.Join(srcDir, extensionBinaryName), content, 0755); err != nil {
+		return fmt.Errorf("could not write extension binary: %s", err)
+	}
+
+	if err := os.Chmod(filepath.Join(srcDir, extensionBinaryName), 0755); err != nil {
+		return fmt.Errorf("could not make extension binary executable: %s", err)
+	}
+
+	if err := manifest.Write(filepath.Join(targetDir, manifestName)); err != nil {
+		return fmt.Errorf("unable to write extension manifest: %s", err)
 	}
 
 	return nil
