@@ -26,7 +26,7 @@ jobs:
           ./sunbeam docs > docs/cli.md
       - name: install and run oranda
         run: |
-          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/oranda/releases/download/v0.1.0-prerelease.8/oranda-installer.sh | sh
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/oranda/releases/download/v0.1.0/oranda-installer.sh | sh
           oranda build
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
