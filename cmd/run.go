@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRunCmd(extensionDir string) *cobra.Command {
+func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                "run <command> [args...]",
 		Short:              "Generate a page from a command or a script, and push it's output",
@@ -31,12 +31,12 @@ func NewRunCmd(extensionDir string) *cobra.Command {
 			}
 
 			if args[0] == "." {
-				if _, err := os.Stat(extensionBinaryName); err != nil {
-					return fmt.Errorf("%s: no such file or directory", extensionBinaryName)
+				if _, err := os.Stat(commandBinaryName); err != nil {
+					return fmt.Errorf("%s: no such file or directory", commandBinaryName)
 				}
 
 				return Run(internal.NewCommandGenerator(&types.Command{
-					Name: "./" + extensionBinaryName,
+					Name: "./" + commandBinaryName,
 					Args: args[1:],
 				}))
 			}

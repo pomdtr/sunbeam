@@ -123,40 +123,6 @@ func SearchSunbeamExtensions(query string) ([]GithubRepo, error) {
 	return body.Items, nil
 }
 
-type Release struct {
-	TagName string `json:"tag_name"`
-}
-
-func GetLatestRelease(repoUrl string) (*Release, error) {
-	matches := repoRegex.FindStringSubmatch(repoUrl)
-
-	if len(matches) != 3 {
-		return nil, fmt.Errorf("invalid repo url: %s", repoUrl)
-	}
-
-	owner := matches[1]
-	name := matches[2]
-
-	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, name)
-
-	resp, err := http.Get(apiUrl)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get latest release: %s", resp.Status)
-	}
-
-	var release Release
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
-		return nil, err
-	}
-
-	return &release, nil
-}
-
 type GitCommit struct {
 	Sha string `json:"sha"`
 }

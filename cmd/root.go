@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/adrg/xdg"
 	"github.com/cli/cli/v2/pkg/findsh"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
@@ -24,8 +23,8 @@ import (
 )
 
 const (
-	coreGroupID      = "core"
-	extensionGroupID = "extension"
+	coreGroupID   = "core"
+	customGroupID = "extension"
 )
 
 var (
@@ -45,9 +44,7 @@ func init() {
 	}
 }
 
-func Execute() error {
-	dataDir := filepath.Join(xdg.DataHome, "sunbeam")
-	extensionRoot := filepath.Join(dataDir, "extensions")
+func NewRootCmd(manifest *Manifest) *cobra.Command {
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -80,25 +77,19 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 
-	extensions, err := ListExtensions(extensionRoot)
-	if err != nil {
-		return fmt.Errorf("could not list extensions: %w", err)
-	}
-
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
-		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
+		&cobra.Group{ID: customGroupID, Title: "Custom Commands"},
 	)
-	rootCmd.AddCommand(NewExtensionCmd(extensionRoot, extensions))
 	rootCmd.AddCommand(NewQueryCmd())
+	rootCmd.AddCommand(NewCommandCmd(manifest))
 	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewListCmd())
 	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewDetailCmd())
-	rootCmd.AddCommand(NewRunCmd(extensionRoot))
-	rootCmd.AddCommand(NewInfoCmd(extensionRoot, Version))
+	rootCmd.AddCommand(NewRunCmd())
 	rootCmd.AddCommand(NewEvalCmd())
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
@@ -117,6 +108,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 	rootCmd.AddCommand(docCmd)
+
+	for name, command := range manifest.Commands {
+		rootCmd.AddCommand(NewCustomCmd(name, command))
+	}
 
 	manCmd := &cobra.Command{
 		Use:    "generate-man-pages [path]",
@@ -138,38 +133,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	for extension, manifest := range extensions {
-		rootCmd.AddCommand(NewExtensionExecCmd(extensionRoot, extension, manifest))
-	}
+	return rootCmd
 
-	return rootCmd.Execute()
-}
-
-func NewExtensionExecCmd(extensionRoot string, extensionName string, manifest *ExtensionManifest) *cobra.Command {
-	return &cobra.Command{
-		Use:                extensionName,
-		Short:              manifest.Description,
-		DisableFlagParsing: true,
-		GroupID:            extensionGroupID,
-
-		RunE: func(cmd *cobra.Command, args []string) error {
-			var input string
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				inputBytes, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-
-				input = string(inputBytes)
-			}
-
-			if manifest.Type == ExtentionTypeLocal {
-				return runExtension(manifest.Entrypoint, args, input)
-			}
-
-			return runExtension(filepath.Join(extensionRoot, extensionName, manifest.Entrypoint), args, input)
-		},
-	}
 }
 
 func runExtension(extensionBin string, args []string, input string) error {
@@ -227,7 +192,7 @@ func Run(generator internal.PageGenerator) error {
 }
 
 func buildDoc(command *cobra.Command) (string, error) {
-	if command.GroupID == extensionGroupID {
+	if command.GroupID == customGroupID {
 		return "", nil
 	}
 
@@ -257,31 +222,29 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewInfoCmd(extensionRoot string, version string) *cobra.Command {
+func NewCustomCmd(commandName string, command Command) *cobra.Command {
 	return &cobra.Command{
-		Use:   "info",
-		Short: "Print information about sunbeam",
+		Use:                commandName,
+		Short:              command.Title,
+		Long:               command.Description,
+		DisableFlagParsing: true,
+		GroupID:            customGroupID,
+
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return Run(func() (*types.Page, error) {
-				return &types.Page{
-					Title: "Info",
-					Type:  types.ListPage,
-					Items: []types.ListItem{
-						{Title: "Version", Subtitle: version, Actions: []types.Action{
-							{
-								Type: types.CopyAction,
-								Text: version,
-							},
-						}},
-						{Title: "Extension Root", Subtitle: extensionRoot, Actions: []types.Action{
-							{
-								Type: types.CopyAction,
-								Text: extensionRoot,
-							},
-						}},
-					}}, nil
-			})
+			if len(args) == 1 && args[0] == "--help" {
+				return cmd.Help()
+			}
+			var input string
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				inputBytes, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+
+				input = string(inputBytes)
+			}
+
+			return runExtension(filepath.Join(command.Dir, commandBinaryName), args, input)
 		},
 	}
-
 }
