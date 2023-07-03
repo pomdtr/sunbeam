@@ -41,24 +41,22 @@ type Command struct {
 	*CommandMetadata
 	Origin     string `json:"origin"`
 	Version    string `json:"version"`
-	EntryPoint string `json:"entryPoint"`
-}
-
-func (c Command) Dir() string {
-	return filepath.Dir(c.EntryPoint)
+	Dir        string `json:"dir"`
+	Entrypoint string `json:"entryPoint"`
 }
 
 func (c Command) IsLocal() bool {
-	return c.Dir() == c.Origin || c.EntryPoint == c.Origin
+	return c.Dir == c.Origin
 }
 
 func LoadManifest(manifestPath string) (*Manifest, error) {
+	manifest := Manifest{
+		path:        manifestPath,
+		commandRoot: filepath.Join(filepath.Dir(manifestPath), "commands"),
+	}
+
 	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
-		manifest := Manifest{
-			path:        manifestPath,
-			commandRoot: filepath.Dir(manifestPath),
-			Commands:    make(map[string]Command),
-		}
+		manifest.Commands = make(map[string]Command)
 
 		if err := os.MkdirAll(manifest.commandRoot, 0755); err != nil {
 			return nil, err
@@ -71,10 +69,6 @@ func LoadManifest(manifestPath string) (*Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	var manifest Manifest
-	manifest.path = manifestPath
-	manifest.commandRoot = filepath.Join(filepath.Dir(manifestPath), "commands")
 
 	err = json.Unmarshal(manifestFile, &manifest)
 	if err != nil {
@@ -132,7 +126,10 @@ func (m Manifest) RenameCommand(oldCommandName string, newCommandName string) er
 		return fmt.Errorf("command already exists")
 	}
 
-	m.Commands[newCommandName] = m.Commands[oldCommandName]
+	command := m.Commands[oldCommandName]
+	command.Dir = filepath.Join(m.commandRoot, newCommandName)
+
+	m.Commands[newCommandName] = command
 	delete(m.Commands, oldCommandName)
 	return m.Save()
 }
@@ -245,10 +242,8 @@ type CommandMetadata struct {
 	Title         string      `json:"title"`
 	Description   string      `json:"description,omitempty"`
 	Mode          CommandMode `json:"mode"`
-	Arguments     []string    `json:"arguments"`
 	Author        string      `json:"author,omitempty"`
 	AuthorURL     string      `json:"authorURL,omitempty"`
-	Origin        string      `json:"-"`
 }
 
 type CommandArgument struct {
@@ -290,10 +285,6 @@ func extractMetadata(script []byte) (*CommandMetadata, error) {
 			metadata.Mode = CommandMode(value)
 			if !metadata.Mode.Supported() {
 				return nil, fmt.Errorf("unsupported mode: %s", metadata.Mode)
-			}
-		case "arguments":
-			if err := json.Unmarshal([]byte(value), &metadata.Arguments); err != nil {
-				return nil, fmt.Errorf("unable to parse arguments: %s", err)
 			}
 		case "schemaVersion":
 			if err := json.Unmarshal([]byte(value), &metadata.SchemaVersion); err != nil {
@@ -600,6 +591,11 @@ func NewCommandRenameCmd(manifest *Manifest) *cobra.Command {
 				return fmt.Errorf("could not rename command: %s", err)
 			}
 
+			if err := manifest.RenameCommand(args[0], args[1]); err != nil {
+				return fmt.Errorf("could not rename command: %s", err)
+			}
+
+			cmd.Printf("Renamed command %s to %s\n", args[0], args[1])
 			return nil
 		},
 	}
@@ -653,7 +649,8 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 				if err := manifest.AddCommand(commandName, Command{
 					Version:         "local",
 					Origin:          origin,
-					EntryPoint:      entrypoint,
+					Dir:             filepath.Dir(entrypoint),
+					Entrypoint:      filepath.Base(entrypoint),
 					CommandMetadata: metadata,
 				}); err != nil {
 					return fmt.Errorf("could not add command: %s", err)
@@ -706,7 +703,8 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 
 			if err := manifest.AddCommand(commandName, Command{
 				Origin:          origin,
-				EntryPoint:      filepath.Join(commandDir, commandBinaryName),
+				Entrypoint:      commandBinaryName,
+				Dir:             commandDir,
 				Version:         version,
 				CommandMetadata: metadata,
 			}); err != nil {
@@ -774,11 +772,7 @@ func NewCommandRemoveCmd(manifest *Manifest) *cobra.Command {
 					continue
 				}
 
-				if _, err := os.Stat(command.Dir()); os.IsNotExist(err) {
-					return fmt.Errorf("command %s not installed", commandName)
-				}
-
-				if err := os.RemoveAll(command.Dir()); err != nil {
+				if err := os.RemoveAll(command.Dir); err != nil {
 					return fmt.Errorf("unable to remove command: %s", err)
 				}
 
@@ -853,11 +847,11 @@ func NewCommandUpgradeCmd(manifest *Manifest) *cobra.Command {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 
-				if err := os.RemoveAll(command.Dir()); err != nil {
+				if err := os.RemoveAll(command.Dir); err != nil {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 
-				if err := os.Rename(tempdir, command.Dir()); err != nil {
+				if err := os.Rename(tempdir, command.Dir); err != nil {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 
