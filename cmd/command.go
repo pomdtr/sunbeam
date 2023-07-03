@@ -39,9 +39,17 @@ type Manifest struct {
 
 type Command struct {
 	*CommandMetadata
-	Origin  string `json:"origin"`
-	Version string `json:"version"`
-	Dir     string `json:"dir"`
+	Origin     string `json:"origin"`
+	Version    string `json:"version"`
+	EntryPoint string `json:"entryPoint"`
+}
+
+func (c Command) Dir() string {
+	return filepath.Dir(c.EntryPoint)
+}
+
+func (c Command) IsLocal() bool {
+	return c.Dir() == c.Origin || c.EntryPoint == c.Origin
 }
 
 func LoadManifest(manifestPath string) (*Manifest, error) {
@@ -66,7 +74,7 @@ func LoadManifest(manifestPath string) (*Manifest, error) {
 
 	var manifest Manifest
 	manifest.path = manifestPath
-	manifest.commandRoot = filepath.Dir(manifestPath)
+	manifest.commandRoot = filepath.Join(filepath.Dir(manifestPath), "commands")
 
 	err = json.Unmarshal(manifestFile, &manifest)
 	if err != nil {
@@ -226,10 +234,6 @@ func (r ScriptRemote) Download(targetDir string, _ string) error {
 	}
 
 	if _, err = io.Copy(f, res.Body); err != nil {
-		return err
-	}
-
-	if err := os.Chmod(entrypointPath, 0755); err != nil {
 		return err
 	}
 
@@ -603,9 +607,10 @@ func NewCommandRenameCmd(manifest *Manifest) *cobra.Command {
 
 func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add <name> <origin>",
-		Short: "Install a sunbeam command from a folder/gist/repository",
-		Args:  cobra.ExactArgs(2),
+		Use:     "add <name> <origin>",
+		Short:   "Install a sunbeam command from a folder/gist/repository",
+		Args:    cobra.ExactArgs(2),
+		Aliases: []string{"install"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			commandName := args[0]
 			commands := cmd.Root().Commands()
@@ -625,13 +630,16 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 			commandName := args[0]
 			origin := args[1]
 
-			if origin == "." {
-				cwd, err := os.Getwd()
+			if info, err := os.Stat(origin); err == nil {
+				entrypoint, err := filepath.Abs(origin)
 				if err != nil {
-					return fmt.Errorf("unable to get current working directory: %s", err)
+					return fmt.Errorf("could not get absolute path: %s", err)
 				}
 
-				entrypoint := filepath.Join(cwd, commandBinaryName)
+				if info.IsDir() {
+					entrypoint = filepath.Join(entrypoint, commandBinaryName)
+				}
+
 				content, err := os.ReadFile(entrypoint)
 				if err != nil {
 					return fmt.Errorf("unable to read command binary: %s", err)
@@ -644,8 +652,8 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 
 				if err := manifest.AddCommand(commandName, Command{
 					Version:         "local",
-					Origin:          cwd,
-					Dir:             cwd,
+					Origin:          origin,
+					EntryPoint:      entrypoint,
 					CommandMetadata: metadata,
 				}); err != nil {
 					return fmt.Errorf("could not add command: %s", err)
@@ -653,6 +661,7 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 
 				cmd.Printf("Added command %s\n", commandName)
 				return nil
+
 			}
 
 			originUrl, err := url.Parse(origin)
@@ -675,6 +684,7 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 				return fmt.Errorf("could not install command: %s", err)
 			}
 
+			entrypoint := filepath.Join(tempDir, commandBinaryName)
 			content, err := os.ReadFile(filepath.Join(tempDir, commandBinaryName))
 			if err != nil {
 				return fmt.Errorf("unable to read command binary: %s", err)
@@ -693,7 +703,7 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 
 			if err := manifest.AddCommand(commandName, Command{
 				Origin:          origin,
-				Dir:             commandDir,
+				EntryPoint:      entrypoint,
 				Version:         version,
 				CommandMetadata: metadata,
 			}); err != nil {
@@ -742,20 +752,38 @@ func NewCommandRemoveCmd(manifest *Manifest) *cobra.Command {
 	return &cobra.Command{
 		Use:       "remove <command> [commands...]",
 		Short:     "Remove an installed command",
-		Args:      cobra.MinimumNArgs(1),
+		Aliases:   []string{"rm", "uninstall"},
+		Args:      cobra.MatchAll(cobra.MinimumNArgs(1), cobra.OnlyValidArgs),
 		ValidArgs: manifest.ListCommands(),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			for _, command := range args {
-				targetDir := filepath.Join(manifest.commandRoot, command)
-				if _, err := os.Stat(targetDir); os.IsNotExist(err) {
-					return fmt.Errorf("command %s not installed", command)
+			for _, commandName := range args {
+				command, ok := manifest.Commands[commandName]
+				if !ok {
+					return fmt.Errorf("command %s not installed", commandName)
 				}
 
-				if err := os.RemoveAll(targetDir); err != nil {
+				if command.IsLocal() {
+					if err := manifest.RemoveCommand(commandName); err != nil {
+						return fmt.Errorf("unable to remove command: %s", err)
+					}
+
+					fmt.Printf("✓ Removed command %s\n", commandName)
+					continue
+				}
+
+				if _, err := os.Stat(command.Dir()); os.IsNotExist(err) {
+					return fmt.Errorf("command %s not installed", commandName)
+				}
+
+				if err := os.RemoveAll(command.Dir()); err != nil {
 					return fmt.Errorf("unable to remove command: %s", err)
 				}
 
-				fmt.Printf("✓ Removed command %s\n", command)
+				if err := manifest.RemoveCommand(commandName); err != nil {
+					return fmt.Errorf("unable to remove command: %s", err)
+				}
+
+				fmt.Printf("✓ Removed command %s\n", commandName)
 			}
 			return nil
 		},
@@ -791,7 +819,7 @@ func NewCommandUpgradeCmd(manifest *Manifest) *cobra.Command {
 
 			for _, commandName := range toUpgrade {
 				command := manifest.Commands[commandName]
-				if command.Origin == command.Dir {
+				if command.IsLocal() {
 					fmt.Printf("Command %s is not installed from a remote, skipping\n", commandName)
 					continue
 				}
@@ -822,11 +850,11 @@ func NewCommandUpgradeCmd(manifest *Manifest) *cobra.Command {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 
-				if err := os.RemoveAll(command.Dir); err != nil {
+				if err := os.RemoveAll(command.Dir()); err != nil {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 
-				if err := os.Rename(tempdir, command.Dir); err != nil {
+				if err := os.Rename(tempdir, command.Dir()); err != nil {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 

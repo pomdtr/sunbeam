@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -244,7 +243,7 @@ func NewCustomCmd(commandName string, command Command) *cobra.Command {
 				input = string(inputBytes)
 			}
 
-			return runExtension(filepath.Join(command.Dir, commandBinaryName), args, input)
+			return runExtension(command.EntryPoint, args, input)
 		},
 	}
 }
