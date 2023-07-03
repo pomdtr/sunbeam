@@ -684,7 +684,6 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 				return fmt.Errorf("could not install command: %s", err)
 			}
 
-			entrypoint := filepath.Join(tempDir, commandBinaryName)
 			content, err := os.ReadFile(filepath.Join(tempDir, commandBinaryName))
 			if err != nil {
 				return fmt.Errorf("unable to read command binary: %s", err)
@@ -695,6 +694,10 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 				return fmt.Errorf("unable to extract metadata: %s", err)
 			}
 
+			if err := os.MkdirAll(manifest.commandRoot, 0755); err != nil {
+				return fmt.Errorf("could not create command directory: %s", err)
+			}
+
 			commandDir := filepath.Join(manifest.commandRoot, commandName)
 
 			if err := os.Rename(tempDir, commandDir); err != nil {
@@ -703,7 +706,7 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 
 			if err := manifest.AddCommand(commandName, Command{
 				Origin:          origin,
-				EntryPoint:      entrypoint,
+				EntryPoint:      filepath.Join(commandDir, commandBinaryName),
 				Version:         version,
 				CommandMetadata: metadata,
 			}); err != nil {
