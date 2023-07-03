@@ -45,9 +45,9 @@ The only requirement is that the script is executable and outputs a JSON object 
 
 ### Any github repository can be used as an extension
 
-Sunbeam is designed to be extended. Any github repository containing a `sunbeam-extension` executable can be installed using the `sunbeam install` command.
+Sunbeam is designed to be extended. Any github repository containing a `sunbeam-command` executable can be installed using the `sunbeam install` command.
 
-You can also distribute your extensions as a golang binary published on github releases, and even automatically compile them thanks to a [github action](https://github.com/pomdtr/sunbeam-extension-precompile).
+You can also distribute your extensions as a golang binary published on github releases, and even automatically compile them thanks to a [github action](https://github.com/pomdtr/sunbeam-command-precompile).
 
 ### Sunbeam supports custom clients
 

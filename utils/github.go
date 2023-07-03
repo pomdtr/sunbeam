@@ -92,13 +92,13 @@ type SearchBody struct {
 
 func SearchSunbeamExtensions(query string) ([]GithubRepo, error) {
 
-	// Search extension with a sunbeam-extension topic
+	// Search extension with a sunbeam-command topic
 	extensionUrl := url.URL{
 		Scheme: "https",
 		Host:   "api.github.com",
 		Path:   "/search/repositories",
 		RawQuery: url.Values{
-			"q":     []string{fmt.Sprintf("%s topic:sunbeam-extension", query)},
+			"q":     []string{fmt.Sprintf("%s topic:sunbeam-command", query)},
 			"sort":  []string{"stars"},
 			"order": []string{"desc"},
 		}.Encode(),

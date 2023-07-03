@@ -642,12 +642,14 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 					return fmt.Errorf("unable to extract metadata: %s", err)
 				}
 
-				manifest.AddCommand(commandName, Command{
+				if err := manifest.AddCommand(commandName, Command{
 					Version:         "local",
 					Origin:          cwd,
 					Dir:             cwd,
 					CommandMetadata: metadata,
-				})
+				}); err != nil {
+					return fmt.Errorf("could not add command: %s", err)
+				}
 
 				cmd.Printf("Added command %s\n", commandName)
 				return nil
@@ -689,12 +691,14 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 				return fmt.Errorf("could not install command: %s", err)
 			}
 
-			manifest.AddCommand(commandName, Command{
+			if err := manifest.AddCommand(commandName, Command{
 				Origin:          origin,
 				Dir:             commandDir,
 				Version:         version,
 				CommandMetadata: metadata,
-			})
+			}); err != nil {
+				return fmt.Errorf("could not add command: %s", err)
+			}
 
 			fmt.Printf("✓ Installed command %s\n", commandName)
 			return nil

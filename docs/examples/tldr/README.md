@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam extension install tldr https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/sunbeam-extension
+sunbeam extension install tldr https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/sunbeam-command
 ```
 
 ## Usage
@@ -23,5 +23,5 @@ sunbeam tldr # List all pages
 ## Code
 
 ```bash
-{{#include ./sunbeam-extension}}
+{{#include ./sunbeam-command}}
 ```
