@@ -71,7 +71,11 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 	action = internal.RenderAction(action, "{{query}}", query)
 	switch action.Type {
 	case types.PushAction:
-		return Run(internal.NewFileGenerator(action.Page))
+		generator, err := internal.GeneratorFromAction(action)
+		if err != nil {
+			return fmt.Errorf("could not create generator: %s", err)
+		}
+		return Run(generator)
 	case types.RunAction:
 		output, err := action.Command.Output(context.TODO())
 		if err != nil {
