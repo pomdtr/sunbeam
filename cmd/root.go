@@ -24,7 +24,7 @@ import (
 
 const (
 	coreGroupID   = "core"
-	customGroupID = "extension"
+	customGroupID = "custom"
 )
 
 var (
@@ -137,15 +137,15 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 }
 
-func runExtension(extensionBin string, args []string, input string) error {
+func runCustomCommand(commandBin string, args []string, input string) error {
 	var command types.Command
 	if runtime.GOOS != "windows" {
-		if err := os.Chmod(extensionBin, 0755); err != nil {
+		if err := os.Chmod(commandBin, 0755); err != nil {
 			return err
 		}
 
 		command = types.Command{
-			Name: extensionBin,
+			Name: commandBin,
 			Args: args,
 		}
 		return Run(internal.NewCommandGenerator(&command))
@@ -158,7 +158,7 @@ func runExtension(extensionBin string, args []string, input string) error {
 		}
 		return err
 	}
-	forwardArgs := append([]string{"-c", `command "$@"`, "--", extensionBin}, args...)
+	forwardArgs := append([]string{"-c", `command "$@"`, "--", commandBin}, args...)
 
 	command = types.Command{
 		Name: shExe,
@@ -244,7 +244,7 @@ func NewCustomCmd(commandName string, command Command) *cobra.Command {
 				input = string(inputBytes)
 			}
 
-			return runExtension(filepath.Join(command.Dir, command.Entrypoint), args, input)
+			return runCustomCommand(filepath.Join(command.Dir, command.Entrypoint), args, input)
 		},
 	}
 }

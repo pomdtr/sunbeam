@@ -38,16 +38,14 @@ Sunbeam is written is distributed as a single binary, so you can run it on any p
 
 ### Sunbeam is language agnostic
 
-Sunbeam communicates with your extensions using JSON, so you can use any language you want to build your scripts.
+Sunbeam communicates with your scripts using JSON, so you can use any language you want.
 The only requirement is that the script is executable and outputs a JSON object conforming to the [Sunbeam JSON Schema](./schemas/page.schema.json) on stdout.
 
 ![sunbeam running in vscode](./static/vscode.png)
 
-### Any github repository can be used as an extension
+### Any github repository can be used as a command
 
-Sunbeam is designed to be extended. Any github repository containing a `sunbeam-command` executable can be installed using the `sunbeam install` command.
-
-You can also distribute your extensions as a golang binary published on github releases, and even automatically compile them thanks to a [github action](https://github.com/pomdtr/sunbeam-command-precompile).
+Sunbeam is designed to be extended. Any github repository containing a `sunbeam-command` executable can be installed using the `sunbeam install` command. You can also install commands from gist, or any pastebin-like service.
 
 ### Sunbeam supports custom clients
 
@@ -63,7 +61,7 @@ Sunbeam wouldn't exist without the work of other people. Here are some projects 
 
 - [raycast](https://raycast.com): Sunbeam shamelessly copy most of raycast UX. Even the project name is a reference to raycast.
 - [fzf](https://github.com/junegunn/fzf): Sunbeam tries to take inspiration from fzf, but it's not a drop-in replacement. Sunbeam is designed to be used as a launcher, not as a fuzzy finder.
-- [kit](https://www.scriptkit.com/): Kit is another script-focused launcher. Sunbeam gists extensions are inspired by kit scripts.
+- [kit](https://www.scriptkit.com/): Kit is another script-focused launcher.
 - [gum](https://github.com/charmbracelet/gum): Sunbeam is powered by charm libraries, and can be seen as a alternative spin on gum. Gum is invoked by scripts, while sunbeam invokes scripts.
 - [slapdash](https://slapdash.com): The sunbeam event loop was inspired by slapdash. Sadly, slapdash doesn't seem to be updated anymore.
 - [gh](https://cli.github.com): The sunbeam extension mechanism is a copycat of the gh extension mechanism.

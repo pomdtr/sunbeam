@@ -7,13 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
@@ -38,7 +35,7 @@ type Manifest struct {
 }
 
 type Command struct {
-	*CommandMetadata
+	*catalog.CommandMetadata
 	Origin     string `json:"origin"`
 	Version    string `json:"version"`
 	Dir        string `json:"dir"`
@@ -237,106 +234,6 @@ func (r ScriptRemote) Download(targetDir string, _ string) error {
 	return nil
 }
 
-type CommandMetadata struct {
-	SchemaVersion int         `json:"schemaVersion"`
-	Title         string      `json:"title"`
-	Description   string      `json:"description,omitempty"`
-	Mode          CommandMode `json:"mode"`
-	Author        string      `json:"author,omitempty"`
-	AuthorURL     string      `json:"authorURL,omitempty"`
-}
-
-type CommandArgument struct {
-	Type           string `json:"type"`
-	Placeholder    string `json:"placeholder"`
-	Optional       bool   `json:"optional"`
-	PercentEncoded bool   `json:"percentEncoded"`
-}
-
-type CommandMode string
-
-const (
-	CommandModeFullOutput CommandMode = "fullOutput"
-	CommandModeSilent     CommandMode = "silent"
-	CommandModeView       CommandMode = "view"
-)
-
-func (m CommandMode) Supported() bool {
-	return m == CommandModeFullOutput || m == CommandModeSilent || m == CommandModeView
-}
-
-var MetadataRegexp = regexp.MustCompile(`@(sunbeam|raycast)\.(?P<key>[A-Za-z0-9]+)\s(?P<value>[\S ]+)`)
-
-func extractMetadata(script []byte) (*CommandMetadata, error) {
-	matches := MetadataRegexp.FindAllSubmatch(script, -1)
-	if len(matches) == 0 {
-		return nil, fmt.Errorf("no metadata found")
-	}
-
-	metadata := CommandMetadata{}
-	for _, match := range matches {
-		key := string(match[2])
-		value := string(match[3])
-
-		switch key {
-		case "title":
-			metadata.Title = value
-		case "mode":
-			metadata.Mode = CommandMode(value)
-			if !metadata.Mode.Supported() {
-				return nil, fmt.Errorf("unsupported mode: %s", metadata.Mode)
-			}
-		case "schemaVersion":
-			if err := json.Unmarshal([]byte(value), &metadata.SchemaVersion); err != nil {
-				return nil, fmt.Errorf("unable to parse schemaVersion: %s", err)
-			}
-		default:
-			log.Printf("unsupported metadata key: %s", key)
-		}
-	}
-
-	if metadata.SchemaVersion == 0 {
-		return nil, fmt.Errorf("no schemaVersion found")
-	}
-
-	if metadata.Title == "" {
-		return nil, fmt.Errorf("no title found")
-	}
-
-	if metadata.Mode == "" {
-		return nil, fmt.Errorf("no mode found")
-	}
-
-	return &metadata, nil
-}
-
-func ReadManifest(manifestPath string) (*CommandMetadata, error) {
-	bs, err := os.ReadFile(manifestPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to load command manifest: %s", err)
-	}
-
-	var manifest CommandMetadata
-	if err := json.Unmarshal(bs, &manifest); err != nil {
-		return nil, fmt.Errorf("unable to load command manifest: %s", err)
-	}
-
-	return &manifest, nil
-}
-
-func (m *CommandMetadata) Write(manifestPath string) error {
-	bs, err := json.MarshalIndent(m, "", "  ")
-	if err != nil {
-		return fmt.Errorf("unable to write command manifest: %s", err)
-	}
-
-	if err := os.WriteFile(manifestPath, bs, 0644); err != nil {
-		return fmt.Errorf("unable to write command manifest: %s", err)
-	}
-
-	return nil
-}
-
 func NewCommandCmd(manifest *Manifest) *cobra.Command {
 	commandCmd := &cobra.Command{
 		Use:     "command",
@@ -369,29 +266,11 @@ func NewCommandBrowseCmd() *cobra.Command {
 
 				listItems := make([]types.ListItem, 0)
 				for _, item := range catalogItems {
-					supportedOs := map[string]struct{}{}
-					for _, platform := range item.Platforms {
-						switch platform {
-						case "windows":
-							supportedOs["windows"] = struct{}{}
-						case "linux":
-							supportedOs["linux"] = struct{}{}
-						case "macos", "darwin":
-							supportedOs["darwin"] = struct{}{}
-						}
-					}
-
-					if len(supportedOs) > 0 {
-						if _, ok := supportedOs[runtime.GOOS]; !ok {
-							continue
-						}
-					}
-
 					listItems = append(listItems, types.ListItem{
-						Title:    item.Title,
-						Subtitle: item.Description,
+						Title:    item.Metadata.Title,
+						Subtitle: item.Metadata.Title,
 						Accessories: []string{
-							item.Author,
+							item.Metadata.Author,
 						},
 						Actions: []types.Action{
 							{
@@ -641,7 +520,7 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 					return fmt.Errorf("unable to read command binary: %s", err)
 				}
 
-				metadata, err := extractMetadata(content)
+				metadata, err := catalog.ExtractCommandMetadata(content)
 				if err != nil {
 					return fmt.Errorf("unable to extract metadata: %s", err)
 				}
@@ -686,7 +565,7 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 				return fmt.Errorf("unable to read command binary: %s", err)
 			}
 
-			metadata, err := extractMetadata(content)
+			metadata, err := catalog.ExtractCommandMetadata(content)
 			if err != nil {
 				return fmt.Errorf("unable to extract metadata: %s", err)
 			}
