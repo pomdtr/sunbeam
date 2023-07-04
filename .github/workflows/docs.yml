@@ -17,9 +17,10 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.19
-      - name: Refresh extension catalog
+      - name: Refresh Command Catalog
         run: |
-          go run catalog/scripts/refresh-catalog.go > catalog.md
+          cat catalog/catalog.txt | go run catalog/scripts/refresh-catalog.go > catalog.md
+          cat catalog/catalog.txt | go run catalog/scripts/refresh-catalog.go --json > static/catalog.json
       - name: Refresh Cli Docs
         run: |
           go build -o sunbeam

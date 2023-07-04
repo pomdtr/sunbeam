@@ -10,7 +10,7 @@
     "build": {
         "path_prefix": "sunbeam",
         "additional_pages": {
-            "Extension Catalog": "./catalog.md"
+            "Command Catalog": "./catalog.md"
         }
     },
     "components": {

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# @sunbeam.schemaVersion 1
+# @sunbeam.title File Filter
+# @sunbeam.mode view
+
 set -euo pipefail
 
 # shellcheck disable=SC2016

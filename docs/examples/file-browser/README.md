@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam extension install files https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/file-browser/sunbeam-extension
+sunbeam extension install files https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/file-browser/sunbeam-command
 ```
 
 ## Usage
@@ -25,5 +25,5 @@ sunbeam files --show-hidden # Show hidden files
 ## Code
 
 ```python
-{{#include ./sunbeam-extension}}
+{{#include ./sunbeam-command}}
 ```
