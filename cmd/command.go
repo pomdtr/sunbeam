@@ -477,7 +477,7 @@ func NewCommandManageCmd() *cobra.Command {
 							},
 							{
 								Title: "Upgrade Command",
-								Type:  types.RunAction,
+								Type:  types.ExecAction,
 								Key:   "u",
 								Command: &types.Command{
 									Name: os.Args[0],
@@ -485,7 +485,7 @@ func NewCommandManageCmd() *cobra.Command {
 								},
 							},
 							{
-								Type:  types.RunAction,
+								Type:  types.ExecAction,
 								Title: "Rename Command",
 								Key:   "r",
 								Command: &types.Command{
@@ -503,7 +503,7 @@ func NewCommandManageCmd() *cobra.Command {
 								},
 							},
 							{
-								Type:  types.RunAction,
+								Type:  types.ExecAction,
 								Title: "Remove Command",
 								Key:   "d",
 								Command: &types.Command{

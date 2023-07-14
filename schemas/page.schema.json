@@ -393,7 +393,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "run",
+                            "const": "exec",
                             "description": "The type of the action."
                         },
                         "title": {

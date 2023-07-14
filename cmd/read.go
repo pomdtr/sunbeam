@@ -13,8 +13,8 @@ import (
 
 func NewReadCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "read",
-		Short:   "read a sunbeam manifest",
+		Use:     "run <command> [args...]",
+		Short:   "read a sunbeam command",
 		GroupID: coreGroupID,
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -32,23 +32,27 @@ func NewReadCmd() *cobra.Command {
 				return err
 			}
 
-			manifestPath := args[0]
+			scriptPath := args[0]
 			if info.IsDir() {
-				manifestPath = filepath.Join(manifestPath, manifestName)
+				scriptPath = filepath.Join(scriptPath, manifestName)
 			}
 
-			if filepath.Base(manifestPath) != manifestName {
-				return fmt.Errorf("invalid manifest name: %s", manifestPath)
+			if filepath.Base(scriptPath) != manifestName {
+				return runCommand(types.Command{
+					Name:  scriptPath,
+					Args:  args[1:],
+					Input: input,
+				})
 			}
 
-			command, err := ParseCommand(filepath.Dir(manifestPath), "")
+			command, err := ParseCommand(filepath.Dir(scriptPath), "")
 			if err != nil {
 				return fmt.Errorf("could not parse command: %w", err)
 			}
 
 			if command.Entrypoint != "" {
 				return runCommand(types.Command{
-					Name:  filepath.Join(filepath.Dir(manifestPath), command.Entrypoint),
+					Name:  filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
 					Args:  args[1:],
 					Input: input,
 				})
@@ -66,7 +70,7 @@ func NewReadCmd() *cobra.Command {
 								Title: "Run",
 								Type:  types.PushAction,
 								Command: &types.Command{
-									Name: filepath.Join(filepath.Dir(manifestPath), command.Entrypoint),
+									Name: filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
 									Args: args,
 								},
 							},
@@ -90,7 +94,7 @@ func NewReadCmd() *cobra.Command {
 				}
 
 				return runCommand(types.Command{
-					Name:  filepath.Join(filepath.Dir(manifestPath), c.Entrypoint),
+					Name:  filepath.Join(filepath.Dir(scriptPath), c.Entrypoint),
 					Args:  args[2:],
 					Input: input,
 				})

@@ -166,7 +166,7 @@ export type Action =
       /**
        * The type of the action.
        */
-      type: "run";
+      type: "exec";
       /**
        * The title of the action.
        */
@@ -429,8 +429,6 @@ export interface Form {
   title?: string;
   submitAction: Action;
 }
-
-
 
 export function List(list: List) {
   return list;

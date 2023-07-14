@@ -133,7 +133,7 @@ const (
 	CopyAction   = "copy"
 	OpenAction   = "open"
 	PushAction   = "push"
-	RunAction    = "run"
+	ExecAction   = "exec"
 	PasteAction  = "paste"
 	ReloadAction = "reload"
 	FetchAction  = "fetch"

@@ -76,7 +76,7 @@ func triggerAction(action types.Action, inputs map[string]string, query string) 
 			return fmt.Errorf("could not create generator: %s", err)
 		}
 		return Run(generator)
-	case types.RunAction:
+	case types.ExecAction:
 		output, err := action.Command.Output(context.TODO())
 		if err != nil {
 			return fmt.Errorf("command failed: %s", err)

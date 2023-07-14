@@ -90,7 +90,7 @@ Detail view support actions, so you can add a button to the page:
   "text": "Hello World!",
   "actions": [
     {
-      "type": "run",
+      "type": "exec",
       "command": "echo Hello World!"
     }
   ]
@@ -105,7 +105,7 @@ You can add an array of inputs to every sunbeam actions, and reference their val
 
 ```json
 {
-  "type": "run",
+  "type": "exec",
   "command": "echo {{input:name}}",
   "inputs": [
     {

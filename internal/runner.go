@@ -142,7 +142,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 			}
 		}
 
-	case types.RunAction, types.FetchAction, types.EvalAction:
+	case types.ExecAction, types.FetchAction, types.EvalAction:
 		return func() tea.Msg {
 			if action.Command != nil && action.OnSuccess == "" {
 				return ExitMsg{
@@ -539,7 +539,7 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 	}
 
 	expandAction := func(action types.Action) (*types.Action, error) {
-		if action.Type == types.RunAction && base != nil && base.Scheme != "file" && base.Scheme != "" {
+		if action.Type == types.ExecAction && base != nil && base.Scheme != "file" && base.Scheme != "" {
 			return nil, fmt.Errorf("run action is not supported for remote pages")
 		}
 
@@ -578,7 +578,7 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 				action.Title = "Open"
 			case types.CopyAction:
 				action.Title = "Copy"
-			case types.RunAction:
+			case types.ExecAction:
 				action.Title = "Run"
 			case types.PushAction:
 				action.Title = "Push"
