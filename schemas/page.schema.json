@@ -117,9 +117,6 @@
                 "text": {
                     "type": "string"
                 },
-                "file": {
-                    "type": "string"
-                },
                 "expression": {
                     "$ref": "#/$defs/expression"
                 },
@@ -161,9 +158,6 @@
                             "$ref": "#/$defs/request"
                         },
                         "text": {
-                            "type": "string"
-                        },
-                        "file": {
                             "type": "string"
                         },
                         "expression": {
@@ -759,9 +753,6 @@
                     "$ref": "#/$defs/request"
                 },
                 "text": {
-                    "type": "string"
-                },
-                "file": {
                     "type": "string"
                 },
                 "expression": {

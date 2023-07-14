@@ -35,7 +35,6 @@ type Page struct {
 
 	// Detail page
 	Text       string      `json:"text,omitempty"`
-	File       string      `json:"file,omitempty"`
 	Command    *Command    `json:"command,omitempty"`
 	Request    *Request    `json:"request,omitempty"`
 	Expression *Expression `json:"expression,omitempty"`
@@ -297,7 +296,6 @@ func (b *Body) UnmarshalJSON(data []byte) error {
 
 type TextProvider struct {
 	Text       string      `json:"text,omitempty"`
-	File       string      `json:"file,omitempty"`
 	Command    *Command    `json:"command,omitempty"`
 	Request    *Request    `json:"request,omitempty"`
 	Expression *Expression `json:"expression,omitempty"`
@@ -389,12 +387,6 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 func (pp TextProvider) Output(ctx context.Context) ([]byte, error) {
 	if pp.Text != "" {
 		return []byte(pp.Text), nil
-	} else if pp.File != "" {
-		b, err := os.ReadFile(pp.File)
-		if err != nil {
-			return nil, err
-		}
-		return b, nil
 	} else if pp.Command != nil {
 		return pp.Command.Output(ctx)
 	} else if pp.Request != nil {

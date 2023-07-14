@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 
 	"github.com/pomdtr/sunbeam/schemas"
@@ -16,34 +15,6 @@ import (
 )
 
 type PageGenerator func() (*types.Page, error)
-
-func NewFileGenerator(name string) PageGenerator {
-	return func() (*types.Page, error) {
-		b, err := os.ReadFile(name)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := schemas.Validate(b); err != nil {
-			return nil, err
-		}
-
-		var page types.Page
-		if err := json.Unmarshal(b, &page); err != nil {
-			return nil, err
-		}
-
-		p, err := expandPage(page, &url.URL{
-			Scheme: "file",
-			Path:   path.Dir(name),
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return p, nil
-	}
-}
 
 func NewStaticGenerator(reader io.Reader) PageGenerator {
 	var pageRef *types.Page
@@ -77,10 +48,7 @@ func NewStaticGenerator(reader io.Reader) PageGenerator {
 }
 
 func NewPageProviderGenerator(pageProvider *types.TextProvider) PageGenerator {
-	// TODO: Add Text/Static ?
-	if pageProvider.File != "" {
-		return NewFileGenerator(pageProvider.File)
-	} else if pageProvider.Command != nil {
+	if pageProvider.Command != nil {
 		return NewCommandGenerator(pageProvider.Command)
 	} else if pageProvider.Request != nil {
 		return NewRequestGenerator(pageProvider.Request)
@@ -169,8 +137,6 @@ func NewRequestGenerator(request *types.Request) PageGenerator {
 
 func GeneratorFromAction(action types.Action) (PageGenerator, error) {
 	switch {
-	case action.Page != "":
-		return NewFileGenerator(action.Page), nil
 	case action.Command != nil:
 		return NewCommandGenerator(action.Command), nil
 	case action.Request != nil:

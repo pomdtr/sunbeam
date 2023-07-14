@@ -485,8 +485,6 @@ func RenderAction(action types.Action, old, new string) types.Action {
 func RenderTextProvider(pageProvider *types.TextProvider, old, new string) *types.TextProvider {
 	if pageProvider.Text != "" {
 		pageProvider.Text = strings.ReplaceAll(pageProvider.Text, old, new)
-	} else if pageProvider.File != "" {
-		pageProvider.File = strings.ReplaceAll(pageProvider.File, old, new)
 	} else if pageProvider.Command != nil {
 		pageProvider.Command = RenderCommand(pageProvider.Command, old, new)
 	} else if pageProvider.Request != nil {
