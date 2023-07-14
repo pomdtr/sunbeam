@@ -4,7 +4,7 @@
 
 There is two ways to wire sunbeam to your programs:
 
-- Run your command from sunbeam: `sunbeam exec ./my-command.sh`
+- Run your command from sunbeam: `sunbeam run ./my-command.sh`
 - Pipe a page to sunbeam: `<my-command> | sunbeam read`
 - Pipe rows to sunbeam: `gh repo list | sunbeam list`
 - Pipe text to sunbeam: `echo "hello world" | sunbeam detail`

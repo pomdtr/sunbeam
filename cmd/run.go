@@ -7,61 +7,106 @@ import (
 	"path/filepath"
 
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 )
 
 func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "run",
-		Short:   "Run a sunbeam command defined in the current directory",
+		Short:   "Run an arbitrar",
 		GroupID: coreGroupID,
-	}
-
-	if cwdCommand == nil {
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("no command manifest found in current directory")
-		}
-
-		return cmd
-	}
-
-	if cwdCommand.Entrypoint != "" {
-		cmd.DisableFlagParsing = true
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		Args:    cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
 			var input string
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				b, err := io.ReadAll(os.Stdin)
+				bs, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					return err
 				}
-				input = string(b)
+				input = string(bs)
 			}
 
-			return runCommand(filepath.Join(cwd, cwdCommand.Entrypoint), args, input)
-		}
-		return cmd
-	}
-
-	for name, command := range cwdCommand.SubCommands {
-		command := command
-		cmd.AddCommand(&cobra.Command{
-			Use:                name,
-			Short:              command.Title,
-			Long:               command.Description,
-			DisableFlagParsing: true,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				var input string
-				if !isatty.IsTerminal(os.Stdin.Fd()) {
-					b, err := io.ReadAll(os.Stdin)
-					if err != nil {
-						return err
-					}
-					input = string(b)
+			if info, err := os.Stat(args[0]); err == nil {
+				scriptPath := args[0]
+				if info.IsDir() {
+					scriptPath = filepath.Join(scriptPath, manifestName)
 				}
 
-				return runCommand(filepath.Join(cwd, command.Entrypoint), args, input)
-			},
-		})
+				if filepath.Base(scriptPath) != manifestName {
+					return runCommand(types.Command{
+						Name:  args[0],
+						Args:  args[1:],
+						Input: input,
+					})
+				}
+
+				command, err := ParseCommand(filepath.Dir(scriptPath), "")
+				if err != nil {
+					return fmt.Errorf("could not parse command: %w", err)
+				}
+
+				if command.Entrypoint != "" {
+					return runCommand(types.Command{
+						Name:  filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
+						Args:  args[1:],
+						Input: input,
+					})
+				}
+
+				if len(args) < 2 {
+					var listitems []types.ListItem
+					for name, command := range command.SubCommands {
+						listitems = append(listitems, types.ListItem{
+							Title:       command.Title,
+							Subtitle:    command.Description,
+							Accessories: []string{name},
+							Actions: []types.Action{
+								{
+									Title: "Run",
+									Type:  types.PushAction,
+									Command: &types.Command{
+										Name: filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
+										Args: args,
+									},
+								},
+							},
+						})
+					}
+
+					return Run(func() (*types.Page, error) {
+						return &types.Page{
+							Type:  types.ListPage,
+							Title: "Sunbeam",
+							Items: listitems,
+						}, nil
+					})
+				}
+
+				subcommand := args[1]
+				for name, c := range command.SubCommands {
+					if subcommand != name {
+						continue
+					}
+
+					return runCommand(types.Command{
+						Name:  filepath.Join(filepath.Dir(scriptPath), c.Entrypoint),
+						Args:  args[2:],
+						Input: input,
+					})
+				}
+
+				return fmt.Errorf("subcommand not found: %s", subcommand)
+			}
+
+			return Run(internal.NewCommandGenerator(&types.Command{
+				Name:  args[0],
+				Args:  args[1:],
+				Input: input,
+			}))
+
+		},
 	}
 
 	return cmd

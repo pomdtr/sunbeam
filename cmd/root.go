@@ -33,9 +33,8 @@ var (
 )
 
 var (
-	options    internal.SunbeamOptions
-	cwd        string
-	cwdCommand *Command
+	options internal.SunbeamOptions
+	cwd     string
 )
 
 func init() {
@@ -52,13 +51,6 @@ func init() {
 		panic(err)
 	}
 	cwd = wd
-
-	c, err := ParseCommand(cwd, "")
-	if err != nil {
-		return
-	}
-
-	cwdCommand = &c
 }
 
 func NewRootCmd() *cobra.Command {
@@ -71,6 +63,13 @@ func NewRootCmd() *cobra.Command {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if isatty.IsTerminal(os.Stdin.Fd()) {
+				return cmd.Usage()
+			}
+
+			return Run(internal.NewStaticGenerator(os.Stdin))
+		},
 	}
 
 	rootCmd.AddGroup(
@@ -81,7 +80,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCommandCmd())
 	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewListCmd())
-	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewDetailCmd())
@@ -134,17 +132,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 }
 
-func runCommand(commandBin string, args []string, input string) error {
-	var command types.Command
+func runCommand(command types.Command) error {
 	if runtime.GOOS != "windows" {
-		if err := os.Chmod(commandBin, 0755); err != nil {
+		if err := os.Chmod(command.Name, 0755); err != nil {
 			return err
 		}
 
-		command = types.Command{
-			Name: commandBin,
-			Args: args,
-		}
 		return Run(internal.NewCommandGenerator(&command))
 	}
 
@@ -155,14 +148,15 @@ func runCommand(commandBin string, args []string, input string) error {
 		}
 		return err
 	}
-	forwardArgs := append([]string{"-c", `command "$@"`, "--", commandBin}, args...)
 
-	command = types.Command{
-		Name: shExe,
-		Args: forwardArgs,
-	}
+	forwardArgs := append([]string{"-c", `command "$@"`, "--", command.Name}, command.Args...)
 
-	return Run(internal.NewCommandGenerator(&command))
+	return Run(internal.NewCommandGenerator(&types.Command{
+		Name:  shExe,
+		Args:  forwardArgs,
+		Input: command.Input,
+		Dir:   command.Dir,
+	}))
 }
 
 func Run(generator internal.PageGenerator) error {
@@ -243,7 +237,11 @@ func NewCustomCmd(commandName string, manifest Manifest) *cobra.Command {
 				input = string(inputBytes)
 			}
 
-			return runCommand(filepath.Join(commandRoot, commandName, manifest.Entrypoint), args, input)
+			return runCommand(types.Command{
+				Name:  filepath.Join(commandRoot, commandName, manifest.Entrypoint),
+				Args:  args,
+				Input: input,
+			})
 		}
 
 		return cmd
@@ -270,7 +268,11 @@ func NewCustomCmd(commandName string, manifest Manifest) *cobra.Command {
 					input = string(inputBytes)
 				}
 
-				return runCommand(filepath.Join(commandRoot, commandName, subCommand.Entrypoint), args, input)
+				return runCommand(types.Command{
+					Name:  filepath.Join(commandRoot, commandName, subCommand.Entrypoint),
+					Args:  args,
+					Input: input,
+				})
 
 			},
 		})

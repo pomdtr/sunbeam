@@ -440,7 +440,7 @@ func (r ScriptRemote) Download(targetDir string, version string) error {
 func NewCommandCmd() *cobra.Command {
 	commandCmd := &cobra.Command{
 		Use:     "command",
-		Short:   "Command commands",
+		Short:   "Manage, install, and run commands",
 		GroupID: coreGroupID,
 	}
 

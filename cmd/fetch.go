@@ -1,14 +1,14 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal"
-	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 )
 
@@ -34,31 +34,40 @@ func NewFetchCmd() *cobra.Command {
 			if cmd.Flags().Changed("method") {
 				method, _ = cmd.Flags().GetString("method")
 			} else if len(input) > 0 {
-				method = "POST"
+				method = http.MethodPost
 			} else {
-				method = "GET"
+				method = http.MethodGet
 			}
 
 			if method == "GET" && len(input) > 0 {
 				return fmt.Errorf("cannot specify request body for GET request")
 			}
 
-			headers := make(map[string]string)
+			req, err := http.NewRequest(method, args[0], bytes.NewReader(input))
+			if err != nil {
+				return err
+			}
+
 			for _, header := range headersFlag {
 				parts := strings.SplitN(header, ":", 2)
 				if len(parts) != 2 {
 					return fmt.Errorf("invalid header: %s", header)
 				}
 
-				headers[parts[0]] = parts[1]
+				req.Header.Set(parts[0], parts[1])
 			}
 
-			return Run(internal.NewRequestGenerator(&types.Request{
-				Url:     args[0],
-				Method:  method,
-				Body:    input,
-				Headers: headers,
-			}))
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+
+			if _, err := io.Copy(os.Stdout, resp.Body); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
 
