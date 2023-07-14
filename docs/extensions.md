@@ -14,7 +14,7 @@ Alternatively, use the `list`, `remove`, `upgrade` and `rename` commands directl
 
 Any directory containing a `sunbeam.json` config file is a valid sunbeam extension.
 
-To test your extension, use the `sunbeam run sunbeam.json [subcommand] [args...]`.
+To test your extension, use the `sunbeam read sunbeam.json [subcommand] [args...]`.
 You can install the current directory as an extension using the `sunbeam command add <alias> .` command.
 
 > **Warning**: Installing local extension is not yet supported on windows.

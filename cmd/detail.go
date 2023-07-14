@@ -16,7 +16,7 @@ import (
 func NewDetailCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "detail",
-		Short:   "parse text from stdin",
+		Short:   "Parse text from stdin",
 		Args:    cobra.NoArgs,
 		GroupID: coreGroupID,
 		RunE: func(cmd *cobra.Command, args []string) error {

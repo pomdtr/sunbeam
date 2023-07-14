@@ -11,10 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRunCmd() *cobra.Command {
+func NewReadCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "run",
-		Short:   "Run an arbitrar",
+		Use:     "read",
+		Short:   "read a sunbeam manifest",
 		GroupID: coreGroupID,
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

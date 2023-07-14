@@ -76,8 +76,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewDetailCmd())
-	rootCmd.AddCommand(NewRunCmd())
-	rootCmd.AddCommand(NewExecCmd())
+	rootCmd.AddCommand(NewReadCmd())
 	rootCmd.AddCommand(NewEvalCmd())
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())

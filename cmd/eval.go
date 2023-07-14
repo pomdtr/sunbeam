@@ -13,9 +13,10 @@ import (
 
 func NewEvalCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "eval <code>",
-		Short: "Evaluate code with val.town",
-		Args:  cobra.MaximumNArgs(1),
+		Use:     "eval <code>",
+		Short:   "Evaluate code with val.town",
+		Args:    cobra.MaximumNArgs(1),
+		GroupID: coreGroupID,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 && isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no code provided")
