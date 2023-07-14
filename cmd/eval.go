@@ -1,12 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal"
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +37,18 @@ func NewEvalCmd() *cobra.Command {
 			expression := types.Expression{
 				Code: code,
 			}
-			return Run(internal.NewRequestGenerator(expression.Request()))
+
+			bs, err := expression.Request().Do(context.Background())
+			if err != nil {
+				return err
+			}
+
+			if _, err := os.Stdout.Write(bs); err != nil {
+				return err
+			}
+
+			return nil
+
 		},
 	}
 
