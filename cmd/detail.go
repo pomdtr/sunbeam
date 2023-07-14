@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -46,13 +47,17 @@ func NewDetailCmd() *cobra.Command {
 				title, _ = cmd.Flags().GetString("title")
 			}
 
-			return Run(func() (*types.Page, error) {
-				return &types.Page{
-					Title: title,
-					Type:  "detail",
-					Text:  text,
-				}, nil
-			})
+			page := &types.Page{
+				Title: title,
+				Type:  "detail",
+				Text:  text,
+			}
+
+			if err := json.NewEncoder(os.Stdout).Encode(page); err != nil {
+				return fmt.Errorf("could not encode page: %s", err)
+			}
+
+			return nil
 		},
 	}
 

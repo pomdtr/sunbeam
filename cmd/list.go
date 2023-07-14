@@ -54,69 +54,72 @@ func NewListCmd() *cobra.Command {
 				title, _ = cmd.Flags().GetString("title")
 			}
 
-			return Run(func() (*types.Page, error) {
-				listItems := make([]types.ListItem, 0)
-				delimiter, _ := cmd.Flags().GetString("delimiter")
-				jsonInput, _ := cmd.Flags().GetBool("json")
-				for _, row := range rows {
-					if jsonInput {
-						var v types.ListItem
-						if err := json.Unmarshal(row, &v); err != nil {
-							return nil, fmt.Errorf("invalid JSON: %s", err)
-						}
-						listItems = append(listItems, v)
-						continue
+			listItems := make([]types.ListItem, 0)
+			delimiter, _ := cmd.Flags().GetString("delimiter")
+			jsonInput, _ := cmd.Flags().GetBool("json")
+			for _, row := range rows {
+				if jsonInput {
+					var v types.ListItem
+					if err := json.Unmarshal(row, &v); err != nil {
+						return fmt.Errorf("invalid JSON: %s", err)
 					}
-
-					row := string(row)
-					tokens := strings.Split(row, delimiter)
-
-					var title, subtitle string
-					var accessories []string
-					if cmd.Flags().Changed("with-nth") {
-						nths, _ := cmd.Flags().GetIntSlice("with-nth")
-						title = safeGet(tokens, nths[0])
-						if len(nths) > 1 {
-							subtitle = safeGet(tokens, nths[1])
-						}
-						if len(nths) > 2 {
-							for _, nth := range nths[2:] {
-								accessories = append(accessories, safeGet(tokens, nth))
-							}
-						}
-					} else {
-						title = tokens[0]
-						if len(tokens) > 1 {
-							subtitle = tokens[1]
-						}
-						if len(tokens) > 2 {
-							accessories = tokens[2:]
-						}
-					}
-
-					listItems = append(listItems, types.ListItem{
-						Title:       title,
-						Subtitle:    subtitle,
-						Accessories: accessories,
-						Actions: []types.Action{
-							{
-								Type:  types.PasteAction,
-								Title: "Pipe",
-								Text:  row,
-							},
-						},
-					})
+					listItems = append(listItems, v)
+					continue
 				}
 
-				showDetail, _ := cmd.Flags().GetBool("show-detail")
-				return &types.Page{
-					Type:       types.ListPage,
-					ShowDetail: showDetail,
-					Title:      title,
-					Items:      listItems,
-				}, nil
-			})
+				row := string(row)
+				tokens := strings.Split(row, delimiter)
 
+				var title, subtitle string
+				var accessories []string
+				if cmd.Flags().Changed("with-nth") {
+					nths, _ := cmd.Flags().GetIntSlice("with-nth")
+					title = safeGet(tokens, nths[0])
+					if len(nths) > 1 {
+						subtitle = safeGet(tokens, nths[1])
+					}
+					if len(nths) > 2 {
+						for _, nth := range nths[2:] {
+							accessories = append(accessories, safeGet(tokens, nth))
+						}
+					}
+				} else {
+					title = tokens[0]
+					if len(tokens) > 1 {
+						subtitle = tokens[1]
+					}
+					if len(tokens) > 2 {
+						accessories = tokens[2:]
+					}
+				}
+
+				listItems = append(listItems, types.ListItem{
+					Title:       title,
+					Subtitle:    subtitle,
+					Accessories: accessories,
+					Actions: []types.Action{
+						{
+							Type:  types.PasteAction,
+							Title: "Pipe",
+							Text:  row,
+						},
+					},
+				})
+			}
+
+			showDetail, _ := cmd.Flags().GetBool("show-detail")
+			page := &types.Page{
+				Type:       types.ListPage,
+				ShowDetail: showDetail,
+				Title:      title,
+				Items:      listItems,
+			}
+
+			if err := json.NewEncoder(os.Stdout).Encode(page); err != nil {
+				return fmt.Errorf("could not encode output: %s", err)
+			}
+
+			return nil
 		},
 	}
 
