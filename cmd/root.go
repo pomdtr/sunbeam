@@ -71,51 +71,6 @@ func NewRootCmd() *cobra.Command {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if cwdCommand == nil {
-				return cmd.Usage()
-			}
-
-			var input string
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				b, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-				input = string(b)
-			}
-
-			if cwdCommand.Entrypoint != "" {
-				return runCommand(filepath.Join(cwd, cwdCommand.Entrypoint), args, input)
-			}
-
-			var listitems []types.ListItem
-			for name, command := range cwdCommand.SubCommands {
-				listitems = append(listitems, types.ListItem{
-					Title:       command.Title,
-					Subtitle:    command.Description,
-					Accessories: []string{name},
-					Actions: []types.Action{
-						{
-							Title: "Run",
-							Type:  types.PushAction,
-							Command: &types.Command{
-								Name: filepath.Join(cwd, command.Entrypoint),
-								Args: args,
-							},
-						},
-					},
-				})
-			}
-
-			return Run(func() (*types.Page, error) {
-				return &types.Page{
-					Type:  types.ListPage,
-					Title: "Sunbeam",
-					Items: listitems,
-				}, nil
-			})
-		},
 	}
 
 	rootCmd.AddGroup(
