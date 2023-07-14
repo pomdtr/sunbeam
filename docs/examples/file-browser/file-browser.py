@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-# @sunbeam.schemaVersion 1
 # @sunbeam.title File Browser
-# @sunbeam.mode view
 
 import json
 import pathlib

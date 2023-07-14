@@ -1,0 +1,12 @@
+{
+    "title": "Example Extension",
+    "description": "This is an example extension.",
+    "author": "pomdtr",
+    "subcommands": {
+        "hello": "./hello.py",
+        "goodbye": {
+            "entrypoint": "./goodbye.py",
+            "title": "Say Goodbye"
+        }
+    }
+}

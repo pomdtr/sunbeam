@@ -1,5 +1,0 @@
-https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/bitwarden/sunbeam-command
-https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/devdocs/sunbeam-command
-https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/file-browser/sunbeam-command
-https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/github/sunbeam-command
-https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/sunbeam-command

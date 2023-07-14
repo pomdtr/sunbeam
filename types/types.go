@@ -350,7 +350,7 @@ func (c Command) Output(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 	if err != nil {
-		return nil, fmt.Errorf("command failed: %T", err)
+		return nil, fmt.Errorf("command failed (%s): %s", cmd.String(), err)
 	}
 
 	return output, nil

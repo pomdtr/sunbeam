@@ -8,12 +8,6 @@
   "markdownlint.config": {
     "MD033": false
   },
-  "json.schemas": [
-    {
-      "fileMatch": ["sunbeam.json"],
-      "url": "./schemas/page.schema.json"
-    }
-  ],
   "search.exclude": {
     "book": true,
     "public": true

@@ -32,7 +32,11 @@ var (
 	Date    = "unknown"
 )
 
-var options internal.SunbeamOptions
+var (
+	options    internal.SunbeamOptions
+	cwd        string
+	cwdCommand *Command
+)
 
 func init() {
 	options = internal.SunbeamOptions{
@@ -42,10 +46,22 @@ func init() {
 		Border:     utils.LookupBoolEnv("SUNBEAM_BORDER", false),
 		Margin:     utils.LookupIntEnv("SUNBEAM_MARGIN", 0),
 	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	cwd = wd
+
+	c, err := ParseCommand(cwd, "")
+	if err != nil {
+		return
+	}
+
+	cwdCommand = &c
 }
 
-func NewRootCmd(manifest *Manifest) *cobra.Command {
-
+func NewRootCmd() *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:          "sunbeam",
@@ -56,24 +72,49 @@ func NewRootCmd(manifest *Manifest) *cobra.Command {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if env, ok := os.LookupEnv("SUNBEAM_DEFAULT_COMMAND"); ok && env != "" {
-				var input string
-				if !isatty.IsTerminal(os.Stdin.Fd()) {
-					b, err := io.ReadAll(os.Stdin)
-					if err != nil {
-						return fmt.Errorf("could not read from stdin: %w", err)
-					}
-					input = string(b)
-				}
-
-				return Run(internal.NewCommandGenerator(&types.Command{
-					Name:  "bash",
-					Args:  []string{"-c", env},
-					Input: input,
-				}))
+			if cwdCommand == nil {
+				return cmd.Usage()
 			}
 
-			return cmd.Usage()
+			var input string
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				b, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+				input = string(b)
+			}
+
+			if cwdCommand.Entrypoint != "" {
+				return runCommand(filepath.Join(cwd, cwdCommand.Entrypoint), args, input)
+			}
+
+			var listitems []types.ListItem
+			for name, command := range cwdCommand.SubCommands {
+				listitems = append(listitems, types.ListItem{
+					Title:       command.Title,
+					Subtitle:    command.Description,
+					Accessories: []string{name},
+					Actions: []types.Action{
+						{
+							Title: "Run",
+							Type:  types.PushAction,
+							Command: &types.Command{
+								Name: filepath.Join(cwd, command.Entrypoint),
+								Args: args,
+							},
+						},
+					},
+				})
+			}
+
+			return Run(func() (*types.Page, error) {
+				return &types.Page{
+					Type:  types.ListPage,
+					Title: "Sunbeam",
+					Items: listitems,
+				}, nil
+			})
 		},
 	}
 
@@ -82,7 +123,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		&cobra.Group{ID: customGroupID, Title: "Custom Commands"},
 	)
 	rootCmd.AddCommand(NewQueryCmd())
-	rootCmd.AddCommand(NewCommandCmd(manifest))
+	rootCmd.AddCommand(NewCommandCmd())
 	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewListCmd())
 	rootCmd.AddCommand(NewReadCmd())
@@ -90,6 +131,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewDetailCmd())
 	rootCmd.AddCommand(NewRunCmd())
+	rootCmd.AddCommand(NewExecCmd())
 	rootCmd.AddCommand(NewEvalCmd())
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
@@ -109,7 +151,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(docCmd)
 
-	for name, command := range manifest.Commands {
+	for name, command := range commands {
 		rootCmd.AddCommand(NewCustomCmd(name, command))
 	}
 
@@ -137,7 +179,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 }
 
-func runCustomCommand(commandBin string, args []string, input string) error {
+func runCommand(commandBin string, args []string, input string) error {
 	var command types.Command
 	if runtime.GOOS != "windows" {
 		if err := os.Chmod(commandBin, 0755); err != nil {
@@ -222,15 +264,17 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(commandName string, command Command) *cobra.Command {
-	return &cobra.Command{
+func NewCustomCmd(commandName string, manifest Manifest) *cobra.Command {
+	cmd := &cobra.Command{
 		Use:                commandName,
-		Short:              command.Title,
-		Long:               command.Description,
+		Short:              manifest.Title,
+		Long:               manifest.Description,
 		DisableFlagParsing: true,
 		GroupID:            customGroupID,
+	}
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+	if len(manifest.SubCommands) == 0 {
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 && args[0] == "--help" {
 				return cmd.Help()
 			}
@@ -244,7 +288,38 @@ func NewCustomCmd(commandName string, command Command) *cobra.Command {
 				input = string(inputBytes)
 			}
 
-			return runCustomCommand(filepath.Join(command.Dir, command.Entrypoint), args, input)
-		},
+			return runCommand(filepath.Join(commandRoot, commandName, manifest.Entrypoint), args, input)
+		}
+
+		return cmd
 	}
+
+	for name, subCommand := range manifest.SubCommands {
+		subCommand := subCommand
+		cmd.AddCommand(&cobra.Command{
+			Use:                name,
+			Short:              subCommand.Title,
+			Long:               subCommand.Description,
+			DisableFlagParsing: true,
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if len(args) == 1 && args[0] == "--help" {
+					return cmd.Help()
+				}
+				var input string
+				if !isatty.IsTerminal(os.Stdin.Fd()) {
+					inputBytes, err := io.ReadAll(os.Stdin)
+					if err != nil {
+						return err
+					}
+
+					input = string(inputBytes)
+				}
+
+				return runCommand(filepath.Join(commandRoot, commandName, subCommand.Entrypoint), args, input)
+
+			},
+		})
+	}
+
+	return cmd
 }

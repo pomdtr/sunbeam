@@ -5,7 +5,7 @@
 To run sunbeam, you need to provide a command as the first argument. Sunbeam will run the command and interpret it's output as a page.
 
 ```bash
-sunbeam run ./file-browser.py
+sunbeam exec ./file-browser.py
 ```
 
 Once the output is shown, you can use the arrow keys to navigate the UI, and press enter to select an item.
@@ -46,7 +46,7 @@ Let's generate the list of files in the current directory.
 {{#include ./dynamic-list.py}}
 ```
 
-Save this script as `file-browser.py`, and run `sunbeam run python3 file-browser.py` to show the list.
+Save this script as `file-browser.py`, and run `sunbeam exec python3 file-browser.py` to show the list.
 
 ### Adding Arguments
 
@@ -56,9 +56,9 @@ Let's add some options to our script to make it more useful.
 {{#include ./dynamic-list-with-args.py}}
 ```
 
-You can now run `sunbeam run file-browser.py /tmp` to show the list of files in the `/tmp` directory, or `sunbeam run -- python3 file-browser.py --show-hidden` to show hidden files in the current directory.
+You can now run `sunbeam exec file-browser.py /tmp` to show the list of files in the `/tmp` directory, or `sunbeam exec -- python3 file-browser.py --show-hidden` to show hidden files in the current directory.
 
-Notice that we used the `--` argument separator to pass arguments to the script. This is required because `sunbeam run` also accepts flags, and we don't want it to interpret them.
+Notice that we used the `--` argument separator to pass arguments to the script. This is required because `sunbeam exec` also accepts flags, and we don't want it to interpret them.
 
 ### Adding Navigation
 

@@ -6,10 +6,8 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "args": [
-        "read",
-        "./docs/getting-started/form.json"
-      ]
+      "cwd": "${workspaceFolder}/docs/examples/local-dir",
+      "args": []
     },
     {
       "name": "install script",

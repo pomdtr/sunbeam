@@ -4,23 +4,30 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"strings"
+	"path/filepath"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal"
-	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 )
 
 func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                "run <command> [args...]",
-		Short:              "Generate a page from a command or a script, and push it's output",
-		GroupID:            coreGroupID,
-		DisableFlagParsing: true,
-		Args:               cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Use:     "run",
+		Short:   "Run a sunbeam command defined in the current directory",
+		GroupID: coreGroupID,
+	}
+
+	if cwdCommand == nil {
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			return fmt.Errorf("no command manifest found in current directory")
+		}
+
+		return cmd
+	}
+
+	if cwdCommand.Entrypoint != "" {
+		cmd.DisableFlagParsing = true
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			var input string
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
 				b, err := io.ReadAll(os.Stdin)
@@ -30,39 +37,31 @@ func NewRunCmd() *cobra.Command {
 				input = string(b)
 			}
 
-			if args[0] == "." {
-				if _, err := os.Stat(commandBinaryName); err != nil {
-					return fmt.Errorf("%s: no such file or directory", commandBinaryName)
+			return runCommand(filepath.Join(cwd, cwdCommand.Entrypoint), args, input)
+		}
+		return cmd
+	}
+
+	for name, command := range cwdCommand.SubCommands {
+		command := command
+		cmd.AddCommand(&cobra.Command{
+			Use:                name,
+			Short:              command.Title,
+			Long:               command.Description,
+			DisableFlagParsing: true,
+			RunE: func(cmd *cobra.Command, args []string) error {
+				var input string
+				if !isatty.IsTerminal(os.Stdin.Fd()) {
+					b, err := io.ReadAll(os.Stdin)
+					if err != nil {
+						return err
+					}
+					input = string(b)
 				}
 
-				return Run(internal.NewCommandGenerator(&types.Command{
-					Name: "./" + commandBinaryName,
-					Args: args[1:],
-				}))
-			}
-
-			if strings.HasPrefix(args[0], ".") {
-				if _, err := os.Stat(args[0]); err != nil {
-					return fmt.Errorf("%s: no such file or directory", args[0])
-				}
-
-				return Run(internal.NewCommandGenerator(&types.Command{
-					Name:  args[0],
-					Args:  args[1:],
-					Input: input,
-				}))
-			}
-
-			if _, err := exec.LookPath(args[0]); err == nil {
-				return Run(internal.NewCommandGenerator(&types.Command{
-					Name:  args[0],
-					Args:  args[1:],
-					Input: input,
-				}))
-			}
-
-			return fmt.Errorf("file or command not found: %s", args[0])
-		},
+				return runCommand(filepath.Join(cwd, command.Entrypoint), args, input)
+			},
+		})
 	}
 
 	return cmd

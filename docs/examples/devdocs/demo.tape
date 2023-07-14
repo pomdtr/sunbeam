@@ -60,7 +60,7 @@ Set FontSize 20
 Set Width 1200
 Set Height 600
 
-Type "sunbeam run ." Sleep 1s Enter
+Type "sunbeam exec ./devdocs.sh" Sleep 1s Enter
 
 Sleep 2s
 

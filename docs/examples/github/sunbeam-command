@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-# @sunbeam.schemaVersion 1
 # @sunbeam.title List Repositories
-# @sunbeam.mode view
 
 set -eo pipefail
 

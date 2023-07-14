@@ -7,16 +7,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
+	"github.com/adrg/xdg"
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/catalog"
+	"github.com/mitchellh/mapstructure"
+	cp "github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/types"
 	"golang.org/x/term"
 
@@ -24,119 +29,100 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	commandBinaryName = "sunbeam-command"
+const (
+	manifestName = "sunbeam.json"
 )
 
+var (
+	commandRoot                      = filepath.Join(xdg.DataHome, "sunbeam", "commands")
+	commands     map[string]Manifest = make(map[string]Manifest)
+	commandNames                     = []string{}
+)
+
+func init() {
+	dataHome := xdg.DataHome
+	if runtime.GOOS == "darwin" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			panic(err)
+		}
+		dataHome = filepath.Join(homeDir, ".local", "share")
+	}
+	commandRoot = filepath.Join(dataHome, "sunbeam", "commands")
+
+	if _, err := os.Stat(commandRoot); err != nil {
+		os.MkdirAll(commandRoot, 0755)
+		return
+	}
+
+	dirs, err := os.ReadDir(commandRoot)
+	if err != nil {
+		return
+	}
+
+	for _, dir := range dirs {
+		manifestPath := filepath.Join(commandRoot, dir.Name(), manifestName)
+		if _, err := os.Stat(manifestPath); err != nil {
+			continue
+		}
+
+		f, err := os.Open(manifestPath)
+		if err != nil {
+			continue
+		}
+
+		var cmd Manifest
+		if err := json.NewDecoder(f).Decode(&cmd); err != nil {
+			continue
+		}
+
+		commands[dir.Name()] = cmd
+		commandNames = append(commandNames, dir.Name())
+	}
+}
+
 type Manifest struct {
-	path        string             `json:"-"`
-	commandRoot string             `json:"-"`
-	Commands    map[string]Command `json:"commands"`
+	Origin  string `json:"origin"`
+	Version string `json:"version"`
+	Command
 }
 
 type Command struct {
-	*catalog.CommandMetadata
-	Origin     string `json:"origin"`
-	Version    string `json:"version"`
-	Dir        string `json:"dir"`
-	Entrypoint string `json:"entryPoint"`
+	Title       string             `json:"title"`
+	Description string             `json:"description,omitempty"`
+	Entrypoint  string             `json:"entrypoint,omitempty"`
+	SubCommands map[string]Command `json:"subcommands,omitempty"`
 }
 
-func (c Command) IsLocal() bool {
-	return c.Dir == c.Origin
-}
+var MetadataRegexp = regexp.MustCompile(`@(sunbeam|raycast)\.(?P<key>[A-Za-z0-9]+)\s(?P<value>[\S ]+)`)
 
-func LoadManifest(manifestPath string) (*Manifest, error) {
-	manifest := Manifest{
-		path:        manifestPath,
-		commandRoot: filepath.Join(filepath.Dir(manifestPath), "commands"),
+func ExtractScriptMetadata(script []byte) (Command, error) {
+	var cmd Command
+	matches := MetadataRegexp.FindAllSubmatch(script, -1)
+	if len(matches) == 0 {
+		return cmd, fmt.Errorf("no metadata found")
 	}
 
-	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
-		manifest.Commands = make(map[string]Command)
+	metadata := Command{}
+	for _, match := range matches {
+		key := string(match[2])
+		value := string(match[3])
 
-		if err := os.MkdirAll(manifest.commandRoot, 0755); err != nil {
-			return nil, err
+		switch key {
+		case "title":
+			metadata.Title = value
+		case "description":
+			metadata.Description = value
+		default:
+			log.Printf("unsupported metadata key: %s", key)
 		}
-
-		return &manifest, manifest.Save()
 	}
 
-	manifestFile, err := os.ReadFile(manifestPath)
-	if err != nil {
-		return nil, err
+	if metadata.Title == "" {
+		return cmd, fmt.Errorf("no title found")
 	}
 
-	err = json.Unmarshal(manifestFile, &manifest)
-	if err != nil {
-		return nil, err
-	}
-
-	return &manifest, nil
-}
-
-func (m Manifest) Save() error {
-	manifestFile, err := os.OpenFile(m.path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer manifestFile.Close()
-
-	encoder := json.NewEncoder(manifestFile)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(m)
-}
-
-func (m Manifest) AddCommand(commandName string, command Command) error {
-	if _, ok := m.Commands[commandName]; ok {
-		return fmt.Errorf("command already exists")
-	}
-
-	m.Commands[commandName] = command
-	return m.Save()
-}
-
-func (m Manifest) RemoveCommand(commandName string) error {
-	if _, ok := m.Commands[commandName]; !ok {
-		return fmt.Errorf("command does not exist")
-	}
-
-	delete(m.Commands, commandName)
-	return m.Save()
-}
-
-func (m Manifest) UpdateCommand(commandName string, command Command) error {
-	if _, ok := m.Commands[commandName]; !ok {
-		return fmt.Errorf("command does not exist")
-	}
-
-	m.Commands[commandName] = command
-	return m.Save()
-}
-
-func (m Manifest) RenameCommand(oldCommandName string, newCommandName string) error {
-	if _, ok := m.Commands[oldCommandName]; !ok {
-		return fmt.Errorf("command does not exist")
-	}
-
-	if _, ok := m.Commands[newCommandName]; ok {
-		return fmt.Errorf("command already exists")
-	}
-
-	command := m.Commands[oldCommandName]
-	command.Dir = filepath.Join(m.commandRoot, newCommandName)
-
-	m.Commands[newCommandName] = command
-	delete(m.Commands, oldCommandName)
-	return m.Save()
-}
-
-func (m Manifest) ListCommands() []string {
-	var commands []string
-	for command := range m.Commands {
-		commands = append(commands, command)
-	}
-	return commands
+	return metadata, nil
 }
 
 type CommandRemote interface {
@@ -144,21 +130,215 @@ type CommandRemote interface {
 	Download(targetDir string, version string) error
 }
 
-func GetRemote(origin *url.URL) CommandRemote {
-	switch origin.Hostname() {
+func GetRemote(origin string) (CommandRemote, error) {
+	if info, err := os.Stat(origin); err == nil {
+		abs, err := filepath.Abs(origin)
+		if err != nil {
+			return nil, fmt.Errorf("could not get absolute path: %s", err)
+		}
+
+		if info.IsDir() {
+			return LocalDir{
+				path: abs,
+			}, nil
+		}
+
+		return LocalScript{
+			path: abs,
+		}, nil
+	}
+
+	originUrl, err := url.Parse(origin)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse origin: %s", err)
+	}
+
+	switch originUrl.Hostname() {
 	case "github.com":
 		return GithubRemote{
-			origin: origin,
-		}
-	case "gist.github.com":
-		return GistRemote{
-			origin: origin,
-		}
+			origin: originUrl,
+		}, nil
 	default:
 		return ScriptRemote{
-			origin: origin,
+			origin: originUrl,
+		}, nil
+	}
+}
+
+func ParseCommand(commandDir string, prefix string) (Command, error) {
+	manifestPath := filepath.Join(commandDir, prefix, manifestName)
+
+	var cmd Command
+	f, err := os.Open(manifestPath)
+	if err != nil {
+		return cmd, fmt.Errorf("unable to open manifest: %s", err)
+	}
+
+	var raw struct {
+		Title       string         `json:"title"`
+		Description string         `json:"description"`
+		Entrypoint  string         `json:"entrypoint"`
+		SubCommands map[string]any `json:"subcommands"`
+	}
+
+	if err := json.NewDecoder(f).Decode(&raw); err != nil {
+		return cmd, fmt.Errorf("unable to decode manifest: %s", err)
+	}
+
+	if raw.Entrypoint == "" && len(raw.SubCommands) == 0 {
+		return cmd, fmt.Errorf("no entrypoint or subcommands found")
+	}
+
+	cmd.Title = raw.Title
+	cmd.Description = raw.Description
+
+	if cmd.Entrypoint != "" {
+		cmd.Entrypoint = filepath.Join(prefix, cmd.Entrypoint)
+		return cmd, nil
+	}
+
+	cmd.SubCommands = make(map[string]Command)
+	for name, subcommand := range raw.SubCommands {
+		switch subcommand := subcommand.(type) {
+		case string:
+			cmdPath := filepath.Join(commandDir, prefix, subcommand)
+			info, err := os.Stat(cmdPath)
+			if err != nil {
+				return cmd, fmt.Errorf("unable to find subcommand: %s", err)
+			}
+
+			if info.IsDir() {
+				return cmd, fmt.Errorf("subcommand cannot be a directory")
+			}
+			bs, err := os.ReadFile(cmdPath)
+			if err != nil {
+				return cmd, fmt.Errorf("unable to read subcommand: %s", err)
+			}
+
+			subCmd, err := ExtractScriptMetadata(bs)
+			if err != nil {
+				return cmd, fmt.Errorf("unable to extract metadata: %s", err)
+			}
+			subCmd.Entrypoint = filepath.Join(prefix, subcommand)
+
+			cmd.SubCommands[name] = subCmd
+		case map[string]any:
+			var subCmd Command
+			if err := mapstructure.Decode(subcommand, &subCmd); err != nil {
+				return cmd, fmt.Errorf("unable to decode subcommand: %s", err)
+			}
+
+			if len(subCmd.SubCommands) > 0 {
+				return cmd, fmt.Errorf("subcommand cannot have subcommands")
+			}
+
+			if subCmd.Entrypoint == "" {
+				return cmd, fmt.Errorf("subcommand must have entrypoint")
+			}
+
+			subCmd.Entrypoint = filepath.Join(prefix, subCmd.Entrypoint)
+			cmd.SubCommands[name] = subCmd
+		default:
+			return cmd, fmt.Errorf("unsupported subcommand type: %T", subcommand)
 		}
 	}
+
+	return cmd, nil
+}
+
+type LocalScript struct {
+	path string
+}
+
+func (r LocalScript) Download(targetDir string, version string) error {
+	if _, err := os.Stat(r.path); err != nil {
+		return fmt.Errorf("unable to find script: %s", err)
+	}
+
+	bs, err := os.ReadFile(r.path)
+	if err != nil {
+		return fmt.Errorf("unable to read script: %s", err)
+	}
+
+	command, err := ExtractScriptMetadata(bs)
+	if err != nil {
+		return fmt.Errorf("unable to extract metadata: %s", err)
+	}
+	command.Entrypoint = filepath.Base(r.path)
+
+	sourceDir := filepath.Join(targetDir, "src")
+	if err := os.MkdirAll(sourceDir, 0755); err != nil {
+		return fmt.Errorf("unable to create source directory: %s", err)
+	}
+
+	entrypoint := filepath.Join(sourceDir, filepath.Base(r.path))
+	if err := cp.Copy(r.path, entrypoint); err != nil {
+		return fmt.Errorf("unable to copy script: %s", err)
+	}
+
+	manifest := Manifest{
+		Origin:  r.path,
+		Version: version,
+		Command: command,
+	}
+
+	content, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return fmt.Errorf("unable to marshal manifest: %s", err)
+	}
+
+	manifestPath := filepath.Join(targetDir, manifestName)
+	if err := os.WriteFile(manifestPath, content, 0644); err != nil {
+		return fmt.Errorf("unable to write manifest: %s", err)
+	}
+
+	return nil
+}
+
+func (r LocalScript) GetLatestVersion() (string, error) {
+	return time.Now().UTC().Format(time.RFC3339), nil
+}
+
+type LocalDir struct {
+	path string
+}
+
+func (r LocalDir) Download(targetDir string, version string) error {
+	srcDir := filepath.Join(targetDir, "src")
+	if err := os.MkdirAll(srcDir, 0755); err != nil {
+		return fmt.Errorf("unable to create source directory: %s", err)
+	}
+
+	if err := cp.Copy(r.path, srcDir); err != nil {
+		return fmt.Errorf("unable to copy script: %s", err)
+	}
+
+	command, err := ParseCommand(targetDir, "src")
+	if err != nil {
+		return fmt.Errorf("unable to parse command: %s", err)
+	}
+
+	manifest := Manifest{
+		Origin:  r.path,
+		Version: version,
+		Command: command,
+	}
+
+	content, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return fmt.Errorf("unable to marshal manifest: %s", err)
+	}
+
+	manifestPath := filepath.Join(targetDir, manifestName)
+	if err := os.WriteFile(manifestPath, content, 0644); err != nil {
+		return fmt.Errorf("unable to write manifest: %s", err)
+	}
+
+	return nil
+}
+
+func (r LocalDir) GetLatestVersion() (string, error) {
+	return time.Now().UTC().Format(time.RFC3339), nil
 }
 
 type GithubRemote struct {
@@ -175,31 +355,30 @@ func (r GithubRemote) GetLatestVersion() (string, error) {
 }
 
 func (r GithubRemote) Download(targetDir string, version string) error {
-	if err := downloadAndExtractZip(fmt.Sprintf("%s/archive/%s.zip", r.origin.String(), version), filepath.Join(targetDir, "src")); err != nil {
+	srcDir := filepath.Join(targetDir, "src")
+	if err := downloadAndExtractZip(fmt.Sprintf("%s/archive/%s.zip", r.origin.String(), version), srcDir); err != nil {
 		return fmt.Errorf("unable to download command: %s", err)
 	}
 
-	return nil
-}
-
-type GistRemote struct {
-	origin *url.URL
-}
-
-func (r GistRemote) GetLatestVersion() (string, error) {
-	commit, err := utils.GetLastGistCommit(r.origin.String())
+	command, err := ParseCommand(targetDir, "src")
 	if err != nil {
-		return "", err
+		return fmt.Errorf("unable to parse command: %s", err)
 	}
 
-	return commit.Version, nil
-}
+	manifest := Manifest{
+		Origin:  r.origin.String(),
+		Version: version,
+		Command: command,
+	}
 
-func (r GistRemote) Download(targetDir string, version string) error {
-	fmt.Fprintf(os.Stderr, "Installing command from gist...\n")
-	zipUrl := fmt.Sprintf("%s/archive/%s.zip", r.origin.String(), version)
-	if err := downloadAndExtractZip(zipUrl, filepath.Join(targetDir, "src")); err != nil {
-		return fmt.Errorf("unable to install command: %s", err)
+	content, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return fmt.Errorf("unable to marshal manifest: %s", err)
+	}
+
+	manifestPath := filepath.Join(targetDir, manifestName)
+	if err := os.WriteFile(manifestPath, content, 0644); err != nil {
+		return fmt.Errorf("unable to write manifest: %s", err)
 	}
 
 	return nil
@@ -214,104 +393,67 @@ func (r ScriptRemote) GetLatestVersion() (string, error) {
 	return time.Now().UTC().Format(time.RFC3339), nil
 }
 
-func (r ScriptRemote) Download(targetDir string, _ string) error {
+func (r ScriptRemote) Download(targetDir string, version string) error {
 	res, err := http.Get(r.origin.String())
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to download script: %s", err)
 	}
 	defer res.Body.Close()
 
-	entrypointPath := filepath.Join(targetDir, commandBinaryName)
-	f, err := os.OpenFile(entrypointPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	bs, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to read response body: %s", err)
 	}
 
-	if _, err = io.Copy(f, res.Body); err != nil {
-		return err
+	command, err := ExtractScriptMetadata(bs)
+	if err != nil {
+		return fmt.Errorf("unable to extract metadata: %s", err)
+	}
+
+	entrypointPath := filepath.Join(targetDir, "sunbeam-command")
+	if err := os.WriteFile(entrypointPath, bs, 0755); err != nil {
+		return fmt.Errorf("unable to write script: %s", err)
+	}
+	command.Entrypoint = entrypointPath
+
+	manifest := Manifest{
+		Origin:  r.origin.String(),
+		Version: version,
+		Command: command,
+	}
+
+	bs, err = json.Marshal(manifest)
+	if err != nil {
+		return fmt.Errorf("unable to encode manifest: %s", err)
+	}
+
+	manifestPath := filepath.Join(targetDir, manifestName)
+	if err := os.WriteFile(manifestPath, bs, 0644); err != nil {
+		return fmt.Errorf("unable to write manifest: %s", err)
 	}
 
 	return nil
 }
 
-func NewCommandCmd(manifest *Manifest) *cobra.Command {
+func NewCommandCmd() *cobra.Command {
 	commandCmd := &cobra.Command{
 		Use:     "command",
 		Short:   "Command commands",
 		GroupID: coreGroupID,
 	}
 
-	commandCmd.AddCommand(NewCommandBrowseCmd())
-	commandCmd.AddCommand(NewCommandManageCmd(manifest))
+	commandCmd.AddCommand(NewCommandManageCmd())
 	commandCmd.AddCommand(NewCommandCreateCmd())
-	commandCmd.AddCommand(NewCommandAddCmd(manifest))
-	commandCmd.AddCommand(NewCommandRenameCmd(manifest))
-	commandCmd.AddCommand(NewCommandListCmd(manifest))
-	commandCmd.AddCommand(NewCommandRemoveCmd(manifest))
-	commandCmd.AddCommand(NewCommandUpgradeCmd(manifest))
+	commandCmd.AddCommand(NewCommandAddCmd())
+	commandCmd.AddCommand(NewCommandRenameCmd())
+	commandCmd.AddCommand(NewCommandListCmd())
+	commandCmd.AddCommand(NewCommandRemoveCmd())
+	commandCmd.AddCommand(NewCommandUpgradeCmd())
 
 	return commandCmd
 }
 
-func NewCommandBrowseCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "browse",
-		Short: "Browse commands",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			generator := func() (*types.Page, error) {
-				catalogItems, err := catalog.FetchCatalog()
-				if err != nil {
-					return nil, err
-				}
-
-				listItems := make([]types.ListItem, 0)
-				for _, item := range catalogItems {
-					listItems = append(listItems, types.ListItem{
-						Title:    item.Metadata.Title,
-						Subtitle: item.Metadata.Title,
-						Accessories: []string{
-							item.Metadata.Author,
-						},
-						Actions: []types.Action{
-							{
-								Type:  types.RunAction,
-								Title: "Install",
-								Key:   "i",
-								Command: &types.Command{
-									Name: os.Args[0],
-									Args: []string{"command", "install", "{{input:name}}", item.Origin},
-								},
-								Inputs: []types.Input{
-									{
-										Name:        "name",
-										Type:        types.TextFieldInput,
-										Title:       "Name",
-										Placeholder: "my-command-name",
-									},
-								},
-							},
-							{
-								Type:   types.OpenAction,
-								Title:  "Open in Browser",
-								Target: item.Origin,
-								Key:    "o",
-							},
-						},
-					})
-				}
-
-				return &types.Page{
-					Type:  types.ListPage,
-					Items: listItems,
-				}, nil
-			}
-
-			return Run(generator)
-		},
-	}
-}
-
-func NewCommandManageCmd(manifest *Manifest) *cobra.Command {
+func NewCommandManageCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "manage",
 		Short: "Manage installed commands",
@@ -319,17 +461,17 @@ func NewCommandManageCmd(manifest *Manifest) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			generator := func() (*types.Page, error) {
 				listItems := make([]types.ListItem, 0)
-				for command, manifest := range manifest.Commands {
+				for name, command := range commands {
 					listItems = append(listItems, types.ListItem{
-						Title:    command,
-						Subtitle: manifest.Description,
+						Title:    name,
+						Subtitle: command.Description,
 						Actions: []types.Action{
 							{
 								Title: "Run Command",
 								Type:  types.PushAction,
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{command},
+									Args: []string{name},
 								},
 							},
 							{
@@ -338,7 +480,7 @@ func NewCommandManageCmd(manifest *Manifest) *cobra.Command {
 								Key:   "u",
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"command", "upgrade", command},
+									Args: []string{"command", "upgrade", name},
 								},
 							},
 							{
@@ -347,7 +489,7 @@ func NewCommandManageCmd(manifest *Manifest) *cobra.Command {
 								Key:   "r",
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"command", "rename", command, "{{input:name}}"},
+									Args: []string{"command", "rename", name, "{{input:name}}"},
 								},
 								Inputs: []types.Input{
 									{
@@ -365,7 +507,7 @@ func NewCommandManageCmd(manifest *Manifest) *cobra.Command {
 								Key:   "d",
 								Command: &types.Command{
 									Name: os.Args[0],
-									Args: []string{"command", "remove", command},
+									Args: []string{"command", "remove", name},
 								},
 							},
 						},
@@ -410,11 +552,6 @@ func NewCommandCreateCmd() *cobra.Command {
 				return fmt.Errorf("name is required")
 			}
 
-			cwd, err := os.Getwd()
-			if err != nil {
-				return fmt.Errorf("unable to get current working directory: %s", err)
-			}
-
 			commandDir := filepath.Join(cwd, name)
 			if _, err := os.Stat(commandDir); err == nil {
 				return fmt.Errorf("directory %s already exists", commandDir)
@@ -424,7 +561,7 @@ func NewCommandCreateCmd() *cobra.Command {
 				return fmt.Errorf("unable to create directory %s: %s", commandDir, err)
 			}
 
-			if err := os.WriteFile(filepath.Join(commandDir, commandBinaryName), []byte(commandTemplate), 0755); err != nil {
+			if err := os.WriteFile(filepath.Join(commandDir, "command.sh"), []byte(commandTemplate), 0755); err != nil {
 				return fmt.Errorf("unable to write command binary: %s", err)
 			}
 
@@ -439,12 +576,12 @@ func NewCommandCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func NewCommandRenameCmd(manifest *Manifest) *cobra.Command {
+func NewCommandRenameCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:       "rename <command> <new-name>",
 		Short:     "Rename an command",
 		Args:      cobra.ExactArgs(2),
-		ValidArgs: manifest.ListCommands(),
+		ValidArgs: commandNames,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			commands := cmd.Root().Commands()
 			commandMap := make(map[string]struct{}, len(commands))
@@ -463,14 +600,14 @@ func NewCommandRenameCmd(manifest *Manifest) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			oldPath := filepath.Join(manifest.commandRoot, args[0])
-			newPath := filepath.Join(manifest.commandRoot, args[1])
+			oldPath := filepath.Join(commandRoot, args[0])
+			newPath := filepath.Join(commandRoot, args[1])
 
 			if err := os.Rename(oldPath, newPath); err != nil {
 				return fmt.Errorf("could not rename command: %s", err)
 			}
 
-			if err := manifest.RenameCommand(args[0], args[1]); err != nil {
+			if err := os.Rename(args[0], args[1]); err != nil {
 				return fmt.Errorf("could not rename command: %s", err)
 			}
 
@@ -480,7 +617,7 @@ func NewCommandRenameCmd(manifest *Manifest) *cobra.Command {
 	}
 }
 
-func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
+func NewCommandAddCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "add <name> <origin>",
 		Short:   "Install a sunbeam command from a folder/gist/repository",
@@ -505,47 +642,10 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 			commandName := args[0]
 			origin := args[1]
 
-			if info, err := os.Stat(origin); err == nil {
-				entrypoint, err := filepath.Abs(origin)
-				if err != nil {
-					return fmt.Errorf("could not get absolute path: %s", err)
-				}
-
-				if info.IsDir() {
-					entrypoint = filepath.Join(entrypoint, commandBinaryName)
-				}
-
-				content, err := os.ReadFile(entrypoint)
-				if err != nil {
-					return fmt.Errorf("unable to read command binary: %s", err)
-				}
-
-				metadata, err := catalog.ExtractCommandMetadata(content)
-				if err != nil {
-					return fmt.Errorf("unable to extract metadata: %s", err)
-				}
-
-				if err := manifest.AddCommand(commandName, Command{
-					Version:         "local",
-					Origin:          origin,
-					Dir:             filepath.Dir(entrypoint),
-					Entrypoint:      filepath.Base(entrypoint),
-					CommandMetadata: metadata,
-				}); err != nil {
-					return fmt.Errorf("could not add command: %s", err)
-				}
-
-				cmd.Printf("Added command %s\n", commandName)
-				return nil
-
-			}
-
-			originUrl, err := url.Parse(origin)
+			remote, err := GetRemote(origin)
 			if err != nil {
-				return fmt.Errorf("could not parse origin: %s", err)
+				return fmt.Errorf("could not get remote: %s", err)
 			}
-
-			remote := GetRemote(originUrl)
 
 			version, err := remote.GetLatestVersion()
 			if err != nil {
@@ -556,38 +656,15 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("could not create temporary directory: %s", err)
 			}
+			defer os.RemoveAll(tempDir)
+
 			if err := remote.Download(tempDir, version); err != nil {
 				return fmt.Errorf("could not install command: %s", err)
 			}
 
-			content, err := os.ReadFile(filepath.Join(tempDir, commandBinaryName))
-			if err != nil {
-				return fmt.Errorf("unable to read command binary: %s", err)
-			}
-
-			metadata, err := catalog.ExtractCommandMetadata(content)
-			if err != nil {
-				return fmt.Errorf("unable to extract metadata: %s", err)
-			}
-
-			if err := os.MkdirAll(manifest.commandRoot, 0755); err != nil {
-				return fmt.Errorf("could not create command directory: %s", err)
-			}
-
-			commandDir := filepath.Join(manifest.commandRoot, commandName)
-
+			commandDir := filepath.Join(commandRoot, commandName)
 			if err := os.Rename(tempDir, commandDir); err != nil {
 				return fmt.Errorf("could not install command: %s", err)
-			}
-
-			if err := manifest.AddCommand(commandName, Command{
-				Origin:          origin,
-				Entrypoint:      commandBinaryName,
-				Dir:             commandDir,
-				Version:         version,
-				CommandMetadata: metadata,
-			}); err != nil {
-				return fmt.Errorf("could not add command: %s", err)
 			}
 
 			fmt.Printf("✓ Installed command %s\n", commandName)
@@ -598,7 +675,7 @@ func NewCommandAddCmd(manifest *Manifest) *cobra.Command {
 	return cmd
 }
 
-func NewCommandListCmd(manifest *Manifest) *cobra.Command {
+func NewCommandListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List installed command commands",
@@ -615,7 +692,7 @@ func NewCommandListCmd(manifest *Manifest) *cobra.Command {
 			}
 
 			printer := tableprinter.New(os.Stdout, isTTY, width)
-			for commandName, command := range manifest.Commands {
+			for commandName, command := range commands {
 				printer.AddField(commandName)
 				printer.AddField(command.Description)
 				printer.EndRow()
@@ -628,34 +705,18 @@ func NewCommandListCmd(manifest *Manifest) *cobra.Command {
 	return cmd
 }
 
-func NewCommandRemoveCmd(manifest *Manifest) *cobra.Command {
+func NewCommandRemoveCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:       "remove <command> [commands...]",
 		Short:     "Remove an installed command",
 		Aliases:   []string{"rm", "uninstall"},
 		Args:      cobra.MatchAll(cobra.MinimumNArgs(1), cobra.OnlyValidArgs),
-		ValidArgs: manifest.ListCommands(),
+		ValidArgs: commandNames,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, commandName := range args {
-				command, ok := manifest.Commands[commandName]
-				if !ok {
-					return fmt.Errorf("command %s not installed", commandName)
-				}
+				commandDir := filepath.Join(commandRoot, commandName)
 
-				if command.IsLocal() {
-					if err := manifest.RemoveCommand(commandName); err != nil {
-						return fmt.Errorf("unable to remove command: %s", err)
-					}
-
-					fmt.Printf("✓ Removed command %s\n", commandName)
-					continue
-				}
-
-				if err := os.RemoveAll(command.Dir); err != nil {
-					return fmt.Errorf("unable to remove command: %s", err)
-				}
-
-				if err := manifest.RemoveCommand(commandName); err != nil {
+				if err := os.RemoveAll(commandDir); err != nil {
 					return fmt.Errorf("unable to remove command: %s", err)
 				}
 
@@ -666,12 +727,13 @@ func NewCommandRemoveCmd(manifest *Manifest) *cobra.Command {
 	}
 }
 
-func NewCommandUpgradeCmd(manifest *Manifest) *cobra.Command {
+func NewCommandUpgradeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:       "upgrade [--all] [<command>]",
 		Short:     "Upgrade an installed command",
+		Aliases:   []string{"up", "update"},
 		Args:      cobra.MaximumNArgs(1),
-		ValidArgs: manifest.ListCommands(),
+		ValidArgs: commandNames,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			all, _ := cmd.Flags().GetBool("all")
 			if all && len(args) > 0 {
@@ -688,24 +750,21 @@ func NewCommandUpgradeCmd(manifest *Manifest) *cobra.Command {
 			var toUpgrade []string
 			all, _ := cmd.Flags().GetBool("all")
 			if all {
-				toUpgrade = manifest.ListCommands()
+				toUpgrade = commandNames
 			} else {
 				toUpgrade = args
 			}
 
 			for _, commandName := range toUpgrade {
-				command := manifest.Commands[commandName]
-				if command.IsLocal() {
-					fmt.Printf("Command %s is not installed from a remote, skipping\n", commandName)
-					continue
+				command, ok := commands[commandName]
+				if !ok {
+					return fmt.Errorf("command %s not found", commandName)
 				}
 
-				originUrl, err := url.Parse(command.Origin)
+				remote, err := GetRemote(command.Origin)
 				if err != nil {
-					return fmt.Errorf("could not parse origin: %s", err)
+					return fmt.Errorf("could not get remote: %s", err)
 				}
-
-				remote := GetRemote(originUrl)
 
 				version, err := remote.GetLatestVersion()
 				if err != nil {
@@ -721,21 +780,18 @@ func NewCommandUpgradeCmd(manifest *Manifest) *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
+				defer os.RemoveAll(tempdir)
 
 				if err := remote.Download(tempdir, version); err != nil {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 
-				if err := os.RemoveAll(command.Dir); err != nil {
+				commandDir := filepath.Join(commandRoot, commandName)
+				if err := os.RemoveAll(commandDir); err != nil {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 
-				if err := os.Rename(tempdir, command.Dir); err != nil {
-					return fmt.Errorf("unable to upgrade command: %s", err)
-				}
-
-				command.Version = version
-				if err := manifest.UpdateCommand(commandName, command); err != nil {
+				if err := os.Rename(tempdir, commandDir); err != nil {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 

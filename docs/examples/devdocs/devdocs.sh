@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# @sunbeam.schemaVersion 1
 # @sunbeam.title Search DevDocs Docsets
-# @sunbeam.mode view
 
 set -euo pipefail
 

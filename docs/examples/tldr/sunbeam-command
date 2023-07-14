@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# @sunbeam.schemaVersion 1
 # @sunbeam.title List TLDR Pages
-# @sunbeam.mode view
 
 set -euo pipefail
 
