@@ -34,7 +34,6 @@ var (
 
 var (
 	options internal.SunbeamOptions
-	cwd     string
 )
 
 func init() {
@@ -45,12 +44,6 @@ func init() {
 		Border:     utils.LookupBoolEnv("SUNBEAM_BORDER", false),
 		Margin:     utils.LookupIntEnv("SUNBEAM_MARGIN", 0),
 	}
-
-	wd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	cwd = wd
 }
 
 func NewRootCmd() *cobra.Command {
