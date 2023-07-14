@@ -24,5 +24,5 @@ sunbeam devdocs <docset-slug> # List all entries for a docset
 ## Code
 
 ```bash
-{{#include ./sunbeam-command}}
+{{#include ./devdocs.sh}}
 ```

@@ -30,17 +30,13 @@ Here are some suggestions if you don't know what language to use:
 
 You have multiple alternatives to distribute sunbeam commands:
 
-### Github Gists
-
-The easiest way to write a sunbeam command is to create a [github gist](https://gist.github.com/) containing a `sunbeam-command` executable.
-
-All the examples from the docs are available as gists.
-
 ### Git Repositories
 
-Alternatively, you can create a github repository containing the `sunbeam-command` executable in it's root directory, and push it to github.
+Alternatively, you can create a github repository containing a `sunbeam.json` manifest in it's root directory, and push it to github.
 
 ### Raw Scripts
+
+You can fetch a sunbeam command from any public URL.
 
 ## Publishing Extensions
 

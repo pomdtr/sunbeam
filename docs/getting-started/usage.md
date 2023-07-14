@@ -71,7 +71,7 @@ The user can then use the escape key to go back to the previous page.
 
 ![Navigation](./navigation.excalidraw.png)
 
-You can find a working file browser example [here](../examples/file-browser.md).
+You can find a working file browser example [here](../examples/file-browser/README.md).
 
 ## Displaying Text
 
@@ -132,7 +132,7 @@ Sunbeam support the following input types:
 
 This is just the tip of the iceberg. Sunbeam can show detail pages, prompt the user for input, and much more.
 
-To learn more, check out the [Sunbeam types](../types.md) and the provided [examples](../examples/index.md).
+To learn more, check out the provided [examples](../examples/index.md).
 
 In order to run the examples, you can either copy/paste them or just clone the sunbeam repository, go to the `docs/examples` directory and run `sunbeam < sunbeam.json`.
 

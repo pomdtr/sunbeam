@@ -9,10 +9,7 @@
         "readme_path": "./README.md"
     },
     "build": {
-        "path_prefix": "sunbeam",
-        "additional_pages": {
-            "Command Catalog": "./catalog.md"
-        }
+        "path_prefix": "sunbeam"
     },
     "components": {
         "changelog": false,

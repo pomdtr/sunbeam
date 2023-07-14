@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 )
 
@@ -84,43 +83,6 @@ func FetchGithubGist(rawGistUrl string) (*GithubGist, error) {
 	}
 
 	return &gist, nil
-}
-
-type SearchBody struct {
-	Items []GithubRepo
-}
-
-func SearchSunbeamExtensions(query string) ([]GithubRepo, error) {
-
-	// Search extension with a sunbeam-command topic
-	extensionUrl := url.URL{
-		Scheme: "https",
-		Host:   "api.github.com",
-		Path:   "/search/repositories",
-		RawQuery: url.Values{
-			"q":     []string{fmt.Sprintf("%s topic:sunbeam-command", query)},
-			"sort":  []string{"stars"},
-			"order": []string{"desc"},
-		}.Encode(),
-	}
-
-	res, err := http.Get(extensionUrl.String())
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, err
-	}
-
-	var body SearchBody
-	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
-		return nil, err
-	}
-
-	return body.Items, nil
 }
 
 type GitCommit struct {

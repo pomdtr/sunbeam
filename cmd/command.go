@@ -51,7 +51,9 @@ func init() {
 	commandRoot = filepath.Join(dataHome, "sunbeam", "commands")
 
 	if _, err := os.Stat(commandRoot); err != nil {
-		os.MkdirAll(commandRoot, 0755)
+		if err := os.MkdirAll(commandRoot, 0755); err != nil {
+			panic(err)
+		}
 		return
 	}
 
@@ -443,7 +445,6 @@ func NewCommandCmd() *cobra.Command {
 	}
 
 	commandCmd.AddCommand(NewCommandManageCmd())
-	commandCmd.AddCommand(NewCommandCreateCmd())
 	commandCmd.AddCommand(NewCommandAddCmd())
 	commandCmd.AddCommand(NewCommandRenameCmd())
 	commandCmd.AddCommand(NewCommandListCmd())
@@ -536,44 +537,6 @@ func NewCommandManageCmd() *cobra.Command {
 			return Run(generator)
 		},
 	}
-}
-
-//go:embed sunbeam-command
-var commandTemplate string
-
-func NewCommandCreateCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create a new command",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			name, _ := cmd.Flags().GetString("name")
-			if name == "" {
-				return fmt.Errorf("name is required")
-			}
-
-			commandDir := filepath.Join(cwd, name)
-			if _, err := os.Stat(commandDir); err == nil {
-				return fmt.Errorf("directory %s already exists", commandDir)
-			}
-
-			if err := os.Mkdir(commandDir, 0755); err != nil {
-				return fmt.Errorf("unable to create directory %s: %s", commandDir, err)
-			}
-
-			if err := os.WriteFile(filepath.Join(commandDir, "command.sh"), []byte(commandTemplate), 0755); err != nil {
-				return fmt.Errorf("unable to write command binary: %s", err)
-			}
-
-			cmd.Printf("Created command %s\n", name)
-			return nil
-		},
-	}
-
-	cmd.Flags().StringP("name", "n", "", "command name")
-	cmd.MarkFlagRequired("name") //nolint:errcheck
-
-	return cmd
 }
 
 func NewCommandRenameCmd() *cobra.Command {
@@ -839,12 +802,7 @@ func downloadAndExtractZip(zipUrl string, dst string) error {
 			continue
 		}
 
-		mode := file.Mode()
-		if filepath.Base(fpath) == "sunbeam-command" {
-			mode = 0755
-		}
-
-		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE, mode)
+		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE, file.Mode())
 		if err != nil {
 			return err
 		}

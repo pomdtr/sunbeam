@@ -2,8 +2,6 @@
 
 # Sunbeam
 
-[![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://codesandbox.io/p/github/pomdtr/sunbeam/main)
-
 </div>
 
 Sunbeam is a command-line launcher, inspired by [fzf](https://github.com/junegunn/fzf), [raycast](https://raycast.com) and [gum](https://github.com/charmbracelet/gum).
@@ -45,7 +43,7 @@ The only requirement is that the script is executable and outputs a JSON object 
 
 ### Any github repository can be used as a command
 
-Sunbeam is designed to be extended. Any github repository containing a `sunbeam-command` executable can be installed using the `sunbeam install` command. You can also install commands from gist, or any pastebin-like service.
+Sunbeam is designed to be extended. Any github repository containing a `sunbeam.json` config can be installed using the `sunbeam install` command. You can also install commands from any url.
 
 ### Sunbeam supports custom clients
 
