@@ -76,7 +76,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewDetailCmd())
-	rootCmd.AddCommand(NewReadCmd())
+	rootCmd.AddCommand(NewRunCmd())
 	rootCmd.AddCommand(NewEvalCmd())
 
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
@@ -205,16 +205,26 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(commandName string, manifest Manifest) *cobra.Command {
+func NewCustomCmd(commandName string, command Command) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                commandName,
-		Short:              manifest.Title,
-		Long:               manifest.Description,
+		Short:              command.Title,
+		Long:               command.Description,
 		DisableFlagParsing: true,
 		GroupID:            customGroupID,
 	}
 
-	if len(manifest.SubCommands) == 0 {
+	root := command.Root
+	if !filepath.IsAbs(root) {
+		root = filepath.Join(commandRoot, commandName, root)
+	}
+
+	info, err := os.Stat(root)
+	if err != nil {
+		return nil
+	}
+
+	if !info.IsDir() {
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 && args[0] == "--help" {
 				return cmd.Help()
@@ -230,7 +240,7 @@ func NewCustomCmd(commandName string, manifest Manifest) *cobra.Command {
 			}
 
 			return runCommand(types.Command{
-				Name:  filepath.Join(commandRoot, commandName, manifest.Entrypoint),
+				Name:  root,
 				Args:  args,
 				Input: input,
 			})
@@ -239,7 +249,31 @@ func NewCustomCmd(commandName string, manifest Manifest) *cobra.Command {
 		return cmd
 	}
 
-	for name, subCommand := range manifest.SubCommands {
+	if command.Entrypoint != "" {
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			if len(args) == 1 && args[0] == "--help" {
+				return cmd.Help()
+			}
+			var input string
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				inputBytes, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+
+				input = string(inputBytes)
+			}
+
+			return runCommand(types.Command{
+				Name:  filepath.Join(root, command.Entrypoint),
+				Args:  args,
+				Input: input,
+			})
+		}
+
+	}
+
+	for name, subCommand := range command.SubCommands {
 		subCommand := subCommand
 		cmd.AddCommand(&cobra.Command{
 			Use:                name,
@@ -261,11 +295,10 @@ func NewCustomCmd(commandName string, manifest Manifest) *cobra.Command {
 				}
 
 				return runCommand(types.Command{
-					Name:  filepath.Join(commandRoot, commandName, subCommand.Entrypoint),
+					Name:  filepath.Join(root, subCommand.Entrypoint),
 					Args:  args,
 					Input: input,
 				})
-
 			},
 		})
 	}

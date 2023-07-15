@@ -11,7 +11,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewReadCmd() *cobra.Command {
+type ExitCodeError struct {
+	ExitCode int
+}
+
+func (e ExitCodeError) Error() string {
+	return fmt.Sprintf("exit code %d", e.ExitCode)
+}
+
+func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "run <command> [args...]",
 		Short:   "read a sunbeam command",
@@ -34,7 +42,12 @@ func NewReadCmd() *cobra.Command {
 
 			scriptPath := args[0]
 			if info.IsDir() {
-				scriptPath = filepath.Join(scriptPath, manifestName)
+				root, err := findRoot(scriptPath)
+				if err != nil {
+					return err
+				}
+
+				scriptPath = root
 			}
 
 			if filepath.Base(scriptPath) != manifestName {
@@ -45,7 +58,7 @@ func NewReadCmd() *cobra.Command {
 				})
 			}
 
-			command, err := ParseCommand(filepath.Dir(scriptPath), "")
+			command, err := ParseCommand(filepath.Dir(scriptPath))
 			if err != nil {
 				return fmt.Errorf("could not parse command: %w", err)
 			}
@@ -59,32 +72,12 @@ func NewReadCmd() *cobra.Command {
 			}
 
 			if len(args) < 2 {
-				var listitems []types.ListItem
-				for name, command := range command.SubCommands {
-					listitems = append(listitems, types.ListItem{
-						Title:       command.Title,
-						Subtitle:    command.Description,
-						Accessories: []string{name},
-						Actions: []types.Action{
-							{
-								Title: "Run",
-								Type:  types.PushAction,
-								Command: &types.Command{
-									Name: filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
-									Args: args,
-								},
-							},
-						},
-					})
+				cmd.PrintErrln("No subcommand provided")
+				cmd.PrintErrln("Subcommands:")
+				for name := range command.SubCommands {
+					cmd.PrintErrf("  - %s\n", name)
 				}
-
-				return Run(func() (*types.Page, error) {
-					return &types.Page{
-						Type:  types.ListPage,
-						Title: "Sunbeam",
-						Items: listitems,
-					}, nil
-				})
+				return ExitCodeError{ExitCode: 1}
 			}
 
 			subcommand := args[1]

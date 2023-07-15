@@ -6,8 +6,10 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "cwd": "${workspaceFolder}/docs/examples/local-dir",
-      "args": []
+      "args": [
+        "eval",
+        "@pomdtr.helloWorld"
+      ]
     },
     {
       "name": "install script",

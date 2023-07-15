@@ -223,10 +223,7 @@ func (e Expression) Request() *Request {
 
 	payload := map[string]any{
 		"code": e.Code,
-	}
-
-	if len(e.Args) > 0 {
-		payload["args"] = e.Args
+		"args": e.Args,
 	}
 
 	body, _ := json.Marshal(payload)

@@ -15,28 +15,34 @@ func NewEvalCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "eval <code>",
 		Short:   "Evaluate code with val.town",
-		Args:    cobra.MaximumNArgs(1),
 		GroupID: coreGroupID,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 && isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no code provided")
 			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var code string
-			if len(args) > 0 {
-				code = args[0]
-			} else {
+			expression := types.Expression{}
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
 				bs, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					return err
 				}
-				code = string(bs)
-			}
+				expression.Code = string(bs)
 
-			expression := types.Expression{
-				Code: code,
+				expression.Args = make([]any, 0)
+				for _, arg := range args {
+					expression.Args = append(expression.Args, arg)
+				}
+			} else {
+				expression.Code = args[0]
+
+				expression.Args = make([]any, 0)
+				for _, arg := range args[1:] {
+					expression.Args = append(expression.Args, arg)
+				}
 			}
 
 			bs, err := expression.Request().Do(context.Background())
@@ -49,9 +55,10 @@ func NewEvalCmd() *cobra.Command {
 			}
 
 			return nil
-
 		},
 	}
+
+	cmd.Flags().StringP("expression", "e", "", "expression to evaluate")
 
 	return cmd
 }
