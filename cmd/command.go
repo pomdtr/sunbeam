@@ -119,6 +119,19 @@ type Metadata struct {
 	SubCommands map[string]Metadata `json:"subcommands,omitempty"`
 }
 
+func (m Metadata) Rows() []string {
+	var rows []string
+	if m.Title != "" {
+		rows = append(rows, fmt.Sprintf("@sunbeam.title %s", m.Title))
+	}
+
+	if m.Description != "" {
+		rows = append(rows, fmt.Sprintf("@sunbeam.description %s", m.Description))
+	}
+
+	return rows
+}
+
 type Command struct {
 	Metadata
 	Manifest
@@ -571,7 +584,16 @@ func (t ValTownRemote) Val() string {
 }
 
 func (r ValTownRemote) FetchVal() (Val, error) {
-	resp, err := http.Get(fmt.Sprintf("https://api.val.town/v1/alias/%s/%s", r.author, r.name))
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.val.town/v1/alias/%s/%s", r.author, r.name), nil)
+	if err != nil {
+		return Val{}, fmt.Errorf("unable to fetch val: %s", err)
+	}
+
+	if env, ok := os.LookupEnv("VALTOWN_TOKEN"); ok {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", env))
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return Val{}, fmt.Errorf("unable to fetch val: %s", err)
 	}
@@ -612,15 +634,7 @@ func (r ValTownRemote) Download(targetDir string, version string) error {
 	rows := []string{
 		"#!/usr/bin/env bash",
 	}
-
-	if metadata.Title != "" {
-		rows = append(rows, fmt.Sprintf("# @sunbeam.title %s", metadata.Title))
-	}
-
-	if metadata.Description != "" {
-		rows = append(rows, fmt.Sprintf("# @sunbeam.description %s", metadata.Description))
-	}
-
+	rows = append(rows, metadata.Rows()...)
 	rows = append(rows, fmt.Sprintf(`echo "%s" | sunbeam eval "$@"`, r.Val()))
 
 	bs := []byte(strings.Join(rows, "\n"))

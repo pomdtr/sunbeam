@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam extension install tldr https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/tldr.sh
+sunbeam command add tldr https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/tldr.sh
 ```
 
 ## Usage

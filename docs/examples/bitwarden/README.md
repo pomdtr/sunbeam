@@ -10,7 +10,7 @@
 ## Install
 
 ```bash
-sunbeam extension install bw https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/bitwarden/bitwarden.sh
+sunbeam command add bw https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/bitwarden/bitwarden.sh
 ```
 
 ## Usage

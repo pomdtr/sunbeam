@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam extension install files https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/file-browser/file-browser.py
+sunbeam command add files https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/file-browser/file-browser.py
 ```
 
 ## Usage
