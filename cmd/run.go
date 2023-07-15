@@ -76,7 +76,6 @@ func NewRunCmd() *cobra.Command {
 			}
 
 			scriptPath := args[0]
-
 			info, err := os.Stat(scriptPath)
 			if err != nil {
 				return err
@@ -104,7 +103,7 @@ func NewRunCmd() *cobra.Command {
 				return fmt.Errorf("could not parse command: %w", err)
 			}
 
-			if command.Entrypoint != "" {
+			if len(command.SubCommands) == 0 {
 				return runCommand(types.Command{
 					Name:  filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
 					Args:  args[1:],
@@ -112,8 +111,34 @@ func NewRunCmd() *cobra.Command {
 				})
 			}
 
-			if len(args) < 2 {
+			if len(args) == 1 {
+				if command.Entrypoint != "" {
+					return runCommand(types.Command{
+						Name:  filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
+						Args:  args[1:],
+						Input: input,
+					})
+				}
+
 				cmd.PrintErrln("No subcommand provided")
+				cmd.PrintErrln("Available subcommands:")
+				for name := range command.SubCommands {
+					cmd.PrintErrf(" - %s\n", name)
+				}
+				return ExitCodeError{ExitCode: 1}
+			}
+
+			subcommand, ok := command.SubCommands[args[1]]
+			if !ok {
+				if command.Entrypoint != "" {
+					return runCommand(types.Command{
+						Name:  filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
+						Args:  args[1:],
+						Input: input,
+					})
+				}
+
+				cmd.PrintErrf("Subcommand not found: %s\n", args[1])
 				cmd.PrintErrln("Subcommands:")
 				for name := range command.SubCommands {
 					cmd.PrintErrf("  - %s\n", name)
@@ -121,20 +146,12 @@ func NewRunCmd() *cobra.Command {
 				return ExitCodeError{ExitCode: 1}
 			}
 
-			subcommand := args[1]
-			for name, c := range command.SubCommands {
-				if subcommand != name {
-					continue
-				}
+			return runCommand(types.Command{
+				Name:  filepath.Join(filepath.Dir(scriptPath), subcommand.Entrypoint),
+				Args:  args[2:],
+				Input: input,
+			})
 
-				return runCommand(types.Command{
-					Name:  filepath.Join(filepath.Dir(scriptPath), c.Entrypoint),
-					Args:  args[2:],
-					Input: input,
-				})
-			}
-
-			return fmt.Errorf("subcommand not found: %s", subcommand)
 		},
 	}
 

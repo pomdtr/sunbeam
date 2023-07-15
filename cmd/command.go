@@ -3,7 +3,9 @@ package cmd
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,7 +19,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/adrg/xdg"
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
@@ -191,8 +192,8 @@ func RefreshCommands() (map[string]Command, error) {
 			return nil, fmt.Errorf("could not stat command: %s", err)
 		}
 
-		if info.IsDir() {
-			metadata, err := ParseCommand(root)
+		if info.Name() == manifestName {
+			metadata, err := ParseCommand(filepath.Dir(root))
 			if err != nil {
 				return nil, fmt.Errorf("unable to parse command: %s", err)
 			}
@@ -357,12 +358,14 @@ func GetRemote(origin string) (CommandRemote, error) {
 		return GithubRemote{
 			origin: originUrl,
 		}, nil
-	case "www.val.town", "val.town":
-		return NewValTownRemote(originUrl)
-	default:
+	case "raw.githubusercontent.com":
 		return ScriptRemote{
 			origin: originUrl,
 		}, nil
+	case "www.val.town", "val.town":
+		return NewValTownRemote(originUrl)
+	default:
+		return nil, fmt.Errorf("unsupported origin: %s", origin)
 	}
 }
 
@@ -411,7 +414,7 @@ func (r LocalScript) Download(targetDir string, version string) error {
 }
 
 func (r LocalScript) GetLatestVersion() (string, error) {
-	return time.Now().UTC().Format(time.RFC3339), nil
+	return "", nil
 }
 
 type LocalDir struct {
@@ -422,10 +425,6 @@ func (r LocalDir) Download(targetDir string, version string) error {
 	root, err := findRoot(r.path)
 	if err != nil {
 		return fmt.Errorf("unable to find root: %s", err)
-	}
-
-	if filepath.Base(root) == manifestName {
-		root = filepath.Dir(root)
 	}
 
 	manifest := Manifest{
@@ -442,7 +441,7 @@ func (r LocalDir) Download(targetDir string, version string) error {
 }
 
 func (r LocalDir) GetLatestVersion() (string, error) {
-	return time.Now().UTC().Format(time.RFC3339), nil
+	return "", nil
 }
 
 type GithubRemote struct {
@@ -469,12 +468,6 @@ func (r GithubRemote) Download(targetDir string, version string) error {
 		return fmt.Errorf("unable to find root: %s", err)
 	}
 
-	if filepath.Base(root) == manifestName {
-		root = "src"
-	} else {
-		root = filepath.Join("src", filepath.Base(root))
-	}
-
 	manifest := Manifest{
 		Origin:  r.origin.String(),
 		Version: version,
@@ -493,8 +486,22 @@ type ScriptRemote struct {
 }
 
 func (r ScriptRemote) GetLatestVersion() (string, error) {
+	res, err := http.Get(r.origin.String())
+	if err != nil {
+		return "", fmt.Errorf("unable to download script: %s", err)
+	}
+	defer res.Body.Close()
+
+	bs, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", fmt.Errorf("unable to read response body: %s", err)
+	}
+
+	hash := sha256.Sum256(bs)
+
 	// return utc timestamp
-	return time.Now().UTC().Format(time.RFC3339), nil
+
+	return hex.EncodeToString(hash[:])[:8], nil
 }
 
 func (r ScriptRemote) Download(targetDir string, version string) error {
@@ -854,6 +861,7 @@ func NewCommandAddCmd() *cobra.Command {
 			}
 
 			if _, err := RefreshCommands(); err != nil {
+				_ = os.RemoveAll(commandDir)
 				return fmt.Errorf("could not refresh commands: %s", err)
 			}
 
@@ -870,18 +878,17 @@ func NewCommandListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List installed command commands",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var isTTY bool
-			var width int
+			var printer tableprinter.TablePrinter
 			if isatty.IsTerminal(os.Stdout.Fd()) {
-				isTTY = true
-				w, _, err := term.GetSize(int(os.Stdout.Fd()))
+				width, _, err := term.GetSize(int(os.Stdout.Fd()))
 				if err != nil {
 					return err
 				}
-				width = w
+				printer = tableprinter.New(os.Stdout, true, width)
+			} else {
+				printer = tableprinter.New(os.Stdout, false, 0)
 			}
 
-			printer := tableprinter.New(os.Stdout, isTTY, width)
 			for commandName, command := range commands {
 				printer.AddField(commandName)
 				printer.AddField(command.Title)
