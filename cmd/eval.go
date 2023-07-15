@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -10,6 +11,19 @@ import (
 	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 )
+
+func parseArg(input string) any {
+	if input == "" {
+		return nil
+	}
+
+	var parsed any
+	if err := json.Unmarshal([]byte(input), &parsed); err == nil {
+		return parsed
+	}
+
+	return input
+}
 
 func NewEvalCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -34,14 +48,14 @@ func NewEvalCmd() *cobra.Command {
 
 				expression.Args = make([]any, 0)
 				for _, arg := range args {
-					expression.Args = append(expression.Args, arg)
+					expression.Args = append(expression.Args, parseArg(arg))
 				}
 			} else {
 				expression.Code = args[0]
 
 				expression.Args = make([]any, 0)
 				for _, arg := range args[1:] {
-					expression.Args = append(expression.Args, arg)
+					expression.Args = append(expression.Args, parseArg(arg))
 				}
 			}
 
