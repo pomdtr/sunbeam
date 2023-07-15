@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -21,7 +23,7 @@ func (e ExitCodeError) Error() string {
 
 func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "run <command> [args...]",
+		Use:     "run <origin> [args...]",
 		Short:   "read a sunbeam command",
 		GroupID: coreGroupID,
 		Args:    cobra.MinimumNArgs(1),
@@ -35,12 +37,51 @@ func NewRunCmd() *cobra.Command {
 				input = string(bs)
 			}
 
-			info, err := os.Stat(args[0])
+			if originUrl, err := url.Parse(args[0]); err == nil && originUrl.Scheme == "https" {
+				resp, err := http.Get(args[0])
+				if err != nil {
+					return fmt.Errorf("could not fetch script: %w", err)
+				}
+				defer resp.Body.Close()
+
+				if resp.StatusCode != 200 {
+					return fmt.Errorf("could not fetch script: %s", resp.Status)
+				}
+
+				tmpDir, err := os.MkdirTemp("", "sunbeam")
+				if err != nil {
+					return err
+				}
+				defer os.RemoveAll(tmpDir)
+
+				scriptPath := filepath.Join(tmpDir, "sunbeam-command")
+				f, err := os.OpenFile(scriptPath, os.O_CREATE|os.O_WRONLY, 0755)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+
+				if _, err := io.Copy(f, resp.Body); err != nil {
+					return err
+				}
+				if err := f.Close(); err != nil {
+					return err
+				}
+
+				return runCommand(types.Command{
+					Name:  scriptPath,
+					Args:  args[1:],
+					Input: input,
+				})
+			}
+
+			scriptPath := args[0]
+
+			info, err := os.Stat(scriptPath)
 			if err != nil {
 				return err
 			}
 
-			scriptPath := args[0]
 			if info.IsDir() {
 				root, err := findRoot(scriptPath)
 				if err != nil {
