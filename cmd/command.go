@@ -953,11 +953,12 @@ func NewCommandUpgradeCmd() *cobra.Command {
 					return fmt.Errorf("unable to upgrade command: %s", err)
 				}
 
-				if _, err := RefreshCommands(); err != nil {
-					return fmt.Errorf("could not refresh commands: %s", err)
-				}
-
 				fmt.Printf("✓ Upgraded command %s\n", commandName)
+			}
+
+			// Refresh commands
+			if _, err := RefreshCommands(); err != nil {
+				return fmt.Errorf("could not refresh commands: %s", err)
 			}
 
 			return nil
