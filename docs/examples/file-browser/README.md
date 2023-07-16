@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam command add files https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/file-browser/file-browser.py
+sunbeam command add files https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/file-browser/sunbeam-command
 ```
 
 ## Usage
@@ -25,5 +25,5 @@ sunbeam files --show-hidden # Show hidden files
 ## Code
 
 ```python
-{{#include ./file-browser.py}}
+{{#include ./sunbeam-command}}
 ```
