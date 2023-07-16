@@ -111,7 +111,7 @@ func (m Manifest) Save(dir string) error {
 type Metadata struct {
 	Title       string              `json:"title"`
 	Description string              `json:"description,omitempty"`
-	Entrypoint  string              `json:"entrypoint,omitempty"`
+	Command     string              `json:"command,omitempty"`
 	SubCommands map[string]Metadata `json:"subcommands,omitempty"`
 }
 
@@ -244,7 +244,7 @@ func ParseCommand(commandDir string) (Metadata, error) {
 	cmd.Description = raw.Description
 
 	if raw.Entrypoint != "" {
-		cmd.Entrypoint = raw.Entrypoint
+		cmd.Command = raw.Entrypoint
 		return cmd, nil
 	}
 
@@ -270,7 +270,7 @@ func ParseCommand(commandDir string) (Metadata, error) {
 			if err != nil {
 				return cmd, fmt.Errorf("unable to extract metadata: %s", err)
 			}
-			subCmd.Entrypoint = subcommand
+			subCmd.Command = subcommand
 
 			cmd.SubCommands[name] = subCmd
 		case map[string]any:
@@ -283,7 +283,7 @@ func ParseCommand(commandDir string) (Metadata, error) {
 				return cmd, fmt.Errorf("subcommand cannot have subcommands")
 			}
 
-			if subCmd.Entrypoint == "" {
+			if subCmd.Command == "" {
 				return cmd, fmt.Errorf("subcommand must have entrypoint")
 			}
 

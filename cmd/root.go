@@ -254,7 +254,7 @@ func NewCustomCmd(commandName string, command Command) (*cobra.Command, error) {
 		return cmd, nil
 	}
 
-	if command.Entrypoint != "" {
+	if command.Command != "" {
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 && args[0] == "--help" {
 				return cmd.Help()
@@ -270,7 +270,7 @@ func NewCustomCmd(commandName string, command Command) (*cobra.Command, error) {
 			}
 
 			return runCommand(types.Command{
-				Name:  filepath.Join(rootDir, command.Entrypoint),
+				Name:  filepath.Join(rootDir, command.Command),
 				Args:  args,
 				Input: input,
 			})
@@ -299,7 +299,7 @@ func NewCustomCmd(commandName string, command Command) (*cobra.Command, error) {
 				}
 
 				return runCommand(types.Command{
-					Name:  filepath.Join(filepath.Dir(rootDir), subCommand.Entrypoint),
+					Name:  filepath.Join(filepath.Dir(rootDir), subCommand.Command),
 					Args:  args,
 					Input: input,
 				})

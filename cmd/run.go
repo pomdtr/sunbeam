@@ -102,16 +102,16 @@ func NewRunCmd() *cobra.Command {
 
 			if len(command.SubCommands) == 0 {
 				return runCommand(types.Command{
-					Name:  filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
+					Name:  filepath.Join(filepath.Dir(scriptPath), command.Command),
 					Args:  args[1:],
 					Input: input,
 				})
 			}
 
 			if len(args) == 1 {
-				if command.Entrypoint != "" {
+				if command.Command != "" {
 					return runCommand(types.Command{
-						Name:  filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
+						Name:  filepath.Join(filepath.Dir(scriptPath), command.Command),
 						Args:  args[1:],
 						Input: input,
 					})
@@ -129,9 +129,9 @@ func NewRunCmd() *cobra.Command {
 
 			subcommand, ok := command.SubCommands[args[1]]
 			if !ok {
-				if command.Entrypoint != "" {
+				if command.Command != "" {
 					return runCommand(types.Command{
-						Name:  filepath.Join(filepath.Dir(scriptPath), command.Entrypoint),
+						Name:  filepath.Join(filepath.Dir(scriptPath), command.Command),
 						Args:  args[1:],
 						Input: input,
 					})
@@ -148,7 +148,7 @@ func NewRunCmd() *cobra.Command {
 			}
 
 			return runCommand(types.Command{
-				Name:  filepath.Join(filepath.Dir(scriptPath), subcommand.Entrypoint),
+				Name:  filepath.Join(filepath.Dir(scriptPath), subcommand.Command),
 				Args:  args[2:],
 				Input: input,
 			})
