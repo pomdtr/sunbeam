@@ -76,12 +76,9 @@ func NewRunCmd() *cobra.Command {
 			}
 
 			scriptPath := args[0]
-			info, err := os.Stat(scriptPath)
-			if err != nil {
-				return err
-			}
-
-			if info.IsDir() {
+			if info, err := os.Stat(scriptPath); err != nil {
+				return fmt.Errorf("could not find script: %w", err)
+			} else if info.IsDir() {
 				root, err := findRoot(scriptPath)
 				if err != nil {
 					return err
@@ -120,11 +117,13 @@ func NewRunCmd() *cobra.Command {
 					})
 				}
 
-				cmd.PrintErrln("No subcommand provided")
+				cmd.PrintErrln("No subcommand provided!")
+				cmd.PrintErrln()
 				cmd.PrintErrln("Available subcommands:")
 				for name := range command.SubCommands {
 					cmd.PrintErrf(" - %s\n", name)
 				}
+				cmd.PrintErrln()
 				return ExitCodeError{ExitCode: 1}
 			}
 
@@ -138,11 +137,13 @@ func NewRunCmd() *cobra.Command {
 					})
 				}
 
-				cmd.PrintErrf("Subcommand not found: %s\n", args[1])
+				cmd.PrintErrf("Subcommand not found: %s\n!", args[1])
+				cmd.PrintErrln()
 				cmd.PrintErrln("Subcommands:")
 				for name := range command.SubCommands {
 					cmd.PrintErrf("  - %s\n", name)
 				}
+				cmd.PrintErrln()
 				return ExitCodeError{ExitCode: 1}
 			}
 
