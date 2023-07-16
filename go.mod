@@ -14,7 +14,6 @@ require (
 	github.com/itchyny/gojq v0.12.12
 	github.com/junegunn/fzf v0.0.0-20230523145557-d2bde205f0f7
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/otiai10/copy v1.12.0
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/spf13/cobra v1.7.0

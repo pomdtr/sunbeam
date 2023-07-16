@@ -21,29 +21,32 @@ func NewFetchCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			headersFlag, _ := cmd.Flags().GetStringArray("header")
 
-			var input []byte
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
+			var body []byte
+			if cmd.Flags().Changed("data") {
+				data, _ := cmd.Flags().GetString("data")
+				body = []byte(data)
+			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
 				b, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					return err
 				}
-				input = b
+				body = b
 			}
 
 			var method string
 			if cmd.Flags().Changed("method") {
 				method, _ = cmd.Flags().GetString("method")
-			} else if len(input) > 0 {
+			} else if len(body) > 0 {
 				method = http.MethodPost
 			} else {
 				method = http.MethodGet
 			}
 
-			if method == "GET" && len(input) > 0 {
+			if method == "GET" && len(body) > 0 {
 				return fmt.Errorf("cannot specify request body for GET request")
 			}
 
-			req, err := http.NewRequest(method, args[0], bytes.NewReader(input))
+			req, err := http.NewRequest(method, args[0], bytes.NewReader(body))
 			if err != nil {
 				return err
 			}
@@ -71,8 +74,9 @@ func NewFetchCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("method", "", "http method")
+	cmd.Flags().StringP("method", "X", "", "http method")
 	cmd.Flags().StringArrayP("header", "H", []string{}, "http header")
+	cmd.Flags().StringP("data", "d", "", "http request body")
 
 	return cmd
 }

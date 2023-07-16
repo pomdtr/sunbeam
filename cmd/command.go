@@ -19,22 +19,17 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/adrg/xdg"
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/mattn/go-isatty"
 	"github.com/mitchellh/mapstructure"
-	cp "github.com/otiai10/copy"
 	"github.com/pomdtr/sunbeam/types"
 	"golang.org/x/term"
 
 	"github.com/pomdtr/sunbeam/utils"
 	"github.com/spf13/cobra"
-)
-
-const (
-	manifestName          = "sunbeam.json"
-	extensionManifestName = "manifest.json"
 )
 
 var (
@@ -87,7 +82,7 @@ type Manifest struct {
 }
 
 func LoadManifest(dir string) (Manifest, error) {
-	f, err := os.Open(filepath.Join(dir, extensionManifestName))
+	f, err := os.Open(filepath.Join(dir, "manifest.json"))
 	if err != nil {
 		return Manifest{}, err
 	}
@@ -102,7 +97,7 @@ func LoadManifest(dir string) (Manifest, error) {
 }
 
 func (m Manifest) Save(dir string) error {
-	f, err := os.OpenFile(filepath.Join(dir, extensionManifestName), os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filepath.Join(dir, "manifest.json"), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -118,19 +113,6 @@ type Metadata struct {
 	Description string              `json:"description,omitempty"`
 	Entrypoint  string              `json:"entrypoint,omitempty"`
 	SubCommands map[string]Metadata `json:"subcommands,omitempty"`
-}
-
-func (m Metadata) Rows() []string {
-	var rows []string
-	if m.Title != "" {
-		rows = append(rows, fmt.Sprintf("@sunbeam.title %s", m.Title))
-	}
-
-	if m.Description != "" {
-		rows = append(rows, fmt.Sprintf("@sunbeam.description %s", m.Description))
-	}
-
-	return rows
 }
 
 type Command struct {
@@ -187,13 +169,13 @@ func RefreshCommands() (map[string]Command, error) {
 			root = filepath.Join(commandRoot, dir.Name(), root)
 		}
 
-		info, err := os.Stat(root)
+		entrypoint, err := findRoot(root)
 		if err != nil {
-			return nil, fmt.Errorf("could not stat command: %s", err)
+			return nil, fmt.Errorf("could not find command entrypoint: %s", err)
 		}
 
-		if info.Name() == manifestName {
-			metadata, err := ParseCommand(filepath.Dir(root))
+		if filepath.Base(entrypoint) == "sunbeam.json" {
+			metadata, err := ParseCommand(root)
 			if err != nil {
 				return nil, fmt.Errorf("unable to parse command: %s", err)
 			}
@@ -202,8 +184,8 @@ func RefreshCommands() (map[string]Command, error) {
 				Metadata: metadata,
 				Manifest: manifest,
 			}
-		} else {
-			bs, err := os.ReadFile(root)
+		} else if filepath.Base(entrypoint) == "sunbeam-command" {
+			bs, err := os.ReadFile(filepath.Join(root, "sunbeam-command"))
 			if err != nil {
 				return nil, fmt.Errorf("unable to read command: %s", err)
 			}
@@ -235,7 +217,7 @@ func RefreshCommands() (map[string]Command, error) {
 }
 
 func ParseCommand(commandDir string) (Metadata, error) {
-	manifestPath := filepath.Join(commandDir, manifestName)
+	manifestPath := filepath.Join(commandDir, "sunbeam.json")
 
 	var cmd Metadata
 	f, err := os.Open(manifestPath)
@@ -331,7 +313,7 @@ func GetRemote(origin string) (CommandRemote, error) {
 			return nil, fmt.Errorf("could not get absolute path: %s", err)
 		}
 
-		if filepath.Base(remotePath) == manifestName {
+		if filepath.Base(remotePath) == "sunbeam.json" {
 			remotePath = filepath.Dir(remotePath)
 		}
 
@@ -343,14 +325,18 @@ func GetRemote(origin string) (CommandRemote, error) {
 		}
 
 		if info.IsDir() {
-			return LocalDir{
+			return LocalRemote{
 				path: remotePath,
 			}, nil
 		}
 
-		return LocalScript{
-			path: remotePath,
-		}, nil
+		if info.Name() == "sunbeam.json" || info.Name() == "sunbeam-command" {
+			return LocalRemote{
+				path: filepath.Dir(remotePath),
+			}, nil
+		}
+
+		return nil, fmt.Errorf("unsupported local file: %s", origin)
 	}
 
 	switch originUrl.Hostname() {
@@ -370,8 +356,8 @@ func GetRemote(origin string) (CommandRemote, error) {
 }
 
 func findRoot(dir string) (string, error) {
-	if _, err := os.Stat(filepath.Join(dir, manifestName)); err == nil {
-		return filepath.Join(dir, manifestName), nil
+	if _, err := os.Stat(filepath.Join(dir, "sunbeam.json")); err == nil {
+		return filepath.Join(dir, "sunbeam.json"), nil
 	}
 
 	if _, err := os.Stat(filepath.Join(dir, "sunbeam-command")); err == nil {
@@ -381,23 +367,14 @@ func findRoot(dir string) (string, error) {
 	return "", fmt.Errorf("unable to find sunbeam.toml or sunbeam-command")
 }
 
-type LocalScript struct {
+type LocalRemote struct {
 	path string
 }
 
-func (r LocalScript) Download(targetDir string, version string) error {
-	if _, err := os.Stat(r.path); err != nil {
-		return fmt.Errorf("unable to find script: %s", err)
-	}
-
-	sourceDir := filepath.Join(targetDir, "src")
-	if err := os.MkdirAll(sourceDir, 0755); err != nil {
-		return fmt.Errorf("unable to create source directory: %s", err)
-	}
-
-	entrypoint := filepath.Join(sourceDir, filepath.Base(r.path))
-	if err := cp.Copy(r.path, entrypoint); err != nil {
-		return fmt.Errorf("unable to copy script: %s", err)
+func (r LocalRemote) Download(targetDir string, version string) error {
+	_, err := findRoot(r.path)
+	if err != nil {
+		return fmt.Errorf("unable to find root: %s", err)
 	}
 
 	manifest := Manifest{
@@ -413,34 +390,7 @@ func (r LocalScript) Download(targetDir string, version string) error {
 	return nil
 }
 
-func (r LocalScript) GetLatestVersion() (string, error) {
-	return "", nil
-}
-
-type LocalDir struct {
-	path string
-}
-
-func (r LocalDir) Download(targetDir string, version string) error {
-	root, err := findRoot(r.path)
-	if err != nil {
-		return fmt.Errorf("unable to find root: %s", err)
-	}
-
-	manifest := Manifest{
-		Origin:  r.path,
-		Version: version,
-		Root:    root,
-	}
-
-	if err := manifest.Save(targetDir); err != nil {
-		return fmt.Errorf("unable to save manifest: %s", err)
-	}
-
-	return nil
-}
-
-func (r LocalDir) GetLatestVersion() (string, error) {
+func (r LocalRemote) GetLatestVersion() (string, error) {
 	return "", nil
 }
 
@@ -463,7 +413,7 @@ func (r GithubRemote) Download(targetDir string, version string) error {
 		return fmt.Errorf("unable to download command: %s", err)
 	}
 
-	root, err := findRoot(srcDir)
+	_, err := findRoot(srcDir)
 	if err != nil {
 		return fmt.Errorf("unable to find root: %s", err)
 	}
@@ -471,7 +421,7 @@ func (r GithubRemote) Download(targetDir string, version string) error {
 	manifest := Manifest{
 		Origin:  r.origin.String(),
 		Version: version,
-		Root:    root,
+		Root:    "src",
 	}
 
 	if err := manifest.Save(targetDir); err != nil {
@@ -524,7 +474,7 @@ func (r ScriptRemote) Download(targetDir string, version string) error {
 	manifest := Manifest{
 		Origin:  r.origin.String(),
 		Version: version,
-		Root:    "sunbeam-command",
+		Root:    ".",
 	}
 
 	bs, err = json.Marshal(manifest)
@@ -532,7 +482,7 @@ func (r ScriptRemote) Download(targetDir string, version string) error {
 		return fmt.Errorf("unable to encode manifest: %s", err)
 	}
 
-	manifestPath := filepath.Join(targetDir, extensionManifestName)
+	manifestPath := filepath.Join(targetDir, "manifest.json")
 	if err := os.WriteFile(manifestPath, bs, 0644); err != nil {
 		return fmt.Errorf("unable to write manifest: %s", err)
 	}
@@ -587,7 +537,7 @@ func NewValTownRemote(origin *url.URL) (*ValTownRemote, error) {
 }
 
 func (t ValTownRemote) Val() string {
-	return fmt.Sprintf("@%s.%s", t.author, t.name)
+	return fmt.Sprintf("%s.%s", t.author, t.name)
 }
 
 func (r ValTownRemote) FetchVal() (Val, error) {
@@ -627,6 +577,10 @@ func (r ValTownRemote) GetLatestVersion() (string, error) {
 	return strconv.Itoa(val.Version), nil
 }
 
+//go:embed templates/run-val.sh
+var rawRunValTemplate string
+var runValTemplate = template.Must(template.New("run-val.sh").Parse(rawRunValTemplate))
+
 func (r ValTownRemote) Download(targetDir string, version string) error {
 	val, err := r.FetchVal()
 	if err != nil {
@@ -638,22 +592,24 @@ func (r ValTownRemote) Download(targetDir string, version string) error {
 		return fmt.Errorf("unable to extract metadata: %s", err)
 	}
 
-	rows := []string{
-		"#!/usr/bin/env bash",
-	}
-	rows = append(rows, metadata.Rows()...)
-	rows = append(rows, fmt.Sprintf(`echo "%s" | sunbeam eval "$@"`, r.Val()))
-
-	bs := []byte(strings.Join(rows, "\n"))
-	entrypointPath := filepath.Join(targetDir, "sunbeam-command")
-	if err := os.WriteFile(entrypointPath, bs, 0755); err != nil {
+	f, err := os.OpenFile(filepath.Join(targetDir, "sunbeam-command"), os.O_CREATE|os.O_WRONLY, 0755)
+	if err != nil {
 		return fmt.Errorf("unable to write script: %s", err)
+	}
+	defer f.Close()
+
+	if err := runValTemplate.Execute(f, map[string]any{
+		"Val":         r.Val(),
+		"Title":       metadata.Title,
+		"Description": metadata.Description,
+	}); err != nil {
+		return fmt.Errorf("unable to render template: %s", err)
 	}
 
 	manifest := Manifest{
 		Origin:  r.origin.String(),
 		Version: version,
-		Root:    "sunbeam-command",
+		Root:    ".",
 	}
 
 	if err := manifest.Save(targetDir); err != nil {

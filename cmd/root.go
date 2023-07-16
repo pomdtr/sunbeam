@@ -46,7 +46,7 @@ func init() {
 	}
 }
 
-func NewRootCmd() *cobra.Command {
+func Execute() error {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:          "sunbeam",
@@ -97,7 +97,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(docCmd)
 
 	for name, command := range commands {
-		rootCmd.AddCommand(NewCustomCmd(name, command))
+		customCmd, err := NewCustomCmd(name, command)
+		if err != nil {
+			return err
+		}
+
+		rootCmd.AddCommand(customCmd)
 	}
 
 	manCmd := &cobra.Command{
@@ -120,7 +125,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	return rootCmd
+	return rootCmd.Execute()
 
 }
 
@@ -205,7 +210,7 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(commandName string, command Command) *cobra.Command {
+func NewCustomCmd(commandName string, command Command) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:                commandName,
 		Short:              command.Title,
@@ -214,17 +219,17 @@ func NewCustomCmd(commandName string, command Command) *cobra.Command {
 		GroupID:            customGroupID,
 	}
 
-	root := command.Root
-	if !filepath.IsAbs(root) {
-		root = filepath.Join(commandRoot, commandName, root)
+	rootDir := command.Root
+	if !filepath.IsAbs(rootDir) {
+		rootDir = filepath.Join(commandRoot, commandName, rootDir)
 	}
 
-	info, err := os.Stat(root)
+	manifest, err := findRoot(rootDir)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	if info.Name() != manifestName {
+	if filepath.Base(manifest) == "sunbeam-command" {
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 && args[0] == "--help" {
 				return cmd.Help()
@@ -240,13 +245,13 @@ func NewCustomCmd(commandName string, command Command) *cobra.Command {
 			}
 
 			return runCommand(types.Command{
-				Name:  root,
+				Name:  filepath.Join(rootDir, "sunbeam-command"),
 				Args:  args,
 				Input: input,
 			})
 		}
 
-		return cmd
+		return cmd, nil
 	}
 
 	if command.Entrypoint != "" {
@@ -265,12 +270,11 @@ func NewCustomCmd(commandName string, command Command) *cobra.Command {
 			}
 
 			return runCommand(types.Command{
-				Name:  filepath.Join(filepath.Dir(root), command.Entrypoint),
+				Name:  filepath.Join(rootDir, command.Entrypoint),
 				Args:  args,
 				Input: input,
 			})
 		}
-
 	}
 
 	for name, subCommand := range command.SubCommands {
@@ -295,7 +299,7 @@ func NewCustomCmd(commandName string, command Command) *cobra.Command {
 				}
 
 				return runCommand(types.Command{
-					Name:  filepath.Join(filepath.Dir(root), subCommand.Entrypoint),
+					Name:  filepath.Join(filepath.Dir(rootDir), subCommand.Entrypoint),
 					Args:  args,
 					Input: input,
 				})
@@ -303,5 +307,5 @@ func NewCustomCmd(commandName string, command Command) *cobra.Command {
 		})
 	}
 
-	return cmd
+	return cmd, nil
 }

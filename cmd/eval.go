@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -12,51 +11,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func parseArg(input string) any {
-	if input == "" {
-		return nil
-	}
-
-	var parsed any
-	if err := json.Unmarshal([]byte(input), &parsed); err == nil {
-		return parsed
-	}
-
-	return input
-}
-
 func NewEvalCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "eval <code>",
+		Use:     "eval [expression]",
 		Short:   "Evaluate code with val.town",
 		GroupID: coreGroupID,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 && isatty.IsTerminal(os.Stdin.Fd()) {
-				return fmt.Errorf("no code provided")
-			}
-
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			expression := types.Expression{}
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
+			var code string
+			if len(args) > 0 {
+				code = args[0]
+			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
 				bs, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					return err
 				}
-				expression.Code = string(bs)
 
-				expression.Args = make([]any, 0)
-				for _, arg := range args {
-					expression.Args = append(expression.Args, parseArg(arg))
-				}
+				code = string(bs)
 			} else {
-				expression.Code = args[0]
+				return fmt.Errorf("expression required")
+			}
 
-				expression.Args = make([]any, 0)
-				for _, arg := range args[1:] {
-					expression.Args = append(expression.Args, parseArg(arg))
-				}
+			expression := types.Expression{
+				Code: code,
 			}
 
 			bs, err := expression.Request().Do(context.Background())
@@ -71,8 +47,6 @@ func NewEvalCmd() *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.Flags().StringP("expression", "e", "", "expression to evaluate")
 
 	return cmd
 }

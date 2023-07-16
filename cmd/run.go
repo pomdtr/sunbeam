@@ -90,7 +90,7 @@ func NewRunCmd() *cobra.Command {
 				scriptPath = root
 			}
 
-			if filepath.Base(scriptPath) != manifestName {
+			if filepath.Base(scriptPath) != "sunbeam.json" {
 				return runCommand(types.Command{
 					Name:  scriptPath,
 					Args:  args[1:],
