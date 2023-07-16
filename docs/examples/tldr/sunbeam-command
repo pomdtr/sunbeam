@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# @sunbeam.title List TLDR Pages
+# @title List TLDR Pages
 
 set -euo pipefail
 

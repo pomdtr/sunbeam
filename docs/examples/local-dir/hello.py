@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# @sunbeam.title Say Hello
+# @title Say Hello
 
 import json
 import sys

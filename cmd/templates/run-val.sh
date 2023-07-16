@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# @sunbeam.title {{ .Title }}
-# @sunbeam.description {{ .Description }}
+# @title {{ .Title }}
+# @description {{ .Description }}
 
 
 if [ $# -eq 0 ]; then

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# @sunbeam.title Say Goodbye
+# @title Say Goodbye
 
 import json
 import sys

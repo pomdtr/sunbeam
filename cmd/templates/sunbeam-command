@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# @sunbeam.title File Filter
+# @title File Filter
 
 set -euo pipefail
 
