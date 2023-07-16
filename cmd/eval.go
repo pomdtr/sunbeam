@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -17,22 +18,25 @@ func NewEvalCmd() *cobra.Command {
 		Short:   "Evaluate code with val.town",
 		GroupID: coreGroupID,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var code string
+			var expression types.Expression
 			if len(args) > 0 {
-				code = args[0]
+				expression.Code = args[0]
 			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
 				bs, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					return err
 				}
 
-				code = string(bs)
+				expression.Code = string(bs)
 			} else {
 				return fmt.Errorf("expression required")
 			}
 
-			expression := types.Expression{
-				Code: code,
+			if cmd.Flags().Changed("args") {
+				args, _ := cmd.Flags().GetString("args")
+				if err := json.Unmarshal([]byte(args), &expression.Args); err != nil {
+					return err
+				}
 			}
 
 			bs, err := expression.Request().Do(context.Background())
@@ -47,6 +51,8 @@ func NewEvalCmd() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringP("args", "a", "", "Arguments to pass to the expression (JSON)")
 
 	return cmd
 }
