@@ -15,8 +15,8 @@ You can configure the appearance of sunbeam by setting the following environment
 
 - `SUNBEAM_HEIGHT`: The maximum height of the sunbeam window, in lines. Defaults to `0` (full-height).
 - `SUNBEAM_WIDTH`: The maximum width of the sunbeam window, in characters. Defaults to `0` (full-width).
-- `SUNBEAM_BORDER`: Wether to display a border around the window. Defaults to `false`.
-- `SUNBEAM_FULLSCREEN`: Wether to display the window in fullscreen. Defaults to `false`.
+- `SUNBEAM_BORDER`: Whether to display a border around the window. Defaults to `false`.
+- `SUNBEAM_FULLSCREEN`: Whether to display the window in fullscreen. Defaults to `false`.
 
 You can also set these options using the `--height` and `--padding` flags.
 
