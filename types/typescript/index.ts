@@ -363,7 +363,6 @@ export interface PageProvider {
   command?: Command;
   request?: Request;
   text?: string;
-  file?: string;
   expression?: Expression;
   [k: string]: unknown;
 }
@@ -384,7 +383,6 @@ export interface Listitem {
     command?: Command;
     request?: Request;
     text?: string;
-    file?: string;
     expression?: Expression;
   };
   /**
@@ -411,7 +409,6 @@ export interface Detail {
   command?: Command;
   request?: Request;
   text?: string;
-  file?: string;
   expression?: Expression;
   /**
    * The actions attached to the detail view.
@@ -429,6 +426,8 @@ export interface Form {
   title?: string;
   submitAction: Action;
 }
+
+
 
 export function List(list: List) {
   return list;

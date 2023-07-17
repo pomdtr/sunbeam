@@ -80,8 +80,12 @@ func NewRunCmd() *cobra.Command {
 				return fmt.Errorf("could not find script: %w", err)
 			} else if !info.IsDir() {
 				base := filepath.Base(scriptDir)
-				if base != "sunbeam.json" && base != "sunbeam-command" {
-					return fmt.Errorf("not a sunbeam script")
+				if base != "sunbeam.json" {
+					return runCommand(types.Command{
+						Name:  scriptDir,
+						Args:  args[1:],
+						Input: input,
+					})
 				}
 
 				scriptDir = filepath.Dir(scriptDir)

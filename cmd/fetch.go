@@ -77,6 +77,10 @@ func NewFetchCmd() *cobra.Command {
 			}
 			defer resp.Body.Close()
 
+			if resp.StatusCode >= 400 {
+				return fmt.Errorf("request failed: %s", resp.Status)
+			}
+
 			if _, err := io.Copy(os.Stdout, resp.Body); err != nil {
 				return err
 			}
