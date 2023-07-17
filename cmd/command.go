@@ -260,17 +260,16 @@ func (r LocalRemote) Download(targetDir string, version string) error {
 		return fmt.Errorf("unable to stat command: %s", err)
 	}
 
-	if !info.IsDir() {
-		bs, err := os.ReadFile(r.path)
+	if info.Name() == "sunbeam.json" {
+		f, err := os.Open(r.path)
 		if err != nil {
-			return fmt.Errorf("unable to read command: %s", err)
+			return fmt.Errorf("unable to open manifest: %s", err)
 		}
 
-		metadata, err := ExtractScriptMetadata(bs)
-		if err != nil {
-			return fmt.Errorf("unable to extract script metadata: %s", err)
+		var metadata Metadata
+		if err := json.NewDecoder(f).Decode(&metadata); err != nil {
+			return fmt.Errorf("unable to load metadata: %s", err)
 		}
-		metadata.Entrypoint = filepath.Base(r.path)
 
 		manifest := CommandManifest{
 			Origin:   r.path,
@@ -279,24 +278,23 @@ func (r LocalRemote) Download(targetDir string, version string) error {
 			Metadata: metadata,
 		}
 
-		return manifest.Save(targetDir)
-	}
-
-	var metadata Metadata
-	if filepath.Base(r.path) == "sunbeam.json" {
-		if err := json.Unmarshal([]byte(r.path), &metadata); err != nil {
-			return fmt.Errorf("unable to load metadata: %s", err)
+		if err := manifest.Save(targetDir); err != nil {
+			return fmt.Errorf("unable to save manifest: %s", err)
 		}
 
-	} else {
-		m, err := ExtractScriptMetadata([]byte(r.path))
-		if err != nil {
-			return fmt.Errorf("unable to extract script metadata: %s", err)
-		}
-
-		metadata = m
-		metadata.Entrypoint = filepath.Base(r.path)
+		return nil
 	}
+
+	bs, err := os.ReadFile(r.path)
+	if err != nil {
+		return fmt.Errorf("unable to read command: %s", err)
+	}
+
+	metadata, err := ExtractScriptMetadata(bs)
+	if err != nil {
+		return fmt.Errorf("unable to extract script metadata: %s", err)
+	}
+	metadata.Entrypoint = filepath.Base(r.path)
 
 	manifest := CommandManifest{
 		Origin:   r.path,
@@ -305,11 +303,7 @@ func (r LocalRemote) Download(targetDir string, version string) error {
 		Metadata: metadata,
 	}
 
-	if err := manifest.Save(targetDir); err != nil {
-		return fmt.Errorf("unable to save manifest: %s", err)
-	}
-
-	return nil
+	return manifest.Save(targetDir)
 }
 
 func (r LocalRemote) GetLatestVersion() (string, error) {
