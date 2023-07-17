@@ -210,71 +210,40 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(commandName string, command Command) (*cobra.Command, error) {
+func NewCustomCmd(commandName string, manifest CommandManifest) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:                commandName,
-		Short:              command.Title,
-		Long:               command.Description,
+		Short:              manifest.Title,
+		Long:               manifest.Description,
 		DisableFlagParsing: true,
 		GroupID:            customGroupID,
 	}
 
-	rootDir := command.Root
+	rootDir := manifest.RootDir
 	if !filepath.IsAbs(rootDir) {
 		rootDir = filepath.Join(commandRoot, commandName, rootDir)
 	}
 
-	manifest, err := findRoot(rootDir)
-	if err != nil {
-		return nil, err
-	}
-
-	if filepath.Base(manifest) == "sunbeam-command" {
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			if len(args) == 1 && args[0] == "--help" {
-				return cmd.Help()
-			}
-			var input string
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				inputBytes, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-
-				input = string(inputBytes)
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if len(args) == 1 && args[0] == "--help" {
+			return cmd.Help()
+		}
+		var input string
+		if !isatty.IsTerminal(os.Stdin.Fd()) {
+			inputBytes, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return err
 			}
 
-			return runCommand(types.Command{
-				Name:  filepath.Join(rootDir, "sunbeam-command"),
-				Args:  args,
-				Input: input,
-			})
+			input = string(inputBytes)
 		}
 
-		return cmd, nil
+		return runCommand(types.Command{
+			Name:  filepath.Join(rootDir, manifest.Entrypoint),
+			Args:  args,
+			Input: input,
+		})
 	}
 
-	if command.Entrypoint != "" {
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			if len(args) == 1 && args[0] == "--help" {
-				return cmd.Help()
-			}
-			var input string
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				inputBytes, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-
-				input = string(inputBytes)
-			}
-
-			return runCommand(types.Command{
-				Name:  filepath.Join(rootDir, command.Entrypoint),
-				Args:  args,
-				Input: input,
-			})
-		}
-	}
 	return cmd, nil
 }
