@@ -75,84 +75,28 @@ func NewRunCmd() *cobra.Command {
 				})
 			}
 
-			scriptPath := args[0]
-			if info, err := os.Stat(scriptPath); err != nil {
+			scriptDir := args[0]
+			if info, err := os.Stat(scriptDir); err != nil {
 				return fmt.Errorf("could not find script: %w", err)
-			} else if info.IsDir() {
-				root, err := findRoot(scriptPath)
-				if err != nil {
-					return err
+			} else if !info.IsDir() {
+				base := filepath.Base(scriptDir)
+				if base != "sunbeam.json" && base != "sunbeam-command" {
+					return fmt.Errorf("not a sunbeam script")
 				}
 
-				scriptPath = root
+				scriptDir = filepath.Dir(scriptDir)
 			}
 
-			if filepath.Base(scriptPath) != "sunbeam.json" {
-				return runCommand(types.Command{
-					Name:  scriptPath,
-					Args:  args[1:],
-					Input: input,
-				})
-			}
-
-			command, err := ParseCommand(filepath.Dir(scriptPath))
+			command, err := ExtractDirMetadata(scriptDir)
 			if err != nil {
 				return fmt.Errorf("could not parse command: %w", err)
 			}
 
-			if len(command.SubCommands) == 0 {
-				return runCommand(types.Command{
-					Name:  filepath.Join(filepath.Dir(scriptPath), command.Command),
-					Args:  args[1:],
-					Input: input,
-				})
-			}
-
-			if len(args) == 1 {
-				if command.Command != "" {
-					return runCommand(types.Command{
-						Name:  filepath.Join(filepath.Dir(scriptPath), command.Command),
-						Args:  args[1:],
-						Input: input,
-					})
-				}
-
-				cmd.PrintErrln("No subcommand provided!")
-				cmd.PrintErrln()
-				cmd.PrintErrln("Available subcommands:")
-				for name := range command.SubCommands {
-					cmd.PrintErrf(" - %s\n", name)
-				}
-				cmd.PrintErrln()
-				return ExitCodeError{ExitCode: 1}
-			}
-
-			subcommand, ok := command.SubCommands[args[1]]
-			if !ok {
-				if command.Command != "" {
-					return runCommand(types.Command{
-						Name:  filepath.Join(filepath.Dir(scriptPath), command.Command),
-						Args:  args[1:],
-						Input: input,
-					})
-				}
-
-				cmd.PrintErrf("Subcommand not found: %s\n!", args[1])
-				cmd.PrintErrln()
-				cmd.PrintErrln("Subcommands:")
-				for name := range command.SubCommands {
-					cmd.PrintErrf("  - %s\n", name)
-				}
-				cmd.PrintErrln()
-				return ExitCodeError{ExitCode: 1}
-			}
-
 			return runCommand(types.Command{
-				Name:  filepath.Join(filepath.Dir(scriptPath), subcommand.Command),
-				Args:  args[2:],
+				Name:  filepath.Join(scriptDir, command.Entrypoint),
+				Args:  args[1:],
 				Input: input,
 			})
-
 		},
 	}
 

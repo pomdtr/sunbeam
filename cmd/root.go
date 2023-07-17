@@ -254,7 +254,7 @@ func NewCustomCmd(commandName string, command Command) (*cobra.Command, error) {
 		return cmd, nil
 	}
 
-	if command.Command != "" {
+	if command.Entrypoint != "" {
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 && args[0] == "--help" {
 				return cmd.Help()
@@ -270,42 +270,11 @@ func NewCustomCmd(commandName string, command Command) (*cobra.Command, error) {
 			}
 
 			return runCommand(types.Command{
-				Name:  filepath.Join(rootDir, command.Command),
+				Name:  filepath.Join(rootDir, command.Entrypoint),
 				Args:  args,
 				Input: input,
 			})
 		}
 	}
-
-	for name, subCommand := range command.SubCommands {
-		subCommand := subCommand
-		cmd.AddCommand(&cobra.Command{
-			Use:                name,
-			Short:              subCommand.Title,
-			Long:               subCommand.Description,
-			DisableFlagParsing: true,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				if len(args) == 1 && args[0] == "--help" {
-					return cmd.Help()
-				}
-				var input string
-				if !isatty.IsTerminal(os.Stdin.Fd()) {
-					inputBytes, err := io.ReadAll(os.Stdin)
-					if err != nil {
-						return err
-					}
-
-					input = string(inputBytes)
-				}
-
-				return runCommand(types.Command{
-					Name:  filepath.Join(filepath.Dir(rootDir), subCommand.Command),
-					Args:  args,
-					Input: input,
-				})
-			},
-		})
-	}
-
 	return cmd, nil
 }

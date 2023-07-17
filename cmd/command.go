@@ -24,7 +24,6 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/mattn/go-isatty"
-	"github.com/mitchellh/mapstructure"
 	"github.com/pomdtr/sunbeam/types"
 	"golang.org/x/term"
 
@@ -109,10 +108,9 @@ func (m Manifest) Save(dir string) error {
 }
 
 type Metadata struct {
-	Title       string              `json:"title"`
-	Description string              `json:"description,omitempty"`
-	Command     string              `json:"command,omitempty"`
-	SubCommands map[string]Metadata `json:"subcommands,omitempty"`
+	Title       string `json:"title"`
+	Description string `json:"description,omitempty"`
+	Entrypoint  string `json:"entrypoint,omitempty"`
 }
 
 type Command struct {
@@ -122,7 +120,7 @@ type Command struct {
 
 var MetadataRegexp = regexp.MustCompile(`@(?P<key>[A-Za-z0-9]+)\s(?P<value>[\S ]+)`)
 
-func ExtractMetadata(script []byte) (Metadata, error) {
+func ExtractScriptMetadata(script []byte) (Metadata, error) {
 	var cmd Metadata
 	matches := MetadataRegexp.FindAllSubmatch(script, -1)
 	if len(matches) == 0 {
@@ -131,8 +129,8 @@ func ExtractMetadata(script []byte) (Metadata, error) {
 
 	metadata := Metadata{}
 	for _, match := range matches {
-		key := string(match[2])
-		value := string(match[3])
+		key := string(match[1])
+		value := string(match[2])
 
 		switch key {
 		case "title":
@@ -175,7 +173,7 @@ func RefreshCommands() (map[string]Command, error) {
 		}
 
 		if filepath.Base(entrypoint) == "sunbeam.json" {
-			metadata, err := ParseCommand(root)
+			metadata, err := ExtractDirMetadata(root)
 			if err != nil {
 				return nil, fmt.Errorf("unable to parse command: %s", err)
 			}
@@ -190,10 +188,11 @@ func RefreshCommands() (map[string]Command, error) {
 				return nil, fmt.Errorf("unable to read command: %s", err)
 			}
 
-			metadata, err := ExtractMetadata(bs)
+			metadata, err := ExtractScriptMetadata(bs)
 			if err != nil {
 				return nil, fmt.Errorf("unable to extract script metadata: %s", err)
 			}
+			metadata.Entrypoint = "sunbeam-command"
 
 			commands[dir.Name()] = Command{
 				Metadata: metadata,
@@ -216,84 +215,41 @@ func RefreshCommands() (map[string]Command, error) {
 	return commands, nil
 }
 
-func ParseCommand(commandDir string) (Metadata, error) {
-	manifestPath := filepath.Join(commandDir, "sunbeam.json")
-
-	var cmd Metadata
-	f, err := os.Open(manifestPath)
+func ExtractDirMetadata(commandDir string) (Metadata, error) {
+	root, err := findRoot(commandDir)
 	if err != nil {
-		return cmd, fmt.Errorf("unable to open manifest: %s", err)
+		return Metadata{}, fmt.Errorf("unable to find command root: %s", err)
 	}
 
-	var raw struct {
-		Title       string         `json:"title"`
-		Description string         `json:"description"`
-		Entrypoint  string         `json:"entrypoint"`
-		SubCommands map[string]any `json:"subcommands"`
-	}
+	if filepath.Base(root) == "sunbeam.json" {
 
-	if err := json.NewDecoder(f).Decode(&raw); err != nil {
-		return cmd, fmt.Errorf("unable to decode manifest: %s", err)
-	}
-
-	if raw.Entrypoint == "" && len(raw.SubCommands) == 0 {
-		return cmd, fmt.Errorf("no entrypoint or subcommands found")
-	}
-
-	cmd.Title = raw.Title
-	cmd.Description = raw.Description
-
-	if raw.Entrypoint != "" {
-		cmd.Command = raw.Entrypoint
-		return cmd, nil
-	}
-
-	cmd.SubCommands = make(map[string]Metadata)
-	for name, subcommand := range raw.SubCommands {
-		switch subcommand := subcommand.(type) {
-		case string:
-			cmdPath := filepath.Join(commandDir, subcommand)
-			info, err := os.Stat(cmdPath)
-			if err != nil {
-				return cmd, fmt.Errorf("unable to find subcommand: %s", err)
-			}
-
-			if info.IsDir() {
-				return cmd, fmt.Errorf("subcommand cannot be a directory")
-			}
-			bs, err := os.ReadFile(cmdPath)
-			if err != nil {
-				return cmd, fmt.Errorf("unable to read subcommand: %s", err)
-			}
-
-			subCmd, err := ExtractMetadata(bs)
-			if err != nil {
-				return cmd, fmt.Errorf("unable to extract metadata: %s", err)
-			}
-			subCmd.Command = subcommand
-
-			cmd.SubCommands[name] = subCmd
-		case map[string]any:
-			var subCmd Metadata
-			if err := mapstructure.Decode(subcommand, &subCmd); err != nil {
-				return cmd, fmt.Errorf("unable to decode subcommand: %s", err)
-			}
-
-			if len(subCmd.SubCommands) > 0 {
-				return cmd, fmt.Errorf("subcommand cannot have subcommands")
-			}
-
-			if subCmd.Command == "" {
-				return cmd, fmt.Errorf("subcommand must have entrypoint")
-			}
-
-			cmd.SubCommands[name] = subCmd
-		default:
-			return cmd, fmt.Errorf("unsupported subcommand type: %T", subcommand)
+		bs, err := os.ReadFile(root)
+		if err != nil {
+			return Metadata{}, fmt.Errorf("unable to read command manifest: %s", err)
 		}
-	}
 
-	return cmd, nil
+		var metadata Metadata
+		if err := json.Unmarshal(bs, &metadata); err != nil {
+			return Metadata{}, fmt.Errorf("unable to parse command manifest: %s", err)
+		}
+
+		return metadata, nil
+	} else if filepath.Base(root) == "sunbeam-command" {
+		bs, err := os.ReadFile(root)
+		if err != nil {
+			return Metadata{}, fmt.Errorf("unable to read command: %s", err)
+		}
+
+		metadata, err := ExtractScriptMetadata(bs)
+		if err != nil {
+			return Metadata{}, fmt.Errorf("unable to extract script metadata: %s", err)
+		}
+		metadata.Entrypoint = "sunbeam-command"
+
+		return metadata, nil
+	} else {
+		return Metadata{}, fmt.Errorf("no command found in directory")
+	}
 }
 
 type CommandRemote interface {
@@ -587,7 +543,7 @@ func (r ValTownRemote) Download(targetDir string, version string) error {
 		return err
 	}
 
-	metadata, err := ExtractMetadata([]byte(val.Code))
+	metadata, err := ExtractScriptMetadata([]byte(val.Code))
 	if err != nil {
 		return fmt.Errorf("unable to extract metadata: %s", err)
 	}

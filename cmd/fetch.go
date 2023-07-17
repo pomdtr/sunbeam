@@ -51,6 +51,17 @@ func NewFetchCmd() *cobra.Command {
 				return err
 			}
 
+			query := req.URL.Query()
+			queryParams, _ := cmd.Flags().GetStringArray("query")
+			for _, param := range queryParams {
+				parts := strings.SplitN(param, "=", 2)
+				if len(parts) != 2 {
+					return fmt.Errorf("invalid query: %s", query)
+				}
+
+				query.Add(parts[0], parts[1])
+			}
+
 			for _, header := range headersFlag {
 				parts := strings.SplitN(header, ":", 2)
 				if len(parts) != 2 {
@@ -76,6 +87,7 @@ func NewFetchCmd() *cobra.Command {
 
 	cmd.Flags().StringP("method", "X", "", "http method")
 	cmd.Flags().StringArrayP("header", "H", []string{}, "http header")
+	cmd.Flags().StringArrayP("query", "q", []string{}, "http query param")
 	cmd.Flags().StringP("data", "d", "", "http request body")
 
 	return cmd
