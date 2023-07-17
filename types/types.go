@@ -212,7 +212,6 @@ func (e *Expression) UnmarshalJSON(data []byte) error {
 	}
 
 	return errors.New("invalid expression")
-
 }
 
 func (e Expression) Request() *Request {
@@ -240,6 +239,25 @@ type Request struct {
 	Method  string            `json:"method,omitempty"`
 	Headers map[string]string `json:"headers,omitempty"`
 	Body    Body              `json:"body,omitempty"`
+}
+
+func (r *Request) UnmarshalJSON(data []byte) error {
+	var url string
+	if err := json.Unmarshal(data, &url); err == nil {
+		r.Url = url
+		return nil
+	}
+
+	var request map[string]any
+	if err := json.Unmarshal(data, &request); err == nil {
+		if err := mapstructure.Decode(request, r); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("invalid request")
 }
 
 func (r Request) Do(ctx context.Context) ([]byte, error) {
