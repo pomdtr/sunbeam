@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# @title List Passwords
+# @sunbeam.title List Passwords
 
 set -eo pipefail
 

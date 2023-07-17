@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# @title Search DevDocs Docsets
+# @sunbeam.title Search DevDocs Docsets
 
 set -euo pipefail
 

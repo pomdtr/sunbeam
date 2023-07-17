@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# @title File Browser
+# @sunbeam.title File Browser
 
 import json
 import pathlib

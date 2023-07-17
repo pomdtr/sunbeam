@@ -118,7 +118,7 @@ type Command struct {
 	Manifest
 }
 
-var MetadataRegexp = regexp.MustCompile(`@(?P<key>[A-Za-z0-9]+)\s(?P<value>[\S ]+)`)
+var MetadataRegexp = regexp.MustCompile(`@sunbeam.(?P<key>[A-Za-z0-9]+)\s(?P<value>[\S ]+)`)
 
 func ExtractScriptMetadata(script []byte) (Metadata, error) {
 	var cmd Metadata

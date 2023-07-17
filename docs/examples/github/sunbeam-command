@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# @title List Repositories
+# @sunbeam.title List Repositories
 
 set -eo pipefail
 
