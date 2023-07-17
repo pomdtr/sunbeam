@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# @title {{ .Title }}
-# @description {{ .Description }}
-
-
 if [ $# -eq 0 ]; then
     payload='{"args": []}'
 else
