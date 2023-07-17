@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -274,8 +274,18 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case types.FormPage:
 			form := NewForm(page.Title, func(values map[string]string) tea.Cmd {
 				action := *page.SubmitAction
+				urlvalues := url.Values{}
+				jsonvalues := map[string]interface{}{}
+
 				for key, value := range values {
 					action = RenderAction(action, fmt.Sprintf("{{input:%s}}", key), value)
+					urlvalues.Set(key, value)
+					jsonvalues[key] = value
+				}
+
+				action = RenderAction(action, "{{inputs:urlencoded}}", urlvalues.Encode())
+				if jsonencoded, err := json.Marshal(jsonvalues); err == nil {
+					action = RenderAction(action, "{{inputs:json}}", string(jsonencoded))
 				}
 
 				return runner.handleAction(action)
@@ -451,10 +461,12 @@ func RenderCommand(command *types.Command, old, new string) *types.Command {
 }
 
 func RenderRequest(request *types.Request, old, new string) *types.Request {
-	rendered := types.Request{}
+	rendered := types.Request{
+		Headers: map[string]string{},
+	}
 	rendered.Method = strings.ReplaceAll(request.Method, old, new)
 	rendered.Url = strings.ReplaceAll(request.Url, old, url.QueryEscape(new))
-	rendered.Body = bytes.ReplaceAll(request.Body, []byte(old), []byte(new))
+	rendered.Body = strings.ReplaceAll(request.Body, old, new)
 
 	for key, value := range request.Headers {
 		rendered.Headers[key] = strings.ReplaceAll(value, old, new)

@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/pomdtr/sunbeam/schemas"
 	"github.com/pomdtr/sunbeam/types"
@@ -88,7 +88,7 @@ func NewCommandGenerator(command *types.Command) PageGenerator {
 
 func NewRequestGenerator(request *types.Request) PageGenerator {
 	return func() (*types.Page, error) {
-		req, err := http.NewRequest(request.Method, request.Url, bytes.NewReader(request.Body))
+		req, err := http.NewRequest(request.Method, request.Url, strings.NewReader(request.Body))
 		if err != nil {
 			return nil, err
 		}

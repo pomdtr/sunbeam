@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -229,7 +228,7 @@ func (e Expression) Request() *Request {
 	return &Request{
 		Url:     "https://api.val.town/v1/eval",
 		Method:  "POST",
-		Body:    body,
+		Body:    string(body),
 		Headers: headers,
 	}
 }
@@ -238,7 +237,7 @@ type Request struct {
 	Url     string            `json:"url"`
 	Method  string            `json:"method,omitempty"`
 	Headers map[string]string `json:"headers,omitempty"`
-	Body    Body              `json:"body,omitempty"`
+	Body    string            `json:"body,omitempty"`
 }
 
 func (r *Request) UnmarshalJSON(data []byte) error {
@@ -262,10 +261,10 @@ func (r *Request) UnmarshalJSON(data []byte) error {
 
 func (r Request) Do(ctx context.Context) ([]byte, error) {
 	if r.Method == "" {
-		r.Method = "GET"
+		r.Method = http.MethodGet
 	}
 
-	req, err := http.NewRequest(r.Method, r.Url, bytes.NewReader(r.Body))
+	req, err := http.NewRequest(r.Method, r.Url, strings.NewReader(r.Body))
 	if err != nil {
 		return nil, err
 	}
@@ -285,28 +284,6 @@ func (r Request) Do(ctx context.Context) ([]byte, error) {
 	}
 
 	return io.ReadAll(resp.Body)
-}
-
-type Body []byte
-
-func (b *Body) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err == nil {
-		*b = Body(s)
-		return nil
-	}
-
-	var v map[string]any
-	if err := json.Unmarshal(data, &v); err == nil {
-		bb, err := json.Marshal(v)
-		if err != nil {
-			return err
-		}
-		*b = Body(bb)
-		return nil
-	}
-
-	return errors.New("body must be a string or a map")
 }
 
 type TextProvider struct {
