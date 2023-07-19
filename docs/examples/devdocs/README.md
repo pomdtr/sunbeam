@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam command add devdocs https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/devdocs/sunbeam-command
+sunbeam command add devdocs https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/devdocs/devdocs.sh
 ```
 
 ## Usage
@@ -24,5 +24,5 @@ sunbeam devdocs <docset-slug> # List all entries for a docset
 ## Code
 
 ```bash
-{{#include ./sunbeam-command}}
+{{#include ./devdocs.sh}}
 ```

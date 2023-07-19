@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-sunbeam command add tldr https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/sunbeam-command
+sunbeam command add tldr https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/tldr.sh
 ```
 
 ## Usage
@@ -23,5 +23,5 @@ sunbeam tldr # List all pages
 ## Code
 
 ```bash
-{{#include ./sunbeam-command}}
+{{#include ./tldr.sh}}
 ```

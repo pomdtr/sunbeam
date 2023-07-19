@@ -13,7 +13,7 @@
 ## Install
 
 ```bash
-sunbeam command add github https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/github/sunbeam-command
+sunbeam command add github https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/github/github.sh
 ```
 
 ## Usage
@@ -26,5 +26,5 @@ sunbeam github list-prs <repo> # List all pull requests for a repository
 ## Code
 
 ```bash
-{{#include ./sunbeam-command}}
+{{#include ./github.sh}}
 ```
