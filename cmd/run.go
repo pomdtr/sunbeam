@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -75,29 +76,32 @@ func NewRunCmd() *cobra.Command {
 				})
 			}
 
-			scriptDir := args[0]
-			if info, err := os.Stat(scriptDir); err != nil {
+			root := args[0]
+			if info, err := os.Stat(root); err != nil {
 				return fmt.Errorf("could not find script: %w", err)
 			} else if !info.IsDir() {
-				base := filepath.Base(scriptDir)
-				if base != "sunbeam.json" {
-					return runCommand(types.Command{
-						Name:  scriptDir,
-						Args:  args[1:],
-						Input: input,
-					})
-				}
-
-				scriptDir = filepath.Dir(scriptDir)
+				root = filepath.Join(root, "sunbeam.json")
 			}
 
-			command, err := ExtractDirMetadata(scriptDir)
-			if err != nil {
-				return fmt.Errorf("could not parse command: %w", err)
+			var entrypoint string
+			if filepath.Base(root) == "sunbeam.json" {
+				f, err := os.Open(root)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+
+				var metadata Metadata
+				if err := json.NewDecoder(f).Decode(&metadata); err != nil {
+					return err
+				}
+				entrypoint = filepath.Join(filepath.Dir(root), metadata.Entrypoint)
+			} else {
+				entrypoint = root
 			}
 
 			return runCommand(types.Command{
-				Name:  filepath.Join(scriptDir, command.Entrypoint),
+				Name:  entrypoint,
 				Args:  args[1:],
 				Input: input,
 			})

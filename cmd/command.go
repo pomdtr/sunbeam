@@ -145,43 +145,6 @@ func ExtractScriptMetadata(script []byte) (Metadata, error) {
 	return metadata, nil
 }
 
-func ExtractDirMetadata(commandDir string) (Metadata, error) {
-	root, err := findRoot(commandDir)
-	if err != nil {
-		return Metadata{}, fmt.Errorf("unable to find command root: %s", err)
-	}
-
-	if filepath.Base(root) == "sunbeam.json" {
-
-		bs, err := os.ReadFile(root)
-		if err != nil {
-			return Metadata{}, fmt.Errorf("unable to read command manifest: %s", err)
-		}
-
-		var metadata Metadata
-		if err := json.Unmarshal(bs, &metadata); err != nil {
-			return Metadata{}, fmt.Errorf("unable to parse command manifest: %s", err)
-		}
-
-		return metadata, nil
-	} else if filepath.Base(root) == "sunbeam-command" {
-		bs, err := os.ReadFile(root)
-		if err != nil {
-			return Metadata{}, fmt.Errorf("unable to read command: %s", err)
-		}
-
-		metadata, err := ExtractScriptMetadata(bs)
-		if err != nil {
-			return Metadata{}, fmt.Errorf("unable to extract script metadata: %s", err)
-		}
-		metadata.Entrypoint = "sunbeam-command"
-
-		return metadata, nil
-	} else {
-		return Metadata{}, fmt.Errorf("no command found in directory")
-	}
-}
-
 type CommandRemote interface {
 	GetLatestVersion() (string, error)
 	Download(targetDir string, version string) error
@@ -207,13 +170,8 @@ func GetRemote(origin string) (CommandRemote, error) {
 		}
 
 		if info.IsDir() {
-			root, err := findRoot(remotePath)
-			if err != nil {
-				return nil, fmt.Errorf("unable to find command root: %s", err)
-			}
-
 			return LocalRemote{
-				path: root,
+				path: filepath.Join(remotePath, "sunbeam.json"),
 			}, nil
 		}
 
@@ -234,20 +192,10 @@ func GetRemote(origin string) (CommandRemote, error) {
 	case "www.val.town", "val.town":
 		return NewValTownRemote(originUrl)
 	default:
-		return nil, fmt.Errorf("unsupported origin: %s", origin)
+		return RestRemote{
+			origin: originUrl,
+		}, nil
 	}
-}
-
-func findRoot(dir string) (string, error) {
-	if _, err := os.Stat(filepath.Join(dir, "sunbeam.json")); err == nil {
-		return filepath.Join(dir, "sunbeam.json"), nil
-	}
-
-	if _, err := os.Stat(filepath.Join(dir, "sunbeam-command")); err == nil {
-		return filepath.Join(dir, "sunbeam-command"), nil
-	}
-
-	return "", fmt.Errorf("unable to find sunbeam.toml or sunbeam-command")
 }
 
 type LocalRemote struct {
@@ -339,31 +287,18 @@ func (r GithubRemote) Download(targetDir string, version string) error {
 		return fmt.Errorf("unable to download command: %s", err)
 	}
 
+	root := filepath.Join(srcDir, "sunbeam.json")
+
+	var metadata Metadata
+	if err := json.Unmarshal([]byte(root), &metadata); err != nil {
+		return fmt.Errorf("unable to load metadata: %s", err)
+	}
+
 	manifest := CommandManifest{
-		Origin:  r.origin.String(),
-		Version: version,
-		RootDir: "src",
-	}
-
-	root, err := findRoot(srcDir)
-	if err != nil {
-		return fmt.Errorf("unable to find root: %s", err)
-	}
-
-	if filepath.Base(root) == "sunbeam.json" {
-		var metadata Metadata
-		if err := json.Unmarshal([]byte(root), &metadata); err != nil {
-			return fmt.Errorf("unable to load metadata: %s", err)
-		}
-
-		manifest.Metadata = metadata
-	} else {
-		metadata, err := ExtractScriptMetadata([]byte(root))
-		if err != nil {
-			return fmt.Errorf("unable to extract script metadata: %s", err)
-		}
-		metadata.Entrypoint = filepath.Base(root)
-		manifest.Metadata = metadata
+		Origin:   r.origin.String(),
+		Version:  version,
+		RootDir:  "src",
+		Metadata: metadata,
 	}
 
 	if err := manifest.Save(targetDir); err != nil {
@@ -390,9 +325,6 @@ func (r ScriptRemote) GetLatestVersion() (string, error) {
 	}
 
 	hash := sha256.Sum256(bs)
-
-	// return utc timestamp
-
 	return hex.EncodeToString(hash[:])[:8], nil
 }
 
@@ -545,6 +477,67 @@ func (r ValTownRemote) Download(targetDir string, version string) error {
 	}); err != nil {
 		return fmt.Errorf("unable to render template: %s", err)
 	}
+
+	manifest := CommandManifest{
+		Origin:   r.origin.String(),
+		Version:  version,
+		RootDir:  ".",
+		Metadata: metadata,
+	}
+
+	if err := manifest.Save(targetDir); err != nil {
+		return fmt.Errorf("unable to save manifest: %s", err)
+	}
+
+	return nil
+}
+
+type RestRemote struct {
+	origin *url.URL
+}
+
+func (r RestRemote) GetLatestVersion() (string, error) {
+	resp, err := http.Get(r.origin.String())
+	if err != nil {
+		return "", fmt.Errorf("unable to fetch latest version: %s", err)
+	}
+	defer resp.Body.Close()
+
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("unable to fetch latest version: %s", err)
+	}
+
+	hash := sha256.Sum256(bs)
+	return hex.EncodeToString(hash[:])[:8], nil
+}
+
+//go:embed templates/run-rest.sh
+var rawRestTemplate string
+var restTemplate = template.Must(template.New("run-server.sh").Parse(rawRestTemplate))
+
+func (r RestRemote) Download(targetDir string, version string) error {
+	resp, err := http.Get(r.origin.String())
+	if err != nil {
+		return fmt.Errorf("unable to fetch latest version: %s", err)
+	}
+	defer resp.Body.Close()
+
+	f, err := os.OpenFile(filepath.Join(targetDir, "sunbeam-command"), os.O_CREATE|os.O_WRONLY, 0755)
+	if err != nil {
+		return fmt.Errorf("unable to write script: %s", err)
+	}
+	if err := restTemplate.Execute(f, map[string]any{
+		"Remote": r.origin.String(),
+	}); err != nil {
+		return fmt.Errorf("unable to render template: %s", err)
+	}
+
+	var metadata Metadata
+	if err := json.NewDecoder(resp.Body).Decode(&metadata); err != nil {
+		return fmt.Errorf("unable to decode metadata: %s", err)
+	}
+	metadata.Entrypoint = "sunbeam-command"
 
 	manifest := CommandManifest{
 		Origin:   r.origin.String(),
