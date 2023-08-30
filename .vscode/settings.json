@@ -11,5 +11,7 @@
   "search.exclude": {
     "book": true,
     "public": true
-  }
+  },
+  "deno.enable": true,
+  "deno.unstable": true
 }

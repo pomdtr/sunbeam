@@ -1,16 +1,9 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
-	"path/filepath"
 
-	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/types"
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +15,7 @@ func (e ExitCodeError) Error() string {
 	return fmt.Sprintf("exit code %d", e.ExitCode)
 }
 
+// TODO: cache dependencies
 func NewRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "run <origin> [args...]",
@@ -29,82 +23,56 @@ func NewRunCmd() *cobra.Command {
 		GroupID: coreGroupID,
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var input string
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				bs, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-				input = string(bs)
+			// build cobra command dynamically
+			origin, err := originToUrl(args[0])
+			if err != nil {
+				return fmt.Errorf("could not parse origin: %w", err)
 			}
 
-			if originUrl, err := url.Parse(args[0]); err == nil && originUrl.Scheme == "https" {
-				resp, err := http.Get(args[0])
-				if err != nil {
-					return fmt.Errorf("could not fetch script: %w", err)
-				}
-				defer resp.Body.Close()
-
-				if resp.StatusCode != 200 {
-					return fmt.Errorf("could not fetch script: %s", resp.Status)
-				}
-
-				tmpDir, err := os.MkdirTemp("", "sunbeam")
-				if err != nil {
-					return err
-				}
-				defer os.RemoveAll(tmpDir)
-
-				scriptPath := filepath.Join(tmpDir, "sunbeam-command")
-				f, err := os.OpenFile(scriptPath, os.O_CREATE|os.O_WRONLY, 0755)
-				if err != nil {
-					return err
-				}
-				defer f.Close()
-
-				if _, err := io.Copy(f, resp.Body); err != nil {
-					return err
-				}
-				if err := f.Close(); err != nil {
-					return err
-				}
-
-				return runCommand(types.Command{
-					Name:  scriptPath,
-					Args:  args[1:],
-					Input: input,
-				})
+			remote, err := GetRemote(origin)
+			if err != nil {
+				return fmt.Errorf("could not get remote: %w", err)
 			}
 
-			root := args[0]
-			if info, err := os.Stat(root); err != nil {
-				return fmt.Errorf("could not find script: %w", err)
-			} else if !info.IsDir() {
-				root = filepath.Join(root, "sunbeam.json")
+			version, err := remote.GetLatestVersion()
+			if err != nil {
+				return fmt.Errorf("could not get latest version: %w", err)
 			}
 
-			var entrypoint string
-			if filepath.Base(root) == "sunbeam.json" {
-				f, err := os.Open(root)
+			var command Extension
+			switch remote := remote.(type) {
+			case LocalRemote:
+				manifest, err := LoadManifest(origin.Path)
 				if err != nil {
-					return err
+					return fmt.Errorf("could not load manifest: %w", err)
 				}
-				defer f.Close()
 
-				var metadata Metadata
-				if err := json.NewDecoder(f).Decode(&metadata); err != nil {
-					return err
+				command = Extension{
+					Manifest: manifest,
+					Metadata: Metadata{
+						Version: version,
+						RootDir: origin.Path,
+						Origin:  origin.Path,
+					},
 				}
-				entrypoint = filepath.Join(filepath.Dir(root), metadata.Entrypoint)
-			} else {
-				entrypoint = root
+			default:
+				tempdir, err := os.MkdirTemp("", "sunbeam")
+				if err != nil {
+					return fmt.Errorf("could not create tempdir: %w", err)
+				}
+				defer os.RemoveAll(tempdir)
+				if _, err := remote.Download(tempdir, ""); err != nil {
+					return fmt.Errorf("could not download remote: %w", err)
+				}
 			}
 
-			return runCommand(types.Command{
-				Name:  entrypoint,
-				Args:  args[1:],
-				Input: input,
-			})
+			tempCmd, err := NewCustomCmd("run", command)
+			if err != nil {
+				return err
+			}
+
+			tempCmd.SetArgs(args)
+			return tempCmd.Execute()
 		},
 	}
 

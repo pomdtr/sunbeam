@@ -1,0 +1,9 @@
+{
+    "title": "Search Nixhub",
+    "arguments": [
+        {
+            "name": "query",
+            "type": "string"
+        }
+    ]
+}

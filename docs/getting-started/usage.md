@@ -110,7 +110,7 @@ You can add an array of inputs to every sunbeam actions, and reference their val
   "inputs": [
     {
       "name": "name",
-      "type": "textfield",
+      "type": "text",
       "title": "Name",
       "title": "What's your name?"
     }
@@ -121,10 +121,10 @@ You can add an array of inputs to every sunbeam actions, and reference their val
 When activating the action, the user will be prompted for the input value.
 Sunbeam support the following input types:
 
-- `textfield`: A simple text input
+- `text`: A simple text input
 - `textarea`: A multiline text input
 - `checkbox`: A checkbox
-- `dropdown`: A dropdown menu
+- `select`: A dropdown menu
 
 ### What's next?
 

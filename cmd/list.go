@@ -70,6 +70,17 @@ func NewListCmd() *cobra.Command {
 				row := string(row)
 				tokens := strings.Split(row, delimiter)
 
+				// filter out empty tokens
+				tokens = func(tokens []string) []string {
+					var out []string
+					for _, token := range tokens {
+						if token != "" {
+							out = append(out, token)
+						}
+					}
+					return out
+				}(tokens)
+
 				var title, subtitle string
 				var accessories []string
 				if cmd.Flags().Changed("with-nth") {
@@ -99,7 +110,7 @@ func NewListCmd() *cobra.Command {
 					Accessories: accessories,
 					Actions: []types.Action{
 						{
-							Type:  types.PasteAction,
+							Type:  types.PipeAction,
 							Title: "Pipe",
 							Text:  row,
 						},
@@ -107,12 +118,10 @@ func NewListCmd() *cobra.Command {
 				})
 			}
 
-			showDetail, _ := cmd.Flags().GetBool("show-detail")
 			page := &types.Page{
-				Type:       types.ListPage,
-				ShowDetail: showDetail,
-				Title:      title,
-				Items:      listItems,
+				Type:  types.ListPage,
+				Title: title,
+				Items: listItems,
 			}
 
 			if err := json.NewEncoder(os.Stdout).Encode(page); err != nil {

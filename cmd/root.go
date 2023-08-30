@@ -4,14 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
-	"github.com/cli/cli/v2/pkg/findsh"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -56,30 +52,24 @@ func Execute() error {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if isatty.IsTerminal(os.Stdin.Fd()) {
-				return cmd.Usage()
-			}
-
-			return Run(internal.NewStaticGenerator(os.Stdin))
-		},
 	}
 
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 		&cobra.Group{ID: customGroupID, Title: "Custom Commands"},
 	)
+
 	rootCmd.AddCommand(NewQueryCmd())
-	rootCmd.AddCommand(NewCommandCmd())
+	rootCmd.AddCommand(NewReadCmd())
+	rootCmd.AddCommand(NewExtensionCmd())
 	rootCmd.AddCommand(NewFetchCmd())
+	rootCmd.AddCommand(NewParseCmd())
 	rootCmd.AddCommand(NewListCmd())
-	rootCmd.AddCommand(NewTriggerCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewDetailCmd())
 	rootCmd.AddCommand(NewRunCmd())
-	rootCmd.AddCommand(NewEvalCmd())
-
 	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
+
 	docCmd := &cobra.Command{
 		Use:    "docs",
 		Short:  "Generate documentation for sunbeam",
@@ -96,7 +86,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(docCmd)
 
-	for name, command := range commands {
+	for name, command := range extensions {
 		customCmd, err := NewCustomCmd(name, command)
 		if err != nil {
 			return err
@@ -127,33 +117,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 	return rootCmd.Execute()
 
-}
-
-func runCommand(command types.Command) error {
-	if runtime.GOOS != "windows" {
-		if err := os.Chmod(command.Name, 0755); err != nil {
-			return err
-		}
-
-		return Run(internal.NewCommandGenerator(&command))
-	}
-
-	shExe, err := findsh.Find()
-	if err != nil {
-		if errors.Is(err, exec.ErrNotFound) {
-			return errors.New("the `sh.exe` interpreter is required. Please install Git for Windows and try again")
-		}
-		return err
-	}
-
-	forwardArgs := append([]string{"-c", `command "$@"`, "--", command.Name}, command.Args...)
-
-	return Run(internal.NewCommandGenerator(&types.Command{
-		Name:  shExe,
-		Args:  forwardArgs,
-		Input: command.Input,
-		Dir:   command.Dir,
-	}))
 }
 
 func Run(generator internal.PageGenerator) error {
@@ -210,39 +173,79 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(commandName string, manifest CommandManifest) (*cobra.Command, error) {
+func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:                commandName,
-		Short:              manifest.Title,
-		Long:               manifest.Description,
+		Use:                name,
+		Short:              extension.Title,
+		Long:               extension.Description,
 		DisableFlagParsing: true,
+		Args:               cobra.NoArgs,
 		GroupID:            customGroupID,
 	}
 
-	rootDir := manifest.RootDir
-	if !filepath.IsAbs(rootDir) {
-		rootDir = filepath.Join(commandRoot, commandName, rootDir)
-	}
+	for _, command := range extension.Commands {
+		subcmd := &cobra.Command{
+			Use:                name,
+			Short:              extension.Title,
+			Long:               extension.Description,
+			DisableFlagParsing: true,
+			Args:               cobra.NoArgs,
+			GroupID:            customGroupID,
+			RunE: func(cmd *cobra.Command, _ []string) error {
+				var args []string
+				entrypoint := command.Entrypoint
+				if command.Entrypoint == "" {
+					entrypoint = extension.Entrypoint
+					args = append(args, command.Name)
+				}
 
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if len(args) == 1 && args[0] == "--help" {
-			return cmd.Help()
+				argumentMap := make(map[string]any)
+				for _, argument := range command.Arguments {
+					switch argument.Type {
+					case "string":
+						value, err := cmd.Flags().GetString(argument.Name)
+						if err != nil {
+							return err
+						}
+
+						argumentMap[argument.Name] = value
+					case "bool":
+						value, err := cmd.Flags().GetBool(argument.Name)
+						if err != nil {
+							return err
+						}
+
+						argumentMap[argument.Name] = value
+					default:
+						return fmt.Errorf("unsupported argument type: %s", argument.Type)
+					}
+				}
+
+				input, err := json.Marshal(argumentMap)
+				if err != nil {
+					return err
+				}
+
+				return Run(internal.NewCommandGenerator(&types.Command{
+					Name:  filepath.Join(extension.RootDir, entrypoint),
+					Args:  args,
+					Input: string(input),
+				}))
+			},
 		}
-		var input string
-		if !isatty.IsTerminal(os.Stdin.Fd()) {
-			inputBytes, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return err
+
+		for _, argument := range command.Arguments {
+			switch argument.Type {
+			case "string":
+				cmd.Flags().String(argument.Name, "", argument.Description)
+			case "bool":
+				cmd.Flags().Bool(argument.Name, false, argument.Description)
+			default:
+				return nil, fmt.Errorf("unsupported argument type: %s", argument.Type)
 			}
-
-			input = string(inputBytes)
 		}
 
-		return runCommand(types.Command{
-			Name:  filepath.Join(rootDir, manifest.Entrypoint),
-			Args:  args,
-			Input: input,
-		})
+		cmd.AddCommand(subcmd)
 	}
 
 	return cmd, nil

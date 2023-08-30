@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
 )
 
 type GithubRepo struct {
@@ -16,18 +15,7 @@ type GithubRepo struct {
 	Topics          []string
 }
 
-var repoRegex = regexp.MustCompile(`^https?://github\.com/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)$`)
-
-func FetchGithubRepository(repoUrl string) (*GithubRepo, error) {
-	matches := repoRegex.FindStringSubmatch(repoUrl)
-
-	if len(matches) != 3 {
-		return nil, fmt.Errorf("invalid repo url: %s", repoUrl)
-	}
-
-	owner := matches[1]
-	name := matches[2]
-
+func FetchGithubRepository(owner string, name string) (*GithubRepo, error) {
 	res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/%s", owner, name))
 	if err != nil {
 		return nil, err
@@ -54,20 +42,8 @@ type GithubGist struct {
 	} `json:"owner"`
 }
 
-var gistRegex = regexp.MustCompile(`^https?://gist\.github\.com/[A-Za-z0-9_-]+/([A-Za-z0-9_-]+)$`)
-
-func FetchGithubGist(rawGistUrl string) (*GithubGist, error) {
-	matches := gistRegex.FindStringSubmatch(rawGistUrl)
-	if len(matches) != 2 {
-		return nil, fmt.Errorf("invalid gist url: %s", rawGistUrl)
-	}
-
-	gistId := matches[1]
-	if gistId == "" {
-		return nil, fmt.Errorf("invalid gist url: %s", rawGistUrl)
-	}
-
-	res, err := http.Get(fmt.Sprintf("https://api.github.com/gists/%s", gistId))
+func FetchGithubGist(gistID string) (*GithubGist, error) {
+	res, err := http.Get(fmt.Sprintf("https://api.github.com/gists/%s", gistID))
 	if err != nil {
 		return nil, err
 	}
@@ -89,16 +65,7 @@ type GitCommit struct {
 	Sha string `json:"sha"`
 }
 
-func GetLastGitCommit(repoUrl string) (*GitCommit, error) {
-	matches := repoRegex.FindStringSubmatch(repoUrl)
-
-	if len(matches) != 3 {
-		return nil, fmt.Errorf("invalid repo url: %s", repoUrl)
-	}
-
-	owner := matches[1]
-	name := matches[2]
-
+func GetLastGitCommit(owner string, name string) (*GitCommit, error) {
 	apiUrl := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits", owner, name)
 
 	resp, err := http.Get(apiUrl)
@@ -127,18 +94,8 @@ type GistCommit struct {
 	Version string `json:"version"`
 }
 
-func GetLastGistCommit(rawGistUrl string) (*GistCommit, error) {
-	matches := gistRegex.FindStringSubmatch(rawGistUrl)
-	if len(matches) != 2 {
-		return nil, fmt.Errorf("invalid gist url: %s", rawGistUrl)
-	}
-
-	gistId := matches[1]
-	if gistId == "" {
-		return nil, fmt.Errorf("invalid gist url: %s", rawGistUrl)
-	}
-
-	res, err := http.Get(fmt.Sprintf("https://api.github.com/gists/%s/commits", gistId))
+func GetLastGistCommit(gistID string) (*GistCommit, error) {
+	res, err := http.Get(fmt.Sprintf("https://api.github.com/gists/%s/commits", gistID))
 	if err != nil {
 		return nil, err
 	}

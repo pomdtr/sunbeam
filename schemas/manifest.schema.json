@@ -1,0 +1,67 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema#",
+    "$id": "manifest",
+    "oneOf": [
+        {
+            "$ref": "#/$defs/command"
+        }
+    ],
+    "$defs": {
+        "command": {
+            "required": [
+                "title",
+                "description"
+            ],
+            "type": "object",
+            "properties": {
+                "$schema": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "author": {
+                    "type": "string"
+                },
+                "entrypoint": {
+                    "type": "string"
+                },
+                "output": {
+                    "type": "string",
+                    "enum": [
+                        "page",
+                        "silent"
+                    ]
+                },
+                "subcommands": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[a-zA-Z0-9]+$": {
+                            "$ref": "#/$defs/command"
+                        }
+                    }
+                },
+                "arguments": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -2,15 +2,12 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"path"
 	"strings"
 
-	"github.com/alessio/shellescape"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -64,8 +61,6 @@ func (c *CommandRunner) Focus() tea.Cmd {
 	case types.DetailPage:
 		c.form = nil
 		return c.detail.Focus()
-	case types.FormPage:
-		return c.form.Focus()
 	}
 
 	return nil
@@ -81,14 +76,6 @@ func (runner *CommandRunner) Refresh() tea.Msg {
 }
 
 func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
-	for _, env := range os.Environ() {
-		pair := strings.SplitN(env, "=", 2)
-		if len(pair) != 2 {
-			continue
-		}
-		action = RenderAction(action, fmt.Sprintf("{{env:%s}}", pair[0]), pair[1])
-	}
-
 	switch action.Type {
 	case types.ReloadAction:
 		runner.form = nil
@@ -124,7 +111,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 
 			return nil
 		}
-	case types.PasteAction:
+	case types.PipeAction:
 		return func() tea.Msg {
 			return ExitMsg{
 				Text: action.Text,
@@ -132,21 +119,23 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 		}
 	case types.PushAction:
 		return func() tea.Msg {
-			generator, err := GeneratorFromAction(action)
-			if err != nil {
-				return err
-			}
+			generator := NewCommandGenerator(action.Command)
 
 			return PushPageMsg{
 				Page: NewRunner(generator),
 			}
 		}
 
-	case types.ExecAction, types.FetchAction, types.EvalAction:
+	case types.RunAction:
 		return func() tea.Msg {
 			if action.Command != nil && action.OnSuccess == "" {
+				cmd, err := action.Command.Cmd(context.TODO())
+				if err != nil {
+					return err
+				}
+
 				return ExitMsg{
-					Cmd: action.Command.Cmd(context.TODO()),
+					Cmd: cmd,
 				}
 			}
 
@@ -172,7 +161,7 @@ func (runner *CommandRunner) handleAction(action types.Action) tea.Cmd {
 				}
 
 				return nil
-			case types.PasteOnSuccess:
+			case types.PipeOnSuccess:
 				return ExitMsg{
 					Text: string(output),
 				}
@@ -249,7 +238,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		switch msg.String() {
 		case "esc":
 			// if form is shown over a page, close it
-			if runner.form != nil && runner.currentPage.Type != types.FormPage {
+			if runner.form != nil {
 				runner.form = nil
 				return runner, nil
 			}
@@ -271,43 +260,8 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		runner.currentPage = page
 
 		switch page.Type {
-		case types.FormPage:
-			form := NewForm(page.Title, func(values map[string]string) tea.Cmd {
-				action := *page.SubmitAction
-				urlvalues := url.Values{}
-				jsonvalues := map[string]interface{}{}
-
-				for key, value := range values {
-					action = RenderAction(action, fmt.Sprintf("{{input:%s}}", key), value)
-					urlvalues.Set(key, value)
-					jsonvalues[key] = value
-				}
-
-				action = RenderAction(action, "{{inputs:urlencoded}}", urlvalues.Encode())
-				if jsonencoded, err := json.Marshal(jsonvalues); err == nil {
-					action = RenderAction(action, "{{inputs:json}}", string(jsonencoded))
-				}
-
-				return runner.handleAction(action)
-			}, page.SubmitAction.Inputs...)
-
-			runner.form = form
-			runner.form.SetSize(runner.width, runner.height)
-
-			return runner, runner.form.Init()
 		case types.DetailPage:
-			detailFunc := func() string {
-				if page.Text != "" {
-					return page.Text
-				}
-				output, err := page.Command.Output(context.TODO())
-				if err != nil {
-					return err.Error()
-				}
-				return string(output)
-			}
-
-			runner.detail = NewDetail(page.Title, detailFunc, page.Actions)
+			runner.detail = NewDetail(page.Title, page.Text, page.Actions)
 			runner.detail.SetSize(runner.width, runner.height)
 
 			return runner, runner.detail.Init()
@@ -333,36 +287,27 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				listItems[i] = listItem
 			}
 
-			cmd := runner.list.SetItems(listItems, selectedId)
+			runner.list.SetItems(listItems, selectedId)
 
 			runner.list.SetSize(runner.width, runner.height)
-			return runner, tea.Batch(runner.list.Init(), cmd)
+			return runner, runner.list.Init()
 		}
 
-	case QueryChangeMsg:
-		if runner.currentPage == nil || runner.currentPage.Type != types.ListPage {
-			return runner, nil
-		}
-
-		queryCmd := RenderTextProvider(runner.currentPage.OnQueryChange, "{{query}}", msg.Query)
-		runner.Generator = NewPageProviderGenerator(queryCmd)
-
-		return runner, tea.Sequence(runner.SetIsloading(true), runner.Refresh)
 	case types.Action:
-		if len(msg.Inputs) > 0 {
-			form := NewForm(msg.Title, func(values map[string]string) tea.Cmd {
-				submitAction := msg
-				for key, value := range values {
-					submitAction = RenderAction(submitAction, fmt.Sprintf("{{input:%s}}", key), value)
-				}
+		// if len(msg.Inputs) > 0 {
+		// 	form := NewForm(msg.Title, func(values map[string]string) tea.Cmd {
+		// 		submitAction := msg
+		// 		for key, value := range values {
+		// 			submitAction = RenderAction(submitAction, fmt.Sprintf("{{input:%s}}", key), value)
+		// 		}
 
-				return runner.handleAction(submitAction)
-			}, msg.Inputs...)
+		// 		return runner.handleAction(submitAction)
+		// 	}, msg.Inputs...)
 
-			runner.form = form
-			runner.SetSize(runner.width, runner.height)
-			return runner, form.Init()
-		}
+		// 	runner.form = form
+		// 	runner.SetSize(runner.width, runner.height)
+		// 	return runner, form.Init()
+		// }
 
 		cmd := runner.handleAction(msg)
 		return runner, cmd
@@ -375,9 +320,7 @@ func (runner *CommandRunner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			content = msg.Error()
 		}
 
-		errorView := NewDetail("Error", func() string {
-			return content
-		}, []types.Action{
+		errorView := NewDetail("Error", content, []types.Action{
 			{
 				Type:  types.CopyAction,
 				Title: "Copy error",
@@ -448,85 +391,7 @@ func (c *CommandRunner) View() string {
 	}
 }
 
-func RenderCommand(command *types.Command, old, new string) *types.Command {
-	rendered := types.Command{}
-	rendered.Name = strings.ReplaceAll(command.Name, old, new)
-	for _, arg := range command.Args {
-		rendered.Args = append(rendered.Args, strings.ReplaceAll(arg, old, shellescape.Quote(new)))
-	}
-	rendered.Input = strings.ReplaceAll(command.Input, old, new)
-	rendered.Dir = strings.ReplaceAll(command.Dir, old, new)
-
-	return &rendered
-}
-
-func RenderRequest(request *types.Request, old, new string) *types.Request {
-	rendered := types.Request{
-		Headers: map[string]string{},
-	}
-	rendered.Method = strings.ReplaceAll(request.Method, old, new)
-	rendered.Url = strings.ReplaceAll(request.Url, old, url.QueryEscape(new))
-	rendered.Body = strings.ReplaceAll(request.Body, old, new)
-
-	for key, value := range request.Headers {
-		rendered.Headers[key] = strings.ReplaceAll(value, old, new)
-	}
-
-	return &rendered
-}
-
-func RenderAction(action types.Action, old, new string) types.Action {
-	if action.Command != nil {
-		action.Command = RenderCommand(action.Command, old, new)
-	}
-
-	if action.Request != nil {
-		action.Request = RenderRequest(action.Request, old, new)
-	}
-
-	if action.Code != nil {
-		action.Code = RenderExpression(action.Code, old, new)
-	}
-
-	action.Target = strings.ReplaceAll(action.Target, old, url.QueryEscape(new))
-	action.Text = strings.ReplaceAll(action.Text, old, new)
-	action.Page = strings.ReplaceAll(action.Page, old, new)
-	return action
-}
-
-func RenderTextProvider(pageProvider *types.TextProvider, old, new string) *types.TextProvider {
-	if pageProvider.Text != "" {
-		pageProvider.Text = strings.ReplaceAll(pageProvider.Text, old, new)
-	} else if pageProvider.Command != nil {
-		pageProvider.Command = RenderCommand(pageProvider.Command, old, new)
-	} else if pageProvider.Request != nil {
-		pageProvider.Request = RenderRequest(pageProvider.Request, old, new)
-	} else if pageProvider.Expression != nil {
-		pageProvider.Expression = RenderExpression(pageProvider.Expression, old, new)
-	}
-	return pageProvider
-}
-
-func RenderExpression(expression *types.Expression, old, new string) *types.Expression {
-	var rendered types.Expression
-	rendered.Code = strings.ReplaceAll(expression.Code, old, new)
-	for _, arg := range expression.Args {
-		if arg, ok := arg.(string); ok {
-			rendered.Args = append(rendered.Args, strings.ReplaceAll(arg, old, new))
-			continue
-		}
-
-		rendered.Args = append(rendered.Args, arg)
-	}
-	return &rendered
-}
-
 func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
-	basePath := ""
-	if base != nil {
-		basePath = base.Path
-	}
-
 	expandUri := func(target string) (string, error) {
 		if base == nil {
 			return target, nil
@@ -551,12 +416,8 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 	}
 
 	expandAction := func(action types.Action) (*types.Action, error) {
-		if action.Type == types.ExecAction && base != nil && base.Scheme != "file" && base.Scheme != "" {
+		if action.Type == types.RunAction && base != nil && base.Scheme != "file" && base.Scheme != "" {
 			return nil, fmt.Errorf("run action is not supported for remote pages")
-		}
-
-		if action.Command != nil && !path.IsAbs(action.Command.Dir) {
-			action.Command.Dir = path.Join(basePath, action.Command.Dir)
 		}
 
 		if action.Page != "" {
@@ -576,30 +437,18 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 			action.Target = t
 		}
 
-		if action.Request != nil {
-			u, err := expandUri(action.Request.Url)
-			if err != nil {
-				return nil, err
-			}
-			action.Request.Url = u
-		}
-
 		if action.Title == "" {
 			switch action.Type {
 			case types.OpenAction:
 				action.Title = "Open"
 			case types.CopyAction:
 				action.Title = "Copy"
-			case types.ExecAction:
+			case types.RunAction:
 				action.Title = "Run"
 			case types.PushAction:
 				action.Title = "Push"
-			case types.EvalAction:
-				action.Title = "Eval"
 			case types.ReloadAction:
 				action.Title = "Reload"
-			case types.FetchAction:
-				action.Title = "Fetch"
 			}
 		}
 
@@ -615,19 +464,8 @@ func expandPage(page types.Page, base *url.URL) (*types.Page, error) {
 		page.Actions[i] = *a
 	}
 
-	if page.Command != nil {
-		page.Command.Dir = basePath
-	}
-
 	for i, item := range page.Items {
-		if item.Detail != nil {
-			if item.Detail.Command != nil {
-				item.Detail.Command.Dir = basePath
-			}
-		}
-
 		for j, action := range item.Actions {
-
 			action, err := expandAction(action)
 			if err != nil {
 				return nil, err

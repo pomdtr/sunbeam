@@ -17,11 +17,13 @@ type Detail struct {
 	actionList ActionList
 	content    string
 	ready      bool
-	ContentCmd func() string
+	ContentCmd string
 	footer     Footer
 }
 
-func NewDetail(title string, contentCmd func() string, actions []types.Action) *Detail {
+type ContentMsg string
+
+func NewDetail(title string, content string, actions []types.Action) *Detail {
 	footer := NewFooter(title)
 	if len(actions) == 1 {
 		footer.SetBindings(
@@ -43,17 +45,14 @@ func NewDetail(title string, contentCmd func() string, actions []types.Action) *
 	d := Detail{
 		header:     header,
 		actionList: actionList,
-		ContentCmd: contentCmd,
+		content:    content,
 		footer:     footer,
 	}
 
 	return &d
 }
 func (d *Detail) Init() tea.Cmd {
-	return func() tea.Msg {
-		content := d.ContentCmd()
-		return ContentMsg(content)
-	}
+	return nil
 }
 
 func (d *Detail) Focus() tea.Cmd {

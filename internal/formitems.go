@@ -37,13 +37,13 @@ type FormItem struct {
 func NewFormItem(input types.Input) (*FormItem, error) {
 	var item FormInput
 	switch input.Type {
-	case types.TextFieldInput:
+	case types.TextInput:
 		item = NewTextInput(input)
 	case types.TextAreaInput:
 		item = NewTextArea(input)
 	case types.CheckboxInput:
 		item = NewCheckbox(input)
-	case types.DropDownInput:
+	case types.SelectInput:
 		item = NewDropDown(input)
 	default:
 		return nil, fmt.Errorf("invalid form input type")

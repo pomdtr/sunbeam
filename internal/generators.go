@@ -47,20 +47,6 @@ func NewStaticGenerator(reader io.Reader) PageGenerator {
 	}
 }
 
-func NewPageProviderGenerator(pageProvider *types.TextProvider) PageGenerator {
-	if pageProvider.Command != nil {
-		return NewCommandGenerator(pageProvider.Command)
-	} else if pageProvider.Request != nil {
-		return NewRequestGenerator(pageProvider.Request)
-	} else if pageProvider.Expression != nil {
-		return NewRequestGenerator(pageProvider.Expression.Request())
-	} else {
-		return func() (*types.Page, error) {
-			return nil, fmt.Errorf("missing pageProvider")
-		}
-	}
-}
-
 func NewCommandGenerator(command *types.Command) PageGenerator {
 	return func() (*types.Page, error) {
 		output, err := command.Output(context.TODO())
@@ -132,18 +118,5 @@ func NewRequestGenerator(request *types.Request) PageGenerator {
 		}
 
 		return p, nil
-	}
-}
-
-func GeneratorFromAction(action types.Action) (PageGenerator, error) {
-	switch {
-	case action.Command != nil:
-		return NewCommandGenerator(action.Command), nil
-	case action.Request != nil:
-		return NewRequestGenerator(action.Request), nil
-	case action.Code != nil:
-		return NewRequestGenerator(action.Code.Request()), nil
-	default:
-		return nil, fmt.Errorf("invalid action")
 	}
 }

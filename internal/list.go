@@ -1,10 +1,8 @@
 package internal
 
 import (
-	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/pomdtr/sunbeam/types"
 
@@ -16,8 +14,6 @@ import (
 	"github.com/muesli/reflow/wrap"
 	"github.com/pomdtr/sunbeam/utils"
 )
-
-const debounceDuration = 300 * time.Millisecond
 
 // Probably not necessary, need to be refactored
 type ListItem struct {
@@ -93,14 +89,10 @@ func (i ListItem) Render(width int, selected bool) string {
 }
 
 type List struct {
-	header              Header
-	footer              Footer
-	actionList          ActionList
-	emptyActions        []types.Action
-	DetailFunc          func(types.ListItem) string
-	ReloadOnQueryChange bool
-
-	ShowDetail bool
+	header       Header
+	footer       Footer
+	actionList   ActionList
+	emptyActions []types.Action
 
 	filter        Filter
 	viewport      viewport.Model
@@ -114,7 +106,6 @@ func NewList(page *types.Page) *List {
 	list := List{
 		actionList: NewActionList(),
 		header:     NewHeader(),
-		ShowDetail: page.ShowDetail,
 		viewport:   viewport,
 		footer:     NewFooter(page.Title),
 	}
@@ -128,24 +119,6 @@ func NewList(page *types.Page) *List {
 	}
 
 	list.filter = filter
-	if page.OnQueryChange != nil {
-		list.ReloadOnQueryChange = true
-	}
-
-	list.DetailFunc = func(item types.ListItem) string {
-		if item.Detail == nil {
-			return ""
-		}
-
-		output, err := item.Detail.Output(context.TODO())
-		if err != nil {
-			return err.Error()
-		}
-
-		content := string(output)
-
-		return content
-	}
 
 	return &list
 }
@@ -171,15 +144,7 @@ func (c *List) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
 	c.actionList.SetSize(width, height)
-	if c.ShowDetail {
-		width = width - 1 // take separator into account
-		c.filter.SetSize(width/3, availableHeight)
-		c.viewport.Width = width - width/3 - (1 - width%3)
-		c.viewport.Height = availableHeight
-		c.RefreshDetail()
-	} else {
-		c.filter.SetSize(width, availableHeight)
-	}
+	c.filter.SetSize(width, availableHeight)
 }
 
 func (c List) Selection() *ListItem {
@@ -191,7 +156,7 @@ func (c List) Selection() *ListItem {
 	return &item
 }
 
-func (c *List) SetItems(items []ListItem, selectedId string) tea.Cmd {
+func (c *List) SetItems(items []ListItem, selectedId string) {
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
 		filterItems[i] = item
@@ -203,28 +168,12 @@ func (c *List) SetItems(items []ListItem, selectedId string) tea.Cmd {
 		c.filter.Select(selectedId)
 	}
 
-	selection := c.updateSelection(c.filter)
-
-	if selection == nil {
-		return nil
-	}
-
-	if c.filter.Selection() == nil {
-		return nil
-	}
-
-	return func() tea.Msg {
-		return SelectionChangeMsg{
-			SelectionId: c.filter.Selection().ID(),
-		}
-	}
+	c.updateSelection(c.filter)
 }
 
 func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 	return c.header.SetIsLoading(isLoading)
 }
-
-type ContentMsg string
 
 func (l *List) updateSelection(filter Filter) FilterItem {
 	if filter.Selection() == nil {
@@ -271,11 +220,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				if selection == nil {
 					return c, nil
 				}
-				return c, tea.Sequence(func() tea.Msg {
-					return SelectionChangeMsg{
-						SelectionId: selection.ID(),
-					}
-				})
+				return c, nil
 			} else {
 				return c, func() tea.Msg {
 					return PopPageMsg{}
@@ -329,35 +274,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.viewport.LineUp(1)
 			return c, nil
 		}
-	case SelectionChangeMsg:
-		if !c.ShowDetail {
-			return c, nil
-		}
-
-		if c.filter.Selection() == nil {
-			return c, nil
-		}
-
-		if msg.SelectionId != c.filter.Selection().ID() {
-			return c, nil
-		}
-
-		item := c.filter.Selection().(ListItem)
-		if c.DetailFunc == nil {
-			return c, nil
-		}
-
-		cmd := c.SetIsLoading(true)
-
-		return c, tea.Sequence(cmd, func() tea.Msg {
-			return ContentMsg(c.DetailFunc(item.ListItem))
-		})
-
-	case ContentMsg:
-		c.SetIsLoading(false)
-		c.detailContent = string(msg)
-		c.RefreshDetail()
-		return c, nil
 	}
 
 	header, cmd := c.header.Update(msg)
@@ -374,19 +290,10 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 
 	if header.Value() != c.header.Value() {
-		if c.ReloadOnQueryChange {
-			cmds = append(cmds, func() tea.Msg {
-				return QueryChangeMsg{Query: header.Value()}
-			})
-		} else {
-			filter.FilterItems(header.Value())
-		}
+		filter.FilterItems(header.Value())
 	}
 
 	if c.filter.Selection() != nil && filter.Selection() != nil && filter.Selection().ID() != c.filter.Selection().ID() {
-		cmds = append(cmds, tea.Tick(debounceDuration, func(t time.Time) tea.Msg {
-			return SelectionChangeMsg{SelectionId: filter.Selection().ID()}
-		}))
 		c.updateSelection(filter)
 	}
 
@@ -397,28 +304,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-type QueryChangeMsg struct {
-	Query string
-}
-
-type SelectionChangeMsg struct {
-	SelectionId string
-}
-
 func (c List) View() string {
 	if c.actionList.Focused() {
 		return c.actionList.View()
-	}
-
-	if c.ShowDetail {
-		var separatorChars = make([]string, c.viewport.Height)
-		for i := 0; i < c.viewport.Height; i++ {
-			separatorChars[i] = "│"
-		}
-		separator := strings.Join(separatorChars, "\n")
-		view := lipgloss.JoinHorizontal(lipgloss.Top, c.filter.View(), separator, c.viewport.View())
-
-		return lipgloss.JoinVertical(lipgloss.Top, c.header.View(), view, c.footer.View())
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.filter.View(), c.footer.View())

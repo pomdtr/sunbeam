@@ -8,11 +8,11 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
+	"github.com/cli/cli/v2/pkg/findsh"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -21,7 +21,6 @@ type PageType string
 const (
 	DetailPage PageType = "detail"
 	ListPage   PageType = "list"
-	FormPage   PageType = "form"
 )
 
 type Page struct {
@@ -33,16 +32,12 @@ type Page struct {
 	SubmitAction *Action `json:"submitAction,omitempty"`
 
 	// Detail page
-	Text       string      `json:"text,omitempty"`
-	Command    *Command    `json:"command,omitempty"`
-	Request    *Request    `json:"request,omitempty"`
-	Expression *Expression `json:"expression,omitempty"`
+	Text    string   `json:"text,omitempty"`
+	Command *Command `json:"command,omitempty"`
 
 	// List page
-	ShowDetail    bool          `json:"showDetail,omitempty"`
-	OnQueryChange *TextProvider `json:"onQueryChange,omitempty"`
-	EmptyView     *EmptyView    `json:"emptyView,omitempty"`
-	Items         []ListItem    `json:"items,omitempty"`
+	EmptyView *EmptyView `json:"emptyView,omitempty"`
+	Items     []ListItem `json:"items,omitempty"`
 }
 
 type EmptyView struct {
@@ -51,21 +46,20 @@ type EmptyView struct {
 }
 
 type ListItem struct {
-	Id          string        `json:"id,omitempty"`
-	Title       string        `json:"title"`
-	Subtitle    string        `json:"subtitle,omitempty"`
-	Detail      *TextProvider `json:"detail,omitempty"`
-	Accessories []string      `json:"accessories,omitempty"`
-	Actions     []Action      `json:"actions,omitempty"`
+	Id          string   `json:"id,omitempty"`
+	Title       string   `json:"title"`
+	Subtitle    string   `json:"subtitle,omitempty"`
+	Accessories []string `json:"accessories,omitempty"`
+	Actions     []Action `json:"actions,omitempty"`
 }
 
 type FormInputType string
 
 const (
-	TextFieldInput FormInputType = "textfield"
-	TextAreaInput  FormInputType = "textarea"
-	DropDownInput  FormInputType = "dropdown"
-	CheckboxInput  FormInputType = "checkbox"
+	TextInput     FormInputType = "text"
+	TextAreaInput FormInputType = "textarea"
+	SelectInput   FormInputType = "select"
+	CheckboxInput FormInputType = "checkbox"
 )
 
 type DropDownItem struct {
@@ -93,7 +87,7 @@ type Input struct {
 func NewTextInput(name string, title string, placeholder string) Input {
 	return Input{
 		Name:        name,
-		Type:        TextFieldInput,
+		Type:        TextInput,
 		Title:       title,
 		Placeholder: placeholder,
 	}
@@ -120,7 +114,7 @@ func NewCheckbox(name string, title string, label string) Input {
 func NewDropDown(name string, title string, items ...DropDownItem) Input {
 	return Input{
 		Name:  name,
-		Type:  DropDownInput,
+		Type:  SelectInput,
 		Title: title,
 		Items: items,
 	}
@@ -132,27 +126,24 @@ const (
 	CopyAction   = "copy"
 	OpenAction   = "open"
 	PushAction   = "push"
-	ExecAction   = "exec"
-	PasteAction  = "paste"
+	RunAction    = "run"
+	PipeAction   = "pipe"
 	ReloadAction = "reload"
-	FetchAction  = "fetch"
-	EvalAction   = "eval"
 )
 
 type OnSuccessType string
 
 const (
 	CopyOnSuccess   OnSuccessType = "copy"
-	PasteOnSuccess  OnSuccessType = "paste"
+	PipeOnSuccess   OnSuccessType = "pipe"
 	OpenOnSuccess   OnSuccessType = "open"
 	ReloadOnSuccess OnSuccessType = "reload"
 )
 
 type Action struct {
-	Title  string     `json:"title,omitempty"`
-	Type   ActionType `json:"type"`
-	Key    string     `json:"key,omitempty"`
-	Inputs []Input    `json:"inputs,omitempty"`
+	Title string     `json:"title,omitempty"`
+	Type  ActionType `json:"type"`
+	Key   string     `json:"key,omitempty"`
 
 	// copy
 	Text string `json:"text,omitempty"`
@@ -162,12 +153,6 @@ type Action struct {
 
 	// push
 	Page string `json:"page,omitempty"`
-
-	// fetch
-	Request *Request `json:"request,omitempty"`
-
-	// eval
-	Code *Expression `json:"expression,omitempty"`
 
 	// run
 	Command *Command `json:"command,omitempty"`
@@ -180,56 +165,8 @@ type Action struct {
 func (a Action) Output(ctx context.Context) ([]byte, error) {
 	if a.Command != nil {
 		return a.Command.Output(ctx)
-	} else if a.Request != nil {
-		return a.Request.Do(ctx)
-	} else if a.Code != nil {
-		return a.Code.Request().Do(ctx)
 	} else {
 		return nil, errors.New("invalid action")
-	}
-}
-
-type Expression struct {
-	Code string `json:"code"`
-	Args []any  `json:"args,omitempty"`
-}
-
-func (e *Expression) UnmarshalJSON(data []byte) error {
-	var code string
-	if err := json.Unmarshal(data, &code); err == nil {
-		e.Code = code
-		return nil
-	}
-
-	var expression map[string]any
-	if err := json.Unmarshal(data, &expression); err == nil {
-		if err := mapstructure.Decode(expression, e); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	return errors.New("invalid expression")
-}
-
-func (e Expression) Request() *Request {
-	headers := make(map[string]string)
-	if env, ok := os.LookupEnv("VALTOWN_TOKEN"); ok {
-		headers["Authorization"] = fmt.Sprintf("Bearer %s", env)
-	}
-
-	payload := map[string]any{
-		"code": e.Code,
-		"args": e.Args,
-	}
-
-	body, _ := json.Marshal(payload)
-	return &Request{
-		Url:     "https://api.val.town/v1/eval",
-		Method:  "POST",
-		Body:    string(body),
-		Headers: headers,
 	}
 }
 
@@ -286,33 +223,48 @@ func (r Request) Do(ctx context.Context) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-type TextProvider struct {
-	Text       string      `json:"text,omitempty"`
-	Command    *Command    `json:"command,omitempty"`
-	Request    *Request    `json:"request,omitempty"`
-	Expression *Expression `json:"expression,omitempty"`
-}
-
 type Command struct {
 	Name  string   `json:"name"`
 	Args  []string `json:"args,omitempty"`
 	Input string   `json:"input,omitempty"`
-	Dir   string   `json:"dir,omitempty"`
 }
 
-func (c Command) Cmd(ctx context.Context) *exec.Cmd {
-	cmd := exec.CommandContext(ctx, c.Name, c.Args...)
-	cmd.Dir = c.Dir
+func (c Command) Cmd(ctx context.Context) (*exec.Cmd, error) {
+	var name string
+	var args []string
+
+	if runtime.GOOS != "windows" {
+		shExe, err := findsh.Find()
+		if err != nil {
+			if errors.Is(err, exec.ErrNotFound) {
+				return nil, errors.New("the `sh.exe` interpreter is required. Please install Git for Windows and try again")
+			}
+
+			return nil, err
+		}
+		name = shExe
+		args = append(args, "-c", `command "$@"`, "--", c.Name)
+		args = append(args, c.Args...)
+
+	} else {
+		name = c.Name
+		args = append(args, c.Args...)
+	}
+
+	cmd := exec.CommandContext(ctx, name, args...)
 	if c.Input != "" {
 		cmd.Stdin = strings.NewReader(c.Input)
 	}
 
-	return cmd
+	return cmd, nil
 
 }
 
 func (c Command) Run(ctx context.Context) error {
-	cmd := c.Cmd(ctx)
+	cmd, err := c.Cmd(ctx)
+	if err != nil {
+		return err
+	}
 
 	var exitErr *exec.ExitError
 	if err := cmd.Run(); errors.As(err, &exitErr) {
@@ -325,7 +277,11 @@ func (c Command) Run(ctx context.Context) error {
 }
 
 func (c Command) Output(ctx context.Context) ([]byte, error) {
-	cmd := c.Cmd(ctx)
+	cmd, err := c.Cmd(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	output, err := cmd.Output()
 
 	var exitErr *exec.ExitError
@@ -374,18 +330,4 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 	}
 
 	return fmt.Errorf("invalid command")
-}
-
-func (pp TextProvider) Output(ctx context.Context) ([]byte, error) {
-	if pp.Text != "" {
-		return []byte(pp.Text), nil
-	} else if pp.Command != nil {
-		return pp.Command.Output(ctx)
-	} else if pp.Request != nil {
-		return pp.Request.Do(ctx)
-	} else if pp.Expression != nil {
-		return pp.Expression.Request().Do(ctx)
-	} else {
-		return nil, errors.New("unknown text provider")
-	}
 }
