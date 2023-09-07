@@ -6,10 +6,6 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "args": [
-        "run",
-        "./docs/examples/local-dir",
-      ]
     },
     {
       "name": "install script",

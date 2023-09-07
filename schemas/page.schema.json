@@ -7,26 +7,22 @@
         },
         {
             "$ref": "#/$defs/detail"
+        },
+        {
+            "$ref": "#/$defs/form"
         }
     ],
     "$defs": {
         "list": {
             "type": "object",
-            "required": [
-                "type"
-            ],
             "additionalProperties": false,
+            "required": [
+                "items"
+            ],
             "properties": {
-                "type": {
-                    "description": "The type of the response.",
-                    "const": "list"
-                },
                 "title": {
                     "description": "The title of the page.",
                     "type": "string"
-                },
-                "onQueryChange": {
-                    "$ref": "#/$defs/command"
                 },
                 "emptyView": {
                     "type": "object",
@@ -67,23 +63,20 @@
         "detail": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "type"
-            ],
             "description": "A detail view displaying a preview and actions.",
+            "required": [
+                "text"
+            ],
             "properties": {
-                "type": {
-                    "description": "The type of the response.",
-                    "const": "detail"
-                },
                 "title": {
                     "description": "The title of the page.",
                     "type": "string"
                 },
-                "highlight": {
+                "language": {
                     "type": "string"
                 },
                 "text": {
+                    "description": "The text to show in the detail view.",
                     "type": "string"
                 },
                 "actions": {
@@ -92,6 +85,22 @@
                     "items": {
                         "$ref": "#/$defs/action"
                     }
+                }
+            }
+        },
+        "form": {
+            "type": "object",
+            "required": [
+                "command"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "The title of the page."
+                },
+                "command": {
+                    "$ref": "#/$defs/command"
                 }
             }
         },
@@ -175,7 +184,7 @@
                         },
                         "text": {
                             "type": "string",
-                            "description": "The text to paste."
+                            "description": "The text to share."
                         },
                         "key": {
                             "type": "string",
@@ -188,24 +197,35 @@
                 {
                     "required": [
                         "type",
-                        "expression"
+                        "params"
                     ],
                     "additionalProperties": false,
-                    "description": "Eval code on val.town",
                     "properties": {
                         "type": {
-                            "const": "eval",
+                            "const": "share",
                             "description": "The type of the action."
                         },
                         "title": {
                             "type": "string",
                             "description": "The title of the action."
                         },
-                        "expression": {
-                            "$ref": "#/$defs/expression"
-                        },
-                        "onSuccess": {
-                            "$ref": "#/$defs/onSuccess"
+                        "params": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "text": {
+                                    "type": "string",
+                                    "description": "The text to share."
+                                },
+                                "url": {
+                                    "type": "string",
+                                    "description": "The url to share."
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "description": "The title to share."
+                                }
+                            }
                         },
                         "key": {
                             "type": "string",
@@ -218,7 +238,7 @@
                 {
                     "required": [
                         "type",
-                        "target"
+                        "url"
                     ],
                     "additionalProperties": false,
                     "properties": {
@@ -234,9 +254,9 @@
                             "type": "string",
                             "description": "The key used as a shortcut."
                         },
-                        "target": {
+                        "url": {
                             "type": "string",
-                            "description": "The target to open."
+                            "description": "The url to open."
                         }
                     }
                 },
@@ -248,7 +268,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "type": {
-                            "const": "reload",
+                            "const": "run",
                             "description": "The type of the action."
                         },
                         "title": {
@@ -261,62 +281,6 @@
                         },
                         "command": {
                             "$ref": "#/$defs/command"
-                        }
-                    }
-                },
-                {
-                    "required": [
-                        "type",
-                        "command"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "type": {
-                            "const": "exec",
-                            "description": "The type of the action."
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
-                        "key": {
-                            "type": "string",
-                            "description": "The key used as a shortcut."
-                        },
-                        "command": {
-                            "$ref": "#/$defs/command"
-                        },
-                        "onSuccess": {
-                            "$ref": "#/$defs/onSuccess"
-                        }
-                    }
-                },
-                {
-                    "required": [
-                        "type"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "type": {
-                            "const": "push",
-                            "description": "The type of the action."
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
-                        "key": {
-                            "type": "string",
-                            "description": "The key used as a shortcut."
-                        },
-                        "command": {
-                            "$ref": "#/$defs/command"
-                        },
-                        "target": {
-                            "type": "string"
-                        },
-                        "page": {
-                            "type": "string"
                         }
                     }
                 }
@@ -327,16 +291,11 @@
                 {
                     "type": "object",
                     "required": [
-                        "name",
                         "title",
                         "type"
                     ],
                     "additionalProperties": false,
                     "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the input."
-                        },
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
@@ -348,10 +307,6 @@
                         "placeholder": {
                             "type": "string",
                             "description": "The placeholder of the input."
-                        },
-                        "optional": {
-                            "type": "boolean",
-                            "description": "Whether the input is optional."
                         },
                         "default": {
                             "type": "string",
@@ -372,17 +327,9 @@
                     ],
                     "additionalProperties": false,
                     "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the input."
-                        },
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
-                        },
-                        "optional": {
-                            "type": "boolean",
-                            "description": "Whether the input is optional."
                         },
                         "type": {
                             "const": "checkbox",
@@ -395,30 +342,17 @@
                         "label": {
                             "type": "string",
                             "description": "The label of the input."
-                        },
-                        "trueSubstitution": {
-                            "type": "string",
-                            "description": "The text substitution to use when the input is true."
-                        },
-                        "falseSubstitution": {
-                            "type": "string",
-                            "description": "The text substitution to use when the input is false."
                         }
                     }
                 },
                 {
                     "type": "object",
                     "required": [
-                        "name",
                         "title",
                         "type"
                     ],
                     "additionalProperties": false,
                     "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the input."
-                        },
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
@@ -426,10 +360,6 @@
                         "type": {
                             "const": "textarea",
                             "description": "The type of the input."
-                        },
-                        "optional": {
-                            "type": "boolean",
-                            "description": "Whether the input is optional."
                         },
                         "placeholder": {
                             "type": "string",
@@ -444,24 +374,15 @@
                 {
                     "type": "object",
                     "required": [
-                        "name",
                         "title",
                         "type",
                         "items"
                     ],
                     "additionalProperties": false,
                     "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the input."
-                        },
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
-                        },
-                        "optional": {
-                            "type": "boolean",
-                            "description": "Whether the input is optional."
                         },
                         "type": {
                             "const": "dropdown",
@@ -507,32 +428,25 @@
                 "name": {
                     "type": "string"
                 },
-                "args": {
-                    "type": "array",
-                    "items": {
-                        "oneOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "boolean"
-                            },
-                            {
-                                "$ref": "#/$defs/input"
-                            }
-                        ]
+                "params": {
+                    "type": "object",
+                    "patternProperties": {
+                        ".+": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "$ref": "#/$defs/input"
+                                }
+                            ]
+                        }
                     }
                 }
             }
-        },
-        "onSuccess": {
-            "type": "string",
-            "enum": [
-                "copy",
-                "paste",
-                "open",
-                "reload"
-            ]
         }
     }
 }

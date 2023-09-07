@@ -16,28 +16,22 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type PageType string
-
-const (
-	DetailPage PageType = "detail"
-	ListPage   PageType = "list"
-)
-
-type Page struct {
-	Type    PageType `json:"type"`
-	Title   string   `json:"title,omitempty"`
-	Actions []Action `json:"actions,omitempty"`
-
-	// form
-	SubmitAction *Action `json:"submitAction,omitempty"`
-
-	// Detail page
-	Text    string   `json:"text,omitempty"`
-	Command *Command `json:"command,omitempty"`
-
-	// List page
+type List struct {
+	Title     string     `json:"title,omitempty"`
 	EmptyView *EmptyView `json:"emptyView,omitempty"`
-	Items     []ListItem `json:"items,omitempty"`
+	Items     []ListItem `json:"items"`
+}
+
+type Detail struct {
+	Title     string   `json:"title,omitempty"`
+	Actions   []Action `json:"actions,omitempty"`
+	Highlight string   `json:"highlight,omitempty"`
+	Text      string   `json:"text"`
+}
+
+type Form struct {
+	Title        string  `json:"title,omitempty"`
+	SubmitAction *Action `json:"submitAction,omitempty"`
 }
 
 type EmptyView struct {
@@ -125,19 +119,10 @@ type ActionType string
 const (
 	CopyAction   = "copy"
 	OpenAction   = "open"
-	PushAction   = "push"
 	RunAction    = "run"
-	PipeAction   = "pipe"
+	ShareAction  = "share"
+	PasteAction  = "paste"
 	ReloadAction = "reload"
-)
-
-type OnSuccessType string
-
-const (
-	CopyOnSuccess   OnSuccessType = "copy"
-	PipeOnSuccess   OnSuccessType = "pipe"
-	OpenOnSuccess   OnSuccessType = "open"
-	ReloadOnSuccess OnSuccessType = "reload"
 )
 
 type Action struct {
@@ -157,9 +142,14 @@ type Action struct {
 	// run
 	Command *Command `json:"command,omitempty"`
 
-	OnSuccess OnSuccessType `json:"onSuccess,omitempty"`
+	// share
+	Params Params `json:"params,omitempty"`
+}
 
-	Exit bool `json:"-"`
+type Params struct {
+	Text  string `json:"text,omitempty"`
+	Title string `json:"title,omitempty"`
+	Url   string `json:"url,omitempty"`
 }
 
 func (a Action) Output(ctx context.Context) ([]byte, error) {

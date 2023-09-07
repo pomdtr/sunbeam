@@ -110,7 +110,7 @@ func NewListCmd() *cobra.Command {
 					Accessories: accessories,
 					Actions: []types.Action{
 						{
-							Type:  types.PipeAction,
+							Type:  types.ShareAction,
 							Title: "Pipe",
 							Text:  row,
 						},
@@ -118,8 +118,7 @@ func NewListCmd() *cobra.Command {
 				})
 			}
 
-			page := &types.Page{
-				Type:  types.ListPage,
+			page := &types.List{
 				Title: title,
 				Items: listItems,
 			}

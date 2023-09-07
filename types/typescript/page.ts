@@ -6,43 +6,6 @@
  */
 
 export type Page = List | Detail | Form;
-export type Command =
-  | string
-  | [string, ...string[]]
-  | {
-      name: string;
-      args?: string[];
-      input?: string;
-      dir?: string;
-    };
-export type Request =
-  | string
-  | {
-      /**
-       * The URL to request.
-       */
-      url: string;
-      /**
-       * The HTTP method to use.
-       */
-      method?: string;
-      /**
-       * The headers to send.
-       */
-      headers?: {
-        [k: string]: string;
-      };
-      /**
-       * The body to send.
-       */
-      body?: string;
-    };
-export type Expression =
-  | string
-  | {
-      code: string;
-      args?: unknown[];
-    };
 export type Action =
   | {
       /**
@@ -58,9 +21,23 @@ export type Action =
        */
       text: string;
       /**
-       * The inputs to show when the action is run.
+       * The key used as a shortcut.
        */
-      inputs?: Input[];
+      key?: string;
+    }
+  | {
+      /**
+       * The type of the action.
+       */
+      type: "paste";
+      /**
+       * The title of the action.
+       */
+      title?: string;
+      /**
+       * The text to share.
+       */
+      text: string;
       /**
        * The key used as a shortcut.
        */
@@ -70,19 +47,25 @@ export type Action =
       /**
        * The type of the action.
        */
-      type: "pipe";
+      type: "share";
       /**
        * The title of the action.
        */
       title?: string;
-      /**
-       * The text to pipe.
-       */
-      text: string;
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
+      params: {
+        /**
+         * The text to share.
+         */
+        text?: string;
+        /**
+         * The url to share.
+         */
+        url?: string;
+        /**
+         * The title to share.
+         */
+        title?: string;
+      };
       /**
        * The key used as a shortcut.
        */
@@ -98,106 +81,31 @@ export type Action =
        */
       title?: string;
       /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
-      /**
        * The key used as a shortcut.
        */
       key?: string;
       /**
-       * The target to open.
+       * The url to open.
        */
-      target: string;
+      url: string;
     }
   | {
       /**
        * The type of the action.
        */
-      type: "reload";
+      type: "run";
       /**
        * The title of the action.
        */
       title?: string;
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
       /**
        * The key used as a shortcut.
        */
       key?: string;
       command: Command;
-    }
-  | {
-      /**
-       * The type of the action.
-       */
-      type: "fetch";
-      /**
-       * The title of the action.
-       */
-      title?: string;
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
-      /**
-       * The key used as a shortcut.
-       */
-      key?: string;
-      request: Request;
-      onSuccess?: OnSuccess;
-    }
-  | {
-      /**
-       * The type of the action.
-       */
-      type: "exec";
-      /**
-       * The title of the action.
-       */
-      title?: string;
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
-      /**
-       * The key used as a shortcut.
-       */
-      key?: string;
-      command: Command;
-      onSuccess?: OnSuccess;
-    }
-  | {
-      /**
-       * The type of the action.
-       */
-      type: "push";
-      /**
-       * The title of the action.
-       */
-      title?: string;
-      /**
-       * The key used as a shortcut.
-       */
-      key?: string;
-      /**
-       * The inputs to show when the action is run.
-       */
-      inputs?: Input[];
-      command?: Command;
-      request?: Request;
-      target?: string;
-      expression?: Expression;
-      page?: string;
     };
 export type Input =
   | {
-      /**
-       * The name of the input.
-       */
-      name: string;
       /**
        * The title of the input.
        */
@@ -205,15 +113,11 @@ export type Input =
       /**
        * The type of the input.
        */
-      type: "text";
+      type: "textfield";
       /**
        * The placeholder of the input.
        */
       placeholder?: string;
-      /**
-       * Whether the input is optional.
-       */
-      optional?: boolean;
       /**
        * The default value of the input.
        */
@@ -225,17 +129,9 @@ export type Input =
     }
   | {
       /**
-       * The name of the input.
-       */
-      name: string;
-      /**
        * The title of the input.
        */
       title: string;
-      /**
-       * Whether the input is optional.
-       */
-      optional?: boolean;
       /**
        * The type of the input.
        */
@@ -248,20 +144,8 @@ export type Input =
        * The label of the input.
        */
       label?: string;
-      /**
-       * The text substitution to use when the input is true.
-       */
-      trueSubstitution?: string;
-      /**
-       * The text substitution to use when the input is false.
-       */
-      falseSubstitution?: string;
     }
   | {
-      /**
-       * The name of the input.
-       */
-      name: string;
       /**
        * The title of the input.
        */
@@ -270,10 +154,6 @@ export type Input =
        * The type of the input.
        */
       type: "textarea";
-      /**
-       * Whether the input is optional.
-       */
-      optional?: boolean;
       /**
        * The placeholder of the input.
        */
@@ -285,21 +165,13 @@ export type Input =
     }
   | {
       /**
-       * The name of the input.
-       */
-      name: string;
-      /**
        * The title of the input.
        */
       title: string;
       /**
-       * Whether the input is optional.
-       */
-      optional?: boolean;
-      /**
        * The type of the input.
        */
-      type: "select";
+      type: "dropdown";
       /**
        * The items of the input.
        */
@@ -318,18 +190,12 @@ export type Input =
        */
       default?: string;
     };
-export type OnSuccess = "copy" | "paste" | "open" | "reload";
 
 export interface List {
-  /**
-   * The type of the response.
-   */
-  type: "list";
   /**
    * The title of the page.
    */
   title?: string;
-  onQueryChange?: PageProvider;
   emptyView?: {
     /**
      * The text to show when the list is empty.
@@ -340,18 +206,17 @@ export interface List {
      */
     actions?: Action[];
   };
-  /**
-   * Whether to show the detail on the right side of the list.
-   */
-  showDetail?: boolean;
-  items?: Listitem[] | null;
+  items: Listitem[] | null;
 }
-export interface PageProvider {
-  command?: Command;
-  request?: Request;
-  text?: string;
-  expression?: Expression;
-  [k: string]: unknown;
+export interface Command {
+  name: string;
+  params?: {
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` ".+".
+     */
+    [k: string]: string | boolean | Input;
+  };
 }
 export interface Listitem {
   /**
@@ -366,12 +231,6 @@ export interface Listitem {
    * The subtitle of the item.
    */
   subtitle?: string;
-  detail?: {
-    command?: Command;
-    request?: Request;
-    text?: string;
-    expression?: Expression;
-  };
   /**
    * The accessories to show on the right side of the item.
    */
@@ -386,17 +245,14 @@ export interface Listitem {
  */
 export interface Detail {
   /**
-   * The type of the response.
-   */
-  type: "detail";
-  /**
    * The title of the page.
    */
   title?: string;
-  command?: Command;
-  request?: Request;
-  text?: string;
-  expression?: Expression;
+  language?: string;
+  /**
+   * The text to show in the detail view.
+   */
+  text: string;
   /**
    * The actions attached to the detail view.
    */
@@ -404,12 +260,8 @@ export interface Detail {
 }
 export interface Form {
   /**
-   * The type of the response.
-   */
-  type: "form";
-  /**
    * The title of the page.
    */
   title?: string;
-  submitAction: Action;
+  command: Command;
 }

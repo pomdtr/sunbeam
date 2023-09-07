@@ -1,4 +1,4 @@
-import { List, Detail, Form, Listitem, Action, Input } from "./types.ts";
+import { List, Detail, Form, Listitem, Action, Input } from "./page.ts";
 
 export function List(list: List) {
   return list;

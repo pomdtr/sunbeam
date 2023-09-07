@@ -13,5 +13,6 @@
     "public": true
   },
   "deno.enable": true,
+  "deno.config": "./types/typescript/deno.json",
   "deno.unstable": true
 }

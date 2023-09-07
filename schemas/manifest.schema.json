@@ -1,65 +1,96 @@
 {
-    "$schema": "https://json-schema.org/draft-07/schema#",
-    "$id": "manifest",
-    "oneOf": [
-        {
-            "$ref": "#/$defs/command"
-        }
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "title",
+        "commands"
     ],
-    "$defs": {
-        "command": {
-            "required": [
-                "title",
-                "description"
-            ],
-            "type": "object",
-            "properties": {
-                "$schema": {
+    "additionalProperties": false,
+    "properties": {
+        "title": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "entrypoint": {
+            "oneOf": [
+                {
                     "type": "string"
                 },
-                "title": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "author": {
-                    "type": "string"
-                },
-                "entrypoint": {
-                    "type": "string"
-                },
-                "output": {
-                    "type": "string",
-                    "enum": [
-                        "page",
-                        "silent"
-                    ]
-                },
-                "subcommands": {
-                    "type": "object",
-                    "patternProperties": {
-                        "^[a-zA-Z0-9]+$": {
-                            "$ref": "#/$defs/command"
-                        }
-                    }
-                },
-                "arguments": {
+                {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "description": {
-                                "type": "string"
-                            },
-                            "type": {
-                                "type": "string"
+                        "type": "string"
+                    }
+                }
+            ]
+        },
+        "commands": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/command"
+            }
+        }
+    },
+    "$defs": {
+        "command": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "required": [
+                        "name",
+                        "mode",
+                        "title"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "title": {
+                            "type": "string"
+                        },
+                        "mode": {
+                            "type": "string",
+                            "enum": [
+                                "filter",
+                                "generator",
+                                "detail",
+                                "form",
+                                "silent"
+                            ]
+                        },
+                        "params": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/param"
                             }
                         }
                     }
+                }
+            ]
+        },
+        "param": {
+            "type": "object",
+            "required": [
+                "name",
+                "type"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "string",
+                        "boolean"
+                    ]
+                },
+                "optional": {
+                    "type": "boolean"
                 }
             }
         }

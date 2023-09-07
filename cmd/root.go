@@ -1,21 +1,13 @@
 package cmd
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	cobracompletefig "github.com/withfig/autocomplete-tools/integrations/cobra"
-
-	"github.com/pomdtr/sunbeam/internal"
-	"github.com/pomdtr/sunbeam/types"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 const (
@@ -26,20 +18,16 @@ const (
 var (
 	Version = "dev"
 	Date    = "unknown"
-)
-
-var (
-	options internal.SunbeamOptions
+	dataDir string
 )
 
 func init() {
-	options = internal.SunbeamOptions{
-		MaxHeight:  utils.LookupIntEnv("SUNBEAM_HEIGHT", 0),
-		MaxWidth:   utils.LookupIntEnv("SUNBEAM_WIDTH", 0),
-		FullScreen: utils.LookupBoolEnv("SUNBEAM_FULLSCREEN", true),
-		Border:     utils.LookupBoolEnv("SUNBEAM_BORDER", false),
-		Margin:     utils.LookupIntEnv("SUNBEAM_MARGIN", 0),
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
 	}
+
+	dataDir = filepath.Join(homedir, ".local", "share", "sunbeam")
 }
 
 func Execute() error {
@@ -56,19 +44,17 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
-		&cobra.Group{ID: customGroupID, Title: "Custom Commands"},
 	)
 
 	rootCmd.AddCommand(NewQueryCmd())
-	rootCmd.AddCommand(NewReadCmd())
-	rootCmd.AddCommand(NewExtensionCmd())
 	rootCmd.AddCommand(NewFetchCmd())
 	rootCmd.AddCommand(NewParseCmd())
+	rootCmd.AddCommand(NewCmdServe())
+	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewListCmd())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewDetailCmd())
-	rootCmd.AddCommand(NewRunCmd())
-	rootCmd.AddCommand(cobracompletefig.CreateCompletionSpecCommand())
+	rootCmd.AddCommand(NewCmdToken())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -85,15 +71,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		},
 	}
 	rootCmd.AddCommand(docCmd)
-
-	for name, command := range extensions {
-		customCmd, err := NewCustomCmd(name, command)
-		if err != nil {
-			return err
-		}
-
-		rootCmd.AddCommand(customCmd)
-	}
 
 	manCmd := &cobra.Command{
 		Use:    "generate-man-pages [path]",
@@ -115,31 +92,25 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	return rootCmd.Execute()
+	extensions, err := LoadExtensions()
+	if os.IsNotExist(err) {
+		return rootCmd.Execute()
+	} else if err != nil {
+		return err
+	}
 
-}
-
-func Run(generator internal.PageGenerator) error {
-	if !isatty.IsTerminal(os.Stderr.Fd()) {
-		output, err := generator()
+	rootCmd.AddGroup(
+		&cobra.Group{ID: customGroupID, Title: "Custom Commands"},
+	)
+	for name, extension := range extensions {
+		cmd, err := NewCustomCmd(name, extension)
 		if err != nil {
-			return fmt.Errorf("could not generate page: %s", err)
+			return err
 		}
-
-		if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
-			return fmt.Errorf("could not encode page: %s", err)
-		}
-
-		return nil
+		rootCmd.AddCommand(cmd)
 	}
 
-	runner := internal.NewRunner(generator)
-	err := internal.Draw(runner, options)
-	if errors.Is(err, internal.ErrInterrupted) && isatty.IsTerminal(os.Stdout.Fd()) {
-		return nil
-	}
-
-	return err
+	return rootCmd.Execute()
 }
 
 func buildDoc(command *cobra.Command) (string, error) {
@@ -175,30 +146,21 @@ func buildDoc(command *cobra.Command) (string, error) {
 
 func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:                name,
-		Short:              extension.Title,
-		Long:               extension.Description,
-		DisableFlagParsing: true,
-		Args:               cobra.NoArgs,
-		GroupID:            customGroupID,
+		Use:     name,
+		Short:   extension.Manifest.Title,
+		Long:    extension.Manifest.Description,
+		Args:    cobra.NoArgs,
+		GroupID: customGroupID,
 	}
 
-	for _, command := range extension.Commands {
+	for _, command := range extension.Manifest.Commands {
 		subcmd := &cobra.Command{
-			Use:                name,
-			Short:              extension.Title,
-			Long:               extension.Description,
-			DisableFlagParsing: true,
-			Args:               cobra.NoArgs,
-			GroupID:            customGroupID,
+			Use:    command.Name,
+			Short:  command.Title,
+			Long:   command.Description,
+			Hidden: command.Hidden,
+			Args:   cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
-				var args []string
-				entrypoint := command.Entrypoint
-				if command.Entrypoint == "" {
-					entrypoint = extension.Entrypoint
-					args = append(args, command.Name)
-				}
-
 				argumentMap := make(map[string]any)
 				for _, argument := range command.Arguments {
 					switch argument.Type {
@@ -221,27 +183,50 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 					}
 				}
 
-				input, err := json.Marshal(argumentMap)
+				input := CommandInput{
+					Command: command.Name,
+					Query:   "",
+					Params:  argumentMap,
+				}
+
+				output, err := extension.Run(input)
 				if err != nil {
 					return err
 				}
 
-				return Run(internal.NewCommandGenerator(&types.Command{
-					Name:  filepath.Join(extension.RootDir, entrypoint),
-					Args:  args,
-					Input: string(input),
-				}))
+				os.Stdout.Write(output)
+				return nil
 			},
 		}
 
 		for _, argument := range command.Arguments {
 			switch argument.Type {
 			case "string":
-				cmd.Flags().String(argument.Name, "", argument.Description)
-			case "bool":
-				cmd.Flags().Bool(argument.Name, false, argument.Description)
+				var defaultValue string
+				if argument.Default != nil {
+					d, ok := argument.Default.(string)
+					if !ok {
+						return nil, fmt.Errorf("invalid default value for %s: %v", argument.Name, argument.Default)
+					}
+					defaultValue = d
+				}
+				cmd.Flags().String(argument.Name, defaultValue, argument.Description)
+			case "boolean":
+				var defaultValue bool
+				if argument.Default != nil {
+					d, ok := argument.Default.(bool)
+					if !ok {
+						return nil, fmt.Errorf("invalid default value for %s: %v", argument.Name, argument.Default)
+					}
+					defaultValue = d
+				}
+				cmd.Flags().Bool(argument.Name, defaultValue, argument.Description)
 			default:
 				return nil, fmt.Errorf("unsupported argument type: %s", argument.Type)
+			}
+
+			if !argument.Optional {
+				subcmd.MarkFlagRequired(argument.Name)
 			}
 		}
 

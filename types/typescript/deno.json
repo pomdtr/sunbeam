@@ -1,0 +1,9 @@
+{
+    "imports": {
+        "json-schema-to-typescript": "npm:json-schema-to-typescript",
+        "$dnt/": "https://deno.land/x/dnt@0.38.0/"
+    },
+    "tasks": {
+        "build": "deno run -A ./build.ts"
+    }
+}

@@ -47,9 +47,8 @@ func NewDetailCmd() *cobra.Command {
 				title, _ = cmd.Flags().GetString("title")
 			}
 
-			page := &types.Page{
+			page := &types.Detail{
 				Title: title,
-				Type:  "detail",
 				Text:  text,
 			}
 
