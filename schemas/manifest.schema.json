@@ -13,19 +13,6 @@
         "description": {
             "type": "string"
         },
-        "entrypoint": {
-            "oneOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            ]
-        },
         "commands": {
             "type": "array",
             "items": {

@@ -9,12 +9,7 @@ for (const name of ["page", "manifest"]) {
 
 await emptyDir(`./npm`);
 await build({
-  entryPoints: [
-    { name: ".", path: "./mod.ts" },
-    { name: "./extension", path: "./extension.ts" },
-    { name: "./manifest", path: "./manifest.ts" },
-    { name: "./page", path: "./page.ts" },
-  ],
+  entryPoints: ["./mod.ts"],
   outDir: `./npm`,
   shims: {
     // see JS docs for overview and more options
@@ -22,12 +17,8 @@ await build({
     custom: [
       {
         package: {
-          name: "isomorphic-fetch",
-          version: "3.0.0",
-        },
-        typesPackage: {
-          name: "@types/isomorphic-fetch",
-          version: "0.0.36",
+          name: "node-fetch",
+          version: "~3.3.2",
         },
         globalNames: [
           {
@@ -35,6 +26,17 @@ await build({
             name: "fetch",
             // use the default export of node-fetch
             exportName: "default",
+          },
+          {
+            // for the `Response` global...
+            name: "Response",
+            exportName: "Response",
+          },
+          {
+            // for the `Response` global...
+            name: "Request",
+            exportName: "Request",
+            typeOnly: true,
           },
         ],
       },

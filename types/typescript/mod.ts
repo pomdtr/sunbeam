@@ -1,25 +1,8 @@
-import { List, Detail, Form, Listitem, Action, Input } from "./page.ts";
-
-export function List(list: List) {
-  return list;
-}
-
-export function Detail(detail: Detail) {
-  return detail;
-}
-
-export function Form(form: Form) {
-  return form;
-}
-
-export function Item(item: Listitem) {
-  return item;
-}
-
-export function Action(action: Action) {
-  return action;
-}
-
-export function Input(input: Input) {
-  return input;
-}
+export type { List, Detail, Form, Listitem, Action, Input } from "./page.ts";
+export type { Manifest, Command, Param } from "./manifest.ts";
+export {
+  Extension,
+  createExtension,
+  loadExtension,
+  fetchExtension,
+} from "./extension.ts";

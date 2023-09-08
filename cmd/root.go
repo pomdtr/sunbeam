@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	coreGroupID   = "core"
-	customGroupID = "custom"
+	coreGroupID      = "core"
+	extensionGroupID = "extension"
 )
 
 var (
@@ -46,15 +46,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 	)
 
-	rootCmd.AddCommand(NewQueryCmd())
-	rootCmd.AddCommand(NewFetchCmd())
-	rootCmd.AddCommand(NewParseCmd())
-	rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewCmdRun())
-	rootCmd.AddCommand(NewListCmd())
 	rootCmd.AddCommand(NewValidateCmd())
-	rootCmd.AddCommand(NewDetailCmd())
-	rootCmd.AddCommand(NewCmdToken())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -93,14 +86,18 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(manCmd)
 
 	extensions, err := LoadExtensions()
-	if os.IsNotExist(err) {
-		return rootCmd.Execute()
-	} else if err != nil {
+	if err != nil {
 		return err
+	}
+	rootCmd.AddCommand(NewExtensionCmd(extensions))
+	rootCmd.AddCommand(NewCmdServe(extensions))
+
+	if len(extensions) == 0 {
+		return rootCmd.Execute()
 	}
 
 	rootCmd.AddGroup(
-		&cobra.Group{ID: customGroupID, Title: "Custom Commands"},
+		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
 	)
 	for name, extension := range extensions {
 		cmd, err := NewCustomCmd(name, extension)
@@ -114,7 +111,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 }
 
 func buildDoc(command *cobra.Command) (string, error) {
-	if command.GroupID == customGroupID {
+	if command.GroupID == extensionGroupID {
 		return "", nil
 	}
 
@@ -146,32 +143,39 @@ func buildDoc(command *cobra.Command) (string, error) {
 
 func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:     name,
-		Short:   extension.Manifest.Title,
-		Long:    extension.Manifest.Description,
-		Args:    cobra.NoArgs,
-		GroupID: customGroupID,
+		Use:           name,
+		Short:         extension.Manifest.Title,
+		Long:          extension.Manifest.Description,
+		Args:          cobra.NoArgs,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		GroupID:       extensionGroupID,
 	}
 
+	cmd.CompletionOptions.DisableDefaultCmd = true
+	cmd.SetHelpCommand(&cobra.Command{Hidden: true})
+
 	for _, command := range extension.Manifest.Commands {
+		command := command
 		subcmd := &cobra.Command{
-			Use:    command.Name,
-			Short:  command.Title,
-			Long:   command.Description,
-			Hidden: command.Hidden,
-			Args:   cobra.NoArgs,
+			Use:           command.Name,
+			Short:         command.Title,
+			Long:          command.Description,
+			Hidden:        command.Hidden,
+			Args:          cobra.NoArgs,
+			SilenceErrors: true,
 			RunE: func(cmd *cobra.Command, _ []string) error {
 				argumentMap := make(map[string]any)
-				for _, argument := range command.Arguments {
+				for _, argument := range command.Params {
 					switch argument.Type {
-					case "string":
+					case ParamTypeString:
 						value, err := cmd.Flags().GetString(argument.Name)
 						if err != nil {
 							return err
 						}
 
 						argumentMap[argument.Name] = value
-					case "bool":
+					case ParamTypeBoolean:
 						value, err := cmd.Flags().GetBool(argument.Name)
 						if err != nil {
 							return err
@@ -199,9 +203,9 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 			},
 		}
 
-		for _, argument := range command.Arguments {
+		for _, argument := range command.Params {
 			switch argument.Type {
-			case "string":
+			case ParamTypeString:
 				var defaultValue string
 				if argument.Default != nil {
 					d, ok := argument.Default.(string)
@@ -210,8 +214,8 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 					}
 					defaultValue = d
 				}
-				cmd.Flags().String(argument.Name, defaultValue, argument.Description)
-			case "boolean":
+				subcmd.Flags().String(argument.Name, defaultValue, argument.Description)
+			case ParamTypeBoolean:
 				var defaultValue bool
 				if argument.Default != nil {
 					d, ok := argument.Default.(bool)
@@ -220,7 +224,7 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 					}
 					defaultValue = d
 				}
-				cmd.Flags().Bool(argument.Name, defaultValue, argument.Description)
+				subcmd.Flags().Bool(argument.Name, defaultValue, argument.Description)
 			default:
 				return nil, fmt.Errorf("unsupported argument type: %s", argument.Type)
 			}

@@ -15,15 +15,6 @@ export type Command = {
 export interface Manifest {
   title: string;
   description?: string;
-  share_target?: {
-    command: string;
-    params: {
-      title?: string;
-      text?: string;
-      url?: string;
-    };
-  };
-  entrypoint?: string;
   commands: Command[];
 }
 export interface Param {

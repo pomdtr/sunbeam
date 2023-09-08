@@ -7,11 +7,5 @@
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
     },
-    {
-      "name": "install script",
-      "type": "bashdb",
-      "request": "launch",
-      "program": "${workspaceFolder}/scripts/sunbeam-installer.sh"
-    }
   ]
 }
