@@ -103,31 +103,24 @@ export class Extension {
         }
       );
     }
-  }
+  };
 
-  async execute() {
-    if (Deno.args.length === 0) {
+  async execute(args: string[]) {
+    if (args.length === 0) {
       console.log(JSON.stringify(this.manifest));
-      Deno.exit(0);
+      return;
     }
 
-    const command = this.command(Deno.args[0]);
+    const command = this.command(args[0]);
     if (!command) {
-      console.error(`Command not found: ${Deno.args[0]}`);
-      Deno.exit(1);
+      throw new Error(`Command not found: ${args[0]}`);
     }
 
-    let params = {};
-    if (!Deno.isatty(Deno.stdin.rid)) {
-      const stdin = new TextDecoder().decode(await readAll(Deno.stdin));
-      if (stdin) {
-        params = JSON.parse(stdin);
-      }
-    }
+    const stdin = new TextDecoder().decode(await readAll(Deno.stdin));
+    const params = JSON.parse(stdin);
 
     if (!params || typeof params !== "object") {
-      console.error("Invalid params");
-      Deno.exit(1);
+      throw new Error("Invalid params");
     }
 
     for (const param of command.params || []) {
@@ -136,8 +129,7 @@ export class Extension {
       }
 
       if (!(param.name in params)) {
-        console.error(`Missing required param: ${param.name}`);
-        Deno.exit(1);
+        throw new Error(`Missing required param: ${param.name}`);
       }
     }
 
@@ -147,8 +139,7 @@ export class Extension {
         console.log(JSON.stringify(res));
       }
     } catch (e) {
-      console.error(e.message);
-      Deno.exit(1);
+      throw new Error(`Failed to execute command: ${e.message}`);
     }
   }
 }
