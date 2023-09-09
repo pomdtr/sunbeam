@@ -39,6 +39,7 @@ func NewCmdServe(extensionMap ExtensionMap) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			e := echo.New()
 			e.HideBanner = true
+			e.HidePort = true
 
 			if flags.bearerToken != "" {
 				e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -54,21 +55,32 @@ func NewCmdServe(extensionMap ExtensionMap) *cobra.Command {
 			}
 
 			e.GET("/", func(c echo.Context) error {
-				return c.JSON(200, map[string]interface{}{
-					"extensions": extensionMap,
+				return c.JSON(200, map[string]any{
+					"version": Version,
+					"date":    Date,
 				})
 			})
 
-			e.GET("/:extension", func(c echo.Context) error {
-				extension := c.Param("extension")
-				manifest, ok := extensionMap[extension]
+			e.GET("/extensions", func(c echo.Context) error {
+				extensions := make(map[string]ExtensionManifest)
+
+				for name, extension := range extensionMap {
+					extensions[name] = extension.Manifest
+				}
+
+				return c.JSON(200, extensions)
+			})
+
+			e.GET("/extensions/:extension", func(c echo.Context) error {
+				name := c.Param("extension")
+				extension, ok := extensionMap[name]
 				if !ok {
 					return c.String(404, "Not found")
 				}
-				return c.JSON(200, manifest)
+				return c.JSON(200, extension.Manifest)
 			})
 
-			e.POST("/:extension/:command", func(c echo.Context) error {
+			e.POST("/extensions/:extension/:command", func(c echo.Context) error {
 				extension := c.Param("extension")
 				command := c.Param("command")
 
@@ -90,6 +102,7 @@ func NewCmdServe(extensionMap ExtensionMap) *cobra.Command {
 				return c.String(200, string(output))
 			})
 
+			cmd.PrintErrf("http server started on http://%s:%d\n", flags.host, flags.port)
 			return e.Start(fmt.Sprintf("%s:%d", flags.host, flags.port))
 		},
 	}
