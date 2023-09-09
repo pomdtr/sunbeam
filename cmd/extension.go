@@ -81,8 +81,8 @@ const (
 )
 
 type CommandInput struct {
-	Query  string         `json:"query"`
-	Params map[string]any `json:"params"`
+	Query  string         `json:"query,omitempty"`
+	Params map[string]any `json:"params,omitempty"`
 }
 
 func (ext Extension) Run(commandName string, input CommandInput) ([]byte, error) {
@@ -91,21 +91,21 @@ func (ext Extension) Run(commandName string, input CommandInput) ([]byte, error)
 		return nil, err
 	}
 	if origin.Scheme == "file" {
-		inputBytes, err := json.Marshal(input.Params)
+		inputBytes, err := json.Marshal(input)
 		if err != nil {
 			return nil, err
 		}
 
 		command := exec.Command(origin.Path, commandName)
 		command.Stdin = bytes.NewReader(inputBytes)
-		command.Env = os.Environ()
-		command.Env = append(command.Env, fmt.Sprintf("SUNBEAM_QUERY=%s", input.Query))
 
 		var exitErr *exec.ExitError
-		if output, err := command.Output(); err != nil && errors.As(err, &exitErr) {
-			return output, fmt.Errorf("command failed: %s", string(exitErr.Stderr))
+		if output, err := command.Output(); err == nil {
+			return output, nil
+		} else if errors.As(err, &exitErr) {
+			return nil, fmt.Errorf("command failed: %s", string(exitErr.Stderr))
 		} else {
-			return output, err
+			return nil, err
 		}
 	}
 	body, err := json.Marshal(input)

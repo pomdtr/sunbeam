@@ -138,7 +138,7 @@ export class Extension {
     }
 
     const stdin = new TextDecoder().decode(await readAll(Deno.stdin));
-    const params = JSON.parse(stdin);
+    const { params } = JSON.parse(stdin);
 
     if (!params || typeof params !== "object") {
       throw new Error("Invalid params");
@@ -155,7 +155,7 @@ export class Extension {
     }
 
     try {
-      const res = await this.run(command.name, params);
+      const res = await this.run(command.name, { params });
       if (command.mode !== "silent") {
         console.log(JSON.stringify(res));
       }

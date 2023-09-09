@@ -143,13 +143,12 @@ func buildDoc(command *cobra.Command) (string, error) {
 
 func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:           name,
-		Short:         extension.Manifest.Title,
-		Long:          extension.Manifest.Description,
-		Args:          cobra.NoArgs,
-		SilenceUsage:  true,
-		SilenceErrors: true,
-		GroupID:       extensionGroupID,
+		Use:          name,
+		Short:        extension.Manifest.Title,
+		Long:         extension.Manifest.Description,
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
+		GroupID:      extensionGroupID,
 	}
 
 	cmd.CompletionOptions.DisableDefaultCmd = true
@@ -158,37 +157,36 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 	for _, command := range extension.Manifest.Commands {
 		command := command
 		subcmd := &cobra.Command{
-			Use:           command.Name,
-			Short:         command.Title,
-			Long:          command.Description,
-			Hidden:        command.Hidden,
-			Args:          cobra.NoArgs,
-			SilenceErrors: true,
+			Use:    command.Name,
+			Short:  command.Title,
+			Long:   command.Description,
+			Hidden: command.Hidden,
+			Args:   cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
-				argumentMap := make(map[string]any)
-				for _, argument := range command.Params {
-					switch argument.Type {
+				params := make(map[string]any)
+				for _, param := range command.Params {
+					switch param.Type {
 					case ParamTypeString:
-						value, err := cmd.Flags().GetString(argument.Name)
+						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
 
-						argumentMap[argument.Name] = value
+						params[param.Name] = value
 					case ParamTypeBoolean:
-						value, err := cmd.Flags().GetBool(argument.Name)
+						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
 							return err
 						}
 
-						argumentMap[argument.Name] = value
+						params[param.Name] = value
 					default:
-						return fmt.Errorf("unsupported argument type: %s", argument.Type)
+						return fmt.Errorf("unsupported argument type: %s", param.Type)
 					}
 				}
 
 				input := CommandInput{
-					Params: argumentMap,
+					Params: params,
 				}
 
 				output, err := extension.Run(command.Name, input)
@@ -201,34 +199,34 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 			},
 		}
 
-		for _, argument := range command.Params {
-			switch argument.Type {
+		for _, param := range command.Params {
+			switch param.Type {
 			case ParamTypeString:
 				var defaultValue string
-				if argument.Default != nil {
-					d, ok := argument.Default.(string)
+				if param.Default != nil {
+					d, ok := param.Default.(string)
 					if !ok {
-						return nil, fmt.Errorf("invalid default value for %s: %v", argument.Name, argument.Default)
+						return nil, fmt.Errorf("invalid default value for %s: %v", param.Name, param.Default)
 					}
 					defaultValue = d
 				}
-				subcmd.Flags().String(argument.Name, defaultValue, argument.Description)
+				subcmd.Flags().String(param.Name, defaultValue, param.Description)
 			case ParamTypeBoolean:
 				var defaultValue bool
-				if argument.Default != nil {
-					d, ok := argument.Default.(bool)
+				if param.Default != nil {
+					d, ok := param.Default.(bool)
 					if !ok {
-						return nil, fmt.Errorf("invalid default value for %s: %v", argument.Name, argument.Default)
+						return nil, fmt.Errorf("invalid default value for %s: %v", param.Name, param.Default)
 					}
 					defaultValue = d
 				}
-				subcmd.Flags().Bool(argument.Name, defaultValue, argument.Description)
+				subcmd.Flags().Bool(param.Name, defaultValue, param.Description)
 			default:
-				return nil, fmt.Errorf("unsupported argument type: %s", argument.Type)
+				return nil, fmt.Errorf("unsupported argument type: %s", param.Type)
 			}
 
-			if !argument.Optional {
-				subcmd.MarkFlagRequired(argument.Name)
+			if !param.Optional {
+				subcmd.MarkFlagRequired(param.Name)
 			}
 		}
 
