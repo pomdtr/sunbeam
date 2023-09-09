@@ -1,10 +1,14 @@
-// deno-lint-ignore-file no-explicit-any
 import type { Command, Manifest } from "./manifest.ts";
 import { readAll } from "https://deno.land/std@0.201.0/streams/read_all.ts";
 
+type RunProps = {
+  params?: Record<string, string | boolean>;
+  query?: string;
+};
+
 export class Extension {
   private manifest: Manifest;
-  private runners: Record<string, (params: unknown) => unknown> = {};
+  private runners: Record<string, (props: RunProps) => unknown> = {};
 
   constructor(props: Omit<Manifest, "commands">) {
     this.manifest = {
@@ -21,7 +25,11 @@ export class Extension {
     return this.manifest.title;
   }
 
-  addCommand(params: Command & { run: (params: any) => unknown }) {
+  addCommand(
+    params: Command & {
+      run: (props: RunProps) => unknown;
+    }
+  ) {
     const { run, ...command } = params;
 
     this.manifest.commands.push(command);
@@ -38,13 +46,13 @@ export class Extension {
     return this.commands.find((c) => c.name === name);
   }
 
-  run(name: string, params: unknown) {
+  run(name: string, props?: RunProps) {
     const runner = this.runners[name];
     if (!runner) {
       throw new Error(`Command not found: ${name}`);
     }
 
-    return runner(params);
+    return runner(props || {});
   }
 
   // here we need an arrow function to preserve the `this` context when using Deno.serve(extension.fetch)
@@ -62,10 +70,23 @@ export class Extension {
       );
     }
 
+    const url = new URL(req.url);
+    const [, command] = url.pathname.split("/");
+    if (!command) {
+      return Response.json(
+        {
+          error: "Invalid request: missing command",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     const body = await req.json();
-    const { command, params } = body as {
-      command: string;
-      params: unknown;
+    const props = body as {
+      params?: Record<string, string | boolean>;
+      query?: string;
     };
     if (!command) {
       return Response.json(
@@ -91,7 +112,7 @@ export class Extension {
     }
 
     try {
-      const result = await runner(params);
+      const result = await runner(props);
       return Response.json(result);
     } catch (e) {
       return Response.json(
@@ -167,20 +188,18 @@ export function loadExtension(origin: string, manifest: Manifest) {
   for (const command of manifest.commands) {
     extension.addCommand({
       ...command,
-      run: async (params: unknown) => {
-        const resp = await fetch(origin, {
+      run: async (props?: RunProps) => {
+        const url = new URL(command.name, origin);
+        const resp = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            command: command.name,
-            params,
-          }),
+          body: JSON.stringify(props || {}),
         });
         if (!resp.ok) {
           throw new Error(
-            `Failed to execute command ${command.name} from ${origin}`
+            `Failed to fetch ${url}: ${resp.status} ${resp.statusText}`
           );
         }
         return resp.json();

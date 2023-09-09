@@ -188,12 +188,10 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 				}
 
 				input := CommandInput{
-					Command: command.Name,
-					Query:   "",
-					Params:  argumentMap,
+					Params: argumentMap,
 				}
 
-				output, err := extension.Run(input)
+				output, err := extension.Run(command.Name, input)
 				if err != nil {
 					return err
 				}

@@ -81,12 +81,11 @@ const (
 )
 
 type CommandInput struct {
-	Command string         `json:"command"`
-	Query   string         `json:"query"`
-	Params  map[string]any `json:"params"`
+	Query  string         `json:"query"`
+	Params map[string]any `json:"params"`
 }
 
-func (ext Extension) Run(input CommandInput) ([]byte, error) {
+func (ext Extension) Run(commandName string, input CommandInput) ([]byte, error) {
 	origin, err := url.Parse(ext.Origin)
 	if err != nil {
 		return nil, err
@@ -97,7 +96,7 @@ func (ext Extension) Run(input CommandInput) ([]byte, error) {
 			return nil, err
 		}
 
-		command := exec.Command(origin.Path, input.Command)
+		command := exec.Command(origin.Path, commandName)
 		command.Stdin = bytes.NewReader(inputBytes)
 		command.Env = os.Environ()
 		command.Env = append(command.Env, fmt.Sprintf("SUNBEAM_QUERY=%s", input.Query))
@@ -114,7 +113,12 @@ func (ext Extension) Run(input CommandInput) ([]byte, error) {
 		return nil, err
 	}
 
-	resp, err := http.Post(ext.Origin, "application/json", bytes.NewReader(body))
+	commandUrl, err := url.JoinPath(ext.Origin, commandName)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.Post(commandUrl, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
