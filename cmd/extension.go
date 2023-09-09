@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/acarl005/stripansi"
 	"github.com/spf13/cobra"
 )
 
@@ -90,11 +91,13 @@ func (ext Extension) Run(commandName string, input CommandInput) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
+
+	inputBytes, err := json.Marshal(input)
+	if err != nil {
+		return nil, err
+	}
+
 	if origin.Scheme == "file" {
-		inputBytes, err := json.Marshal(input)
-		if err != nil {
-			return nil, err
-		}
 
 		command := exec.Command(origin.Path, commandName)
 		command.Stdin = bytes.NewReader(inputBytes)
@@ -103,22 +106,35 @@ func (ext Extension) Run(commandName string, input CommandInput) ([]byte, error)
 		if output, err := command.Output(); err == nil {
 			return output, nil
 		} else if errors.As(err, &exitErr) {
-			return nil, fmt.Errorf("command failed: %s", string(exitErr.Stderr))
+			return nil, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
 		} else {
 			return nil, err
 		}
 	}
-	body, err := json.Marshal(input)
+
+	var bearerToken string
+	if origin.User != nil {
+		if _, ok := origin.User.Password(); !ok {
+			bearerToken = origin.User.Username()
+			origin.User = nil
+		}
+	}
+
+	commandUrl, err := url.JoinPath(origin.String(), commandName)
 	if err != nil {
 		return nil, err
 	}
 
-	commandUrl, err := url.JoinPath(ext.Origin, commandName)
+	req, err := http.NewRequest("POST", commandUrl, bytes.NewReader(inputBytes))
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := http.Post(commandUrl, "application/json", bytes.NewReader(body))
+	if bearerToken != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +145,6 @@ func (ext Extension) Run(commandName string, input CommandInput) ([]byte, error)
 	}
 
 	return io.ReadAll(resp.Body)
-
 }
 
 type ExtensionMap map[string]Extension

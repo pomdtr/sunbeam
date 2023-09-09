@@ -140,10 +140,6 @@ export class Extension {
     const stdin = new TextDecoder().decode(await readAll(Deno.stdin));
     const { params } = JSON.parse(stdin);
 
-    if (!params || typeof params !== "object") {
-      throw new Error("Invalid params");
-    }
-
     for (const param of command.params || []) {
       if (param.optional) {
         continue;
@@ -189,7 +185,7 @@ export function loadExtension(origin: string, manifest: Manifest) {
     extension.addCommand({
       ...command,
       run: async (props?: RunProps) => {
-        const url = new URL(command.name, origin);
+        const url = `${origin}/${command.name}`;
         const resp = await fetch(url, {
           method: "POST",
           headers: {
@@ -198,8 +194,9 @@ export function loadExtension(origin: string, manifest: Manifest) {
           body: JSON.stringify(props || {}),
         });
         if (!resp.ok) {
+          const message = await resp.text();
           throw new Error(
-            `Failed to fetch ${url}: ${resp.status} ${resp.statusText}`
+            `Failed to fetch ${url}: ${resp.status} ${resp.statusText} ${message}`
           );
         }
         return resp.json();

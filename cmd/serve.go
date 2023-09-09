@@ -81,10 +81,10 @@ func NewCmdServe(extensionMap ExtensionMap) *cobra.Command {
 			})
 
 			e.POST("/extensions/:extension/:command", func(c echo.Context) error {
-				extension := c.Param("extension")
-				command := c.Param("command")
+				extensionName := c.Param("extension")
+				commandName := c.Param("command")
 
-				manifest, ok := extensionMap[extension]
+				extension, ok := extensionMap[extensionName]
 				if !ok {
 					return echo.NewHTTPError(http.StatusNotFound, "Not found")
 				}
@@ -94,7 +94,7 @@ func NewCmdServe(extensionMap ExtensionMap) *cobra.Command {
 					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to bind input: %s", err.Error()))
 				}
 
-				output, err := manifest.Run(command, input)
+				output, err := extension.Run(commandName, input)
 				if err != nil {
 					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to run command: %s", err.Error()))
 				}
