@@ -47,7 +47,8 @@ export class Extension {
     return runner(params);
   }
 
-  async fetch(req: Request) {
+  // here we need an arrow function to preserve the `this` context when using Deno.serve(extension.fetch)
+  fetch = async (req: Request) => {
     if (req.method === "GET") {
       return Response.json(this.manifest);
     }
