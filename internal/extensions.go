@@ -241,6 +241,10 @@ func LoadManifest(origin *url.URL) (pkg.Manifest, error) {
 			return manifest, err
 		}
 
+		if err := pkg.Validate(pkg.ManifestSchema, b); err != nil {
+			return manifest, err
+		}
+
 		if err := json.Unmarshal(b, &manifest); err != nil {
 			return manifest, err
 		}
@@ -260,6 +264,10 @@ func LoadManifest(origin *url.URL) (pkg.Manifest, error) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
+		return manifest, err
+	}
+
+	if err := pkg.Validate(pkg.ManifestSchema, b); err != nil {
 		return manifest, err
 	}
 

@@ -123,6 +123,10 @@ func CommandToPage(extensions Extensions, extensionName string, commandName stri
 				return list, err
 			}
 
+			if err := pkg.Validate(pkg.PageSchema, res); err != nil {
+				return list, err
+			}
+
 			if err := json.Unmarshal(res, &list); err != nil {
 				return list, err
 			}
@@ -137,6 +141,10 @@ func CommandToPage(extensions Extensions, extensionName string, commandName stri
 				Params: params,
 			})
 			if err != nil {
+				return detail, err
+			}
+
+			if err := pkg.Validate(pkg.PageSchema, res); err != nil {
 				return detail, err
 			}
 

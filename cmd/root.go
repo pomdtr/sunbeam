@@ -179,19 +179,6 @@ func NewCustomCmd(extensions internal.Extensions, extensionName string) (*cobra.
 		GroupID:      extensionGroupID,
 	}
 
-	rootCmds := make([]pkg.Command, 0)
-	for _, command := range extension.Manifest.Commands {
-		if len(command.Params) == 0 {
-			rootCmds = append(rootCmds, command)
-		}
-	}
-
-	if len(rootCmds) == 1 {
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			return Run(extensions, extensionName, rootCmds[0].Name, nil)
-		}
-	}
-
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	cmd.SetHelpCommand(&cobra.Command{Hidden: true})
 

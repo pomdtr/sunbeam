@@ -365,18 +365,16 @@
         "params": {
             "type": "object",
             "additionalProperties": false,
-            "properties": {
-                "text": {
-                    "type": "string",
-                    "description": "The text to share."
-                },
-                "url": {
-                    "type": "string",
-                    "description": "The url to share."
-                },
-                "title": {
-                    "type": "string",
-                    "description": "The title to share."
+            "patternProperties": {
+                ".+": {
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "boolean"
+                        }
+                    ]
                 }
             }
         }
