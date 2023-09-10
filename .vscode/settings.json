@@ -10,7 +10,8 @@
   },
   "search.exclude": {
     "book": true,
-    "public": true
+    "public": true,
+    "types/typescript/npm": true
   },
   "deno.enable": true,
   "deno.config": "./types/typescript/deno.json",

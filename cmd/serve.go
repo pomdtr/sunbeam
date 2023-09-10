@@ -6,10 +6,12 @@ import (
 	"os"
 
 	"github.com/labstack/echo/v4"
+	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/pkg"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdServe(extensionMap ExtensionMap) *cobra.Command {
+func NewCmdServe(extensions internal.Extensions) *cobra.Command {
 	flags := struct {
 		port        int
 		host        string
@@ -62,19 +64,19 @@ func NewCmdServe(extensionMap ExtensionMap) *cobra.Command {
 			})
 
 			e.GET("/extensions", func(c echo.Context) error {
-				extensions := make(map[string]ExtensionManifest)
+				manifests := make(map[string]pkg.Manifest)
 
-				for name, extension := range extensionMap {
-					extensions[name] = extension.Manifest
+				for name, extension := range extensions.Map() {
+					manifests[name] = extension.Manifest
 				}
 
-				return c.JSON(200, extensions)
+				return c.JSON(200, manifests)
 			})
 
 			e.GET("/extensions/:extension", func(c echo.Context) error {
 				name := c.Param("extension")
-				extension, ok := extensionMap[name]
-				if !ok {
+				extension, err := extensions.Get(name)
+				if err != nil {
 					return c.String(404, "Not found")
 				}
 				return c.JSON(200, extension.Manifest)
@@ -84,12 +86,12 @@ func NewCmdServe(extensionMap ExtensionMap) *cobra.Command {
 				extensionName := c.Param("extension")
 				commandName := c.Param("command")
 
-				extension, ok := extensionMap[extensionName]
-				if !ok {
+				extension, err := extensions.Get(extensionName)
+				if err != nil {
 					return echo.NewHTTPError(http.StatusNotFound, "Not found")
 				}
 
-				var input CommandInput
+				var input pkg.CommandInput
 				if err := c.Bind(&input); err != nil {
 					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to bind input: %s", err.Error()))
 				}

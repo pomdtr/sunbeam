@@ -137,6 +137,10 @@ export class Extension {
       throw new Error(`Command not found: ${args[0]}`);
     }
 
+    if (Deno.isatty(Deno.stdin.rid)) {
+      throw new Error("No input provided");
+    }
+
     const stdin = new TextDecoder().decode(await readAll(Deno.stdin));
     const { params } = JSON.parse(stdin);
 

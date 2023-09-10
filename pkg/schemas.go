@@ -1,4 +1,4 @@
-package schemas
+package pkg
 
 import (
 	_ "embed"
@@ -7,11 +7,11 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-//go:embed page.schema.json
+//go:embed schemas/page.schema.json
 var pageSchemaString string
 var PageSchema = jsonschema.MustCompileString("", pageSchemaString)
 
-//go:embed manifest.schema.json
+//go:embed schemas/manifest.schema.json
 var manifestSchemaString string
 var ManifestSchema = jsonschema.MustCompileString("", manifestSchemaString)
 

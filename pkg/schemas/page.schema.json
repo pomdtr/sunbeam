@@ -45,18 +45,11 @@
                     }
                 },
                 "items": {
-                    "oneOf": [
-                        {
-                            "description": "The items in the list.",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/$defs/listitem"
-                            }
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ]
+                    "description": "The items in the list.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/listitem"
+                    }
                 }
             }
         },
@@ -100,7 +93,11 @@
                     "description": "The title of the page."
                 },
                 "command": {
-                    "$ref": "#/$defs/command"
+                    "type": "string",
+                    "description": "The command to run when the form is submitted."
+                },
+                "params": {
+                    "$ref": "#/$defs/params"
                 }
             }
         },
@@ -155,77 +152,13 @@
                             "type": "string",
                             "description": "The title of the action."
                         },
+                        "exit": {
+                            "type": "boolean",
+                            "description": "Whether to exit the app after copying."
+                        },
                         "text": {
                             "type": "string",
                             "description": "The text to copy."
-                        },
-                        "key": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 1,
-                            "description": "The key used as a shortcut."
-                        }
-                    }
-                },
-                {
-                    "required": [
-                        "type",
-                        "text"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "type": {
-                            "const": "paste",
-                            "description": "The type of the action."
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
-                        "text": {
-                            "type": "string",
-                            "description": "The text to share."
-                        },
-                        "key": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 1,
-                            "description": "The key used as a shortcut."
-                        }
-                    }
-                },
-                {
-                    "required": [
-                        "type",
-                        "params"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "type": {
-                            "const": "share",
-                            "description": "The type of the action."
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
-                        "params": {
-                            "type": "object",
-                            "additionalProperties": false,
-                            "properties": {
-                                "text": {
-                                    "type": "string",
-                                    "description": "The text to share."
-                                },
-                                "url": {
-                                    "type": "string",
-                                    "description": "The url to share."
-                                },
-                                "title": {
-                                    "type": "string",
-                                    "description": "The title to share."
-                                }
-                            }
                         },
                         "key": {
                             "type": "string",
@@ -245,6 +178,10 @@
                         "type": {
                             "const": "open",
                             "description": "The type of the action."
+                        },
+                        "exit": {
+                            "type": "boolean",
+                            "description": "Whether to exit the app after opening."
                         },
                         "title": {
                             "type": "string",
@@ -275,12 +212,19 @@
                             "type": "string",
                             "description": "The title of the action."
                         },
+                        "exit": {
+                            "type": "boolean",
+                            "description": "Whether to exit the app after running."
+                        },
                         "key": {
                             "type": "string",
                             "description": "The key used as a shortcut."
                         },
                         "command": {
-                            "$ref": "#/$defs/command"
+                            "type": "string"
+                        },
+                        "params": {
+                            "$ref": "#/$defs/params"
                         }
                     }
                 }
@@ -418,33 +362,21 @@
                 }
             ]
         },
-        "command": {
+        "params": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "name"
-            ],
             "properties": {
-                "name": {
-                    "type": "string"
+                "text": {
+                    "type": "string",
+                    "description": "The text to share."
                 },
-                "params": {
-                    "type": "object",
-                    "patternProperties": {
-                        ".+": {
-                            "oneOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "$ref": "#/$defs/input"
-                                }
-                            ]
-                        }
-                    }
+                "url": {
+                    "type": "string",
+                    "description": "The url to share."
+                },
+                "title": {
+                    "type": "string",
+                    "description": "The title to share."
                 }
             }
         }

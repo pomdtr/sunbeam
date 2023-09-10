@@ -1,11 +1,16 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
+	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/pkg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -18,19 +23,32 @@ const (
 var (
 	Version = "dev"
 	Date    = "unknown"
-	dataDir string
 )
 
-func init() {
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
+func ConfigDir() (string, error) {
+	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
+		return filepath.Join(env, "sunbeam"), nil
 	}
 
-	dataDir = filepath.Join(homedir, ".local", "share", "sunbeam")
+	switch runtime.GOOS {
+	case "darwin":
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+
+		return filepath.Join(homeDir, ".config", "sunbeam"), nil
+	default:
+		configHome, err := os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
+
+		return filepath.Join(configHome, "sunbeam"), nil
+	}
 }
 
-func Execute() error {
+func NewRootCmd() (*cobra.Command, error) {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:          "sunbeam",
@@ -46,7 +64,19 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 	)
 
-	rootCmd.AddCommand(NewCmdRun())
+	configDir, err := ConfigDir()
+	if err != nil {
+		return nil, err
+	}
+
+	extensions, err := internal.LoadExtensions(filepath.Join(configDir, "extensions.json"))
+	if err != nil {
+		return nil, err
+	}
+	rootCmd.AddCommand(NewCmdRun(extensions))
+	rootCmd.AddCommand(NewExtensionCmd(extensions))
+	rootCmd.AddCommand(NewCmdServe(extensions))
+	rootCmd.AddCommand(NewCmdParse())
 	rootCmd.AddCommand(NewValidateCmd())
 
 	docCmd := &cobra.Command{
@@ -85,29 +115,22 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	extensions, err := LoadExtensions()
-	if err != nil {
-		return err
-	}
-	rootCmd.AddCommand(NewExtensionCmd(extensions))
-	rootCmd.AddCommand(NewCmdServe(extensions))
-
-	if len(extensions) == 0 {
-		return rootCmd.Execute()
+	if len(extensions.List()) == 0 {
+		return rootCmd, nil
 	}
 
 	rootCmd.AddGroup(
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
 	)
-	for name, extension := range extensions {
-		cmd, err := NewCustomCmd(name, extension)
+	for _, name := range extensions.List() {
+		cmd, err := NewCustomCmd(extensions, name)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		rootCmd.AddCommand(cmd)
 	}
 
-	return rootCmd.Execute()
+	return rootCmd, nil
 }
 
 func buildDoc(command *cobra.Command) (string, error) {
@@ -141,14 +164,32 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
+func NewCustomCmd(extensions internal.Extensions, extensionName string) (*cobra.Command, error) {
+	extension, err := extensions.Get(extensionName)
+	if err != nil {
+		return nil, err
+	}
+
 	cmd := &cobra.Command{
-		Use:          name,
+		Use:          extensionName,
 		Short:        extension.Manifest.Title,
 		Long:         extension.Manifest.Description,
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		GroupID:      extensionGroupID,
+	}
+
+	rootCmds := make([]pkg.Command, 0)
+	for _, command := range extension.Manifest.Commands {
+		if len(command.Params) == 0 {
+			rootCmds = append(rootCmds, command)
+		}
+	}
+
+	if len(rootCmds) == 1 {
+		cmd.RunE = func(cmd *cobra.Command, args []string) error {
+			return Run(extensions, extensionName, rootCmds[0].Name, nil)
+		}
 	}
 
 	cmd.CompletionOptions.DisableDefaultCmd = true
@@ -157,23 +198,22 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 	for _, command := range extension.Manifest.Commands {
 		command := command
 		subcmd := &cobra.Command{
-			Use:    command.Name,
-			Short:  command.Title,
-			Long:   command.Description,
-			Hidden: command.Hidden,
-			Args:   cobra.NoArgs,
+			Use:   command.Name,
+			Short: command.Title,
+			Long:  command.Description,
+			Args:  cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
 				params := make(map[string]any)
 				for _, param := range command.Params {
 					switch param.Type {
-					case ParamTypeString:
+					case pkg.ParamTypeString:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
 
 						params[param.Name] = value
-					case ParamTypeBoolean:
+					case pkg.ParamTypeBoolean:
 						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
 							return err
@@ -185,23 +225,13 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 					}
 				}
 
-				input := CommandInput{
-					Params: params,
-				}
-
-				output, err := extension.Run(command.Name, input)
-				if err != nil {
-					return err
-				}
-
-				os.Stdout.Write(output)
-				return nil
+				return Run(extensions, extensionName, command.Name, params)
 			},
 		}
 
 		for _, param := range command.Params {
 			switch param.Type {
-			case ParamTypeString:
+			case pkg.ParamTypeString:
 				var defaultValue string
 				if param.Default != nil {
 					d, ok := param.Default.(string)
@@ -211,7 +241,7 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 					defaultValue = d
 				}
 				subcmd.Flags().String(param.Name, defaultValue, param.Description)
-			case ParamTypeBoolean:
+			case pkg.ParamTypeBoolean:
 				var defaultValue bool
 				if param.Default != nil {
 					d, ok := param.Default.(bool)
@@ -234,4 +264,45 @@ func NewCustomCmd(name string, extension Extension) (*cobra.Command, error) {
 	}
 
 	return cmd, nil
+}
+
+func Run(extensions internal.Extensions, extensionName string, commandName string, params map[string]any) error {
+	extension, err := extensions.Get(extensionName)
+	if err != nil {
+		return err
+	}
+
+	command, ok := extension.Command(commandName)
+	if !ok {
+		return fmt.Errorf("command %s not found", commandName)
+	}
+
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		output, err := extension.Run(command.Name, pkg.CommandInput{
+			Params: params,
+		})
+		if err != nil {
+			return err
+		}
+
+		os.Stdout.Write(output)
+		return nil
+	}
+
+	page, err := internal.CommandToPage(extensions, extensionName, command.Name, params)
+	if err != nil {
+		return err
+	}
+
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		return fmt.Errorf("sunbeam can only be run in a terminal")
+	}
+
+	if err := internal.Draw(page, internal.SunbeamOptions{}); err == nil {
+		return nil
+	} else if errors.Is(err, internal.ErrInterrupted) && isatty.IsTerminal(os.Stdout.Fd()) {
+		return nil
+	} else {
+		return err
+	}
 }

@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/schemas"
+	"github.com/pomdtr/sunbeam/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +41,7 @@ func NewValidatePageCmd() *cobra.Command {
 				return fmt.Errorf("unable to read stdin: %s", err)
 			}
 
-			if err := schemas.PageSchema.Validate(input); err != nil {
+			if err := pkg.Validate(pkg.PageSchema, input); err != nil {
 				return err
 			}
 
@@ -70,7 +70,7 @@ func NewValidateManifestCmd() *cobra.Command {
 				return fmt.Errorf("unable to read stdin: %s", err)
 			}
 
-			if err := schemas.Validate(schemas.ManifestSchema, input); err != nil {
+			if err := pkg.Validate(pkg.ManifestSchema, input); err != nil {
 				return err
 			}
 

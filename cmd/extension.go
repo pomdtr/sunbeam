@@ -1,225 +1,15 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
 	"path/filepath"
 
-	"github.com/acarl005/stripansi"
+	"github.com/pomdtr/sunbeam/internal"
 	"github.com/spf13/cobra"
 )
 
-type Extension struct {
-	Origin   string            `json:"origin"`
-	Manifest ExtensionManifest `json:"manifest"`
-}
-
-type ExtensionManifest struct {
-	Title       string     `json:"title"`
-	Description string     `json:"description,omitempty"`
-	Origin      string     `json:"origin,omitempty"`
-	Entrypoint  Entrypoint `json:"entrypoint,omitempty"`
-	Commands    []Command  `json:"commands"`
-}
-
-type Entrypoint []string
-
-func (e *Entrypoint) UnmarshalJSON(b []byte) error {
-	var entrypoint string
-	if err := json.Unmarshal(b, &entrypoint); err == nil {
-		*e = Entrypoint{entrypoint}
-		return nil
-	}
-
-	var entrypoints []string
-	if err := json.Unmarshal(b, &entrypoints); err == nil {
-		*e = Entrypoint(entrypoints)
-		return nil
-	}
-
-	return fmt.Errorf("invalid entrypoint: %s", string(b))
-}
-
-type Command struct {
-	Name        string          `json:"name"`
-	Title       string          `json:"title"`
-	Mode        CommandMode     `json:"mode"`
-	Hidden      bool            `json:"hidden,omitempty"`
-	Description string          `json:"description,omitempty"`
-	Params      []CommandParams `json:"params,omitempty"`
-}
-
-type CommandMode string
-
-const (
-	CommandModeList      CommandMode = "filter"
-	CommandModeGenerator CommandMode = "generator"
-	CommandModeDetail    CommandMode = "detail"
-	CommandModeText      CommandMode = "text"
-	CommandModeSilent    CommandMode = "silent"
-)
-
-type CommandParams struct {
-	Name        string    `json:"name"`
-	Type        ParamType `json:"type"`
-	Default     any       `json:"default,omitempty"`
-	Optional    bool      `json:"optional,omitempty"`
-	Description string    `json:"description,omitempty"`
-}
-
-type ParamType string
-
-const (
-	ParamTypeString  ParamType = "string"
-	ParamTypeBoolean ParamType = "boolean"
-)
-
-type CommandInput struct {
-	Query  string         `json:"query,omitempty"`
-	Params map[string]any `json:"params,omitempty"`
-}
-
-func (ext Extension) Run(commandName string, input CommandInput) ([]byte, error) {
-	origin, err := url.Parse(ext.Origin)
-	if err != nil {
-		return nil, err
-	}
-
-	inputBytes, err := json.Marshal(input)
-	if err != nil {
-		return nil, err
-	}
-
-	if origin.Scheme == "file" {
-
-		command := exec.Command(origin.Path, commandName)
-		command.Stdin = bytes.NewReader(inputBytes)
-
-		var exitErr *exec.ExitError
-		if output, err := command.Output(); err == nil {
-			return output, nil
-		} else if errors.As(err, &exitErr) {
-			return nil, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
-		} else {
-			return nil, err
-		}
-	}
-
-	var bearerToken string
-	if origin.User != nil {
-		if _, ok := origin.User.Password(); !ok {
-			bearerToken = origin.User.Username()
-			origin.User = nil
-		}
-	}
-
-	commandUrl, err := url.JoinPath(origin.String(), commandName)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", commandUrl, bytes.NewReader(inputBytes))
-	if err != nil {
-		return nil, err
-	}
-
-	if bearerToken != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("command failed: %s", resp.Status)
-	}
-
-	return io.ReadAll(resp.Body)
-}
-
-type ExtensionMap map[string]Extension
-
-func LoadExtensions() (ExtensionMap, error) {
-	extensions := make(ExtensionMap)
-	f, err := os.Open(filepath.Join(dataDir, "extensions.json"))
-	if os.IsNotExist(err) {
-		return extensions, nil
-	}
-
-	if err != nil {
-		return extensions, err
-	}
-
-	decoder := json.NewDecoder(f)
-	if err := decoder.Decode(&extensions); err != nil {
-		return extensions, err
-	}
-
-	return extensions, nil
-}
-
-func (e ExtensionMap) Save() error {
-	f, err := os.Create(filepath.Join(dataDir, "extensions.json"))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	encoder := json.NewEncoder(f)
-	return encoder.Encode(e)
-}
-
-func LoadManifest(origin *url.URL) (ExtensionManifest, error) {
-	var manifest ExtensionManifest
-
-	if origin.Scheme == "file" {
-		command := exec.Command(origin.Path)
-		b, err := command.Output()
-		if err != nil {
-			return manifest, err
-		}
-
-		if err := json.Unmarshal(b, &manifest); err != nil {
-			return manifest, err
-		}
-		return manifest, nil
-
-	}
-
-	resp, err := http.Get(origin.String())
-	if err != nil {
-		return manifest, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return manifest, fmt.Errorf("failed to fetch extension manifest: %s", resp.Status)
-	}
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return manifest, err
-	}
-
-	if err := json.Unmarshal(b, &manifest); err != nil {
-		return manifest, err
-	}
-
-	return manifest, nil
-
-}
-
-func NewExtensionCmd(extensionMap ExtensionMap) *cobra.Command {
+func NewExtensionCmd(extensionMap internal.Extensions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "extension",
 		Short:   "Manage extensions",
@@ -227,6 +17,10 @@ func NewExtensionCmd(extensionMap ExtensionMap) *cobra.Command {
 	}
 
 	cmd.AddCommand(NewExtensionAddCmd(extensionMap))
+	cmd.AddCommand(NewExtensionCmdList(extensionMap))
+	cmd.AddCommand(NewExtensionUpgrade(extensionMap))
+	cmd.AddCommand(NewExtensionRenameCmd(extensionMap))
+	cmd.AddCommand(NewExtensionCmdRemove(extensionMap))
 
 	return cmd
 }
@@ -257,12 +51,12 @@ func parseOrigin(origin string) (*url.URL, error) {
 	return url, nil
 }
 
-func NewExtensionAddCmd(extensionMap ExtensionMap) *cobra.Command {
+func NewExtensionAddCmd(extensions internal.Extensions) *cobra.Command {
 	return &cobra.Command{
 		Use:   "add <name> <origin>",
 		Short: "Add an extension",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if _, ok := extensionMap[args[0]]; ok {
+			if _, err := extensions.Get(args[0]); err == nil {
 				return fmt.Errorf("extension %s already exists", args[0])
 			}
 
@@ -270,49 +64,68 @@ func NewExtensionAddCmd(extensionMap ExtensionMap) *cobra.Command {
 		},
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
-
 			originUrl, err := parseOrigin(args[1])
 			if err != nil {
 				return err
 			}
 
-			manifest, err := LoadManifest(originUrl)
+			cmd.PrintErrf("Loading manifest from %s\n", originUrl.String())
+			manifest, err := internal.LoadManifest(originUrl)
 			if err != nil {
 				return err
 			}
 
-			extensionMap[name] = Extension{
+			extensions.Add(args[0], internal.Extension{
 				Origin:   originUrl.String(),
 				Manifest: manifest,
-			}
+			})
 
-			if err := extensionMap.Save(); err != nil {
+			if err := extensions.Save(); err != nil {
 				return err
 			}
 
+			cmd.PrintErrln("Extension added successfully!")
 			return nil
 		},
 	}
 }
 
-func NewExtensionCmdRemove(extensions ExtensionMap) *cobra.Command {
+func NewExtensionCmdList(extensions internal.Extensions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove <name>",
-		Short: "Remove an extension",
+		Use:   "list",
+		Short: "List extensions",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			for name, extension := range extensions.Map() {
+				fmt.Printf("%s\t%s\t%s\n", name, extension.Title, extension.Origin)
+			}
+
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+func NewExtensionCmdRemove(extensions internal.Extensions) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:       "remove <name>",
+		Short:     "Remove an extension",
+		ValidArgs: extensions.List(),
+		Args:      cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if _, ok := extensions[args[0]]; !ok {
+			if _, err := extensions.Get(args[0]); err != nil {
 				return fmt.Errorf("extension %s does not exist", args[0])
 			}
 
 			return nil
 		},
-		Hidden: true,
-		Args:   cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
 
-			delete(extensions, name)
+			if err := extensions.Remove(name); err != nil {
+				return err
+			}
 
 			if err := extensions.Save(); err != nil {
 				return err
@@ -325,69 +138,87 @@ func NewExtensionCmdRemove(extensions ExtensionMap) *cobra.Command {
 	return cmd
 }
 
-func NewExtensionUpdateCmd(extensions ExtensionMap) *cobra.Command {
+func NewExtensionUpgrade(extensions internal.Extensions) *cobra.Command {
+	flags := struct {
+		all bool
+	}{}
+
 	cmd := &cobra.Command{
-		Use:   "update <name>",
-		Short: "Update an extension",
-		Args:  cobra.ExactArgs(1),
+		Use:       "upgrade <name>",
+		Short:     "Update an extension",
+		Args:      cobra.ArbitraryArgs,
+		ValidArgs: extensions.List(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if _, ok := extensions[args[0]]; !ok {
-				return fmt.Errorf("extension %s does not exist", args[0])
+			if flags.all && len(args) > 0 {
+				return fmt.Errorf("cannot use --all and specify extensions")
+			}
+
+			if !flags.all && len(args) == 0 {
+				return fmt.Errorf("must specify an extension or use --all")
 			}
 
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
-			extension := extensions[name]
-
-			origin, err := parseOrigin(extension.Origin)
-			if err != nil {
-				return err
+			toUpgrade := args
+			if flags.all {
+				toUpgrade = extensions.List()
 			}
 
-			manifest, err := LoadManifest(origin)
-			if err != nil {
-				return err
-			}
+			for _, name := range toUpgrade {
+				extension, err := extensions.Get(name)
+				if err != nil {
+					return err
+				}
 
-			extension.Manifest = manifest
-			extensions[name] = extension
+				origin, err := parseOrigin(extension.Origin)
+				if err != nil {
+					return err
+				}
 
-			if err := extensions.Save(); err != nil {
-				return err
+				cmd.PrintErrf("Extracting manifest from %s\n", origin.String())
+				manifest, err := internal.LoadManifest(origin)
+				if err != nil {
+					return err
+				}
+
+				extension.Manifest = manifest
+				if err := extensions.Update(name, extension); err != nil {
+					return err
+				}
+
+				if err := extensions.Save(); err != nil {
+					return err
+				}
+
+				cmd.PrintErrf("Extension %s upgraded successfully!\n", name)
 			}
 
 			return nil
 		},
 	}
 
+	cmd.Flags().BoolVar(&flags.all, "all", false, "Upgrade all extensions")
+
 	return cmd
 }
 
-func NewExtensionRenameCmd(extensions ExtensionMap) *cobra.Command {
+func NewExtensionRenameCmd(extensions internal.Extensions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rename <old-name> <new-name>",
 		Short: "Rename an extension",
 		Args:  cobra.ExactArgs(2),
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if _, ok := extensions[args[0]]; !ok {
-				return fmt.Errorf("extension %s does not exist", args[0])
-			}
-
-			if _, ok := extensions[args[1]]; ok {
-				return fmt.Errorf("extension %s already exists", args[1])
-			}
-
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			oldName := args[0]
 			newName := args[1]
 
-			extension := extensions[oldName]
-			delete(extensions, oldName)
-			extensions[newName] = extension
+			if err := extensions.Rename(oldName, newName); err != nil {
+				return err
+			}
+
+			if err := extensions.Remove(oldName); err != nil {
+				return err
+			}
 
 			if err := extensions.Save(); err != nil {
 				return err
