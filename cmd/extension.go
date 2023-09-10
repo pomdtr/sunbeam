@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"path/filepath"
 
+	"github.com/cli/browser"
 	"github.com/pomdtr/sunbeam/internal"
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,7 @@ func NewExtensionCmd(extensionMap internal.Extensions) *cobra.Command {
 	}
 
 	cmd.AddCommand(NewExtensionAddCmd(extensionMap))
+	cmd.AddCommand(NewExtensionOpenCmd(extensionMap))
 	cmd.AddCommand(NewExtensionCmdList(extensionMap))
 	cmd.AddCommand(NewExtensionUpgrade(extensionMap))
 	cmd.AddCommand(NewExtensionRenameCmd(extensionMap))
@@ -88,6 +90,34 @@ func NewExtensionAddCmd(extensions internal.Extensions) *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func NewExtensionOpenCmd(extensions internal.Extensions) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:       "open <name>",
+		Short:     "Open an extension's homepage",
+		Args:      cobra.ExactArgs(1),
+		ValidArgs: extensions.List(),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			extension, err := extensions.Get(args[0])
+			if err != nil {
+				return err
+			}
+
+			if extension.Homepage == "" {
+				cmd.PrintErrf("Extension %s does not have a homepage\n", args[0])
+				return nil
+			}
+
+			if err := browser.OpenURL(extension.Homepage); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+
+	return cmd
 }
 
 func NewExtensionCmdList(extensions internal.Extensions) *cobra.Command {

@@ -6,11 +6,10 @@ import (
 )
 
 type Manifest struct {
-	Title       string     `json:"title"`
-	Description string     `json:"description,omitempty"`
-	Origin      string     `json:"origin,omitempty"`
-	Entrypoint  Entrypoint `json:"entrypoint,omitempty"`
-	Commands    []Command  `json:"commands"`
+	Title       string    `json:"title"`
+	Homepage    string    `json:"homepage,omitempty"`
+	Description string    `json:"description,omitempty"`
+	Commands    []Command `json:"commands"`
 }
 
 type Entrypoint []string
