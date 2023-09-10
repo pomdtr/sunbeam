@@ -110,7 +110,6 @@ type Action struct {
 	Title string     `json:"title,omitempty"`
 	Type  ActionType `json:"type"`
 	Key   string     `json:"key,omitempty"`
-	Exit  bool       `json:"exit,omitempty"`
 
 	// copy
 	Text string `json:"text,omitempty"`

@@ -152,10 +152,6 @@
                             "type": "string",
                             "description": "The title of the action."
                         },
-                        "exit": {
-                            "type": "boolean",
-                            "description": "Whether to exit the app after copying."
-                        },
                         "text": {
                             "type": "string",
                             "description": "The text to copy."
@@ -178,10 +174,6 @@
                         "type": {
                             "const": "open",
                             "description": "The type of the action."
-                        },
-                        "exit": {
-                            "type": "boolean",
-                            "description": "Whether to exit the app after opening."
                         },
                         "title": {
                             "type": "string",
@@ -211,10 +203,6 @@
                         "title": {
                             "type": "string",
                             "description": "The title of the action."
-                        },
-                        "exit": {
-                            "type": "boolean",
-                            "description": "Whether to exit the app after running."
                         },
                         "key": {
                             "type": "string",

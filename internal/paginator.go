@@ -65,24 +65,16 @@ func CommandToPage(extensions Extensions, extensionName string, commandName stri
 			switch action.Type {
 			case pkg.ActionTypeCopy:
 				if err := clipboard.WriteAll(action.Text); err != nil {
-					return err
+					return fmt.Errorf("could not copy to clipboard: %s", action.Text)
 				}
 
-				if action.Exit {
-					return ExitMsg{}
-				}
-
-				return nil
+				return ExitMsg{}
 			case pkg.ActionTypeOpen:
 				if err := browser.OpenURL(action.Url); err != nil {
-					return err
+					return fmt.Errorf("could not open url: %s", action.Url)
 				}
 
-				if action.Exit {
-					return ExitMsg{}
-				}
-
-				return nil
+				return ExitMsg{}
 			case pkg.ActionTypeRun:
 				if command.Mode == pkg.CommandModeSilent {
 					_, err := extension.Run(action.Command, pkg.CommandInput{
@@ -92,11 +84,7 @@ func CommandToPage(extensions Extensions, extensionName string, commandName stri
 						return err
 					}
 
-					if action.Exit {
-						return ExitMsg{}
-					}
-
-					return nil
+					return ExitMsg{}
 				}
 
 				page, err := CommandToPage(extensions, extensionName, action.Command, action.Params)
