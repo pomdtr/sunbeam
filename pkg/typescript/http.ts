@@ -19,3 +19,7 @@ export function handler(extension: Extension) {
     return Response.json(output);
   };
 }
+
+export function handle(extension: Extension, req: Request) {
+  return handler(extension)(req);
+}
