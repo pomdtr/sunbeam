@@ -1,40 +1,38 @@
 package internal
 
 import (
+	"encoding/json"
+
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/pkg"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type List struct {
-	header       Header
-	footer       Footer
-	actionList   ActionList
-	emptyActions []pkg.Action
+	header     Header
+	footer     Footer
+	actionList ActionList
+	filter     Filter
 
-	generator func() (pkg.List, error)
-	runner    func(pkg.Action) tea.Cmd
+	extension Extension
+	command   pkg.Command
+	params    pkg.CommandParams
 
-	viewport      viewport.Model
-	filter        Filter
-	detailContent string
+	page *pkg.List
 }
 
-func NewList(title string, generator func() (pkg.List, error), runner func(pkg.Action) tea.Cmd) *List {
-	viewport := viewport.New(0, 0)
+func NewList(extension Extension, command pkg.Command, params pkg.CommandParams) *List {
 	list := List{
-		header:   NewHeader(),
-		footer:   NewFooter(title),
-		viewport: viewport,
+		header: NewHeader(),
+		footer: NewFooter(command.Title),
 
-		generator: generator,
-		runner:    runner,
+		extension: extension,
+		command:   command,
+		params:    params,
 	}
 
-	list.actionList = NewActionList(runner)
+	list.actionList = NewActionList()
 
 	filter := NewFilter()
 	filter.DrawLines = true
@@ -45,31 +43,36 @@ func NewList(title string, generator func() (pkg.List, error), runner func(pkg.A
 }
 
 func (c *List) Init() tea.Cmd {
-	return tea.Batch(c.header.Focus(), c.header.SetIsLoading(true), c.Reload)
+	return tea.Batch(FocusCmd, c.header.SetIsLoading(true), c.Reload)
 }
 
 func (c *List) Reload() tea.Msg {
-	list, err := c.generator()
+	output, err := c.extension.Run(c.command.Name, pkg.CommandInput{
+		Params: c.params,
+	})
 	if err != nil {
+		return err
+	}
+
+	if err := pkg.ValidatePage(output); err != nil {
+		return err
+	}
+
+	var list pkg.List
+	if err := json.Unmarshal(output, &list); err != nil {
 		return err
 	}
 
 	return list
 }
 
-func (c *List) Focus() tea.Cmd {
-	return c.header.Focus()
-}
-
 func (c *List) SetSize(width, height int) {
-	availableHeight := utils.Max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
+	availableHeight := max(0, height-lipgloss.Height(c.header.View())-lipgloss.Height(c.footer.View()))
 
 	c.footer.Width = width
 	c.header.Width = width
 	c.actionList.SetSize(width, height)
 	c.filter.SetSize(width, availableHeight)
-	c.viewport.Width = width
-	c.viewport.Height = availableHeight
 }
 
 func (c List) Selection() *ListItem {
@@ -101,18 +104,11 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (l *List) updateSelection(filter Filter) FilterItem {
-	if filter.Selection() == nil {
-		l.detailContent = ""
-		l.actionList.SetTitle("Empty Actions")
-		l.actionList.SetActions(l.emptyActions...)
+	if l.page == nil {
+		return nil
+	}
 
-		if len(l.emptyActions) > 0 {
-			l.footer.SetBindings(
-				key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", l.emptyActions[0].Title)),
-				key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
-			)
-		}
-	} else {
+	if filter.Selection() != nil {
 		item := filter.Selection().(ListItem)
 		l.actionList.SetTitle(item.Title)
 		l.actionList.SetActions(item.Actions...)
@@ -122,9 +118,26 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 				key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
 			)
 		}
+
+		return filter.Selection()
 	}
 
-	return l.filter.Selection()
+	if l.page.EmptyView == nil {
+		return nil
+	}
+
+	actions := l.page.EmptyView.Actions
+	l.actionList.SetTitle("Empty Actions")
+	l.actionList.SetActions(l.page.EmptyView.Actions...)
+
+	if len(l.page.EmptyView.Actions) > 0 {
+		l.footer.SetBindings(
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
+		)
+	}
+
+	return nil
 }
 
 func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -133,15 +146,16 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case pkg.List:
+		c.page = &msg
 		c.SetIsLoading(false)
-		items := make([]ListItem, len(msg.Items))
 
-		for i, item := range msg.Items {
+		items := make([]ListItem, len(msg.Items))
+		for i, item := range c.page.Items {
 			items[i] = ListItem(item)
 		}
 
 		c.SetItems(items, "")
-		if msg.Title != "" {
+		if c.page.Title != "" {
 			c.footer.title = msg.Title
 		}
 	case tea.KeyMsg:
@@ -177,7 +191,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, nil
 			}
 
-			return c, c.actionList.Focus()
+			return c, nil
 		case "enter":
 			if c.actionList.Focused() {
 				break
@@ -188,14 +202,14 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				item := c.filter.Selection().(ListItem)
 				actions = item.Actions
 			} else {
-				actions = c.emptyActions
+				actions = c.page.EmptyView.Actions
 			}
 
 			if len(actions) == 0 {
 				break
 			}
 
-			return c, c.runner(actions[0])
+			return c, runAction(actions[0], c.extension)
 		}
 	}
 
@@ -230,10 +244,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 func (c List) View() string {
 	if c.actionList.Focused() {
 		return c.actionList.View()
-	}
-
-	if len(c.filter.filtered) == 0 {
-		return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.filter.View(), c.footer.View())

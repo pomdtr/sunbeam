@@ -3,35 +3,35 @@ package internal
 import (
 	"fmt"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cli/browser"
 	"github.com/pomdtr/sunbeam/pkg"
 )
 
 type ActionList struct {
-	actions   []pkg.Action
-	header    Header
-	filter    Filter
-	runAction func(pkg.Action) tea.Cmd
-	footer    Footer
+	actions []pkg.Action
+	header  Header
+	filter  Filter
+	footer  Footer
 }
 
-func NewActionList(runAction func(pkg.Action) tea.Cmd) ActionList {
+func NewActionList() ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
 
 	header := NewHeader()
 	footer := NewFooter("Actions")
 	footer.SetBindings(
-		key.NewBinding(key.WithKeys(""), key.WithHelp("↩", "Confirm")),
+		key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", "Confirm")),
 	)
 
 	return ActionList{
-		runAction: runAction,
-		header:    header,
-		filter:    filter,
-		footer:    footer,
+		header: header,
+		filter: filter,
+		footer: footer,
 	}
 }
 
@@ -100,22 +100,27 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 
 			al.filter.CursorUp()
 		case "enter":
-			selectedItem := al.filter.Selection()
-			if selectedItem == nil {
-				return al, nil
-			}
-			listItem, _ := selectedItem.(ListItem)
-			al.Blur()
+			return al, func() tea.Msg {
+				selectedItem := al.filter.Selection()
+				if selectedItem == nil {
+					return nil
+				}
+				listItem, _ := selectedItem.(ListItem)
+				al.Blur()
 
-			if len(listItem.Actions) == 0 {
-				return al, nil
-			}
+				if len(listItem.Actions) == 0 {
+					return nil
+				}
 
-			return al, al.runAction(listItem.Actions[0])
+				return listItem.Actions[0]
+			}
 		default:
 			for _, action := range al.actions {
 				if msg.String() == fmt.Sprintf("alt+%s", action.Key) {
-					return al, al.runAction(action)
+					return al, func() tea.Msg {
+						al.Blur()
+						return action
+					}
 				}
 			}
 		}
@@ -147,10 +152,6 @@ func (al ActionList) Focused() bool {
 
 }
 
-func (al *ActionList) Focus() tea.Cmd {
-	return al.header.Focus()
-}
-
 func (al *ActionList) Clear() {
 	al.header.input.SetValue("")
 	al.filter.FilterItems("")
@@ -171,8 +172,42 @@ func (al ActionList) View() string {
 	)
 }
 
-type RunMsg struct {
-	Command string
-	Params  map[string]any
-	Exit    bool
+func runAction(action pkg.Action, extension Extension) tea.Cmd {
+	return func() tea.Msg {
+		switch action.Type {
+		case pkg.ActionTypeCopy:
+			if err := clipboard.WriteAll(action.Text); err != nil {
+				return fmt.Errorf("could not copy to clipboard: %s", action.Text)
+			}
+
+			return ExitMsg{}
+		case pkg.ActionTypeOpen:
+			if err := browser.OpenURL(action.Url); err != nil {
+				return fmt.Errorf("could not open url: %s", action.Url)
+			}
+
+			return ExitMsg{}
+		case pkg.ActionTypeRun:
+			_, err := extension.Run(action.Command.Name, pkg.CommandInput{
+				Params: action.Command.Params,
+			})
+			if err != nil {
+				return err
+			}
+
+			return ExitMsg{}
+		case pkg.ActionTypePush:
+			page, err := CommandToPage(extension, pkg.CommandRef{
+				Name:   action.Command.Name,
+				Params: action.Command.Params,
+			})
+			if err != nil {
+				return err
+			}
+
+			return PushPageMsg{Page: page}
+		}
+
+		return nil
+	}
 }

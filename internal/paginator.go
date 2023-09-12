@@ -1,20 +1,28 @@
 package internal
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 
-	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/cli/browser"
 	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/pkg"
 )
 
+func PopPageCmd() tea.Msg {
+	return PopPageMsg{}
+}
+
 type PopPageMsg struct{}
+
+func NewPushPageCmd(page Page) tea.Cmd {
+	return func() tea.Msg {
+		return PushPageMsg{
+			Page: page,
+		}
+	}
+}
 
 type PushPageMsg struct {
 	Page Page
@@ -22,10 +30,9 @@ type PushPageMsg struct {
 
 type Page interface {
 	Init() tea.Cmd
-	Focus() tea.Cmd
+	SetSize(width, height int)
 	Update(tea.Msg) (Page, tea.Cmd)
 	View() string
-	SetSize(width, height int)
 }
 
 type SunbeamOptions struct {
@@ -39,109 +46,37 @@ type SunbeamOptions struct {
 
 type ExitMsg struct{}
 
+func ExitCmd() tea.Msg {
+	return ExitMsg{}
+}
+
+type FocusMsg struct{}
+
+func FocusCmd() tea.Msg {
+	return FocusMsg{}
+}
+
 type Paginator struct {
 	width, height int
 	options       SunbeamOptions
-	Cancelled     bool
-	err           error
 
 	pages  []Page
 	hidden bool
 }
 
-func CommandToPage(extensions Extensions, extensionName string, commandName string, params map[string]any) (Page, error) {
-	extension, err := extensions.Get(extensionName)
-	if err != nil {
-		return nil, err
-	}
-
-	command, ok := extension.Command(commandName)
+func CommandToPage(extension Extension, commandRef pkg.CommandRef) (Page, error) {
+	command, ok := extension.Command(commandRef.Name)
 	if !ok {
-		return nil, fmt.Errorf("command %s not found", commandName)
-	}
-
-	runner := func(action pkg.Action) tea.Cmd {
-		return func() tea.Msg {
-			switch action.Type {
-			case pkg.ActionTypeCopy:
-				if err := clipboard.WriteAll(action.Text); err != nil {
-					return fmt.Errorf("could not copy to clipboard: %s", action.Text)
-				}
-
-				return ExitMsg{}
-			case pkg.ActionTypeOpen:
-				if err := browser.OpenURL(action.Url); err != nil {
-					return fmt.Errorf("could not open url: %s", action.Url)
-				}
-
-				return ExitMsg{}
-			case pkg.ActionTypeRun:
-				if command.Mode == pkg.CommandModeSilent {
-					_, err := extension.Run(action.Command, pkg.CommandInput{
-						Params: action.Params,
-					})
-					if err != nil {
-						return err
-					}
-
-					return ExitMsg{}
-				}
-
-				page, err := CommandToPage(extensions, extensionName, action.Command, action.Params)
-				if err != nil {
-					return err
-				}
-
-				return PushPageMsg{Page: page}
-			}
-
-			return nil
-		}
+		return nil, fmt.Errorf("command %s not found", commandRef.Name)
 	}
 
 	switch command.Mode {
 	case pkg.CommandModeFilter, pkg.CommandModeGenerator:
-		return NewList(command.Title, func() (pkg.List, error) {
-			var list pkg.List
-
-			res, err := extension.Run(command.Name, pkg.CommandInput{
-				Params: params,
-			})
-			if err != nil {
-				return list, err
-			}
-
-			if err := pkg.Validate(pkg.PageSchema, res); err != nil {
-				return list, err
-			}
-
-			if err := json.Unmarshal(res, &list); err != nil {
-				return list, err
-			}
-
-			return list, nil
-		}, runner), nil
+		return NewList(extension, command, commandRef.Params), nil
+	case pkg.CommandModeForm:
+		return NewDynamicForm(extension, command, commandRef.Params), nil
 	case pkg.CommandModeDetail:
-		return NewDetail(command.Title, func() (pkg.Detail, error) {
-			var detail pkg.Detail
-
-			res, err := extension.Run(command.Name, pkg.CommandInput{
-				Params: params,
-			})
-			if err != nil {
-				return detail, err
-			}
-
-			if err := pkg.Validate(pkg.PageSchema, res); err != nil {
-				return detail, err
-			}
-
-			if err := json.Unmarshal(res, &detail); err != nil {
-				return detail, err
-			}
-
-			return detail, nil
-		}, runner), nil
+		return NewDetail(extension, command, commandRef.Params), nil
 	default:
 		return nil, fmt.Errorf("unsupported command mode: %s", command.Mode)
 	}
@@ -167,7 +102,6 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			m.hidden = true
-			m.Cancelled = true
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
@@ -182,14 +116,17 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		m.Cancelled = true
 		m.hidden = true
 		return m, tea.Quit
 	case ExitMsg:
 		m.hidden = true
 		return m, tea.Quit
 	case error:
-		m.err = msg
+		if len(m.pages) > 0 {
+			m.pages = m.pages[:len(m.pages)-1]
+		}
+		cmd := m.Push(NewErrorPage(msg))
+		return m, cmd
 	}
 
 	// Update the current page
@@ -208,10 +145,6 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Paginator) View() string {
 	if m.hidden {
 		return ""
-	}
-
-	if m.err != nil {
-		return fmt.Sprintf("Error: %s", m.err)
 	}
 
 	var pageView string
@@ -313,11 +246,10 @@ func (m *Paginator) Pop() tea.Cmd {
 		m.pages = m.pages[:len(m.pages)-1]
 	}
 
-	page := m.pages[len(m.pages)-1]
-	return page.Focus()
+	return func() tea.Msg {
+		return FocusMsg{}
+	}
 }
-
-var ErrInterrupted = errors.New("interrupted")
 
 func Draw(page Page, options SunbeamOptions) error {
 	if options.NoColor {
@@ -335,18 +267,9 @@ func Draw(page Page, options SunbeamOptions) error {
 		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr))
 	}
 
-	m, err := p.Run()
+	_, err := p.Run()
 	if err != nil {
 		return err
-	}
-
-	paginator, ok := m.(*Paginator)
-	if !ok {
-		return fmt.Errorf("could not cast model to paginator")
-	}
-
-	if paginator.Cancelled {
-		return ErrInterrupted
 	}
 
 	return nil

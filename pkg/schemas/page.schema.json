@@ -84,7 +84,8 @@
         "form": {
             "type": "object",
             "required": [
-                "command"
+                "command",
+                "items"
             ],
             "additionalProperties": false,
             "properties": {
@@ -93,11 +94,13 @@
                     "description": "The title of the page."
                 },
                 "command": {
-                    "type": "string",
-                    "description": "The command to run when the form is submitted."
+                    "$ref": "#/$defs/command"
                 },
-                "params": {
-                    "$ref": "#/$defs/params"
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/formitem"
+                    }
                 }
             }
         },
@@ -209,20 +212,43 @@
                             "description": "The key used as a shortcut."
                         },
                         "command": {
-                            "type": "string"
+                            "$ref": "#/$defs/command"
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "type",
+                        "command"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the action."
                         },
-                        "params": {
-                            "$ref": "#/$defs/params"
+                        "key": {
+                            "type": "string",
+                            "description": "The key used as a shortcut."
+                        },
+                        "type": {
+                            "type": "string",
+                            "const": "push"
+                        },
+                        "command": {
+                            "$ref": "#/$defs/command"
                         }
                     }
                 }
             ]
         },
-        "input": {
+        "formitem": {
             "oneOf": [
                 {
                     "type": "object",
                     "required": [
+                        "name",
                         "title",
                         "type"
                     ],
@@ -231,6 +257,10 @@
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the input."
                         },
                         "type": {
                             "const": "textfield",
@@ -263,6 +293,10 @@
                             "type": "string",
                             "description": "The title of the input."
                         },
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the input."
+                        },
                         "type": {
                             "const": "checkbox",
                             "description": "The type of the input."
@@ -280,11 +314,16 @@
                 {
                     "type": "object",
                     "required": [
+                        "name",
                         "title",
                         "type"
                     ],
                     "additionalProperties": false,
                     "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the input."
+                        },
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
@@ -306,12 +345,17 @@
                 {
                     "type": "object",
                     "required": [
+                        "name",
                         "title",
                         "type",
                         "items"
                     ],
                     "additionalProperties": false,
                     "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the input."
+                        },
                         "title": {
                             "type": "string",
                             "description": "The title of the input."
@@ -363,6 +407,21 @@
                             "type": "boolean"
                         }
                     ]
+                }
+            }
+        },
+        "command": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "params": {
+                    "$ref": "#/$defs/params"
                 }
             }
         }

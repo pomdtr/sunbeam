@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type Footer struct {
@@ -40,14 +39,14 @@ func (f Footer) View() string {
 	help := strings.Join(keys, " · ")
 	help = fmt.Sprintf("  %s ", help)
 
-	availableWidth := utils.Max(0, f.Width-lipgloss.Width(help))
+	availableWidth := max(0, f.Width-lipgloss.Width(help))
 	title := fmt.Sprintf(" %s", f.title)
 
 	if availableWidth < lipgloss.Width(title) {
 		title = title[:availableWidth]
 	}
 
-	blanks := strings.Repeat(" ", utils.Max(0, f.Width-lipgloss.Width(title)-lipgloss.Width(help)))
+	blanks := strings.Repeat(" ", max(0, f.Width-lipgloss.Width(title)-lipgloss.Width(help)))
 
 	footerRow := lipgloss.JoinHorizontal(lipgloss.Left, lipgloss.NewStyle().Italic(true).Render(title), blanks, help)
 

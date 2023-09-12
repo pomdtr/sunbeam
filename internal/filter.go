@@ -4,10 +4,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/internal/fzf"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type FilterItem interface {
@@ -29,8 +29,14 @@ type Filter struct {
 	cursor    int
 }
 
-func NewFilter() Filter {
-	return Filter{}
+func NewFilter(items ...FilterItem) Filter {
+	viewport := viewport.New(0, 0)
+	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
+
+	return Filter{
+		items:    items,
+		filtered: items,
+	}
 }
 
 func (f *Filter) SetSize(width, height int) {
@@ -111,8 +117,18 @@ func (m Filter) Init() tea.Cmd { return nil }
 func (m Filter) View() string {
 	itemWidth := m.Width - 2
 	rows := make([]string, 0)
+
+	if len(m.filtered) == 0 {
+		if len(m.items) != 0 {
+			return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Top, "No matches")
+		}
+
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Top, "")
+	}
+
 	index := m.minIndex
 	availableHeight := m.Height
+
 	for availableHeight > 0 && index < len(m.filtered) {
 		item := m.filtered[index]
 		itemView := item.Render(itemWidth, index == m.cursor)
@@ -147,12 +163,12 @@ func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 		case "up", "ctrl+k", "ctrl+p":
 			f.CursorUp()
 		case "ctrl+u":
-			shift := utils.Min(f.nbVisibleItems(), f.cursor)
+			shift := min(f.nbVisibleItems(), f.cursor)
 			for i := 0; i < shift; i++ {
 				f.CursorUp()
 			}
 		case "ctrl+d":
-			shift := utils.Min(f.nbVisibleItems(), len(f.filtered)-f.cursor-1)
+			shift := min(f.nbVisibleItems(), len(f.filtered)-f.cursor-1)
 			for i := 0; i < shift; i++ {
 				f.CursorDown()
 			}
@@ -172,13 +188,12 @@ func (m Filter) itemHeight() int {
 func (m *Filter) CursorUp() {
 	if m.cursor > 0 {
 		m.cursor = m.cursor - 1
-
 		if m.cursor < m.minIndex {
 			m.minIndex = m.cursor
 		}
 	} else {
 		m.cursor = len(m.filtered) - 1
-		m.minIndex = utils.Max(0, m.cursor-m.nbVisibleItems()+1)
+		m.minIndex = max(0, m.cursor-m.nbVisibleItems()+1)
 	}
 }
 

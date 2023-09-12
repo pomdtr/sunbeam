@@ -41,7 +41,7 @@ func NewValidatePageCmd() *cobra.Command {
 				return fmt.Errorf("unable to read stdin: %s", err)
 			}
 
-			if err := pkg.Validate(pkg.PageSchema, input); err != nil {
+			if err := pkg.ValidatePage(input); err != nil {
 				return err
 			}
 
@@ -70,7 +70,7 @@ func NewValidateManifestCmd() *cobra.Command {
 				return fmt.Errorf("unable to read stdin: %s", err)
 			}
 
-			if err := pkg.Validate(pkg.ManifestSchema, input); err != nil {
+			if err := pkg.ValidateManifest(input); err != nil {
 				return err
 			}
 

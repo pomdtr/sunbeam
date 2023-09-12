@@ -12,7 +12,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/pomdtr/sunbeam/pkg"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 type FormInput interface {
@@ -34,26 +33,26 @@ type FormItem struct {
 	Name     string
 }
 
-func NewFormItem(input pkg.Input) (*FormItem, error) {
-	var item FormInput
-	switch input.Type {
+func NewFormItem(item pkg.FormItem) (*FormItem, error) {
+	var input FormInput
+	switch item.Type {
 	case pkg.TextInput:
-		item = NewTextInput(input)
+		input = NewTextInput(item)
 	case pkg.TextAreaInput:
-		item = NewTextArea(input)
+		input = NewTextArea(item)
 	case pkg.CheckboxInput:
-		item = NewCheckbox(input)
+		input = NewCheckbox(item)
 	case pkg.SelectInput:
-		item = NewDropDown(input)
+		input = NewDropDown(item)
 	default:
 		return nil, fmt.Errorf("invalid form input type")
 	}
 
 	return &FormItem{
-		Name:      input.Name,
-		Title:     input.Title,
-		Optional:  input.Optional,
-		FormInput: item,
+		Name:      item.Name,
+		Title:     item.Title,
+		Optional:  item.Optional,
+		FormInput: input,
 	}, nil
 }
 
@@ -66,7 +65,7 @@ func (ta *TextArea) Title() string {
 	return ta.title
 }
 
-func NewTextArea(formItem pkg.Input) *TextArea {
+func NewTextArea(formItem pkg.FormItem) *TextArea {
 	ta := textarea.New()
 	ta.Cursor.SetMode(cursor.CursorStatic)
 	ta.Prompt = ""
@@ -107,19 +106,19 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(formItem pkg.Input) *TextInput {
+func NewTextInput(input pkg.FormItem) *TextInput {
 	ti := textinput.New()
 	ti.Cursor.SetMode(cursor.CursorStatic)
 	ti.Prompt = ""
-	if formItem.Default != nil {
-		ti.SetValue(formItem.Default.(string))
+	if input.Default != nil {
+		ti.SetValue(input.Default.(string))
 	}
 
-	placeholder := formItem.Placeholder
+	placeholder := input.Placeholder
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
 	return &TextInput{
-		title:       formItem.Title,
+		title:       input.Title,
 		Model:       ti,
 		placeholder: placeholder,
 	}
@@ -140,7 +139,7 @@ func (ti *TextInput) Height() int {
 func (ti *TextInput) SetWidth(width int) {
 	ti.Model.Width = width - 1
 	ti.Model.SetValue(ti.Model.Value())
-	placeholderPadding := utils.Max(0, width-len(ti.placeholder))
+	placeholderPadding := max(0, width-len(ti.placeholder))
 	ti.Model.Placeholder = fmt.Sprintf("%s%s", ti.placeholder, strings.Repeat(" ", placeholderPadding))
 }
 
@@ -170,7 +169,7 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(input pkg.Input) *Checkbox {
+func NewCheckbox(input pkg.FormItem) *Checkbox {
 	var defaultValue bool
 	if input.Default != nil {
 		defaultValue = input.Default.(bool)
@@ -224,7 +223,7 @@ func (cb Checkbox) View() string {
 		checkbox = fmt.Sprintf("[ ] %s", cb.label)
 	}
 
-	padding := utils.Max(0, cb.width-len(checkbox))
+	padding := max(0, cb.width-len(checkbox))
 
 	return fmt.Sprintf("%s%s", checkbox, strings.Repeat(" ", padding))
 }
@@ -269,7 +268,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem pkg.Input) *DropDown {
+func NewDropDown(formItem pkg.FormItem) *DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 
@@ -331,7 +330,7 @@ func (dd *DropDown) Height() int {
 
 func (dd *DropDown) SetWidth(width int) {
 	dd.textinput.Width = width - 1
-	placeholderPadding := utils.Max(0, width-len(dd.textinput.Placeholder))
+	placeholderPadding := max(0, width-len(dd.textinput.Placeholder))
 	dd.textinput.Placeholder = fmt.Sprintf("%s%s", dd.textinput.Placeholder, strings.Repeat(" ", placeholderPadding))
 	dd.filter.Width = width
 }
@@ -340,7 +339,7 @@ func (dd DropDown) View() string {
 	modelView := dd.textinput.View()
 	paddingRight := 0
 	if dd.Value() == "" {
-		paddingRight = utils.Max(0, dd.filter.Width-lipgloss.Width(modelView))
+		paddingRight = max(0, dd.filter.Width-lipgloss.Width(modelView))
 	}
 	textInputView := fmt.Sprintf("%s%s", modelView, strings.Repeat(" ", paddingRight))
 

@@ -17,8 +17,8 @@ import (
 )
 
 type Extension struct {
-	Origin string
-	pkg.Manifest
+	Origin       string `json:"origin"`
+	pkg.Manifest `json:"manifest"`
 }
 
 func (ext Extension) Run(commandName string, input pkg.CommandInput) ([]byte, error) {
@@ -96,13 +96,13 @@ func (e Extension) Command(name string) (pkg.Command, bool) {
 
 type Extensions struct {
 	filepath  string                  `json:"-"`
-	Commands  map[string]string       `json:"commands"`
+	Aliases   map[string]string       `json:"aliases"`
 	Manifests map[string]pkg.Manifest `json:"manifests"`
 }
 
 func (ext Extensions) Get(name string) (Extension, error) {
 	var extension Extension
-	origin, ok := ext.Commands[name]
+	origin, ok := ext.Aliases[name]
 	if !ok {
 		return extension, fmt.Errorf("extension %s does not exist", name)
 	}
@@ -118,22 +118,22 @@ func (ext Extensions) Get(name string) (Extension, error) {
 }
 
 func (ext Extensions) Update(name string, extension Extension) error {
-	if _, ok := ext.Commands[name]; !ok {
+	if _, ok := ext.Aliases[name]; !ok {
 		return fmt.Errorf("extension %s does not exist", name)
 	}
 
-	ext.Commands[name] = extension.Origin
+	ext.Aliases[name] = extension.Origin
 	ext.Manifests[extension.Origin] = extension.Manifest
 
 	return nil
 }
 
 func (ext Extensions) Add(name string, extension Extension) error {
-	if _, ok := ext.Commands[name]; ok {
+	if _, ok := ext.Aliases[name]; ok {
 		return fmt.Errorf("extension %s already exists", name)
 	}
 
-	ext.Commands[name] = extension.Origin
+	ext.Aliases[name] = extension.Origin
 	if _, ok := ext.Manifests[extension.Origin]; !ok {
 		ext.Manifests[extension.Origin] = extension.Manifest
 	}
@@ -142,13 +142,13 @@ func (ext Extensions) Add(name string, extension Extension) error {
 }
 
 func (ext Extensions) Remove(name string) error {
-	origin, ok := ext.Commands[name]
+	origin, ok := ext.Aliases[name]
 	if !ok {
 		return fmt.Errorf("extension %s does not exist", name)
 	}
-	delete(ext.Commands, name)
+	delete(ext.Aliases, name)
 
-	for _, commandOrigin := range ext.Commands {
+	for _, commandOrigin := range ext.Aliases {
 		if commandOrigin == origin {
 			return nil
 		}
@@ -159,23 +159,23 @@ func (ext Extensions) Remove(name string) error {
 }
 
 func (ext Extensions) Rename(oldName, newName string) error {
-	if _, ok := ext.Commands[oldName]; !ok {
+	if _, ok := ext.Aliases[oldName]; !ok {
 		return fmt.Errorf("extension %s does not exist", oldName)
 	}
 
-	if _, ok := ext.Commands[newName]; ok {
+	if _, ok := ext.Aliases[newName]; ok {
 		return fmt.Errorf("extension %s already exists", newName)
 	}
 
-	ext.Commands[newName] = ext.Commands[oldName]
-	delete(ext.Commands, oldName)
+	ext.Aliases[newName] = ext.Aliases[oldName]
+	delete(ext.Aliases, oldName)
 
 	return nil
 }
 
 func (ext Extensions) List() []string {
 	var names []string
-	for name := range ext.Commands {
+	for name := range ext.Aliases {
 		names = append(names, name)
 	}
 
@@ -184,7 +184,7 @@ func (ext Extensions) List() []string {
 
 func (ext Extensions) Map() map[string]Extension {
 	var extensions = make(map[string]Extension)
-	for name, origin := range ext.Commands {
+	for name, origin := range ext.Aliases {
 		extensions[name] = Extension{
 			Origin:   origin,
 			Manifest: ext.Manifests[origin],
@@ -197,7 +197,7 @@ func (ext Extensions) Map() map[string]Extension {
 func LoadExtensions(manifestPath string) (Extensions, error) {
 	extensions := Extensions{
 		filepath:  manifestPath,
-		Commands:  make(map[string]string),
+		Aliases:   make(map[string]string),
 		Manifests: make(map[string]pkg.Manifest),
 	}
 
@@ -241,7 +241,7 @@ func LoadManifest(origin *url.URL) (pkg.Manifest, error) {
 			return manifest, err
 		}
 
-		if err := pkg.Validate(pkg.ManifestSchema, b); err != nil {
+		if err := pkg.ValidateManifest(b); err != nil {
 			return manifest, err
 		}
 
@@ -267,7 +267,7 @@ func LoadManifest(origin *url.URL) (pkg.Manifest, error) {
 		return manifest, err
 	}
 
-	if err := pkg.Validate(pkg.ManifestSchema, b); err != nil {
+	if err := pkg.ValidateManifest(b); err != nil {
 		return manifest, err
 	}
 

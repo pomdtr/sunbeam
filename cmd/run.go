@@ -7,14 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdRun(extensions internal.Extensions) *cobra.Command {
+func NewCmdRun() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                "run <origin> [args...]",
 		Short:              "Run an extension without installing it",
 		Args:               cobra.MinimumNArgs(1),
 		GroupID:            coreGroupID,
 		DisableFlagParsing: true,
-		SilenceErrors:      true,
 		RunE: func(_ *cobra.Command, args []string) error {
 			origin, err := parseOrigin(args[0])
 			if err != nil {
@@ -26,19 +25,24 @@ func NewCmdRun(extensions internal.Extensions) *cobra.Command {
 				return err
 			}
 
-			extensionName := filepath.Base(origin.Path)
-			extensions.Add(extensionName, internal.Extension{
+			alias := filepath.Base(origin.Path)
+			if alias == "/" {
+				alias = origin.Hostname()
+			}
+
+			extension := internal.Extension{
 				Origin:   origin.String(),
 				Manifest: manifest,
-			})
+			}
 
-			cmd, err := NewCustomCmd(extensions, extensionName)
+			scriptCmd, err := NewCustomCmd(alias, extension)
 			if err != nil {
 				return err
 			}
+			scriptCmd.SilenceErrors = true
 
-			cmd.SetArgs(args[1:])
-			return cmd.Execute()
+			scriptCmd.SetArgs(args[1:])
+			return scriptCmd.Execute()
 		},
 	}
 

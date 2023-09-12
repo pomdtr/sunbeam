@@ -3,7 +3,7 @@ import { build, emptyDir } from "$dnt/mod.ts";
 
 for (const name of ["page", "manifest"]) {
   // compile from file
-  const ts = await json2ts.compileFromFile(`../../schemas/${name}.schema.json`);
+  const ts = await json2ts.compileFromFile(`../schemas/${name}.schema.json`);
   Deno.writeTextFileSync(`./${name}.ts`, ts);
 }
 
@@ -11,11 +11,7 @@ await emptyDir(`./npm`);
 await build({
   entryPoints: ["./mod.ts"],
   outDir: `./npm`,
-  shims: {
-    // see JS docs for overview and more options
-    deno: true,
-    undici: true,
-  },
+  shims: {},
   package: {
     // package.json properties
     name: "sunbeam-types",

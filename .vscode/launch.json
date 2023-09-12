@@ -6,10 +6,6 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "args": [
-        "deno-deploy",
-        "list-projects",
-      ]
     },
   ]
 }

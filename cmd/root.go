@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -24,6 +24,17 @@ var (
 	Version = "dev"
 	Date    = "unknown"
 )
+
+func getOptions() internal.SunbeamOptions {
+	return internal.SunbeamOptions{
+		MaxHeight:  LookupIntEnv("SUNBEAM_HEIGHT", 30),
+		MaxWidth:   LookupIntEnv("SUNBEAM_WIDTH", 100),
+		FullScreen: LookupBoolEnv("SUNBEAM_FULLSCREEN", true),
+		Border:     LookupBoolEnv("SUNBEAM_BORDER", true),
+		Margin:     LookupIntEnv("SUNBEAM_MARGIN", 1),
+		NoColor:    LookupBoolEnv("NO_COLOR", false),
+	}
+}
 
 func ConfigDir() (string, error) {
 	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
@@ -49,21 +60,6 @@ func ConfigDir() (string, error) {
 }
 
 func NewRootCmd() (*cobra.Command, error) {
-	// rootCmd represents the base command when called without any subcommands
-	var rootCmd = &cobra.Command{
-		Use:          "sunbeam",
-		Short:        "Command Line Launcher",
-		Version:      fmt.Sprintf("%s (%s)", Version, Date),
-		SilenceUsage: true,
-		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
-
-See https://pomdtr.github.io/sunbeam for more information.`,
-	}
-
-	rootCmd.AddGroup(
-		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
-	)
-
 	configDir, err := ConfigDir()
 	if err != nil {
 		return nil, err
@@ -73,8 +69,27 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	if err != nil {
 		return nil, err
 	}
-	rootCmd.AddCommand(NewCmdRun(extensions))
+
+	// rootCmd represents the base command when called without any subcommands
+	var rootCmd = &cobra.Command{
+		Use:          "sunbeam",
+		Short:        "Command Line Launcher",
+		Version:      fmt.Sprintf("%s (%s)", Version, Date),
+		SilenceUsage: true,
+		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
+
+See https://pomdtr.github.io/sunbeam for more information.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return internal.Draw(internal.NewRootPage(extensions.Map()), getOptions())
+		},
+	}
+
+	rootCmd.AddGroup(
+		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
+	)
+
 	rootCmd.AddCommand(NewExtensionCmd(extensions))
+	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdServe(extensions))
 	rootCmd.AddCommand(NewCmdParse())
 	rootCmd.AddCommand(NewValidateCmd())
@@ -122,8 +137,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddGroup(
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
 	)
-	for _, name := range extensions.List() {
-		cmd, err := NewCustomCmd(extensions, name)
+	for alias, extension := range extensions.Map() {
+		cmd, err := NewCustomCmd(alias, extension)
 		if err != nil {
 			return nil, err
 		}
@@ -164,19 +179,20 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(extensions internal.Extensions, extensionName string) (*cobra.Command, error) {
-	extension, err := extensions.Get(extensionName)
-	if err != nil {
-		return nil, err
-	}
-
+func NewCustomCmd(alias string, extension internal.Extension) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:          extensionName,
+		Use:          alias,
 		Short:        extension.Manifest.Title,
 		Long:         extension.Manifest.Description,
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
-		GroupID:      extensionGroupID,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			extensions := map[string]internal.Extension{
+				alias: extension,
+			}
+			return internal.Draw(internal.NewRootPage(extensions), getOptions())
+		},
+		GroupID: extensionGroupID,
 	}
 
 	cmd.CompletionOptions.DisableDefaultCmd = true
@@ -212,32 +228,36 @@ func NewCustomCmd(extensions internal.Extensions, extensionName string) (*cobra.
 					}
 				}
 
-				return Run(extensions, extensionName, command.Name, params)
+				if os.Getenv("CI") != "" || !isatty.IsTerminal(os.Stdout.Fd()) {
+					output, err := extension.Run(command.Name, pkg.CommandInput{
+						Params: params,
+					})
+					if err != nil {
+						return err
+					}
+
+					os.Stdout.Write(output)
+					return nil
+				}
+
+				page, err := internal.CommandToPage(extension, pkg.CommandRef{
+					Name:   command.Name,
+					Params: params,
+				})
+				if err != nil {
+					return err
+				}
+
+				return internal.Draw(page, getOptions())
 			},
 		}
 
 		for _, param := range command.Params {
 			switch param.Type {
 			case pkg.ParamTypeString:
-				var defaultValue string
-				if param.Default != nil {
-					d, ok := param.Default.(string)
-					if !ok {
-						return nil, fmt.Errorf("invalid default value for %s: %v", param.Name, param.Default)
-					}
-					defaultValue = d
-				}
-				subcmd.Flags().String(param.Name, defaultValue, param.Description)
+				subcmd.Flags().String(param.Name, "", param.Description)
 			case pkg.ParamTypeBoolean:
-				var defaultValue bool
-				if param.Default != nil {
-					d, ok := param.Default.(bool)
-					if !ok {
-						return nil, fmt.Errorf("invalid default value for %s: %v", param.Name, param.Default)
-					}
-					defaultValue = d
-				}
-				subcmd.Flags().Bool(param.Name, defaultValue, param.Description)
+				subcmd.Flags().Bool(param.Name, false, param.Description)
 			default:
 				return nil, fmt.Errorf("unsupported argument type: %s", param.Type)
 			}
@@ -253,43 +273,32 @@ func NewCustomCmd(extensions internal.Extensions, extensionName string) (*cobra.
 	return cmd, nil
 }
 
-func Run(extensions internal.Extensions, extensionName string, commandName string, params map[string]any) error {
-	extension, err := extensions.Get(extensionName)
-	if err != nil {
-		return err
-	}
-
-	command, ok := extension.Command(commandName)
+func LookupIntEnv(key string, fallback int) int {
+	env, ok := os.LookupEnv(key)
 	if !ok {
-		return fmt.Errorf("command %s not found", commandName)
+		return fallback
+
 	}
 
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
-		output, err := extension.Run(command.Name, pkg.CommandInput{
-			Params: params,
-		})
-		if err != nil {
-			return err
-		}
-
-		os.Stdout.Write(output)
-		return nil
-	}
-
-	page, err := internal.CommandToPage(extensions, extensionName, command.Name, params)
+	value, err := strconv.Atoi(env)
 	if err != nil {
-		return err
+		return fallback
 	}
 
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
-		return fmt.Errorf("sunbeam can only be run in a terminal")
+	return value
+}
+
+func LookupBoolEnv(key string, fallback bool) bool {
+	env, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback
+
 	}
 
-	if err := internal.Draw(page, internal.SunbeamOptions{}); err == nil {
-		return nil
-	} else if errors.Is(err, internal.ErrInterrupted) && isatty.IsTerminal(os.Stdout.Fd()) {
-		return nil
-	} else {
-		return err
+	b, err := strconv.ParseBool(env)
+	if err != nil {
+		return fallback
 	}
+
+	return b
 }

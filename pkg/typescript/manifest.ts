@@ -14,6 +14,7 @@ export type Command = {
 
 export interface Manifest {
   title: string;
+  homepage?: string;
   description?: string;
   commands: Command[];
 }

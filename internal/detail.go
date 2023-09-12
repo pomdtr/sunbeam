@@ -1,34 +1,47 @@
 package internal
 
 import (
+	"bytes"
+	"encoding/json"
+
+	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
-	"github.com/muesli/reflow/wrap"
 	"github.com/pomdtr/sunbeam/pkg"
 )
+
+var theme string
+
+func init() {
+	if lipgloss.HasDarkBackground() {
+		theme = "monokai"
+	} else {
+		theme = "monokailight"
+	}
+}
 
 type Detail struct {
 	header     Header
 	Style      lipgloss.Style
 	viewport   viewport.Model
 	actionList ActionList
-	ready      bool
 	footer     Footer
-	raw        string
 
-	generator func() (pkg.Detail, error)
-	runner    func(pkg.Action) tea.Cmd
+	page      *pkg.Detail
+	extension Extension
+	command   pkg.Command
+	params    pkg.CommandParams
 }
 
-func NewDetail(title string, generator func() (pkg.Detail, error), runner func(pkg.Action) tea.Cmd) *Detail {
-	footer := NewFooter(title)
+func NewDetail(extension Extension, command pkg.Command, params pkg.CommandParams) *Detail {
+	footer := NewFooter(command.Title)
 
-	actionList := NewActionList(runner)
-	actionList.SetTitle(title)
+	actionList := NewActionList()
 	viewport := viewport.New(0, 0)
+	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
 
 	header := NewHeader()
 
@@ -38,8 +51,9 @@ func NewDetail(title string, generator func() (pkg.Detail, error), runner func(p
 		actionList: actionList,
 		footer:     footer,
 
-		generator: generator,
-		runner:    runner,
+		extension: extension,
+		command:   command,
+		params:    params,
 	}
 
 	return &d
@@ -48,17 +62,24 @@ func (d *Detail) Init() tea.Cmd {
 	return tea.Batch(d.header.SetIsLoading(true), d.Reload)
 }
 
-func (d *Detail) Focus() tea.Cmd {
-	return nil
-}
-
 func (d *Detail) Reload() tea.Msg {
-	detail, err := d.generator()
+	output, err := d.extension.Run(d.command.Name, pkg.CommandInput{
+		Params: d.params,
+	})
 	if err != nil {
 		return err
 	}
 
-	return detail
+	if err := pkg.ValidatePage(output); err != nil {
+		return err
+	}
+
+	var page pkg.Detail
+	if err := json.Unmarshal(output, &page); err != nil {
+		return err
+	}
+
+	return page
 }
 
 type DetailMsg string
@@ -70,8 +91,9 @@ func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
 func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case pkg.Detail:
+		c.page = &msg
 		c.SetIsLoading(false)
-		c.RefreshContent(msg.Text)
+		c.RefreshContent()
 		c.actionList.SetActions(msg.Actions...)
 		if len(msg.Actions) == 1 {
 			c.footer.SetBindings(
@@ -89,6 +111,14 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "q":
+			if c.actionList.Focused() {
+				break
+			}
+
+			return c, func() tea.Msg {
+				return ExitMsg{}
+			}
 		case "tab":
 			if c.actionList.Focused() {
 				break
@@ -97,7 +127,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if len(c.actionList.actions) == 0 {
 				return c, nil
 			}
-			return c, c.actionList.Focus()
+			return c, nil
 
 		case "esc":
 			if c.actionList.Focused() {
@@ -116,7 +146,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, nil
 			}
 
-			return c, c.runner(actions[0])
+			return c, runAction(actions[0], c.extension)
 		}
 	}
 	var cmds []tea.Cmd
@@ -134,35 +164,34 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return c, tea.Batch(cmds...)
 }
 
-func (c *Detail) RefreshContent(text string) {
-	c.raw = text
-	content := wrap.String(wordwrap.String(c.raw, c.viewport.Width-2), c.viewport.Width-2)
-	c.viewport.SetContent(content)
+func (c *Detail) RefreshContent() error {
+	if c.page == nil {
+		return nil
+	}
+
+	writer := bytes.Buffer{}
+	err := quick.Highlight(&writer, c.page.Text, c.page.Language, "terminal16", theme)
+	if err != nil {
+		return err
+	}
+
+	text := wordwrap.String(writer.String(), c.viewport.Width-2)
+
+	c.viewport.SetContent(text)
+
+	return nil
 }
 
 func (c *Detail) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
+	c.viewport.Width = width
 	c.actionList.SetSize(width, height)
 
-	viewportHeight := height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
-	if !c.ready {
-		c.ready = true
-		c.viewport = viewport.New(width, viewportHeight)
-		c.viewport.Style = lipgloss.NewStyle().Padding(0, 1)
-	} else {
-		c.viewport.Width = width
-		c.viewport.Height = viewportHeight
-	}
-
-	c.RefreshContent(c.raw)
+	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 }
 
 func (c *Detail) View() string {
-	if !c.ready {
-		return ""
-	}
-
 	if c.actionList.Focused() {
 		return c.actionList.View()
 	}

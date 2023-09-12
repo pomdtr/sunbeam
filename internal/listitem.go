@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/pkg"
-	"github.com/pomdtr/sunbeam/utils"
 )
 
 // Probably not necessary, need to be refactored
@@ -64,7 +63,7 @@ func (i ListItem) Render(width int, selected bool) string {
 		subtitle = ""
 		accessories = ""
 		// Why is this -1? I don't know, but it works
-		title = title[:utils.Min(len(title), width)]
+		title = title[:min(len(title), width)]
 	}
 
 	title = titleStyle.Render(title)

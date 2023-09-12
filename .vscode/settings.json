@@ -1,19 +1,10 @@
 {
-  "markdownlint.ignore": [
-    "docs/src/SUMMARY.md",
-    "docs/cli.md",
-    "docs/types.md",
-    "cmd/templates/system-message.md"
-  ],
-  "markdownlint.config": {
-    "MD033": false
-  },
   "search.exclude": {
     "book": true,
     "public": true,
-    "types/typescript/npm": true
+    "pkg/typescript/npm": true
   },
   "deno.enable": true,
-  "deno.config": "./types/typescript/deno.json",
+  "deno.config": "./pkg/typescript/deno.json",
   "deno.unstable": true
 }

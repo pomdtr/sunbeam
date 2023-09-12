@@ -17,10 +17,6 @@ export type Action =
        */
       title?: string;
       /**
-       * Whether to exit the app after copying.
-       */
-      exit?: boolean;
-      /**
        * The text to copy.
        */
       text: string;
@@ -34,10 +30,6 @@ export type Action =
        * The type of the action.
        */
       type: "open";
-      /**
-       * Whether to exit the app after opening.
-       */
-      exit?: boolean;
       /**
        * The title of the action.
        */
@@ -61,15 +53,124 @@ export type Action =
        */
       title?: string;
       /**
-       * Whether to exit the app after running.
+       * The key used as a shortcut.
        */
-      exit?: boolean;
+      key?: string;
+      command: Command;
+    }
+  | {
+      /**
+       * The title of the action.
+       */
+      title?: string;
       /**
        * The key used as a shortcut.
        */
       key?: string;
-      command: string;
-      params?: Params;
+      type: "push";
+      command: Command;
+    };
+export type Formitem =
+  | {
+      /**
+       * The title of the input.
+       */
+      title: string;
+      /**
+       * The name of the input.
+       */
+      name: string;
+      /**
+       * The type of the input.
+       */
+      type: "textfield";
+      /**
+       * The placeholder of the input.
+       */
+      placeholder?: string;
+      /**
+       * The default value of the input.
+       */
+      default?: string;
+      /**
+       * Whether the input should be secure.
+       */
+      secure?: boolean;
+    }
+  | {
+      /**
+       * The title of the input.
+       */
+      title: string;
+      /**
+       * The name of the input.
+       */
+      name: string;
+      /**
+       * The type of the input.
+       */
+      type: "checkbox";
+      /**
+       * The default value of the input.
+       */
+      default?: boolean;
+      /**
+       * The label of the input.
+       */
+      label?: string;
+    }
+  | {
+      /**
+       * The name of the input.
+       */
+      name: string;
+      /**
+       * The title of the input.
+       */
+      title: string;
+      /**
+       * The type of the input.
+       */
+      type: "textarea";
+      /**
+       * The placeholder of the input.
+       */
+      placeholder?: string;
+      /**
+       * The default value of the input.
+       */
+      default?: string;
+    }
+  | {
+      /**
+       * The name of the input.
+       */
+      name: string;
+      /**
+       * The title of the input.
+       */
+      title: string;
+      /**
+       * The type of the input.
+       */
+      type: "dropdown";
+      /**
+       * The items of the input.
+       */
+      items: {
+        /**
+         * The title of the item.
+         */
+        title: string;
+        /**
+         * The value of the item.
+         */
+        value: string;
+      }[];
+      /**
+       * The default value of the input.
+       */
+      default?: string;
     };
 
 export interface List {
@@ -92,19 +193,16 @@ export interface List {
    */
   items: Listitem[];
 }
+export interface Command {
+  name: string;
+  params?: Params;
+}
 export interface Params {
   /**
-   * The text to share.
+   * This interface was referenced by `Params`'s JSON-Schema definition
+   * via the `patternProperty` ".+".
    */
-  text?: string;
-  /**
-   * The url to share.
-   */
-  url?: string;
-  /**
-   * The title to share.
-   */
-  title?: string;
+  [k: string]: string | boolean;
 }
 export interface Listitem {
   /**
@@ -151,9 +249,6 @@ export interface Form {
    * The title of the page.
    */
   title?: string;
-  /**
-   * The command to run when the form is submitted.
-   */
-  command: string;
-  params?: Params;
+  command: Command;
+  items: Formitem[];
 }

@@ -34,14 +34,14 @@ if [ $# -eq 0 ]; then
 exit 0
 fi
 
-eval "$(sunbeam parse bash)"
 if [ "$1" = "list" ]; then
     tldr --list | jq -R '{
         title: .,
         actions: [
-            {type: "run", title: "View", command: "view", params: {command: .}}
+            {type: "push", title: "View", command: { name: "view", params: {command: .}}}
         ]
     }' | jq -s '{items: .}'
 elif [ "$1" = "view" ]; then
-    tldr --raw "$COMMAND" | jq -sR '{text: ., language: "markdown", actions: [{type: "copy", title: "Copy", text: ., exit: true}]}'
+    eval "$(sunbeam parse bash)"
+    tldr --raw "$COMMAND" | jq -sR '{text: ., language: "markdown", actions: [{type: "copy", title: "Copy", text: .}]}'
 fi

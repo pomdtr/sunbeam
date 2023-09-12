@@ -17,10 +17,10 @@ func NewExtensionCmd(extensionMap internal.Extensions) *cobra.Command {
 		GroupID: coreGroupID,
 	}
 
-	cmd.AddCommand(NewExtensionAddCmd(extensionMap))
+	cmd.AddCommand(NewExtensionInstallCmd(extensionMap))
 	cmd.AddCommand(NewExtensionOpenCmd(extensionMap))
 	cmd.AddCommand(NewExtensionCmdList(extensionMap))
-	cmd.AddCommand(NewExtensionUpgrade(extensionMap))
+	cmd.AddCommand(NewExtensionUpdate(extensionMap))
 	cmd.AddCommand(NewExtensionRenameCmd(extensionMap))
 	cmd.AddCommand(NewExtensionCmdRemove(extensionMap))
 
@@ -53,10 +53,10 @@ func parseOrigin(origin string) (*url.URL, error) {
 	return url, nil
 }
 
-func NewExtensionAddCmd(extensions internal.Extensions) *cobra.Command {
+func NewExtensionInstallCmd(extensions internal.Extensions) *cobra.Command {
 	return &cobra.Command{
-		Use:   "add <name> <origin>",
-		Short: "Add an extension",
+		Use:   "install <alias> <origin>",
+		Short: "Install an extension",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if _, err := extensions.Get(args[0]); err == nil {
 				return fmt.Errorf("extension %s already exists", args[0])
@@ -94,7 +94,7 @@ func NewExtensionAddCmd(extensions internal.Extensions) *cobra.Command {
 
 func NewExtensionOpenCmd(extensions internal.Extensions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:       "open <name>",
+		Use:       "open <alias>",
 		Short:     "Open an extension's homepage",
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: extensions.List(),
@@ -126,8 +126,8 @@ func NewExtensionCmdList(extensions internal.Extensions) *cobra.Command {
 		Short: "List extensions",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			for name, extension := range extensions.Map() {
-				fmt.Printf("%s\t%s\t%s\n", name, extension.Title, extension.Origin)
+			for alias, extension := range extensions.Map() {
+				fmt.Printf("%s\t%s\t%s\n", alias, extension.Title, extension.Origin)
 			}
 
 			return nil
@@ -139,7 +139,7 @@ func NewExtensionCmdList(extensions internal.Extensions) *cobra.Command {
 
 func NewExtensionCmdRemove(extensions internal.Extensions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:       "remove <name>",
+		Use:       "remove <alias>",
 		Short:     "Remove an extension",
 		ValidArgs: extensions.List(),
 		Args:      cobra.ExactArgs(1),
@@ -151,9 +151,9 @@ func NewExtensionCmdRemove(extensions internal.Extensions) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			alias := args[0]
 
-			if err := extensions.Remove(name); err != nil {
+			if err := extensions.Remove(alias); err != nil {
 				return err
 			}
 
@@ -161,6 +161,7 @@ func NewExtensionCmdRemove(extensions internal.Extensions) *cobra.Command {
 				return err
 			}
 
+			cmd.PrintErrf("Extension %s removed successfully!\n", alias)
 			return nil
 		},
 	}
@@ -168,13 +169,13 @@ func NewExtensionCmdRemove(extensions internal.Extensions) *cobra.Command {
 	return cmd
 }
 
-func NewExtensionUpgrade(extensions internal.Extensions) *cobra.Command {
+func NewExtensionUpdate(extensions internal.Extensions) *cobra.Command {
 	flags := struct {
 		all bool
 	}{}
 
 	cmd := &cobra.Command{
-		Use:       "upgrade <name>",
+		Use:       "update <alias>",
 		Short:     "Update an extension",
 		Args:      cobra.ArbitraryArgs,
 		ValidArgs: extensions.List(),
@@ -195,8 +196,8 @@ func NewExtensionUpgrade(extensions internal.Extensions) *cobra.Command {
 				toUpgrade = extensions.List()
 			}
 
-			for _, name := range toUpgrade {
-				extension, err := extensions.Get(name)
+			for _, alias := range toUpgrade {
+				extension, err := extensions.Get(alias)
 				if err != nil {
 					return err
 				}
@@ -213,7 +214,7 @@ func NewExtensionUpgrade(extensions internal.Extensions) *cobra.Command {
 				}
 
 				extension.Manifest = manifest
-				if err := extensions.Update(name, extension); err != nil {
+				if err := extensions.Update(alias, extension); err != nil {
 					return err
 				}
 
@@ -221,7 +222,7 @@ func NewExtensionUpgrade(extensions internal.Extensions) *cobra.Command {
 					return err
 				}
 
-				cmd.PrintErrf("Extension %s upgraded successfully!\n", name)
+				cmd.PrintErrf("Extension %s upgraded successfully!\n", alias)
 			}
 
 			return nil
@@ -235,18 +236,18 @@ func NewExtensionUpgrade(extensions internal.Extensions) *cobra.Command {
 
 func NewExtensionRenameCmd(extensions internal.Extensions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rename <old-name> <new-name>",
+		Use:   "rename <old-alias> <new-alias>",
 		Short: "Rename an extension",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			oldName := args[0]
-			newName := args[1]
+			oldAlias := args[0]
+			newAlias := args[1]
 
-			if err := extensions.Rename(oldName, newName); err != nil {
+			if err := extensions.Rename(oldAlias, newAlias); err != nil {
 				return err
 			}
 
-			if err := extensions.Remove(oldName); err != nil {
+			if err := extensions.Remove(oldAlias); err != nil {
 				return err
 			}
 
@@ -254,6 +255,7 @@ func NewExtensionRenameCmd(extensions internal.Extensions) *cobra.Command {
 				return err
 			}
 
+			cmd.PrintErrf("Extension %s renamed to %s successfully!\n", oldAlias, newAlias)
 			return nil
 		},
 	}

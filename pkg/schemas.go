@@ -15,13 +15,25 @@ var PageSchema = jsonschema.MustCompileString("", pageSchemaString)
 var manifestSchemaString string
 var ManifestSchema = jsonschema.MustCompileString("", manifestSchemaString)
 
-func Validate(schema *jsonschema.Schema, input []byte) error {
+func ValidatePage(input []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(input, &v); err != nil {
 		return err
 	}
 
-	if err := schema.Validate(v); err != nil {
+	if err := PageSchema.Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ValidateManifest(input []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(input, &v); err != nil {
+		return err
+	}
+
+	if err := ManifestSchema.Validate(v); err != nil {
 		return err
 	}
 	return nil

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -10,9 +11,94 @@ import (
 	"github.com/pomdtr/sunbeam/pkg"
 )
 
-type Form struct {
-	items     []*FormItem
-	submitCmd func(values map[string]string) tea.Cmd
+type DynamicForm struct {
+	*StaticForm
+	page *pkg.Form
+
+	extension Extension
+	command   pkg.Command
+	params    pkg.CommandParams
+}
+
+func NewDynamicForm(extension Extension, command pkg.Command, params pkg.CommandParams) *DynamicForm {
+	return &DynamicForm{
+		StaticForm: NewStaticForm(command.Title),
+
+		extension: extension,
+		command:   command,
+		params:    params,
+	}
+}
+
+func (c *DynamicForm) Init() tea.Cmd {
+	return tea.Batch(c.header.SetIsLoading(true), c.Reload)
+}
+
+func (c *DynamicForm) Reload() tea.Msg {
+	output, err := c.extension.Run(c.command.Name, pkg.CommandInput{
+		Params: c.params,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := pkg.ValidatePage(output); err != nil {
+		return err
+	}
+
+	var form pkg.Form
+	if err := json.Unmarshal(output, &form); err != nil {
+		return err
+	}
+
+	return form
+}
+
+func (c *DynamicForm) Update(msg tea.Msg) (Page, tea.Cmd) {
+	switch msg := msg.(type) {
+	case pkg.Form:
+		formitems := make([]FormItem, 0)
+		for _, item := range msg.Items {
+			formitem, err := NewFormItem(item)
+			if err != nil {
+				return c, func() tea.Msg {
+					return err
+				}
+			}
+
+			formitems = append(formitems, *formitem)
+		}
+
+		c.SetInputs(formitems...)
+		if msg.Title != "" {
+			c.StaticForm.footer.title = msg.Title
+		}
+		return c, nil
+	case SubmitFormMsg:
+		return c, func() tea.Msg {
+			for name, value := range msg.Values {
+				c.page.Command.Params[name] = value
+			}
+
+			page, err := CommandToPage(c.extension, pkg.CommandRef{
+				Name:   c.page.Command.Name,
+				Params: c.page.Command.Params,
+			})
+			if err != nil {
+				return err
+			}
+
+			return PushPageMsg{
+				Page: page,
+			}
+		}
+	}
+
+	return c.StaticForm.Update(msg)
+}
+
+type StaticForm struct {
+	items []FormItem
 
 	width    int
 	header   Header
@@ -23,49 +109,42 @@ type Form struct {
 	focusIndex   int
 }
 
-func NewForm(title string, submitCmd func(values map[string]string) tea.Cmd, inputs ...pkg.Input) *Form {
+func NewStaticForm(title string, inputs ...pkg.FormItem) *StaticForm {
 	header := NewHeader()
 	viewport := viewport.New(0, 0)
 	footer := NewFooter(title)
-	footer.SetBindings(
+
+	return &StaticForm{
+		header:   header,
+		footer:   footer,
+		viewport: viewport,
+	}
+}
+
+func (c *StaticForm) SetInputs(inputs ...FormItem) {
+	c.items = inputs
+
+	c.footer.SetBindings(
 		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
 	)
 
-	var items []*FormItem
-	for _, input := range inputs {
-		item, err := NewFormItem(input)
-		if err != nil {
-			continue
-		}
-
-		items = append(items, item)
-	}
-
-	if len(items) > 0 {
-		footer.bindings = append(footer.bindings, key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Next Input")))
-	}
-
-	return &Form{
-		header:    header,
-		submitCmd: submitCmd,
-		footer:    footer,
-		viewport:  viewport,
-		items:     items,
+	if len(c.items) > 0 {
+		c.footer.bindings = append(c.footer.bindings, key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Next Input")))
 	}
 }
 
-func (c *Form) SetIsLoading(isLoading bool) tea.Cmd {
+func (c *StaticForm) SetIsLoading(isLoading bool) tea.Cmd {
 	return c.header.SetIsLoading(isLoading)
 }
 
-func (c Form) Init() tea.Cmd {
+func (c StaticForm) Init() tea.Cmd {
 	if len(c.items) == 0 {
 		return nil
 	}
 	return c.items[0].Focus()
 }
 
-func (c Form) Focus() tea.Cmd {
+func (c StaticForm) Focus() tea.Cmd {
 	if len(c.items) == 0 {
 		return nil
 	}
@@ -73,14 +152,14 @@ func (c Form) Focus() tea.Cmd {
 	return c.items[c.focusIndex].Focus()
 }
 
-func (c *Form) CurrentItem() FormInput {
+func (c *StaticForm) CurrentItem() FormInput {
 	if c.focusIndex >= len(c.items) {
 		return nil
 	}
 	return c.items[c.focusIndex]
 }
 
-func (c *Form) ScrollViewport() {
+func (c *StaticForm) ScrollViewport() {
 	cursorOffset := 0
 	for i := 0; i < c.focusIndex; i++ {
 		cursorOffset += c.items[i].Height() + 2
@@ -101,7 +180,7 @@ func (c *Form) ScrollViewport() {
 	}
 }
 
-func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
+func (c StaticForm) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -145,7 +224,7 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return &c, tea.Batch(cmds...)
 		case tea.KeyCtrlS:
-			values := make(map[string]string)
+			values := make(map[string]any)
 			for _, input := range c.items {
 				if input.Value() == "" && !input.Optional {
 					return &c, func() tea.Msg {
@@ -155,7 +234,7 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 				values[input.Name] = input.Value()
 			}
 
-			return &c, c.submitCmd(values)
+			return &c, SubmitCmd(values)
 		}
 	}
 
@@ -174,7 +253,15 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return &c, tea.Batch(cmds...)
 }
 
-func (c *Form) renderInputs() {
+func SubmitCmd(values map[string]any) tea.Cmd {
+	return func() tea.Msg {
+		return SubmitMsg(values)
+	}
+}
+
+type SubmitMsg map[string]any
+
+func (c *StaticForm) renderInputs() {
 	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(lipgloss.Color("13"))
 	normalBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true)
 	itemViews := make([]string, len(c.items))
@@ -211,7 +298,7 @@ func (c *Form) renderInputs() {
 	c.viewport.SetContent(formView)
 }
 
-func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
+func (c StaticForm) updateInputs(msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(c.items))
 
 	// Only text inputs with Focus() set will respond, so it's safe to simply
@@ -228,7 +315,7 @@ type SubmitFormMsg struct {
 	Values map[string]any
 }
 
-func (c *Form) SetSize(width, height int) {
+func (c *StaticForm) SetSize(width, height int) {
 	c.footer.Width = width
 	c.header.Width = width
 
@@ -244,6 +331,6 @@ func (c *Form) SetSize(width, height int) {
 	}
 }
 
-func (c *Form) View() string {
+func (c *StaticForm) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
 }

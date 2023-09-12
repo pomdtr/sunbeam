@@ -49,6 +49,8 @@ func (h Header) Update(msg tea.Msg) (Header, tea.Cmd) {
 	case IsLoadingMsg:
 		cmd := h.SetIsLoading(true)
 		return h, cmd
+	case FocusMsg:
+		h.input.Focus()
 	}
 
 	var cmds []tea.Cmd
@@ -71,11 +73,6 @@ func (h *Header) SetIsLoading(isLoading bool) tea.Cmd {
 		return h.spinner.Tick
 	}
 	return nil
-}
-
-func (h *Header) Focus() tea.Cmd {
-	h.input.Placeholder = "Search..."
-	return h.input.Focus()
 }
 
 func (c Header) View() string {

@@ -31,11 +31,11 @@ func (e *Entrypoint) UnmarshalJSON(b []byte) error {
 }
 
 type Command struct {
-	Name        string          `json:"name"`
-	Title       string          `json:"title"`
-	Mode        CommandMode     `json:"mode"`
-	Description string          `json:"description,omitempty"`
-	Params      []CommandParams `json:"params,omitempty"`
+	Name        string         `json:"name"`
+	Title       string         `json:"title"`
+	Mode        CommandMode    `json:"mode"`
+	Description string         `json:"description,omitempty"`
+	Params      []CommandParam `json:"params,omitempty"`
 }
 
 type CommandMode string
@@ -44,14 +44,13 @@ const (
 	CommandModeFilter    CommandMode = "filter"
 	CommandModeGenerator CommandMode = "generator"
 	CommandModeDetail    CommandMode = "detail"
-	CommandModeText      CommandMode = "text"
+	CommandModeForm      CommandMode = "form"
 	CommandModeSilent    CommandMode = "silent"
 )
 
-type CommandParams struct {
+type CommandParam struct {
 	Name        string    `json:"name"`
 	Type        ParamType `json:"type"`
-	Default     any       `json:"default,omitempty"`
 	Optional    bool      `json:"optional,omitempty"`
 	Description string    `json:"description,omitempty"`
 }
@@ -64,6 +63,6 @@ const (
 )
 
 type CommandInput struct {
-	Query  string         `json:"query,omitempty"`
-	Params map[string]any `json:"params,omitempty"`
+	Query  string        `json:"query,omitempty"`
+	Params CommandParams `json:"params,omitempty"`
 }
