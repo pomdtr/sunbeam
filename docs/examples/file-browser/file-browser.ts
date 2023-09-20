@@ -10,14 +10,13 @@ const extension = new sunbeam.Extension({
 }).command({
   name: "browse",
   title: "Browse files",
-  mode: "filter",
-  params: [
-    {
-      name: "root",
+  params: {
+    root: {
       type: "string",
       optional: true,
     },
-  ],
+  },
+  output: "list",
   run: async ({ params }) => {
     const root = params.root as string || Deno.cwd();
 

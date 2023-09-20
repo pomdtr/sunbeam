@@ -1,13 +1,11 @@
-package internal
+package tui
 
 import (
-	"fmt"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
-	"github.com/pomdtr/sunbeam/pkg"
 )
 
 func PopPageCmd() tea.Msg {
@@ -16,7 +14,7 @@ func PopPageCmd() tea.Msg {
 
 type PopPageMsg struct{}
 
-func NewPushPageCmd(page Page) tea.Cmd {
+func PushPageCmd(page Page) tea.Cmd {
 	return func() tea.Msg {
 		return PushPageMsg{
 			Page: page,
@@ -35,13 +33,10 @@ type Page interface {
 	View() string
 }
 
-type SunbeamOptions struct {
-	MaxHeight  int
-	MaxWidth   int
-	Border     bool
-	FullScreen bool
-	Margin     int
-	NoColor    bool
+type WindowOptions struct {
+	Height int  `json:"height"`
+	Border bool `json:"border"`
+	Margin int  `json:"margin"`
 }
 
 type ExitMsg struct{}
@@ -58,31 +53,13 @@ func FocusCmd() tea.Msg {
 
 type Paginator struct {
 	width, height int
-	options       SunbeamOptions
+	options       WindowOptions
 
 	pages  []Page
 	hidden bool
 }
 
-func CommandToPage(extension Extension, commandRef pkg.CommandRef) (Page, error) {
-	command, ok := extension.Command(commandRef.Name)
-	if !ok {
-		return nil, fmt.Errorf("command %s not found", commandRef.Name)
-	}
-
-	switch command.Mode {
-	case pkg.CommandModeFilter, pkg.CommandModeGenerator:
-		return NewList(extension, command, commandRef.Params), nil
-	case pkg.CommandModeForm:
-		return NewDynamicForm(extension, command, commandRef.Params), nil
-	case pkg.CommandModeDetail:
-		return NewDetail(extension, command, commandRef.Params), nil
-	default:
-		return nil, fmt.Errorf("unsupported command mode: %s", command.Mode)
-	}
-}
-
-func NewPaginator(root Page, options SunbeamOptions) *Paginator {
+func NewPaginator(root Page, options WindowOptions) *Paginator {
 	return &Paginator{pages: []Page{
 		root,
 	}, options: options}
@@ -121,12 +98,6 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ExitMsg:
 		m.hidden = true
 		return m, tea.Quit
-	case error:
-		if len(m.pages) > 0 {
-			m.pages = m.pages[:len(m.pages)-1]
-		}
-		cmd := m.Push(NewErrorPage(msg))
-		return m, cmd
 	}
 
 	// Update the current page
@@ -153,41 +124,13 @@ func (m *Paginator) View() string {
 		pageView = currentPage.View()
 	}
 
-	style := lipgloss.NewStyle().Margin(m.MarginVertical(lipgloss.Height(pageView)), m.MarginHorizontal(lipgloss.Width(pageView)))
+	style := lipgloss.NewStyle().Margin(m.options.Margin)
 
 	if m.options.Border {
 		style = style.Border(lipgloss.RoundedBorder())
 	}
 
 	return style.Render(pageView)
-}
-
-func (m Paginator) MarginHorizontal(width int) int {
-	if m.options.MaxWidth == 0 {
-		return m.options.Margin
-	}
-
-	if m.options.MaxWidth > m.width {
-		return m.options.Margin
-	}
-
-	return (m.width - width - 1) / 2
-}
-
-func (m Paginator) MarginVertical(height int) int {
-	if !m.options.FullScreen {
-		return m.options.Margin
-	}
-
-	if m.options.MaxHeight == 0 {
-		return m.options.Margin
-	}
-
-	if m.options.MaxHeight > m.height {
-		return m.options.Margin
-	}
-
-	return (m.height - height - 1) / 2
 }
 
 func (m *Paginator) SetSize(width, height int) {
@@ -200,37 +143,28 @@ func (m *Paginator) SetSize(width, height int) {
 }
 
 func (m *Paginator) pageWidth() int {
-	pageWidth := m.width
-
-	if m.options.MaxWidth > 0 && m.options.MaxWidth < pageWidth {
-		pageWidth = m.options.MaxWidth
-	}
+	width := m.width
 
 	if m.options.Border {
-		pageWidth -= 2
+		width -= 2
 	}
 
-	if m.options.Margin > 0 {
-		pageWidth -= 2 * m.options.Margin
-	}
+	width -= 2 * m.options.Margin
 
-	return pageWidth
+	return width
 }
 
 func (m *Paginator) pageHeight() int {
 	height := m.height
-
-	if m.options.MaxHeight > 0 && m.options.MaxHeight < height {
-		height = m.options.MaxHeight
+	if m.options.Height != 0 {
+		height = min(height, m.options.Height)
 	}
 
 	if m.options.Border {
 		height -= 2
 	}
 
-	if m.options.Margin > 0 {
-		height -= 2 * m.options.Margin
-	}
+	height -= 2 * m.options.Margin
 
 	return height
 }
@@ -251,20 +185,15 @@ func (m *Paginator) Pop() tea.Cmd {
 	}
 }
 
-func Draw(page Page, options SunbeamOptions) error {
-	if options.NoColor {
-		lipgloss.SetColorProfile(termenv.Ascii)
-	} else {
-		lipgloss.SetColorProfile(termenv.NewOutput(os.Stdout).Profile)
-	}
-
+func Draw(page Page, options WindowOptions) error {
+	lipgloss.SetColorProfile(termenv.NewOutput(os.Stderr).Profile)
 	paginator := NewPaginator(page, options)
 
 	var p *tea.Program
-	if options.FullScreen {
-		p = tea.NewProgram(paginator, tea.WithAltScreen())
-	} else {
+	if options.Height > 0 {
 		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr))
+	} else {
+		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	}
 
 	_, err := p.Run()

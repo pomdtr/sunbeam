@@ -1,4 +1,4 @@
-package internal
+package tui
 
 import (
 	"github.com/charmbracelet/bubbles/viewport"
@@ -35,6 +35,8 @@ func (c *ErrorPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "esc":
+			return c, PopPageCmd
 		case "q":
 			return c, ExitCmd
 		}

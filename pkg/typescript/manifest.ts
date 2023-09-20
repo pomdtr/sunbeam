@@ -5,21 +5,53 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Command = {
-  name: string;
-  title: string;
-  mode: "filter" | "generator" | "detail" | "form" | "silent";
-  params?: Param[];
-};
-
 export interface Manifest {
   title: string;
+  items: Item[];
   homepage?: string;
   description?: string;
-  commands: Command[];
+  commands: {
+    [k: string]: Command;
+  };
 }
-export interface Param {
-  name: string;
-  type: "string" | "boolean";
-  optional?: boolean;
+export interface Item {
+  command: string;
+  title?: string;
+  params?: {
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` ".+".
+     */
+    [k: string]: string | boolean;
+  };
+}
+/**
+ * This interface was referenced by `undefined`'s JSON-Schema definition
+ * via the `patternProperty` ".+".
+ */
+export interface Command {
+  mode: "page" | "action" | "silent";
+  title: string;
+  params?: {
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` ".+".
+     */
+    [k: string]: {
+      name?: string;
+      type: "string" | "boolean";
+      optional?: boolean;
+    };
+  };
+  prefs?: {
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` ".+".
+     */
+    [k: string]: {
+      name?: string;
+      type: "string" | "boolean";
+      optional?: boolean;
+    };
+  };
 }

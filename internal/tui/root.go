@@ -1,4 +1,4 @@
-package internal
+package tui
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/pkg"
+	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type RootList struct {
@@ -14,44 +14,48 @@ type RootList struct {
 	footer Footer
 	filter Filter
 
-	extensions map[string]Extension
+	extensions Extensions
 }
 
-func NewRootPage(extensions map[string]Extension) *RootList {
+func NewRootPage(extensions Extensions, allowlist ...string) *RootList {
 	items := make([]FilterItem, 0)
 
+	allowMap := make(map[string]bool)
+	for _, alias := range allowlist {
+		allowMap[alias] = true
+	}
+
 	for alias, ext := range extensions {
-		for _, command := range ext.Commands {
-			if len(command.Params) > 0 {
+		for i, item := range ext.Items {
+			if _, ok := allowMap[alias]; len(allowMap) > 0 && !ok {
 				continue
 			}
-			var primaryAction pkg.Action
-			if command.Mode == "silent" {
-				primaryAction = pkg.Action{
-					Type: pkg.ActionTypeRun,
-					Text: "Run",
-					Command: pkg.CommandRef{
-						Alias: alias,
-						Name:  command.Name,
-					},
-				}
-			} else {
-				primaryAction = pkg.Action{
-					Type: pkg.ActionTypePush,
-					Text: "Push",
-					Command: pkg.CommandRef{
-						Alias: alias,
-						Name:  command.Name,
-					},
-				}
+
+			command, ok := ext.Commands[item.Command]
+			if !ok {
+				continue
 			}
+
+			title := item.Title
+			if title == "" {
+				title = command.Title
+			}
+
 			items = append(items, ListItem{
-				Id:          fmt.Sprintf("%s:%s", alias, command.Name),
-				Title:       command.Title,
+				Id:          fmt.Sprintf("%s:%d", alias, i),
+				Title:       title,
 				Subtitle:    ext.Title,
 				Accessories: []string{alias},
-				Actions: []pkg.Action{
-					primaryAction,
+				Actions: []types.Action{
+					{
+						Type: types.ActionTypeRun,
+						Text: "Run",
+						Command: types.CommandRef{
+							Extension: alias,
+							Name:      item.Command,
+							Params:    item.Params,
+						},
+					},
 				},
 			})
 
@@ -101,13 +105,8 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			action := item.Actions[0]
-			alias := action.Command.Alias
-			extension, ok := c.extensions[alias]
-			if !ok {
-				return c, nil
-			}
 
-			return c, runAction(action, extension)
+			return c, PushPageCmd(NewCommand(c.extensions, action.Command))
 		}
 	}
 

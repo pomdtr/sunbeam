@@ -1,69 +1,36 @@
-package internal
+package tui
 
 import (
-	"encoding/json"
-
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/pkg"
+	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type List struct {
 	header     Header
-	footer     Footer
-	actionList ActionList
 	filter     Filter
-
-	extension Extension
-	command   pkg.Command
-	params    pkg.CommandParams
-
-	page *pkg.List
+	actionList ActionList
+	footer     Footer
 }
 
-func NewList(extension Extension, command pkg.Command, params pkg.CommandParams) *List {
-	list := List{
-		header: NewHeader(),
-		footer: NewFooter(command.Title),
-
-		extension: extension,
-		command:   command,
-		params:    params,
-	}
-
-	list.actionList = NewActionList()
-
+func NewList(title string, items ...types.ListItem) *List {
 	filter := NewFilter()
 	filter.DrawLines = true
 
-	list.filter = filter
+	list := &List{
+		header:     NewHeader(),
+		actionList: NewActionList(),
+		footer:     NewFooter(title),
+		filter:     filter,
+	}
 
-	return &list
+	list.SetItems(items...)
+	return list
 }
 
 func (c *List) Init() tea.Cmd {
-	return tea.Batch(FocusCmd, c.header.SetIsLoading(true), c.Reload)
-}
-
-func (c *List) Reload() tea.Msg {
-	output, err := c.extension.Run(c.command.Name, pkg.CommandInput{
-		Params: c.params,
-	})
-	if err != nil {
-		return err
-	}
-
-	if err := pkg.ValidatePage(output); err != nil {
-		return err
-	}
-
-	var list pkg.List
-	if err := json.Unmarshal(output, &list); err != nil {
-		return err
-	}
-
-	return list
+	return tea.Batch(FocusCmd)
 }
 
 func (c *List) SetSize(width, height int) {
@@ -84,18 +51,14 @@ func (c List) Selection() *ListItem {
 	return &item
 }
 
-func (c *List) SetItems(items []ListItem, selectedId string) {
+func (c *List) SetItems(items ...types.ListItem) {
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
-		filterItems[i] = item
+		filterItems[i] = ListItem(item)
 	}
 
-	c.filter.SetItems(filterItems)
+	c.filter.SetItems(filterItems...)
 	c.filter.FilterItems(c.Query())
-	if selectedId != "" {
-		c.filter.Select(selectedId)
-	}
-
 	c.updateSelection(c.filter)
 }
 
@@ -104,10 +67,6 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (l *List) updateSelection(filter Filter) FilterItem {
-	if l.page == nil {
-		return nil
-	}
-
 	if filter.Selection() != nil {
 		item := filter.Selection().(ListItem)
 		l.actionList.SetTitle(item.Title)
@@ -122,21 +81,6 @@ func (l *List) updateSelection(filter Filter) FilterItem {
 		return filter.Selection()
 	}
 
-	if l.page.EmptyView == nil {
-		return nil
-	}
-
-	actions := l.page.EmptyView.Actions
-	l.actionList.SetTitle("Empty Actions")
-	l.actionList.SetActions(l.page.EmptyView.Actions...)
-
-	if len(l.page.EmptyView.Actions) > 0 {
-		l.footer.SetBindings(
-			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
-			key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Actions")),
-		)
-	}
-
 	return nil
 }
 
@@ -145,19 +89,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case pkg.List:
-		c.page = &msg
-		c.SetIsLoading(false)
-
-		items := make([]ListItem, len(msg.Items))
-		for i, item := range c.page.Items {
-			items[i] = ListItem(item)
-		}
-
-		c.SetItems(items, "")
-		if c.page.Title != "" {
-			c.footer.title = msg.Title
-		}
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
@@ -191,25 +122,25 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, nil
 			}
 
-			return c, nil
+			return c, c.actionList.Focus()
 		case "enter":
 			if c.actionList.Focused() {
 				break
 			}
 
-			var actions []pkg.Action
-			if c.filter.Selection() != nil {
+			return c, func() tea.Msg {
+				selection := c.filter.Selection()
+				if selection == nil {
+					return nil
+				}
+
 				item := c.filter.Selection().(ListItem)
-				actions = item.Actions
-			} else {
-				actions = c.page.EmptyView.Actions
-			}
+				if len(item.Actions) == 0 {
+					return nil
+				}
 
-			if len(actions) == 0 {
-				break
+				return item.Actions[0]
 			}
-
-			return c, runAction(actions[0], c.extension)
 		}
 	}
 

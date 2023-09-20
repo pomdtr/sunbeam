@@ -3,12 +3,19 @@
     "type": "object",
     "required": [
         "title",
+        "items",
         "commands"
     ],
     "additionalProperties": false,
     "properties": {
         "title": {
             "type": "string"
+        },
+        "items": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/item"
+            }
         },
         "homepage": {
             "type": "string"
@@ -17,70 +24,116 @@
             "type": "string"
         },
         "commands": {
-            "type": "array",
-            "items": {
-                "$ref": "#/$defs/command"
+            "type": "object",
+            "patternProperties": {
+                ".+": {
+                    "$ref": "#/definitions/command"
+                }
             }
         }
     },
-    "$defs": {
-        "command": {
-            "oneOf": [
-                {
-                    "type": "object",
-                    "required": [
-                        "name",
-                        "mode",
-                        "title"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "name": {
-                            "type": "string"
-                        },
-                        "title": {
-                            "type": "string"
-                        },
-                        "mode": {
-                            "type": "string",
-                            "enum": [
-                                "filter",
-                                "generator",
-                                "detail",
-                                "form",
-                                "silent"
-                            ]
-                        },
-                        "params": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/$defs/param"
-                            }
-                        }
-                    }
-                }
-            ]
-        },
-        "param": {
+    "definitions": {
+        "item": {
             "type": "object",
             "required": [
-                "name",
-                "type"
+                "command"
             ],
             "additionalProperties": false,
             "properties": {
-                "name": {
+                "command": {
                     "type": "string"
                 },
-                "type": {
-                    "type": "string",
+                "title": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "object",
+                    "patternProperties": {
+                        ".+": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "boolean"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "command": {
+            "type": "object",
+            "required": [
+                "title",
+                "mode"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "mode": {
                     "enum": [
-                        "string",
-                        "boolean"
+                        "page",
+                        "action",
+                        "silent"
                     ]
                 },
-                "optional": {
-                    "type": "boolean"
+                "title": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "object",
+                    "patternProperties": {
+                        ".+": {
+                            "type": "object",
+                            "required": [
+                                "type"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "string",
+                                        "boolean"
+                                    ]
+                                },
+                                "optional": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                },
+                "prefs": {
+                    "type": "object",
+                    "patternProperties": {
+                        ".+": {
+                            "type": "object",
+                            "required": [
+                                "type"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "string",
+                                        "boolean"
+                                    ]
+                                },
+                                "optional": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

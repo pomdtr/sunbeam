@@ -12,7 +12,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "list",
                 title: "List Passwords",
-                mode: "filter",
+                mode: "list",
             }
         ]
     }'

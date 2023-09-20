@@ -1,4 +1,4 @@
-package internal
+package tui
 
 import (
 	"fmt"
@@ -10,8 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"github.com/pomdtr/sunbeam/pkg"
+	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type FormInput interface {
@@ -33,19 +32,19 @@ type FormItem struct {
 	Name     string
 }
 
-func NewFormItem(item pkg.FormItem) (*FormItem, error) {
+func NewFormItem(item types.FormItem) *FormItem {
 	var input FormInput
 	switch item.Type {
-	case pkg.TextInput:
+	case types.TextInput:
 		input = NewTextInput(item)
-	case pkg.TextAreaInput:
+	case types.TextAreaInput:
 		input = NewTextArea(item)
-	case pkg.CheckboxInput:
+	case types.CheckboxInput:
 		input = NewCheckbox(item)
-	case pkg.SelectInput:
+	case types.SelectInput:
 		input = NewDropDown(item)
 	default:
-		return nil, fmt.Errorf("invalid form input type")
+		return nil
 	}
 
 	return &FormItem{
@@ -53,7 +52,7 @@ func NewFormItem(item pkg.FormItem) (*FormItem, error) {
 		Title:     item.Title,
 		Optional:  item.Optional,
 		FormInput: input,
-	}, nil
+	}
 }
 
 type TextArea struct {
@@ -65,7 +64,7 @@ func (ta *TextArea) Title() string {
 	return ta.title
 }
 
-func NewTextArea(formItem pkg.FormItem) *TextArea {
+func NewTextArea(formItem types.FormItem) *TextArea {
 	ta := textarea.New()
 	ta.Cursor.SetMode(cursor.CursorStatic)
 	ta.Prompt = ""
@@ -106,7 +105,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(input pkg.FormItem) *TextInput {
+func NewTextInput(input types.FormItem) *TextInput {
 	ti := textinput.New()
 	ti.Cursor.SetMode(cursor.CursorStatic)
 	ti.Prompt = ""
@@ -169,7 +168,7 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(input pkg.FormItem) *Checkbox {
+func NewCheckbox(input types.FormItem) *Checkbox {
 	var defaultValue bool
 	if input.Default != nil {
 		defaultValue = input.Default.(bool)
@@ -268,7 +267,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem pkg.FormItem) *DropDown {
+func NewDropDown(formItem types.FormItem) *DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 
@@ -306,7 +305,7 @@ func NewDropDown(formItem pkg.FormItem) *DropDown {
 	dropdown.textinput = ti
 
 	filter := NewFilter()
-	filter.SetItems(choices)
+	filter.SetItems(choices...)
 	if defaultId != "" {
 		filter.Select(defaultId)
 	}

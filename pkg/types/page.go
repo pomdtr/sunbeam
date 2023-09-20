@@ -1,4 +1,12 @@
-package pkg
+package types
+
+type PageType string
+
+const (
+	PageTypeList   PageType = "list"
+	PageTypeForm   PageType = "form"
+	PageTypeDetail PageType = "detail"
+)
 
 type List struct {
 	Title     string     `json:"title,omitempty"`
@@ -71,16 +79,18 @@ type FormItem struct {
 type ActionType string
 
 const (
-	ActionTypeRun  ActionType = "run"
-	ActionTypePush ActionType = "push"
-	ActionTypeOpen ActionType = "open"
-	ActionTypeCopy ActionType = "copy"
+	ActionTypeRun    ActionType = "run"
+	ActionTypeOpen   ActionType = "open"
+	ActionTypeCopy   ActionType = "copy"
+	ActionTypeReload ActionType = "reload"
 )
 
 type Action struct {
-	Title string     `json:"title,omitempty"`
-	Key   string     `json:"key,omitempty"`
-	Type  ActionType `json:"type,omitempty"`
+	Title  string     `json:"title,omitempty"`
+	Key    string     `json:"key,omitempty"`
+	Type   ActionType `json:"type,omitempty"`
+	Exit   bool       `json:"exit,omitempty"`
+	Reload bool       `json:"reload,omitempty"`
 
 	Text string `json:"text,omitempty"`
 
@@ -90,9 +100,7 @@ type Action struct {
 }
 
 type CommandRef struct {
-	Alias  string         `json:"-"`
-	Name   string         `json:"name"`
-	Params map[string]any `json:"params,omitempty"`
+	Extension string         `json:"-"`
+	Name      string         `json:"name"`
+	Params    map[string]any `json:"params,omitempty"`
 }
-
-type CommandParams map[string]any

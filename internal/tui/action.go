@@ -1,24 +1,22 @@
-package internal
+package tui
 
 import (
 	"fmt"
 
-	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/cli/browser"
-	"github.com/pomdtr/sunbeam/pkg"
+	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type ActionList struct {
-	actions []pkg.Action
+	actions []types.Action
 	header  Header
 	filter  Filter
 	footer  Footer
 }
 
-func NewActionList() ActionList {
+func NewActionList(actions ...types.Action) ActionList {
 	filter := NewFilter()
 	filter.DrawLines = true
 
@@ -28,11 +26,14 @@ func NewActionList() ActionList {
 		key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", "Confirm")),
 	)
 
-	return ActionList{
+	al := ActionList{
 		header: header,
 		filter: filter,
 		footer: footer,
 	}
+	al.SetActions(actions...)
+
+	return al
 }
 
 func (al *ActionList) SetSize(w, h int) {
@@ -47,7 +48,7 @@ func (al *ActionList) SetTitle(title string) {
 	al.footer.title = title
 }
 
-func (al *ActionList) SetActions(actions ...pkg.Action) {
+func (al *ActionList) SetActions(actions ...types.Action) {
 	al.actions = actions
 	filterItems := make([]FilterItem, len(actions))
 	for i, action := range actions {
@@ -59,15 +60,15 @@ func (al *ActionList) SetActions(actions ...pkg.Action) {
 		}
 
 		filterItems[i] = ListItem(
-			pkg.ListItem{
+			types.ListItem{
 				Title:    action.Title,
 				Subtitle: subtitle,
-				Actions:  []pkg.Action{action},
+				Actions:  []types.Action{action},
 			},
 		)
 	}
 
-	al.filter.SetItems(filterItems)
+	al.filter.SetItems(filterItems...)
 	al.filter.FilterItems(al.header.Value())
 }
 
@@ -149,7 +150,10 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 
 func (al ActionList) Focused() bool {
 	return al.header.input.Focused()
+}
 
+func (al *ActionList) Focus() tea.Cmd {
+	return al.header.input.Focus()
 }
 
 func (al *ActionList) Clear() {
@@ -170,44 +174,4 @@ func (al ActionList) View() string {
 		al.filter.View(),
 		al.footer.View(),
 	)
-}
-
-func runAction(action pkg.Action, extension Extension) tea.Cmd {
-	return func() tea.Msg {
-		switch action.Type {
-		case pkg.ActionTypeCopy:
-			if err := clipboard.WriteAll(action.Text); err != nil {
-				return fmt.Errorf("could not copy to clipboard: %s", action.Text)
-			}
-
-			return ExitMsg{}
-		case pkg.ActionTypeOpen:
-			if err := browser.OpenURL(action.Url); err != nil {
-				return fmt.Errorf("could not open url: %s", action.Url)
-			}
-
-			return ExitMsg{}
-		case pkg.ActionTypeRun:
-			_, err := extension.Run(action.Command.Name, pkg.CommandInput{
-				Params: action.Command.Params,
-			})
-			if err != nil {
-				return err
-			}
-
-			return ExitMsg{}
-		case pkg.ActionTypePush:
-			page, err := CommandToPage(extension, pkg.CommandRef{
-				Name:   action.Command.Name,
-				Params: action.Command.Params,
-			})
-			if err != nil {
-				return err
-			}
-
-			return PushPageMsg{Page: page}
-		}
-
-		return nil
-	}
 }

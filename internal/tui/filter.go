@@ -1,4 +1,4 @@
-package internal
+package tui
 
 import (
 	"sort"
@@ -51,7 +51,7 @@ func (f Filter) Selection() FilterItem {
 	return f.filtered[f.cursor]
 }
 
-func (f *Filter) SetItems(items []FilterItem) {
+func (f *Filter) SetItems(items ...FilterItem) {
 	f.items = items
 	f.filtered = items
 }

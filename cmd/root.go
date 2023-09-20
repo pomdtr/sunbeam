@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal"
-	"github.com/pomdtr/sunbeam/pkg"
+	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"github.com/tailscale/hujson"
+	"muzzammil.xyz/jsonc"
 )
 
 const (
@@ -25,47 +28,83 @@ var (
 	Date    = "unknown"
 )
 
-func getOptions() internal.SunbeamOptions {
-	return internal.SunbeamOptions{
-		MaxHeight:  LookupIntEnv("SUNBEAM_HEIGHT", 30),
-		MaxWidth:   LookupIntEnv("SUNBEAM_WIDTH", 100),
-		FullScreen: LookupBoolEnv("SUNBEAM_FULLSCREEN", true),
-		Border:     LookupBoolEnv("SUNBEAM_BORDER", true),
-		Margin:     LookupIntEnv("SUNBEAM_MARGIN", 1),
-		NoColor:    LookupBoolEnv("NO_COLOR", false),
-	}
-}
+type ExtensionCache map[string]types.Manifest
 
-func ConfigDir() (string, error) {
-	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
-		return filepath.Join(env, "sunbeam"), nil
-	}
+func LoadConfig() (tui.Config, error) {
+	var config tui.Config
 
-	switch runtime.GOOS {
-	case "darwin":
+	var candidates []string
+	if runtime.GOOS == "darwin" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return "", err
+			return config, err
 		}
 
-		return filepath.Join(homeDir, ".config", "sunbeam"), nil
-	default:
+		candidates = append(candidates, filepath.Join(homeDir, ".config", "sunbeam", "config.json"))
+		candidates = append(candidates, filepath.Join(homeDir, ".config", "sunbeam", "config.jsonc"))
+	} else {
 		configHome, err := os.UserConfigDir()
 		if err != nil {
-			return "", err
+			return config, err
 		}
 
-		return filepath.Join(configHome, "sunbeam"), nil
+		candidates = append(candidates, filepath.Join(configHome, "sunbeam", "config.json"))
+		candidates = append(candidates, filepath.Join(configHome, "sunbeam", "config.jsonc"))
 	}
+
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err != nil {
+			continue
+		}
+
+		bytes, err := os.ReadFile(candidate)
+		if err != nil {
+			return config, err
+		}
+
+		if strings.HasSuffix(candidate, ".jsonc") {
+			b, err := hujson.Standardize(bytes)
+			if err != nil {
+				return config, err
+			}
+			bytes = b
+		}
+
+		if err := jsonc.Unmarshal(bytes, &config); err != nil {
+			return config, err
+		}
+
+		return config, nil
+	}
+
+	return tui.Config{
+		Extensions: make(map[string]string),
+		Window: tui.WindowOptions{
+			Height: 0,
+			Margin: 0,
+			Border: true,
+		},
+	}, nil
 }
 
 func NewRootCmd() (*cobra.Command, error) {
-	configDir, err := ConfigDir()
+	config, err := LoadConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	extensions, err := internal.LoadExtensions(filepath.Join(configDir, "extensions.json"))
+	config.Window.Height = LookupIntEnv("SUNBEAM_HEIGHT", config.Window.Height)
+	config.Window.Margin = LookupIntEnv("SUNBEAM_MARGIN", config.Window.Margin)
+	config.Window.Border = LookupBoolEnv("SUNBEAM_BORDER", config.Window.Border)
+
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return nil, err
+	}
+
+	cachePath := filepath.Join(cacheDir, "sunbeam", "extensions.json")
+
+	extensions, err := tui.LoadExtensions(config, cachePath)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +119,15 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return internal.Draw(internal.NewRootPage(extensions.Map()), getOptions())
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				if err := encoder.Encode(extensions); err != nil {
+					return err
+				}
+			}
+
+			return tui.Draw(tui.NewRootPage(extensions), config.Window)
 		},
 	}
 
@@ -88,10 +135,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 	)
 
-	rootCmd.AddCommand(NewExtensionCmd(extensions))
-	rootCmd.AddCommand(NewCmdRun())
+	rootCmd.AddCommand(NewCmdUpdate(config, cachePath))
+	rootCmd.AddCommand(NewCmdRun(extensions, config.Window))
 	rootCmd.AddCommand(NewCmdServe(extensions))
-	rootCmd.AddCommand(NewCmdParse())
 	rootCmd.AddCommand(NewValidateCmd())
 
 	docCmd := &cobra.Command{
@@ -137,8 +183,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddGroup(
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
 	)
-	for alias, extension := range extensions.Map() {
-		cmd, err := NewCustomCmd(alias, extension)
+	for _, alias := range extensions.List() {
+		cmd, err := NewCustomCmd(extensions, alias, config.Window)
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +225,12 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(alias string, extension internal.Extension) (*cobra.Command, error) {
+func NewCustomCmd(extensions tui.Extensions, alias string, options tui.WindowOptions) (*cobra.Command, error) {
+	extension, ok := extensions[alias]
+	if !ok {
+		return nil, fmt.Errorf("extension %s does not exist", alias)
+	}
+
 	cmd := &cobra.Command{
 		Use:          alias,
 		Short:        extension.Manifest.Title,
@@ -187,10 +238,15 @@ func NewCustomCmd(alias string, extension internal.Extension) (*cobra.Command, e
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensions := map[string]internal.Extension{
-				alias: extension,
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				if err := encoder.Encode(extension); err != nil {
+					return err
+				}
 			}
-			return internal.Draw(internal.NewRootPage(extensions), getOptions())
+
+			return tui.Draw(tui.NewRootPage(extensions, alias), options)
 		},
 		GroupID: extensionGroupID,
 	}
@@ -198,39 +254,40 @@ func NewCustomCmd(alias string, extension internal.Extension) (*cobra.Command, e
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	cmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
-	for _, command := range extension.Manifest.Commands {
+	for name, command := range extension.Manifest.Commands {
+		name := name
 		command := command
 		subcmd := &cobra.Command{
-			Use:   command.Name,
+			Use:   name,
 			Short: command.Title,
 			Long:  command.Description,
 			Args:  cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error {
-				params := make(map[string]any)
-				for _, param := range command.Params {
-					switch param.Type {
-					case pkg.ParamTypeString:
-						value, err := cmd.Flags().GetString(param.Name)
+				args := make(map[string]any)
+				for name, arg := range command.Params {
+					switch arg.Type {
+					case types.ParamTypeString:
+						value, err := cmd.Flags().GetString(name)
 						if err != nil {
 							return err
 						}
 
-						params[param.Name] = value
-					case pkg.ParamTypeBoolean:
-						value, err := cmd.Flags().GetBool(param.Name)
+						args[name] = value
+					case types.ParamTypeBoolean:
+						value, err := cmd.Flags().GetBool(name)
 						if err != nil {
 							return err
 						}
 
-						params[param.Name] = value
+						args[name] = value
 					default:
-						return fmt.Errorf("unsupported argument type: %s", param.Type)
+						return fmt.Errorf("unsupported argument type: %s", arg.Type)
 					}
 				}
 
-				if os.Getenv("CI") != "" || !isatty.IsTerminal(os.Stdout.Fd()) {
-					output, err := extension.Run(command.Name, pkg.CommandInput{
-						Params: params,
+				if !isatty.IsTerminal(os.Stdout.Fd()) {
+					output, err := extension.Run(name, tui.CommandInput{
+						Params: args,
 					})
 					if err != nil {
 						return err
@@ -240,30 +297,26 @@ func NewCustomCmd(alias string, extension internal.Extension) (*cobra.Command, e
 					return nil
 				}
 
-				page, err := internal.CommandToPage(extension, pkg.CommandRef{
-					Name:   command.Name,
-					Params: params,
-				})
-				if err != nil {
-					return err
-				}
-
-				return internal.Draw(page, getOptions())
+				return tui.Draw(tui.NewCommand(extensions, types.CommandRef{
+					Extension: alias,
+					Name:      name,
+					Params:    args,
+				}), options)
 			},
 		}
 
-		for _, param := range command.Params {
-			switch param.Type {
-			case pkg.ParamTypeString:
-				subcmd.Flags().String(param.Name, "", param.Description)
-			case pkg.ParamTypeBoolean:
-				subcmd.Flags().Bool(param.Name, false, param.Description)
+		for name, arg := range command.Params {
+			switch arg.Type {
+			case types.ParamTypeString:
+				subcmd.Flags().String(name, "", arg.Description)
+			case types.ParamTypeBoolean:
+				subcmd.Flags().Bool(name, false, arg.Description)
 			default:
-				return nil, fmt.Errorf("unsupported argument type: %s", param.Type)
+				return nil, fmt.Errorf("unsupported argument type: %s", arg.Type)
 			}
 
-			if !param.Optional {
-				subcmd.MarkFlagRequired(param.Name)
+			if !arg.Optional {
+				subcmd.MarkFlagRequired(name)
 			}
 		}
 

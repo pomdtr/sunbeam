@@ -1,9 +1,11 @@
 import json2ts from "npm:json-schema-to-typescript";
 import { build, emptyDir } from "$dnt/mod.ts";
 
-for (const name of ["page", "manifest"]) {
-  // compile from file
-  const ts = await json2ts.compileFromFile(`../schemas/${name}.schema.json`);
+// compile from file
+for (const name of ["manifest", "page", "config"]) {
+  const ts = await json2ts.compileFromFile(`../schemas/${name}.schema.json`, {
+    cwd: "../schemas",
+  });
   Deno.writeTextFileSync(`./${name}.ts`, ts);
 }
 

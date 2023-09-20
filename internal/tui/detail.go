@@ -1,8 +1,7 @@
-package internal
+package tui
 
 import (
 	"bytes"
-	"encoding/json"
 
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/bubbles/key"
@@ -10,7 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
-	"github.com/pomdtr/sunbeam/pkg"
+	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 var theme string
@@ -29,20 +28,26 @@ type Detail struct {
 	viewport   viewport.Model
 	actionList ActionList
 	footer     Footer
-
-	page      *pkg.Detail
-	extension Extension
-	command   pkg.Command
-	params    pkg.CommandParams
+	text       string
+	language   string
 }
 
-func NewDetail(extension Extension, command pkg.Command, params pkg.CommandParams) *Detail {
-	footer := NewFooter(command.Title)
+func NewDetail(title string, text string, actions ...types.Action) *Detail {
+	footer := NewFooter(title)
+	if len(actions) == 1 {
+		footer.SetBindings(
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
+		)
+	} else if len(actions) > 1 {
+		footer.SetBindings(
+			key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", actions[0].Title)),
+			key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "Actions")),
+		)
+	}
 
-	actionList := NewActionList()
+	actionList := NewActionList(actions...)
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
-
 	header := NewHeader()
 
 	d := Detail{
@@ -50,36 +55,14 @@ func NewDetail(extension Extension, command pkg.Command, params pkg.CommandParam
 		header:     header,
 		actionList: actionList,
 		footer:     footer,
-
-		extension: extension,
-		command:   command,
-		params:    params,
+		text:       text,
 	}
+	d.RefreshContent()
 
 	return &d
 }
 func (d *Detail) Init() tea.Cmd {
-	return tea.Batch(d.header.SetIsLoading(true), d.Reload)
-}
-
-func (d *Detail) Reload() tea.Msg {
-	output, err := d.extension.Run(d.command.Name, pkg.CommandInput{
-		Params: d.params,
-	})
-	if err != nil {
-		return err
-	}
-
-	if err := pkg.ValidatePage(output); err != nil {
-		return err
-	}
-
-	var page pkg.Detail
-	if err := json.Unmarshal(output, &page); err != nil {
-		return err
-	}
-
-	return page
+	return nil
 }
 
 type DetailMsg string
@@ -90,25 +73,6 @@ func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
 
 func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
-	case pkg.Detail:
-		c.page = &msg
-		c.SetIsLoading(false)
-		c.RefreshContent()
-		c.actionList.SetActions(msg.Actions...)
-		if len(msg.Actions) == 1 {
-			c.footer.SetBindings(
-				key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", msg.Actions[0].Title)),
-			)
-		} else if len(msg.Actions) > 1 {
-			c.footer.SetBindings(
-				key.NewBinding(key.WithKeys("enter"), key.WithHelp("↩", msg.Actions[0].Title)),
-				key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "Actions")),
-			)
-		}
-
-		if msg.Title != "" {
-			c.footer.title = msg.Title
-		}
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q":
@@ -124,11 +88,11 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 
-			if len(c.actionList.actions) == 0 {
+			if len(c.actionList.actions) < 2 {
 				return c, nil
 			}
-			return c, nil
 
+			return c, c.actionList.Focus()
 		case "esc":
 			if c.actionList.Focused() {
 				break
@@ -141,12 +105,14 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 
-			actions := c.actionList.actions
-			if len(actions) == 0 {
-				return c, nil
-			}
+			return c, func() tea.Msg {
+				actions := c.actionList.actions
+				if len(actions) == 0 {
+					return nil
+				}
 
-			return c, runAction(actions[0], c.extension)
+				return actions[0]
+			}
 		}
 	}
 	var cmds []tea.Cmd
@@ -165,20 +131,17 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *Detail) RefreshContent() error {
-	if c.page == nil {
-		return nil
-	}
-
 	writer := bytes.Buffer{}
-	err := quick.Highlight(&writer, c.page.Text, c.page.Language, "terminal16", theme)
-	if err != nil {
-		return err
+	text := c.text
+	if c.language != "" {
+		err := quick.Highlight(&writer, c.text, c.language, "terminal16", theme)
+		if err != nil {
+			return err
+		}
+		text = writer.String()
 	}
 
-	text := wordwrap.String(writer.String(), c.viewport.Width-2)
-
-	c.viewport.SetContent(text)
-
+	c.viewport.SetContent(wordwrap.String(text, c.viewport.Width-2))
 	return nil
 }
 

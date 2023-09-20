@@ -12,8 +12,8 @@ if [ $# -eq 0 ]; then
 jq -n '{
     title: "GitHub",
     commands: [
-        {mode: "filter", name: "list-repos", title: "List Repositories"},
-        {mode: "filter", name: "list-prs", title: "List Pull Requests", params: [{name: "repository", type: "string"}]}
+        {output: "list", name: "list-repos", title: "List Repositories"},
+        {output: "list", name: "list-prs", title: "List Pull Requests", params: [{name: "repository", type: "string"}]}
     ]
 }'
 exit 0

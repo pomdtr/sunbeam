@@ -3,11 +3,11 @@ package cmd
 import (
 	"path/filepath"
 
-	"github.com/pomdtr/sunbeam/internal"
+	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdRun() *cobra.Command {
+func NewCmdRun(extensions tui.Extensions, options tui.WindowOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                "run <origin> [args...]",
 		Short:              "Run an extension without installing it",
@@ -15,12 +15,12 @@ func NewCmdRun() *cobra.Command {
 		GroupID:            coreGroupID,
 		DisableFlagParsing: true,
 		RunE: func(_ *cobra.Command, args []string) error {
-			origin, err := parseOrigin(args[0])
+			origin, err := tui.ParseOrigin(args[0])
 			if err != nil {
 				return err
 			}
 
-			manifest, err := internal.LoadManifest(origin)
+			manifest, err := tui.LoadManifest(origin)
 			if err != nil {
 				return err
 			}
@@ -30,12 +30,12 @@ func NewCmdRun() *cobra.Command {
 				alias = origin.Hostname()
 			}
 
-			extension := internal.Extension{
-				Origin:   origin.String(),
+			extensions[alias] = tui.Extension{
+				Origin:   origin,
 				Manifest: manifest,
 			}
 
-			scriptCmd, err := NewCustomCmd(alias, extension)
+			scriptCmd, err := NewCustomCmd(extensions, alias, options)
 			if err != nil {
 				return err
 			}

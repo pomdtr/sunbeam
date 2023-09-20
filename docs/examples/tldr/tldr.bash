@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# This script is an example of how to use tldr with sunbeam
 set -euo pipefail
 
 # check if jq is installed
@@ -8,40 +9,51 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
+# check if tldr is installed
+if ! command -v tldr &> /dev/null; then
+    echo "tldr is not installed"
+    exit 1
+fi
+
+
+# if no arguments are passed, return the extension's manifest
 if [ $# -eq 0 ]; then
     jq -n '
 {
     title: "TLDR Pages",
-    commands: [
-        {
-            name: "list",
-            title: "List TLDR pages",
-            mode: "filter",
-        },
-        {
-            name: "view",
-            title: "View TLDR page",
-            mode: "detail",
-            params: [
-                {
-                    name: "command",
-                    type: "string",
-                }
-            ]
-        }
-    ]
+    # items are displayed in the root list
+    items: [
+        { command: "list" },
+        { command: "view", title: "View jq page", params: { page: "jq" }},
+        { command: "view", title: "View curl page", params: { page: "curl" }}
+    ],
+    # each command can be called through the cli
+    commands: {
+        list: { mode: "page", title: "List TLDR pages" },
+        view: { mode: "page", title: "View TLDR page", params: { page: { type: "string" } } }
+    }
 }'
 exit 0
 fi
 
-if [ "$1" = "list" ]; then
+# read input from stdin
+INPUT=$(cat)
+COMMAND=$1
+
+# handle commands
+if [ "$COMMAND" = "list" ]; then
     tldr --list | jq -R '{
         title: .,
         actions: [
-            {type: "push", title: "View", command: { name: "view", params: {command: .}}}
+            {type: "run", title: "View Page", command: { name: "view", params: {page: .}}}
         ]
-    }' | jq -s '{items: .}'
-elif [ "$1" = "view" ]; then
-    eval "$(sunbeam parse bash)"
-    tldr --raw "$COMMAND" | jq -sR '{text: ., language: "markdown", actions: [{type: "copy", title: "Copy", text: .}]}'
+    }' | jq -s '{
+            type: "list",
+            items: .
+        }'
+elif [ "$COMMAND" = "view" ]; then
+    PAGE=$(jq -r '.params.page' <<< "$INPUT")
+    tldr --raw "$PAGE" | jq -sR '{
+            type: "detail", text: ., language: "markdown", actions: [{type: "copy", title: "Copy", exit: true, text: .}]
+        }'
 fi

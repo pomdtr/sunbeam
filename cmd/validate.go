@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/pkg"
+	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/spf13/cobra"
 )
 
@@ -17,40 +17,40 @@ func NewValidateCmd() *cobra.Command {
 		GroupID: coreGroupID,
 	}
 
-	cmd.AddCommand(NewValidatePageCmd())
+	// cmd.AddCommand(NewValidatePageCmd())
 	cmd.AddCommand(NewValidateManifestCmd())
 
 	return cmd
 }
 
-func NewValidatePageCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "page",
-		Short: "Validate a page",
-		Args:  cobra.NoArgs,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if isatty.IsTerminal(os.Stdin.Fd()) {
-				return fmt.Errorf("no input provided")
-			}
+// func NewValidatePageCmd() *cobra.Command {
+// 	return &cobra.Command{
+// 		Use:   "page",
+// 		Short: "Validate a page",
+// 		Args:  cobra.NoArgs,
+// 		PreRunE: func(cmd *cobra.Command, args []string) error {
+// 			if isatty.IsTerminal(os.Stdin.Fd()) {
+// 				return fmt.Errorf("no input provided")
+// 			}
 
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			input, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return fmt.Errorf("unable to read stdin: %s", err)
-			}
+// 			return nil
+// 		},
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			input, err := io.ReadAll(os.Stdin)
+// 			if err != nil {
+// 				return fmt.Errorf("unable to read stdin: %s", err)
+// 			}
 
-			if err := pkg.ValidatePage(input); err != nil {
-				return err
-			}
+// 			// if err := schemas.ValidatePage(input); err != nil {
+// 			// 	return err
+// 			// }
 
-			fmt.Println("✅ Input is valid!")
-			return nil
-		},
-	}
+// 			fmt.Println("✅ Input is valid!")
+// 			return nil
+// 		},
+// 	}
 
-}
+// }
 
 func NewValidateManifestCmd() *cobra.Command {
 	return &cobra.Command{
@@ -70,7 +70,7 @@ func NewValidateManifestCmd() *cobra.Command {
 				return fmt.Errorf("unable to read stdin: %s", err)
 			}
 
-			if err := pkg.ValidateManifest(input); err != nil {
+			if err := schemas.ValidateManifest(input); err != nil {
 				return err
 			}
 

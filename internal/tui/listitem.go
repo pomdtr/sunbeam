@@ -1,15 +1,15 @@
-package internal
+package tui
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/pkg"
+	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 // Probably not necessary, need to be refactored
-type ListItem pkg.ListItem
+type ListItem types.ListItem
 
 func (i ListItem) ID() string {
 	if i.Id != "" {

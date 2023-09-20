@@ -1,23 +1,66 @@
-import type { Command, Manifest } from "./manifest.ts";
+import type { Command, Item, Manifest } from "./manifest.ts";
+import type { Action, Page } from "./page.ts";
 
 type RunProps = {
   params: Record<string, string | boolean>;
   query?: string;
 };
 
-export class Extension {
-  private manifest: Omit<Manifest, "commands">;
-  private _commands: Record<string, Command> = {};
-  private runners: Record<string, (props: RunProps) => unknown> = {};
+type CommandProps = Command & {
+  run: Runner;
+  items?: Item[];
+};
 
-  constructor(props: Omit<Manifest, "commands">) {
+export type Runner = (
+  props: RunProps,
+) => Page | Action | void | Promise<Page | Action | void>;
+
+export class Extension {
+  private manifest: Omit<Manifest, "commands" | "items">;
+  private _commands: Record<string, Command> = {};
+  private _items: Item[] = [];
+  private runners: Record<
+    string,
+    Runner
+  > = {};
+
+  constructor(props: Omit<Manifest, "commands" | "items">) {
     this.manifest = {
       ...props,
     };
   }
 
+  static load(
+    manifest: Manifest,
+    runners: Record<string, Runner>,
+  ) {
+    const extension = new Extension({
+      title: manifest.title,
+      description: manifest.description,
+      homepage: manifest.homepage,
+    });
+    extension._items.push(...manifest.items);
+
+    for (const [name, command] of Object.entries(manifest.commands)) {
+      const runner = runners[name];
+      if (!runner) {
+        throw new Error(`Command not found: ${name}`);
+      }
+      extension.command(name, {
+        ...command,
+        run: runner,
+      });
+    }
+
+    return extension;
+  }
+
   toJSON() {
-    return { ...this.manifest, commands: Object.values(this._commands) };
+    return {
+      ...this.manifest,
+      commands: Object.values(this._commands),
+      items: this._items,
+    };
   }
 
   get title() {
@@ -28,19 +71,24 @@ export class Extension {
     return this._commands;
   }
 
+  get items() {
+    return this._items;
+  }
+
   get homepage() {
     return this.manifest.homepage;
   }
 
   command(
-    params: Command & {
-      run: (props: RunProps) => unknown;
-    },
+    name: string,
+    props: CommandProps,
   ) {
-    const { run, ...command } = params;
-
-    this._commands[command.name] = command;
-    this.runners[command.name] = run;
+    const { run, ...command } = props;
+    this._commands[name] = command;
+    this.runners[name] = run;
+    if (props.items) {
+      this._items.push(...props.items);
+    }
 
     return this;
   }
@@ -53,27 +101,4 @@ export class Extension {
 
     return runner(props || { params: {} });
   }
-}
-
-export function createExtension(props: Omit<Manifest, "commands">) {
-  return new Extension(props);
-}
-
-export function loadExtension(
-  manifest: Manifest,
-  run: (command: string, props: RunProps) => unknown,
-) {
-  const extension = new Extension({
-    title: manifest.title,
-    description: manifest.description,
-  });
-
-  for (const command of manifest.commands) {
-    extension.command({
-      ...command,
-      run: (props) => run(command.name, props),
-    });
-  }
-
-  return extension;
 }

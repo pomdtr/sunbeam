@@ -13,6 +13,10 @@ export type Action =
        */
       type: "copy";
       /**
+       * Whether to exit the app after copying.
+       */
+      exit?: boolean;
+      /**
        * The title of the action.
        */
       title?: string;
@@ -30,6 +34,10 @@ export type Action =
        * The type of the action.
        */
       type: "open";
+      /**
+       * Whether to exit the app after opening.
+       */
+      exit?: boolean;
       /**
        * The title of the action.
        */
@@ -59,6 +67,7 @@ export type Action =
       command: Command;
     }
   | {
+      type: "reload";
       /**
        * The title of the action.
        */
@@ -67,8 +76,24 @@ export type Action =
        * The key used as a shortcut.
        */
       key?: string;
-      type: "push";
-      command: Command;
+    };
+export type Command =
+  | string
+  | {
+      /**
+       * The name of the command.
+       */
+      name: string;
+      /**
+       * The params of the command.
+       */
+      params?: {
+        /**
+         * This interface was referenced by `undefined`'s JSON-Schema definition
+         * via the `patternProperty` ".*".
+         */
+        [k: string]: string | boolean;
+      };
     };
 export type Formitem =
   | {
@@ -175,6 +200,10 @@ export type Formitem =
 
 export interface List {
   /**
+   * The type of the page.
+   */
+  type: "list";
+  /**
    * The title of the page.
    */
   title?: string;
@@ -192,17 +221,6 @@ export interface List {
    * The items in the list.
    */
   items: Listitem[];
-}
-export interface Command {
-  name: string;
-  params?: Params;
-}
-export interface Params {
-  /**
-   * This interface was referenced by `Params`'s JSON-Schema definition
-   * via the `patternProperty` ".+".
-   */
-  [k: string]: string | boolean;
 }
 export interface Listitem {
   /**
@@ -234,6 +252,10 @@ export interface Detail {
    * The title of the page.
    */
   title?: string;
+  /**
+   * The type of the page.
+   */
+  type: "detail";
   language?: string;
   /**
    * The text to show in the detail view.
@@ -245,6 +267,10 @@ export interface Detail {
   actions?: Action[];
 }
 export interface Form {
+  /**
+   * The type of the page.
+   */
+  type: "form";
   /**
    * The title of the page.
    */
