@@ -110,10 +110,10 @@
                 "command": {
                     "$ref": "#/definitions/command"
                 },
-                "items": {
+                "inputs": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/formitem"
+                        "$ref": "#/definitions/input"
                     }
                 }
             }
@@ -152,7 +152,7 @@
                 }
             }
         },
-        "formitem": {
+        "input": {
             "oneOf": [
                 {
                     "type": "object",

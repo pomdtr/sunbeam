@@ -6,6 +6,9 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
+      "args": [
+        "tldr"
+      ]
     },
   ]
 }

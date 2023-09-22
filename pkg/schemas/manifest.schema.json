@@ -3,19 +3,12 @@
     "type": "object",
     "required": [
         "title",
-        "items",
         "commands"
     ],
     "additionalProperties": false,
     "properties": {
         "title": {
             "type": "string"
-        },
-        "items": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/item"
-            }
         },
         "homepage": {
             "type": "string"
@@ -24,49 +17,18 @@
             "type": "string"
         },
         "commands": {
-            "type": "object",
-            "patternProperties": {
-                ".+": {
-                    "$ref": "#/definitions/command"
-                }
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/command"
             }
         }
     },
     "definitions": {
-        "item": {
-            "type": "object",
-            "required": [
-                "command"
-            ],
-            "additionalProperties": false,
-            "properties": {
-                "command": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "params": {
-                    "type": "object",
-                    "patternProperties": {
-                        ".+": {
-                            "oneOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "boolean"
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "command": {
             "type": "object",
             "required": [
                 "title",
+                "name",
                 "mode"
             ],
             "additionalProperties": false,
@@ -81,29 +43,33 @@
                 "title": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "params": {
-                    "type": "object",
-                    "patternProperties": {
-                        ".+": {
-                            "type": "object",
-                            "required": [
-                                "type"
-                            ],
-                            "additionalProperties": false,
-                            "properties": {
-                                "name": {
-                                    "type": "string"
-                                },
-                                "type": {
-                                    "type": "string",
-                                    "enum": [
-                                        "string",
-                                        "boolean"
-                                    ]
-                                },
-                                "optional": {
-                                    "type": "boolean"
-                                }
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "type"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "string",
+                                    "boolean"
+                                ]
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "optional": {
+                                "type": "boolean"
                             }
                         }
                     }

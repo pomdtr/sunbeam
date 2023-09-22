@@ -13,16 +13,22 @@ export interface Config {
      */
     [k: string]: string;
   };
-  items?: {
-    title?: string;
-    extension: string;
-    command: string;
-    params?: {
-      /**
-       * This interface was referenced by `undefined`'s JSON-Schema definition
-       * via the `patternProperty` ".+".
-       */
-      [k: string]: string | boolean;
-    };
-  }[];
+  items?: Rootitem[];
+  window?: {
+    border?: boolean;
+    height?: number;
+    margin?: number;
+  };
+}
+export interface Rootitem {
+  title: string;
+  extension: string;
+  command: string;
+  params?: {
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` ".+".
+     */
+    [k: string]: string | boolean;
+  };
 }

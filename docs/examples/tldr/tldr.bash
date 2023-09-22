@@ -21,17 +21,11 @@ if [ $# -eq 0 ]; then
     jq -n '
 {
     title: "TLDR Pages",
-    # items are displayed in the root list
-    items: [
-        { command: "list" },
-        { command: "view", title: "View jq page", params: { page: "jq" }},
-        { command: "view", title: "View curl page", params: { page: "curl" }}
-    ],
     # each command can be called through the cli
-    commands: {
-        list: { mode: "page", title: "List TLDR pages" },
-        view: { mode: "page", title: "View TLDR page", params: { page: { type: "string" } } }
-    }
+    commands: [
+        { name: "list", mode: "page", title: "List TLDR pages" },
+        { name: "view", mode: "page", title: "View TLDR page", params: [{ name: "page", type: "string", description: "page to show" }] }
+    ]
 }'
 exit 0
 fi

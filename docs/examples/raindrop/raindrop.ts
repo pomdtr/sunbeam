@@ -20,7 +20,7 @@ function fetchRaindrop(path: string, init?: RequestInit) {
   });
 }
 
-const extension = new sunbeam.Extension({
+const extension = new sunbeam.ExtensionClass({
   title: "Raindrop",
   description: "Search your Raindrop bookmarks",
 }).command({

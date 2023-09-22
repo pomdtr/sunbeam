@@ -1,14 +1,11 @@
 export type { Command, Manifest } from "./manifest.ts";
-export type { Config } from "./config.ts";
+export type { Config, Rootitem } from "./config.ts";
 export type {
   Action,
   Detail,
   Form,
-  Formitem,
+  Input,
   List,
   Listitem,
   Page,
 } from "./page.ts";
-
-export { Extension } from "./extension.ts";
-export type { Runner } from "./extension.ts";

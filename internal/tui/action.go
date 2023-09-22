@@ -118,8 +118,8 @@ func (al ActionList) Update(msg tea.Msg) (ActionList, tea.Cmd) {
 		default:
 			for _, action := range al.actions {
 				if msg.String() == fmt.Sprintf("alt+%s", action.Key) {
+					al.Blur()
 					return al, func() tea.Msg {
-						al.Blur()
 						return action
 					}
 				}

@@ -55,14 +55,12 @@ func (i ListItem) Render(width int, selected bool) string {
 		blanks = strings.Repeat(" ", availableWidth)
 	} else if width >= lipgloss.Width(title+accessories) {
 		subtitle = subtitle[:width-lipgloss.Width(title+accessories)]
-	} else if width >= lipgloss.Width(title) {
+	} else if width >= lipgloss.Width(accessories) {
 		subtitle = ""
-		start_index := len(accessories) - (width - lipgloss.Width(title)) + 1
-		accessories = " " + accessories[start_index:]
+		title = title[:width-lipgloss.Width(accessories)]
 	} else {
 		subtitle = ""
 		accessories = ""
-		// Why is this -1? I don't know, but it works
 		title = title[:min(len(title), width)]
 	}
 

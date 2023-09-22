@@ -57,10 +57,11 @@ func NewDetail(title string, text string, actions ...types.Action) *Detail {
 		footer:     footer,
 		text:       text,
 	}
-	d.RefreshContent()
 
+	d.RefreshContent()
 	return &d
 }
+
 func (d *Detail) Init() tea.Cmd {
 	return nil
 }
@@ -88,8 +89,8 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 
-			if len(c.actionList.actions) < 2 {
-				return c, nil
+			if len(c.actionList.actions) == 0 {
+				break
 			}
 
 			return c, c.actionList.Focus()
@@ -152,6 +153,8 @@ func (c *Detail) SetSize(width, height int) {
 	c.actionList.SetSize(width, height)
 
 	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
+
+	c.RefreshContent()
 }
 
 func (c *Detail) View() string {

@@ -5,21 +5,29 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
+if ! command -v bw &> /dev/null; then
+    echo "bw is not installed"
+    exit 1
+fi
+
 if [ $# -eq 0 ]; then
     jq -n '{
         title: "Bitwarden Vault",
         commands: [
             {
-                name: "list",
+                name: "list-passwords",
                 title: "List Passwords",
-                mode: "list",
+                mode: "page",
+                params: [
+                    {name: "session", type: "string", optional: true, description: "session token"}
+                ]
             }
         ]
     }'
     exit 0
 fi
 
-if [ "$1" = "list" ]; then
+if [ "$1" = "list-passwords" ]; then
     bw --nointeraction list items --session "$BW_SESSION" | jq '.[] | {
         title: .name,
         subtitle: (.login.username // ""),
@@ -38,5 +46,5 @@ if [ "$1" = "list" ]; then
                 key: "l"
             }
         ]
-    }' | jq -s '{items: .}'
+    }' | jq -s '{type: "list", items: .}'
 fi

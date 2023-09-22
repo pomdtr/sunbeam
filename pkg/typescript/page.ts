@@ -95,7 +95,7 @@ export type Command =
         [k: string]: string | boolean;
       };
     };
-export type Formitem =
+export type Input =
   | {
       /**
        * The title of the input.
@@ -276,5 +276,5 @@ export interface Form {
    */
   title?: string;
   command: Command;
-  items: Formitem[];
+  inputs?: Input[];
 }

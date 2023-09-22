@@ -20,20 +20,35 @@ import (
 
 type Config struct {
 	Extensions map[string]string `json:"extensions"`
+	Items      []types.RootItem  `json:"items"`
 	Window     WindowOptions     `json:"window"`
 }
 
 type Extension struct {
 	Origin *url.URL
+	Alias  string
 	types.Manifest
 }
 
 type CommandInput struct {
 	Query  string         `json:"query,omitempty"`
-	Params map[string]any `json:"params,omitempty"`
+	Params map[string]any `json:"params"`
+}
+
+func (e Extension) Command(name string) (types.Command, bool) {
+	for _, command := range e.Commands {
+		if command.Name == name {
+			return command, true
+		}
+	}
+
+	return types.Command{}, false
 }
 
 func (ext Extension) Run(commandName string, input CommandInput) ([]byte, error) {
+	if input.Params == nil {
+		input.Params = make(map[string]any)
+	}
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
@@ -136,107 +151,60 @@ func ParseOrigin(origin string) (*url.URL, error) {
 	return url, nil
 }
 
-func LoadExtensions(config Config, cachePath string) (Extensions, error) {
-	cache := make(map[string]types.Manifest)
-	if f, err := os.Open(cachePath); err == nil {
-		if err := json.NewDecoder(f).Decode(&cache); err != nil {
-			return nil, err
-		}
-	}
-
-	extensions := make(Extensions)
-	var dirty bool
-	for alias, origin := range config.Extensions {
-		originUrl, err := ParseOrigin(origin)
-		if err != nil {
-			return nil, err
-		}
-
-		if manifest, ok := cache[originUrl.String()]; ok {
-			extensions[alias] = Extension{
-				Origin:   originUrl,
-				Manifest: manifest,
-			}
-			continue
-		}
-
-		manifest, err := LoadManifest(originUrl)
-		if err != nil {
-			return nil, err
-		}
-
-		extensions[originUrl.String()] = Extension{
-			Origin:   originUrl,
-			Manifest: manifest,
-		}
-
-		cache[originUrl.String()] = manifest
-		dirty = true
-	}
-
-	if !dirty {
-		return extensions, nil
-	}
-
-	if err := os.MkdirAll(filepath.Dir(cachePath), 0755); err != nil {
-		return nil, err
-	}
-
-	cacheFile, err := os.Create(cachePath)
+func LoadExtension(originRaw string) (Extension, error) {
+	origin, err := ParseOrigin(originRaw)
 	if err != nil {
-		return nil, err
+		return Extension{}, err
 	}
 
-	if err := json.NewEncoder(cacheFile).Encode(cache); err != nil {
-		return nil, err
-	}
-
-	return extensions, nil
-}
-
-func LoadManifest(origin *url.URL) (types.Manifest, error) {
 	var manifest types.Manifest
 
 	if origin.Scheme == "file" {
 		command := exec.Command(origin.Path)
 		b, err := command.Output()
 		if err != nil {
-			return manifest, err
+			return Extension{}, err
 		}
 
 		if err := schemas.ValidateManifest(b); err != nil {
-			return manifest, err
+			return Extension{}, err
 		}
 
 		if err := json.Unmarshal(b, &manifest); err != nil {
-			return manifest, err
+			return Extension{}, err
 		}
-		return manifest, nil
+		return Extension{
+			Origin:   origin,
+			Manifest: manifest,
+		}, nil
 
 	}
 
 	resp, err := http.Get(origin.String())
 	if err != nil {
-		return manifest, err
+		return Extension{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return manifest, fmt.Errorf("failed to fetch extension manifest: %s", resp.Status)
+		return Extension{}, fmt.Errorf("failed to fetch extension manifest: %s", resp.Status)
 	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return manifest, err
+		return Extension{}, err
 	}
 
 	if err := schemas.ValidateManifest(b); err != nil {
-		return manifest, err
+		return Extension{}, err
 	}
 
 	if err := json.Unmarshal(b, &manifest); err != nil {
-		return manifest, err
+		return Extension{}, err
 	}
 
-	return manifest, nil
+	return Extension{
+		Origin:   origin,
+		Manifest: manifest,
+	}, nil
 }

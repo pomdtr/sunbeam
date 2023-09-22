@@ -23,7 +23,7 @@ type Detail struct {
 
 type Form struct {
 	Title   string     `json:"title,omitempty"`
-	Items   []FormItem `json:"inputs,omitempty"`
+	Inputs  []FormItem `json:"inputs,omitempty"`
 	Command CommandRef `json:"command,omitempty"`
 }
 
@@ -33,12 +33,11 @@ type EmptyView struct {
 }
 
 type ListItem struct {
-	Id          string              `json:"id,omitempty"`
-	Title       string              `json:"title"`
-	Subtitle    string              `json:"subtitle,omitempty"`
-	Accessories []string            `json:"accessories,omitempty"`
-	Actions     []Action            `json:"actions,omitempty"`
-	Metadata    map[string]Metadata `json:"metadata,omitempty"`
+	Id          string   `json:"id,omitempty"`
+	Title       string   `json:"title"`
+	Subtitle    string   `json:"subtitle,omitempty"`
+	Accessories []string `json:"accessories,omitempty"`
+	Actions     []Action `json:"actions,omitempty"`
 }
 
 type Metadata struct {
@@ -100,7 +99,7 @@ type Action struct {
 }
 
 type CommandRef struct {
-	Extension string         `json:"-"`
-	Name      string         `json:"name"`
-	Params    map[string]any `json:"params,omitempty"`
+	Origin string         `json:"origin,omitempty"`
+	Name   string         `json:"name"`
+	Params map[string]any `json:"params,omitempty"`
 }

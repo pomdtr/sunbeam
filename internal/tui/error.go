@@ -16,6 +16,7 @@ type ErrorPage struct {
 
 func NewErrorPage(err error) *ErrorPage {
 	viewport := viewport.New(0, 0)
+	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
 	viewport.SetContent(err.Error())
 	page := ErrorPage{
 		header:   NewHeader(),

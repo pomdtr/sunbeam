@@ -7,42 +7,20 @@
 
 export interface Manifest {
   title: string;
-  items: Item[];
   homepage?: string;
   description?: string;
-  commands: {
-    [k: string]: Command;
-  };
+  commands: Command[];
 }
-export interface Item {
-  command: string;
-  title?: string;
-  params?: {
-    /**
-     * This interface was referenced by `undefined`'s JSON-Schema definition
-     * via the `patternProperty` ".+".
-     */
-    [k: string]: string | boolean;
-  };
-}
-/**
- * This interface was referenced by `undefined`'s JSON-Schema definition
- * via the `patternProperty` ".+".
- */
 export interface Command {
   mode: "page" | "action" | "silent";
   title: string;
+  name: string;
   params?: {
-    /**
-     * This interface was referenced by `undefined`'s JSON-Schema definition
-     * via the `patternProperty` ".+".
-     */
-    [k: string]: {
-      name?: string;
-      type: "string" | "boolean";
-      optional?: boolean;
-    };
-  };
+    name?: string;
+    type: "string" | "boolean";
+    description?: string;
+    optional?: boolean;
+  }[];
   prefs?: {
     /**
      * This interface was referenced by `undefined`'s JSON-Schema definition
