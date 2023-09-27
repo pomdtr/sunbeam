@@ -11,11 +11,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/acarl005/stripansi"
-	"github.com/alessio/shellescape"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
@@ -82,16 +80,6 @@ func (e Extension) Run(input CommandInput) ([]byte, error) {
 		} else {
 			return nil, err
 		}
-	case "ssh":
-		command := exec.Command("ssh", e.Origin.Host, shellescape.QuoteCommand([]string{e.Origin.Path, string(inputBytes)}))
-		var exitErr *exec.ExitError
-		if output, err := command.Output(); err == nil {
-			return output, nil
-		} else if errors.As(err, &exitErr) {
-			return nil, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
-		} else {
-			return nil, err
-		}
 	case "http", "https":
 		var bearerToken string
 		if e.Origin.User != nil {
@@ -136,7 +124,7 @@ func ParseOrigin(origin string) (*url.URL, error) {
 		url.Scheme = "file"
 	}
 
-	if url.Scheme != "file" && url.Scheme != "http" && url.Scheme != "https" && url.Scheme != "ssh" {
+	if url.Scheme != "file" && url.Scheme != "http" && url.Scheme != "https" {
 		return nil, fmt.Errorf("invalid origin: %s", origin)
 	}
 
@@ -178,45 +166,7 @@ func NewExtensions(aliases map[string]string) Extensions {
 	}
 }
 
-var (
-	githubRegexp = regexp.MustCompile("^github:([A-Za-z0-9_-]+/[A-Za-z0-9_-]+)@([A-Za-z0-9_-]+)/([A-Za-z0-9_/-]+)$")
-)
-
 func (e Extensions) Get(rawOrigin string) (Extension, error) {
-	// check if origin match github regexp
-	if matches := githubRegexp.FindStringSubmatch(rawOrigin); len(matches) > 0 {
-		owner, repo, rev, path := matches[1], matches[2], matches[3], matches[4]
-		rawUrl := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", owner, repo, rev, path)
-		res, err := http.Get(rawUrl)
-		if err != nil {
-			return Extension{}, err
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode != 200 {
-			return Extension{}, fmt.Errorf("failed to fetch extension manifest: %s", res.Status)
-		}
-
-		f, err := os.CreateTemp("", "sunbeam-")
-		if err != nil {
-			return Extension{}, err
-		}
-
-		if _, err := io.Copy(f, res.Body); err != nil {
-			return Extension{}, err
-		}
-		if err := f.Close(); err != nil {
-			return Extension{}, err
-		}
-
-		// chmod +x
-		if err := os.Chmod(f.Name(), 0755); err != nil {
-			return Extension{}, err
-		}
-
-		rawOrigin = fmt.Sprintf("file://%s", f.Name())
-	}
-
 	origin, err := ParseOrigin(rawOrigin)
 	if err != nil {
 		return Extension{}, fmt.Errorf("invalid origin: %s", rawOrigin)
@@ -245,26 +195,6 @@ func LoadExtension(origin *url.URL) (Extension, error) {
 	switch origin.Scheme {
 	case "file":
 		command := exec.Command(origin.Path)
-		b, err := command.Output()
-		if err != nil {
-			return extension, err
-		}
-
-		if err := schemas.ValidateManifest(b); err != nil {
-			return extension, err
-		}
-
-		var manifest types.Manifest
-		if err := json.Unmarshal(b, &manifest); err != nil {
-			return extension, err
-		}
-
-		return Extension{
-			Manifest: manifest,
-			Origin:   origin,
-		}, nil
-	case "ssh":
-		command := exec.Command("ssh", origin.Host, origin.Path)
 		b, err := command.Output()
 		if err != nil {
 			return extension, err

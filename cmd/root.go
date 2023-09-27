@@ -203,28 +203,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			Short:              origin,
 			DisableFlagParsing: true,
 			GroupID:            extensionGroupID,
-			ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-				origin, err := tui.ParseOrigin(origin)
-				if err != nil {
-					return []string{}, cobra.ShellCompDirectiveDefault
-				}
-
-				manifest, err := tui.LoadExtension(origin)
-				if err != nil {
-					return []string{}, cobra.ShellCompDirectiveDefault
-				}
-
-				var commands []string
-				for _, command := range manifest.Commands {
-					if command.Hidden {
-						continue
-					}
-					commands = append(commands, command.Name)
-				}
-
-				return commands, cobra.ShellCompDirectiveNoFileComp
-			},
 			RunE: func(cmd *cobra.Command, args []string) error {
+				origin, err := resolveSpecifiers(origin)
+				if err != nil {
+					return err
+				}
+
 				command, err := NewCustomCommand(origin, config)
 				if err != nil {
 					return err
@@ -432,22 +416,28 @@ func ExtractCommand(exec string, aliases map[string]string) (tui.CommandRef, err
 
 	args = args[1:]
 
+	var origin string
 	if args[0] == "run" {
 		args = args[1:]
 		if len(args) == 0 {
 			return ref, fmt.Errorf("no origin specified")
 		}
 
-		ref.Origin = args[0]
+		origin = args[0]
 		args = args[1:]
 	} else {
-		origin, ok := aliases[args[0]]
+		o, ok := aliases[args[0]]
 		if !ok {
 			return ref, fmt.Errorf("alias %s not found", args[0])
 		}
 
-		ref.Origin = origin
+		origin = o
 		args = args[1:]
+	}
+
+	ref.Origin, err = resolveSpecifiers(origin)
+	if err != nil {
+		return ref, err
 	}
 
 	if len(args) == 0 {
