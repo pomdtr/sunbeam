@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strings"
 
+	"slices"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -21,6 +23,7 @@ type Filter struct {
 	Width, Height int
 	Query         string
 	Less          func(i, j FilterItem) bool
+	Reversed      bool
 
 	items    []FilterItem
 	filtered []FilterItem
@@ -120,29 +123,35 @@ func (m Filter) View() string {
 
 	if len(m.filtered) == 0 {
 		if len(m.items) != 0 {
-			return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Top, "No matches")
+			return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "No matches")
 		}
 
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Top, "")
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "No Items")
 	}
 
 	index := m.minIndex
-	availableHeight := m.Height
+	nbVisibleItems := m.Height
+	if m.DrawLines {
+		nbVisibleItems = nbVisibleItems/2 + nbVisibleItems%2
+	}
 
-	for availableHeight > 0 && index < len(m.filtered) {
+	for nbVisibleItems > 0 && index < len(m.filtered) {
 		item := m.filtered[index]
 		itemView := item.Render(itemWidth, index == m.cursor)
 		rows = append(rows, itemView)
 
 		index++
-		availableHeight--
+		nbVisibleItems--
 
-		if availableHeight > 0 && m.DrawLines {
+		if m.DrawLines && index < len(m.filtered) && nbVisibleItems > 0 {
 			separator := strings.Repeat("─", itemWidth)
 			separator = lipgloss.NewStyle().Faint(true).Render(separator)
 			rows = append(rows, separator)
-			availableHeight--
 		}
+	}
+
+	if m.Reversed {
+		slices.Reverse(rows)
 	}
 
 	if len(rows) == 0 {
@@ -151,7 +160,7 @@ func (m Filter) View() string {
 
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)
 	filteredView = lipgloss.NewStyle().Padding(0, 1).Render(filteredView)
-	return lipgloss.Place(m.Width, m.Height, lipgloss.Top, lipgloss.Left, filteredView)
+	return lipgloss.Place(m.Width, m.Height, lipgloss.Left, lipgloss.Bottom, filteredView)
 }
 
 func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
@@ -159,9 +168,17 @@ func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "down", "ctrl+j", "ctrl+n":
-			f.CursorDown()
+			if f.Reversed {
+				f.CursorUp()
+			} else {
+				f.CursorDown()
+			}
 		case "up", "ctrl+k", "ctrl+p":
-			f.CursorUp()
+			if f.Reversed {
+				f.CursorDown()
+			} else {
+				f.CursorUp()
+			}
 		case "ctrl+u":
 			shift := min(f.nbVisibleItems(), f.cursor)
 			for i := 0; i < shift; i++ {

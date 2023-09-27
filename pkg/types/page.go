@@ -9,27 +9,17 @@ const (
 )
 
 type List struct {
-	Title     string     `json:"title,omitempty"`
-	EmptyView *EmptyView `json:"emptyView,omitempty"`
-	Items     []ListItem `json:"items"`
+	Items []ListItem `json:"items"`
 }
 
 type Detail struct {
-	Title    string   `json:"title,omitempty"`
 	Actions  []Action `json:"actions,omitempty"`
 	Text     string   `json:"text,omitempty"`
 	Language string   `json:"language,omitempty"`
 }
 
 type Form struct {
-	Title   string     `json:"title,omitempty"`
-	Inputs  []FormItem `json:"inputs,omitempty"`
-	Command CommandRef `json:"command,omitempty"`
-}
-
-type EmptyView struct {
-	Text    string   `json:"text,omitempty"`
-	Actions []Action `json:"actions,omitempty"`
+	Items []FormItem `json:"items,omitempty"`
 }
 
 type ListItem struct {
@@ -46,13 +36,13 @@ type Metadata struct {
 	Url   string `json:"url,omitempty"`
 }
 
-type FormInputType string
+type FormItemType string
 
 const (
-	TextInput     FormInputType = "text"
-	TextAreaInput FormInputType = "textarea"
-	SelectInput   FormInputType = "select"
-	CheckboxInput FormInputType = "checkbox"
+	TextInput     FormItemType = "text"
+	TextAreaInput FormItemType = "textarea"
+	SelectInput   FormItemType = "select"
+	CheckboxInput FormItemType = "checkbox"
 )
 
 type DropDownItem struct {
@@ -61,12 +51,12 @@ type DropDownItem struct {
 }
 
 type FormItem struct {
-	Type        FormInputType `json:"type"`
-	Name        string        `json:"name,omitempty"`
-	Title       string        `json:"title"`
-	Placeholder string        `json:"placeholder,omitempty"`
-	Default     any           `json:"default,omitempty"`
-	Optional    bool          `json:"optional,omitempty"`
+	Type        FormItemType `json:"type"`
+	Name        string       `json:"name,omitempty"`
+	Title       string       `json:"title"`
+	Placeholder string       `json:"placeholder,omitempty"`
+	Default     any          `json:"default,omitempty"`
+	Optional    bool         `json:"optional,omitempty"`
 
 	// Only for dropdown
 	Items []DropDownItem `json:"items,omitempty"`
@@ -75,31 +65,28 @@ type FormItem struct {
 	Label string `json:"label,omitempty"`
 }
 
-type ActionType string
+type CommandType string
 
 const (
-	ActionTypeRun    ActionType = "run"
-	ActionTypeOpen   ActionType = "open"
-	ActionTypeCopy   ActionType = "copy"
-	ActionTypeReload ActionType = "reload"
+	CommandTypeRun  CommandType = "run"
+	CommandTypeOpen CommandType = "open"
+	CommandTypeCopy CommandType = "copy"
 )
 
 type Action struct {
-	Title  string     `json:"title,omitempty"`
-	Key    string     `json:"key,omitempty"`
-	Type   ActionType `json:"type,omitempty"`
-	Exit   bool       `json:"exit,omitempty"`
-	Reload bool       `json:"reload,omitempty"`
-
-	Text string `json:"text,omitempty"`
-
-	Url string `json:"url,omitempty"`
-
-	Command CommandRef `json:"command,omitempty"`
+	Title    string  `json:"title,omitempty"`
+	Key      string  `json:"key,omitempty"`
+	OnAction Command `json:"onAction,omitempty"`
 }
 
-type CommandRef struct {
-	Origin string         `json:"origin,omitempty"`
-	Name   string         `json:"name"`
-	Params map[string]any `json:"params,omitempty"`
+type Command struct {
+	Type CommandType `json:"type,omitempty"`
+	Exit bool        `json:"exit,omitempty"`
+
+	Text string `json:"text,omitempty"`
+	Url  string `json:"url,omitempty"`
+
+	Origin  string         `json:"origin,omitempty"`
+	Command string         `json:"command,omitempty"`
+	Params  map[string]any `json:"params,omitempty"`
 }

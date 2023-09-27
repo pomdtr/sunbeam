@@ -24,30 +24,6 @@
                     "const": "list",
                     "description": "The type of the page."
                 },
-                "title": {
-                    "description": "The title of the page.",
-                    "type": "string"
-                },
-                "emptyView": {
-                    "type": "object",
-                    "required": [
-                        "text"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "text": {
-                            "type": "string",
-                            "description": "The text to show when the list is empty."
-                        },
-                        "actions": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/action"
-                            },
-                            "description": "The actions to show when the list is empty."
-                        }
-                    }
-                },
                 "items": {
                     "description": "The items in the list.",
                     "type": "array",
@@ -66,10 +42,6 @@
                 "text"
             ],
             "properties": {
-                "title": {
-                    "description": "The title of the page.",
-                    "type": "string"
-                },
                 "type": {
                     "description": "The type of the page.",
                     "const": "detail"
@@ -94,7 +66,6 @@
             "type": "object",
             "required": [
                 "type",
-                "command",
                 "items"
             ],
             "additionalProperties": false,
@@ -102,13 +73,6 @@
                 "type": {
                     "const": "form",
                     "description": "The type of the page."
-                },
-                "title": {
-                    "type": "string",
-                    "description": "The title of the page."
-                },
-                "command": {
-                    "$ref": "#/definitions/command"
                 },
                 "inputs": {
                     "type": "array",
@@ -304,8 +268,27 @@
             ]
         },
         "action": {
-            "$schema": "https://json-schema.org/draft-07/schema#",
-            "$id": "action",
+            "type": "object",
+            "required": [
+                "title",
+                "command"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "The title of the action."
+                },
+                "key": {
+                    "type": "string",
+                    "description": "The key used as a shortcut."
+                },
+                "onAction": {
+                    "$ref": "#/definitions/command"
+                }
+            }
+        },
+        "command": {
             "oneOf": [
                 {
                     "required": [
@@ -322,19 +305,9 @@
                             "type": "boolean",
                             "description": "Whether to exit the app after copying."
                         },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
                         "text": {
                             "type": "string",
                             "description": "The text to copy."
-                        },
-                        "key": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 1,
-                            "description": "The key used as a shortcut."
                         }
                     }
                 },
@@ -353,14 +326,6 @@
                             "type": "boolean",
                             "description": "Whether to exit the app after opening."
                         },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
-                        "key": {
-                            "type": "string",
-                            "description": "The key used as a shortcut."
-                        },
                         "url": {
                             "type": "string",
                             "description": "The url to open."
@@ -370,7 +335,7 @@
                 {
                     "required": [
                         "type",
-                        "command"
+                        "origin"
                     ],
                     "additionalProperties": false,
                     "properties": {
@@ -378,16 +343,17 @@
                             "const": "run",
                             "description": "The type of the action."
                         },
-                        "title": {
+                        "name": {
                             "type": "string",
-                            "description": "The title of the action."
+                            "description": "The name of the command to run."
                         },
-                        "key": {
+                        "origin": {
                             "type": "string",
-                            "description": "The key used as a shortcut."
+                            "description": "The origin of the command to run."
                         },
-                        "command": {
-                            "$ref": "#/definitions/command"
+                        "params": {
+                            "type": "object",
+                            "description": "The parameters to pass to the command."
                         }
                     }
                 },
@@ -401,49 +367,9 @@
                         "type": {
                             "const": "reload"
                         },
-                        "title": {
-                            "type": "string",
-                            "description": "The title of the action."
-                        },
-                        "key": {
-                            "type": "string",
-                            "description": "The key used as a shortcut."
-                        }
-                    }
-                }
-            ]
-        },
-        "command": {
-            "oneOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "object",
-                    "required": [
-                        "name"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the command."
-                        },
                         "params": {
                             "type": "object",
-                            "description": "The params of the command.",
-                            "patternProperties": {
-                                ".*": {
-                                    "oneOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "boolean"
-                                        }
-                                    ]
-                                }
-                            }
+                            "description": "The parameters to pass to the command."
                         }
                     }
                 }

@@ -371,8 +371,11 @@ func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 				return d, nil
 			}
 			selection := d.filter.Selection()
-			dropDownItem := selection.(DropDownItem)
+			if selection != nil {
+				return d, nil
+			}
 
+			dropDownItem := selection.(DropDownItem)
 			d.selection = dropDownItem
 			d.textinput.SetValue(dropDownItem.value)
 			d.filter.FilterItems(dropDownItem.value)

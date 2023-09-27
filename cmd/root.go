@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,7 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mattn/go-isatty"
+	"github.com/atotto/clipboard"
+	"github.com/cli/browser"
+	"github.com/google/shlex"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
@@ -30,14 +31,12 @@ var (
 
 type ExtensionCache map[string]types.Manifest
 
-func LoadConfig() (tui.Config, error) {
-	var config tui.Config
-
+func getConfigPath() (string, error) {
 	var candidates []string
 	if runtime.GOOS == "darwin" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return config, err
+			return "", err
 		}
 
 		candidates = append(candidates, filepath.Join(homeDir, ".config", "sunbeam", "config.json"))
@@ -45,7 +44,7 @@ func LoadConfig() (tui.Config, error) {
 	} else {
 		configHome, err := os.UserConfigDir()
 		if err != nil {
-			return config, err
+			return "", err
 		}
 
 		candidates = append(candidates, filepath.Join(configHome, "sunbeam", "config.json"))
@@ -57,45 +56,46 @@ func LoadConfig() (tui.Config, error) {
 			continue
 		}
 
-		bytes, err := os.ReadFile(candidate)
-		if err != nil {
-			return config, err
-		}
-
-		if strings.HasSuffix(candidate, ".jsonc") {
-			b, err := hujson.Standardize(bytes)
-			if err != nil {
-				return config, err
-			}
-			bytes = b
-		}
-
-		if err := jsonc.Unmarshal(bytes, &config); err != nil {
-			return config, err
-		}
-
-		return config, nil
+		return candidate, nil
 	}
 
-	return tui.Config{
-		Extensions: make(map[string]string),
-		Window: tui.WindowOptions{
-			Height: 25,
-			Margin: 0,
-			Border: true,
-		},
-	}, nil
+	return candidates[0], nil
+}
+
+func LoadConfig(configPath string) (tui.Config, error) {
+	bytes, err := os.ReadFile(configPath)
+	if err != nil {
+		return tui.Config{}, err
+	}
+
+	if strings.HasSuffix(configPath, ".jsonc") {
+		b, err := hujson.Standardize(bytes)
+		if err != nil {
+			return tui.Config{}, err
+		}
+		bytes = b
+	}
+
+	var config tui.Config
+	if err := jsonc.Unmarshal(bytes, &config); err != nil {
+		return tui.Config{}, err
+	}
+
+	return config, nil
 }
 
 func NewRootCmd() (*cobra.Command, error) {
-	config, err := LoadConfig()
+	configPath, err := getConfigPath()
 	if err != nil {
 		return nil, err
 	}
 
+	config, err := LoadConfig(configPath)
+	if err != nil {
+		config = tui.Config{}
+	}
+
 	config.Window.Height = LookupIntEnv("SUNBEAM_HEIGHT", config.Window.Height)
-	config.Window.Margin = LookupIntEnv("SUNBEAM_MARGIN", config.Window.Margin)
-	config.Window.Border = LookupBoolEnv("SUNBEAM_BORDER", config.Window.Border)
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -106,33 +106,52 @@ func NewRootCmd() (*cobra.Command, error) {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
-	}
-
-	if len(config.Items) > 0 {
-		rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-			items := make([]types.RootItem, 0)
-			for _, item := range config.Items {
-				origin, ok := config.Extensions[item.Extension]
-				if !ok {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			items := make([]types.ListItem, 0)
+			for title, command := range config.Root {
+				ref, err := ExtractCommand(command, config.Aliases)
+				if err != nil {
 					continue
 				}
 
-				item.Origin = origin
-				items = append(items, item)
+				items = append(items, types.ListItem{
+					Title:       title,
+					Id:          title,
+					Accessories: []string{command},
+					Actions: []types.Action{
+						{
+							Title: "Run Command",
+							OnAction: types.Command{
+								Type:    types.CommandTypeRun,
+								Origin:  ref.Origin,
+								Command: ref.Command,
+								Params:  ref.Params,
+							},
+						},
+						{
+							Title: "Copy Command",
+							Key:   "c",
+							OnAction: types.Command{
+								Type: types.CommandTypeCopy,
+								Text: command,
+								Exit: true,
+							},
+						},
+					},
+				})
 			}
 
-			list := tui.NewRootList("Sunbeam", items...)
-			return tui.Draw(list, config.Window)
-		}
-
+			return tui.Draw(tui.NewRootList(tui.NewExtensions(config.Aliases), items...), config.Window)
+		},
 	}
 
 	rootCmd.AddGroup(
 		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
 	)
 
+	rootCmd.AddCommand(NewCmdConfig(configPath))
 	rootCmd.AddCommand(NewCmdRun(config))
-	// rootCmd.AddCommand(NewCmdServe(extensions))
+	rootCmd.AddCommand(NewCmdServe(config))
 	rootCmd.AddCommand(NewValidateCmd())
 
 	docCmd := &cobra.Command{
@@ -174,52 +193,158 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddGroup(
 		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
 	)
-	for alias, origin := range config.Extensions {
+
+	for alias, origin := range config.Aliases {
 		alias := alias
 		origin := origin
+
 		rootCmd.AddCommand(&cobra.Command{
 			Use:                alias,
 			Short:              origin,
 			DisableFlagParsing: true,
 			GroupID:            extensionGroupID,
 			ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-				extension, err := tui.LoadExtension(origin)
+				origin, err := tui.ParseOrigin(origin)
 				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
+					return []string{}, cobra.ShellCompDirectiveDefault
 				}
 
-				if len(args) == 0 {
-					commands := make([]string, 0, len(extension.Manifest.Commands))
-					for _, command := range extension.Manifest.Commands {
-						commands = append(commands, command.Name)
+				manifest, err := tui.LoadExtension(origin)
+				if err != nil {
+					return []string{}, cobra.ShellCompDirectiveDefault
+				}
+
+				var commands []string
+				for _, command := range manifest.Commands {
+					if command.Hidden {
+						continue
 					}
-					return commands, cobra.ShellCompDirectiveNoFileComp
+					commands = append(commands, command.Name)
 				}
 
-				return []string{}, cobra.ShellCompDirectiveNoFileComp
+				return commands, cobra.ShellCompDirectiveNoFileComp
 			},
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if len(args) == 0 {
-					return tui.Draw(tui.NewExtensionPage(origin), config.Window)
-				}
-
-				extension, err := tui.LoadExtension(origin)
-				if err != nil {
-					return err
-				}
-				extension.Alias = alias
-
-				extensionCmd, err := NewCustomCmd(extension, config)
+				command, err := NewCustomCommand(origin, config)
 				if err != nil {
 					return err
 				}
 
-				extensionCmd.SilenceErrors = true
-				extensionCmd.SetArgs(args)
-
-				return extensionCmd.Execute()
+				command.Use = alias
+				command.SetArgs(args)
+				return command.Execute()
 			},
 		})
+	}
+
+	return rootCmd, nil
+}
+
+func NewCustomCommand(origin string, config tui.Config) (*cobra.Command, error) {
+	extensions := tui.NewExtensions(config.Aliases)
+
+	manifest, err := extensions.Get(origin)
+	if err != nil {
+		return nil, err
+	}
+
+	rootCmd := &cobra.Command{
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
+				Origin: origin,
+			}), config.Window)
+		},
+		SilenceErrors: true,
+	}
+
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
+
+	for _, subcommand := range manifest.Commands {
+		subcommand := subcommand
+		subcmd := &cobra.Command{
+			Use: subcommand.Name,
+			RunE: func(cmd *cobra.Command, args []string) error {
+				params := make(map[string]any)
+				for _, param := range subcommand.Params {
+					if !cmd.Flags().Changed(param.Name) {
+						continue
+					}
+					switch param.Type {
+					case types.ParamTypeString:
+						value, err := cmd.Flags().GetString(param.Name)
+						if err != nil {
+							return err
+						}
+						params[param.Name] = value
+					case types.ParamTypeBoolean:
+						value, err := cmd.Flags().GetBool(param.Name)
+						if err != nil {
+							return err
+						}
+						params[param.Name] = value
+					}
+				}
+
+				extension, err := extensions.Get(origin)
+				if err != nil {
+					return err
+				}
+
+				if subcommand.Mode == types.CommandModeView {
+					return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
+						Origin:  origin,
+						Command: subcommand.Name,
+						Params:  params,
+					}), config.Window)
+				}
+
+				out, err := extension.Run(tui.CommandInput{
+					Command: subcommand.Name,
+					Params:  params,
+				})
+				if err != nil {
+					return err
+				}
+
+				if len(out) == 0 {
+					return nil
+				}
+
+				var command types.Command
+				if err := jsonc.Unmarshal(out, &command); err != nil {
+					return err
+				}
+
+				switch command.Type {
+				case types.CommandTypeCopy:
+					return clipboard.WriteAll(command.Text)
+				case types.CommandTypeOpen:
+					return browser.OpenURL(command.Url)
+				default:
+					return nil
+				}
+			},
+		}
+
+		if subcommand.Hidden {
+			subcmd.Hidden = true
+		}
+
+		for _, param := range subcommand.Params {
+			switch param.Type {
+			case types.ParamTypeString:
+				subcmd.Flags().String(param.Name, "", param.Description)
+			case types.ParamTypeBoolean:
+				subcmd.Flags().Bool(param.Name, false, param.Description)
+			}
+
+			if !param.Optional {
+				subcmd.MarkFlagRequired(param.Name)
+			}
+		}
+
+		rootCmd.AddCommand(subcmd)
 	}
 
 	return rootCmd, nil
@@ -256,131 +381,6 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func NewCustomCmd(extension tui.Extension, config tui.Config) (*cobra.Command, error) {
-	use := extension.Alias
-	if use == "" {
-		use = extension.Origin.String()
-	}
-
-	cmd := &cobra.Command{
-		Use:          use,
-		Short:        extension.Manifest.Title,
-		Long:         extension.Manifest.Description,
-		Args:         cobra.NoArgs,
-		SilenceUsage: true,
-	}
-
-	cmd.CompletionOptions.DisableDefaultCmd = true
-	cmd.SetHelpCommand(&cobra.Command{Hidden: true})
-
-	for _, command := range extension.Manifest.Commands {
-		command := command
-		subcmd := &cobra.Command{
-			Use:   command.Name,
-			Short: command.Title,
-			Long:  command.Description,
-			Args:  cobra.NoArgs,
-			RunE: func(cmd *cobra.Command, _ []string) error {
-				params := make(map[string]any)
-				for _, param := range command.Params {
-					if !cmd.Flags().Changed(param.Name) {
-						continue
-					}
-
-					switch param.Type {
-					case types.ParamTypeString:
-						value, err := cmd.Flags().GetString(param.Name)
-						if err != nil {
-							return err
-						}
-
-						params[param.Name] = value
-					case types.ParamTypeBoolean:
-						value, err := cmd.Flags().GetBool(param.Name)
-						if err != nil {
-							return err
-						}
-
-						params[param.Name] = value
-					default:
-						return fmt.Errorf("unsupported argument type: %s", param.Type)
-					}
-				}
-
-				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					output, err := extension.Run(command.Name, tui.CommandInput{
-						Params: params,
-					})
-					if err != nil {
-						return err
-					}
-
-					os.Stdout.Write(output)
-					return nil
-				}
-
-				extensions := tui.Extensions{
-					extension.Origin.String(): extension,
-				}
-
-				if command.Mode == types.CommandModeSilent {
-					_, err := extension.Run(command.Name, tui.CommandInput{
-						Params: params,
-					})
-
-					return err
-				}
-
-				if command.Mode == types.CommandModeAction {
-					output, err := extension.Run(command.Name, tui.CommandInput{
-						Params: params,
-					})
-					if err != nil {
-						return err
-					}
-
-					var action types.Action
-					if err := json.Unmarshal(output, &action); err != nil {
-						return err
-					}
-
-					return tui.RunAction(action)
-				}
-
-				return tui.Draw(
-					tui.NewCommand(
-						extensions,
-						types.CommandRef{
-							Origin: extension.Origin.String(),
-							Name:   command.Name,
-							Params: params,
-						}),
-					config.Window,
-				)
-			},
-		}
-
-		for _, param := range command.Params {
-			switch param.Type {
-			case types.ParamTypeString:
-				subcmd.Flags().String(param.Name, "", param.Description)
-			case types.ParamTypeBoolean:
-				subcmd.Flags().Bool(param.Name, false, param.Description)
-			default:
-				return nil, fmt.Errorf("unsupported argument type: %s", param.Type)
-			}
-
-			if !param.Optional {
-				subcmd.MarkFlagRequired(param.Name)
-			}
-		}
-
-		cmd.AddCommand(subcmd)
-	}
-
-	return cmd, nil
-}
-
 func LookupIntEnv(key string, fallback int) int {
 	env, ok := os.LookupEnv(key)
 	if !ok {
@@ -409,4 +409,89 @@ func LookupBoolEnv(key string, fallback bool) bool {
 	}
 
 	return b
+}
+
+func ExtractCommand(exec string, aliases map[string]string) (tui.CommandRef, error) {
+	var ref tui.CommandRef
+	args, err := shlex.Split(exec)
+	if err != nil {
+		return ref, err
+	}
+
+	if len(args) == 0 {
+		return ref, fmt.Errorf("no command specified")
+	}
+
+	if args[0] != "sunbeam" {
+		return ref, fmt.Errorf("only sunbeam commands are supported")
+	}
+
+	if len(args) == 1 {
+		return ref, fmt.Errorf("no command specified")
+	}
+
+	args = args[1:]
+
+	if args[0] == "run" {
+		args = args[1:]
+		if len(args) == 0 {
+			return ref, fmt.Errorf("no origin specified")
+		}
+
+		ref.Origin = args[0]
+		args = args[1:]
+	} else {
+		origin, ok := aliases[args[0]]
+		if !ok {
+			return ref, fmt.Errorf("alias %s not found", args[0])
+		}
+
+		ref.Origin = origin
+		args = args[1:]
+	}
+
+	if len(args) == 0 {
+		return ref, nil
+	}
+
+	ref.Command = args[0]
+	args = args[1:]
+
+	if len(args) == 0 {
+		return ref, nil
+	}
+
+	ref.Params = make(map[string]any)
+
+	for len(args) > 0 {
+		if !strings.HasPrefix(args[0], "--") {
+			return ref, fmt.Errorf("invalid argument: %s", args[0])
+		}
+
+		arg := strings.TrimPrefix(args[0], "--")
+
+		if strings.Contains(arg, "=") {
+			parts := strings.SplitN(arg, "=", 2)
+			ref.Params[parts[0]] = parts[1]
+			args = args[1:]
+			continue
+		}
+
+		if len(args) == 1 {
+			ref.Params[arg] = true
+			args = args[1:]
+			continue
+		}
+
+		if strings.HasPrefix(args[1], "--") {
+			ref.Params[arg] = true
+			args = args[1:]
+			continue
+		}
+
+		ref.Params[arg] = args[1]
+		args = args[2:]
+	}
+
+	return ref, nil
 }

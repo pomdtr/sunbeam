@@ -1,4 +1,5 @@
 {
+  "version": "0.2.0",
   "configurations": [
     {
       "name": "sunbeam",
@@ -7,8 +8,8 @@
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
       "args": [
-        "tldr"
+        "config"
       ]
     },
-  ]
+  ],
 }

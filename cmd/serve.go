@@ -1,17 +1,42 @@
 package cmd
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/labstack/echo/v4"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdServe(extensions tui.Extensions) *cobra.Command {
+func BearerMiddleware(token string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			auth := r.Header.Get("Authorization")
+			if auth == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			if auth != fmt.Sprintf("Bearer %s", token) {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func NewCmdServe(config tui.Config) *cobra.Command {
 	flags := struct {
 		port        int
 		host        string
@@ -22,90 +47,76 @@ func NewCmdServe(extensions tui.Extensions) *cobra.Command {
 		Use:     "serve",
 		Short:   "Serve extensions over HTTP",
 		GroupID: coreGroupID,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return nil
-			}
-
-			extensionRoot := args[0]
-			if info, err := os.Stat(extensionRoot); os.IsNotExist(err) {
-				return fmt.Errorf("extension root %s does not exist", extensionRoot)
-			} else if err != nil {
-				return err
-			} else if !info.IsDir() {
-				return fmt.Errorf("extension root %s is not a directory", extensionRoot)
-			}
-
-			return nil
-		},
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			e := echo.New()
-			e.HideBanner = true
-			e.HidePort = true
-
-			if flags.bearerToken != "" {
-				e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-					return func(c echo.Context) error {
-						token := c.Request().Header.Get("Authorization")
-						if token != fmt.Sprintf("Bearer %s", flags.bearerToken) {
-							return c.String(401, "Unauthorized")
-						}
-
-						return next(c)
-					}
-				})
+			origin, err := tui.ParseOrigin(args[0])
+			if err != nil {
+				return err
 			}
 
-			e.GET("/", func(c echo.Context) error {
-				return c.JSON(200, map[string]any{
-					"version": Version,
-					"date":    Date,
-				})
-			})
+			r := chi.NewRouter()
+			r.Use(middleware.Logger)
+			if flags.bearerToken != "" {
+				r.Use(BearerMiddleware(flags.bearerToken))
+			}
 
-			e.GET("/extensions", func(c echo.Context) error {
-				manifests := make(map[string]types.Manifest)
-
-				for name, extension := range extensions {
-					manifests[name] = extension.Manifest
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				extension, err := tui.LoadExtension(origin)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("failed to load extension: %s", err.Error()), 500)
+					return
 				}
 
-				return c.JSON(200, manifests)
+				encoder := json.NewEncoder(w)
+				encoder.Encode(extension.Manifest)
 			})
 
-			e.GET("/extensions/:extension", func(c echo.Context) error {
-				alias := c.Param("extension")
-				extension, ok := extensions[alias]
-				if !ok {
-					return c.String(404, "Not found")
-				}
-				return c.JSON(200, extension.Manifest)
-			})
-
-			e.POST("/extensions/:extension/:command", func(c echo.Context) error {
-				extensionName := c.Param("extension")
-				commandName := c.Param("command")
-
-				extension, ok := extensions[extensionName]
-				if !ok {
-					return echo.NewHTTPError(http.StatusNotFound, "Not found")
+			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+				extension, err := tui.LoadExtension(origin)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("failed to load extension: %s", err.Error()), 500)
+					return
 				}
 
 				var input tui.CommandInput
-				if err := c.Bind(&input); err != nil {
-					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to bind input: %s", err.Error()))
+				if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+					http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)
+					return
 				}
 
-				output, err := extension.Run(commandName, input)
+				output, err := extension.Run(input)
 				if err != nil {
-					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to run command: %s", err.Error()))
+					http.Error(w, fmt.Sprintf("failed to run command: %s", err.Error()), 500)
+					return
 				}
 
-				return c.String(200, string(output))
+				if _, err := w.Write(output); err != nil {
+					http.Error(w, fmt.Sprintf("failed to write output: %s", err.Error()), 500)
+					return
+				}
 			})
 
-			cmd.PrintErrf("http server started on http://%s:%d\n", flags.host, flags.port)
-			return e.Start(fmt.Sprintf("%s:%d", flags.host, flags.port))
+			server := &http.Server{
+				Addr:    fmt.Sprintf("%s:%d", flags.host, flags.port),
+				Handler: r,
+			}
+
+			sigs := make(chan os.Signal, 1)
+			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+			go func() {
+				<-sigs
+				log.Print("Shutting down...")
+				if err := server.Shutdown(context.Background()); err != nil {
+					os.Exit(1)
+				}
+
+				os.Exit(0)
+			}()
+
+			log.Printf("Listening on http://%s:%d", flags.host, flags.port)
+			server.ListenAndServe()
+			return nil
 		},
 	}
 

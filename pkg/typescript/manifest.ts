@@ -9,12 +9,13 @@ export interface Manifest {
   title: string;
   homepage?: string;
   description?: string;
-  commands: Command[];
+  commands: Commandspec[];
 }
-export interface Command {
-  mode: "page" | "action" | "silent";
-  title: string;
+export interface Commandspec {
   name: string;
+  hidden?: boolean;
+  title: string;
+  mode: "view" | "no-view";
   params?: {
     name?: string;
     type: "string" | "boolean";

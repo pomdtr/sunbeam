@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
 
-# check if jq is installed
-if ! command -v jq &> /dev/null
-then
-    echo "jq could not be found"
-    exit
-fi
-
 # check is sqlite3 is installed
 if ! command -v sqlite3 &> /dev/null
 then
@@ -19,15 +12,15 @@ then
     jq -n '{
         title: "VS Code",
         commands: [
-            {name: "list-projects", title: "List Projects", mode: "page"},
-            {name: "open-project", title: "Open Project", mode: "silent", params: [{name: "dir", type: "string"}]}
+            {name: "list-projects", title: "List Projects", mode: "view"},
+            {name: "open-project", title: "Open Project", mode: "no-view", params: [{name: "dir", type: "string"}]}
         ]
     }'
     exit 0
 fi
 
-INPUT="$(cat)"
-if [ "$1" = "list-projects" ]; then
+COMMAND=$(jq -r .command <<< "$1")
+if [ "$COMMAND" = "list-projects" ]; then
     dbPath="$HOME/Library/Application Support/Code/User/globalStorage/state.vscdb"
     query="SELECT json_extract(value, '$.entries') as entries FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'"
 
@@ -35,16 +28,15 @@ if [ "$1" = "list-projects" ]; then
     sqlite3 "$dbPath" "$query" | jq '.[] | select(.folderUri) | {
         title: (.folderUri | split("/") | last),
         actions: [
-            {type: "run", title: "Open in VS Code", command: {name: "open-project", params: {dir: (.folderUri | sub("^file://"; ""))}}},
-            {type: "open", title: "Open Folder", url: .folderUri}
-
+            {title: "Open in VS Code", onAction: { type: "run", command: "open-project", params: {dir: (.folderUri | sub("^file://"; ""))}}},
+            {title: "Open Folder", key: "o", onAction: { type: "open", url: .folderUri, exit: true}}
         ]
     }' | jq -s '{
         type: "list",
         items: .
     }'
-elif [ "$1" = "open-project" ]; then
-    dir="$(echo "$INPUT" | jq -r '.params.dir')"
+elif [ "$COMMAND" = "open-project" ]; then
+    dir=$(jq -r '.params.dir' <<< "$1")
     code "$dir"
 fi
 

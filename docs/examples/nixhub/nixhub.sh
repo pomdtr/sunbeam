@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 sunbeam fetch "https://www.nixhub.io/search?q=$1&_data=routes/_nixhub.search" \
-    | sunbeam query '.results[] | {
+    | jq '.results[] | {
         title: .name,
         subtitle: .summary,
         actions: [{type: "open", title: "Open in Browser", target: "https://www.nixhub.io/packages/\(.name)" }]

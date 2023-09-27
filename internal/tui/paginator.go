@@ -34,9 +34,7 @@ type Page interface {
 }
 
 type WindowOptions struct {
-	Height int  `json:"height"`
-	Border bool `json:"border"`
-	Margin int  `json:"margin"`
+	Height int
 }
 
 type ExitMsg struct{}
@@ -118,19 +116,15 @@ func (m *Paginator) View() string {
 		return ""
 	}
 
-	var pageView string
 	if len(m.pages) > 0 {
 		currentPage := m.pages[len(m.pages)-1]
-		pageView = currentPage.View()
+		if m.options.Height > 0 {
+			return lipgloss.NewStyle().PaddingTop(1).Render(currentPage.View())
+		}
+		return currentPage.View()
 	}
 
-	style := lipgloss.NewStyle().Margin(m.options.Margin)
-
-	if m.options.Border {
-		style = style.Border(lipgloss.RoundedBorder())
-	}
-
-	return style.Render(pageView)
+	return ""
 }
 
 func (m *Paginator) SetSize(width, height int) {
@@ -143,28 +137,18 @@ func (m *Paginator) SetSize(width, height int) {
 }
 
 func (m *Paginator) pageWidth() int {
-	width := m.width
-
-	if m.options.Border {
-		width -= 2
-	}
-
-	width -= 2 * m.options.Margin
-
-	return width
+	return m.width
 }
 
 func (m *Paginator) pageHeight() int {
-	height := m.height
-	if m.options.Height != 0 {
-		height = min(height, m.options.Height)
+	if m.options.Height == 0 {
+		return m.height
 	}
 
-	if m.options.Border {
-		height -= 2
+	height := min(m.height, m.options.Height)
+	if height > 0 {
+		return height - 1 // margin top
 	}
-
-	height -= 2 * m.options.Margin
 
 	return height
 }

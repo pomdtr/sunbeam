@@ -2,18 +2,20 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type Form struct {
-	width    int
-	header   Header
-	footer   Footer
-	viewport viewport.Model
+	id            string
+	width, height int
+	viewport      viewport.Model
+	isLoading     bool
+	spinner       spinner.Model
 
 	scrollOffset int
 	focusIndex   int
@@ -21,36 +23,27 @@ type Form struct {
 	items []FormItem
 }
 
-func NewForm(title string, items ...FormItem) *Form {
-	header := NewHeader()
+type SubmitMsg map[string]any
+
+func NewForm(id string, items ...FormItem) *Form {
 	viewport := viewport.New(0, 0)
-	footer := NewFooter(title)
 
 	form := &Form{
-		header:   header,
-		footer:   footer,
+		id:       id,
 		viewport: viewport,
+		items:    items,
 	}
-
-	form.SetItems(items...)
 
 	return form
 }
 
-func (c *Form) SetItems(items ...FormItem) {
-	c.items = items
-
-	c.footer.SetBindings(
-		key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("⌃S", "Submit")),
-	)
-
-	if len(c.items) > 0 {
-		c.footer.bindings = append(c.footer.bindings, key.NewBinding(key.WithKeys("tab"), key.WithHelp("⇥", "Next Input")))
-	}
-}
-
 func (c *Form) SetIsLoading(isLoading bool) tea.Cmd {
-	return c.header.SetIsLoading(isLoading)
+	c.isLoading = isLoading
+	if isLoading {
+		return c.spinner.Tick
+	}
+
+	return nil
 }
 
 func (c Form) Init() tea.Cmd {
@@ -108,7 +101,6 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case "tab", "shift+tab":
 			s := msg.String()
 
-			// Cycle indexes
 			if s == "up" || s == "shift+tab" {
 				c.focusIndex--
 			} else {
@@ -116,10 +108,10 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			// Cycle focus
-			if c.focusIndex == len(c.items) {
+			if c.focusIndex > len(c.items) {
 				c.focusIndex = 0
 			} else if c.focusIndex < 0 {
-				c.focusIndex = len(c.items) - 1
+				c.focusIndex = len(c.items)
 			}
 
 			cmds := make([]tea.Cmd, len(c.items))
@@ -139,20 +131,22 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return &c, tea.Batch(cmds...)
-		case "ctrl+s":
-			if len(c.items) == 0 {
-				return &c, nil
+		case "enter", "ctrl+s":
+			if msg.String() == "enter" && c.focusIndex != len(c.items) {
+				break
 			}
 
-			values := make(map[string]any)
-			for _, input := range c.items {
-				if input.Value() == "" && !input.Optional {
-					return &c, nil
+			return &c, func() tea.Msg {
+				values := make(map[string]any)
+				for _, input := range c.items {
+					if input.Value() == "" && !input.Optional {
+						return nil
+					}
+					values[input.Name] = input.Value()
 				}
-				values[input.Name] = input.Value()
-			}
 
-			return &c, nil
+				return SubmitMsg(values)
+			}
 		}
 	}
 
@@ -164,14 +158,8 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 	c.renderInputs()
 
-	if c.header, cmd = c.header.Update(msg); cmd != nil {
-		cmds = append(cmds, cmd)
-	}
-
 	return &c, tea.Batch(cmds...)
 }
-
-type SubmitMsg map[string]any
 
 func (c *Form) renderInputs() {
 	selectedBorder := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(lipgloss.Color("13"))
@@ -205,7 +193,7 @@ func (c *Form) renderInputs() {
 	}
 
 	formView := lipgloss.JoinVertical(lipgloss.Left, itemViews...)
-	formView = lipgloss.NewStyle().Width(c.footer.Width).Align(lipgloss.Center).Render(formView)
+	formView = lipgloss.NewStyle().Width(c.width).Align(lipgloss.Center).Render(formView)
 
 	c.viewport.SetContent(formView)
 }
@@ -222,20 +210,12 @@ func (c Form) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-type SubmitFormMsg struct {
-	Id     string
-	Values map[string]any
-}
-
 func (c *Form) SetSize(width, height int) {
-	c.footer.Width = width
-	c.header.Width = width
-
-	c.width = width
+	c.width, c.height = width, height
+	c.viewport.Height = max(0, height-2)
 	for _, input := range c.items {
 		input.SetWidth(width / 2)
 	}
-	c.viewport.Height = height - lipgloss.Height(c.header.View()) - lipgloss.Height(c.footer.View())
 
 	c.renderInputs()
 	if c.viewport.Height > 0 {
@@ -244,5 +224,15 @@ func (c *Form) SetSize(width, height int) {
 }
 
 func (c *Form) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.header.View(), c.viewport.View(), c.footer.View())
+	separator := strings.Repeat("─", c.width)
+
+	var submitAction string
+	if c.focusIndex == len(c.items) {
+		submitAction = renderAction("Submit", "enter", true)
+	} else {
+		submitAction = renderAction("Submit", "ctrl+s", false)
+	}
+
+	submitRow := lipgloss.NewStyle().Align(lipgloss.Right).Padding(0, 1).Width(c.width).Render(fmt.Sprintf("%s · %s", submitAction, renderAction("Focus Next", "tab", false)))
+	return lipgloss.JoinVertical(lipgloss.Left, c.viewport.View(), separator, submitRow)
 }

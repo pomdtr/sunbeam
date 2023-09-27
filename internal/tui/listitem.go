@@ -23,12 +23,11 @@ func (i ListItem) FilterValue() string {
 	return strings.Join(keywords, " ")
 }
 
-func (i ListItem) Render(width int, selected bool) string {
+func RenderItem(title string, subtitle string, accessories []string, width int, selected bool) string {
 	if width == 0 {
 		return ""
 	}
-
-	title := strings.Split(i.Title, "\n")[0]
+	title = strings.Split(title, "\n")[0]
 	titleStyle := lipgloss.NewStyle().Bold(true)
 	subtitleStyle := lipgloss.NewStyle()
 	accessoryStyle := lipgloss.NewStyle()
@@ -43,30 +42,35 @@ func (i ListItem) Render(width int, selected bool) string {
 		title = fmt.Sprintf("  %s", title)
 	}
 
-	subtitle := strings.Split(i.Subtitle, "\n")[0]
+	subtitle = strings.Split(subtitle, "\n")[0]
 	subtitle = " " + subtitle
 	var blanks string
 
-	accessories := " " + strings.Join(i.Accessories, " · ")
+	accessory := " " + strings.Join(accessories, " · ")
 
-	// If the width is too small, we need to truncate the subtitle, accessories, or title (in that order)
-	if width >= lipgloss.Width(title+subtitle+accessories) {
-		availableWidth := width - lipgloss.Width(title+subtitle+accessories)
+	// If the width is too small, we need to truncate the subtitle, accessory, or title (in that order)
+	if width >= lipgloss.Width(title+subtitle+accessory) {
+		availableWidth := width - lipgloss.Width(title+subtitle+accessory)
 		blanks = strings.Repeat(" ", availableWidth)
-	} else if width >= lipgloss.Width(title+accessories) {
-		subtitle = subtitle[:width-lipgloss.Width(title+accessories)]
-	} else if width >= lipgloss.Width(accessories) {
+	} else if width >= lipgloss.Width(title+accessory) {
+		subtitle = subtitle[:width-lipgloss.Width(title+accessory)]
+	} else if width >= lipgloss.Width(accessory) {
 		subtitle = ""
-		title = title[:width-lipgloss.Width(accessories)]
+		title = title[:width-lipgloss.Width(accessory)]
 	} else {
 		subtitle = ""
-		accessories = ""
+		accessory = ""
 		title = title[:min(len(title), width)]
 	}
 
 	title = titleStyle.Render(title)
 	subtitle = subtitleStyle.Render(subtitle)
-	accessories = accessoryStyle.Render(accessories)
+	accessory = accessoryStyle.Render(accessory)
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessories)
+	return lipgloss.JoinHorizontal(lipgloss.Top, title, subtitle, blanks, accessory)
+
+}
+
+func (i ListItem) Render(width int, selected bool) string {
+	return RenderItem(i.Title, i.Subtitle, i.Accessories, width, selected)
 }

@@ -6,6 +6,8 @@ import (
 )
 
 func NewCmdRun(config tui.Config) *cobra.Command {
+	extensions := tui.NewExtensions(config.Aliases)
+
 	cmd := &cobra.Command{
 		Use:                "run <origin> [args...]",
 		Short:              "Run an extension without installing it",
@@ -17,14 +19,17 @@ func NewCmdRun(config tui.Config) *cobra.Command {
 				return []string{}, cobra.ShellCompDirectiveDefault
 			}
 
-			extension, err := tui.LoadExtension(args[0])
+			manifest, err := extensions.Get(args[0])
 			if err != nil {
 				return []string{}, cobra.ShellCompDirectiveDefault
 			}
 
 			if len(args) == 1 {
 				commands := make([]string, 0)
-				for _, command := range extension.Manifest.Commands {
+				for _, command := range manifest.Commands {
+					if command.Hidden {
+						continue
+					}
 					commands = append(commands, command.Name)
 				}
 
@@ -34,28 +39,14 @@ func NewCmdRun(config tui.Config) *cobra.Command {
 			return []string{}, cobra.ShellCompDirectiveNoFileComp
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "--help" || args[0] == "-h" {
-				return cmd.Help()
-			}
-
-			if len(args) == 1 {
-				return tui.Draw(tui.NewExtensionPage(args[0]), config.Window)
-			}
-
-			extension, err := tui.LoadExtension(args[0])
+			rootCmd, err := NewCustomCommand(args[0], config)
 			if err != nil {
 				return err
 			}
 
-			scriptCmd, err := NewCustomCmd(extension, config)
-			if err != nil {
-				return err
-			}
-			scriptCmd.SilenceErrors = true
-			scriptCmd.SilenceUsage = true
-
-			scriptCmd.SetArgs(args[1:])
-			return scriptCmd.Execute()
+			rootCmd.Use = args[0]
+			rootCmd.SetArgs(args[1:])
+			return rootCmd.Execute()
 		},
 	}
 

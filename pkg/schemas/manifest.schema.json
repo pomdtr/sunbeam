@@ -19,12 +19,12 @@
         "commands": {
             "type": "array",
             "items": {
-                "$ref": "#/definitions/command"
+                "$ref": "#/definitions/commandspec"
             }
         }
     },
     "definitions": {
-        "command": {
+        "commandspec": {
             "type": "object",
             "required": [
                 "title",
@@ -33,18 +33,20 @@
             ],
             "additionalProperties": false,
             "properties": {
-                "mode": {
-                    "enum": [
-                        "page",
-                        "action",
-                        "silent"
-                    ]
+                "name": {
+                    "type": "string"
+                },
+                "hidden": {
+                    "type": "boolean"
                 },
                 "title": {
                     "type": "string"
                 },
-                "name": {
-                    "type": "string"
+                "mode": {
+                    "enum": [
+                        "view",
+                        "no-view"
+                    ]
                 },
                 "params": {
                     "type": "array",

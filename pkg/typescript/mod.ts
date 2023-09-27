@@ -1,11 +1,2 @@
-export type { Command, Manifest } from "./manifest.ts";
-export type { Config, Rootitem } from "./config.ts";
-export type {
-  Action,
-  Detail,
-  Form,
-  Input,
-  List,
-  Listitem,
-  Page,
-} from "./page.ts";
+export type * from "./manifest.ts";
+export type * from "./page.ts";

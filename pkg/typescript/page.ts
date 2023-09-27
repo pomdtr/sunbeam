@@ -5,8 +5,8 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Page = List | Detail | Form;
-export type Action =
+export type Page = List | Detail;
+export type Command =
   | {
       /**
        * The type of the action.
@@ -17,17 +17,9 @@ export type Action =
        */
       exit?: boolean;
       /**
-       * The title of the action.
-       */
-      title?: string;
-      /**
        * The text to copy.
        */
       text: string;
-      /**
-       * The key used as a shortcut.
-       */
-      key?: string;
     }
   | {
       /**
@@ -39,14 +31,6 @@ export type Action =
        */
       exit?: boolean;
       /**
-       * The title of the action.
-       */
-      title?: string;
-      /**
-       * The key used as a shortcut.
-       */
-      key?: string;
-      /**
        * The url to open.
        */
       url: string;
@@ -57,42 +41,31 @@ export type Action =
        */
       type: "run";
       /**
-       * The title of the action.
+       * The name of the command to run.
        */
-      title?: string;
+      command?: string;
       /**
-       * The key used as a shortcut.
+       * The origin of the command to run.
        */
-      key?: string;
-      command: Command;
-    }
-  | {
-      type: "reload";
+      origin: string;
       /**
-       * The title of the action.
-       */
-      title?: string;
-      /**
-       * The key used as a shortcut.
-       */
-      key?: string;
-    };
-export type Command =
-  | string
-  | {
-      /**
-       * The name of the command.
-       */
-      name: string;
-      /**
-       * The params of the command.
+       * The parameters to pass to the command.
        */
       params?: {
         /**
          * This interface was referenced by `undefined`'s JSON-Schema definition
-         * via the `patternProperty` ".*".
+         * via the `patternProperty` ".+".
          */
-        [k: string]: string | boolean;
+        [k: string]: boolean | number | Input;
+      };
+    }
+  | {
+      type: "reload";
+      /**
+       * The parameters to pass to the command.
+       */
+      params?: {
+        [k: string]: unknown;
       };
     };
 export type Input =
@@ -101,10 +74,6 @@ export type Input =
        * The title of the input.
        */
       title: string;
-      /**
-       * The name of the input.
-       */
-      name: string;
       /**
        * The type of the input.
        */
@@ -128,10 +97,6 @@ export type Input =
        */
       title: string;
       /**
-       * The name of the input.
-       */
-      name: string;
-      /**
        * The type of the input.
        */
       type: "checkbox";
@@ -145,10 +110,6 @@ export type Input =
       label?: string;
     }
   | {
-      /**
-       * The name of the input.
-       */
-      name: string;
       /**
        * The title of the input.
        */
@@ -167,10 +128,6 @@ export type Input =
       default?: string;
     }
   | {
-      /**
-       * The name of the input.
-       */
-      name: string;
       /**
        * The title of the input.
        */
@@ -203,10 +160,6 @@ export interface List {
    * The type of the page.
    */
   type: "list";
-  /**
-   * The title of the page.
-   */
-  title?: string;
   emptyView?: {
     /**
      * The text to show when the list is empty.
@@ -221,6 +174,17 @@ export interface List {
    * The items in the list.
    */
   items: Listitem[];
+}
+export interface Action {
+  /**
+   * The title of the action.
+   */
+  title: string;
+  /**
+   * The key used as a shortcut.
+   */
+  key?: string;
+  onAction: Command;
 }
 export interface Listitem {
   /**
@@ -249,10 +213,6 @@ export interface Listitem {
  */
 export interface Detail {
   /**
-   * The title of the page.
-   */
-  title?: string;
-  /**
    * The type of the page.
    */
   type: "detail";
@@ -265,16 +225,4 @@ export interface Detail {
    * The actions attached to the detail view.
    */
   actions?: Action[];
-}
-export interface Form {
-  /**
-   * The type of the page.
-   */
-  type: "form";
-  /**
-   * The title of the page.
-   */
-  title?: string;
-  command: Command;
-  inputs?: Input[];
 }

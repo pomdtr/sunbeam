@@ -1,12 +1,19 @@
 #!/bin/bash
 
+# check for dependencies
+
 if ! command -v jq &> /dev/null; then
-    echo "jq is not installed"
+    echo "jq could not be found"
+    exit 1
+fi
+
+if ! command -v bkt &> /dev/null; then
+    echo "bkt could not be found"
     exit 1
 fi
 
 if ! command -v bw &> /dev/null; then
-    echo "bw is not installed"
+    echo "bw could not be found"
     exit 1
 fi
 
@@ -17,7 +24,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "list-passwords",
                 title: "List Passwords",
-                mode: "page",
+                mode: "view",
                 params: [
                     {name: "session", type: "string", optional: true, description: "session token"}
                 ]
@@ -27,23 +34,28 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-if [ "$1" = "list-passwords" ]; then
-    bw --nointeraction list items --session "$BW_SESSION" | jq '.[] | {
+COMMAND=$(jq -r '.command' <<< "$1")
+if [ "$COMMAND" = "list-passwords" ]; then
+    bkt --ttl 24h --stale 60s -- bw --nointeraction list items --session "$BW_SESSION" | jq '.[] | {
         title: .name,
         subtitle: (.login.username // ""),
         actions: [
             {
-                type: "copy",
                 title: "Copy Password",
-                exit: true,
-                text: (.login.password // ""),
+                onAction: {
+                    type: "copy",
+                    text: (.login.password // ""),
+                    exit: true
+                }
             },
             {
-                type: "copy",
                 title: "Copy Username",
-                exit: true,
-                text: (.login.username // ""),
-                key: "l"
+                key: "l",
+                onAction: {
+                    type: "copy",
+                    text: (.login.username // ""),
+                    exit: true
+                }
             }
         ]
     }' | jq -s '{type: "list", items: .}'
