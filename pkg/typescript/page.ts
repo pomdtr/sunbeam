@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Page = List | Detail;
+export type Page = List | Detail | Form;
 export type Command =
   | {
       /**
@@ -43,7 +43,7 @@ export type Command =
       /**
        * The name of the command to run.
        */
-      command?: string;
+      name?: string;
       /**
        * The origin of the command to run.
        */
@@ -52,11 +52,7 @@ export type Command =
        * The parameters to pass to the command.
        */
       params?: {
-        /**
-         * This interface was referenced by `undefined`'s JSON-Schema definition
-         * via the `patternProperty` ".+".
-         */
-        [k: string]: boolean | number | Input;
+        [k: string]: unknown;
       };
     }
   | {
@@ -74,6 +70,10 @@ export type Input =
        * The title of the input.
        */
       title: string;
+      /**
+       * The name of the input.
+       */
+      name: string;
       /**
        * The type of the input.
        */
@@ -97,6 +97,10 @@ export type Input =
        */
       title: string;
       /**
+       * The name of the input.
+       */
+      name: string;
+      /**
        * The type of the input.
        */
       type: "checkbox";
@@ -110,6 +114,10 @@ export type Input =
       label?: string;
     }
   | {
+      /**
+       * The name of the input.
+       */
+      name: string;
       /**
        * The title of the input.
        */
@@ -128,6 +136,10 @@ export type Input =
       default?: string;
     }
   | {
+      /**
+       * The name of the input.
+       */
+      name: string;
       /**
        * The title of the input.
        */
@@ -160,31 +172,10 @@ export interface List {
    * The type of the page.
    */
   type: "list";
-  emptyView?: {
-    /**
-     * The text to show when the list is empty.
-     */
-    text: string;
-    /**
-     * The actions to show when the list is empty.
-     */
-    actions?: Action[];
-  };
   /**
    * The items in the list.
    */
   items: Listitem[];
-}
-export interface Action {
-  /**
-   * The title of the action.
-   */
-  title: string;
-  /**
-   * The key used as a shortcut.
-   */
-  key?: string;
-  onAction: Command;
 }
 export interface Listitem {
   /**
@@ -208,6 +199,17 @@ export interface Listitem {
    */
   actions?: Action[];
 }
+export interface Action {
+  /**
+   * The title of the action.
+   */
+  title: string;
+  /**
+   * The key used as a shortcut.
+   */
+  key?: string;
+  onAction?: Command;
+}
 /**
  * A detail view displaying a preview and actions.
  */
@@ -225,4 +227,11 @@ export interface Detail {
    * The actions attached to the detail view.
    */
   actions?: Action[];
+}
+export interface Form {
+  /**
+   * The type of the page.
+   */
+  type: "form";
+  inputs?: Input[];
 }
