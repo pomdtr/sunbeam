@@ -216,8 +216,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				continue
 			}
 			items = append(items, types.ListItem{
-				Title:    command.Title,
-				Subtitle: command.Description,
+				Title: command.Title,
 				Actions: []types.Action{
 					{
 						Title: "Run Command",

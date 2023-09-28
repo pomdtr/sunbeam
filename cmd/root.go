@@ -70,22 +70,40 @@ func NewRootCmd() (*cobra.Command, error) {
 		Version: fmt.Sprintf("%s (%s)", Version, Date),
 		Args:    cobra.ArbitraryArgs,
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			extensions, err := ListExtensions()
+			extensions, err := FindExtensions()
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveDefault
 			}
 
-			if len(args) > 0 {
-				return nil, cobra.ShellCompDirectiveDefault
+			if len(args) == 0 {
+				var completions []string
+				for alias, extension := range extensions {
+					completions = append(completions, fmt.Sprintf("%s\t%s", alias, extension))
+				}
+
+				return completions, cobra.ShellCompDirectiveNoFileComp
 			}
 
-			var completions []string
-			for _, extension := range extensions {
-				name := strings.TrimPrefix(filepath.Base(extension), "sunbeam-")
-				completions = append(completions, fmt.Sprintf("%s\t%s", name, extension))
+			if len(args) == 1 {
+				extensionPath, ok := extensions[args[0]]
+				if !ok {
+					return nil, cobra.ShellCompDirectiveDefault
+				}
+
+				extension, err := tui.LoadExtension(extensionPath)
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveDefault
+				}
+
+				completions := make([]string, 0)
+				for _, command := range extension.Commands {
+					completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
+				}
+
+				return completions, cobra.ShellCompDirectiveNoFileComp
 			}
 
-			return completions, cobra.ShellCompDirectiveNoFileComp
+			return nil, cobra.ShellCompDirectiveDefault
 		},
 		SilenceUsage:       true,
 		DisableFlagParsing: true,

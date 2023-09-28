@@ -8,12 +8,11 @@ type Manifest struct {
 }
 
 type CommandSpec struct {
-	Name        string         `json:"name"`
-	Title       string         `json:"title"`
-	Hidden      bool           `json:"hidden,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Params      []CommandParam `json:"params,omitempty"`
-	Mode        CommandMode    `json:"mode,omitempty"`
+	Name   string         `json:"name"`
+	Title  string         `json:"title"`
+	Hidden bool           `json:"hidden,omitempty"`
+	Params []CommandParam `json:"params,omitempty"`
+	Mode   CommandMode    `json:"mode,omitempty"`
 }
 
 type CommandMode string

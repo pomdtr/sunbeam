@@ -5,10 +5,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/spf13/cobra"
 )
 
-var template = `#/bin/sh
+var template = `#!/bin/sh
 
 exec sunbeam fetch %s "$@"
 `
@@ -19,6 +20,23 @@ func NewCmdRun() *cobra.Command {
 		Short:              "Run an extension without installing it",
 		Args:               cobra.MinimumNArgs(1),
 		DisableFlagParsing: true,
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 1 {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			extension, err := tui.LoadExtension(args[0])
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			completions := make([]string, 0)
+			for _, command := range extension.Commands {
+				completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "--help" || args[0] == "-h" {
 				return cmd.Help()

@@ -11,9 +11,10 @@ import (
 
 func NewCmdFetch() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fetch",
-		Short: "Fetch an extension",
-		Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+		Use:    "fetch",
+		Short:  "Fetch an extension",
+		Hidden: true,
+		Args:   cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 {
 				resp, err := http.Get(args[0])

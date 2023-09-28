@@ -15,14 +15,13 @@ func NewCmdList() *cobra.Command {
 		Short: "List installed extensions",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensions, err := ListExtensions()
+			extensions, err := FindExtensions()
 			if err != nil {
 				return err
 			}
 
-			for _, extension := range extensions {
-				name := strings.TrimPrefix(filepath.Base(extension), "sunbeam-")
-				fmt.Printf("%s\t%s\n", name, extension)
+			for alias, extension := range extensions {
+				fmt.Printf("%s\t%s\n", alias, extension)
 			}
 
 			return nil
@@ -30,9 +29,10 @@ func NewCmdList() *cobra.Command {
 	}
 }
 
-func ListExtensions() ([]string, error) {
+func FindExtensions() (map[string]string, error) {
 	path := os.Getenv("PATH")
-	var extensions []string
+
+	extensions := make(map[string]string)
 	for _, dir := range filepath.SplitList(path) {
 		if dir == "" {
 			// Unix shell semantics: path element "" means "."
@@ -58,7 +58,12 @@ func ListExtensions() ([]string, error) {
 				continue
 			}
 
-			extensions = append(extensions, filepath.Join(dir, entry.Name()))
+			alias := strings.TrimPrefix(entry.Name(), "sunbeam-")
+			if _, ok := extensions[alias]; ok {
+				continue
+			}
+
+			extensions[alias] = filepath.Join(dir, entry.Name())
 		}
 	}
 
