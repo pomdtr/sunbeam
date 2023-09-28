@@ -15,6 +15,7 @@ fi
 if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Bitwarden Vault",
+        root: "list-passwords",
         commands: [
             {
                 name: "list-passwords",
@@ -31,7 +32,7 @@ fi
 
 COMMAND=$(sunbeam query -r '.command' <<< "$1")
 if [ "$COMMAND" = "list-passwords" ]; then
-    bkt --ttl 24h --stale 60s -- bw --nointeraction list items --session "$BW_SESSION" | sunbeam query '.[] | {
+    bkt --ttl 24h --stale 1h -- bw --nointeraction list items --session "$BW_SESSION" | sunbeam query '.[] | {
         title: .name,
         subtitle: (.login.username // ""),
         actions: [

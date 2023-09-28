@@ -209,40 +209,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}),
 			}
 		}
-	case Extension:
-		var items []types.ListItem
-		for _, command := range msg.Commands {
-			if !IsRootCommand(command) {
-				continue
-			}
-			items = append(items, types.ListItem{
-				Title: command.Title,
-				Actions: []types.Action{
-					{
-						Title: "Run Command",
-						OnAction: types.Command{
-							Type:    types.CommandTypeRun,
-							Origin:  c.ref.Path,
-							Command: command.Name,
-						},
-					},
-					{
-						Title: "Copy Command",
-						Key:   "c",
-						OnAction: types.Command{
-							Type: types.CommandTypeCopy,
-							Text: ShellCommand(CommandRef{Path: c.ref.Path, Command: command.Name}),
-							Exit: true,
-						},
-					},
-				},
-			})
-		}
-
-		page := NewList(items...)
-		page.SetSize(c.width, c.height)
-		c.embed = page
-		return c, c.embed.Init()
 	case error:
 		c.embed = NewErrorPage(msg)
 		c.embed.SetSize(c.width, c.height)
@@ -282,10 +248,6 @@ func (c *Runner) Run() tea.Msg {
 		return err
 	}
 
-	if c.ref.Command == "" {
-		return extension
-	}
-
 	command, ok := extension.Command(c.ref.Command)
 	if !ok {
 		return fmt.Errorf("command %s not found", c.ref.Command)
@@ -293,7 +255,7 @@ func (c *Runner) Run() tea.Msg {
 
 	output, err := extension.Run(
 		CommandInput{
-			Command: c.ref.Command,
+			Command: command.Name,
 			Params:  c.ref.Params,
 		})
 	if err != nil {

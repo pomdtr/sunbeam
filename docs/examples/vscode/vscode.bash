@@ -11,6 +11,7 @@ if [ $# -eq 0 ]
 then
     sunbeam query -n '{
         title: "VS Code",
+        root: "list-projects",
         commands: [
             {name: "list-projects", title: "List Projects", mode: "view"},
             {name: "open-project", title: "Open Project", mode: "no-view", params: [{name: "dir", type: "string"}]}

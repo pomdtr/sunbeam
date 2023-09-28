@@ -227,24 +227,28 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
 	extensions := tui.Extensions{}
-	manifest, err := extensions.Get(extensionpath)
+	extension, err := extensions.Get(extensionpath)
 	if err != nil {
 		return nil, err
 	}
 
 	rootCmd := &cobra.Command{
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
-				Path: extensionpath,
-			}), MaxHeigth)
-		},
 		SilenceErrors: true,
+	}
+
+	if extension.Root != "" {
+		rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
+			return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
+				Path:    extensionpath,
+				Command: extension.Root,
+			}), MaxHeigth)
+		}
 	}
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
-	for _, subcommand := range manifest.Commands {
+	for _, subcommand := range extension.Commands {
 		subcommand := subcommand
 		subcmd := &cobra.Command{
 			Use: subcommand.Name,

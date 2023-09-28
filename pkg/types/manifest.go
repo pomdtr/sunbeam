@@ -3,6 +3,7 @@ package types
 type Manifest struct {
 	Title       string        `json:"title"`
 	Homepage    string        `json:"homepage,omitempty"`
+	Root        string        `json:"root,omitempty"`
 	Description string        `json:"description,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
 }

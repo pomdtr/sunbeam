@@ -8,6 +8,7 @@
 export interface Manifest {
   title: string;
   homepage?: string;
+  root?: string;
   description?: string;
   commands: Commandspec[];
 }

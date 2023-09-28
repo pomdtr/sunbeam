@@ -6,6 +6,7 @@ set -euo pipefail
 if [ $# -eq 0 ]; then
   sunbeam query -n '{
     title: "DevDocs",
+    root: "list-docsets",
     commands: [
       {
         name: "list-docsets",
@@ -56,8 +57,8 @@ elif [ "$COMMAND" = "list-entries" ]; then
       title: .name,
       subtitle: .type,
       actions: [
-        {title: "Open in Browser", onAction: { type: "open", url: "https://devdocs.io/\($slug)/\(.path)"}},
-        {title: "Copy URL", onAction: { type: "copy", text: "https://devdocs.io/\($slug)/\(.path)"}}
+        {title: "Open in Browser", onAction: { type: "open", url: "https://devdocs.io/\($slug)/\(.path)", exit: true}},
+        {title: "Copy URL", onAction: { type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}}
       ]
     }
   ' | sunbeam query --slurp '{ type: "list", items: . }'
