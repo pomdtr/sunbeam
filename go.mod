@@ -12,6 +12,7 @@ require (
 	github.com/cli/browser v1.2.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
+	github.com/itchyny/gojq v0.12.13
 	github.com/junegunn/fzf v0.0.0-20230924042340-76364ea767cc
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/muesli/reflow v0.3.0
@@ -27,6 +28,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect

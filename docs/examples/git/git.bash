@@ -13,7 +13,7 @@ if ! command -v git &> /dev/null; then
 fi
 
 if [ $# -eq 0 ]; then
-    jq -n '{
+    sunbeam query -n '{
         title: "Git",
         commands: [
             {
@@ -31,9 +31,9 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-COMMAND=$(jq -r '.command' <<< "$1")
+COMMAND=$(sunbeam query -r '.command' <<< "$1")
 if [ "$COMMAND" = "list-commits" ]; then
-    git log | jc --git-log | jq '.[] | {
+    git log | jc --git-log | sunbeam query '.[] | {
         title: .message,
         subtitle: .author,
         accessories: [
@@ -48,11 +48,11 @@ if [ "$COMMAND" = "list-commits" ]; then
                 }
             }
         ]
-    }' | jq -s '{type: "list", items: .}'
+    }' | sunbeam query -s '{type: "list", items: .}'
 elif [ "$COMMAND" = "commit" ]; then
-    INPUTS=$(jq .inputs <<< "$1")
+    INPUTS=$(sunbeam query .inputs <<< "$1")
     if [ "$INPUTS" = "null" ]; then
-        jq -n '{
+        sunbeam query -n '{
             type: "form",
             items: [
                 {name: "message", type: "textarea", title: "Commit Message"}
@@ -61,6 +61,6 @@ elif [ "$COMMAND" = "commit" ]; then
         exit 0
     fi
 
-    MESSAGE=$(jq -r '.inputs.message' <<< "$1")
+    MESSAGE=$(sunbeam query -r '.inputs.message' <<< "$1")
     echo "$MESSAGE" > .commit-message
 fi

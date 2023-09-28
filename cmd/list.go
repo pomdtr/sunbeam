@@ -11,9 +11,10 @@ import (
 
 func NewCmdList() *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
-		Short: "List installed extensions",
-		Args:  cobra.NoArgs,
+		Use:     "list",
+		Short:   "List installed extensions",
+		Aliases: []string{"ls"},
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extensions, err := FindExtensions()
 			if err != nil {

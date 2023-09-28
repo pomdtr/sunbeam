@@ -9,7 +9,7 @@ if ! command -v gh &> /dev/null; then
 fi
 
 if [ $# -eq 0 ]; then
-jq -n '{
+sunbeam query -n '{
     title: "GitHub",
     commands: [
         {name: "list-repos", mode: "view", title: "List Repositories"},
@@ -19,10 +19,10 @@ jq -n '{
 exit 0
 fi
 
-COMMAND=$(jq -r .command <<< "$1")
+COMMAND=$(sunbeam query -r .command <<< "$1")
 if [ "$COMMAND" = "list-repos" ]; then
     # shellcheck disable=SC2016
-    gh api "/user/repos?sort=updated" | jq '.[] |
+    gh api "/user/repos?sort=updated" | sunbeam query '.[] |
         {
             title: .name,
             subtitle: (.description // ""),
@@ -32,10 +32,10 @@ if [ "$COMMAND" = "list-repos" ]; then
                 { title: "List Pull Requests", key: "p", onAction: { type: "run", command: "list-prs", params: { repo: .full_name }}}
             ]
         }
-    ' | jq -s '{type: "list", items: .}'
+    ' | sunbeam query -s '{type: "list", items: .}'
 elif [ "$COMMAND" == "list-prs" ]; then
-    REPOSITORY=$(jq -r '.params.repo' <<< "$1")
-    gh pr list --repo "$REPOSITORY" --json author,title,url,number | jq '.[] |
+    REPOSITORY=$(sunbeam query -r '.params.repo' <<< "$1")
+    gh pr list --repo "$REPOSITORY" --json author,title,url,number | sunbeam query '.[] |
     {
         title: .title,
         subtitle: .author.login,
@@ -47,5 +47,5 @@ elif [ "$COMMAND" == "list-prs" ]; then
             {title: "Copy URL", onAction: { type: "copy", text: .url, exit: true}}
         ]
     }
-    ' | jq -s '{type: "list", items: .}'
+    ' | sunbeam query -s '{type: "list", items: .}'
 fi

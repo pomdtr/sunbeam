@@ -9,7 +9,7 @@ fi
 
 if [ $# -eq 0 ]
 then
-    jq -n '{
+    sunbeam query -n '{
         title: "VS Code",
         commands: [
             {name: "list-projects", title: "List Projects", mode: "view"},
@@ -19,24 +19,24 @@ then
     exit 0
 fi
 
-COMMAND=$(jq -r .command <<< "$1")
+COMMAND=$(sunbeam query -r .command <<< "$1")
 if [ "$COMMAND" = "list-projects" ]; then
     dbPath="$HOME/Library/Application Support/Code/User/globalStorage/state.vscdb"
     query="SELECT json_extract(value, '$.entries') as entries FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'"
 
     # get the recently opened paths
-    sqlite3 "$dbPath" "$query" | jq '.[] | select(.folderUri) | {
+    sqlite3 "$dbPath" "$query" | sunbeam query '.[] | select(.folderUri) | {
         title: (.folderUri | split("/") | last),
         actions: [
             {title: "Open in VS Code", onAction: { type: "run", command: "open-project", params: {dir: (.folderUri | sub("^file://"; ""))}}},
             {title: "Open Folder", key: "o", onAction: { type: "open", url: .folderUri, exit: true}}
         ]
-    }' | jq -s '{
+    }' | sunbeam query -s '{
         type: "list",
         items: .
     }'
 elif [ "$COMMAND" = "open-project" ]; then
-    dir=$(jq -r '.params.dir' <<< "$1")
+    dir=$(sunbeam query -r '.params.dir' <<< "$1")
     code "$dir"
 fi
 
