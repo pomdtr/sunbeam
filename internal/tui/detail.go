@@ -62,7 +62,7 @@ func NewDetail(text string, actions ...types.Action) *Detail {
 		text:      text,
 	}
 
-	d.RefreshContent()
+	_ = d.RefreshContent()
 	return &d
 }
 
@@ -131,7 +131,7 @@ func (c *Detail) SetSize(width, height int) {
 	c.viewport.Width = width
 
 	c.statusBar.Width = width
-	c.RefreshContent()
+	_ = c.RefreshContent()
 }
 
 func (c *Detail) View() string {

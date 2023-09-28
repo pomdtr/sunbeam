@@ -62,7 +62,10 @@ func NewCmdServe() *cobra.Command {
 				}
 
 				encoder := json.NewEncoder(w)
-				encoder.Encode(extension.Manifest)
+				if err := encoder.Encode(extension.Manifest); err != nil {
+					http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), 500)
+					return
+				}
 			})
 
 			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +112,9 @@ func NewCmdServe() *cobra.Command {
 			}()
 
 			log.Printf("Listening on http://%s:%d", flags.host, flags.port)
-			server.ListenAndServe()
+			if err := server.ListenAndServe(); err != nil {
+				return err
+			}
 			return nil
 		},
 	}

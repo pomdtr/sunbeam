@@ -322,7 +322,7 @@ func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
 			}
 
 			if !param.Optional {
-				subcmd.MarkFlagRequired(param.Name)
+				_ = subcmd.MarkFlagRequired(param.Name)
 			}
 		}
 
