@@ -4,24 +4,22 @@
 
 - [tealdeer](https://github.com/dbrgn/tealdeer)
 
-## Demo
-
-![demo](./demo.gif)
-
 ## Install
 
 ```bash
-sunbeam command add tldr https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/tldr.sh
+curl -L https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/tldr/tldr.sh > ~/.local/bin/sunbeam-tldr
+chmod +x ~/.local/bin/sunbeam-tldr
 ```
 
 ## Usage
 
 ```bash
-sunbeam tldr # List all pages
+sunbeam tldr list
+sunbeam tldr view --page tldr
 ```
 
 ## Code
 
 ```bash
-{{#include ./tldr.sh}}
+{{#include ./tldr.bash}}
 ```

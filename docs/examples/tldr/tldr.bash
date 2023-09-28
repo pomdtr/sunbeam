@@ -41,7 +41,7 @@ if [ "$COMMAND" = "list" ]; then
 elif [ "$COMMAND" = "view" ]; then
     PAGE=$(sunbeam query -r '.params.page' <<< "$1")
     # shellcheck disable=SC2016
-    tldr --raw "$PAGE" | sunbeam query --arg page "$PAGE" -sR '{
+    tldr --raw "$PAGE" | sunbeam query --arg page="$PAGE" -sR '{
             type: "detail", text: ., language: "markdown", actions: [
                 {title: "Copy Page", onAction: {type: "copy", text: ., exit: true}},
                 {title: "Copy Command", onAction: {type: "copy", text: $page, exit: true}}

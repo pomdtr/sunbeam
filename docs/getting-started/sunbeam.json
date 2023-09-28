@@ -1,8 +1,0 @@
-{
-  "title": "Getting Started",
-  "subcommands": {
-    "static-list": "./static-list.sh",
-    "dynamic-list": "./dynamic-list.py",
-    "dynamic-list-with-args": "./dynamic-list-with-args.py"
-  }
-}

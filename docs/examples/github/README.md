@@ -6,25 +6,22 @@
 
 > **Note** You should be authenticated with GitHub using the `gh auth login` command before running the scripts.
 
-## Demo
-
-![demo](./demo.gif)
-
 ## Install
 
 ```bash
-sunbeam command add github https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/github/github.sh
+curl -L https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/github/github.sh > ~/.local/bin/sunbeam-gh
+chmod +x ~/.local/bin/sunbeam-gh
 ```
 
 ## Usage
 
 ```bash
-sunbeam github # List all repositories
-sunbeam github list-prs <repo> # List all pull requests for a repository
+sunbeam gh list-repos # List all repositories
+sunbeam github list-prs --repo excaldraw/excalidraw # List all pull requests for a repository
 ```
 
 ## Code
 
 ```bash
-{{#include ./github.sh}}
+{{#include ./github.bash}}
 ```

@@ -12,7 +12,6 @@ It allows you to build interactives UIs from simple scripts.
 
 Other examples:
 
-- [File Browser](https://pomdtr.github.io/sunbeam/book/examples/file-browser)
 - [Bitwarden](https://pomdtr.github.io/sunbeam/book/examples/bitwarden)
 - [Github](https://pomdtr.github.io/sunbeam/book/examples/github)
 - [TLDR Pages](https://pomdtr.github.io/sunbeam/book/examples/tldr)
@@ -41,10 +40,6 @@ The only requirement is that the script is executable and outputs a JSON object 
 
 ![sunbeam running in vscode](./static/vscode.png)
 
-### Any github repository can be used as a command
-
-Sunbeam is designed to be extended. Any github repository containing a `sunbeam.json` config can be installed using the `sunbeam install` command. You can also install commands from any url.
-
 ### Sunbeam supports custom clients
 
 Sunbeam comes with a built-in TUI to interact with your scripts, but you can also use any other client.
@@ -55,11 +50,9 @@ Currently the only alternative client is [sunbeam-raycast](https://github.com/po
 
 ## Inspirations / Alternatives
 
-Sunbeam wouldn't exist without the work of other people. Here are some projects that inspired sunbeam:
+Sunbeam wouldn't exist without taking inspirations from incredible tools. Make sure to checkout:
 
 - [raycast](https://raycast.com): Sunbeam shamelessly copy most of raycast UX. Even the project name is a reference to raycast.
 - [fzf](https://github.com/junegunn/fzf): Sunbeam tries to take inspiration from fzf, but it's not a drop-in replacement. Sunbeam is designed to be used as a launcher, not as a fuzzy finder.
-- [kit](https://www.scriptkit.com/): Kit is another script-focused launcher.
 - [gum](https://github.com/charmbracelet/gum): Sunbeam is powered by charm libraries, and can be seen as a alternative spin on gum. Gum is invoked by scripts, while sunbeam invokes scripts.
 - [slapdash](https://slapdash.com): The sunbeam event loop was inspired by slapdash. Sadly, slapdash doesn't seem to be updated anymore.
-- [gh](https://cli.github.com): The sunbeam extension mechanism is a copycat of the gh extension mechanism.

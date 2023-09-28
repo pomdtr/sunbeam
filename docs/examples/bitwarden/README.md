@@ -10,17 +10,18 @@
 ## Install
 
 ```bash
-sunbeam command add bw https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/bitwarden/bitwarden.sh
+curl -L https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/bitwarden/bitwarden.bash > ~/.local/bin/sunbeam-bw
+chmod +x ~/.local/bin/sunbeam-bw
 ```
 
 ## Usage
 
 ```bash
-sunbeam bw
+sunbeam bw list-passwords
 ```
 
 ## Code
 
 ```bash
-{{#include ./bitwarden.sh}}
+{{#include ./bitwarden.bash}}
 ```
