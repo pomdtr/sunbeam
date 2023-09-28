@@ -95,7 +95,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			if command.Mode == types.CommandModeView {
 				return PushPageMsg{NewRunner(c.extensions, CommandRef{
-					Origin:  msg.Origin,
+					Path:    msg.Origin,
 					Command: msg.Command,
 					Params:  msg.Params,
 				})}

@@ -36,7 +36,7 @@ func BearerMiddleware(token string) func(next http.Handler) http.Handler {
 	}
 }
 
-func NewCmdServe(config tui.Config) *cobra.Command {
+func NewCmdServe() *cobra.Command {
 	flags := struct {
 		port        int
 		host        string
@@ -44,16 +44,10 @@ func NewCmdServe(config tui.Config) *cobra.Command {
 	}{}
 
 	cmd := &cobra.Command{
-		Use:     "serve",
-		Short:   "Serve extensions over HTTP",
-		GroupID: coreGroupID,
-		Args:    cobra.ExactArgs(1),
+		Use:   "serve",
+		Short: "Serve extensions over HTTP",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			origin, err := tui.ParseOrigin(args[0])
-			if err != nil {
-				return err
-			}
-
 			r := chi.NewRouter()
 			r.Use(middleware.Logger)
 			if flags.bearerToken != "" {
@@ -61,7 +55,7 @@ func NewCmdServe(config tui.Config) *cobra.Command {
 			}
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				extension, err := tui.LoadExtension(origin)
+				extension, err := tui.LoadExtension(args[0])
 				if err != nil {
 					http.Error(w, fmt.Sprintf("failed to load extension: %s", err.Error()), 500)
 					return
@@ -72,7 +66,7 @@ func NewCmdServe(config tui.Config) *cobra.Command {
 			})
 
 			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-				extension, err := tui.LoadExtension(origin)
+				extension, err := tui.LoadExtension(args[0])
 				if err != nil {
 					http.Error(w, fmt.Sprintf("failed to load extension: %s", err.Error()), 500)
 					return

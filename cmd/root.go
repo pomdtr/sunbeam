@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -15,13 +16,7 @@ import (
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"github.com/tailscale/hujson"
 	"muzzammil.xyz/jsonc"
-)
-
-const (
-	coreGroupID      = "core"
-	extensionGroupID = "extension"
 )
 
 var (
@@ -29,87 +24,106 @@ var (
 	Date    = "unknown"
 )
 
+var (
+	MaxHeigth = LookupIntEnv("SUNBEAM_HEIGHT", 0)
+)
+
 type ExtensionCache map[string]types.Manifest
 
-func getConfigPath() (string, error) {
+type RooItems map[string]string
+
+func getRootItems() (RooItems, error) {
 	var candidates []string
-	if runtime.GOOS == "darwin" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-
-		candidates = append(candidates, filepath.Join(homeDir, ".config", "sunbeam", "config.json"))
-		candidates = append(candidates, filepath.Join(homeDir, ".config", "sunbeam", "config.jsonc"))
-	} else {
-		configHome, err := os.UserConfigDir()
-		if err != nil {
-			return "", err
-		}
-
-		candidates = append(candidates, filepath.Join(configHome, "sunbeam", "config.json"))
-		candidates = append(candidates, filepath.Join(configHome, "sunbeam", "config.jsonc"))
+	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
+		candidates = append(candidates, filepath.Join(env, "sunbeam", "root.json"))
 	}
+
+	candidates = append(candidates, filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "root.json"))
 
 	for _, candidate := range candidates {
 		if _, err := os.Stat(candidate); err != nil {
 			continue
 		}
 
-		return candidate, nil
-	}
-
-	return candidates[0], nil
-}
-
-func LoadConfig(configPath string) (tui.Config, error) {
-	bytes, err := os.ReadFile(configPath)
-	if err != nil {
-		return tui.Config{}, err
-	}
-
-	if strings.HasSuffix(configPath, ".jsonc") {
-		b, err := hujson.Standardize(bytes)
+		f, err := os.Open(candidate)
 		if err != nil {
-			return tui.Config{}, err
+			return nil, err
 		}
-		bytes = b
+
+		decoder := json.NewDecoder(f)
+		var rootItems RooItems
+		if err := decoder.Decode(&rootItems); err != nil {
+			return nil, err
+		}
+
+		return rootItems, nil
 	}
 
-	var config tui.Config
-	if err := jsonc.Unmarshal(bytes, &config); err != nil {
-		return tui.Config{}, err
-	}
-
-	return config, nil
+	return nil, nil
 }
 
 func NewRootCmd() (*cobra.Command, error) {
-	configPath, err := getConfigPath()
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := LoadConfig(configPath)
-	if err != nil {
-		config = tui.Config{}
-	}
-
-	config.Window.Height = LookupIntEnv("SUNBEAM_HEIGHT", config.Window.Height)
-
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
-		Use:          "sunbeam",
-		Short:        "Command Line Launcher",
-		Version:      fmt.Sprintf("%s (%s)", Version, Date),
-		SilenceUsage: true,
+		Use:     "sunbeam",
+		Short:   "Command Line Launcher",
+		Version: fmt.Sprintf("%s (%s)", Version, Date),
+		Args:    cobra.ArbitraryArgs,
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			extensions, err := ListExtensions()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			if len(args) > 0 {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			var completions []string
+			for _, extension := range extensions {
+				name := strings.TrimPrefix(filepath.Base(extension), "sunbeam-")
+				completions = append(completions, fmt.Sprintf("%s\t%s", name, extension))
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
+		SilenceUsage:       true,
+		DisableFlagParsing: true,
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if args[0] == "--help" || args[0] == "-h" {
+					return cmd.Help()
+				}
+
+				commandPath, err := exec.LookPath(fmt.Sprintf("sunbeam-%s", args[0]))
+				if err != nil {
+					return fmt.Errorf("command %s not found", args[0])
+				}
+
+				command, err := NewExtensionCommand(commandPath)
+				if err != nil {
+					return err
+				}
+
+				command.SetArgs(args[1:])
+				command.Use = args[0]
+				return command.Execute()
+			}
+
+			rootItems, err := getRootItems()
+			if err != nil {
+				return err
+			}
+			if len(rootItems) == 0 {
+				return cmd.Help()
+			}
+
 			items := make([]types.ListItem, 0)
-			for title, command := range config.Root {
-				ref, err := ExtractCommand(command, config.Aliases)
+			for title, command := range rootItems {
+				ref, err := ExtractCommand(command)
 				if err != nil {
 					continue
 				}
@@ -123,7 +137,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 							Title: "Run Command",
 							OnAction: types.Command{
 								Type:    types.CommandTypeRun,
-								Origin:  ref.Origin,
+								Origin:  ref.Path,
 								Command: ref.Command,
 								Params:  ref.Params,
 							},
@@ -133,7 +147,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 							Key:   "c",
 							OnAction: types.Command{
 								Type: types.CommandTypeCopy,
-								Text: command,
+								Text: fmt.Sprintf("%s %s", os.Args[0], command),
 								Exit: true,
 							},
 						},
@@ -141,18 +155,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				})
 			}
 
-			return tui.Draw(tui.NewRootList(tui.NewExtensions(config.Aliases), items...), config.Window)
+			return tui.Draw(tui.NewRootList(tui.Extensions{}, items...), MaxHeigth)
+
 		},
 	}
 
-	rootCmd.AddGroup(
-		&cobra.Group{ID: coreGroupID, Title: "Core Commands"},
-	)
-
-	rootCmd.AddCommand(NewCmdConfig(configPath))
-	rootCmd.AddCommand(NewCmdRun(config))
-	rootCmd.AddCommand(NewCmdServe(config))
+	rootCmd.AddCommand(NewCmdRun())
+	rootCmd.AddCommand(NewCmdServe())
+	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewValidateCmd())
+	rootCmd.AddCommand(NewCmdList())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -190,44 +202,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	rootCmd.AddGroup(
-		&cobra.Group{ID: extensionGroupID, Title: "Extension Commands"},
-	)
-
-	for alias, origin := range config.Aliases {
-		alias := alias
-		origin := origin
-
-		rootCmd.AddCommand(&cobra.Command{
-			Use:                alias,
-			Short:              origin,
-			DisableFlagParsing: true,
-			GroupID:            extensionGroupID,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				origin, err := resolveSpecifiers(origin)
-				if err != nil {
-					return err
-				}
-
-				command, err := NewCustomCommand(origin, config)
-				if err != nil {
-					return err
-				}
-
-				command.Use = alias
-				command.SetArgs(args)
-				return command.Execute()
-			},
-		})
-	}
-
 	return rootCmd, nil
 }
 
-func NewCustomCommand(origin string, config tui.Config) (*cobra.Command, error) {
-	extensions := tui.NewExtensions(config.Aliases)
-
-	manifest, err := extensions.Get(origin)
+func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
+	extensions := tui.Extensions{}
+	manifest, err := extensions.Get(extensionpath)
 	if err != nil {
 		return nil, err
 	}
@@ -235,8 +215,8 @@ func NewCustomCommand(origin string, config tui.Config) (*cobra.Command, error) 
 	rootCmd := &cobra.Command{
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
-				Origin: origin,
-			}), config.Window)
+				Path: extensionpath,
+			}), MaxHeigth)
 		},
 		SilenceErrors: true,
 	}
@@ -270,17 +250,17 @@ func NewCustomCommand(origin string, config tui.Config) (*cobra.Command, error) 
 					}
 				}
 
-				extension, err := extensions.Get(origin)
+				extension, err := extensions.Get(extensionpath)
 				if err != nil {
 					return err
 				}
 
 				if subcommand.Mode == types.CommandModeView {
 					return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
-						Origin:  origin,
+						Path:    extensionpath,
 						Command: subcommand.Name,
 						Params:  params,
-					}), config.Window)
+					}), MaxHeigth)
 				}
 
 				out, err := extension.Run(tui.CommandInput{
@@ -335,10 +315,6 @@ func NewCustomCommand(origin string, config tui.Config) (*cobra.Command, error) 
 }
 
 func buildDoc(command *cobra.Command) (string, error) {
-	if command.GroupID == extensionGroupID {
-		return "", nil
-	}
-
 	var page strings.Builder
 	err := doc.GenMarkdown(command, &page)
 	if err != nil {
@@ -395,9 +371,9 @@ func LookupBoolEnv(key string, fallback bool) bool {
 	return b
 }
 
-func ExtractCommand(exec string, aliases map[string]string) (tui.CommandRef, error) {
+func ExtractCommand(shellCommand string) (tui.CommandRef, error) {
 	var ref tui.CommandRef
-	args, err := shlex.Split(exec)
+	args, err := shlex.Split(shellCommand)
 	if err != nil {
 		return ref, err
 	}
@@ -406,39 +382,13 @@ func ExtractCommand(exec string, aliases map[string]string) (tui.CommandRef, err
 		return ref, fmt.Errorf("no command specified")
 	}
 
-	if args[0] != "sunbeam" {
-		return ref, fmt.Errorf("only sunbeam commands are supported")
-	}
-
-	if len(args) == 1 {
-		return ref, fmt.Errorf("no command specified")
-	}
-
-	args = args[1:]
-
-	var origin string
-	if args[0] == "run" {
-		args = args[1:]
-		if len(args) == 0 {
-			return ref, fmt.Errorf("no origin specified")
-		}
-
-		origin = args[0]
-		args = args[1:]
-	} else {
-		o, ok := aliases[args[0]]
-		if !ok {
-			return ref, fmt.Errorf("alias %s not found", args[0])
-		}
-
-		origin = o
-		args = args[1:]
-	}
-
-	ref.Origin, err = resolveSpecifiers(origin)
+	path, err := exec.LookPath(fmt.Sprintf("sunbeam-%s", args[0]))
 	if err != nil {
-		return ref, err
+		return ref, fmt.Errorf("command %s not found", args[0])
 	}
+
+	ref.Path = path
+	args = args[1:]
 
 	if len(args) == 0 {
 		return ref, nil

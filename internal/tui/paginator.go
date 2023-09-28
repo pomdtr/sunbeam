@@ -33,10 +33,6 @@ type Page interface {
 	View() string
 }
 
-type WindowOptions struct {
-	Height int
-}
-
 type ExitMsg struct{}
 
 func ExitCmd() tea.Msg {
@@ -51,16 +47,16 @@ func FocusCmd() tea.Msg {
 
 type Paginator struct {
 	width, height int
-	options       WindowOptions
+	maxHeight     int
 
 	pages  []Page
 	hidden bool
 }
 
-func NewPaginator(root Page, options WindowOptions) *Paginator {
+func NewPaginator(root Page, maxHeight int) *Paginator {
 	return &Paginator{pages: []Page{
 		root,
-	}, options: options}
+	}, maxHeight: maxHeight}
 }
 
 func (m *Paginator) Init() tea.Cmd {
@@ -118,7 +114,7 @@ func (m *Paginator) View() string {
 
 	if len(m.pages) > 0 {
 		currentPage := m.pages[len(m.pages)-1]
-		if m.options.Height > 0 {
+		if m.maxHeight > 0 {
 			return lipgloss.NewStyle().PaddingTop(1).Render(currentPage.View())
 		}
 		return currentPage.View()
@@ -141,11 +137,11 @@ func (m *Paginator) pageWidth() int {
 }
 
 func (m *Paginator) pageHeight() int {
-	if m.options.Height == 0 {
+	if m.maxHeight == 0 {
 		return m.height
 	}
 
-	height := min(m.height, m.options.Height)
+	height := min(m.height, m.maxHeight)
 	if height > 0 {
 		return height - 1 // margin top
 	}
@@ -169,12 +165,12 @@ func (m *Paginator) Pop() tea.Cmd {
 	}
 }
 
-func Draw(page Page, options WindowOptions) error {
+func Draw(page Page, maxHeight int) error {
 	lipgloss.SetColorProfile(termenv.NewOutput(os.Stderr).Profile)
-	paginator := NewPaginator(page, options)
+	paginator := NewPaginator(page, maxHeight)
 
 	var p *tea.Program
-	if options.Height > 0 {
+	if maxHeight > 0 {
 		p = tea.NewProgram(paginator, tea.WithOutput(os.Stderr))
 	} else {
 		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))

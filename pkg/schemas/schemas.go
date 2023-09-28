@@ -11,25 +11,25 @@ import (
 var configSchemaString string
 var ConfigSchema = jsonschema.MustCompileString("config.schema.json", configSchemaString)
 
-// //go:embed page.schema.json
-// var pageSchemaString string
-// var PageSchema = jsonschema.MustCompileString("page.schema.json", pageSchemaString)
+//go:embed page.schema.json
+var pageSchemaString string
+var PageSchema = jsonschema.MustCompileString("page.schema.json", pageSchemaString)
 
 //go:embed manifest.schema.json
 var manifestSchemaString string
 var ManifestSchema = jsonschema.MustCompileString("manifest.schema.json", manifestSchemaString)
 
-// func ValidatePage(input []byte) error {
-// 	var v interface{}
-// 	if err := json.Unmarshal(input, &v); err != nil {
-// 		return err
-// 	}
+func ValidatePage(input []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(input, &v); err != nil {
+		return err
+	}
 
-// 	if err := PageSchema.Validate(v); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+	if err := PageSchema.Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
 
 func ValidateManifest(input []byte) error {
 	var v interface{}

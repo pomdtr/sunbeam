@@ -12,45 +12,44 @@ import (
 
 func NewValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "validate",
-		Short:   "Validate a Sunbeam schema",
-		GroupID: coreGroupID,
+		Use:   "validate",
+		Short: "Validate a Sunbeam schema",
 	}
 
-	// cmd.AddCommand(NewValidatePageCmd())
+	cmd.AddCommand(NewValidatePageCmd())
 	cmd.AddCommand(NewValidateManifestCmd())
 
 	return cmd
 }
 
-// func NewValidatePageCmd() *cobra.Command {
-// 	return &cobra.Command{
-// 		Use:   "page",
-// 		Short: "Validate a page",
-// 		Args:  cobra.NoArgs,
-// 		PreRunE: func(cmd *cobra.Command, args []string) error {
-// 			if isatty.IsTerminal(os.Stdin.Fd()) {
-// 				return fmt.Errorf("no input provided")
-// 			}
+func NewValidatePageCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "page",
+		Short: "Validate a page",
+		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if isatty.IsTerminal(os.Stdin.Fd()) {
+				return fmt.Errorf("no input provided")
+			}
 
-// 			return nil
-// 		},
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			input, err := io.ReadAll(os.Stdin)
-// 			if err != nil {
-// 				return fmt.Errorf("unable to read stdin: %s", err)
-// 			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			input, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf("unable to read stdin: %s", err)
+			}
 
-// 			// if err := schemas.ValidatePage(input); err != nil {
-// 			// 	return err
-// 			// }
+			if err := schemas.ValidatePage(input); err != nil {
+				return err
+			}
 
-// 			fmt.Println("✅ Input is valid!")
-// 			return nil
-// 		},
-// 	}
+			fmt.Println("✅ Input is valid!")
+			return nil
+		},
+	}
 
-// }
+}
 
 func NewValidateManifestCmd() *cobra.Command {
 	return &cobra.Command{

@@ -22,7 +22,7 @@ type Runner struct {
 }
 
 type CommandRef struct {
-	Origin  string
+	Path    string
 	Command string
 	Params  map[string]any
 }
@@ -105,7 +105,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, c.embed.Init()
 	case SubmitMsg:
 		return c, func() tea.Msg {
-			extension, err := c.extensions.Get(c.ref.Origin)
+			extension, err := c.extensions.Get(c.ref.Path)
 			if err != nil {
 				return err
 			}
@@ -154,12 +154,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			case types.CommandTypeRun:
 				if msg.Origin == "" {
-					msg.Origin = c.ref.Origin
+					msg.Origin = c.ref.Path
 				}
 
 				if msg.Command == "" {
 					return PushPageMsg{NewRunner(c.extensions, CommandRef{
-						Origin: msg.Origin,
+						Path: msg.Origin,
 					})}
 				}
 
@@ -175,7 +175,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				if command.Mode == types.CommandModeView {
 					return PushPageMsg{NewRunner(c.extensions, CommandRef{
-						Origin:  msg.Origin,
+						Path:    msg.Origin,
 						Command: command.Name,
 						Params:  msg.Params,
 					})}
@@ -203,7 +203,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			return PushPageMsg{
 				Page: NewRunner(c.extensions, CommandRef{
-					Origin:  ref.Origin,
+					Path:    ref.Origin,
 					Command: ref.Command,
 					Params:  ref.Params,
 				}),
@@ -223,7 +223,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						Title: "Run Command",
 						OnAction: types.Command{
 							Type:    types.CommandTypeRun,
-							Origin:  c.ref.Origin,
+							Origin:  c.ref.Path,
 							Command: command.Name,
 						},
 					},
@@ -232,7 +232,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						Key:   "c",
 						OnAction: types.Command{
 							Type: types.CommandTypeCopy,
-							Text: ShellCommand(CommandRef{Origin: c.ref.Origin, Command: command.Name}),
+							Text: ShellCommand(CommandRef{Path: c.ref.Path, Command: command.Name}),
 							Exit: true,
 						},
 					},
@@ -278,7 +278,7 @@ func (c *Runner) View() string {
 }
 
 func (c *Runner) Run() tea.Msg {
-	extension, err := c.extensions.Get(c.ref.Origin)
+	extension, err := c.extensions.Get(c.ref.Path)
 	if err != nil {
 		return err
 	}
