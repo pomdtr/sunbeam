@@ -6,42 +6,76 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/schemas"
+	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/spf13/cobra"
 )
 
 func NewValidateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validate",
+		Short: "Validate a Sunbeam schema",
+	}
+
+	cmd.AddCommand(NewValidatePageCmd())
+	cmd.AddCommand(NewValidateManifestCmd())
+
+	return cmd
+}
+
+func NewValidatePageCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:     "validate [file]",
-		Short:   "Validate a page",
-		GroupID: coreGroupID,
-		Args:    cobra.MaximumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			var input []byte
-
-			if len(args) == 1 {
-				c, err := os.ReadFile(args[0])
-				if err != nil {
-					return fmt.Errorf("unable to read file: %s", err)
-				}
-				input = c
-			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
-				c, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return fmt.Errorf("unable to read stdin: %s", err)
-				}
-
-				input = c
-			} else {
+		Use:   "page",
+		Short: "Validate a page",
+		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no input provided")
 			}
 
-			if err := schemas.Validate(input); err != nil {
-				return fmt.Errorf("input is not valid: %s", err)
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			input, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf("unable to read stdin: %s", err)
+			}
+
+			if err := schemas.ValidatePage(input); err != nil {
+				return err
 			}
 
 			fmt.Println("✅ Input is valid!")
 			return nil
 		},
 	}
+
+}
+
+func NewValidateManifestCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "manifest",
+		Short: "Validate a manifest",
+		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if isatty.IsTerminal(os.Stdin.Fd()) {
+				return fmt.Errorf("no input provided")
+			}
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			input, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf("unable to read stdin: %s", err)
+			}
+
+			if err := schemas.ValidateManifest(input); err != nil {
+				return err
+			}
+
+			fmt.Println("✅ Input is valid!")
+			return nil
+		},
+	}
+
 }

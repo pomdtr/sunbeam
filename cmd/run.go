@@ -1,110 +1,76 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
-	"path/filepath"
+	"strings"
 
-	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/types"
+	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/spf13/cobra"
 )
 
-type ExitCodeError struct {
-	ExitCode int
-}
+var template = `#!/bin/sh
 
-func (e ExitCodeError) Error() string {
-	return fmt.Sprintf("exit code %d", e.ExitCode)
-}
+exec sunbeam fetch %s "$@"
+`
 
-func NewRunCmd() *cobra.Command {
+func NewCmdRun() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "run <origin> [args...]",
-		Short:   "read a sunbeam command",
-		GroupID: coreGroupID,
-		Args:    cobra.MinimumNArgs(1),
+		Use:                "run <origin> [args...]",
+		Short:              "Run an extension without installing it",
+		Args:               cobra.MinimumNArgs(1),
+		DisableFlagParsing: true,
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 1 {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			extension, err := tui.LoadExtension(args[0])
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			completions := make([]string, 0)
+			for _, command := range extension.Commands {
+				completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var input string
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				bs, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-				input = string(bs)
+			if args[0] == "--help" || args[0] == "-h" {
+				return cmd.Help()
 			}
 
-			if originUrl, err := url.Parse(args[0]); err == nil && originUrl.Scheme == "https" {
-				resp, err := http.Get(args[0])
-				if err != nil {
-					return fmt.Errorf("could not fetch script: %w", err)
-				}
-				defer resp.Body.Close()
-
-				if resp.StatusCode != 200 {
-					return fmt.Errorf("could not fetch script: %s", resp.Status)
-				}
-
-				tmpDir, err := os.MkdirTemp("", "sunbeam")
+			var scriptPath string
+			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
+				tempfile, err := os.CreateTemp("", "sunbeam-run-*.sh")
 				if err != nil {
 					return err
 				}
-				defer os.RemoveAll(tmpDir)
+				defer os.Remove(tempfile.Name())
 
-				scriptPath := filepath.Join(tmpDir, "sunbeam-command")
-				f, err := os.OpenFile(scriptPath, os.O_CREATE|os.O_WRONLY, 0755)
-				if err != nil {
-					return err
-				}
-				defer f.Close()
-
-				if _, err := io.Copy(f, resp.Body); err != nil {
-					return err
-				}
-				if err := f.Close(); err != nil {
+				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
 					return err
 				}
 
-				return runCommand(types.Command{
-					Name:  scriptPath,
-					Args:  args[1:],
-					Input: input,
-				})
-			}
-
-			root := args[0]
-			if info, err := os.Stat(root); err != nil {
-				return fmt.Errorf("could not find script: %w", err)
-			} else if !info.IsDir() {
-				root = filepath.Join(root, "sunbeam.json")
-			}
-
-			var entrypoint string
-			if filepath.Base(root) == "sunbeam.json" {
-				f, err := os.Open(root)
-				if err != nil {
+				if _, err := tempfile.WriteString(fmt.Sprintf(template, args[0])); err != nil {
 					return err
 				}
-				defer f.Close()
 
-				var metadata Metadata
-				if err := json.NewDecoder(f).Decode(&metadata); err != nil {
-					return err
-				}
-				entrypoint = filepath.Join(filepath.Dir(root), metadata.Entrypoint)
+				scriptPath = tempfile.Name()
 			} else {
-				entrypoint = root
+				scriptPath = args[0]
 			}
 
-			return runCommand(types.Command{
-				Name:  entrypoint,
-				Args:  args[1:],
-				Input: input,
-			})
+			rootCmd, err := NewExtensionCommand(scriptPath)
+			if err != nil {
+				return err
+			}
+
+			rootCmd.Use = args[0]
+			rootCmd.SetArgs(args[1:])
+			return rootCmd.Execute()
 		},
 	}
 

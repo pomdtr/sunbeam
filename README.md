@@ -37,7 +37,7 @@ Sunbeam is written is distributed as a single binary, so you can run it on any p
 ### Sunbeam is language agnostic
 
 Sunbeam communicates with your scripts using JSON, so you can use any language you want.
-The only requirement is that the script is executable and outputs a JSON object conforming to the [Sunbeam JSON Schema](./schemas/page.schema.json) on stdout.
+The only requirement is that the script is executable and outputs a JSON object conforming to the Sunbeam JSON Schema on stdout.
 
 ![sunbeam running in vscode](./static/vscode.png)
 

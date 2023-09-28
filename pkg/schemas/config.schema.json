@@ -1,0 +1,75 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "extensions": {
+            "type": "object",
+            "patternProperties": {
+                ".+": {
+                    "type": "string"
+                }
+            }
+        },
+        "items": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/rootitem"
+            }
+        },
+        "window": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "border": {
+                    "type": "boolean"
+                },
+                "height": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "margin": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        }
+    },
+    "definitions": {
+        "rootitem": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "title",
+                "extension",
+                "command"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "extension": {
+                    "type": "string"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "object",
+                    "patternProperties": {
+                        ".+": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "boolean"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -23,7 +23,7 @@ You can write command using any language. If you want to distribute your command
 
 Here are some suggestions if you don't know what language to use:
 
-- Bash is already installed on most systems. Sunbeam provides multiple commands to help you write bash commands. You can use the `sunbeam query` command to generate/manipulate JSON objects.
+- Bash is already installed on most systems. Sunbeam provides multiple commands to help you write bash commands. You can use the `jq` command to generate/manipulate JSON objects.
 - If you are more confortable with javascript/typescript, take a look at [deno](https://deno.land/). Types are available both on [npm](https://npmjs.com/package/sunbeam-types).
 
 ## Distributing Commands

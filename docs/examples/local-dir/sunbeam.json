@@ -1,6 +1,0 @@
-{
-    "title": "Example Extension",
-    "description": "This is an example extension.",
-    "author": "pomdtr",
-    "entrypoint": "./hello.py"
-}

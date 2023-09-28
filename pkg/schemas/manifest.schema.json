@@ -1,0 +1,109 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "title",
+        "commands"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "title": {
+            "type": "string"
+        },
+        "homepage": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "commands": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/commandspec"
+            }
+        }
+    },
+    "definitions": {
+        "commandspec": {
+            "type": "object",
+            "required": [
+                "title",
+                "name",
+                "mode"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "mode": {
+                    "enum": [
+                        "view",
+                        "no-view"
+                    ]
+                },
+                "params": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "type"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "string",
+                                    "boolean"
+                                ]
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "optional": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                "prefs": {
+                    "type": "object",
+                    "patternProperties": {
+                        ".+": {
+                            "type": "object",
+                            "required": [
+                                "type"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "string",
+                                        "boolean"
+                                    ]
+                                },
+                                "optional": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

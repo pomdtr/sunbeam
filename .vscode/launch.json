@@ -1,21 +1,12 @@
 {
+  "version": "0.2.0",
   "configurations": [
     {
       "name": "sunbeam",
       "type": "go",
       "request": "launch",
       "console": "integratedTerminal",
-      "program": "${workspaceFolder}",
-      "args": [
-        "eval",
-        "@pomdtr.helloWorld"
-      ]
+      "program": "${workspaceFolder}"
     },
-    {
-      "name": "install script",
-      "type": "bashdb",
-      "request": "launch",
-      "program": "${workspaceFolder}/scripts/sunbeam-installer.sh"
-    }
-  ]
+  ],
 }

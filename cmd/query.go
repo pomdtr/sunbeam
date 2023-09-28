@@ -9,10 +9,11 @@ import (
 	"strings"
 
 	"github.com/itchyny/gojq"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
-func NewQueryCmd() *cobra.Command {
+func NewCmdQuery() *cobra.Command {
 	var jqFlags struct {
 		NullInput bool
 		RawInput  bool
@@ -23,10 +24,9 @@ func NewQueryCmd() *cobra.Command {
 	}
 
 	queryCmd := &cobra.Command{
-		Use:     "query <query> [file]",
-		Short:   "Transform or generate JSON using a jq query",
-		Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
-		GroupID: coreGroupID,
+		Use:   "query <query> [file]",
+		Short: "Transform or generate JSON using a jq query",
+		Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			vars := make([]string, 0)
@@ -115,6 +115,9 @@ func NewQueryCmd() *cobra.Command {
 			}
 
 			encoder := json.NewEncoder(os.Stdout)
+			if isatty.IsTerminal(os.Stdout.Fd()) {
+				encoder.SetIndent("", "  ")
+			}
 			for _, output := range outputs {
 				for {
 					v, ok := output.Next()

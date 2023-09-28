@@ -5,7 +5,9 @@
       "label": "start mdbook",
       "type": "process",
       "command": "mdbook",
-      "args": ["serve"],
+      "args": [
+        "serve"
+      ],
       "problemMatcher": []
     }
   ]
