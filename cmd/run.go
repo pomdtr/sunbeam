@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -55,6 +56,22 @@ func NewCmdRun() *cobra.Command {
 				}
 
 				if _, err := tempfile.WriteString(fmt.Sprintf(template, args[0])); err != nil {
+					return err
+				}
+
+				scriptPath = tempfile.Name()
+			} else if args[0] == "-" {
+				tempfile, err := os.CreateTemp("", "sunbeam-run-*.sh")
+				if err != nil {
+					return err
+				}
+				defer os.Remove(tempfile.Name())
+
+				if _, err := io.Copy(tempfile, os.Stdin); err != nil {
+					return err
+				}
+
+				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
 					return err
 				}
 
