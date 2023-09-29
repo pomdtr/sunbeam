@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,30 +20,27 @@ import (
 )
 
 func BearerMiddleware(token string) func(next http.Handler) http.Handler {
+	// as base64
+	bearerAuthHeader := fmt.Sprint("Bearer ", token)
+	basicAuthHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(token+":"))
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			auth := r.Header.Get("Authorization")
-			if auth == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			if authorization := r.Header.Get("Authorization"); authorization == bearerAuthHeader || authorization == basicAuthHeader {
+				next.ServeHTTP(w, r)
 				return
 			}
 
-			if auth != fmt.Sprintf("Bearer %s", token) {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-				return
-			}
-
-			next.ServeHTTP(w, r)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		})
 	}
 }
 
 func NewCmdServe() *cobra.Command {
 	flags := struct {
-		port        int
-		host        string
-		bearerToken string
+		port         int
+		host         string
+		bearerToken  string
+		withoutToken bool
 	}{}
 
 	cmd := &cobra.Command{
@@ -50,8 +50,19 @@ func NewCmdServe() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r := chi.NewRouter()
 			r.Use(middleware.Logger)
+			var token string
 			if flags.bearerToken != "" {
-				r.Use(BearerMiddleware(flags.bearerToken))
+				token = flags.bearerToken
+			} else if !flags.withoutToken {
+				t, err := generateRandomToken()
+				if err != nil {
+					return err
+				}
+				token = t
+			}
+
+			if token != "" {
+				r.Use(BearerMiddleware(token))
 			}
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +122,12 @@ func NewCmdServe() *cobra.Command {
 				os.Exit(0)
 			}()
 
-			log.Printf("Listening on http://%s:%d", flags.host, flags.port)
+			if token != "" {
+				log.Printf("Listening on http://%s@%s:%d", token, flags.host, flags.port)
+			} else {
+				log.Printf("Listening on http://%s:%d", flags.host, flags.port)
+			}
+
 			if err := server.ListenAndServe(); err != nil {
 				return err
 			}
@@ -121,7 +137,28 @@ func NewCmdServe() *cobra.Command {
 
 	cmd.Flags().IntVarP(&flags.port, "port", "p", 9999, "Port to listen on")
 	cmd.Flags().StringVarP(&flags.host, "host", "H", "localhost", "Host to listen on")
-	cmd.Flags().StringVarP(&flags.bearerToken, "token", "t", "", "Bearer token to use for authentication")
+	cmd.Flags().Bool("without-token", false, "Disable bearer token authentication")
+	cmd.Flags().String("token", "", "Bearer token to use for authentication")
 
 	return cmd
+}
+
+const (
+	alphanumericChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	tokenLength       = 16
+)
+
+func generateRandomToken() (string, error) {
+	var tokenRunes []rune
+	runesCount := big.NewInt(int64(len(alphanumericChars)))
+
+	for i := 0; i < tokenLength; i++ {
+		randomIndex, err := rand.Int(rand.Reader, runesCount)
+		if err != nil {
+			return "", err
+		}
+		tokenRunes = append(tokenRunes, []rune(alphanumericChars)[randomIndex.Int64()])
+	}
+
+	return string(tokenRunes), nil
 }

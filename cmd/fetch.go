@@ -10,9 +10,6 @@ import (
 )
 
 func NewCmdFetch() *cobra.Command {
-	flags := &struct {
-		headers []string
-	}{}
 	cmd := &cobra.Command{
 		Use:    "fetch",
 		Short:  "Fetch an extension",
@@ -23,15 +20,6 @@ func NewCmdFetch() *cobra.Command {
 				req, err := http.NewRequest(http.MethodGet, args[0], nil)
 				if err != nil {
 					return err
-				}
-
-				for _, header := range flags.headers {
-					parts := strings.SplitN(header, ":", 2)
-					if len(parts) != 2 {
-						return cmd.Help()
-					}
-
-					req.Header.Add(parts[0], parts[1])
 				}
 
 				resp, err := http.DefaultClient.Do(req)
@@ -51,15 +39,6 @@ func NewCmdFetch() *cobra.Command {
 				return err
 			}
 
-			for _, header := range flags.headers {
-				parts := strings.SplitN(header, ":", 2)
-				if len(parts) != 2 {
-					return cmd.Help()
-				}
-
-				req.Header.Add(parts[0], parts[1])
-			}
-
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				return err
@@ -74,6 +53,5 @@ func NewCmdFetch() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSliceVarP(&flags.headers, "header", "H", nil, "HTTP headers to include in the request")
 	return cmd
 }
