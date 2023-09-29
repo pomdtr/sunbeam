@@ -12,7 +12,7 @@ import (
 
 var template = `#!/bin/sh
 
-exec sunbeam fetch %s "$@"
+exec sunbeam fetch '%s' "$@"
 `
 
 func NewCmdRun() *cobra.Command {

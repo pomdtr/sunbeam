@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -21,11 +20,9 @@ import (
 
 func BearerMiddleware(token string) func(next http.Handler) http.Handler {
 	// as base64
-	bearerAuthHeader := fmt.Sprint("Bearer ", token)
-	basicAuthHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(token+":"))
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if authorization := r.Header.Get("Authorization"); authorization == bearerAuthHeader || authorization == basicAuthHeader {
+			if authorization := r.Header.Get("Authorization"); authorization == fmt.Sprint("Bearer ", token) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -123,9 +120,11 @@ func NewCmdServe() *cobra.Command {
 			}()
 
 			if token != "" {
-				log.Printf("Listening on http://%s@%s:%d", token, flags.host, flags.port)
+				log.Printf("sunbeam command: sunbeam run http://%s@%s:%d\n", token, flags.host, flags.port)
+				log.Printf("curl command: curl -H 'Authorization: Bearer %s' http://%s:%d\n", token, flags.host, flags.port)
 			} else {
-				log.Printf("Listening on http://%s:%d", flags.host, flags.port)
+				log.Printf("sunbeam command: sunbeam run http://%s:%d\n", flags.host, flags.port)
+				log.Printf("curl command: curl http://%s:%d\n", flags.host, flags.port)
 			}
 
 			if err := server.ListenAndServe(); err != nil {
