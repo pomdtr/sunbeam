@@ -2,13 +2,27 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "start mdbook",
+      "label": "preview docs",
       "type": "process",
-      "command": "mdbook",
+      "command": "oranda",
       "args": [
-        "serve"
+        "dev"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "build typescript package",
+      "type": "process",
+      "command": "deno",
+      "options": {
+        "cwd": "${workspaceFolder}/pkg/typescript"
+      },
+      "args": [
+        "run",
+        "-A",
+        "./build.ts"
       ],
       "problemMatcher": []
     }
-  ]
+  ],
 }
