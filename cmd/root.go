@@ -103,7 +103,7 @@ func NewRootCmd() (*cobra.Command, error) {
 				return completions, cobra.ShellCompDirectiveNoFileComp
 			}
 
-			return nil, cobra.ShellCompDirectiveDefault
+			return nil, cobra.ShellCompDirectiveNoFileComp
 		},
 		SilenceUsage:       true,
 		DisableFlagParsing: true,

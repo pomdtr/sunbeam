@@ -22,8 +22,16 @@ func NewCmdRun() *cobra.Command {
 		Args:               cobra.MinimumNArgs(1),
 		DisableFlagParsing: true,
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			if len(args) != 1 {
+			if len(args) == 0 {
 				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			if len(args) > 1 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+
+			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") || args[0] == "-" {
+				return nil, cobra.ShellCompDirectiveNoFileComp
 			}
 
 			extension, err := tui.LoadExtension(args[0])
