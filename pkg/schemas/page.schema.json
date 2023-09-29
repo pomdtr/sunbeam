@@ -24,6 +24,10 @@
                     "const": "list",
                     "description": "The type of the page."
                 },
+                "title": {
+                    "type": "string",
+                    "description": "The title of the list."
+                },
                 "items": {
                     "description": "The items in the list.",
                     "type": "array",
@@ -45,6 +49,10 @@
                 "type": {
                     "description": "The type of the page.",
                     "const": "detail"
+                },
+                "title": {
+                    "description": "The title of the detail view.",
+                    "type": "string"
                 },
                 "language": {
                     "type": "string"
@@ -73,6 +81,10 @@
                 "type": {
                     "const": "form",
                     "description": "The type of the page."
+                },
+                "title": {
+                    "type": "string",
+                    "description": "The title of the form."
                 },
                 "inputs": {
                     "type": "array",

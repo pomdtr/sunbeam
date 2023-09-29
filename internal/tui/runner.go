@@ -253,7 +253,6 @@ func (c *Runner) Run() tea.Msg {
 		return fmt.Errorf("command %s not found", c.ref.Command)
 	}
 
-	output.SetWindowTitle(fmt.Sprintf("%s - %s", command.Title, "Sunbeam"))
 	output, err := extension.Run(
 		CommandInput{
 			Command: command.Name,
@@ -294,6 +293,12 @@ func (c *Runner) Run() tea.Msg {
 	switch types.PageType(pageType) {
 	case types.PageTypeDetail:
 		var detail types.Detail
+		if detail.Title != "" {
+			termOutput.SetWindowTitle(detail.Title)
+		} else {
+			termOutput.SetWindowTitle(command.Title)
+		}
+
 		if err := mapstructure.Decode(page, &detail); err != nil {
 			return err
 		}
@@ -301,6 +306,12 @@ func (c *Runner) Run() tea.Msg {
 		return detail
 	case types.PageTypeList:
 		var list types.List
+		if list.Title != "" {
+			termOutput.SetWindowTitle(list.Title)
+		} else {
+			termOutput.SetWindowTitle(command.Title)
+		}
+
 		if err := mapstructure.Decode(page, &list); err != nil {
 			return err
 		}
@@ -308,6 +319,12 @@ func (c *Runner) Run() tea.Msg {
 		return list
 	case types.PageTypeForm:
 		var form types.Form
+		if form.Title != "" {
+			termOutput.SetWindowTitle(form.Title)
+		} else {
+			termOutput.SetWindowTitle(command.Title)
+		}
+
 		if err := mapstructure.Decode(page, &form); err != nil {
 			return err
 		}

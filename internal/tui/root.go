@@ -26,7 +26,6 @@ func NewRootList(extensions Extensions, items ...types.ListItem) *RootList {
 }
 
 func (c *RootList) Init() tea.Cmd {
-	output.SetWindowTitle("Sunbeam")
 	return tea.Batch(c.list.Init(), FocusCmd)
 }
 
@@ -36,6 +35,8 @@ func (c *RootList) SetSize(width, height int) {
 
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
+	case FocusMsg:
+		termOutput.SetWindowTitle("Sunbeam")
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":

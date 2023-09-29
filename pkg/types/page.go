@@ -9,16 +9,19 @@ const (
 )
 
 type List struct {
+	Title string     `json:"title,omitempty"`
 	Items []ListItem `json:"items"`
 }
 
 type Detail struct {
+	Title    string   `json:"title,omitempty"`
 	Actions  []Action `json:"actions,omitempty"`
 	Text     string   `json:"text,omitempty"`
 	Language string   `json:"language,omitempty"`
 }
 
 type Form struct {
+	Title string     `json:"title,omitempty"`
 	Items []FormItem `json:"items,omitempty"`
 }
 

@@ -173,6 +173,10 @@ export interface List {
    */
   type: "list";
   /**
+   * The title of the list.
+   */
+  title?: string;
+  /**
    * The items in the list.
    */
   items: Listitem[];
@@ -218,6 +222,10 @@ export interface Detail {
    * The type of the page.
    */
   type: "detail";
+  /**
+   * The title of the detail view.
+   */
+  title?: string;
   language?: string;
   /**
    * The text to show in the detail view.
@@ -233,5 +241,9 @@ export interface Form {
    * The type of the page.
    */
   type: "form";
+  /**
+   * The title of the form.
+   */
+  title?: string;
   inputs?: Input[];
 }

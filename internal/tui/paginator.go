@@ -8,7 +8,7 @@ import (
 	"github.com/muesli/termenv"
 )
 
-var output = termenv.NewOutput(os.Stderr)
+var termOutput = termenv.NewOutput(os.Stderr)
 
 func PopPageCmd() tea.Msg {
 	return PopPageMsg{}
@@ -168,8 +168,7 @@ func (m *Paginator) Pop() tea.Cmd {
 }
 
 func Draw(page Page, maxHeight int) error {
-	lipgloss.SetColorProfile(output.Profile)
-
+	lipgloss.SetColorProfile(termOutput.Profile)
 	paginator := NewPaginator(page, maxHeight)
 	var p *tea.Program
 	if maxHeight > 0 {
@@ -178,6 +177,7 @@ func Draw(page Page, maxHeight int) error {
 		p = tea.NewProgram(paginator, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	}
 	_, err := p.Run()
+	termOutput.SetWindowTitle("")
 	if err != nil {
 		return err
 	}
