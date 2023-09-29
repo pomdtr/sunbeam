@@ -14,12 +14,12 @@ fi
 if [ $# -eq 0 ]; then
     sunbeam query -n '
 {
-    title: "TLDR Pages",
+    title: "TLDR",
     root: "list",
     # each command can be called through the cli
     commands: [
-        { name: "list", mode: "view", title: "List TLDR pages" },
-        { name: "view", mode: "view", title: "View TLDR page", params: [{ name: "page", type: "string", description: "page to show" }] }
+        { name: "list", mode: "view", title: "Search Pages" },
+        { name: "view", mode: "view", title: "View page", params: [{ name: "page", type: "string", description: "page to show" }] }
     ]
 }'
 exit 0

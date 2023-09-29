@@ -2,6 +2,18 @@
 
 set -euo pipefail
 
+# check if bkt is installed
+if ! command -v bkt &> /dev/null; then
+  echo "bkt is not installed"
+  exit 1
+fi
+
+# check if curl is installed
+if ! command -v curl &> /dev/null; then
+  echo "curl is not installed"
+  exit 1
+fi
+
 # if no arguments are passed, return the extension's manifest
 if [ $# -eq 0 ]; then
   sunbeam query -n '{
@@ -30,7 +42,7 @@ COMMAND=$(sunbeam query -r '.command' <<< "$1")
 
 if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
-  curl -s https://devdocs.io/docs/docs.json | sunbeam query '.[] |
+  bkt --ttl=24h --stale=1h -- curl -s https://devdocs.io/docs/docs.json | sunbeam query '.[] |
     {
       title: .name,
       subtitle: (.release // "latest"),
@@ -52,13 +64,13 @@ if [ "$COMMAND" = "list-docsets" ]; then
 elif [ "$COMMAND" = "list-entries" ]; then
   SLUG=$(sunbeam query -r '.params.slug' <<< "$1")
   # shellcheck disable=SC2016
-  curl -s "https://devdocs.io/docs/$SLUG/index.json" | sunbeam query --arg slug="$SLUG" '.entries[] |
+  bkt --ttl=24h --stale=1h -- curl -s "https://devdocs.io/docs/$SLUG/index.json" | sunbeam query --arg slug="$SLUG" '.entries[] |
     {
       title: .name,
       subtitle: .type,
       actions: [
         {title: "Open in Browser", onAction: { type: "open", url: "https://devdocs.io/\($slug)/\(.path)", exit: true}},
-        {title: "Copy URL", onAction: { type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}}
+        {title: "Copy URL", key: "c", onAction: { type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}}
       ]
     }
   ' | sunbeam query --slurp '{ type: "list", items: . }'

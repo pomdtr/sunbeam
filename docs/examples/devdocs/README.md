@@ -3,6 +3,7 @@
 ## Requirements
 
 - [curl](https://curl.haxx.se/)
+- [bkt](https://www.bkt.rs/)
 
 ## Install
 

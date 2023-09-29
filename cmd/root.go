@@ -30,39 +30,36 @@ var (
 
 type ExtensionCache map[string]types.Manifest
 
-type RooItems map[string]string
+type Config struct {
+	RootItems map[string]string `json:"root"`
+}
 
-func getRootItems() (RooItems, error) {
-	var candidates []string
+func findConfigPath() string {
 	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
-		candidates = append(candidates, filepath.Join(env, "sunbeam", "root.json"))
+		if _, err := os.Stat(filepath.Join(env, "sunbeam", "config.json")); err == nil {
+			return filepath.Join(env, "sunbeam", "config.json")
+		}
 	}
 
-	candidates = append(candidates, filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "root.json"))
+	return filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.json")
+}
 
-	for _, candidate := range candidates {
-		if _, err := os.Stat(candidate); err != nil {
-			continue
-		}
+func NewRootCmd() (*cobra.Command, error) {
+	var config Config
 
-		f, err := os.Open(candidate)
+	configPath := findConfigPath()
+	// Todo: initialize config file
+	if _, err := os.Stat(configPath); err == nil {
+		file, err := os.Open(configPath)
 		if err != nil {
 			return nil, err
 		}
 
-		decoder := json.NewDecoder(f)
-		var rootItems RooItems
-		if err := decoder.Decode(&rootItems); err != nil {
+		if err := json.NewDecoder(file).Decode(&config); err != nil {
 			return nil, err
 		}
-
-		return rootItems, nil
 	}
 
-	return nil, nil
-}
-
-func NewRootCmd() (*cobra.Command, error) {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:     "sunbeam",
@@ -131,16 +128,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return command.Execute()
 			}
 
-			rootItems, err := getRootItems()
-			if err != nil {
-				return err
-			}
-			if len(rootItems) == 0 {
-				return cmd.Help()
+			if len(config.RootItems) == 0 {
+				return cmd.Usage()
 			}
 
 			items := make([]types.ListItem, 0)
-			for title, command := range rootItems {
+			for title, command := range config.RootItems {
 				ref, err := ExtractCommand(command)
 				if err != nil {
 					continue
@@ -180,7 +173,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdServe())
-	rootCmd.AddCommand(NewCmdEdit())
+	rootCmd.AddCommand(NewCmdEdit(configPath))
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdList())

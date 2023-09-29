@@ -294,9 +294,9 @@ func (c *Runner) Run() tea.Msg {
 	case types.PageTypeDetail:
 		var detail types.Detail
 		if detail.Title != "" {
-			termOutput.SetWindowTitle(detail.Title)
+			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", detail.Title, extension.Title))
 		} else {
-			termOutput.SetWindowTitle(command.Title)
+			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", command.Title, extension.Title))
 		}
 
 		if err := mapstructure.Decode(page, &detail); err != nil {
@@ -307,9 +307,9 @@ func (c *Runner) Run() tea.Msg {
 	case types.PageTypeList:
 		var list types.List
 		if list.Title != "" {
-			termOutput.SetWindowTitle(list.Title)
+			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", list.Title, extension.Title))
 		} else {
-			termOutput.SetWindowTitle(command.Title)
+			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", command.Title, extension.Title))
 		}
 
 		if err := mapstructure.Decode(page, &list); err != nil {
@@ -320,9 +320,9 @@ func (c *Runner) Run() tea.Msg {
 	case types.PageTypeForm:
 		var form types.Form
 		if form.Title != "" {
-			termOutput.SetWindowTitle(form.Title)
+			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", form.Title, extension.Title))
 		} else {
-			termOutput.SetWindowTitle(command.Title)
+			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", command.Title, extension.Title))
 		}
 
 		if err := mapstructure.Decode(page, &form); err != nil {

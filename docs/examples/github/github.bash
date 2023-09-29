@@ -11,6 +11,7 @@ fi
 if [ $# -eq 0 ]; then
 sunbeam query -n '{
     title: "GitHub",
+    root: "list-repos",
     commands: [
         {name: "list-repos", mode: "view", title: "List Repositories"},
         {name: "list-prs", mode: "view", title: "List Pull Requests", params: [{name: "repo", type: "string"}]}
@@ -44,7 +45,7 @@ elif [ "$COMMAND" == "list-prs" ]; then
         ],
         actions: [
             {title: "Open in Browser", onAction: { type: "open", url: .url, exit: true}},
-            {title: "Copy URL", onAction: { type: "copy", text: .url, exit: true}}
+            {title: "Copy URL", key: "c", onAction: { type: "copy", text: .url, exit: true}}
         ]
     }
     ' | sunbeam query -s '{type: "list", items: .}'
