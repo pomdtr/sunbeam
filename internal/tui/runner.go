@@ -253,6 +253,7 @@ func (c *Runner) Run() tea.Msg {
 		return fmt.Errorf("command %s not found", c.ref.Command)
 	}
 
+	output.SetWindowTitle(fmt.Sprintf("%s - %s", command.Title, "Sunbeam"))
 	output, err := extension.Run(
 		CommandInput{
 			Command: command.Name,

@@ -26,6 +26,7 @@ func NewRootList(extensions Extensions, items ...types.ListItem) *RootList {
 }
 
 func (c *RootList) Init() tea.Cmd {
+	output.SetWindowTitle("Sunbeam")
 	return tea.Batch(c.list.Init(), FocusCmd)
 }
 
