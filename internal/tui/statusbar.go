@@ -107,7 +107,7 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			for _, action := range p.actions {
 				if fmt.Sprintf("alt+%s", action.Key) == msg.String() {
 					return p, func() tea.Msg {
-						return action
+						return action.OnAction
 					}
 				}
 			}
