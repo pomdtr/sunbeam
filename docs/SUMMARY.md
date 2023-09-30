@@ -9,6 +9,7 @@
   - [Github (Bash)](./examples/github/README.md)
   - [Bitwarden (Bash)](./examples/bitwarden/README.md)
   - [Devdocs (Bash)](./examples/devdocs/README.md)
+- [Alacritty](./clients/alacritty.md)
 
 # Reference
 

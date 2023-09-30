@@ -1,0 +1,18 @@
+shell:
+  program: /opt/homebrew/bin/fish
+  args: ["-lic", "sunbeam"]
+
+window:
+  opacity: 0.9
+  decorations: buttonless
+  dimensions:
+    columns: 90
+    lines: 23
+
+  option_as_alt: Both
+  padding:
+    x: 10
+    y: 10
+
+font:
+  size: 13.0

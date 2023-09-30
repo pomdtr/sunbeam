@@ -2,18 +2,6 @@
 
 set -euo pipefail
 
-# check if bkt is installed
-if ! command -v bkt &> /dev/null; then
-  echo "bkt is not installed"
-  exit 1
-fi
-
-# check if curl is installed
-if ! command -v curl &> /dev/null; then
-  echo "curl is not installed"
-  exit 1
-fi
-
 # if no arguments are passed, return the extension's manifest
 if [ $# -eq 0 ]; then
   sunbeam query -n '{
@@ -42,7 +30,7 @@ COMMAND=$(sunbeam query -r '.command' <<< "$1")
 
 if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
-  bkt --ttl=24h --stale=1h -- curl -s https://devdocs.io/docs/docs.json | sunbeam query '.[] |
+  sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query '.[] |
     {
       title: .name,
       subtitle: (.release // "latest"),
@@ -64,7 +52,7 @@ if [ "$COMMAND" = "list-docsets" ]; then
 elif [ "$COMMAND" = "list-entries" ]; then
   SLUG=$(sunbeam query -r '.params.slug' <<< "$1")
   # shellcheck disable=SC2016
-  bkt --ttl=24h --stale=1h -- curl -s "https://devdocs.io/docs/$SLUG/index.json" | sunbeam query --arg slug="$SLUG" '.entries[] |
+  sunbeam fetch "https://devdocs.io/docs/$SLUG/index.json" | sunbeam query --arg slug="$SLUG" '.entries[] |
     {
       title: .name,
       subtitle: .type,
