@@ -13,8 +13,8 @@ import (
 
 func NewCmdFetch() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "fetch",
-		Short:  "Fetch an extension",
+		Use:    "fetch <url> [body]",
+		Short:  "Simple http client, mostly used for accessing sunbeam scripts remotely.",
 		Hidden: true,
 		Args:   cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 		RunE: func(cmd *cobra.Command, args []string) error {
