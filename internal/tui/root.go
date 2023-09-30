@@ -13,7 +13,7 @@ import (
 type RootList struct {
 	list       *List
 	extensions Extensions
-	OnSelect   func(types.ListItem) error
+	OnSelect   func(id string)
 }
 
 func NewRootList(extensions Extensions, items ...types.ListItem) *RootList {
@@ -40,22 +40,15 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if c.OnSelect == nil {
-				break
-			}
-
 			item, ok := c.list.Selection()
 			if !ok {
 				break
 			}
 
-			if err := c.OnSelect(item); err != nil {
-				return c, func() tea.Msg {
-					return err
-				}
+			if c.OnSelect != nil {
+				c.OnSelect(item.Id)
 			}
 		}
-
 	case types.Command:
 		return c, func() tea.Msg {
 			if msg.Type != types.CommandTypeRun {

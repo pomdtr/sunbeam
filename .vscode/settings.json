@@ -4,6 +4,7 @@
     "public": true,
     "pkg/typescript/npm": true
   },
+  "yaml.validate": false,
   "deno.enable": true,
   "deno.config": "./pkg/typescript/deno.json",
   "deno.unstable": true

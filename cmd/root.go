@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/cli/browser"
@@ -34,6 +36,20 @@ type Config struct {
 	RootItems map[string]string `json:"root"`
 }
 
+func LoadConfig(fp string) (Config, error) {
+	f, err := os.Open(fp)
+	if err != nil {
+		return Config{}, err
+	}
+
+	var config Config
+	if err := json.NewDecoder(f).Decode(&config); err != nil {
+		return Config{}, err
+	}
+
+	return config, nil
+}
+
 func findConfigPath() string {
 	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
 		if _, err := os.Stat(filepath.Join(env, "sunbeam", "config.json")); err == nil {
@@ -44,21 +60,55 @@ func findConfigPath() string {
 	return filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.json")
 }
 
-func NewRootCmd() (*cobra.Command, error) {
-	var config Config
+type History struct {
+	entries map[string]int64
+	path    string
+}
 
-	configPath := findConfigPath()
-	// Todo: initialize config file
-	if _, err := os.Stat(configPath); err == nil {
-		file, err := os.Open(configPath)
-		if err != nil {
-			return nil, err
+func LoadHistory(fp string) (History, error) {
+	f, err := os.Open(fp)
+	if err != nil {
+		return History{}, err
+	}
+
+	var entries map[string]int64
+	if err := json.NewDecoder(f).Decode(&entries); err != nil {
+		return History{}, err
+	}
+
+	return History{
+		entries: entries,
+		path:    fp,
+	}, nil
+}
+
+func (h History) Save() error {
+	f, err := os.OpenFile(h.path, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
 		}
 
-		if err := json.NewDecoder(file).Decode(&config); err != nil {
-			return nil, err
+		if err := os.MkdirAll(filepath.Dir(h.path), 0755); err != nil {
+			return err
+		}
+
+		f, err = os.Create(h.path)
+		if err != nil {
+			return err
 		}
 	}
+
+	encoder := json.NewEncoder(f)
+	if err := encoder.Encode(h.entries); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func NewRootCmd() (*cobra.Command, error) {
+	configPath := findConfigPath()
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
@@ -128,8 +178,30 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return command.Execute()
 			}
 
+			config, err := LoadConfig(configPath)
+			if err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
 			if len(config.RootItems) == 0 {
 				return cmd.Usage()
+			}
+
+			cacheDir, err := os.UserCacheDir()
+			if err != nil {
+				return err
+			}
+			historyPath := filepath.Join(cacheDir, "sunbeam", "history.json")
+			history, err := LoadHistory(historyPath)
+			if err != nil {
+				if !os.IsNotExist(err) {
+					return err
+				}
+
+				history = History{
+					entries: make(map[string]int64),
+					path:    historyPath,
+				}
 			}
 
 			items := make([]types.ListItem, 0)
@@ -166,7 +238,27 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				})
 			}
 
-			return tui.Draw(tui.NewRootList(tui.Extensions{}, items...), MaxHeigth)
+			sort.Slice(items, func(i, j int) bool {
+				timestampA, ok := history.entries[items[i].Id]
+				if !ok {
+					return false
+				}
+
+				timestampB, ok := history.entries[items[j].Id]
+				if !ok {
+					return true
+				}
+
+				return timestampA > timestampB
+			})
+
+			rootList := tui.NewRootList(tui.Extensions{}, items...)
+			rootList.OnSelect = func(id string) {
+				history.entries[id] = time.Now().Unix()
+				_ = history.Save()
+			}
+
+			return tui.Draw(rootList, MaxHeigth)
 
 		},
 	}
