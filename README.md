@@ -1,9 +1,3 @@
-<div class="oranda-hide">
-
-# Sunbeam
-
-</div>
-
 Sunbeam is a command-line launcher, inspired by [fzf](https://github.com/junegunn/fzf), [raycast](https://raycast.com) and [gum](https://github.com/charmbracelet/gum).
 
 It allows you to build interactives UIs from simple scripts.
