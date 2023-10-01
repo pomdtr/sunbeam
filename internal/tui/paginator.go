@@ -31,6 +31,8 @@ type PushPageMsg struct {
 type Page interface {
 	Init() tea.Cmd
 	SetSize(width, height int)
+	Focus() tea.Cmd
+	Blur() tea.Cmd
 	Update(tea.Msg) (Page, tea.Cmd)
 	View() string
 }
@@ -39,12 +41,6 @@ type ExitMsg struct{}
 
 func ExitCmd() tea.Msg {
 	return ExitMsg{}
-}
-
-type FocusMsg struct{}
-
-func FocusCmd() tea.Msg {
-	return FocusMsg{}
 }
 
 type Paginator struct {
@@ -66,7 +62,7 @@ func (m *Paginator) Init() tea.Cmd {
 		return nil
 	}
 
-	return m.pages[0].Init()
+	return tea.Sequence(m.pages[0].Init(), m.pages[0].Focus())
 }
 
 func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -152,19 +148,27 @@ func (m *Paginator) pageHeight() int {
 }
 
 func (m *Paginator) Push(page Page) tea.Cmd {
+	var cmd tea.Cmd
+	if len(m.pages) > 0 {
+		cmd = m.pages[len(m.pages)-1].Blur()
+	}
 	page.SetSize(m.pageWidth(), m.pageHeight())
 	m.pages = append(m.pages, page)
-	return page.Init()
+	return tea.Sequence(cmd, page.Init(), page.Focus())
 }
 
 func (m *Paginator) Pop() tea.Cmd {
+	var cmds []tea.Cmd
 	if len(m.pages) > 0 {
+		cmds = append(cmds, m.pages[len(m.pages)-1].Blur())
 		m.pages = m.pages[:len(m.pages)-1]
 	}
 
-	return func() tea.Msg {
-		return FocusMsg{}
+	if len(m.pages) > 0 {
+		cmds = append(cmds, m.pages[len(m.pages)-1].Focus())
 	}
+
+	return tea.Sequence(cmds...)
 }
 
 func Draw(page Page, maxHeight int) error {

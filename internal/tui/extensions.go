@@ -31,7 +31,7 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 }
 
 func ShellCommand(ref CommandRef) string {
-	args := []string{"sunbeam", "run", ref.Path, ref.Command}
+	args := []string{"sunbeam", "run", ref.Script, ref.Command}
 	for name, value := range ref.Params {
 		switch value := value.(type) {
 		case string:

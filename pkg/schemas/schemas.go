@@ -1,23 +1,54 @@
 package schemas
 
 import (
-	_ "embed"
+	"embed"
 	"encoding/json"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-//go:embed config.schema.json
-var configSchemaString string
-var ConfigSchema = jsonschema.MustCompileString("config.schema.json", configSchemaString)
+//go:embed *.schema.json
+var embedFS embed.FS
 
-//go:embed page.schema.json
-var pageSchemaString string
-var PageSchema = jsonschema.MustCompileString("page.schema.json", pageSchemaString)
+var schemas map[string]*jsonschema.Schema
 
-//go:embed manifest.schema.json
-var manifestSchemaString string
-var ManifestSchema = jsonschema.MustCompileString("manifest.schema.json", manifestSchemaString)
+const (
+	CommandSchemaURL  = "command.schema.json"
+	PageSchemaURL     = "page.schema.json"
+	ManifestSchemaURL = "manifest.schema.json"
+)
+
+var schemaUrls = []string{
+	CommandSchemaURL,
+	PageSchemaURL,
+	ManifestSchemaURL,
+}
+
+func init() {
+	compiler := jsonschema.NewCompiler()
+	compiler.Draft = jsonschema.Draft7
+
+	for _, url := range schemaUrls {
+		schema, err := embedFS.Open(url)
+		if err != nil {
+			panic(err)
+		}
+
+		if err := compiler.AddResource(url, schema); err != nil {
+			panic(err)
+		}
+	}
+
+	schemas = make(map[string]*jsonschema.Schema)
+	for _, url := range schemaUrls {
+		schema, err := compiler.Compile(url)
+		if err != nil {
+			panic(err)
+		}
+
+		schemas[url] = schema
+	}
+}
 
 func ValidatePage(input []byte) error {
 	var v interface{}
@@ -25,7 +56,19 @@ func ValidatePage(input []byte) error {
 		return err
 	}
 
-	if err := PageSchema.Validate(v); err != nil {
+	if err := schemas[PageSchemaURL].Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ValidateCommand(input []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(input, &v); err != nil {
+		return err
+	}
+
+	if err := schemas[CommandSchemaURL].Validate(v); err != nil {
 		return err
 	}
 	return nil
@@ -37,19 +80,7 @@ func ValidateManifest(input []byte) error {
 		return err
 	}
 
-	if err := ManifestSchema.Validate(v); err != nil {
-		return err
-	}
-	return nil
-}
-
-func ValidateConfig(input []byte) error {
-	var v interface{}
-	if err := json.Unmarshal(input, &v); err != nil {
-		return err
-	}
-
-	if err := ConfigSchema.Validate(v); err != nil {
+	if err := schemas[ManifestSchemaURL].Validate(v); err != nil {
 		return err
 	}
 	return nil

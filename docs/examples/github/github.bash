@@ -28,7 +28,7 @@ if [ "$COMMAND" = "list-repos" ]; then
             title: .name,
             subtitle: (.description // ""),
             actions: [
-                { title: "Open in Browser", onAction: { type: "open", url: .html_url, exit: true }},
+                { title: "Open in Browser", onAction: { type: "open", target: .html_url, exit: true }},
                 { title: "Copy URL", key: "o", onAction: {type: "copy",  text: .html_url, exit: true} },
                 { title: "List Pull Requests", key: "p", onAction: { type: "run", command: "list-prs", params: { repo: .full_name }}}
             ]
@@ -44,7 +44,7 @@ elif [ "$COMMAND" == "list-prs" ]; then
             "#\(.number)"
         ],
         actions: [
-            {title: "Open in Browser", onAction: { type: "open", url: .url, exit: true}},
+            {title: "Open in Browser", onAction: { type: "open", target: .url, exit: true}},
             {title: "Copy URL", key: "c", onAction: { type: "copy", text: .url, exit: true}}
         ]
     }

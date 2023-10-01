@@ -2,9 +2,10 @@
 
 ## Requirements
 
-- bash (used to run most script extensions)
+A lot of extensions rely on having bash installed on your system.
+MacOS and Linux devices comes with bash pre-installed, but you will need to install it on windows.
 
-On windows, you can get both by installing [git for windows](https://gitforwindows.org/).
+You can install bash on windows using [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10) or [git bash](https://gitforwindows.org/).
 
 ## Installation
 

@@ -70,6 +70,14 @@ func (d *Detail) Init() tea.Cmd {
 	return d.statusBar.Init()
 }
 
+func (d *Detail) Focus() tea.Cmd {
+	return nil
+}
+
+func (d *Detail) Blur() tea.Cmd {
+	return nil
+}
+
 type DetailMsg string
 
 func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {

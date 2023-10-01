@@ -2,7 +2,7 @@ import json2ts from "npm:json-schema-to-typescript";
 import { build, emptyDir } from "https://deno.land/x/dnt@0.38.0/mod.ts";
 
 // compile from file
-for (const name of ["manifest", "page", "config"]) {
+for (const name of ["manifest", "page", "command"]) {
   const ts = await json2ts.compileFromFile(`../schemas/${name}.schema.json`, {
     cwd: "../schemas",
   });

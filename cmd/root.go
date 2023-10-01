@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
-	"github.com/cli/browser"
 	"github.com/google/shlex"
 	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -217,7 +217,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 							Title: "Run Command",
 							OnAction: types.Command{
 								Type:    types.CommandTypeRun,
-								Origin:  ref.Path,
+								Script:  ref.Script,
 								Command: ref.Command,
 								Params:  ref.Params,
 							},
@@ -320,7 +320,7 @@ func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
 	if extension.Root != "" {
 		rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
 			return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
-				Path:    extensionpath,
+				Script:  extensionpath,
 				Command: extension.Root,
 			}), MaxHeigth)
 		}
@@ -362,7 +362,7 @@ func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
 
 				if subcommand.Mode == types.CommandModeView {
 					return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
-						Path:    extensionpath,
+						Script:  extensionpath,
 						Command: subcommand.Name,
 						Params:  params,
 					}), MaxHeigth)
@@ -389,7 +389,7 @@ func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
 				case types.CommandTypeCopy:
 					return clipboard.WriteAll(command.Text)
 				case types.CommandTypeOpen:
-					return browser.OpenURL(command.Url)
+					return utils.Open(command.Target, command.App)
 				default:
 					return nil
 				}
@@ -492,7 +492,7 @@ func ExtractCommand(shellCommand string) (tui.CommandRef, error) {
 		return ref, fmt.Errorf("command %s not found", args[0])
 	}
 
-	ref.Path = path
+	ref.Script = path
 	args = args[1:]
 
 	if len(args) == 0 {

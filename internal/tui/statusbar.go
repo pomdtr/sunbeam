@@ -116,8 +116,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 	case IsLoadingMsg:
 		cmd := p.SetIsLoading(true)
 		return p, cmd
-	case FocusMsg:
-		p.input.Focus()
 	}
 
 	var cmds []tea.Cmd

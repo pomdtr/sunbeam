@@ -10,7 +10,10 @@
         "title": {
             "type": "string"
         },
-        "homepage": {
+        "origin": {
+            "type": "string"
+        },
+        "version": {
             "type": "string"
         },
         "root": {

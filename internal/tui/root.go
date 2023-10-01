@@ -6,11 +6,13 @@ import (
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/cli/browser"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type RootList struct {
+	w, h       int
+	err        *Detail
 	list       *List
 	extensions Extensions
 	OnSelect   func(id string)
@@ -26,17 +28,28 @@ func NewRootList(extensions Extensions, items ...types.ListItem) *RootList {
 }
 
 func (c *RootList) Init() tea.Cmd {
-	return tea.Batch(c.list.Init(), FocusCmd)
+	return tea.Batch(c.list.Init())
+}
+
+func (c *RootList) Focus() tea.Cmd {
+	termOutput.SetWindowTitle("Sunbeam")
+	return c.list.Focus()
+}
+
+func (c *RootList) Blur() tea.Cmd {
+	return c.list.SetIsLoading(false)
 }
 
 func (c *RootList) SetSize(width, height int) {
+	c.w, c.h = width, height
+	if c.err != nil {
+		c.err.SetSize(width, height)
+	}
 	c.list.SetSize(width, height)
 }
 
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
-	case FocusMsg:
-		termOutput.SetWindowTitle("Sunbeam")
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
@@ -49,8 +62,12 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.OnSelect(item.Id)
 			}
 		}
+	case error:
+		c.err = NewErrorPage(msg)
+		c.err.SetSize(c.w, c.h)
+		return c, c.err.Init()
 	case types.Command:
-		return c, func() tea.Msg {
+		return c, tea.Sequence(c.list.SetIsLoading(true), func() tea.Msg {
 			if msg.Type != types.CommandTypeRun {
 				switch msg.Type {
 				case types.CommandTypeCopy:
@@ -64,7 +81,8 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 					return nil
 				case types.CommandTypeOpen:
-					if err := browser.OpenURL(msg.Text); err != nil {
+					command := msg
+					if err := utils.Open(command.Target, command.App); err != nil {
 						return err
 					}
 
@@ -73,12 +91,14 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 
 					return nil
+				case types.CommandTypeExit:
+					return ExitMsg{}
 				default:
 					return nil
 				}
 			}
 
-			extension, err := c.extensions.Get(msg.Origin)
+			extension, err := c.extensions.Get(msg.Script)
 			if err != nil {
 				return err
 			}
@@ -90,7 +110,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			if command.Mode == types.CommandModeView {
 				return PushPageMsg{NewRunner(c.extensions, CommandRef{
-					Path:    msg.Origin,
+					Script:  msg.Script,
 					Command: msg.Command,
 					Params:  msg.Params,
 				})}
@@ -114,7 +134,13 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return outputCommand
-		}
+		})
+	}
+
+	if c.err != nil {
+		page, cmd := c.err.Update(msg)
+		c.err = page.(*Detail)
+		return c, cmd
 	}
 
 	page, cmd := c.list.Update(msg)
@@ -124,5 +150,8 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *RootList) View() string {
+	if c.err != nil {
+		return c.err.View()
+	}
 	return c.list.View()
 }

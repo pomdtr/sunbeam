@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/spf13/cobra"
 )
 
@@ -49,6 +50,10 @@ func NewCmdExtensionEdit() *cobra.Command {
 			extensionPath, ok := extensions[args[0]]
 			if !ok {
 				return cmd.Help()
+			}
+
+			if mime, err := mimetype.DetectFile(extensionPath); err != nil || mime.String() == "application/octet-stream" {
+				return fmt.Errorf("extension %s is not a text file", args[0])
 			}
 
 			return editFile(extensionPath)

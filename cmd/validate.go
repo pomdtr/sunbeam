@@ -16,13 +16,14 @@ func NewValidateCmd() *cobra.Command {
 		Short: "Validate a Sunbeam schema",
 	}
 
-	cmd.AddCommand(NewValidatePageCmd())
-	cmd.AddCommand(NewValidateManifestCmd())
+	cmd.AddCommand(NewCmdValidatePage())
+	cmd.AddCommand(NewCmdValidateManifest())
+	cmd.AddCommand(NewCmdValidateCommand())
 
 	return cmd
 }
 
-func NewValidatePageCmd() *cobra.Command {
+func NewCmdValidatePage() *cobra.Command {
 	return &cobra.Command{
 		Use:   "page",
 		Short: "Validate a page",
@@ -51,7 +52,7 @@ func NewValidatePageCmd() *cobra.Command {
 
 }
 
-func NewValidateManifestCmd() *cobra.Command {
+func NewCmdValidateManifest() *cobra.Command {
 	return &cobra.Command{
 		Use:   "manifest",
 		Short: "Validate a manifest",
@@ -77,5 +78,32 @@ func NewValidateManifestCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
 
+func NewCmdValidateCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "command",
+		Short: "Validate a command",
+		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if isatty.IsTerminal(os.Stdin.Fd()) {
+				return fmt.Errorf("no input provided")
+			}
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			input, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf("unable to read stdin: %s", err)
+			}
+
+			if err := schemas.ValidateCommand(input); err != nil {
+				return err
+			}
+
+			fmt.Println("✅ Input is valid!")
+			return nil
+		},
+	}
 }

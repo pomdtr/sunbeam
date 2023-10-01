@@ -6,64 +6,10 @@
  */
 
 export type Page = List | Detail | Form;
-export type Command =
-  | {
-      /**
-       * The type of the action.
-       */
-      type: "copy";
-      /**
-       * Whether to exit the app after copying.
-       */
-      exit?: boolean;
-      /**
-       * The text to copy.
-       */
-      text: string;
-    }
-  | {
-      /**
-       * The type of the action.
-       */
-      type: "open";
-      /**
-       * Whether to exit the app after opening.
-       */
-      exit?: boolean;
-      /**
-       * The url to open.
-       */
-      url: string;
-    }
-  | {
-      /**
-       * The type of the action.
-       */
-      type: "run";
-      /**
-       * The name of the command to run.
-       */
-      name?: string;
-      /**
-       * The origin of the command to run.
-       */
-      origin: string;
-      /**
-       * The parameters to pass to the command.
-       */
-      params?: {
-        [k: string]: unknown;
-      };
-    }
-  | {
-      type: "reload";
-      /**
-       * The parameters to pass to the command.
-       */
-      params?: {
-        [k: string]: unknown;
-      };
-    };
+export type Application = {
+  platform?: "windows" | "mac" | "linux";
+  name: string;
+}[];
 export type Input =
   | {
       /**
@@ -212,7 +158,61 @@ export interface Action {
    * The key used as a shortcut.
    */
   key?: string;
-  onAction?: Command;
+  onAction: Copy | Open | Run | Reload;
+}
+export interface Copy {
+  /**
+   * The type of the action.
+   */
+  type: "copy";
+  /**
+   * Whether to exit the app after copying.
+   */
+  exit?: boolean;
+  /**
+   * The text to copy.
+   */
+  text: string;
+}
+export interface Open {
+  /**
+   * The type of the action.
+   */
+  type: "open";
+  /**
+   * Whether to exit the app after opening.
+   */
+  exit?: boolean;
+  /**
+   * The target to open.
+   */
+  target: string;
+  app?: Application | Application[];
+}
+export interface Run {
+  /**
+   * The type of the action.
+   */
+  type: "run";
+  /**
+   * The name of the command to run.
+   */
+  command: string;
+  /**
+   * The parameters to pass to the command.
+   */
+  params?: {
+    [k: string]: unknown;
+  };
+}
+export interface Reload {
+  type: "reload";
+  /**
+   * The parameters to pass to the command.
+   */
+  params?: {
+    [k: string]: unknown;
+  };
 }
 /**
  * A detail view displaying a preview and actions.

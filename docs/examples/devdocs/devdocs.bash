@@ -57,7 +57,7 @@ elif [ "$COMMAND" = "list-entries" ]; then
       title: .name,
       subtitle: .type,
       actions: [
-        {title: "Open in Browser", onAction: { type: "open", url: "https://devdocs.io/\($slug)/\(.path)", exit: true}},
+        {title: "Open in Browser", onAction: { type: "open", target: "https://devdocs.io/\($slug)/\(.path)", exit: true}},
         {title: "Copy URL", key: "c", onAction: { type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}}
       ]
     }

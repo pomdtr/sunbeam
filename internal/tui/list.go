@@ -28,7 +28,15 @@ func NewList(items ...types.ListItem) *List {
 }
 
 func (c *List) Init() tea.Cmd {
-	return tea.Batch(FocusCmd)
+	return tea.Batch()
+}
+
+func (c *List) Focus() tea.Cmd {
+	return c.statusBar.input.Focus()
+}
+
+func (c *List) Blur() tea.Cmd {
+	return nil
 }
 
 func (c *List) SetSize(width, height int) {

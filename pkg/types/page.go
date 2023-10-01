@@ -1,5 +1,10 @@
 package types
 
+type Page struct {
+	Type  PageType `json:"type"`
+	Title string   `json:"title,omitempty"`
+}
+
 type PageType string
 
 const (
@@ -9,19 +14,16 @@ const (
 )
 
 type List struct {
-	Title string     `json:"title,omitempty"`
 	Items []ListItem `json:"items"`
 }
 
 type Detail struct {
-	Title    string   `json:"title,omitempty"`
 	Actions  []Action `json:"actions,omitempty"`
 	Text     string   `json:"text,omitempty"`
 	Language string   `json:"language,omitempty"`
 }
 
 type Form struct {
-	Title string     `json:"title,omitempty"`
 	Items []FormItem `json:"items,omitempty"`
 }
 
@@ -34,9 +36,9 @@ type ListItem struct {
 }
 
 type Metadata struct {
-	Title string `json:"title,omitempty"`
-	Text  string `json:"text,omitempty"`
-	Url   string `json:"url,omitempty"`
+	Title  string `json:"title,omitempty"`
+	Text   string `json:"text,omitempty"`
+	Target string `json:"target,omitempty"`
 }
 
 type FormItemType string
@@ -68,28 +70,8 @@ type FormItem struct {
 	Label string `json:"label,omitempty"`
 }
 
-type CommandType string
-
-const (
-	CommandTypeRun  CommandType = "run"
-	CommandTypeOpen CommandType = "open"
-	CommandTypeCopy CommandType = "copy"
-)
-
 type Action struct {
 	Title    string  `json:"title,omitempty"`
 	Key      string  `json:"key,omitempty"`
 	OnAction Command `json:"onAction,omitempty"`
-}
-
-type Command struct {
-	Type CommandType `json:"type,omitempty"`
-	Exit bool        `json:"exit,omitempty"`
-
-	Text string `json:"text,omitempty"`
-	Url  string `json:"url,omitempty"`
-
-	Origin  string         `json:"origin,omitempty"`
-	Command string         `json:"command,omitempty"`
-	Params  map[string]any `json:"params,omitempty"`
 }

@@ -1,8 +1,9 @@
 package types
 
 type Manifest struct {
+	Version     string        `json:"version"`
 	Title       string        `json:"title"`
-	Homepage    string        `json:"homepage,omitempty"`
+	Origin      string        `json:"origin"`
 	Root        string        `json:"root,omitempty"`
 	Description string        `json:"description,omitempty"`
 	Commands    []CommandSpec `json:"commands"`

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pomdtr/sunbeam/internal/tui"
@@ -89,7 +90,12 @@ func NewCmdRun() *cobra.Command {
 
 				scriptPath = tempfile.Name()
 			} else {
-				scriptPath = args[0]
+				s, err := filepath.Abs(args[0])
+				if err != nil {
+					return err
+				}
+
+				scriptPath = s
 			}
 
 			rootCmd, err := NewExtensionCommand(scriptPath)
