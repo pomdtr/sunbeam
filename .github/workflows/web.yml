@@ -60,16 +60,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: 1.21
       - name: Refresh Cli Docs
         run: |
           go build -o sunbeam
           ./sunbeam docs > docs/cli.md
-
       # If you use any mdbook plugins, here's the place to install them!
-
       # Install and run oranda (and mdbook)
       # This will write all output to ./public/ (including copying mdbook's output to there)
       - name: Install and run oranda
@@ -80,7 +78,7 @@ jobs:
       - name: Prepare HTML for link checking
         # untitaker/hyperlink supports no site prefixes, move entire site into
         # a subfolder
-        run: mkdir /tmp/public/ && cp -R public /tmp/public/oranda
+        run: mkdir /tmp/public/ && cp -R public /tmp/public/sunbeam
 
       - name: Check HTML for broken internal links
         uses: untitaker/hyperlink@0.1.29
