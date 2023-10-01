@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -19,10 +20,12 @@ import (
 )
 
 func BearerMiddleware(token string) func(next http.Handler) http.Handler {
-	// as base64
+	bearerHeader := fmt.Sprint("Bearer ", token)
+	basicHeader := fmt.Sprint("Basic ", base64.StdEncoding.EncodeToString([]byte(token)))
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if authorization := r.Header.Get("Authorization"); authorization == fmt.Sprint("Bearer ", token) {
+
+			if authorization := r.Header.Get("Authorization"); authorization == bearerHeader || authorization == basicHeader {
 				next.ServeHTTP(w, r)
 				return
 			}

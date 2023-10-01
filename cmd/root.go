@@ -50,11 +50,9 @@ func LoadConfig(fp string) (Config, error) {
 	return config, nil
 }
 
-func findConfigPath() string {
+func ConfigPath() string {
 	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
-		if _, err := os.Stat(filepath.Join(env, "sunbeam", "config.json")); err == nil {
-			return filepath.Join(env, "sunbeam", "config.json")
-		}
+		return filepath.Join(env, "sunbeam", "config.json")
 	}
 
 	return filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.json")
@@ -108,8 +106,6 @@ func (h History) Save() error {
 }
 
 func NewRootCmd() (*cobra.Command, error) {
-	configPath := findConfigPath()
-
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:     "sunbeam",
@@ -178,6 +174,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return command.Execute()
 			}
 
+			configPath := ConfigPath()
 			config, err := LoadConfig(configPath)
 			if err != nil && !os.IsNotExist(err) {
 				return err
@@ -265,10 +262,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdServe())
-	rootCmd.AddCommand(NewCmdEdit(configPath))
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewValidateCmd())
-	rootCmd.AddCommand(NewCmdList())
+	rootCmd.AddCommand(NewCmdExtension())
 	rootCmd.AddCommand(NewCmdQuery())
 
 	docCmd := &cobra.Command{
