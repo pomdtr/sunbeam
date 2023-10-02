@@ -8,7 +8,7 @@
 ## Install
 
 ```bash
-curl -L https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/devdocs/devdocs.sh > ~/.local/bin/sunbeam-devdocs
+curl -L https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/devdocs/devdocs.bash > ~/.local/bin/sunbeam-devdocs
 chmod +x ~/.local/bin/sunbeam-devdocs
 ```
 
