@@ -12,12 +12,8 @@ You can install bash on windows using [WSL](https://docs.microsoft.com/en-us/win
 You can use a package manager
 
 ```bash
-# brew (macos and linux)
+# using brew
 brew install pomdtr/tap/sunbeam
-
-# scoop (windows)
-scoop bucket add pomdtr https://github.com/pomdtr/scoop-bucket.git
-scoop install pomdtr/sunbeam
 
 # from source
 go install github.com/pomdtr/sunbeam@main

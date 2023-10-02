@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -50,7 +49,15 @@ func LoadConfig(fp string) (Config, error) {
 	return config, nil
 }
 
-func ConfigPath() string {
+func dataHome() string {
+	if env, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
+		return filepath.Join(env, "sunbeam")
+	}
+
+	return filepath.Join(os.Getenv("HOME"), ".local", "share", "sunbeam")
+}
+
+func configPath() string {
 	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
 		return filepath.Join(env, "sunbeam", "config.json")
 	}
@@ -159,9 +166,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return cmd.Help()
 				}
 
-				commandPath, err := exec.LookPath(fmt.Sprintf("sunbeam-%s", args[0]))
+				extensions, err := FindExtensions()
 				if err != nil {
-					return fmt.Errorf("command %s not found", args[0])
+					return err
+				}
+
+				commandPath, ok := extensions[args[0]]
+				if !ok {
+					return cmd.Help()
 				}
 
 				command, err := NewExtensionCommand(commandPath)
@@ -174,7 +186,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return command.Execute()
 			}
 
-			configPath := ConfigPath()
+			configPath := configPath()
 			config, err := LoadConfig(configPath)
 			if err != nil && !os.IsNotExist(err) {
 				return err
@@ -261,12 +273,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.AddCommand(NewCmdRun())
-	rootCmd.AddCommand(NewCmdServe())
+	// rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewValidateCmd())
-	rootCmd.AddCommand(NewCmdList())
-	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdQuery())
+	rootCmd.AddCommand(NewCmdExtension())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -488,9 +499,14 @@ func ExtractCommand(shellCommand string) (tui.CommandRef, error) {
 		return ref, fmt.Errorf("no command specified")
 	}
 
-	path, err := exec.LookPath(fmt.Sprintf("sunbeam-%s", args[0]))
+	extensions, err := FindExtensions()
 	if err != nil {
-		return ref, fmt.Errorf("command %s not found", args[0])
+		return ref, err
+	}
+
+	path, ok := extensions[args[0]]
+	if !ok {
+		return ref, fmt.Errorf("extension %s not found", args[0])
 	}
 
 	ref.Script = path

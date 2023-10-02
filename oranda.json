@@ -15,7 +15,7 @@
         "changelog": false,
         "mdbook": {
             "path": "./",
-            "theme": true
+            "theme": false
         }
     }
 }

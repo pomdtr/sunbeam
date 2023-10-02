@@ -9,7 +9,6 @@ require (
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.8.0
-	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.13
@@ -38,7 +37,6 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/term v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect

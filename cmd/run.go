@@ -97,12 +97,21 @@ func NewCmdRun() *cobra.Command {
 					return err
 				}
 
-				scriptPath = s
+				if info, err := os.Stat(s); err != nil {
+					return err
+				} else if info.IsDir() {
+					scriptPath = filepath.Join(s, "sunbeam-extension")
+					if _, err := os.Stat(scriptPath); err != nil {
+						return fmt.Errorf("no extension found at %s", args[0])
+					}
+				} else {
+					scriptPath = s
+				}
 			}
 
 			rootCmd, err := NewExtensionCommand(scriptPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("error loading extension: %w", err)
 			}
 
 			rootCmd.Use = args[0]
