@@ -87,7 +87,10 @@
                 },
                 "params": {
                     "type": "object",
-                    "description": "The parameters to pass to the command."
+                    "description": "The parameters to pass to the command.",
+                    "patternProperties": {
+                        ".+": true
+                    }
                 }
             }
         },
@@ -103,8 +106,10 @@
                 },
                 "params": {
                     "type": "object",
-                    "additionalProperties": false,
-                    "description": "The parameters to pass to the command."
+                    "description": "The parameters to pass to the command.",
+                    "patternProperties": {
+                        ".+": true
+                    }
                 }
             },
             "exit": {

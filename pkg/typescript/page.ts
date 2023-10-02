@@ -6,10 +6,6 @@
  */
 
 export type Page = List | Detail | Form;
-export type Application = {
-  platform?: "windows" | "mac" | "linux";
-  name: string;
-}[];
 export type Input =
   | {
       /**
@@ -189,6 +185,10 @@ export interface Open {
   target: string;
   app?: Application | Application[];
 }
+export interface Application {
+  platform?: "windows" | "mac" | "linux";
+  name: string;
+}
 export interface Run {
   /**
    * The type of the action.
@@ -202,6 +202,10 @@ export interface Run {
    * The parameters to pass to the command.
    */
   params?: {
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` ".+".
+     */
     [k: string]: unknown;
   };
 }
@@ -211,6 +215,10 @@ export interface Reload {
    * The parameters to pass to the command.
    */
   params?: {
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` ".+".
+     */
     [k: string]: unknown;
   };
 }

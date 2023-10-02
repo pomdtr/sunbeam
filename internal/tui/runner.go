@@ -21,7 +21,9 @@ type Runner struct {
 	extensions Extensions
 }
 
-type ReloadMsg struct{}
+type ReloadMsg struct {
+	params map[string]any
+}
 
 type CommandRef struct {
 	Script  string
@@ -222,7 +224,9 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return outputCommand
 			case types.CommandTypeReload:
-				return ReloadMsg{}
+				return ReloadMsg{
+					params: msg.Params,
+				}
 			case types.CommandTypeExit:
 				return ExitMsg{}
 			}
@@ -236,6 +240,10 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		}
 	case ReloadMsg:
+		params := msg.params
+		if params != nil {
+			c.ref.Params = params
+		}
 		return c, tea.Sequence(c.SetIsLoading(true), c.Run)
 	case error:
 		c.embed = NewErrorPage(msg)
