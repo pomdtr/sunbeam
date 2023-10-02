@@ -10,12 +10,6 @@
         "title": {
             "type": "string"
         },
-        "origin": {
-            "type": "string"
-        },
-        "version": {
-            "type": "string"
-        },
         "root": {
             "type": "string"
         },

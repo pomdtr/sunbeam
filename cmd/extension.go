@@ -11,19 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdExtension() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "extension",
-		Short: "Manage extensions",
-	}
-
-	cmd.AddCommand(NewCmdExtensionList())
-	cmd.AddCommand(NewCmdExtensionEdit())
-
-	return cmd
-}
-
-func NewCmdExtensionEdit() *cobra.Command {
+func NewCmdEdit() *cobra.Command {
 	return &cobra.Command{
 		Use:   "edit",
 		Short: "Edit an extension",
@@ -75,7 +63,7 @@ func editFile(p string) error {
 	return command.Run()
 }
 
-func NewCmdExtensionList() *cobra.Command {
+func NewCmdList() *cobra.Command {
 	return &cobra.Command{
 		Use:     "list",
 		Short:   "List installed extensions",
@@ -97,10 +85,16 @@ func NewCmdExtensionList() *cobra.Command {
 }
 
 func FindExtensions() (map[string]string, error) {
-	path := os.Getenv("PATH")
+	var dirs []string
+	if env, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
+		dirs = append(dirs, filepath.Join(env, "sunbeam", "extensions"))
+	} else {
+		dirs = append(dirs, filepath.Join(os.Getenv("HOME"), ".local", "share", "sunbeam", "extensions"))
+	}
 
+	dirs = append(dirs, filepath.SplitList(os.Getenv("PATH"))...)
 	extensions := make(map[string]string)
-	for _, dir := range filepath.SplitList(path) {
+	for _, dir := range dirs {
 		if dir == "" {
 			// Unix shell semantics: path element "" means "."
 			dir = "."
