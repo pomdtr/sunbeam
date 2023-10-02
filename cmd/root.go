@@ -127,8 +127,8 @@ func NewRootCmd() (*cobra.Command, error) {
 
 			if len(args) == 0 {
 				var completions []string
-				for alias, extension := range extensions {
-					completions = append(completions, fmt.Sprintf("%s\t%s", alias, extension))
+				for alias := range extensions {
+					completions = append(completions, alias)
 				}
 
 				return completions, cobra.ShellCompDirectiveNoFileComp

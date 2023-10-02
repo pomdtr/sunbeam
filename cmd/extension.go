@@ -37,8 +37,8 @@ func NewCmdList() *cobra.Command {
 				return err
 			}
 
-			for alias, extension := range extensions {
-				fmt.Printf("%s\t%s\n", alias, extension)
+			for alias := range extensions {
+				fmt.Println(alias)
 			}
 
 			return nil
@@ -57,8 +57,8 @@ func NewCmdInstall() *cobra.Command {
 		Short:   "Install an extension",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionsDir := filepath.Join(dataHome(), "extensions")
-			if err := os.MkdirAll(extensionsDir, 0755); err != nil {
+			extensionRoot := filepath.Join(dataHome(), "extensions")
+			if err := os.MkdirAll(extensionRoot, 0755); err != nil {
 				return err
 			}
 
@@ -75,9 +75,9 @@ func NewCmdInstall() *cobra.Command {
 				// create symlink to current directory
 				var target string
 				if flags.alias != "" {
-					target = filepath.Join(extensionsDir, flags.alias)
+					target = filepath.Join(extensionRoot, flags.alias)
 				} else {
-					target = filepath.Join(extensionsDir, strings.TrimPrefix(filepath.Base(extensionDir), "sunbeam-"))
+					target = filepath.Join(extensionRoot, strings.TrimPrefix(filepath.Base(extensionDir), "sunbeam-"))
 				}
 
 				return os.Symlink(extensionDir, target)
@@ -108,12 +108,13 @@ func NewCmdInstall() *cobra.Command {
 				return err
 			}
 
-			alias := strings.TrimPrefix(entries[0].Name(), "sunbeam-")
+			extensionDir := entries[0]
+			alias := strings.TrimPrefix(extensionDir.Name(), "sunbeam-")
 			if flags.alias != "" {
 				alias = flags.alias
 			}
 
-			if err := os.Rename(filepath.Join(tempdir, entries[0].Name()), filepath.Join(extensionsDir, alias)); err != nil {
+			if err := os.Rename(filepath.Join(tempdir, extensionDir.Name()), filepath.Join(extensionRoot, alias)); err != nil {
 				return err
 			}
 
@@ -130,6 +131,19 @@ func NewCmdUpgrade() *cobra.Command {
 		Use:   "upgrade",
 		Short: "Upgrade an extension",
 		Args:  cobra.ExactArgs(1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			extensions, err := FindExtensions()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			completions := make([]string, 0)
+			for alias := range extensions {
+				completions = append(completions, alias)
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extensions, err := FindExtensions()
 			if err != nil {
@@ -169,6 +183,19 @@ func NewCmdRemove() *cobra.Command {
 		Use:   "remove",
 		Short: "Remove an extension",
 		Args:  cobra.ExactArgs(1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			extensions, err := FindExtensions()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			completions := make([]string, 0)
+			for alias := range extensions {
+				completions = append(completions, alias)
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extensions, err := FindExtensions()
 			if err != nil {
@@ -195,21 +222,38 @@ func NewCmdRename() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rename",
 		Short: "Rename an extension",
-		Args:  cobra.ExactArgs(2),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) > 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			extensions, err := FindExtensions()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			completions := make([]string, 0)
+			for alias := range extensions {
+				completions = append(completions, alias)
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extensions, err := FindExtensions()
 			if err != nil {
 				return err
 			}
 
-			extensionPath, ok := extensions[args[0]]
+			src, dst := args[0], args[1]
+			extensionPath, ok := extensions[src]
 			if !ok {
-				return fmt.Errorf("extension %s not found", args[0])
+				return fmt.Errorf("extension %s not found", src)
 			}
 
 			extensionDir := filepath.Dir(extensionPath)
-			extensionsDir := filepath.Dir(extensionDir)
-			if err := os.Rename(extensionDir, filepath.Join(extensionsDir, args[1])); err != nil {
+			extensionRoot := filepath.Dir(extensionDir)
+			if err := os.Rename(extensionDir, filepath.Join(extensionRoot, dst)); err != nil {
 				return err
 			}
 
