@@ -9,7 +9,7 @@
 ## Install
 
 ```bash
-curl -L https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/github/github.sh > ~/.local/bin/sunbeam-gh
+curl -L https://raw.githubusercontent.com/pomdtr/sunbeam/main/docs/examples/github/github.bash > ~/.local/bin/sunbeam-gh
 chmod +x ~/.local/bin/sunbeam-gh
 ```
 
