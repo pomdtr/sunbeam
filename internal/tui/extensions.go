@@ -58,6 +58,7 @@ func (e Extension) Run(input CommandInput) ([]byte, error) {
 
 	command := exec.Command(e.Path, string(inputBytes))
 	command.Env = os.Environ()
+	command.Env = append(command.Env, "SUNBEAM=0")
 	command.Env = append(command.Env, "NO_COLOR=1")
 
 	var exitErr *exec.ExitError
