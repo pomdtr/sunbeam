@@ -123,7 +123,7 @@ func NewRootCmd() (*cobra.Command, error) {
 			if len(args) == 0 {
 				var completions []string
 				for alias := range extensions {
-					completions = append(completions, alias)
+					completions = append(completions, fmt.Sprintf("%s\tExtension command", alias))
 				}
 
 				return completions, cobra.ShellCompDirectiveNoFileComp

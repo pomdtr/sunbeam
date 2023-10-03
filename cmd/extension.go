@@ -7,13 +7,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/spf13/cobra"
 )
 
 func NewCmdExtension() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "extension",
-		Short: "Manage extensions",
+		Use:     "extension",
+		Aliases: []string{"ext", "extensions"},
+		Short:   "Manage extensions",
 	}
 
 	cmd.AddCommand(NewCmdExtensionList())
@@ -109,6 +111,15 @@ func NewCmdExtensionInstall() *cobra.Command {
 			}
 
 			extensionDir := entries[0]
+			entrypoint := filepath.Join(tempdir, extensionDir.Name(), "sunbeam-extension")
+			if _, err := os.Stat(entrypoint); err != nil {
+				return fmt.Errorf("extension %s not found", args[0])
+			}
+
+			if _, err := tui.LoadExtension(entrypoint); err != nil {
+				return err
+			}
+
 			alias := strings.TrimPrefix(extensionDir.Name(), "sunbeam-")
 			if flags.alias != "" {
 				alias = flags.alias
@@ -323,6 +334,11 @@ func FindExtensions() (map[string]string, error) {
 
 			info, err := os.Stat(dest)
 			if err != nil {
+				if os.IsNotExist(err) {
+					// delete broken symlink
+					_ = os.Remove(filepath.Join(extensionDir, entry.Name()))
+				}
+
 				continue
 			}
 

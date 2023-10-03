@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +10,15 @@ import (
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/spf13/cobra"
 )
+
+var template = `#!/bin/sh
+
+if [ $# -eq 0 ]; then
+	exec sunbeam fetch '%s'
+fi
+
+exec sunbeam fetch '%s' -d "$1"
+`
 
 func NewCmdRun() *cobra.Command {
 	cmd := &cobra.Command{
@@ -53,23 +61,14 @@ func NewCmdRun() *cobra.Command {
 
 			var scriptPath string
 			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
-				res, err := http.Get(args[0])
-				if err != nil {
-					return err
-				}
-				defer res.Body.Close()
-
-				if res.StatusCode != 200 {
-					return fmt.Errorf("extension %s not found", args[0])
-				}
-
 				tempfile, err := os.CreateTemp("", "sunbeam-run-*.sh")
 				if err != nil {
 					return err
 				}
 				defer os.Remove(tempfile.Name())
 
-				if _, err := io.Copy(tempfile, res.Body); err != nil {
+				script := fmt.Sprintf(template, args[0], args[0])
+				if _, err := io.Copy(tempfile, strings.NewReader(script)); err != nil {
 					return err
 				}
 
