@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/acarl005/stripansi"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
@@ -30,23 +29,39 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	return types.CommandSpec{}, false
 }
 
-func ShellCommand(ref CommandRef) string {
-	args := []string{"sunbeam", "run", ref.Script, ref.Command}
-	for name, value := range ref.Params {
-		switch value := value.(type) {
-		case string:
-			args = append(args, fmt.Sprintf("--%s=%s", name, value))
-		case bool:
-			if value {
-				args = append(args, fmt.Sprintf("--%s", name))
-			}
-		}
-	}
+// func ShellCommand(extensi) string {
+// 	args := []string{"sunbeam", "run", ref.Script, ref.Command}
+// 	for name, value := range ref.Params {
+// 		switch value := value.(type) {
+// 		case string:
+// 			args = append(args, fmt.Sprintf("--%s=%s", name, value))
+// 		case bool:
+// 			if value {
+// 				args = append(args, fmt.Sprintf("--%s", name))
+// 			}
+// 		}
+// 	}
 
-	return strings.Join(args, " ")
-}
+// 	return strings.Join(args, " ")
+// }
 
 func (e Extension) Run(input CommandInput) ([]byte, error) {
+	cmd, err := e.Cmd(input)
+	if err != nil {
+		return nil, err
+	}
+
+	var exitErr *exec.ExitError
+	if output, err := cmd.Output(); err == nil {
+		return output, nil
+	} else if errors.As(err, &exitErr) {
+		return nil, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
+	} else {
+		return nil, err
+	}
+}
+
+func (e Extension) Cmd(input CommandInput) (*exec.Cmd, error) {
 	if input.Params == nil {
 		input.Params = make(map[string]any)
 	}
@@ -61,14 +76,7 @@ func (e Extension) Run(input CommandInput) ([]byte, error) {
 	command.Env = append(command.Env, "SUNBEAM=0")
 	command.Env = append(command.Env, "NO_COLOR=1")
 
-	var exitErr *exec.ExitError
-	if output, err := command.Output(); err == nil {
-		return output, nil
-	} else if errors.As(err, &exitErr) {
-		return nil, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
-	} else {
-		return nil, err
-	}
+	return command, nil
 }
 
 type Extension struct {

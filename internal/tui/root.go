@@ -109,11 +109,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			if command.Mode == types.CommandModeView {
-				return PushPageMsg{NewRunner(c.extensions, CommandRef{
-					Script:  msg.Script,
-					Command: msg.Command,
-					Params:  msg.Params,
-				})}
+				return PushPageMsg{NewRunner(extension, command, msg.Params)}
 			}
 
 			out, err := extension.Run(CommandInput{

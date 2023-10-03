@@ -7,8 +7,6 @@
 
 export interface Manifest {
   title: string;
-  origin?: string;
-  version?: string;
   root?: string;
   description?: string;
   commands: Commandspec[];
@@ -17,7 +15,7 @@ export interface Commandspec {
   name: string;
   hidden?: boolean;
   title: string;
-  mode: "view" | "no-view";
+  mode: "tty" | "view" | "no-view";
   params?: {
     name?: string;
     type: "string" | "boolean";

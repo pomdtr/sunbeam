@@ -16,13 +16,10 @@ type Runner struct {
 
 	width, height int
 
-	ref CommandRef
+	command types.CommandSpec
+	params  map[string]any
 
-	extensions Extensions
-}
-
-type ReloadMsg struct {
-	params map[string]any
+	extension Extension
 }
 
 type CommandRef struct {
@@ -31,14 +28,15 @@ type CommandRef struct {
 	Params  map[string]any
 }
 
-func NewRunner(extensions Extensions, ref CommandRef) *Runner {
+func NewRunner(extension Extension, command types.CommandSpec, params map[string]any) *Runner {
 	detail := NewDetail("")
 	detail.SetIsLoading(true)
 
 	return &Runner{
-		extensions: extensions,
-		ref:        ref,
-		embed:      detail,
+		extension: extension,
+		command:   command,
+		params:    params,
+		embed:     detail,
 	}
 }
 
@@ -89,19 +87,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 			return c, PopPageCmd
-		case "ctrl+y":
-			return c, func() tea.Msg {
-				shell := ShellCommand(c.ref)
-				if shell == "" {
-					return nil
-				}
-
-				if err := clipboard.WriteAll(shell); err != nil {
-					return err
-				}
-
-				return ExitMsg{}
-			}
 		}
 	case types.Form:
 		form := msg
@@ -110,7 +95,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			formitems = append(formitems, *NewFormItem(item))
 		}
 
-		page := NewForm(c.ref.Command, formitems...)
+		page := NewForm(c.extension.Title, formitems...)
 		page.SetSize(c.width, c.height)
 		c.embed = page
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
@@ -134,13 +119,8 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
 	case SubmitMsg:
 		return c, func() tea.Msg {
-			extension, err := c.extensions.Get(c.ref.Script)
-			if err != nil {
-				return err
-			}
-
-			output, err := extension.Run(
-				CommandInput{Command: c.ref.Command, Params: msg, Inputs: msg},
+			output, err := c.extension.Run(
+				CommandInput{Command: c.command.Name, Params: msg, Inputs: msg},
 			)
 			if err != nil {
 				return err
@@ -158,10 +138,62 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return command
 		}
 	case types.Command:
-		ref := msg
-		return c, func() tea.Msg {
-			switch msg.Type {
-			case types.CommandTypeCopy:
+		switch msg.Type {
+		case types.CommandTypeRun:
+			command, ok := c.extension.Command(msg.Command)
+			if !ok {
+				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Command))
+				c.embed.SetSize(c.width, c.height)
+				return c, c.embed.Init()
+			}
+
+			switch command.Mode {
+			case types.CommandModeNoView:
+				return c, func() tea.Msg {
+					output, err := c.extension.Run(
+						CommandInput{
+							Command: command.Name,
+							Params:  msg.Params,
+						})
+					if err != nil {
+						return err
+					}
+
+					if err := schemas.ValidateCommand(output); err != nil {
+						return err
+					}
+
+					var command types.Command
+					if err := json.Unmarshal(output, &command); err != nil {
+						return err
+					}
+
+					return command
+				}
+			case types.CommandModeView:
+				return c, PushPageCmd(NewRunner(c.extension, command, msg.Params))
+			case types.CommandModeTTY:
+				cmd, err := c.extension.Cmd(CommandInput{
+					Command: command.Name,
+					Params:  msg.Params,
+				})
+
+				if err != nil {
+					c.embed = NewErrorPage(err)
+					return c, c.embed.Init()
+				}
+
+				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
+					if err != nil {
+						return err
+					}
+
+					return nil
+				})
+			}
+		case types.CommandTypeCopy:
+			return c, func() tea.Msg {
+
 				if err := clipboard.WriteAll(msg.Text); err != nil {
 					return err
 				}
@@ -171,8 +203,10 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				return nil
-			case types.CommandTypeOpen:
-				command := msg
+			}
+		case types.CommandTypeOpen:
+			command := msg
+			return c, func() tea.Msg {
 				if err := utils.OpenWith(command.Target, command.App); err != nil {
 					return err
 				}
@@ -182,69 +216,16 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				return nil
-			case types.CommandTypeRun:
-				if msg.Script == "" {
-					msg.Script = c.ref.Script
-				}
-
-				extension, err := c.extensions.Get(msg.Script)
-				if err != nil {
-					return err
-				}
-
-				command, ok := extension.Command(msg.Command)
-				if !ok {
-					return fmt.Errorf("command %s not found", msg.Command)
-				}
-
-				if command.Mode == types.CommandModeView {
-					return PushPageMsg{NewRunner(c.extensions, CommandRef{
-						Script:  msg.Script,
-						Command: command.Name,
-						Params:  msg.Params,
-					})}
-				}
-
-				out, err := extension.Run(CommandInput{
-					Command: msg.Command,
-					Params:  msg.Params,
-				})
-				if err != nil {
-					return err
-				}
-
-				if len(out) == 0 {
-					return ExitMsg{}
-				}
-
-				var outputCommand types.Command
-				if err := json.Unmarshal(out, &outputCommand); err != nil {
-					return err
-				}
-
-				return outputCommand
-			case types.CommandTypeReload:
-				return ReloadMsg{
-					params: msg.Params,
-				}
-			case types.CommandTypeExit:
-				return ExitMsg{}
 			}
-
-			return PushPageMsg{
-				Page: NewRunner(c.extensions, CommandRef{
-					Script:  ref.Script,
-					Command: ref.Command,
-					Params:  ref.Params,
-				}),
+		case types.CommandTypeReload:
+			params := msg.Params
+			if params != nil {
+				c.params = params
 			}
+			return c, tea.Sequence(c.SetIsLoading(true), c.Run)
+		case types.CommandTypeExit:
+			return c, ExitCmd
 		}
-	case ReloadMsg:
-		params := msg.params
-		if params != nil {
-			c.ref.Params = params
-		}
-		return c, tea.Sequence(c.SetIsLoading(true), c.Run)
 	case error:
 		c.embed = NewErrorPage(msg)
 		c.embed.SetSize(c.width, c.height)
@@ -279,36 +260,13 @@ func (c *Runner) View() string {
 }
 
 func (c *Runner) Run() tea.Msg {
-	extension, err := c.extensions.Get(c.ref.Script)
-	if err != nil {
-		return err
-	}
-
-	command, ok := extension.Command(c.ref.Command)
-	if !ok {
-		return fmt.Errorf("command %s not found", c.ref.Command)
-	}
-
-	output, err := extension.Run(
+	output, err := c.extension.Run(
 		CommandInput{
-			Command: command.Name,
-			Params:  c.ref.Params,
+			Command: c.command.Name,
+			Params:  c.params,
 		})
 	if err != nil {
 		return err
-	}
-
-	if command.Mode == types.CommandModeNoView {
-		if err := schemas.ValidateCommand(output); err != nil {
-			return err
-		}
-
-		var command types.Command
-		if err := json.Unmarshal(output, &command); err != nil {
-			return err
-		}
-
-		return command
 	}
 
 	if err := schemas.ValidatePage(output); err != nil {
@@ -321,9 +279,9 @@ func (c *Runner) Run() tea.Msg {
 	}
 
 	if page.Title != "" {
-		termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, extension.Title))
+		termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
 	} else {
-		termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", command.Title, extension.Title))
+		termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
 	}
 
 	switch page.Type {

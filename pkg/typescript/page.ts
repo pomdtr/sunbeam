@@ -154,7 +154,7 @@ export interface Action {
    * The key used as a shortcut.
    */
   key?: string;
-  onAction: Copy | Open | Run | Reload;
+  onAction: Copy | Open | Run | Reload | Pop | Exit | Pass;
 }
 export interface Copy {
   /**
@@ -221,6 +221,19 @@ export interface Reload {
      */
     [k: string]: unknown;
   };
+}
+export interface Pop {
+  type: "pop";
+  /**
+   * Whether to reload the page after popping.
+   */
+  reload?: boolean;
+}
+export interface Exit {
+  type: "exit";
+}
+export interface Pass {
+  type: "pass";
 }
 /**
  * A detail view displaying a preview and actions.

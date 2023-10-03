@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/mattn/go-isatty"
@@ -221,7 +222,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				items = append(items, types.ListItem{
 					Title:       title,
 					Id:          title,
-					Accessories: []string{command},
+					Accessories: []string{strings.TrimPrefix(command, "sunbeam ")},
 					Actions: []types.Action{
 						{
 							Title: "Run Command",

@@ -82,11 +82,7 @@ func NewCmdCustom(extensionpath string) (*cobra.Command, error) {
 						return err
 					}
 				}
-				return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
-					Script:  extensionpath,
-					Command: subcommand.Name,
-					Params:  params,
-				}), MaxHeigth)
+				return tui.Draw(tui.NewRunner(extension, subcommand, params), MaxHeigth)
 			}
 
 			out, err := extension.Run(tui.CommandInput{
