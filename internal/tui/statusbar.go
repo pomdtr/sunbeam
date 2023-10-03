@@ -77,6 +77,28 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			p.input.Blur()
 			p.expanded = true
 			return p, nil
+		case "right":
+			if !p.expanded {
+				break
+			}
+
+			if p.cursor < len(p.actions)-1 {
+				p.cursor++
+			} else {
+				p.cursor = 0
+			}
+			return p, nil
+
+		case "left":
+			if !p.expanded {
+				break
+			}
+
+			if p.cursor > 0 {
+				p.cursor--
+			} else {
+				p.cursor = len(p.actions) - 1
+			}
 		case "enter":
 			if len(p.actions) == 0 {
 				return p, nil
