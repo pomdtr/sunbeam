@@ -109,7 +109,7 @@ func NewCmdRun() *cobra.Command {
 				}
 			}
 
-			rootCmd, err := NewExtensionCommand(scriptPath)
+			rootCmd, err := NewCmdCustom(scriptPath)
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}
