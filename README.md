@@ -36,6 +36,16 @@ The only requirement is that the script is executable and outputs a JSON object 
 
 ![sunbeam running in vscode](./static/vscode.png)
 
+### Sunbeam is easy to extend
+
+Instead of reiventing the wheel, sunbeam relies on your familiarity with git and github to make it easy to create, update, publish and install extensions.
+
+Creating a new extension is as easy as creating a new folder and adding a `sunbeam-extension` executable to it. Sunbeam supports installing extension from any git host, including github.
+
+If you want your extension to be discoverable, you can also add a `sunbeam-extension` topic to your github repository.
+
+Since sunbeam uses `git` under the hood, you can create private extensions by using private git repositories.
+
 ### Sunbeam supports custom clients
 
 Sunbeam comes with a built-in TUI to interact with your scripts, but you can also use any other client.
@@ -50,5 +60,5 @@ Sunbeam wouldn't exist without taking inspirations from incredible tools. Make s
 
 - [raycast](https://raycast.com): Sunbeam shamelessly copy most of raycast UX. Even the project name is a reference to raycast.
 - [fzf](https://github.com/junegunn/fzf): Sunbeam tries to take inspiration from fzf, but it's not a drop-in replacement. Sunbeam is designed to be used as a launcher, not as a fuzzy finder.
-- [gum](https://github.com/charmbracelet/gum): Sunbeam is powered by charm libraries, and can be seen as a alternative spin on gum. Gum is invoked by scripts, while sunbeam invokes scripts.
 - [slapdash](https://slapdash.com): The sunbeam event loop was inspired by slapdash. Sadly, slapdash doesn't seem to be updated anymore.
+- [gh](https://cli.github.com): The sunbeam extension system was inspired by gh, with some modifications to make it more flexible.

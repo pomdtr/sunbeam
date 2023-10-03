@@ -8,7 +8,6 @@
 - [Clients](./clients/README.md)
   - [Alacritty](./clients/alacritty.md)
   - [VS Code](./clients/vscode.md)
-- [FAQ]()
 
 # Reference
 
