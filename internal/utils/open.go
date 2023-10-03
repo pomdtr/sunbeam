@@ -9,9 +9,9 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-func Open(url string, application types.Applications) error {
+func OpenWith(target string, application types.Applications) error {
 	if len(application) == 0 {
-		return open.Run(url)
+		return open.Run(target)
 	}
 
 	var platform string
@@ -30,7 +30,7 @@ func Open(url string, application types.Applications) error {
 		if app.Platform != "" && app.Platform != types.Platform(platform) {
 			continue
 		}
-		if err := open.RunWith(url, app.Name); err != nil {
+		if err := open.RunWith(target, app.Name); err != nil {
 			return err
 		}
 
@@ -40,4 +40,8 @@ func Open(url string, application types.Applications) error {
 	}
 
 	return fmt.Errorf("no application found")
+}
+
+func Open(target string) error {
+	return OpenWith(target, nil)
 }

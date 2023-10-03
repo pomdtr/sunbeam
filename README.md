@@ -4,12 +4,14 @@ It allows you to build interactives UIs from simple scripts.
 
 ![sunbeam demo gif](./static/demo.gif)
 
-Other examples:
+Example Integrations:
 
-- [Bitwarden](https://pomdtr.github.io/sunbeam/book/examples/bitwarden)
-- [Github](https://pomdtr.github.io/sunbeam/book/examples/github)
-- [TLDR Pages](https://pomdtr.github.io/sunbeam/book/examples/tldr)
-- [Devdocs](https://pomdtr.github.io/sunbeam/book/examples/devdocs)
+- [VS Code](https://github.com/pomdtr/sunbeam-vscode)
+- [File Browser](https://github.com/pomdtr/sunbeam-files)
+- [Bitwarden](https://github.com/pomdtr/sunbeam-bitwarden)
+- [Github](https://github.com/pomdtr/sunbeam-github)
+- [TLDR Pages](https://github.com/pomdtr/sunbeam-tldr)
+- [Devdocs](https://github.com/pomdtr/sunbeam-devdocs)
 
 Visit the [documentation](https://pomdtr.github.io/sunbeam/book) for more information (including installation instructions).
 

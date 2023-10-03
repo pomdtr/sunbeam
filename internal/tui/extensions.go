@@ -56,7 +56,7 @@ func (e Extension) Run(input CommandInput) ([]byte, error) {
 		return nil, err
 	}
 
-	command := exec.Command(e.Path, string(inputBytes))
+	command := exec.Command(e.Entrypoint, string(inputBytes))
 	command.Env = os.Environ()
 	command.Env = append(command.Env, "SUNBEAM=0")
 	command.Env = append(command.Env, "NO_COLOR=1")
@@ -73,7 +73,7 @@ func (e Extension) Run(input CommandInput) ([]byte, error) {
 
 type Extension struct {
 	types.Manifest
-	Path string
+	Entrypoint string
 }
 
 type Extensions map[string]Extension
@@ -101,8 +101,8 @@ func (extensions Extensions) Get(extensionpath string) (Extension, error) {
 	return extension, nil
 }
 
-func LoadExtension(extensionpath string) (Extension, error) {
-	command := exec.Command(extensionpath)
+func LoadExtension(entrypoint string) (Extension, error) {
+	command := exec.Command(entrypoint)
 	b, err := command.Output()
 	if err != nil {
 		return Extension{}, err
@@ -118,7 +118,7 @@ func LoadExtension(extensionpath string) (Extension, error) {
 	}
 
 	return Extension{
-		Manifest: manifest,
-		Path:     extensionpath,
+		Manifest:   manifest,
+		Entrypoint: entrypoint,
 	}, nil
 }

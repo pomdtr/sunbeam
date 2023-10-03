@@ -13,7 +13,7 @@ type Command struct {
 	Target string       `json:"target,omitempty"`
 	App    Applications `json:"app,omitempty"`
 
-	Script  string         `json:"-,omitempty"`
+	Script  string         `json:"script,omitempty"`
 	Command string         `json:"command,omitempty"`
 	Params  map[string]any `json:"params,omitempty"`
 }

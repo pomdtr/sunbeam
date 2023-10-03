@@ -4,21 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/atotto/clipboard"
-	"github.com/google/shlex"
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"muzzammil.xyz/jsonc"
 )
 
 var (
@@ -50,7 +44,15 @@ func LoadConfig(fp string) (Config, error) {
 	return config, nil
 }
 
-func ConfigPath() string {
+func dataHome() string {
+	if env, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
+		return filepath.Join(env, "sunbeam")
+	}
+
+	return filepath.Join(os.Getenv("HOME"), ".local", "share", "sunbeam")
+}
+
+func configPath() string {
 	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
 		return filepath.Join(env, "sunbeam", "config.json")
 	}
@@ -120,8 +122,8 @@ func NewRootCmd() (*cobra.Command, error) {
 
 			if len(args) == 0 {
 				var completions []string
-				for alias, extension := range extensions {
-					completions = append(completions, fmt.Sprintf("%s\t%s", alias, extension))
+				for alias := range extensions {
+					completions = append(completions, fmt.Sprintf("%s\tExtension command", alias))
 				}
 
 				return completions, cobra.ShellCompDirectiveNoFileComp
@@ -140,6 +142,9 @@ func NewRootCmd() (*cobra.Command, error) {
 
 				completions := make([]string, 0)
 				for _, command := range extension.Commands {
+					if extension.Root == command.Name {
+						continue
+					}
 					completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
 				}
 
@@ -159,12 +164,17 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return cmd.Help()
 				}
 
-				commandPath, err := exec.LookPath(fmt.Sprintf("sunbeam-%s", args[0]))
+				extensions, err := FindExtensions()
 				if err != nil {
-					return fmt.Errorf("command %s not found", args[0])
+					return err
 				}
 
-				command, err := NewExtensionCommand(commandPath)
+				commandPath, ok := extensions[args[0]]
+				if !ok {
+					return cmd.Help()
+				}
+
+				command, err := NewCmdCustom(commandPath)
 				if err != nil {
 					return err
 				}
@@ -174,7 +184,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return command.Execute()
 			}
 
-			configPath := ConfigPath()
+			configPath := configPath()
 			config, err := LoadConfig(configPath)
 			if err != nil && !os.IsNotExist(err) {
 				return err
@@ -249,6 +259,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return timestampA > timestampB
 			})
 
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				if err := encoder.Encode(items); err != nil {
+					return err
+				}
+
+				return nil
+			}
+
 			rootList := tui.NewRootList(tui.Extensions{}, items...)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
@@ -261,12 +281,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.AddCommand(NewCmdRun())
-	rootCmd.AddCommand(NewCmdServe())
+	// rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewValidateCmd())
-	rootCmd.AddCommand(NewCmdList())
-	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdQuery())
+	rootCmd.AddCommand(NewCmdExtension())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -305,239 +324,4 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(manCmd)
 
 	return rootCmd, nil
-}
-
-func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
-	extensions := tui.Extensions{}
-	extension, err := extensions.Get(extensionpath)
-	if err != nil {
-		return nil, err
-	}
-
-	rootCmd := &cobra.Command{
-		SilenceErrors: true,
-	}
-
-	if extension.Root != "" {
-		rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-			return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
-				Script:  extensionpath,
-				Command: extension.Root,
-			}), MaxHeigth)
-		}
-	}
-
-	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
-
-	for _, subcommand := range extension.Commands {
-		subcommand := subcommand
-		subcmd := &cobra.Command{
-			Use: subcommand.Name,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				params := make(map[string]any)
-				for _, param := range subcommand.Params {
-					if !cmd.Flags().Changed(param.Name) {
-						continue
-					}
-					switch param.Type {
-					case types.ParamTypeString:
-						value, err := cmd.Flags().GetString(param.Name)
-						if err != nil {
-							return err
-						}
-						params[param.Name] = value
-					case types.ParamTypeBoolean:
-						value, err := cmd.Flags().GetBool(param.Name)
-						if err != nil {
-							return err
-						}
-						params[param.Name] = value
-					}
-				}
-
-				extension, err := extensions.Get(extensionpath)
-				if err != nil {
-					return err
-				}
-
-				if subcommand.Mode == types.CommandModeView {
-					return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
-						Script:  extensionpath,
-						Command: subcommand.Name,
-						Params:  params,
-					}), MaxHeigth)
-				}
-
-				out, err := extension.Run(tui.CommandInput{
-					Command: subcommand.Name,
-					Params:  params,
-				})
-				if err != nil {
-					return err
-				}
-
-				if len(out) == 0 {
-					return nil
-				}
-
-				var command types.Command
-				if err := jsonc.Unmarshal(out, &command); err != nil {
-					return err
-				}
-
-				switch command.Type {
-				case types.CommandTypeCopy:
-					return clipboard.WriteAll(command.Text)
-				case types.CommandTypeOpen:
-					return utils.Open(command.Target, command.App)
-				default:
-					return nil
-				}
-			},
-		}
-
-		if subcommand.Hidden {
-			subcmd.Hidden = true
-		}
-
-		for _, param := range subcommand.Params {
-			switch param.Type {
-			case types.ParamTypeString:
-				subcmd.Flags().String(param.Name, "", param.Description)
-			case types.ParamTypeBoolean:
-				subcmd.Flags().Bool(param.Name, false, param.Description)
-			}
-
-			if !param.Optional {
-				_ = subcmd.MarkFlagRequired(param.Name)
-			}
-		}
-
-		rootCmd.AddCommand(subcmd)
-	}
-
-	return rootCmd, nil
-}
-
-func buildDoc(command *cobra.Command) (string, error) {
-	var page strings.Builder
-	err := doc.GenMarkdown(command, &page)
-	if err != nil {
-		return "", err
-	}
-
-	out := strings.Builder{}
-	for _, line := range strings.Split(page.String(), "\n") {
-		if strings.Contains(line, "SEE ALSO") {
-			break
-		}
-
-		out.WriteString(line + "\n")
-	}
-
-	for _, child := range command.Commands() {
-		childPage, err := buildDoc(child)
-		if err != nil {
-			return "", err
-		}
-		out.WriteString(childPage)
-	}
-
-	return out.String(), nil
-}
-
-func LookupIntEnv(key string, fallback int) int {
-	env, ok := os.LookupEnv(key)
-	if !ok {
-		return fallback
-
-	}
-
-	value, err := strconv.Atoi(env)
-	if err != nil {
-		return fallback
-	}
-
-	return value
-}
-
-func LookupBoolEnv(key string, fallback bool) bool {
-	env, ok := os.LookupEnv(key)
-	if !ok {
-		return fallback
-
-	}
-
-	b, err := strconv.ParseBool(env)
-	if err != nil {
-		return fallback
-	}
-
-	return b
-}
-
-func ExtractCommand(shellCommand string) (tui.CommandRef, error) {
-	var ref tui.CommandRef
-	args, err := shlex.Split(shellCommand)
-	if err != nil {
-		return ref, err
-	}
-
-	if len(args) == 0 {
-		return ref, fmt.Errorf("no command specified")
-	}
-
-	path, err := exec.LookPath(fmt.Sprintf("sunbeam-%s", args[0]))
-	if err != nil {
-		return ref, fmt.Errorf("command %s not found", args[0])
-	}
-
-	ref.Script = path
-	args = args[1:]
-
-	if len(args) == 0 {
-		return ref, nil
-	}
-
-	ref.Command = args[0]
-	args = args[1:]
-
-	if len(args) == 0 {
-		return ref, nil
-	}
-
-	ref.Params = make(map[string]any)
-
-	for len(args) > 0 {
-		if !strings.HasPrefix(args[0], "--") {
-			return ref, fmt.Errorf("invalid argument: %s", args[0])
-		}
-
-		arg := strings.TrimPrefix(args[0], "--")
-
-		if strings.Contains(arg, "=") {
-			parts := strings.SplitN(arg, "=", 2)
-			ref.Params[parts[0]] = parts[1]
-			args = args[1:]
-			continue
-		}
-
-		if len(args) == 1 {
-			ref.Params[arg] = true
-			args = args[1:]
-			continue
-		}
-
-		if strings.HasPrefix(args[1], "--") {
-			ref.Params[arg] = true
-			args = args[1:]
-			continue
-		}
-
-		ref.Params[arg] = args[1]
-		args = args[2:]
-	}
-
-	return ref, nil
 }
