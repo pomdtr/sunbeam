@@ -12,6 +12,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/google/shlex"
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -261,6 +262,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return timestampA > timestampB
 			})
 
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				if err := encoder.Encode(items); err != nil {
+					return err
+				}
+
+				return nil
+			}
+
 			rootList := tui.NewRootList(tui.Extensions{}, items...)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
@@ -331,6 +342,22 @@ func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
 
 	if extension.Root != "" {
 		rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				output, err := extension.Run(tui.CommandInput{
+					Command: extension.Root,
+				})
+
+				if err != nil {
+					return err
+				}
+
+				if _, err := os.Stdout.Write(output); err != nil {
+					return err
+				}
+
+				return nil
+			}
+
 			return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
 				Script:  extensionpath,
 				Command: extension.Root,
@@ -373,6 +400,20 @@ func NewExtensionCommand(extensionpath string) (*cobra.Command, error) {
 				}
 
 				if subcommand.Mode == types.CommandModeView {
+					if !isatty.IsTerminal(os.Stdout.Fd()) {
+						output, err := extension.Run(tui.CommandInput{
+							Command: subcommand.Name,
+							Params:  params,
+						})
+
+						if err != nil {
+							return err
+						}
+
+						if _, err := os.Stdout.Write(output); err != nil {
+							return err
+						}
+					}
 					return tui.Draw(tui.NewRunner(extensions, tui.CommandRef{
 						Script:  extensionpath,
 						Command: subcommand.Name,

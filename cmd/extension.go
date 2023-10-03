@@ -16,16 +16,16 @@ func NewCmdExtension() *cobra.Command {
 		Short: "Manage extensions",
 	}
 
-	cmd.AddCommand(NewCmdList())
-	cmd.AddCommand(NewCmdInstall())
-	cmd.AddCommand(NewCmdUpgrade())
-	cmd.AddCommand(NewCmdRemove())
-	cmd.AddCommand(NewCmdRename())
+	cmd.AddCommand(NewCmdExtensionList())
+	cmd.AddCommand(NewCmdExtensionInstall())
+	cmd.AddCommand(NewCmdExtensionUpgrade())
+	cmd.AddCommand(NewCmdExtensionRemove())
+	cmd.AddCommand(NewCmdExtensionRename())
 
 	return cmd
 }
 
-func NewCmdList() *cobra.Command {
+func NewCmdExtensionList() *cobra.Command {
 	return &cobra.Command{
 		Use:     "list",
 		Short:   "List installed extensions",
@@ -46,7 +46,7 @@ func NewCmdList() *cobra.Command {
 	}
 }
 
-func NewCmdInstall() *cobra.Command {
+func NewCmdExtensionInstall() *cobra.Command {
 	flags := struct {
 		alias string
 	}{}
@@ -126,12 +126,23 @@ func NewCmdInstall() *cobra.Command {
 	return cmd
 }
 
-func NewCmdUpgrade() *cobra.Command {
+func NewCmdExtensionUpgrade() *cobra.Command {
+	flags := struct {
+		all bool
+	}{}
 	cmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "Upgrade an extension",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if flags.all {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+
+			if len(args) > 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+
 			extensions, err := FindExtensions()
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveDefault
@@ -144,41 +155,67 @@ func NewCmdUpgrade() *cobra.Command {
 
 			return completions, cobra.ShellCompDirectiveNoFileComp
 		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if flags.all && len(args) > 0 {
+				return fmt.Errorf("cannot use --all with an extension")
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensions, err := FindExtensions()
-			if err != nil {
-				return err
-			}
-
-			extensionPath, ok := extensions[args[0]]
-			if !ok {
-				return fmt.Errorf("extension %s not found", args[0])
-			}
-
-			// check if .git directory exists
-			extensionDir := filepath.Dir(extensionPath)
-			if _, err := os.Stat(filepath.Join(extensionDir, ".git")); err != nil {
-				return fmt.Errorf("extension %s is not installed with git", args[0])
-			}
-
 			// check if git is installed
 			if _, err := exec.LookPath("git"); err != nil {
 				return fmt.Errorf("git not found")
 			}
 
-			pullCmd := exec.Command("git", "pull")
-			pullCmd.Dir = extensionDir
-			pullCmd.Stdout = os.Stdout
-			pullCmd.Stderr = os.Stderr
+			extensions, err := FindExtensions()
+			if err != nil {
+				return err
+			}
 
-			return pullCmd.Run()
+			toUpgrade := make([]string, 0)
+			for alias, extensionPath := range extensions {
+				extensionDir := filepath.Dir(extensionPath)
+				if _, err := os.Stat(filepath.Join(extensionDir, ".git")); err != nil {
+					continue
+				}
+
+				if flags.all {
+					toUpgrade = append(toUpgrade, extensionDir)
+					continue
+				}
+
+				if len(args) > 0 && args[0] == alias {
+					toUpgrade = append(toUpgrade, extensionDir)
+				}
+			}
+
+			if len(toUpgrade) == 0 {
+				return nil
+			}
+
+			for _, extensionDir := range toUpgrade {
+				pullCmd := exec.Command("git", "pull")
+				pullCmd.Dir = extensionDir
+				pullCmd.Stdout = os.Stdout
+				pullCmd.Stderr = os.Stderr
+
+				err := pullCmd.Run()
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
 		},
 	}
+
+	cmd.Flags().BoolVarP(&flags.all, "all", "a", false, "upgrade all extensions")
 
 	return cmd
 }
 
-func NewCmdRemove() *cobra.Command {
+func NewCmdExtensionRemove() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove an extension",
@@ -218,7 +255,7 @@ func NewCmdRemove() *cobra.Command {
 	return cmd
 }
 
-func NewCmdRename() *cobra.Command {
+func NewCmdExtensionRename() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rename",
 		Short: "Rename an extension",
