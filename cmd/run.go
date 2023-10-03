@@ -23,7 +23,7 @@ exec sunbeam fetch '%s' -d "$1"
 func NewCmdRun() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                "run <origin> [args...]",
-		Short:              "Run an extension without installing it",
+		Short:              "Run an extension from a script, directory, or URL",
 		Args:               cobra.MinimumNArgs(1),
 		DisableFlagParsing: true,
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

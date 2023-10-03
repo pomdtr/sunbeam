@@ -3,7 +3,7 @@
 # Docs
 
 - [Installation](./installation.md)
-- [User Guide]()
+- [User Guide](./user-guide.md)
 - [Developer Guide]()
 - [Clients]()
   - [Alacritty](./clients/alacritty.md)

@@ -205,6 +205,16 @@ func ExtractCommand(shellCommand string) (tui.CommandRef, error) {
 		return ref, fmt.Errorf("no command specified")
 	}
 
+	if args[0] != "sunbeam" {
+		return ref, fmt.Errorf("only sunbeam commands are supported")
+	}
+
+	args = args[1:]
+
+	if len(args) == 0 {
+		return ref, fmt.Errorf("no extension specified")
+	}
+
 	extensions, err := FindExtensions()
 	if err != nil {
 		return ref, err
