@@ -25,7 +25,7 @@ Sunbeam try to address these limitations:
 
 ### Sunbeam runs on all platforms
 
-Sunbeam is written is distributed as a single binary, so you can run it on any platform. The sunbeam extension system is also designed to be cross-platform.
+Sunbeam is distributed as a single binary, so you can run it on any platform. The sunbeam extension system is also designed to be cross-platform.
 
 ![sunbeam running in alacritty](./static/alacritty.png)
 
