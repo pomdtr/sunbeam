@@ -142,6 +142,9 @@ func NewRootCmd() (*cobra.Command, error) {
 
 				completions := make([]string, 0)
 				for _, command := range extension.Commands {
+					if extension.Root == command.Name {
+						continue
+					}
 					completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
 				}
 

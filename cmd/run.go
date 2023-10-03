@@ -38,6 +38,9 @@ func NewCmdRun() *cobra.Command {
 
 			completions := make([]string, 0)
 			for _, command := range extension.Commands {
+				if command.Name == extension.Root {
+					continue
+				}
 				completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
 			}
 
