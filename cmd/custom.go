@@ -110,7 +110,7 @@ func NewCmdCustom(extensionpath string) (*cobra.Command, error) {
 			case types.CommandTypeCopy:
 				return clipboard.WriteAll(command.Text)
 			case types.CommandTypeOpen:
-				return utils.Open(command.Target, command.App)
+				return utils.OpenWith(command.Target, command.App)
 			default:
 				return nil
 			}

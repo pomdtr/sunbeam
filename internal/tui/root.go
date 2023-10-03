@@ -82,7 +82,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return nil
 				case types.CommandTypeOpen:
 					command := msg
-					if err := utils.Open(command.Target, command.App); err != nil {
+					if err := utils.OpenWith(command.Target, command.App); err != nil {
 						return err
 					}
 

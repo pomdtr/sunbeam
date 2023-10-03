@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +24,20 @@ func NewCmdExtension() *cobra.Command {
 	cmd.AddCommand(NewCmdExtensionUpgrade())
 	cmd.AddCommand(NewCmdExtensionRemove())
 	cmd.AddCommand(NewCmdExtensionRename())
+	cmd.AddCommand(NewCmdExtensionBrowse())
 
 	return cmd
+}
+
+func NewCmdExtensionBrowse() *cobra.Command {
+	return &cobra.Command{
+		Use:   "browse",
+		Short: "Browse extensions",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return utils.Open("https://github.com/topics/sunbeam-extension")
+		},
+	}
 }
 
 func NewCmdExtensionList() *cobra.Command {
