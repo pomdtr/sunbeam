@@ -4,17 +4,12 @@
 
 - [Installation](./installation.md)
 - [User Guide](./user-guide.md)
-- [Developer Guide]()
-- [Clients]()
+- [Developer Guide](developer-guide.md)
+- [Clients](./clients/README.md)
   - [Alacritty](./clients/alacritty.md)
-  - [Raycast]()
   - [VS Code](./clients/vscode.md)
 - [FAQ]()
 
 # Reference
 
-- [Manifest]()
-- [Command]()
-- [Pages]()
-- [Configuration]()
 - [CLI](./cli.md)

@@ -8,14 +8,22 @@
         "license": "MIT",
         "readme_path": "./README.md"
     },
+    "marketing": {
+        "social": {
+            "twitter_account": "@pomdtr"
+        }
+    },
     "build": {
         "path_prefix": "sunbeam"
+    },
+    "styles": {
+        "theme": "axodark"
     },
     "components": {
         "changelog": false,
         "mdbook": {
             "path": "./",
-            "theme": false
+            "theme": true
         }
     }
 }
