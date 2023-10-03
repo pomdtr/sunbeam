@@ -26,7 +26,6 @@ archives:
       - README.md
       - LICENSE-MIT
       - completions/*
-    rlcp: true
 nfpms:
   - vendor: pomdtr
     homepage: https://pomdtr.github.io/sunbeam
@@ -51,7 +50,7 @@ snapshot:
 brews:
   - name: sunbeam
     homepage: https://pomdtr.github.io/sunbeam
-    tap:
+    repository:
       owner: pomdtr
       name: homebrew-tap
     install: |-
@@ -59,11 +58,12 @@ brews:
       bash_completion.install "completions/sunbeam.bash"
       zsh_completion.install "completions/sunbeam.zsh"
       fish_completion.install "completions/sunbeam.fish"
-scoop:
-  bucket:
-    owner: pomdtr
-    name: scoop-bucket
-  folder: bucket
-  homepage: https://pomdtr.github.io/sunbeam
-  description: Generate powerful UIs from simple scripts written in any language.
-  license: MIT
+
+# scoops:
+#   - repository:
+#       owner: pomdtr
+#       name: scoop-bucket
+#     folder: bucket
+#     homepage: https://pomdtr.github.io/sunbeam
+#     description: Generate powerful UIs from simple scripts written in any language.
+#     license: MIT
