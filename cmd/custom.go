@@ -1,13 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/atotto/clipboard"
-	"github.com/google/shlex"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/utils"
@@ -172,78 +170,4 @@ func LookupBoolEnv(key string, fallback bool) bool {
 	}
 
 	return b
-}
-
-type CommandRef struct {
-	Alias   string
-	Command string
-	Params  map[string]any
-}
-
-func ExtractCommand(shellCommand string) (CommandRef, error) {
-	var ref CommandRef
-	args, err := shlex.Split(shellCommand)
-	if err != nil {
-		return ref, err
-	}
-
-	if len(args) == 0 {
-		return ref, fmt.Errorf("no command specified")
-	}
-	if args[0] != "sunbeam" {
-		return ref, fmt.Errorf("invalid command: %s", args[0])
-	}
-	args = args[1:]
-
-	if len(args) == 0 {
-		return ref, fmt.Errorf("no extension specified")
-	}
-
-	ref.Alias = args[0]
-	args = args[1:]
-
-	if len(args) == 0 {
-		return ref, fmt.Errorf("no command specified")
-	}
-
-	ref.Command = args[0]
-	args = args[1:]
-
-	if len(args) == 0 {
-		return ref, nil
-	}
-
-	ref.Params = make(map[string]any)
-
-	for len(args) > 0 {
-		if !strings.HasPrefix(args[0], "--") {
-			return ref, fmt.Errorf("invalid argument: %s", args[0])
-		}
-
-		arg := strings.TrimPrefix(args[0], "--")
-
-		if strings.Contains(arg, "=") {
-			parts := strings.SplitN(arg, "=", 2)
-			ref.Params[parts[0]] = parts[1]
-			args = args[1:]
-			continue
-		}
-
-		if len(args) == 1 {
-			ref.Params[arg] = true
-			args = args[1:]
-			continue
-		}
-
-		if strings.HasPrefix(args[1], "--") {
-			ref.Params[arg] = true
-			args = args[1:]
-			continue
-		}
-
-		ref.Params[arg] = args[1]
-		args = args[2:]
-	}
-
-	return ref, nil
 }

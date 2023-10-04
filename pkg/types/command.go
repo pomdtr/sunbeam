@@ -20,6 +20,8 @@ type Command struct {
 	Extension string         `json:"extension,omitempty"`
 	Command   string         `json:"command,omitempty"`
 	Params    map[string]any `json:"params,omitempty"`
+
+	Args []string `json:"args,omitempty"`
 }
 
 type CommandType string
@@ -32,6 +34,7 @@ const (
 	CommandTypeExit   CommandType = "exit"
 	CommandTypePop    CommandType = "pop"
 	CommandTypePass   CommandType = "pass"
+	CommandTypeExec   CommandType = "exec"
 )
 
 type Applications []Application

@@ -3,9 +3,13 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"os/exec"
+	"sort"
+	"strings"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/google/shlex"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
@@ -18,13 +22,125 @@ type RootList struct {
 	OnSelect   func(id string)
 }
 
-func NewRootList(extensions map[string]Extension, items ...types.ListItem) *RootList {
-	page := RootList{
-		extensions: extensions,
-		list:       NewList(items...),
+func NewRootList(extensions map[string]Extension, rootItems map[string]string, history map[string]int64) *RootList {
+	items := make([]types.ListItem, 0)
+	for alias, extension := range extensions {
+		for _, command := range extension.Commands {
+			if !isRootCommand(command) {
+				continue
+			}
+
+			shellCommand := fmt.Sprintf("sunbeam %s %s", alias, command.Name)
+			items = append(items, types.ListItem{
+				Id:          shellCommand,
+				Title:       command.Title,
+				Subtitle:    extension.Title,
+				Accessories: []string{shellCommand},
+				Actions: []types.Action{
+					{
+						Title: "Run Command",
+						OnAction: types.Command{
+							Type:      types.CommandTypeRun,
+							Extension: alias,
+							Command:   command.Name,
+						},
+					},
+					{
+						Title: "Copy Command",
+						OnAction: types.Command{
+							Type: types.CommandTypeCopy,
+							Text: shellCommand,
+							Exit: true,
+						},
+					},
+				},
+			})
+		}
 	}
 
-	return &page
+	for title, shellCommand := range rootItems {
+		args, err := shlex.Split(shellCommand)
+		if err != nil {
+			return nil
+		}
+
+		if len(args) == 0 {
+			continue
+		}
+
+		if args[0] == "sunbeam" {
+			ref, err := ExtractCommand(args[1:])
+			if err != nil {
+				continue
+			}
+
+			extension, ok := extensions[ref.Alias]
+			if !ok {
+				continue
+			}
+
+			items = append(items, types.ListItem{
+				Id:          shellCommand,
+				Title:       title,
+				Subtitle:    extension.Title,
+				Accessories: []string{shellCommand},
+				Actions: []types.Action{
+					{
+						Title: "Run Command",
+						OnAction: types.Command{
+							Type:      types.CommandTypeRun,
+							Extension: ref.Alias,
+							Command:   ref.Command,
+							Params:    ref.Params,
+						},
+					},
+					{
+						Title: "Copy Command",
+						OnAction: types.Command{
+							Type: types.CommandTypeCopy,
+							Text: shellCommand,
+							Exit: true,
+						},
+					},
+				},
+			})
+		} else {
+			items = append(items, types.ListItem{
+				Id:          shellCommand,
+				Title:       title,
+				Subtitle:    "Oneliner",
+				Accessories: []string{shellCommand},
+				Actions: []types.Action{
+					{
+						Title: "Run Command",
+						OnAction: types.Command{
+							Type: types.CommandTypeExec,
+							Args: args,
+						},
+					},
+				},
+			})
+		}
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		timestampA, ok := history[items[i].Id]
+		if !ok {
+			return false
+		}
+
+		timestampB, ok := history[items[j].Id]
+		if !ok {
+			return true
+		}
+
+		return timestampA > timestampB
+	})
+
+	return &RootList{
+		list:       NewList(items...),
+		extensions: extensions,
+	}
 }
 
 func (c *RootList) Init() tea.Cmd {
@@ -67,10 +183,10 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		c.err.SetSize(c.w, c.h)
 		return c, c.err.Init()
 	case types.Command:
-		return c, tea.Sequence(c.list.SetIsLoading(true), func() tea.Msg {
-			if msg.Type != types.CommandTypeRun {
-				switch msg.Type {
-				case types.CommandTypeCopy:
+		if msg.Type != types.CommandTypeRun {
+			switch msg.Type {
+			case types.CommandTypeCopy:
+				return c, func() tea.Msg {
 					if err := clipboard.WriteAll(msg.Text); err != nil {
 						return err
 					}
@@ -80,9 +196,11 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 
 					return nil
-				case types.CommandTypeOpen:
-					command := msg
-					if err := utils.OpenWith(command.Target, command.App); err != nil {
+				}
+
+			case types.CommandTypeOpen:
+				return c, func() tea.Msg {
+					if err := utils.OpenWith(msg.Target, msg.App); err != nil {
 						return err
 					}
 
@@ -91,13 +209,23 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 
 					return nil
-				case types.CommandTypeExit:
-					return ExitMsg{}
-				default:
-					return nil
 				}
-			}
+			case types.CommandTypeExec:
+				return c, tea.ExecProcess(exec.Command(msg.Args[0], msg.Args[1:]...), func(err error) tea.Msg {
+					if err != nil {
+						return err
+					}
 
+					return ExitMsg{}
+				})
+			case types.CommandTypeExit:
+				return c, ExitCmd
+			default:
+				return c, nil
+			}
+		}
+
+		return c, func() tea.Msg {
 			extension, ok := c.extensions[msg.Extension]
 			if !ok {
 				return fmt.Errorf("extension %s not found", msg.Extension)
@@ -130,7 +258,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return outputCommand
-		})
+		}
 	}
 
 	if c.err != nil {
@@ -150,4 +278,75 @@ func (c *RootList) View() string {
 		return c.err.View()
 	}
 	return c.list.View()
+}
+
+func isRootCommand(command types.CommandSpec) bool {
+	for _, param := range command.Params {
+		if !param.Optional {
+			return false
+		}
+	}
+
+	return true
+}
+
+type CommandRef struct {
+	Alias   string
+	Command string
+	Params  map[string]any
+}
+
+func ExtractCommand(args []string) (CommandRef, error) {
+	var ref CommandRef
+	if len(args) == 0 {
+		return ref, fmt.Errorf("no extension specified")
+	}
+
+	ref.Alias = args[0]
+	args = args[1:]
+
+	if len(args) == 0 {
+		return ref, fmt.Errorf("no command specified")
+	}
+
+	ref.Command = args[0]
+	args = args[1:]
+
+	if len(args) == 0 {
+		return ref, nil
+	}
+
+	ref.Params = make(map[string]any)
+
+	for len(args) > 0 {
+		if !strings.HasPrefix(args[0], "--") {
+			return ref, fmt.Errorf("invalid argument: %s", args[0])
+		}
+
+		arg := strings.TrimPrefix(args[0], "--")
+
+		if strings.Contains(arg, "=") {
+			parts := strings.SplitN(arg, "=", 2)
+			ref.Params[parts[0]] = parts[1]
+			args = args[1:]
+			continue
+		}
+
+		if len(args) == 1 {
+			ref.Params[arg] = true
+			args = args[1:]
+			continue
+		}
+
+		if strings.HasPrefix(args[1], "--") {
+			ref.Params[arg] = true
+			args = args[1:]
+			continue
+		}
+
+		ref.Params[arg] = args[1]
+		args = args[2:]
+	}
+
+	return ref, nil
 }
