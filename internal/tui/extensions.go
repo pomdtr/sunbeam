@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/acarl005/stripansi"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
@@ -28,22 +27,6 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	}
 	return types.CommandSpec{}, false
 }
-
-// func ShellCommand(extensi) string {
-// 	args := []string{"sunbeam", "run", ref.Script, ref.Command}
-// 	for name, value := range ref.Params {
-// 		switch value := value.(type) {
-// 		case string:
-// 			args = append(args, fmt.Sprintf("--%s=%s", name, value))
-// 		case bool:
-// 			if value {
-// 				args = append(args, fmt.Sprintf("--%s", name))
-// 			}
-// 		}
-// 	}
-
-// 	return strings.Join(args, " ")
-// }
 
 func (e Extension) Run(input CommandInput) ([]byte, error) {
 	cmd, err := e.Cmd(input)
@@ -82,31 +65,6 @@ func (e Extension) Cmd(input CommandInput) (*exec.Cmd, error) {
 type Extension struct {
 	types.Manifest
 	Entrypoint string
-}
-
-type Extensions map[string]Extension
-
-func (extensions Extensions) Get(extensionpath string) (Extension, error) {
-	extensionpath, err := filepath.Abs(extensionpath)
-	if err != nil {
-		return Extension{}, err
-	}
-
-	if extension, ok := extensions[extensionpath]; ok {
-		return extension, nil
-	}
-
-	extension, err := LoadExtension(extensionpath)
-	if err != nil {
-		return extension, err
-	}
-
-	if extensions == nil {
-		extensions = make(map[string]Extension)
-	}
-	extensions[extensionpath] = extension
-
-	return extension, nil
 }
 
 func LoadExtension(entrypoint string) (Extension, error) {

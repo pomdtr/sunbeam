@@ -17,103 +17,85 @@ import (
 	"muzzammil.xyz/jsonc"
 )
 
-func NewCmdCustom(extensionpath string) (*cobra.Command, error) {
-	extensions := tui.Extensions{}
-	extension, err := extensions.Get(extensionpath)
-	if err != nil {
-		return nil, err
+func NewCmdCustom(use string, extension tui.Extension) (*cobra.Command, error) {
+	rootCmd := &cobra.Command{
+		Use: use,
 	}
-
-	rootCmd := &cobra.Command{}
-
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
 	for _, subcommand := range extension.Commands {
 		subcommand := subcommand
-		var cmd *cobra.Command
-		if extension.Root == subcommand.Name {
-			cmd = rootCmd
-		} else {
-			cmd = &cobra.Command{}
-			rootCmd.AddCommand(cmd)
-		}
-		cmd.Use = subcommand.Name
-
-		cmd.RunE = func(cmd *cobra.Command, args []string) error {
-			params := make(map[string]any)
-			for _, param := range subcommand.Params {
-				if !cmd.Flags().Changed(param.Name) {
-					continue
-				}
-				switch param.Type {
-				case types.ParamTypeString:
-					value, err := cmd.Flags().GetString(param.Name)
-					if err != nil {
-						return err
+		cmd := &cobra.Command{
+			Use:    subcommand.Name,
+			Short:  subcommand.Title,
+			Hidden: subcommand.Hidden,
+			RunE: func(cmd *cobra.Command, args []string) error {
+				params := make(map[string]any)
+				for _, param := range subcommand.Params {
+					if !cmd.Flags().Changed(param.Name) {
+						continue
 					}
-					params[param.Name] = value
-				case types.ParamTypeBoolean:
-					value, err := cmd.Flags().GetBool(param.Name)
-					if err != nil {
-						return err
-					}
-					params[param.Name] = value
-				}
-			}
-
-			extension, err := extensions.Get(extensionpath)
-			if err != nil {
-				return err
-			}
-
-			if subcommand.Mode == types.CommandModeView {
-				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					output, err := extension.Run(tui.CommandInput{
-						Command: subcommand.Name,
-						Params:  params,
-					})
-
-					if err != nil {
-						return err
-					}
-
-					if _, err := os.Stdout.Write(output); err != nil {
-						return err
+					switch param.Type {
+					case types.ParamTypeString:
+						value, err := cmd.Flags().GetString(param.Name)
+						if err != nil {
+							return err
+						}
+						params[param.Name] = value
+					case types.ParamTypeBoolean:
+						value, err := cmd.Flags().GetBool(param.Name)
+						if err != nil {
+							return err
+						}
+						params[param.Name] = value
 					}
 				}
-				return tui.Draw(tui.NewRunner(extension, subcommand, params), MaxHeigth)
-			}
 
-			out, err := extension.Run(tui.CommandInput{
-				Command: subcommand.Name,
-				Params:  params,
-			})
-			if err != nil {
-				return err
-			}
+				if subcommand.Mode == types.CommandModeView {
+					if !isatty.IsTerminal(os.Stdout.Fd()) {
+						output, err := extension.Run(tui.CommandInput{
+							Command: subcommand.Name,
+							Params:  params,
+						})
 
-			if len(out) == 0 {
-				return nil
-			}
+						if err != nil {
+							return err
+						}
 
-			var command types.Command
-			if err := jsonc.Unmarshal(out, &command); err != nil {
-				return err
-			}
+						if _, err := os.Stdout.Write(output); err != nil {
+							return err
+						}
+					}
+					return tui.Draw(tui.NewRunner(extension, subcommand, params), MaxHeigth)
+				}
 
-			switch command.Type {
-			case types.CommandTypeCopy:
-				return clipboard.WriteAll(command.Text)
-			case types.CommandTypeOpen:
-				return utils.OpenWith(command.Target, command.App)
-			default:
-				return nil
-			}
-		}
+				out, err := extension.Run(tui.CommandInput{
+					Command: subcommand.Name,
+					Params:  params,
+				})
+				if err != nil {
+					return err
+				}
 
-		if subcommand.Hidden {
-			cmd.Hidden = true
+				if len(out) == 0 {
+					return nil
+				}
+
+				var command types.Command
+				if err := jsonc.Unmarshal(out, &command); err != nil {
+					return err
+				}
+
+				switch command.Type {
+				case types.CommandTypeCopy:
+					return clipboard.WriteAll(command.Text)
+				case types.CommandTypeOpen:
+					return utils.OpenWith(command.Target, command.App)
+				default:
+					return nil
+				}
+			},
 		}
 
 		for _, param := range subcommand.Params {
@@ -128,6 +110,8 @@ func NewCmdCustom(extensionpath string) (*cobra.Command, error) {
 				_ = cmd.MarkFlagRequired(param.Name)
 			}
 		}
+
+		rootCmd.AddCommand(cmd)
 	}
 
 	return rootCmd, nil
@@ -190,8 +174,14 @@ func LookupBoolEnv(key string, fallback bool) bool {
 	return b
 }
 
-func ExtractCommand(shellCommand string) (tui.CommandRef, error) {
-	var ref tui.CommandRef
+type CommandRef struct {
+	Alias   string
+	Command string
+	Params  map[string]any
+}
+
+func ExtractCommand(shellCommand string) (CommandRef, error) {
+	var ref CommandRef
 	args, err := shlex.Split(shellCommand)
 	if err != nil {
 		return ref, err
@@ -200,32 +190,20 @@ func ExtractCommand(shellCommand string) (tui.CommandRef, error) {
 	if len(args) == 0 {
 		return ref, fmt.Errorf("no command specified")
 	}
-
 	if args[0] != "sunbeam" {
-		return ref, fmt.Errorf("only sunbeam commands are supported")
+		return ref, fmt.Errorf("invalid command: %s", args[0])
 	}
-
 	args = args[1:]
 
 	if len(args) == 0 {
 		return ref, fmt.Errorf("no extension specified")
 	}
 
-	extensions, err := FindExtensions()
-	if err != nil {
-		return ref, err
-	}
-
-	path, ok := extensions[args[0]]
-	if !ok {
-		return ref, fmt.Errorf("extension %s not found", args[0])
-	}
-
-	ref.Script = path
+	ref.Alias = args[0]
 	args = args[1:]
 
 	if len(args) == 0 {
-		return ref, nil
+		return ref, fmt.Errorf("no command specified")
 	}
 
 	ref.Command = args[0]

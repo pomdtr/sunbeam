@@ -7,15 +7,19 @@ import (
 
 type Command struct {
 	Type CommandType `json:"type,omitempty"`
-	Exit bool        `json:"exit,omitempty"`
-	Text string      `json:"text,omitempty"`
 
-	Target string       `json:"target,omitempty"`
+	Text string `json:"text,omitempty"`
+
 	App    Applications `json:"app,omitempty"`
+	Target string       `json:"target,omitempty"`
 
-	Script  string         `json:"script,omitempty"`
-	Command string         `json:"command,omitempty"`
-	Params  map[string]any `json:"params,omitempty"`
+	Exit bool `json:"exit,omitempty"`
+
+	Reload bool `json:"reload,omitempty"`
+
+	Extension string         `json:"extension,omitempty"`
+	Command   string         `json:"command,omitempty"`
+	Params    map[string]any `json:"params,omitempty"`
 }
 
 type CommandType string
@@ -26,6 +30,8 @@ const (
 	CommandTypeCopy   CommandType = "copy"
 	CommandTypeReload CommandType = "reload"
 	CommandTypeExit   CommandType = "exit"
+	CommandTypePop    CommandType = "pop"
+	CommandTypePass   CommandType = "pass"
 )
 
 type Applications []Application

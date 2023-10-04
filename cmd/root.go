@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/mattn/go-isatty"
@@ -131,21 +130,13 @@ func NewRootCmd() (*cobra.Command, error) {
 			}
 
 			if len(args) == 1 {
-				extensionPath, ok := extensions[args[0]]
+				extension, ok := extensions[args[0]]
 				if !ok {
-					return nil, cobra.ShellCompDirectiveDefault
-				}
-
-				extension, err := tui.LoadExtension(extensionPath)
-				if err != nil {
 					return nil, cobra.ShellCompDirectiveDefault
 				}
 
 				completions := make([]string, 0)
 				for _, command := range extension.Commands {
-					if extension.Root == command.Name {
-						continue
-					}
 					completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
 				}
 
@@ -160,22 +151,22 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			extensions, err := FindExtensions()
+			if err != nil {
+				return err
+			}
+
 			if len(args) > 0 {
 				if args[0] == "--help" || args[0] == "-h" {
 					return cmd.Help()
 				}
 
-				extensions, err := FindExtensions()
-				if err != nil {
-					return err
-				}
-
-				commandPath, ok := extensions[args[0]]
+				extension, ok := extensions[args[0]]
 				if !ok {
-					return cmd.Help()
+					return fmt.Errorf("extension not found: %s", args[0])
 				}
 
-				command, err := NewCmdCustom(commandPath)
+				command, err := NewCmdCustom(args[0], extension)
 				if err != nil {
 					return err
 				}
@@ -185,52 +176,66 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return command.Execute()
 			}
 
+			items := make([]types.ListItem, 0)
+			for alias, extension := range extensions {
+				for _, command := range extension.Commands {
+					if command.Hidden {
+						continue
+					}
+
+					if !isRootCommand(command) {
+						continue
+					}
+
+					items = append(items, types.ListItem{
+						Title:       command.Title,
+						Subtitle:    extension.Title,
+						Accessories: []string{fmt.Sprintf("sunbeam %s %s", alias, command.Name)},
+						Id:          fmt.Sprintf("%s %s", alias, command.Name),
+						Actions: []types.Action{
+							{
+								Title: "Run Command",
+								OnAction: types.Command{
+									Type:      types.CommandTypeRun,
+									Extension: alias,
+									Command:   command.Name,
+								},
+							},
+						},
+					})
+				}
+			}
+
 			configPath := configPath()
 			config, err := LoadConfig(configPath)
 			if err != nil && !os.IsNotExist(err) {
 				return err
 			}
 
-			if len(config.RootItems) == 0 {
-				return cmd.Usage()
-			}
-
-			cacheDir, err := os.UserCacheDir()
-			if err != nil {
-				return err
-			}
-			historyPath := filepath.Join(cacheDir, "sunbeam", "history.json")
-			history, err := LoadHistory(historyPath)
-			if err != nil {
-				if !os.IsNotExist(err) {
-					return err
-				}
-
-				history = History{
-					entries: make(map[string]int64),
-					path:    historyPath,
-				}
-			}
-
-			items := make([]types.ListItem, 0)
 			for title, command := range config.RootItems {
 				ref, err := ExtractCommand(command)
 				if err != nil {
 					continue
 				}
 
+				extension, ok := extensions[ref.Alias]
+				if !ok {
+					continue
+				}
+
 				items = append(items, types.ListItem{
 					Title:       title,
 					Id:          title,
-					Accessories: []string{strings.TrimPrefix(command, "sunbeam ")},
+					Subtitle:    extension.Title,
+					Accessories: []string{command},
 					Actions: []types.Action{
 						{
 							Title: "Run Command",
 							OnAction: types.Command{
-								Type:    types.CommandTypeRun,
-								Script:  ref.Script,
-								Command: ref.Command,
-								Params:  ref.Params,
+								Type:      types.CommandTypeRun,
+								Extension: ref.Alias,
+								Command:   ref.Command,
+								Params:    ref.Params,
 							},
 						},
 						{
@@ -244,6 +249,28 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						},
 					},
 				})
+			}
+
+			if len(items) == 0 {
+				return cmd.Usage()
+			}
+
+			cacheDir, err := os.UserCacheDir()
+			if err != nil {
+				return err
+			}
+
+			historyPath := filepath.Join(cacheDir, "sunbeam", "history.json")
+			history, err := LoadHistory(historyPath)
+			if err != nil {
+				if !os.IsNotExist(err) {
+					return err
+				}
+
+				history = History{
+					entries: make(map[string]int64),
+					path:    historyPath,
+				}
 			}
 
 			sort.Slice(items, func(i, j int) bool {
@@ -270,7 +297,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return nil
 			}
 
-			rootList := tui.NewRootList(tui.Extensions{}, items...)
+			rootList := tui.NewRootList(extensions, items...)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
 				_ = history.Save()
@@ -325,4 +352,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(manCmd)
 
 	return rootCmd, nil
+}
+
+func isRootCommand(command types.CommandSpec) bool {
+	for _, param := range command.Params {
+		if !param.Optional {
+			return false
+		}
+	}
+
+	return true
 }

@@ -66,13 +66,14 @@ Flags:
 Use "sunbeam [command] --help" for more information about a command.
 ```
 
-If you want to show a list of commands instead, you need to set them in the config file, located at `~/.config/sunbeam/config.json` by default (you can set the `XDG_CONFIG_HOME` env var to override this).
+As soon as you install an extension, new commands will be available.
+
+If you want add your own commands, you can add them to the `~/.config/sunbeam/config.json` file.
 
 ```json
 {
-    // the key is the root item title, and the value is the command to run
+    // the key is the root item title, and the value is arguments you want to pass to the `sunbeam` command
     "root": {
-        "Search DevDocs Docsets": "sunbeam devdocs",
         "Search Go Documentation": "sunbeam devdocs list-entries --slug go"
     }
 }

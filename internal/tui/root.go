@@ -14,11 +14,11 @@ type RootList struct {
 	w, h       int
 	err        *Detail
 	list       *List
-	extensions Extensions
+	extensions map[string]Extension
 	OnSelect   func(id string)
 }
 
-func NewRootList(extensions Extensions, items ...types.ListItem) *RootList {
+func NewRootList(extensions map[string]Extension, items ...types.ListItem) *RootList {
 	page := RootList{
 		extensions: extensions,
 		list:       NewList(items...),
@@ -98,9 +98,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 
-			extension, err := c.extensions.Get(msg.Script)
-			if err != nil {
-				return err
+			extension, ok := c.extensions[msg.Extension]
+			if !ok {
+				return fmt.Errorf("extension %s not found", msg.Extension)
 			}
 
 			command, ok := extension.Command(msg.Command)

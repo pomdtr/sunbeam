@@ -7,7 +7,6 @@
 
 export interface Manifest {
   title: string;
-  root?: string;
   description?: string;
   commands: Commandspec[];
 }

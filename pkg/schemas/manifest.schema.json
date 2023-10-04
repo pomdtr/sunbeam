@@ -10,9 +10,6 @@
         "title": {
             "type": "string"
         },
-        "root": {
-            "type": "string"
-        },
         "description": {
             "type": "string"
         },

@@ -46,9 +46,6 @@ func NewCmdRun() *cobra.Command {
 
 			completions := make([]string, 0)
 			for _, command := range extension.Commands {
-				if command.Name == extension.Root {
-					continue
-				}
 				completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
 			}
 
@@ -111,7 +108,12 @@ func NewCmdRun() *cobra.Command {
 				}
 			}
 
-			rootCmd, err := NewCmdCustom(scriptPath)
+			extension, err := tui.LoadExtension(scriptPath)
+			if err != nil {
+				return err
+			}
+
+			rootCmd, err := NewCmdCustom(args[0], extension)
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}
