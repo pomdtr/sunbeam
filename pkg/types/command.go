@@ -38,7 +38,6 @@ const (
 	CommandTypeExit   CommandType = "exit"
 	CommandTypePop    CommandType = "pop"
 	CommandTypePass   CommandType = "pass"
-	CommandTypeExec   CommandType = "exec"
 )
 
 type Applications []Application

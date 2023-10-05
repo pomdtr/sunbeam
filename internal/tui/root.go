@@ -3,7 +3,6 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"sort"
 
 	"github.com/atotto/clipboard"
@@ -191,14 +190,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-		case types.CommandTypeExec:
-			return c, tea.ExecProcess(exec.Command("sh", "-c", msg.Exec), func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				return ExitMsg{}
-			})
 		case types.CommandTypeExit:
 			return c, ExitCmd
 		default:
