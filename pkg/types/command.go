@@ -5,6 +5,12 @@ import (
 	"fmt"
 )
 
+type CommandRef struct {
+	Extension string         `json:"extension"`
+	Command   string         `json:"command"`
+	Params    map[string]any `json:"params"`
+}
+
 type Command struct {
 	Type CommandType `json:"type,omitempty"`
 
@@ -17,11 +23,9 @@ type Command struct {
 
 	Reload bool `json:"reload,omitempty"`
 
-	Extension string         `json:"extension,omitempty"`
-	Command   string         `json:"command,omitempty"`
-	Params    map[string]any `json:"params,omitempty"`
+	CommandRef
 
-	Args []string `json:"args,omitempty"`
+	Exec string `json:"exec,omitempty"`
 }
 
 type CommandType string

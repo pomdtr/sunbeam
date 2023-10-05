@@ -6,6 +6,5 @@
   },
   "yaml.validate": false,
   "deno.enable": true,
-  "deno.config": "./pkg/typescript/deno.json",
   "deno.unstable": true
 }

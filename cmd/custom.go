@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -15,9 +16,13 @@ import (
 	"muzzammil.xyz/jsonc"
 )
 
-func NewCmdCustom(use string, extension tui.Extension) (*cobra.Command, error) {
+func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Command, error) {
+	extension, ok := extensions[alias]
+	if !ok {
+		return nil, fmt.Errorf("extension %s not found", alias)
+	}
 	rootCmd := &cobra.Command{
-		Use: use,
+		Use: alias,
 	}
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
@@ -65,7 +70,14 @@ func NewCmdCustom(use string, extension tui.Extension) (*cobra.Command, error) {
 							return err
 						}
 					}
-					return tui.Draw(tui.NewRunner(extension, subcommand, params), MaxHeigth)
+
+					runner := tui.NewRunner(extensions, types.CommandRef{
+						Extension: alias,
+						Command:   subcommand.Name,
+						Params:    params,
+					})
+
+					return tui.Draw(runner, MaxHeigth)
 				}
 
 				out, err := extension.Run(tui.CommandInput{

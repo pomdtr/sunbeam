@@ -11,6 +11,7 @@ import (
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"github.com/tailscale/hujson"
 )
 
 var (
@@ -22,25 +23,49 @@ var (
 	MaxHeigth = LookupIntEnv("SUNBEAM_HEIGHT", 0)
 )
 
-type ExtensionCache map[string]types.Manifest
-
 type Config struct {
-	RootItems map[string]string `json:"root"`
+	Actions []types.Action `json:"actions"`
 }
 
-func LoadConfig(fp string) (Config, error) {
-	f, err := os.Open(fp)
+func LoadConfig() (Config, error) {
+	var configPath string
+	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
+		if _, err := os.Stat(filepath.Join(env, "sunbeam", "config.json")); err == nil {
+			configPath = filepath.Join(env, "sunbeam", "config.json")
+		} else if _, err := os.Stat(filepath.Join(env, "sunbeam", "config.jsonc")); err == nil {
+			configPath = filepath.Join(env, "sunbeam", "config.jsonc")
+		} else {
+			return Config{}, fmt.Errorf("config file not found")
+		}
+	} else {
+		if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.jsonc")); err == nil {
+			configPath = filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.jsonc")
+		} else if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.json")); err == nil {
+			configPath = filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.json")
+		} else {
+			return Config{}, fmt.Errorf("config file not found")
+		}
+	}
+
+	configBytes, err := os.ReadFile(configPath)
+	if err != nil {
+		return Config{}, err
+	}
+
+	jsonBytes, err := hujson.Standardize(configBytes)
 	if err != nil {
 		return Config{}, err
 	}
 
 	var config Config
-	if err := json.NewDecoder(f).Decode(&config); err != nil {
+	if err := json.Unmarshal(jsonBytes, &config); err != nil {
 		return Config{}, err
 	}
 
 	return config, nil
 }
+
+type ExtensionCache map[string]types.Manifest
 
 func dataHome() string {
 	if env, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
@@ -48,14 +73,6 @@ func dataHome() string {
 	}
 
 	return filepath.Join(os.Getenv("HOME"), ".local", "share", "sunbeam")
-}
-
-func configPath() string {
-	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
-		return filepath.Join(env, "sunbeam", "config.json")
-	}
-
-	return filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.json")
 }
 
 type History struct {
@@ -159,12 +176,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return cmd.Help()
 				}
 
-				extension, ok := extensions[args[0]]
-				if !ok {
-					return fmt.Errorf("extension not found: %s", args[0])
-				}
-
-				command, err := NewCmdCustom(args[0], extension)
+				command, err := NewCmdCustom(extensions, args[0])
 				if err != nil {
 					return err
 				}
@@ -174,8 +186,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return command.Execute()
 			}
 
-			configPath := configPath()
-			config, err := LoadConfig(configPath)
+			config, err := LoadConfig()
 			if err != nil && !os.IsNotExist(err) {
 				return err
 			}
@@ -184,7 +195,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			if err != nil {
 				return err
 			}
-
 			historyPath := filepath.Join(cacheDir, "sunbeam", "history.json")
 			history, err := LoadHistory(historyPath)
 			if err != nil {
@@ -198,19 +208,17 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				}
 			}
 
-			rootList := tui.NewRootList(extensions, config.RootItems, history.entries)
+			rootList := tui.NewRootList(extensions, config.Actions, history.entries)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
 				_ = history.Save()
 			}
 
 			return tui.Draw(rootList, MaxHeigth)
-
 		},
 	}
 
 	rootCmd.AddCommand(NewCmdRun())
-	// rootCmd.AddCommand(NewCmdServe())
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdQuery())

@@ -185,14 +185,23 @@ func (c StatusBar) View() string {
 		if c.expanded {
 			accessories := make([]string, len(c.actions))
 			for i, action := range c.actions {
+				var subtitle string
 				if i == 0 {
-					accessories[i] = renderAction(action.Title, "enter", i == c.cursor)
-				} else {
-					var subtitle string
-					if action.Key != "" {
-						subtitle = fmt.Sprintf("alt+%s", action.Key)
-					}
-					accessories[i] = renderAction(action.Title, subtitle, i == c.cursor)
+					subtitle = "enter"
+				} else if action.Key != "" {
+					subtitle = fmt.Sprintf("alt+%s", action.Key)
+				}
+				accessories[i] = renderAction(action.Title, subtitle, i == c.cursor)
+			}
+			availableWidth := c.Width - lipgloss.Width(prefix)
+			for i, accessory := range accessories {
+				availableWidth -= lipgloss.Width(accessory) + 3
+				if availableWidth < 0 {
+					accessories = accessories[1:]
+				}
+
+				if i == c.cursor {
+					break
 				}
 			}
 

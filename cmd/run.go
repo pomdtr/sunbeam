@@ -74,22 +74,6 @@ func NewCmdRun() *cobra.Command {
 				}
 
 				scriptPath = tempfile.Name()
-			} else if args[0] == "-" {
-				tempfile, err := os.CreateTemp("", "sunbeam-run-*.sh")
-				if err != nil {
-					return err
-				}
-				defer os.Remove(tempfile.Name())
-
-				if _, err := io.Copy(tempfile, os.Stdin); err != nil {
-					return err
-				}
-
-				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
-					return err
-				}
-
-				scriptPath = tempfile.Name()
 			} else {
 				s, err := filepath.Abs(args[0])
 				if err != nil {
@@ -113,12 +97,19 @@ func NewCmdRun() *cobra.Command {
 				return err
 			}
 
-			rootCmd, err := NewCmdCustom(args[0], extension)
+			extensions, err := FindExtensions()
+			if err != nil {
+				return err
+			}
+
+			extensions[args[0]] = extension
+
+			rootCmd, err := NewCmdCustom(extensions, args[0])
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}
 
-			rootCmd.Use = args[0]
+			rootCmd.Use = "extension"
 			rootCmd.SetArgs(args[1:])
 			return rootCmd.Execute()
 		},

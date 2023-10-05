@@ -16,10 +16,11 @@ type Runner struct {
 
 	width, height int
 
-	command types.CommandSpec
-	params  map[string]any
-
-	extension Extension
+	extensions map[string]Extension
+	extension  Extension
+	command    types.CommandSpec
+	alias      string
+	params     map[string]any
 }
 
 type ReloadMsg struct {
@@ -32,15 +33,16 @@ func ReloadCmd(params map[string]any) tea.Cmd {
 	}
 }
 
-func NewRunner(extension Extension, command types.CommandSpec, params map[string]any) *Runner {
-	detail := NewDetail("")
-	detail.SetIsLoading(true)
-
+func NewRunner(extensions map[string]Extension, ref types.CommandRef) *Runner {
+	extension := extensions[ref.Extension]
+	command, _ := extension.Command(ref.Command)
 	return &Runner{
-		extension: extension,
-		command:   command,
-		params:    params,
-		embed:     detail,
+		extensions: extensions,
+		extension:  extension,
+		alias:      ref.Extension,
+		embed:      NewDetail(""),
+		command:    command,
+		params:     ref.Params,
 	}
 }
 
@@ -62,7 +64,8 @@ func (c *Runner) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c *Runner) Init() tea.Cmd {
-	return tea.Batch(c.Run, c.embed.Init())
+	termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
+	return tea.Batch(c.SetIsLoading(true), c.Run, c.embed.Init())
 }
 
 func (c *Runner) Focus() tea.Cmd {
@@ -175,25 +178,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return command
 				}
 			case types.CommandModeView:
-				return c, PushPageCmd(NewRunner(c.extension, command, msg.Params))
-			case types.CommandModeTTY:
-				cmd, err := c.extension.Cmd(CommandInput{
-					Command: command.Name,
-					Params:  msg.Params,
+				runner := NewRunner(c.extensions, types.CommandRef{
+					Extension: c.alias,
+					Command:   msg.Command,
+					Params:    msg.Params,
 				})
-
-				if err != nil {
-					c.embed = NewErrorPage(err)
-					return c, c.embed.Init()
-				}
-
-				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
-					if err != nil {
-						return err
-					}
-
-					return nil
-				})
+				return c, PushPageCmd(runner)
 			}
 		case types.CommandTypeCopy:
 			return c, func() tea.Msg {
@@ -273,11 +263,10 @@ func (c *Runner) View() string {
 }
 
 func (c *Runner) Run() tea.Msg {
-	output, err := c.extension.Run(
-		CommandInput{
-			Command: c.command.Name,
-			Params:  c.params,
-		})
+	output, err := c.extension.Run(CommandInput{
+		Command: c.command.Name,
+		Params:  c.params,
+	})
 	if err != nil {
 		return err
 	}

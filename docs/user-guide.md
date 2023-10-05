@@ -66,15 +66,24 @@ Flags:
 Use "sunbeam [command] --help" for more information about a command.
 ```
 
-As soon as you install an extension, new commands will be available.
+As soon as you install an extension, a list of root commands will be shown instead.
 
-If you want add your own commands, you can add them to the `~/.config/sunbeam/config.json` file.
+You can also add your own root commands by creating a `$HOME/.config/sunbeam.json` file.
 
 ```json
 {
-    // the key is the root item title, and the value is arguments you want to pass to the `sunbeam` command
-    "root": {
-        "Search Go Documentation": "sunbeam devdocs list-entries --slug go"
-    }
+    "actions": [
+        {
+            "title": "Search Go Documentation",
+            "onAction": {
+                "type": "run",
+                "extension": "devdocs",
+                "command": "list-entries",
+                "params": {
+                    "slug": "go"
+                }
+            }
+        }
+    ]
 }
 ```

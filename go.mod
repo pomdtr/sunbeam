@@ -10,7 +10,6 @@ require (
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.8.0
 	github.com/go-chi/chi/v5 v5.0.10
-	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/itchyny/gojq v0.12.13
 	github.com/junegunn/fzf v0.0.0-20231001000142-4fdc08295b90
 	github.com/muesli/reflow v0.3.0
@@ -18,6 +17,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.7.0
+	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	muzzammil.xyz/jsonc v1.0.0
 )
 

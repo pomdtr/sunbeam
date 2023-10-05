@@ -37,7 +37,8 @@ type Page interface {
 	View() string
 }
 
-type ExitMsg struct{}
+type ExitMsg struct {
+}
 
 func ExitCmd() tea.Msg {
 	return ExitMsg{}
