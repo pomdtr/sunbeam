@@ -28,6 +28,10 @@ func NewRootList(extensions map[string]Extension, actions []types.Action, histor
 				continue
 			}
 
+			if command.Hidden {
+				continue
+			}
+
 			items = append(items, types.ListItem{
 				Id:       fmt.Sprintf("%s/%s", alias, command.Name),
 				Title:    command.Title,
