@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -22,7 +24,44 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 		return nil, fmt.Errorf("extension %s not found", alias)
 	}
 	rootCmd := &cobra.Command{
-		Use: alias,
+		Use:  alias,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var inputBytes []byte
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				i, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+				inputBytes = i
+			}
+
+			if len(inputBytes) == 0 {
+				if isatty.IsTerminal(os.Stdout.Fd()) {
+					return cmd.Usage()
+				}
+
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				return encoder.Encode(extension.Manifest)
+			}
+
+			var input tui.CommandInput
+			if err := json.Unmarshal(inputBytes, &input); err != nil {
+				return err
+			}
+
+			output, err := extension.Run(input)
+			if err != nil {
+				return err
+			}
+
+			if _, err := os.Stdout.Write(output); err != nil {
+				return err
+			}
+
+			return nil
+		},
 	}
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
@@ -69,6 +108,8 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 						if _, err := os.Stdout.Write(output); err != nil {
 							return err
 						}
+
+						return nil
 					}
 
 					runner := tui.NewRunner(extensions, types.CommandRef{

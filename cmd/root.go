@@ -24,7 +24,7 @@ var (
 )
 
 type Config struct {
-	Actions []types.Action `json:"actions"`
+	Commands map[string]types.Command `json:"commands"`
 }
 
 func LoadConfig() (Config, error) {
@@ -208,7 +208,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				}
 			}
 
-			rootList := tui.NewRootList(extensions, config.Actions, history.entries)
+			rootList := tui.NewRootList(extensions, config.Commands, history.entries)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
 				_ = history.Save()

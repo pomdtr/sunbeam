@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -53,6 +54,12 @@ func NewCmdExtensionList() *cobra.Command {
 			extensions, err := FindExtensions()
 			if err != nil {
 				return err
+			}
+
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				return encoder.Encode(extensions)
 			}
 
 			for alias := range extensions {

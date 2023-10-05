@@ -72,18 +72,15 @@ You can also add your own root commands by creating a `$HOME/.config/sunbeam.jso
 
 ```json
 {
-    "actions": [
-        {
-            "title": "Search Go Documentation",
-            "onAction": {
-                "type": "run",
-                "extension": "devdocs",
-                "command": "list-entries",
-                "params": {
-                    "slug": "go"
-                }
+    "commands": {
+        "Search Go Documentation": {
+            "type": "run",
+            "extension": "devdocs",
+            "command": "list-entries",
+            "params": {
+                "slug": "go"
             }
         }
-    ]
+    }
 }
 ```

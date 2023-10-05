@@ -19,7 +19,7 @@ type RootList struct {
 	extensions map[string]Extension
 }
 
-func NewRootList(extensions map[string]Extension, actions []types.Action, history map[string]int64) *RootList {
+func NewRootList(extensions map[string]Extension, commands map[string]types.Command, history map[string]int64) *RootList {
 	items := make([]types.ListItem, 0)
 	for alias, extension := range extensions {
 		for _, command := range extension.Commands {
@@ -32,7 +32,7 @@ func NewRootList(extensions map[string]Extension, actions []types.Action, histor
 			}
 
 			items = append(items, types.ListItem{
-				Id:       fmt.Sprintf("%s/%s", alias, command.Name),
+				Id:       fmt.Sprintf("extensions/%s/%s", alias, command.Name),
 				Title:    command.Title,
 				Subtitle: extension.Title,
 				Actions: []types.Action{
@@ -51,15 +51,15 @@ func NewRootList(extensions map[string]Extension, actions []types.Action, histor
 		}
 	}
 
-	for i, action := range actions {
+	for title, command := range commands {
 		items = append(items, types.ListItem{
-			Id:       fmt.Sprintf("actions/%d", i),
-			Title:    action.Title,
-			Subtitle: "Action",
+			Id:       fmt.Sprintf("commands/%s", title),
+			Title:    title,
+			Subtitle: "Command",
 			Actions: []types.Action{
 				{
 					Title:    "Run Action",
-					OnAction: action.OnAction,
+					OnAction: command,
 				},
 			},
 		})
