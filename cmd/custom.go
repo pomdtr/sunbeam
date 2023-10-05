@@ -91,6 +91,12 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 							return err
 						}
 						params[param.Name] = value
+					case types.ParamTypeNumber:
+						value, err := cmd.Flags().GetInt(param.Name)
+						if err != nil {
+							return err
+						}
+						params[param.Name] = value
 					}
 				}
 
@@ -155,6 +161,8 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 				cmd.Flags().String(param.Name, "", param.Description)
 			case types.ParamTypeBoolean:
 				cmd.Flags().Bool(param.Name, false, param.Description)
+			case types.ParamTypeNumber:
+				cmd.Flags().Int(param.Name, 0, param.Description)
 			}
 
 			if !param.Optional {

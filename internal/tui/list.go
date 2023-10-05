@@ -1,17 +1,22 @@
 package tui
 
 import (
+	"time"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type List struct {
-	statusBar StatusBar
-	filter    Filter
-	height    int
-	width     int
+	statusBar     StatusBar
+	filter        Filter
+	height        int
+	width         int
+	OnQueryChange func(string) tea.Cmd
 }
+
+type QueryChangeMsg string
 
 func NewList(items ...types.ListItem) *List {
 	filter := NewFilter()
@@ -37,6 +42,10 @@ func (c *List) Focus() tea.Cmd {
 
 func (c *List) Blur() tea.Cmd {
 	return nil
+}
+
+func (c *List) SetQuery(query string) {
+	c.statusBar.input.SetValue(query)
 }
 
 func (c *List) SetSize(width, height int) {
@@ -80,12 +89,38 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
+
+	switch msg := msg.(type) {
+	case QueryChangeMsg:
+		if c.OnQueryChange == nil {
+			return c, nil
+		}
+
+		if string(msg) != c.statusBar.Value() {
+			return c, nil
+		}
+
+		return c, c.OnQueryChange(string(msg))
+	}
+
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+
 	statusBar, cmd := c.statusBar.Update(msg)
 	cmds = append(cmds, cmd)
 	if statusBar.Value() != c.statusBar.Value() {
-		c.filter.FilterItems(statusBar.Value())
+		if c.OnQueryChange != nil {
+			query := statusBar.Value()
+			cmds = append(cmds, tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
+				if query == c.statusBar.Value() {
+					return QueryChangeMsg(query)
+				}
+
+				return nil
+			}))
+		} else {
+			c.filter.FilterItems(statusBar.Value())
+		}
 		if c.filter.Selection() != nil {
 			statusBar.SetActions(c.filter.Selection().(ListItem).Actions...)
 		}
@@ -109,10 +144,6 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 func (c List) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, c.filter.View(), c.statusBar.View())
-}
-
-func (c *List) SetQuery(query string) {
-	c.statusBar.input.SetValue(query)
 }
 
 func (c List) Query() string {

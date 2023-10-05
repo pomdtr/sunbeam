@@ -39,7 +39,12 @@ func NewCmdRun() *cobra.Command {
 				return nil, cobra.ShellCompDirectiveNoFileComp
 			}
 
-			extension, err := tui.LoadExtension(args[0])
+			entrypoint := args[0]
+			if entrypoint == "." {
+				entrypoint = "./sunbeam-extension"
+			}
+
+			extension, err := tui.LoadExtension(entrypoint)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveDefault
 			}

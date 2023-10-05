@@ -14,7 +14,8 @@ const (
 )
 
 type List struct {
-	Items []ListItem `json:"items"`
+	Items  []ListItem `json:"items"`
+	Reload bool       `json:"reload,omitempty"`
 }
 
 type Detail struct {

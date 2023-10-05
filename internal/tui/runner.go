@@ -12,15 +12,14 @@ import (
 )
 
 type Runner struct {
-	embed Page
-
+	embed         Page
 	width, height int
 
 	extensions map[string]Extension
 	extension  Extension
-	command    types.CommandSpec
 	alias      string
-	params     map[string]any
+
+	input CommandInput
 }
 
 type ReloadMsg struct {
@@ -29,20 +28,22 @@ type ReloadMsg struct {
 
 func ReloadCmd(params map[string]any) tea.Cmd {
 	return func() tea.Msg {
-		return ReloadMsg{params}
+		return ReloadMsg{
+			params: params,
+		}
 	}
 }
 
 func NewRunner(extensions map[string]Extension, ref types.CommandRef) *Runner {
-	extension := extensions[ref.Extension]
-	command, _ := extension.Command(ref.Command)
 	return &Runner{
 		extensions: extensions,
-		extension:  extension,
+		extension:  extensions[ref.Extension],
 		alias:      ref.Extension,
 		embed:      NewDetail(""),
-		command:    command,
-		params:     ref.Params,
+		input: CommandInput{
+			Command: ref.Command,
+			Params:  ref.Params,
+		},
 	}
 }
 
@@ -64,8 +65,7 @@ func (c *Runner) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c *Runner) Init() tea.Cmd {
-	termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
-	return tea.Batch(c.SetIsLoading(true), c.Run, c.embed.Init())
+	return tea.Batch(c.Run(c.input), c.embed.Init())
 }
 
 func (c *Runner) Focus() tea.Cmd {
@@ -119,15 +119,26 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
 	case types.List:
 		list := msg
-
 		page := NewList(list.Items...)
+		if list.Reload {
+			page.OnQueryChange = func(query string) tea.Cmd {
+				input := c.input
+				input.Query = query
+				return c.Run(input)
+			}
+		}
+
+		if c.input.Query != "" {
+			page.SetQuery(c.input.Query)
+		}
+
 		page.SetSize(c.width, c.height)
 		c.embed = page
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
 	case SubmitMsg:
 		return c, func() tea.Msg {
 			output, err := c.extension.Run(
-				CommandInput{Command: c.command.Name, Params: msg, Inputs: msg},
+				CommandInput{Command: c.input.Command, Params: msg, Inputs: msg},
 			)
 			if err != nil {
 				return err
@@ -212,7 +223,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}
 		case types.CommandTypeReload:
-			return c, ReloadCmd(msg.Params)
+			input := c.input
+			if msg.Params != nil {
+				input.Params = msg.Params
+			}
+
+			return c, c.Run(input)
 		case types.CommandTypeExit:
 			return c, ExitCmd
 		case types.CommandTypePop:
@@ -225,10 +241,10 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case ReloadMsg:
 		if msg.params != nil {
-			c.params = msg.params
+			c.input.Params = msg.params
 		}
 
-		return c, tea.Sequence(c.SetIsLoading(true), c.Run)
+		return c, tea.Sequence(c.SetIsLoading(true))
 	case error:
 		c.embed = NewErrorPage(msg)
 		c.embed.SetSize(c.width, c.height)
@@ -262,53 +278,53 @@ func (c *Runner) View() string {
 	return c.embed.View()
 }
 
-func (c *Runner) Run() tea.Msg {
-	output, err := c.extension.Run(CommandInput{
-		Command: c.command.Name,
-		Params:  c.params,
+func (c *Runner) Run(input CommandInput) tea.Cmd {
+	c.input = input
+	return tea.Sequence(c.SetIsLoading(true), func() tea.Msg {
+		output, err := c.extension.Run(input)
+		if err != nil {
+			return err
+		}
+
+		if err := schemas.ValidatePage(output); err != nil {
+			return err
+		}
+
+		var page types.Page
+		if err := json.Unmarshal(output, &page); err != nil {
+			return err
+		}
+
+		if page.Title != "" {
+			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
+		} else {
+			termOutput.SetWindowTitle(c.extension.Title)
+		}
+
+		switch page.Type {
+		case types.PageTypeDetail:
+			var detail types.Detail
+			if err := json.Unmarshal(output, &detail); err != nil {
+				return err
+			}
+
+			return detail
+		case types.PageTypeList:
+			var list types.List
+			if err := json.Unmarshal(output, &list); err != nil {
+				return err
+			}
+
+			return list
+		case types.PageTypeForm:
+			var form types.Form
+			if err := json.Unmarshal(output, &form); err != nil {
+				return err
+			}
+
+			return form
+		default:
+			return fmt.Errorf("invalid command output")
+		}
 	})
-	if err != nil {
-		return err
-	}
-
-	if err := schemas.ValidatePage(output); err != nil {
-		return err
-	}
-
-	var page types.Page
-	if err := json.Unmarshal(output, &page); err != nil {
-		return err
-	}
-
-	if page.Title != "" {
-		termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
-	} else {
-		termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
-	}
-
-	switch page.Type {
-	case types.PageTypeDetail:
-		var detail types.Detail
-		if err := json.Unmarshal(output, &detail); err != nil {
-			return err
-		}
-
-		return detail
-	case types.PageTypeList:
-		var list types.List
-		if err := json.Unmarshal(output, &list); err != nil {
-			return err
-		}
-
-		return list
-	case types.PageTypeForm:
-		var form types.Form
-		if err := json.Unmarshal(output, &form); err != nil {
-			return err
-		}
-
-		return form
-	default:
-		return fmt.Errorf("invalid command output")
-	}
 }

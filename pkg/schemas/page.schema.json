@@ -24,6 +24,10 @@
                     "const": "list",
                     "description": "The type of the page."
                 },
+                "reload": {
+                    "type": "boolean",
+                    "description": "Whether the list should be reloaded when the query changes."
+                },
                 "title": {
                     "type": "string",
                     "description": "The title of the list."
@@ -264,8 +268,14 @@
                                         "description": "The title of the item."
                                     },
                                     "value": {
-                                        "type": "string",
-                                        "description": "The value of the item."
+                                        "oneOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "number"
+                                            }
+                                        ]
                                     }
                                 }
                             },

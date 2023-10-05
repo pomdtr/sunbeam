@@ -18,7 +18,7 @@ type FormInput interface {
 	Blur()
 
 	Height() int
-	Value() string
+	Value() any
 
 	SetWidth(int)
 	Update(tea.Msg) (FormInput, tea.Cmd)
@@ -89,7 +89,7 @@ func (ta *TextArea) SetWidth(w int) {
 	ta.Model.SetWidth(w)
 }
 
-func (ta *TextArea) Value() string {
+func (ta *TextArea) Value() any {
 	return ta.Model.Value()
 }
 
@@ -142,7 +142,7 @@ func (ti *TextInput) SetWidth(width int) {
 	ti.Model.Placeholder = fmt.Sprintf("%s%s", ti.placeholder, strings.Repeat(" ", placeholderPadding))
 }
 
-func (ti *TextInput) Value() string {
+func (ti *TextInput) Value() any {
 	return ti.Model.Value()
 }
 
@@ -160,9 +160,6 @@ type Checkbox struct {
 	title string
 	label string
 	width int
-
-	trueSubstitution  string
-	falseSubstitution string
 
 	focused bool
 	checked bool
@@ -227,11 +224,8 @@ func (cb Checkbox) View() string {
 	return fmt.Sprintf("%s%s", checkbox, strings.Repeat(" ", padding))
 }
 
-func (cb Checkbox) Value() string {
-	if cb.checked {
-		return cb.trueSubstitution
-	}
-	return cb.falseSubstitution
+func (cb Checkbox) Value() any {
+	return cb.checked
 }
 
 func (cb *Checkbox) Toggle() {
@@ -241,7 +235,7 @@ func (cb *Checkbox) Toggle() {
 type DropDownItem struct {
 	id    string
 	title string
-	value string
+	value any
 }
 
 func (d DropDownItem) ID() string {
@@ -256,7 +250,7 @@ func (d DropDownItem) Render(width int, selected bool) string {
 }
 
 func (d DropDownItem) FilterValue() string {
-	return d.value
+	return d.title
 }
 
 type DropDown struct {
@@ -350,7 +344,7 @@ func (dd DropDown) View() string {
 	}
 }
 
-func (d DropDown) Value() string {
+func (d DropDown) Value() any {
 	return d.selection.value
 }
 
@@ -377,8 +371,19 @@ func (d *DropDown) Update(msg tea.Msg) (FormInput, tea.Cmd) {
 
 			dropDownItem := selection.(DropDownItem)
 			d.selection = dropDownItem
-			d.textinput.SetValue(dropDownItem.value)
-			d.filter.FilterItems(dropDownItem.value)
+			switch value := dropDownItem.value.(type) {
+			case string:
+				d.textinput.SetValue(value)
+				d.filter.FilterItems(value)
+			case int:
+				str := strconv.Itoa(value)
+				d.textinput.SetValue(str)
+				d.filter.FilterItems(str)
+			case bool:
+				d.textinput.SetValue(strconv.FormatBool(value))
+				d.filter.FilterItems(strconv.FormatBool(value))
+			}
+
 			d.textinput.CursorEnd()
 
 			return d, nil
