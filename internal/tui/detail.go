@@ -120,15 +120,17 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 func (c *Detail) RefreshContent() error {
 	writer := bytes.Buffer{}
 	text := c.text
+	text = wordwrap.String(text, c.viewport.Width-2)
+
 	if c.language != "" {
-		err := quick.Highlight(&writer, c.text, c.language, "terminal16", theme)
+		err := quick.Highlight(&writer, text, c.language, "terminal16", theme)
 		if err != nil {
 			return err
 		}
 		text = writer.String()
 	}
 
-	c.viewport.SetContent(wordwrap.String(text, c.viewport.Width-2))
+	c.viewport.SetContent(text)
 	return nil
 }
 
