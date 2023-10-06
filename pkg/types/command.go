@@ -6,9 +6,9 @@ import (
 )
 
 type CommandRef struct {
-	Extension string         `json:"extension"`
-	Command   string         `json:"command"`
-	Params    map[string]any `json:"params"`
+	Extension string         `json:"extension,omitempty"`
+	Command   string         `json:"command,omitempty"`
+	Params    map[string]any `json:"params,omitempty"`
 }
 
 type Command struct {
