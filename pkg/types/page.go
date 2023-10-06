@@ -1,5 +1,7 @@
 package types
 
+import "encoding/json"
+
 type Page struct {
 	Type  PageType `json:"type"`
 	Title string   `json:"title,omitempty"`
@@ -14,18 +16,54 @@ const (
 )
 
 type List struct {
-	Items  []ListItem `json:"items"`
+	Title  string     `json:"title,omitempty"`
+	Items  []ListItem `json:"items,omitempty"`
 	Reload bool       `json:"reload,omitempty"`
 }
 
+func (l List) MarshalJSON() ([]byte, error) {
+	type Alias List
+	return json.Marshal(&struct {
+		Type string `json:"type"`
+		*Alias
+	}{
+		Type:  "list",
+		Alias: (*Alias)(&l),
+	})
+}
+
 type Detail struct {
+	Title    string   `json:"title,omitempty"`
 	Actions  []Action `json:"actions,omitempty"`
 	Text     string   `json:"text,omitempty"`
 	Language string   `json:"language,omitempty"`
 }
 
+func (d Detail) MarshalJSON() ([]byte, error) {
+	type Alias Detail
+	return json.Marshal(&struct {
+		Type string `json:"type"`
+		*Alias
+	}{
+		Type:  "detail",
+		Alias: (*Alias)(&d),
+	})
+}
+
 type Form struct {
+	Title string     `json:"title,omitempty"`
 	Items []FormItem `json:"items,omitempty"`
+}
+
+func (f Form) MarshalJSON() ([]byte, error) {
+	type Alias Form
+	return json.Marshal(&struct {
+		Type string `json:"type"`
+		*Alias
+	}{
+		Type:  "form",
+		Alias: (*Alias)(&f),
+	})
 }
 
 type ListItem struct {

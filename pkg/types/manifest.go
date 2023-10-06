@@ -7,11 +7,11 @@ type Manifest struct {
 }
 
 type CommandSpec struct {
-	Name   string         `json:"name"`
-	Title  string         `json:"title"`
-	Hidden bool           `json:"hidden,omitempty"`
-	Params []CommandParam `json:"params,omitempty"`
-	Mode   CommandMode    `json:"mode,omitempty"`
+	Name   string      `json:"name"`
+	Title  string      `json:"title"`
+	Hidden bool        `json:"hidden,omitempty"`
+	Params []Param     `json:"params,omitempty"`
+	Mode   CommandMode `json:"mode,omitempty"`
 }
 
 type CommandMode string
@@ -21,7 +21,7 @@ const (
 	CommandModeNoView CommandMode = "no-view"
 )
 
-type CommandParam struct {
+type Param struct {
 	Name        string    `json:"name"`
 	Type        ParamType `json:"type"`
 	Optional    bool      `json:"optional,omitempty"`
