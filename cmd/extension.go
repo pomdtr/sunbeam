@@ -412,6 +412,13 @@ func upgradeExtension(extensionDir string) error {
 		if manifest.Version == release.TagName {
 			return nil
 		}
+
+		// remove old entrypoint
+		entrypoint := filepath.Join(extensionDir, "src", "sunbeam-extension")
+		if err := os.Remove(entrypoint); err != nil {
+			return err
+		}
+
 		if err := installFromGithubRelease(release, filepath.Join(extensionDir, "src")); err != nil {
 			return err
 		}
