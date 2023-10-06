@@ -12,13 +12,6 @@ import (
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
-type CommandInput struct {
-	Command string         `json:"command"`
-	Params  map[string]any `json:"params"`
-	Inputs  map[string]any `json:"inputs,omitempty"`
-	Query   string         `json:"query,omitempty"`
-}
-
 func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	for _, command := range e.Commands {
 		if command.Name == name {
@@ -28,7 +21,7 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	return types.CommandSpec{}, false
 }
 
-func (e Extension) Run(input CommandInput) ([]byte, error) {
+func (e Extension) Run(input types.CommandInput) ([]byte, error) {
 	cmd, err := e.Cmd(input)
 	if err != nil {
 		return nil, err
@@ -44,7 +37,7 @@ func (e Extension) Run(input CommandInput) ([]byte, error) {
 	}
 }
 
-func (e Extension) Cmd(input CommandInput) (*exec.Cmd, error) {
+func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 	if input.Params == nil {
 		input.Params = make(map[string]any)
 	}

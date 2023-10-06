@@ -46,7 +46,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 				return encoder.Encode(extension.Manifest)
 			}
 
-			var input tui.CommandInput
+			var input types.CommandInput
 			if err := json.Unmarshal(inputBytes, &input); err != nil {
 				return err
 			}
@@ -102,7 +102,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 
 				if subcommand.Mode == types.CommandModeView {
 					if !isatty.IsTerminal(os.Stdout.Fd()) {
-						output, err := extension.Run(tui.CommandInput{
+						output, err := extension.Run(types.CommandInput{
 							Command: subcommand.Name,
 							Params:  params,
 						})
@@ -127,7 +127,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 					return tui.Draw(runner, MaxHeigth)
 				}
 
-				out, err := extension.Run(tui.CommandInput{
+				out, err := extension.Run(types.CommandInput{
 					Command: subcommand.Name,
 					Params:  params,
 				})

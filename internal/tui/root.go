@@ -146,7 +146,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					})}
 				}
 
-				out, err := extension.Run(CommandInput{
+				out, err := extension.Run(types.CommandInput{
 					Command: msg.Command,
 					Params:  msg.Params,
 				})

@@ -19,7 +19,7 @@ type Runner struct {
 	extension  Extension
 	alias      string
 
-	input CommandInput
+	input types.CommandInput
 }
 
 type ReloadMsg struct {
@@ -40,7 +40,7 @@ func NewRunner(extensions map[string]Extension, ref types.CommandRef) *Runner {
 		extension:  extensions[ref.Extension],
 		alias:      ref.Extension,
 		embed:      NewDetail(""),
-		input: CommandInput{
+		input: types.CommandInput{
 			Command: ref.Command,
 			Params:  ref.Params,
 		},
@@ -143,7 +143,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case SubmitMsg:
 		return c, func() tea.Msg {
 			output, err := c.extension.Run(
-				CommandInput{Command: c.input.Command, Params: msg, Inputs: msg},
+				types.CommandInput{Command: c.input.Command, Params: msg, Inputs: msg},
 			)
 			if err != nil {
 				return err
@@ -174,7 +174,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			case types.CommandModeNoView:
 				return c, func() tea.Msg {
 					output, err := c.extension.Run(
-						CommandInput{
+						types.CommandInput{
 							Command: command.Name,
 							Params:  msg.Params,
 						})
@@ -283,7 +283,7 @@ func (c *Runner) View() string {
 	return c.embed.View()
 }
 
-func (c *Runner) Run(input CommandInput) tea.Cmd {
+func (c *Runner) Run(input types.CommandInput) tea.Cmd {
 	c.input = input
 	return tea.Sequence(c.SetIsLoading(true), func() tea.Msg {
 		output, err := c.extension.Run(input)

@@ -70,3 +70,10 @@ var (
 	PlatformMac     = "mac"
 	PlatformLinux   = "linux"
 )
+
+type CommandInput struct {
+	Command string         `json:"command"`
+	Params  map[string]any `json:"params"`
+	Inputs  map[string]any `json:"inputs,omitempty"`
+	Query   string         `json:"query,omitempty"`
+}

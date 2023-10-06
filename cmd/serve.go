@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
@@ -86,7 +87,7 @@ func NewCmdServe() *cobra.Command {
 					return
 				}
 
-				var input tui.CommandInput
+				var input types.CommandInput
 				if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 					http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)
 					return
