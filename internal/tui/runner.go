@@ -109,11 +109,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.Detail:
 		detail := msg
 
-		page := NewDetail(detail.Text, detail.Actions...)
-		if detail.Language != "" {
-			page.language = detail.Language
-		}
-
+		page := NewDetail(detail.Markdown, detail.Actions...)
 		c.embed = page
 		c.embed.SetSize(c.width, c.height)
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())

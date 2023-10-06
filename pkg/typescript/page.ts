@@ -98,10 +98,7 @@ export type Input =
          * The title of the item.
          */
         title: string;
-        /**
-         * The value of the item.
-         */
-        value: string;
+        value: string | number;
       }[];
       /**
        * The default value of the input.
@@ -114,6 +111,10 @@ export interface List {
    * The type of the page.
    */
   type: "list";
+  /**
+   * Whether the list should be reloaded when the query changes.
+   */
+  reload?: boolean;
   /**
    * The title of the list.
    */
@@ -247,11 +248,10 @@ export interface Detail {
    * The title of the detail view.
    */
   title?: string;
-  language?: string;
   /**
    * The text to show in the detail view.
    */
-  text: string;
+  markdown: string;
   /**
    * The actions attached to the detail view.
    */

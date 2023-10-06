@@ -47,7 +47,7 @@
             "description": "A detail view displaying a preview and actions.",
             "required": [
                 "type",
-                "text"
+                "markdown"
             ],
             "properties": {
                 "type": {
@@ -58,10 +58,7 @@
                     "description": "The title of the detail view.",
                     "type": "string"
                 },
-                "language": {
-                    "type": "string"
-                },
-                "text": {
+                "markdown": {
                     "description": "The text to show in the detail view.",
                     "type": "string"
                 },

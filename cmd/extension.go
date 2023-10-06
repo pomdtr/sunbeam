@@ -3,17 +3,23 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
+	"golang.org/x/mod/semver"
 )
 
 func NewCmdExtension() *cobra.Command {
@@ -82,60 +88,13 @@ func NewCmdExtensionInstall() *cobra.Command {
 		Short:   "Install an extension",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionRoot := filepath.Join(dataHome(), "extensions")
-			if err := os.MkdirAll(extensionRoot, 0755); err != nil {
+			origin, err := url.Parse(args[0])
+			if err != nil {
 				return err
 			}
 
-			if info, err := os.Stat(args[0]); err == nil && info.IsDir() {
-				originDir, err := filepath.Abs(args[0])
-				if err != nil {
-					return err
-				}
-				entrypoint := filepath.Join(originDir, "sunbeam-extension")
-				if _, err := os.Stat(entrypoint); err != nil {
-					return fmt.Errorf("extension %s not found", args[0])
-				}
-
-				var alias string
-				if flags.alias != "" {
-					alias = flags.alias
-				} else {
-					alias = strings.TrimPrefix(filepath.Base(originDir), "sunbeam-")
-				}
-
-				extension, err := tui.LoadExtension(entrypoint)
-				if err != nil {
-					return err
-				}
-
-				extensionDir := filepath.Join(extensionRoot, alias)
-				if err := os.MkdirAll(extensionDir, 0755); err != nil {
-					return err
-				}
-
-				manifestPath := filepath.Join(extensionDir, "manifest.json")
-				f, err := os.Create(manifestPath)
-				if err != nil {
-					return err
-				}
-
-				encoder := json.NewEncoder(f)
-				encoder.SetIndent("", "  ")
-				if err := encoder.Encode(extension.Manifest); err != nil {
-					return err
-				}
-
-				return os.Symlink(originDir, filepath.Join(extensionDir, "src"))
-			}
-
-			// check if git is installed
-			if _, err := exec.LookPath("git"); err != nil {
-				return fmt.Errorf("git not found")
-			}
-
-			origin, err := url.Parse(args[0])
-			if err != nil {
+			extensionRoot := filepath.Join(dataHome(), "extensions")
+			if err := os.MkdirAll(extensionRoot, 0755); err != nil {
 				return err
 			}
 
@@ -148,47 +107,210 @@ func NewCmdExtensionInstall() *cobra.Command {
 				alias = strings.TrimPrefix(alias, "sunbeam-")
 			}
 
-			tempdir, err := os.MkdirTemp("", "sunbeam-extension-")
-			if err != nil {
-				return err
-			}
-			defer os.RemoveAll(tempdir)
-
-			cloneCmd := exec.Command("git", "clone", args[0], "src")
-			cloneCmd.Dir = tempdir
-			cloneCmd.Stdout = os.Stdout
-			cloneCmd.Stderr = os.Stderr
-			if err := cloneCmd.Run(); err != nil {
-				return err
-			}
-
-			extension, err := tui.LoadExtension(filepath.Join(tempdir, "src", "sunbeam-extension"))
-			if err != nil {
-				return err
-			}
-
-			manifestPath := filepath.Join(tempdir, "manifest.json")
-			f, err := os.Create(manifestPath)
-			if err != nil {
-				return err
-			}
-
-			encoder := json.NewEncoder(f)
-			encoder.SetIndent("", "  ")
-			if err := encoder.Encode(extension.Manifest); err != nil {
-				return err
-			}
-
-			if err := os.Rename(tempdir, filepath.Join(extensionRoot, alias)); err != nil {
-				return err
-			}
-
-			return nil
+			return installExtension(origin, filepath.Join(extensionRoot, alias))
 		},
 	}
 
 	cmd.Flags().StringVarP(&flags.alias, "alias", "a", "", "alias for extension")
 	return cmd
+}
+
+func installExtension(origin *url.URL, extensionDir string) error {
+	srcDir := filepath.Join(extensionDir, "src")
+	var version string
+	if origin.Scheme == "file" || origin.Scheme == "" {
+		if err := installFromLocalDir(origin.Path, srcDir); err != nil {
+			return err
+		}
+		version = time.Now().Format("20060102150405")
+	} else if release, err := getLatestRelease(origin); err == nil {
+		if err := installFromGithubRelease(release, srcDir); err != nil {
+			return err
+		}
+
+		version = release.TagName
+	} else if tag, err := getLatestTag(origin); err == nil {
+		if err := installFromRepository(origin, tag, srcDir); err != nil {
+			return err
+		}
+
+		version = tag
+	} else {
+		if err := installFromRepository(origin, "", srcDir); err != nil {
+			return err
+		}
+
+		version = ""
+	}
+
+	entrypoint := filepath.Join(srcDir, "sunbeam-extension")
+	if _, err := os.Stat(entrypoint); err != nil {
+		return fmt.Errorf("extension %s not found", origin.String())
+	}
+
+	extension, err := tui.LoadExtension(entrypoint)
+	if err != nil {
+		return err
+	}
+
+	extension.Origin = origin.String()
+	extension.Version = version
+
+	f, err := os.Create(filepath.Join(extensionDir, "manifest.json"))
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(extension.Manifest); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func installFromLocalDir(srcDir string, targetDir string) error {
+	originDir, err := filepath.Abs(srcDir)
+	if err != nil {
+		return err
+	}
+	entrypoint := filepath.Join(originDir, "sunbeam-extension")
+	if _, err := os.Stat(entrypoint); err != nil {
+		return fmt.Errorf("extension %s not found", srcDir)
+	}
+
+	return os.Symlink(srcDir, targetDir)
+}
+
+func installFromRepository(origin *url.URL, tag string, targetDir string) error {
+	// check if git is installed
+	if _, err := exec.LookPath("git"); err != nil {
+		return fmt.Errorf("git not found")
+	}
+
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return err
+	}
+
+	var cloneCmd *exec.Cmd
+	if tag != "" {
+		cloneCmd = exec.Command("git", "clone", "--depth=1", fmt.Sprintf("--branch=%s", tag), tag, origin.String(), targetDir)
+	} else {
+		cloneCmd = exec.Command("git", "clone", "--depth=1", origin.String(), targetDir)
+	}
+	cloneCmd.Stdout = os.Stdout
+	cloneCmd.Stderr = os.Stderr
+	if err := cloneCmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func installFromGithubRelease(release GithubRelease, targetDir string) error {
+	var assetUrl string
+	for _, asset := range release.Assets {
+		if asset.Name != fmt.Sprintf("sunbeam-extension-%s-%s", runtime.GOOS, runtime.GOARCH) {
+			continue
+		}
+
+		assetUrl = asset.URL
+		break
+	}
+
+	if assetUrl == "" {
+		return fmt.Errorf("no asset found")
+	}
+
+	resp, err := http.Get(assetUrl)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("failed to download extension")
+	}
+
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return err
+	}
+
+	entrypointPath := filepath.Join(targetDir, "sunbeam-extension")
+	entrypoint, err := os.Create(entrypointPath)
+	if err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(entrypoint, resp.Body); err != nil {
+		return err
+	}
+
+	if err := os.Chmod(entrypointPath, 0755); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getLatestTag(origin *url.URL) (string, error) {
+	cmd := exec.Command("git", "ls-remote", "--tags", origin.String())
+	output, err := cmd.Output()
+	if err != nil {
+		return "", nil
+	}
+
+	var tags []string
+	for _, line := range strings.Split(string(output), "\n") {
+		if line == "" {
+			continue
+		}
+
+		tags = append(tags, strings.Split(line, "\t")[1])
+	}
+
+	if len(tags) == 0 {
+		return "", fmt.Errorf("no tags found")
+	}
+
+	sort.SliceStable(tags, func(i, j int) bool {
+		return semver.Compare(tags[i], tags[j]) == -1
+	})
+
+	return tags[len(tags)-1], nil
+}
+
+type GithubRelease struct {
+	TagName string `json:"tag_name"`
+	Assets  []struct {
+		Name string `json:"name"`
+		URL  string `json:"browser_download_url"`
+	} `json:"assets"`
+}
+
+func getLatestRelease(origin *url.URL) (GithubRelease, error) {
+	var release GithubRelease
+	if origin.Host != "github.com" {
+		return release, fmt.Errorf("only github.com is supported")
+	}
+
+	latestReleaseUrl := fmt.Sprintf("https://api.github.com/repos%s/releases/latest", origin.Path)
+	resp, err := http.Get(latestReleaseUrl)
+	if err != nil {
+		return release, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return release, fmt.Errorf("failed to get latest release")
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return release, err
+	}
+
+	return release, nil
 }
 
 func NewCmdExtensionUpgrade() *cobra.Command {
@@ -248,41 +370,12 @@ func NewCmdExtensionUpgrade() *cobra.Command {
 				cmd.PrintErrln()
 				cmd.PrintErrf("Upgrading %s...\n", alias)
 				extensionDir := filepath.Join(dataHome(), "extensions", alias)
-				if _, err := os.Stat(filepath.Join(extensionDir, "src", ".git")); err == nil {
-					if _, err := exec.LookPath("git"); err != nil {
-						return fmt.Errorf("git not found")
-					}
 
-					cmd.PrintErrln("Pulling changes...")
-					pullCmd := exec.Command("git", "pull")
-					pullCmd.Dir = filepath.Join(extensionDir, "src")
-					pullCmd.Stdout = os.Stdout
-					pullCmd.Stderr = os.Stderr
-					err := pullCmd.Run()
-					if err != nil {
-						return err
-					}
+				if err := upgradeExtension(extensionDir); err != nil {
+					cmd.PrintErrln(err)
+				} else {
+					cmd.PrintErrln("done")
 				}
-
-				cmd.PrintErrf("Updating manifest for %s...\n", alias)
-				extension, err := tui.LoadExtension(filepath.Join(extensionDir, "src", "sunbeam-extension"))
-				if err != nil {
-					return err
-				}
-
-				f, err := os.Create(filepath.Join(extensionDir, "manifest.json"))
-				if err != nil {
-					return err
-				}
-				defer f.Close()
-
-				encoder := json.NewEncoder(f)
-				encoder.SetIndent("", "  ")
-				if err := encoder.Encode(extension.Manifest); err != nil {
-					return err
-				}
-
-				cmd.PrintErrf("Done upgrading %s\n", alias)
 			}
 
 			return nil
@@ -292,6 +385,86 @@ func NewCmdExtensionUpgrade() *cobra.Command {
 	cmd.Flags().BoolVarP(&flags.all, "all", "a", false, "upgrade all extensions")
 
 	return cmd
+}
+
+func upgradeExtension(extensionDir string) error {
+	f, err := os.Open(filepath.Join(extensionDir, "manifest.json"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var manifest types.Manifest
+	if err := json.NewDecoder(f).Decode(&manifest); err != nil {
+		return err
+	}
+	f.Close()
+
+	origin, err := url.Parse(manifest.Origin)
+	if err != nil {
+		return err
+	}
+
+	var version string
+	if origin.Scheme == "file" || origin.Scheme == "" {
+		version = time.Now().Format("20060102150405")
+	} else if release, err := getLatestRelease(origin); err == nil {
+		if manifest.Version == release.TagName {
+			return nil
+		}
+		if err := installFromGithubRelease(release, filepath.Join(extensionDir, "src")); err != nil {
+			return err
+		}
+
+		version = release.TagName
+	} else if tag, err := getLatestTag(origin); err == nil {
+		if manifest.Version == tag {
+			return nil
+		}
+
+		checkoutCmd := exec.Command("git", "checkout", tag)
+		checkoutCmd.Dir = filepath.Join(extensionDir, "src")
+		checkoutCmd.Stdout = os.Stdout
+		checkoutCmd.Stderr = os.Stderr
+		if err := checkoutCmd.Run(); err != nil {
+			return err
+		}
+
+		version = tag
+	} else {
+		pullCmd := exec.Command("git", "pull")
+		pullCmd.Dir = filepath.Join(extensionDir, "src")
+		pullCmd.Stdout = os.Stdout
+		pullCmd.Stderr = os.Stderr
+
+		if err := pullCmd.Run(); err != nil {
+			return err
+		}
+
+		version = ""
+	}
+
+	// refresh manifest
+	extension, err := tui.LoadExtension(filepath.Join(extensionDir, "src", "sunbeam-extension"))
+	if err != nil {
+		return err
+	}
+	extension.Origin = origin.String()
+	extension.Version = version
+
+	f, err = os.Create(filepath.Join(extensionDir, "manifest.json"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(extension.Manifest); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func NewCmdExtensionRemove() *cobra.Command {

@@ -1,25 +1,12 @@
 package tui
 
 import (
-	"bytes"
-
-	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/wordwrap"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
-
-var theme string
-
-func init() {
-	if lipgloss.HasDarkBackground() {
-		theme = "monokai"
-	} else {
-		theme = "monokailight"
-	}
-}
 
 type Detail struct {
 	actionsFocused bool
@@ -29,11 +16,10 @@ type Detail struct {
 	Style     lipgloss.Style
 	viewport  viewport.Model
 
-	text     string
-	language string
+	markdown string
 }
 
-func NewDetail(text string, actions ...types.Action) *Detail {
+func NewDetail(markdown string, actions ...types.Action) *Detail {
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
 
@@ -59,7 +45,7 @@ func NewDetail(text string, actions ...types.Action) *Detail {
 	d := Detail{
 		viewport:  viewport,
 		statusBar: statusBar,
-		text:      text,
+		markdown:  markdown,
 	}
 
 	_ = d.RefreshContent()
@@ -118,19 +104,20 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *Detail) RefreshContent() error {
-	writer := bytes.Buffer{}
-	text := c.text
-	text = wordwrap.String(text, c.viewport.Width-2)
-
-	if c.language != "" {
-		err := quick.Highlight(&writer, text, c.language, "terminal16", theme)
-		if err != nil {
-			return err
-		}
-		text = writer.String()
+	render, err := glamour.NewTermRenderer(
+		glamour.WithAutoStyle(),
+		glamour.WithWordWrap(c.width-2),
+	)
+	if err != nil {
+		return err
 	}
 
-	c.viewport.SetContent(text)
+	content, err := render.Render(c.markdown)
+	if err != nil {
+		return err
+	}
+
+	c.viewport.SetContent(content)
 	return nil
 }
 
