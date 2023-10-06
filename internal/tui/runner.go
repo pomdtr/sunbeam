@@ -128,11 +128,16 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		}
 
-		if c.input.Query != "" {
-			page.SetQuery(c.input.Query)
+		page.SetSize(c.width, c.height)
+		if c.embed == nil {
+			c.embed = page
+			return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
 		}
 
-		page.SetSize(c.width, c.height)
+		if list, ok := c.embed.(*List); ok {
+			page.SetQuery(list.Query())
+		}
+
 		c.embed = page
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
 	case SubmitMsg:
