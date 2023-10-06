@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,7 +48,8 @@ func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 		return nil, err
 	}
 
-	command := exec.Command(e.Entrypoint, string(inputBytes))
+	command := exec.Command(e.Entrypoint)
+	command.Stdin = bytes.NewReader(inputBytes)
 	command.Env = os.Environ()
 	command.Env = append(command.Env, "SUNBEAM=0")
 	command.Env = append(command.Env, "NO_COLOR=1")
@@ -61,7 +63,7 @@ type Extension struct {
 }
 
 func LoadExtension(entrypoint string) (Extension, error) {
-	command := exec.Command(entrypoint)
+	command := exec.Command(entrypoint, "manifest")
 	b, err := command.Output()
 	if err != nil {
 		return Extension{}, err
