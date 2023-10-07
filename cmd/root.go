@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/pomdtr/sunbeam/internal/tui"
@@ -186,11 +187,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return command.Execute()
 			}
 
-			config, err := LoadConfig()
-			if err != nil && !os.IsNotExist(err) {
-				return err
-			}
-
 			cacheDir, err := os.UserCacheDir()
 			if err != nil {
 				return err
@@ -208,7 +204,75 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				}
 			}
 
-			rootList := tui.NewRootList(extensions, config.Commands, history.entries)
+			generator := func() ([]types.ListItem, error) {
+				config, err := LoadConfig()
+				if err != nil && !os.IsNotExist(err) {
+					return nil, err
+				}
+
+				items := make([]types.ListItem, 0)
+				for alias, extension := range extensions {
+					for _, command := range extension.Commands {
+						if !IsRootCommand(command) {
+							continue
+						}
+
+						if command.Hidden {
+							continue
+						}
+
+						items = append(items, types.ListItem{
+							Id:       fmt.Sprintf("extensions/%s/%s", alias, command.Name),
+							Title:    command.Title,
+							Subtitle: extension.Title,
+							Actions: []types.Action{
+								{
+									Title: "Run",
+									OnAction: types.Command{
+										Type: types.CommandTypeRun,
+										CommandRef: types.CommandRef{
+											Extension: alias,
+											Command:   command.Name,
+										},
+									},
+								},
+							},
+						})
+					}
+				}
+
+				for title, command := range config.Commands {
+					items = append(items, types.ListItem{
+						Id:       fmt.Sprintf("commands/%s", title),
+						Title:    title,
+						Subtitle: "Command",
+						Actions: []types.Action{
+							{
+								Title:    "Run Action",
+								OnAction: command,
+							},
+						},
+					})
+				}
+
+				sort.Slice(items, func(i, j int) bool {
+					timestampA, ok := history.entries[items[i].Id]
+					if !ok {
+						return false
+					}
+
+					timestampB, ok := history.entries[items[j].Id]
+					if !ok {
+						return true
+					}
+
+					return timestampA > timestampB
+				})
+
+				return items, nil
+			}
+
+			rootList := tui.NewRootList(extensions, generator)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
 				_ = history.Save()
@@ -262,4 +326,18 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(manCmd)
 
 	return rootCmd, nil
+}
+
+func IsRootCommand(command types.CommandSpec) bool {
+	if command.Hidden {
+		return false
+	}
+
+	for _, param := range command.Params {
+		if !param.Optional {
+			return false
+		}
+	}
+
+	return true
 }

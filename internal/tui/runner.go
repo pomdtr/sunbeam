@@ -65,7 +65,7 @@ func (c *Runner) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c *Runner) Init() tea.Cmd {
-	return tea.Batch(c.Run(c.input), c.embed.Init())
+	return tea.Batch(c.Reload(), c.embed.Init())
 }
 
 func (c *Runner) Focus() tea.Cmd {
@@ -97,6 +97,8 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 			return c, PopPageCmd
+		case "ctrl+r":
+			return c, c.Reload()
 		}
 	case types.Form:
 		form := msg
@@ -121,9 +123,8 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		page := NewList(list.Items...)
 		if list.Reload {
 			page.OnQueryChange = func(query string) tea.Cmd {
-				input := c.input
-				input.Query = query
-				return c.Run(input)
+				c.input.Query = query
+				return c.Reload()
 			}
 		}
 
@@ -133,8 +134,8 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
 		}
 
-		if list, ok := c.embed.(*List); ok {
-			page.SetQuery(list.Query())
+		if embed, ok := c.embed.(*List); ok {
+			page.SetQuery(embed.Query())
 		}
 
 		c.embed = page
@@ -227,12 +228,11 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}
 		case types.CommandTypeReload:
-			input := c.input
 			if msg.Params != nil {
-				input.Params = msg.Params
+				c.input.Params = msg.Params
 			}
 
-			return c, c.Run(input)
+			return c, c.Reload()
 		case types.CommandTypeExit:
 			return c, ExitCmd
 		case types.CommandTypePop:
@@ -264,28 +264,13 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return c, nil
 }
 
-func IsRootCommand(command types.CommandSpec) bool {
-	if command.Hidden {
-		return false
-	}
-
-	for _, param := range command.Params {
-		if !param.Optional {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (c *Runner) View() string {
 	return c.embed.View()
 }
 
-func (c *Runner) Run(input types.CommandInput) tea.Cmd {
-	c.input = input
+func (c *Runner) Reload() tea.Cmd {
 	return tea.Sequence(c.SetIsLoading(true), func() tea.Msg {
-		output, err := c.extension.Run(input)
+		output, err := c.extension.Run(c.input)
 		if err != nil {
 			return err
 		}

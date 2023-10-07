@@ -14,6 +14,7 @@ type List struct {
 	height        int
 	width         int
 	OnQueryChange func(string) tea.Cmd
+	OnSelect      func(string) tea.Cmd
 }
 
 type QueryChangeMsg string
@@ -49,6 +50,9 @@ func (c *List) Blur() tea.Cmd {
 
 func (c *List) SetQuery(query string) {
 	c.statusBar.input.SetValue(query)
+	if c.OnQueryChange == nil {
+		c.filter.FilterItems(query)
+	}
 }
 
 func (c *List) SetSize(width, height int) {

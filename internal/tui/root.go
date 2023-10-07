@@ -3,7 +3,6 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,78 +14,32 @@ type RootList struct {
 	w, h       int
 	err        *Detail
 	list       *List
+	generator  func() ([]types.ListItem, error)
 	OnSelect   func(id string)
 	extensions map[string]Extension
 }
 
-func NewRootList(extensions map[string]Extension, commands map[string]types.Command, history map[string]int64) *RootList {
-	items := make([]types.ListItem, 0)
-	for alias, extension := range extensions {
-		for _, command := range extension.Commands {
-			if !IsRootCommand(command) {
-				continue
-			}
-
-			if command.Hidden {
-				continue
-			}
-
-			items = append(items, types.ListItem{
-				Id:       fmt.Sprintf("extensions/%s/%s", alias, command.Name),
-				Title:    command.Title,
-				Subtitle: extension.Title,
-				Actions: []types.Action{
-					{
-						Title: "Run",
-						OnAction: types.Command{
-							Type: types.CommandTypeRun,
-							CommandRef: types.CommandRef{
-								Extension: alias,
-								Command:   command.Name,
-							},
-						},
-					},
-				},
-			})
-		}
-	}
-
-	for title, command := range commands {
-		items = append(items, types.ListItem{
-			Id:       fmt.Sprintf("commands/%s", title),
-			Title:    title,
-			Subtitle: "Command",
-			Actions: []types.Action{
-				{
-					Title:    "Run Action",
-					OnAction: command,
-				},
-			},
-		})
-	}
-
-	sort.Slice(items, func(i, j int) bool {
-		timestampA, ok := history[items[i].Id]
-		if !ok {
-			return false
-		}
-
-		timestampB, ok := history[items[j].Id]
-		if !ok {
-			return true
-		}
-
-		return timestampA > timestampB
-	})
-
+func NewRootList(extensions map[string]Extension, generator func() ([]types.ListItem, error)) *RootList {
 	return &RootList{
-		list:       NewList(items...),
+		list:       NewList(),
+		generator:  generator,
 		extensions: extensions,
 	}
 }
 
 func (c *RootList) Init() tea.Cmd {
-	return tea.Batch(c.list.Init())
+	return c.Reload()
+}
+
+func (c RootList) Reload() tea.Cmd {
+	return tea.Sequence(c.list.SetIsLoading(true), func() tea.Msg {
+		list, err := c.generator()
+		if err != nil {
+			return err
+		}
+
+		return list
+	})
 }
 
 func (c *RootList) Focus() tea.Cmd {
@@ -119,7 +72,12 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if c.OnSelect != nil {
 				c.OnSelect(item.Id)
 			}
+		case "ctrl+r":
+			return c, c.Reload()
 		}
+	case []types.ListItem:
+		c.list.SetItems(msg...)
+		return c, c.list.SetIsLoading(false)
 	case error:
 		c.err = NewErrorPage(msg)
 		c.err.SetSize(c.w, c.h)
