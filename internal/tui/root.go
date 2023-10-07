@@ -74,6 +74,17 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		case "ctrl+r":
 			return c, c.Reload()
+		case "ctrl+e":
+			editCmd := utils.EditCmd(utils.ConfigPath())
+			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
+				if err != nil {
+					return err
+				}
+
+				return types.Command{
+					Type: types.CommandTypeReload,
+				}
+			})
 		}
 	case []types.ListItem:
 		c.list.SetItems(msg...)
@@ -148,7 +159,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-		case types.CommandTypeExit:
+		case types.CommandTypeReload:
+			return c, c.Reload()
+		case types.CommandTypeExit, types.CommandTypePop:
 			return c, ExitCmd
 		default:
 			return c, nil

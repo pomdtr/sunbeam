@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -29,26 +30,7 @@ type Config struct {
 }
 
 func LoadConfig() (Config, error) {
-	var configPath string
-	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
-		if _, err := os.Stat(filepath.Join(env, "sunbeam", "config.json")); err == nil {
-			configPath = filepath.Join(env, "sunbeam", "config.json")
-		} else if _, err := os.Stat(filepath.Join(env, "sunbeam", "config.jsonc")); err == nil {
-			configPath = filepath.Join(env, "sunbeam", "config.jsonc")
-		} else {
-			return Config{}, fmt.Errorf("config file not found")
-		}
-	} else {
-		if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.jsonc")); err == nil {
-			configPath = filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.jsonc")
-		} else if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.json")); err == nil {
-			configPath = filepath.Join(os.Getenv("HOME"), ".config", "sunbeam", "config.json")
-		} else {
-			return Config{}, fmt.Errorf("config file not found")
-		}
-	}
-
-	configBytes, err := os.ReadFile(configPath)
+	configBytes, err := os.ReadFile(utils.ConfigPath())
 	if err != nil {
 		return Config{}, err
 	}

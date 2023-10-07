@@ -124,10 +124,15 @@ func NewCmdExtensionInstall() *cobra.Command {
 	return cmd
 }
 
-func installExtension(origin *url.URL, extensionDir string) error {
+func installExtension(origin *url.URL, extensionDir string) (err error) {
 	if err := os.MkdirAll(extensionDir, 0755); err != nil {
 		return err
 	}
+	defer func() {
+		if err != nil {
+			os.RemoveAll(extensionDir)
+		}
+	}()
 
 	srcDir := filepath.Join(extensionDir, "src")
 	var version string
