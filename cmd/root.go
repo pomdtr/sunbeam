@@ -149,12 +149,12 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensions, err := FindExtensions()
-			if err != nil {
-				return err
-			}
-
 			if len(args) > 0 {
+				extensions, err := FindExtensions()
+				if err != nil {
+					return err
+				}
+
 				if args[0] == "--help" || args[0] == "-h" {
 					return cmd.Help()
 				}
@@ -186,10 +186,15 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				}
 			}
 
-			generator := func() ([]types.ListItem, error) {
+			generator := func() (map[string]tui.Extension, []types.ListItem, error) {
 				config, err := LoadConfig()
 				if err != nil && !os.IsNotExist(err) {
-					return nil, err
+					return nil, nil, err
+				}
+
+				extensions, err := FindExtensions()
+				if err != nil {
+					return nil, nil, err
 				}
 
 				items := make([]types.ListItem, 0)
@@ -251,10 +256,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return timestampA > timestampB
 				})
 
-				return items, nil
+				return extensions, items, nil
 			}
 
-			rootList := tui.NewRootList(extensions, generator)
+			rootList := tui.NewRootList(generator)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
 				_ = history.Save()

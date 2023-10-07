@@ -63,13 +63,18 @@ func NewCmdExtensionList() *cobra.Command {
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				extensionMap := make(map[string]types.Manifest)
+				for alias, extension := range extensions {
+					extensionMap[alias] = extension.Manifest
+				}
+
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
-				return encoder.Encode(extensions)
+				return encoder.Encode(extensionMap)
 			}
 
-			for alias := range extensions {
-				fmt.Println(alias)
+			for alias, extension := range extensions {
+				fmt.Printf("%s\t%s\t%s\n", alias, extension.Title, extension.Origin)
 			}
 
 			return nil

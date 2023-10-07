@@ -81,7 +81,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 				}), MaxHeigth)
 			}
 
-			tui.NewRootList(extensions, func() ([]types.ListItem, error) {
+			page := tui.NewRootList(func() (map[string]tui.Extension, []types.ListItem, error) {
 				items := make([]types.ListItem, 0)
 				for _, command := range rootCommands {
 					items = append(items, types.ListItem{
@@ -101,10 +101,10 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 						},
 					})
 				}
-				return items, nil
+				return extensions, items, nil
 			})
 
-			return nil
+			return tui.Draw(page, MaxHeigth)
 		},
 	}
 	rootCmd.CompletionOptions.DisableDefaultCmd = true

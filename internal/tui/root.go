@@ -14,16 +14,15 @@ type RootList struct {
 	w, h       int
 	err        *Detail
 	list       *List
-	generator  func() ([]types.ListItem, error)
+	generator  func() (map[string]Extension, []types.ListItem, error)
 	OnSelect   func(id string)
 	extensions map[string]Extension
 }
 
-func NewRootList(extensions map[string]Extension, generator func() ([]types.ListItem, error)) *RootList {
+func NewRootList(generator func() (map[string]Extension, []types.ListItem, error)) *RootList {
 	return &RootList{
-		list:       NewList(),
-		generator:  generator,
-		extensions: extensions,
+		list:      NewList(),
+		generator: generator,
 	}
 }
 
@@ -31,14 +30,22 @@ func (c *RootList) Init() tea.Cmd {
 	return c.Reload()
 }
 
+type RefreshMsg struct {
+	extensions map[string]Extension
+	rootItems  []types.ListItem
+}
+
 func (c RootList) Reload() tea.Cmd {
 	return tea.Sequence(c.list.SetIsLoading(true), func() tea.Msg {
-		list, err := c.generator()
+		extensions, items, err := c.generator()
 		if err != nil {
 			return err
 		}
 
-		return list
+		return RefreshMsg{
+			extensions: extensions,
+			rootItems:  items,
+		}
 	})
 }
 
@@ -86,8 +93,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			})
 		}
-	case []types.ListItem:
-		c.list.SetItems(msg...)
+	case RefreshMsg:
+		c.list.SetItems(msg.rootItems...)
+		c.extensions = msg.extensions
 		return c, c.list.SetIsLoading(false)
 	case error:
 		c.err = NewErrorPage(msg)
