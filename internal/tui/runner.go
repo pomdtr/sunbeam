@@ -69,7 +69,10 @@ func (c *Runner) Init() tea.Cmd {
 }
 
 func (c *Runner) Focus() tea.Cmd {
-	return nil
+	if c.embed == nil {
+		return nil
+	}
+	return c.embed.Focus()
 }
 
 func (c *Runner) Blur() tea.Cmd {

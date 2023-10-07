@@ -23,8 +23,11 @@ func NewList(items ...types.ListItem) *List {
 	filter.Reversed = true
 	filter.DrawLines = true
 
+	statusBar := NewStatusBar()
+	statusBar.ShowInput()
+
 	list := &List{
-		statusBar: NewStatusBar(),
+		statusBar: statusBar,
 		filter:    filter,
 	}
 
@@ -37,7 +40,7 @@ func (c *List) Init() tea.Cmd {
 }
 
 func (c *List) Focus() tea.Cmd {
-	return c.statusBar.input.Focus()
+	return c.statusBar.Focus()
 }
 
 func (c *List) Blur() tea.Cmd {
@@ -89,7 +92,6 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
-
 	switch msg := msg.(type) {
 	case QueryChangeMsg:
 		if c.OnQueryChange == nil {

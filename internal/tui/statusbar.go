@@ -13,6 +13,7 @@ import (
 
 type StatusBar struct {
 	Width     int
+	showInput bool
 	input     textinput.Model
 	isLoading bool
 	actions   []types.Action
@@ -28,18 +29,29 @@ func (c *StatusBar) SetActions(actions ...types.Action) {
 }
 
 func NewStatusBar(actions ...types.Action) StatusBar {
+	spinner := spinner.New()
+	spinner.Style = lipgloss.NewStyle().Padding(0, 1)
+	return StatusBar{
+		actions: actions,
+		spinner: spinner,
+	}
+}
+
+func (h *StatusBar) ShowInput() {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.Placeholder = ""
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
-	spinner := spinner.New()
-	spinner.Style = lipgloss.NewStyle().Padding(0, 1)
-	return StatusBar{
-		input:   ti,
-		actions: actions,
-		spinner: spinner,
+	h.showInput = true
+	h.input = ti
+}
+
+func (h *StatusBar) Focus() tea.Cmd {
+	if h.showInput {
+		return h.input.Focus()
 	}
+	return nil
 }
 
 func (h StatusBar) Init() tea.Cmd {
@@ -74,7 +86,9 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 				return p, nil
 			}
 
-			p.input.Blur()
+			if p.showInput {
+				p.input.Blur()
+			}
 			p.expanded = true
 			return p, nil
 		case "right":
@@ -113,13 +127,15 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 
 		case "esc":
 			if p.expanded {
-				p.input.Focus()
+				if p.showInput {
+					p.input.Focus()
+				}
 				p.expanded = false
 				p.cursor = 0
 				return p, nil
 			}
 
-			if p.input.Value() != "" {
+			if p.showInput && p.input.Value() != "" {
 				p.input.SetValue("")
 				return p, nil
 			}
@@ -143,8 +159,11 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
-	p.input, cmd = p.input.Update(msg)
-	cmds = append(cmds, cmd)
+	if p.showInput {
+		input, cmd := p.input.Update(msg)
+		p.input = input
+		cmds = append(cmds, cmd)
+	}
 
 	if p.isLoading {
 		p.spinner, cmd = p.spinner.Update(msg)
@@ -174,7 +193,7 @@ func (c StatusBar) View() string {
 	}
 
 	var input string
-	if c.input.Focused() {
+	if c.showInput && c.input.Focused() {
 		input = c.input.View()
 	}
 
@@ -193,7 +212,7 @@ func (c StatusBar) View() string {
 				}
 				accessories[i] = renderAction(action.Title, subtitle, i == c.cursor)
 			}
-			availableWidth := c.Width - lipgloss.Width(prefix)
+			availableWidth := c.Width - lipgloss.Width(prefix) - 1
 			for i, accessory := range accessories {
 				availableWidth -= lipgloss.Width(accessory) + 3
 				if availableWidth < 0 {
@@ -210,6 +229,7 @@ func (c StatusBar) View() string {
 			accessory = fmt.Sprintf("%s · Actions %s", renderAction(c.actions[0].Title, "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
 		}
 	}
+	accessory = fmt.Sprintf("%s ", accessory)
 
 	var statusBar string
 	if !c.expanded {
