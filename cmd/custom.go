@@ -36,29 +36,73 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 				inputBytes = i
 			}
 
-			if len(inputBytes) == 0 {
-				if isatty.IsTerminal(os.Stdout.Fd()) {
-					return cmd.Usage()
+			if len(inputBytes) > 0 {
+				var input types.CommandInput
+				if err := json.Unmarshal(inputBytes, &input); err != nil {
+					return err
 				}
 
+				output, err := extension.Run(input)
+				if err != nil {
+					return err
+				}
+
+				if _, err := os.Stdout.Write(output); err != nil {
+					return err
+				}
+
+				return nil
+			}
+
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
 				return encoder.Encode(extension.Manifest)
 			}
 
-			var input types.CommandInput
-			if err := json.Unmarshal(inputBytes, &input); err != nil {
-				return err
+			rootCommands := make([]types.CommandSpec, 0)
+			for _, command := range extension.Commands {
+				if !IsRootCommand(command) {
+					continue
+				}
+
+				rootCommands = append(rootCommands, command)
 			}
 
-			output, err := extension.Run(input)
-			if err != nil {
-				return err
+			if len(rootCommands) == 0 {
+				return cmd.Usage()
 			}
 
-			if _, err := os.Stdout.Write(output); err != nil {
-				return err
+			if len(rootCommands) == 1 {
+				command := rootCommands[0]
+				return tui.Draw(tui.NewRunner(extensions, types.CommandRef{
+					Extension: alias,
+					Command:   command.Name,
+				}), MaxHeigth)
 			}
+
+			tui.NewRootList(extensions, func() ([]types.ListItem, error) {
+				items := make([]types.ListItem, 0)
+				for _, command := range rootCommands {
+					items = append(items, types.ListItem{
+						Title:    command.Title,
+						Subtitle: extension.Title,
+						Actions: []types.Action{
+							{
+								Title: "Run Command",
+								OnAction: types.Command{
+									Type: types.CommandTypeRun,
+									CommandRef: types.CommandRef{
+										Extension: alias,
+										Command:   command.Name,
+									},
+								},
+							},
+						},
+					})
+				}
+				return items, nil
+			})
 
 			return nil
 		},
