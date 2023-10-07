@@ -93,6 +93,15 @@ func NewCmdExtensionInstall() *cobra.Command {
 				return err
 			}
 
+			if origin.Scheme == "file" || origin.Scheme == "" {
+				p, err := filepath.Abs(origin.Path)
+				if err != nil {
+					return err
+				}
+
+				origin.Path = p
+			}
+
 			extensionRoot := filepath.Join(dataHome(), "extensions")
 			if err := os.MkdirAll(extensionRoot, 0755); err != nil {
 				return err
@@ -116,6 +125,10 @@ func NewCmdExtensionInstall() *cobra.Command {
 }
 
 func installExtension(origin *url.URL, extensionDir string) error {
+	if err := os.MkdirAll(extensionDir, 0755); err != nil {
+		return err
+	}
+
 	srcDir := filepath.Join(extensionDir, "src")
 	var version string
 	if origin.Scheme == "file" || origin.Scheme == "" {

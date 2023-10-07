@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
@@ -21,12 +21,10 @@ import (
 )
 
 func BearerMiddleware(token string) func(next http.Handler) http.Handler {
-	bearerHeader := fmt.Sprint("Bearer ", token)
-	basicHeader := fmt.Sprint("Basic ", base64.StdEncoding.EncodeToString([]byte(token)))
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			if authorization := r.Header.Get("Authorization"); authorization == bearerHeader || authorization == basicHeader {
+			if authorization := r.Header.Get("Authorization"); authorization == fmt.Sprint("Bearer ", token) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -49,6 +47,20 @@ func NewCmdServe() *cobra.Command {
 		Short: "Serve extensions over HTTP",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			entrypoint, err := filepath.Abs(args[0])
+			if err != nil {
+				return err
+			}
+
+			if info, err := os.Stat(entrypoint); err == nil && info.IsDir() {
+				entrypoint = filepath.Join(entrypoint, "sunbeam-extension")
+			}
+
+			extension, err := tui.LoadExtension(entrypoint)
+			if err != nil {
+				return err
+			}
+
 			r := chi.NewRouter()
 			r.Use(middleware.Logger)
 			var token string
@@ -67,12 +79,6 @@ func NewCmdServe() *cobra.Command {
 			}
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				extension, err := tui.LoadExtension(args[0])
-				if err != nil {
-					http.Error(w, fmt.Sprintf("failed to load extension: %s", err.Error()), 500)
-					return
-				}
-
 				encoder := json.NewEncoder(w)
 				if err := encoder.Encode(extension.Manifest); err != nil {
 					http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), 500)
@@ -81,12 +87,6 @@ func NewCmdServe() *cobra.Command {
 			})
 
 			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-				extension, err := tui.LoadExtension(args[0])
-				if err != nil {
-					http.Error(w, fmt.Sprintf("failed to load extension: %s", err.Error()), 500)
-					return
-				}
-
 				var input types.CommandInput
 				if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 					http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)

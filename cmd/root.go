@@ -223,6 +223,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdExtension())
+	rootCmd.AddCommand(NewCmdServe())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",

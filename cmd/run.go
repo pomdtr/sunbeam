@@ -2,22 +2,23 @@ package cmd
 
 import (
 	"fmt"
-	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/spf13/cobra"
 )
 
-var template = `#!/bin/sh
+var scriptTemplate = `#!/bin/sh
 
-if [ $# -eq 0 ]; then
-	exec sunbeam fetch '%s'
+if [ $# -eq 1 ] && [ "$1" = "manifest" ] ; then
+	exec sunbeam fetch {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} '{{ .Origin }}'
 fi
 
-exec sunbeam fetch '%s' -d "$1"
+exec sunbeam fetch {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} '{{ .Origin }}' -d @-
 `
 
 func NewCmdRun() *cobra.Command {
@@ -63,14 +64,34 @@ func NewCmdRun() *cobra.Command {
 
 			var scriptPath string
 			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
+				origin, err := url.Parse(args[0])
+				if err != nil {
+					return err
+				}
+
+				var token string
+				if origin.User != nil {
+					if _, ok := origin.User.Password(); !ok {
+						token = origin.User.Username()
+						origin.User = nil
+					}
+				}
+
+				template, err := template.New("script").Parse(scriptTemplate)
+				if err != nil {
+					return err
+				}
+
 				tempfile, err := os.CreateTemp("", "sunbeam-run-*.sh")
 				if err != nil {
 					return err
 				}
 				defer os.Remove(tempfile.Name())
 
-				script := fmt.Sprintf(template, args[0], args[0])
-				if _, err := io.Copy(tempfile, strings.NewReader(script)); err != nil {
+				if err := template.Execute(tempfile, struct {
+					Origin string
+					Token  string
+				}{Origin: origin.String(), Token: token}); err != nil {
 					return err
 				}
 

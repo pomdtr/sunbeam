@@ -57,14 +57,6 @@ func NewCmdFetch() *cobra.Command {
 				}
 			}
 
-			var bearerToken string
-			if origin.User != nil {
-				if _, ok := origin.User.Password(); !ok {
-					bearerToken = origin.User.Username()
-					origin.User = nil
-				}
-			}
-
 			req, err := http.NewRequest(method, origin.String(), body)
 			if err != nil {
 				return err
@@ -77,10 +69,6 @@ func NewCmdFetch() *cobra.Command {
 				}
 
 				req.Header.Add(parts[0], parts[1])
-			}
-
-			if bearerToken != "" {
-				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
 			}
 
 			if flags.user != "" {
