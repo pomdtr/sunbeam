@@ -143,7 +143,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case SubmitMsg:
 		return c, func() tea.Msg {
 			output, err := c.extension.Run(
-				types.CommandInput{Command: c.input.Command, Params: msg, Inputs: msg},
+				types.CommandInput{Command: c.input.Command, Params: msg, FormData: msg},
 			)
 			if err != nil {
 				return err
