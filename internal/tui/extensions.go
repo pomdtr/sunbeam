@@ -1,12 +1,12 @@
 package tui
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/acarl005/stripansi"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
@@ -22,8 +22,8 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	return types.CommandSpec{}, false
 }
 
-func (e Extension) Run(input types.CommandInput) ([]byte, error) {
-	cmd, err := e.Cmd(input)
+func (e Extension) Run(command string, input types.CommandInput) ([]byte, error) {
+	cmd, err := e.Cmd(command, input)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (e Extension) Run(input types.CommandInput) ([]byte, error) {
 	}
 }
 
-func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
+func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd, error) {
 	if input.Params == nil {
 		input.Params = make(map[string]any)
 	}
@@ -48,8 +48,8 @@ func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 		return nil, err
 	}
 
-	command := exec.Command(e.Entrypoint)
-	command.Stdin = bytes.NewReader(inputBytes)
+	command := exec.Command(e.Entrypoint, commandName)
+	command.Stdin = strings.NewReader(string(inputBytes))
 	command.Env = os.Environ()
 	command.Env = append(command.Env, "SUNBEAM=0")
 	command.Env = append(command.Env, "NO_COLOR=1")
@@ -63,9 +63,12 @@ type Extension struct {
 }
 
 func LoadExtension(entrypoint string) (Extension, error) {
-	command := exec.Command(entrypoint, "manifest")
-	b, err := command.Output()
+	b, err := exec.Command(entrypoint).Output()
 	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return Extension{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
+		}
+
 		return Extension{}, err
 	}
 

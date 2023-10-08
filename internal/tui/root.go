@@ -118,16 +118,20 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				if command.Mode == types.CommandModeView {
-					return PushPageMsg{NewRunner(c.extensions, types.CommandRef{
+					runner, err := NewRunner(c.extensions, types.CommandRef{
 						Extension: msg.Extension,
 						Command:   msg.Command,
 						Params:    msg.Params,
-					})}
+					})
+
+					if err != nil {
+						return err
+					}
+					return PushPageMsg{runner}
 				}
 
-				out, err := extension.Run(types.CommandInput{
-					Command: msg.Command,
-					Params:  msg.Params,
+				out, err := extension.Run(command.Name, types.CommandInput{
+					Params: msg.Params,
 				})
 				if err != nil {
 					return err

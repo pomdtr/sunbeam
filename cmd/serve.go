@@ -86,14 +86,15 @@ func NewCmdServe() *cobra.Command {
 				}
 			})
 
-			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+			r.Post("/:command", func(w http.ResponseWriter, r *http.Request) {
+				command := chi.URLParam(r, "command")
 				var input types.CommandInput
 				if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 					http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)
 					return
 				}
 
-				output, err := extension.Run(input)
+				output, err := extension.Run(command, input)
 				if err != nil {
 					http.Error(w, fmt.Sprintf("failed to run command: %s", err.Error()), 500)
 					return

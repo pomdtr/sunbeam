@@ -22,7 +22,7 @@ var (
 )
 
 var (
-	MaxHeigth = LookupIntEnv("SUNBEAM_HEIGHT", 0)
+	MaxHeight = LookupIntEnv("SUNBEAM_HEIGHT", 0)
 )
 
 type Config struct {
@@ -269,11 +269,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				_ = history.Save()
 			}
 
-			return tui.Draw(rootList, MaxHeigth)
+			return tui.Draw(rootList, MaxHeight)
 		},
 	}
 
 	rootCmd.AddCommand(NewCmdRun())
+	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdQuery())

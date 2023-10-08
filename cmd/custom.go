@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -27,33 +26,6 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 		Use:  alias,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var inputBytes []byte
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				i, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-				inputBytes = i
-			}
-
-			if len(inputBytes) > 0 {
-				var input types.CommandInput
-				if err := json.Unmarshal(inputBytes, &input); err != nil {
-					return err
-				}
-
-				output, err := extension.Run(input)
-				if err != nil {
-					return err
-				}
-
-				if _, err := os.Stdout.Write(output); err != nil {
-					return err
-				}
-
-				return nil
-			}
-
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
@@ -75,10 +47,15 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 
 			if len(rootCommands) == 1 {
 				command := rootCommands[0]
-				return tui.Draw(tui.NewRunner(extensions, types.CommandRef{
+				runner, err := tui.NewRunner(extensions, types.CommandRef{
 					Extension: alias,
 					Command:   command.Name,
-				}), MaxHeigth)
+				})
+
+				if err != nil {
+					return err
+				}
+				return tui.Draw(runner, MaxHeight)
 			}
 
 			page := tui.NewRootList(extension.Title, func() (map[string]tui.Extension, []types.ListItem, error) {
@@ -104,7 +81,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 				return extensions, items, nil
 			})
 
-			return tui.Draw(page, MaxHeigth)
+			return tui.Draw(page, MaxHeight)
 		},
 	}
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -146,9 +123,8 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 
 				if subcommand.Mode == types.CommandModeView {
 					if !isatty.IsTerminal(os.Stdout.Fd()) {
-						output, err := extension.Run(types.CommandInput{
-							Command: subcommand.Name,
-							Params:  params,
+						output, err := extension.Run(subcommand.Name, types.CommandInput{
+							Params: params,
 						})
 
 						if err != nil {
@@ -162,18 +138,21 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 						return nil
 					}
 
-					runner := tui.NewRunner(extensions, types.CommandRef{
+					runner, err := tui.NewRunner(extensions, types.CommandRef{
 						Extension: alias,
 						Command:   subcommand.Name,
 						Params:    params,
 					})
 
-					return tui.Draw(runner, MaxHeigth)
+					if err != nil {
+						return err
+					}
+
+					return tui.Draw(runner, MaxHeight)
 				}
 
-				out, err := extension.Run(types.CommandInput{
-					Command: subcommand.Name,
-					Params:  params,
+				out, err := extension.Run(subcommand.Name, types.CommandInput{
+					Params: params,
 				})
 				if err != nil {
 					return err

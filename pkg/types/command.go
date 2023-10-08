@@ -72,7 +72,6 @@ var (
 )
 
 type CommandInput struct {
-	Command  string         `json:"command"`
 	Params   map[string]any `json:"params"`
 	FormData map[string]any `json:"formData,omitempty"`
 	Query    string         `json:"query,omitempty"`

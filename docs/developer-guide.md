@@ -19,10 +19,9 @@ A sunbeam extension is a directory containing a `sunbeam-extension` file.
 The file must respect the following contract:
 
 - It must be executable (use `chmod +x <file>` to make it executable)
-- It must return a sunbeam manifest when with `manifest` as first argument.
-- When called with no argument
-    - it will receive a json input payload on stdin
-    - it must return a json output payload on stdout
+- When called without arguments, it must return a json manifest describing the extension and its commands.
+- When called with a command name as first argument, it must execute the command and return a json payload.
+    - The command parameters are passed as json payload on stdin
 
 ### Manifest
 

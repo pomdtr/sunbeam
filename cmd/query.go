@@ -128,8 +128,10 @@ func NewCmdQuery() *cobra.Command {
 						return fmt.Errorf("could not run query: %s", err)
 					}
 					if jqFlags.RawOutput {
-						fmt.Println(v)
-						continue
+						if s, ok := v.(string); ok {
+							fmt.Println(s)
+							continue
+						}
 					}
 					err := encoder.Encode(v)
 					if err != nil {

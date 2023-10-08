@@ -87,10 +87,10 @@
                     "type": "string",
                     "description": "The title of the form."
                 },
-                "inputs": {
+                "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/input"
+                        "$ref": "#/definitions/formitem"
                     }
                 }
             }
@@ -129,7 +129,7 @@
                 }
             }
         },
-        "input": {
+        "formitem": {
             "oneOf": [
                 {
                     "type": "object",
@@ -149,7 +149,7 @@
                             "description": "The name of the input."
                         },
                         "type": {
-                            "const": "textfield",
+                            "const": "text",
                             "description": "The type of the input."
                         },
                         "placeholder": {
@@ -247,7 +247,7 @@
                             "description": "The title of the input."
                         },
                         "type": {
-                            "const": "dropdown",
+                            "const": "select",
                             "description": "The type of the input."
                         },
                         "items": {
