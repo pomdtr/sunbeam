@@ -32,6 +32,10 @@ type Config struct {
 func LoadConfig() (Config, error) {
 	configBytes, err := os.ReadFile(utils.ConfigPath())
 	if err != nil {
+		if os.IsNotExist(err) {
+			return Config{}, nil
+		}
+
 		return Config{}, err
 	}
 
@@ -259,7 +263,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return extensions, items, nil
 			}
 
-			rootList := tui.NewRootList(generator)
+			rootList := tui.NewRootList("Sunbeam", generator)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
 				_ = history.Save()

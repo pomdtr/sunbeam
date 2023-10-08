@@ -81,7 +81,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 				}), MaxHeigth)
 			}
 
-			page := tui.NewRootList(func() (map[string]tui.Extension, []types.ListItem, error) {
+			page := tui.NewRootList(extension.Title, func() (map[string]tui.Extension, []types.ListItem, error) {
 				items := make([]types.ListItem, 0)
 				for _, command := range rootCommands {
 					items = append(items, types.ListItem{

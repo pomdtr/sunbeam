@@ -287,7 +287,12 @@ func (c *Runner) Reload() tea.Cmd {
 		if page.Title != "" {
 			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
 		} else {
-			termOutput.SetWindowTitle(c.extension.Title)
+			command, ok := c.extension.Command(c.input.Command)
+			if !ok {
+				return fmt.Errorf("command %s not found", c.input.Command)
+			}
+
+			termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", command.Title, c.extension.Title))
 		}
 
 		switch page.Type {

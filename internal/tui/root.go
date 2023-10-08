@@ -12,6 +12,7 @@ import (
 
 type RootList struct {
 	w, h       int
+	title      string
 	err        *Detail
 	list       *List
 	generator  func() (map[string]Extension, []types.ListItem, error)
@@ -19,8 +20,9 @@ type RootList struct {
 	extensions map[string]Extension
 }
 
-func NewRootList(generator func() (map[string]Extension, []types.ListItem, error)) *RootList {
+func NewRootList(title string, generator func() (map[string]Extension, []types.ListItem, error)) *RootList {
 	return &RootList{
+		title:     title,
 		list:      NewList(),
 		generator: generator,
 	}
@@ -50,7 +52,7 @@ func (c RootList) Reload() tea.Cmd {
 }
 
 func (c *RootList) Focus() tea.Cmd {
-	termOutput.SetWindowTitle("Sunbeam")
+	termOutput.SetWindowTitle(c.title)
 	return c.list.Focus()
 }
 
