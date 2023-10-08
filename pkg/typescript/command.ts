@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Command = Copy | Open | Run | Reload | Pop | Exit | Pass;
+export type Command = Copy | Open | Run | Reload | Pop | Exit;
 
 export interface Copy {
   /**
@@ -82,7 +82,4 @@ export interface Pop {
 }
 export interface Exit {
   type: "exit";
-}
-export interface Pass {
-  type: "pass";
 }

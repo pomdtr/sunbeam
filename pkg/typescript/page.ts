@@ -6,7 +6,7 @@
  */
 
 export type Page = List | Detail | Form;
-export type Input =
+export type Formitem =
   | {
       /**
        * The title of the input.
@@ -19,7 +19,7 @@ export type Input =
       /**
        * The type of the input.
        */
-      type: "textfield";
+      type: "text";
       /**
        * The placeholder of the input.
        */
@@ -89,7 +89,7 @@ export type Input =
       /**
        * The type of the input.
        */
-      type: "dropdown";
+      type: "select";
       /**
        * The items of the input.
        */
@@ -155,7 +155,7 @@ export interface Action {
    * The key used as a shortcut.
    */
   key?: string;
-  onAction: Copy | Open | Run | Reload | Pop | Exit | Pass;
+  onAction: Copy | Open | Run | Reload | Pop | Exit;
 }
 export interface Copy {
   /**
@@ -233,9 +233,6 @@ export interface Pop {
 export interface Exit {
   type: "exit";
 }
-export interface Pass {
-  type: "pass";
-}
 /**
  * A detail view displaying a preview and actions.
  */
@@ -266,5 +263,5 @@ export interface Form {
    * The title of the form.
    */
   title?: string;
-  inputs?: Input[];
+  items: Formitem[];
 }

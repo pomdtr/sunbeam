@@ -14,7 +14,7 @@ export interface Commandspec {
   name: string;
   hidden?: boolean;
   title: string;
-  mode: "view" | "no-view";
+  mode: "view" | "no-view" | "tty";
   params?: {
     name?: string;
     type: "string" | "boolean" | "number";

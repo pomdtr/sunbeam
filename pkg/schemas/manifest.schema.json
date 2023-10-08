@@ -42,7 +42,8 @@
                 "mode": {
                     "enum": [
                         "view",
-                        "no-view"
+                        "no-view",
+                        "tty"
                     ]
                 },
                 "params": {

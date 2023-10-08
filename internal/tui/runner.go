@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -194,11 +195,14 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, func() tea.Msg {
 					output, err := c.extension.Run(
 						command.Name,
-						types.CommandInput{
-							Params: msg.Params,
-						})
+						types.CommandInput{Params: msg.Params},
+					)
 					if err != nil {
 						return err
+					}
+
+					if len(output) == 0 {
+						return nil
 					}
 
 					if err := schemas.ValidateCommand(output); err != nil {
@@ -224,6 +228,32 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 				}
 				return c, PushPageCmd(runner)
+			case types.CommandModeTTY:
+				cmd, err := c.extension.Cmd(command.Name, types.CommandInput{Params: msg.Params})
+				if err != nil {
+					return c, func() tea.Msg {
+						return err
+					}
+				}
+
+				buffer := bytes.Buffer{}
+				cmd.Stdout = &buffer
+				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
+					if err != nil {
+						return err
+					}
+
+					if len(buffer.Bytes()) == 0 {
+						return nil
+					}
+
+					var command types.Command
+					if err := json.Unmarshal(buffer.Bytes(), &command); err != nil {
+						return err
+					}
+
+					return command
+				})
 			}
 		case types.CommandTypeCopy:
 			return c, func() tea.Msg {
@@ -262,8 +292,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, tea.Sequence(PopPageCmd, ReloadCmd(nil))
 			}
 			return c, PopPageCmd
-		case types.CommandTypePass:
-			return c, nil
 		}
 	case ReloadMsg:
 		return c, c.Reload(types.CommandInput{
