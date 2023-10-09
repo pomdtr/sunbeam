@@ -27,6 +27,7 @@ func NewCmdExtension() *cobra.Command {
 		Use:     "extension",
 		Aliases: []string{"ext", "extensions"},
 		Short:   "Manage extensions",
+		GroupID: CommandGroupCore,
 	}
 
 	cmd.AddCommand(NewCmdExtensionList())

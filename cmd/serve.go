@@ -43,9 +43,10 @@ func NewCmdServe() *cobra.Command {
 	}{}
 
 	cmd := &cobra.Command{
-		Use:   "serve <script>",
-		Short: "Serve extensions over HTTP",
-		Args:  cobra.ExactArgs(1),
+		Use:     "serve <script>",
+		Short:   "Serve extensions over HTTP",
+		Args:    cobra.ExactArgs(1),
+		GroupID: CommandGroupCore,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			entrypoint, err := filepath.Abs(args[0])
 			if err != nil {

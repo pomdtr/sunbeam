@@ -97,7 +97,7 @@ type Field struct {
 	Title    string `json:"title"`
 	Name     string `json:"name,omitempty"`
 	Optional bool   `json:"optional,omitempty"`
-	Input
+	Input    `json:"input"`
 }
 
 type Input struct {

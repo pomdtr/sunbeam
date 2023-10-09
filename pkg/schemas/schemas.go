@@ -14,12 +14,14 @@ var schemas map[string]*jsonschema.Schema
 
 const (
 	CommandSchemaURL  = "command.schema.json"
+	InputSchemaURL    = "input.schema.json"
 	PageSchemaURL     = "page.schema.json"
 	ManifestSchemaURL = "manifest.schema.json"
 )
 
 var schemaUrls = []string{
 	CommandSchemaURL,
+	InputSchemaURL,
 	PageSchemaURL,
 	ManifestSchemaURL,
 }

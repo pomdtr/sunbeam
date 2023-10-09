@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type Form struct {
@@ -25,8 +26,17 @@ type Form struct {
 
 type SubmitMsg map[string]any
 
-func NewForm(id string, items ...FormItem) *Form {
+func NewForm(id string, fields ...types.Field) (*Form, error) {
 	viewport := viewport.New(0, 0)
+
+	items := make([]FormItem, 0, len(fields))
+	for i, field := range fields {
+		item, err := NewFormItem(field)
+		if err != nil {
+			return nil, err
+		}
+		items[i] = item
+	}
 
 	form := &Form{
 		id:       id,
@@ -34,7 +44,7 @@ func NewForm(id string, items ...FormItem) *Form {
 		items:    items,
 	}
 
-	return form
+	return form, nil
 }
 
 func (c *Form) SetIsLoading(isLoading bool) tea.Cmd {

@@ -19,9 +19,10 @@ func NewCmdFetch() *cobra.Command {
 		user    string
 	}{}
 	cmd := &cobra.Command{
-		Use:   "fetch <url> [body]",
-		Short: "Simple http client inspired by curl",
-		Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+		Use:     "fetch <url> [body]",
+		Short:   "Simple http client inspired by curl",
+		GroupID: CommandGroupCore,
+		Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			origin, err := url.Parse(args[0])
 			if err != nil {

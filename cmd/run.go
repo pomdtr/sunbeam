@@ -27,36 +27,7 @@ func NewCmdRun() *cobra.Command {
 		Short:              "Run an extension from a script, directory, or URL",
 		Args:               cobra.MinimumNArgs(1),
 		DisableFlagParsing: true,
-		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			if len(args) == 0 {
-				return nil, cobra.ShellCompDirectiveDefault
-			}
-
-			if len(args) > 1 {
-				return nil, cobra.ShellCompDirectiveNoFileComp
-			}
-
-			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") || args[0] == "-" {
-				return nil, cobra.ShellCompDirectiveNoFileComp
-			}
-
-			entrypoint := args[0]
-			if entrypoint == "." {
-				entrypoint = "./sunbeam-extension"
-			}
-
-			extension, err := tui.LoadExtension(entrypoint)
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveDefault
-			}
-
-			completions := make([]string, 0)
-			for _, command := range extension.Commands {
-				completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
-			}
-
-			return completions, cobra.ShellCompDirectiveNoFileComp
-		},
+		GroupID:            CommandGroupCore,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "--help" || args[0] == "-h" {
 				return cmd.Help()

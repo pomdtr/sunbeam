@@ -32,7 +32,7 @@ type FormItem struct {
 	Name     string
 }
 
-func NewFormItem(item types.Field) *FormItem {
+func NewFormItem(item types.Field) (FormItem, error) {
 	var input FormInput
 	switch item.Type {
 	case types.TextInput:
@@ -44,15 +44,15 @@ func NewFormItem(item types.Field) *FormItem {
 	case types.SelectInput:
 		input = NewDropDown(item)
 	default:
-		return nil
+		return FormItem{}, fmt.Errorf("unknown input type %s", item.Type)
 	}
 
-	return &FormItem{
+	return FormItem{
 		Name:      item.Name,
 		Title:     item.Title,
 		Optional:  item.Optional,
 		FormInput: input,
-	}
+	}, nil
 }
 
 type TextArea struct {

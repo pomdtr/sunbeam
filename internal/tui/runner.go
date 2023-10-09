@@ -117,12 +117,13 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 	case types.Form:
 		form := msg
-		var formitems []FormItem
-		for _, field := range form.Fields {
-			formitems = append(formitems, *NewFormItem(field))
+		page, err := NewForm(c.extension.Title, form.Fields...)
+		if err != nil {
+			c.embed = NewErrorPage(err)
+			c.embed.SetSize(c.width, c.height)
+			return c, c.embed.Init()
 		}
 
-		page := NewForm(c.extension.Title, formitems...)
 		page.SetSize(c.width, c.height)
 		c.embed = page
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())

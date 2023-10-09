@@ -23,8 +23,11 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 		return nil, fmt.Errorf("extension %s not found", alias)
 	}
 	rootCmd := &cobra.Command{
-		Use:  alias,
-		Args: cobra.NoArgs,
+		Use:     alias,
+		Short:   extension.Title,
+		Long:    extension.Description,
+		Args:    cobra.NoArgs,
+		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				encoder := json.NewEncoder(os.Stdout)
