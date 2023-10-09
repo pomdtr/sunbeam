@@ -11,6 +11,7 @@ type CommandRef struct {
 	Params    map[string]any `json:"params,omitempty"`
 }
 
+// TODO: move distinct types to their own structs
 type Command struct {
 	Type CommandType `json:"type,omitempty"`
 
@@ -23,9 +24,9 @@ type Command struct {
 
 	Reload bool `json:"reload,omitempty"`
 
-	CommandRef
-
-	Exec string `json:"exec,omitempty"`
+	Extension string         `json:"extension,omitempty"`
+	Command   string         `json:"command,omitempty"`
+	Params    map[string]any `json:"params,omitempty"`
 }
 
 type CommandType string

@@ -35,7 +35,13 @@ func ReloadCmd(params map[string]any) tea.Cmd {
 	}
 }
 
-func NewRunner(extensions map[string]Extension, ref types.CommandRef) (*Runner, error) {
+type CommandRef struct {
+	Extension string         `json:"extension,omitempty"`
+	Command   string         `json:"command,omitempty"`
+	Params    map[string]any `json:"params,omitempty"`
+}
+
+func NewRunner(extensions map[string]Extension, ref CommandRef) (*Runner, error) {
 	extension, ok := extensions[ref.Extension]
 	if !ok {
 		return nil, fmt.Errorf("extension %s not found", ref.Extension)
@@ -218,7 +224,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return command
 				}
 			case types.CommandModeView:
-				runner, err := NewRunner(c.extensions, types.CommandRef{
+				runner, err := NewRunner(c.extensions, CommandRef{
 					Extension: c.alias,
 					Command:   msg.Command,
 					Params:    msg.Params,

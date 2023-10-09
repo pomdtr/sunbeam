@@ -50,7 +50,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 
 			if len(rootCommands) == 1 {
 				command := rootCommands[0]
-				runner, err := tui.NewRunner(extensions, types.CommandRef{
+				runner, err := tui.NewRunner(extensions, tui.CommandRef{
 					Extension: alias,
 					Command:   command.Name,
 				})
@@ -71,11 +71,9 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 							{
 								Title: "Run Command",
 								OnAction: types.Command{
-									Type: types.CommandTypeRun,
-									CommandRef: types.CommandRef{
-										Extension: alias,
-										Command:   command.Name,
-									},
+									Type:      types.CommandTypeRun,
+									Extension: alias,
+									Command:   command.Name,
 								},
 							},
 						},
@@ -144,7 +142,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 						return nil
 					}
 
-					runner, err := tui.NewRunner(extensions, types.CommandRef{
+					runner, err := tui.NewRunner(extensions, tui.CommandRef{
 						Extension: alias,
 						Command:   subcommand.Name,
 						Params:    params,

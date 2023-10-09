@@ -127,7 +127,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			switch commandspec.Mode {
 			case types.CommandModeView:
-				runner, err := NewRunner(c.extensions, types.CommandRef{
+				runner, err := NewRunner(c.extensions, CommandRef{
 					Extension: msg.Extension,
 					Command:   msg.Command,
 					Params:    msg.Params,

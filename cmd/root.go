@@ -82,11 +82,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 								{
 									Title: "Run",
 									OnAction: types.Command{
-										Type: types.CommandTypeRun,
-										CommandRef: types.CommandRef{
-											Extension: alias,
-											Command:   command.Name,
-										},
+										Type:      types.CommandTypeRun,
+										Extension: alias,
+										Command:   command.Name,
 									},
 								},
 							},

@@ -88,11 +88,6 @@ const (
 	CheckboxInput InputType = "checkbox"
 )
 
-type DropDownItem struct {
-	Title string `json:"title"`
-	Value string `json:"value"`
-}
-
 type Field struct {
 	Title    string `json:"title"`
 	Name     string `json:"name,omitempty"`
@@ -100,6 +95,7 @@ type Field struct {
 	Input    `json:"input"`
 }
 
+// TODO: move distinct types to their own structs
 type Input struct {
 	Type        InputType `json:"type"`
 	Placeholder string    `json:"placeholder,omitempty"`
@@ -110,6 +106,11 @@ type Input struct {
 
 	// Only for checkbox
 	Label string `json:"label,omitempty"`
+}
+
+type DropDownItem struct {
+	Title string `json:"title"`
+	Value string `json:"value"`
 }
 
 type Action struct {
