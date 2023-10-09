@@ -1,0 +1,220 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "type",
+        "fields"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "type": {
+            "const": "form",
+            "description": "The type of the page."
+        },
+        "title": {
+            "type": "string",
+            "description": "The title of the form."
+        },
+        "fields": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/field"
+            }
+        }
+    },
+    "definitions": {
+        "field": {
+            "required": [
+                "name",
+                "input"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "input": {
+                    "$ref": "#/definitions/input"
+                }
+            }
+        },
+        "input": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "enum": [
+                        "text",
+                        "textarea",
+                        "checkbox",
+                        "select"
+                    ]
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "text"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/text"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "textarea"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/textarea"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "checkbox"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/checkbox"
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "select"
+                            }
+                        }
+                    },
+                    "then": {
+                        "$ref": "#/definitions/select"
+                    }
+                }
+            ]
+        },
+        "text": {
+            "type": "object",
+            "required": [
+                "type",
+                "placeholder"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "const": "text",
+                    "description": "The type of the input."
+                },
+                "placeholder": {
+                    "type": "string",
+                    "description": "The placeholder of the input."
+                },
+                "default": {
+                    "type": "string",
+                    "description": "The default value of the input."
+                },
+                "secure": {
+                    "type": "boolean",
+                    "description": "Whether the input should be secure."
+                }
+            }
+        },
+        "textarea": {
+            "type": "object",
+            "required": [
+                "type",
+                "placeholder"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "const": "textarea",
+                    "description": "The type of the input."
+                },
+                "placeholder": {
+                    "type": "string",
+                    "description": "The placeholder of the input."
+                },
+                "default": {
+                    "type": "string",
+                    "description": "The default value of the input."
+                }
+            }
+        },
+        "checkbox": {
+            "type": "object",
+            "required": [
+                "type",
+                "label"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "const": "checkbox",
+                    "description": "The type of the input."
+                },
+                "label": {
+                    "type": "string",
+                    "description": "The label of the input."
+                },
+                "default": {
+                    "type": "boolean",
+                    "description": "The default value of the input."
+                }
+            }
+        },
+        "select": {
+            "type": "object",
+            "required": [
+                "type",
+                "items"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "const": "select",
+                    "description": "The type of the input."
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "title",
+                            "value"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "title": {
+                                "type": "string",
+                                "description": "The title of the item."
+                            },
+                            "value": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "description": "The items of the input."
+                },
+                "default": {
+                    "type": "string",
+                    "description": "The default value of the input."
+                }
+            }
+        }
+    }
+}

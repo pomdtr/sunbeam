@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "description": "A detail view displaying a preview and actions.",
+    "required": [
+        "type",
+        "markdown"
+    ],
+    "properties": {
+        "type": {
+            "description": "The type of the page.",
+            "const": "detail"
+        },
+        "title": {
+            "description": "The title of the detail view.",
+            "type": "string"
+        },
+        "markdown": {
+            "description": "The text to show in the detail view.",
+            "type": "string"
+        },
+        "actions": {
+            "type": "array",
+            "description": "The actions attached to the detail view.",
+            "items": {
+                "$ref": "./action.schema.json"
+            }
+        }
+    }
+}

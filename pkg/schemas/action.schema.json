@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "title",
+        "onAction"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "title": {
+            "type": "string",
+            "description": "The title of the action."
+        },
+        "key": {
+            "type": "string",
+            "description": "The key used as a shortcut."
+        },
+        "onAction": {
+            "$ref": "./command.schema.json"
+        }
+    }
+}

@@ -12,18 +12,14 @@ var embedFS embed.FS
 
 var schemas map[string]*jsonschema.Schema
 
-const (
-	CommandSchemaURL  = "command.schema.json"
-	InputSchemaURL    = "input.schema.json"
-	PageSchemaURL     = "page.schema.json"
-	ManifestSchemaURL = "manifest.schema.json"
-)
-
 var schemaUrls = []string{
-	CommandSchemaURL,
-	InputSchemaURL,
-	PageSchemaURL,
-	ManifestSchemaURL,
+	"command.schema.json",
+	"action.schema.json",
+	"list.schema.json",
+	"detail.schema.json",
+	"form.schema.json",
+	"page.schema.json",
+	"manifest.schema.json",
 }
 
 func init() {
@@ -58,7 +54,7 @@ func ValidatePage(input []byte) error {
 		return err
 	}
 
-	if err := schemas[PageSchemaURL].Validate(v); err != nil {
+	if err := schemas["page.schema.json"].Validate(v); err != nil {
 		return err
 	}
 	return nil
@@ -70,7 +66,7 @@ func ValidateCommand(input []byte) error {
 		return err
 	}
 
-	if err := schemas[CommandSchemaURL].Validate(v); err != nil {
+	if err := schemas["command.schema.json"].Validate(v); err != nil {
 		return err
 	}
 	return nil
@@ -82,7 +78,7 @@ func ValidateManifest(input []byte) error {
 		return err
 	}
 
-	if err := schemas[ManifestSchemaURL].Validate(v); err != nil {
+	if err := schemas["manifest.schema.json"].Validate(v); err != nil {
 		return err
 	}
 	return nil

@@ -1,0 +1,66 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type",
+        "items"
+    ],
+    "properties": {
+        "type": {
+            "const": "list",
+            "description": "The type of the page."
+        },
+        "reload": {
+            "type": "boolean",
+            "description": "Whether the list should be reloaded when the query changes."
+        },
+        "title": {
+            "type": "string",
+            "description": "The title of the list."
+        },
+        "items": {
+            "description": "The items in the list.",
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/item"
+            }
+        }
+    },
+    "definitions": {
+        "item": {
+            "additionalProperties": false,
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "The title of the item."
+                },
+                "id": {
+                    "type": "string",
+                    "description": "The id of the item."
+                },
+                "subtitle": {
+                    "type": "string",
+                    "description": "The subtitle of the item."
+                },
+                "accessories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "The accessories to show on the right side of the item."
+                },
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "./action.schema.json"
+                    },
+                    "description": "The actions attached to the item."
+                }
+            }
+        }
+    }
+}

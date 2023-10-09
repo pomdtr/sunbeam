@@ -74,4 +74,5 @@ type CommandInput struct {
 	Params   map[string]any `json:"params"`
 	FormData map[string]any `json:"formData,omitempty"`
 	Query    string         `json:"query,omitempty"`
+	WorkDir  string         `json:"workDir,omitempty"`
 }

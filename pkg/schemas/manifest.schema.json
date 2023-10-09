@@ -51,6 +51,7 @@
                     "items": {
                         "type": "object",
                         "required": [
+                            "name",
                             "type"
                         ],
                         "additionalProperties": false,
@@ -71,33 +72,6 @@
                             },
                             "optional": {
                                 "type": "boolean"
-                            }
-                        }
-                    }
-                },
-                "prefs": {
-                    "type": "object",
-                    "patternProperties": {
-                        ".+": {
-                            "type": "object",
-                            "required": [
-                                "type"
-                            ],
-                            "additionalProperties": false,
-                            "properties": {
-                                "name": {
-                                    "type": "string"
-                                },
-                                "type": {
-                                    "type": "string",
-                                    "enum": [
-                                        "string",
-                                        "boolean"
-                                    ]
-                                },
-                                "optional": {
-                                    "type": "boolean"
-                                }
                             }
                         }
                     }

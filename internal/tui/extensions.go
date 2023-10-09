@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/acarl005/stripansi"
@@ -43,6 +44,12 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		input.Params = make(map[string]any)
 	}
 
+	workdir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	input.WorkDir = workdir
+
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
@@ -50,6 +57,7 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 
 	command := exec.Command(e.Entrypoint, commandName)
 	command.Stdin = strings.NewReader(string(inputBytes))
+	command.Dir = filepath.Dir(e.Entrypoint)
 	command.Env = os.Environ()
 	command.Env = append(command.Env, "SUNBEAM=0")
 	command.Env = append(command.Env, "NO_COLOR=1")

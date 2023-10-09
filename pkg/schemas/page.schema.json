@@ -1,178 +1,54 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "oneOf": [
-        {
-            "$ref": "#/definitions/list"
-        },
-        {
-            "$ref": "#/definitions/detail"
-        },
-        {
-            "$ref": "#/definitions/form"
-        }
+    "type": "object",
+    "required": [
+        "type"
     ],
-    "definitions": {
-        "list": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "type",
-                "items"
-            ],
-            "properties": {
-                "type": {
-                    "const": "list",
-                    "description": "The type of the page."
-                },
-                "reload": {
-                    "type": "boolean",
-                    "description": "Whether the list should be reloaded when the query changes."
-                },
-                "title": {
-                    "type": "string",
-                    "description": "The title of the list."
-                },
-                "items": {
-                    "description": "The items in the list.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/item"
-                    }
-                }
-            }
-        },
-        "detail": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "A detail view displaying a preview and actions.",
-            "required": [
-                "type",
-                "markdown"
-            ],
-            "properties": {
-                "type": {
-                    "description": "The type of the page.",
-                    "const": "detail"
-                },
-                "title": {
-                    "description": "The title of the detail view.",
-                    "type": "string"
-                },
-                "markdown": {
-                    "description": "The text to show in the detail view.",
-                    "type": "string"
-                },
-                "actions": {
-                    "type": "array",
-                    "description": "The actions attached to the detail view.",
-                    "items": {
-                        "$ref": "#/definitions/action"
-                    }
-                }
-            }
-        },
-        "form": {
-            "type": "object",
-            "required": [
-                "type",
-                "items"
-            ],
-            "additionalProperties": false,
-            "properties": {
-                "type": {
-                    "const": "form",
-                    "description": "The type of the page."
-                },
-                "title": {
-                    "type": "string",
-                    "description": "The title of the form."
-                },
-                "fields": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/field"
-                    }
-                }
-            }
-        },
-        "item": {
-            "additionalProperties": false,
-            "required": [
-                "title"
-            ],
-            "properties": {
-                "title": {
-                    "type": "string",
-                    "description": "The title of the item."
-                },
-                "id": {
-                    "type": "string",
-                    "description": "The id of the item."
-                },
-                "subtitle": {
-                    "type": "string",
-                    "description": "The subtitle of the item."
-                },
-                "accessories": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "The accessories to show on the right side of the item."
-                },
-                "actions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/action"
-                    },
-                    "description": "The actions attached to the item."
-                }
-            }
-        },
-        "field": {
-            "required": [
-                "name",
-                "input"
-            ],
-            "additionalProperties": false,
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "input": {
-                    "$ref": "#/definitions/input"
-                }
-            }
-        },
-        "input": {
-            "$ref": "input.schema.json"
-        },
-        "action": {
-            "type": "object",
-            "required": [
-                "title",
-                "onAction"
-            ],
-            "additionalProperties": false,
-            "properties": {
-                "title": {
-                    "type": "string",
-                    "description": "The title of the action."
-                },
-                "key": {
-                    "type": "string",
-                    "description": "The key used as a shortcut."
-                },
-                "onAction": {
-                    "$ref": "#/definitions/command"
-                }
-            }
-        },
-        "command": {
-            "$ref": "command.schema.json"
+    "properties": {
+        "type": {
+            "enum": [
+                "list",
+                "form",
+                "detail"
+            ]
         }
-    }
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "list"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "./list.schema.json"
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "form"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "./form.schema.json"
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "detail"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "./detail.schema.json"
+            }
+        }
+    ]
 }

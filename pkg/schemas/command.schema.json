@@ -1,23 +1,93 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "oneOf": [
+    "type": "object",
+    "required": [
+        "type"
+    ],
+    "properties": {
+        "type": {
+            "enum": [
+                "copy",
+                "open",
+                "run",
+                "reload",
+                "pop",
+                "exit"
+            ]
+        }
+    },
+    "allOf": [
         {
-            "$ref": "#/definitions/copy"
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "copy"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "#/definitions/copy"
+            }
         },
         {
-            "$ref": "#/definitions/open"
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "open"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "#/definitions/open"
+            }
         },
         {
-            "$ref": "#/definitions/run"
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "run"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "#/definitions/run"
+            }
         },
         {
-            "$ref": "#/definitions/reload"
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "reload"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "#/definitions/reload"
+            }
         },
         {
-            "$ref": "#/definitions/pop"
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "pop"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "#/definitions/pop"
+            }
         },
         {
-            "$ref": "#/definitions/exit"
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "exit"
+                    }
+                }
+            },
+            "then": {
+                "$ref": "#/definitions/exit"
+            }
         }
     ],
     "definitions": {
