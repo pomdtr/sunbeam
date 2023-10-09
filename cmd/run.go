@@ -18,7 +18,7 @@ if [ $# -eq 0 ] ; then
 	exec sunbeam fetch {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} '{{ .Origin }}'
 fi
 
-exec sunbeam fetch {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} '{{ .Origin }}$1' -d @-
+exec sunbeam fetch {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} "{{ .Origin }}/$1" -d @-
 `
 
 func NewCmdRun() *cobra.Command {

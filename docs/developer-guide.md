@@ -5,8 +5,7 @@ Sunbeam extensions can be written in any language. They are executed as standalo
 - Bash: sunbeam provides helpers to write bash extensions.
     - `sunbeam query` allows you to create/transfor json payloads (it's a go port of [jq](https://stedolan.github.io/jq/))
     - `sunbeam fetch` allows you to perform http requests (with an api similar to [curl](https://curl.se/))
-- Deno: Deno is a secure runtime for javascript/typescript. It's a good choice for writing sunbeam extensions with external dependencies.
-- Go: Go is a compiled language. It's a good choice for writing sunbeam extensions that need to be fast and portable.
+- Deno: Deno is a secure runtime for javascript/typescript. It's a good choice for writing complex sunbeam extensions, since importing external dependencies can be done using a url.
 
 ## Example Extensions
 
@@ -20,8 +19,8 @@ The file must respect the following contract:
 
 - It must be executable (use `chmod +x <file>` to make it executable)
 - When called without arguments, it must return a json manifest describing the extension and its commands.
-- When called with a command name as first argument, it must execute the command and return a json payload.
-    - The command parameters are passed as json payload on stdin
+- When called with a command name as first argument, it must execute the command, and optionally return a json payload on stdout.
+    - The output schema depends on the command mode defined in the manifest.
 
 ### Manifest
 

@@ -97,9 +97,6 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 			RunE: func(cmd *cobra.Command, args []string) error {
 				params := make(map[string]any)
 				for _, param := range subcommand.Params {
-					if !cmd.Flags().Changed(param.Name) {
-						continue
-					}
 					switch param.Type {
 					case types.ParamTypeString:
 						value, err := cmd.Flags().GetString(param.Name)
@@ -125,7 +122,6 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 				var command types.Command
 				switch subcommand.Mode {
 				case types.CommandModeView:
-
 					if !isatty.IsTerminal(os.Stdout.Fd()) {
 						output, err := extension.Run(subcommand.Name, types.CommandInput{
 							Params: params,
@@ -205,14 +201,39 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 		for _, param := range subcommand.Params {
 			switch param.Type {
 			case types.ParamTypeString:
-				cmd.Flags().String(param.Name, "", param.Description)
+				if param.Default != nil {
+					defaultValue, ok := param.Default.(string)
+					if !ok {
+						return nil, fmt.Errorf("invalid default value for parameter %s", param.Name)
+					}
+					cmd.Flags().String(param.Name, defaultValue, param.Description)
+				} else {
+					cmd.Flags().String(param.Name, "", param.Description)
+				}
 			case types.ParamTypeBoolean:
-				cmd.Flags().Bool(param.Name, false, param.Description)
+				if param.Default != nil {
+					defaultValue, ok := param.Default.(bool)
+					if !ok {
+						return nil, fmt.Errorf("invalid default value for parameter %s", param.Name)
+					}
+
+					cmd.Flags().Bool(param.Name, defaultValue, param.Description)
+				} else {
+					cmd.Flags().Bool(param.Name, false, param.Description)
+				}
 			case types.ParamTypeNumber:
-				cmd.Flags().Int(param.Name, 0, param.Description)
+				if param.Default != nil {
+					defaultValue, ok := param.Default.(int)
+					if !ok {
+						return nil, fmt.Errorf("invalid default value for parameter %s", param.Name)
+					}
+					cmd.Flags().Int(param.Name, defaultValue, param.Description)
+				} else {
+					cmd.Flags().Int(param.Name, 0, param.Description)
+				}
 			}
 
-			if !param.Optional {
+			if param.Required {
 				_ = cmd.MarkFlagRequired(param.Name)
 			}
 		}

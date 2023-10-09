@@ -91,7 +91,7 @@ const (
 type Field struct {
 	Title    string `json:"title"`
 	Name     string `json:"name,omitempty"`
-	Optional bool   `json:"optional,omitempty"`
+	Required bool   `json:"required,omitempty"`
 	Input    `json:"input"`
 }
 

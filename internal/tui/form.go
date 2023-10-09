@@ -153,8 +153,8 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return &c, func() tea.Msg {
 				values := make(map[string]any)
 				for _, input := range c.items {
-					if input.Value() == "" && !input.Optional {
-						return nil
+					if input.Value() == "" && input.Required {
+						return fmt.Errorf("field %s is required", input.Name)
 					}
 					values[input.Name] = input.Value()
 				}
@@ -189,11 +189,11 @@ func (c *Form) renderInputs() {
 		}
 
 		var titleView string
-		if input.Optional {
-			titleView = fmt.Sprintf("%s ", input.Title)
-		} else {
+		if input.Required {
 			asterisk := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render("*")
 			titleView = fmt.Sprintf("%s%s ", input.Title, asterisk)
+		} else {
+			titleView = fmt.Sprintf("%s ", input.Title)
 		}
 
 		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(titleView), inputView)

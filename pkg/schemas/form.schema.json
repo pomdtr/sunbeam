@@ -36,6 +36,9 @@
                 "title": {
                     "type": "string"
                 },
+                "required": {
+                    "type": "boolean"
+                },
                 "input": {
                     "$ref": "#/definitions/input"
                 }

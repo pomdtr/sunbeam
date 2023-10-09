@@ -2,8 +2,6 @@ package types
 
 type Manifest struct {
 	Title       string        `json:"title"`
-	Origin      string        `json:"origin,omitempty"`
-	Version     string        `json:"version,omitempty"`
 	Description string        `json:"description,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
 }
@@ -27,8 +25,9 @@ const (
 type Param struct {
 	Name        string    `json:"name"`
 	Type        ParamType `json:"type"`
-	Optional    bool      `json:"optional,omitempty"`
 	Description string    `json:"description,omitempty"`
+	Required    bool      `json:"required,omitempty"`
+	Default     any       `json:"default,omitempty"`
 }
 
 type ParamType string

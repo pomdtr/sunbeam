@@ -44,6 +44,22 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		input.Params = make(map[string]any)
 	}
 
+	command, ok := e.Command(commandName)
+	if !ok {
+		return nil, fmt.Errorf("command %s not found", commandName)
+	}
+
+	for _, spec := range command.Params {
+		_, ok := input.Params[spec.Name]
+		if !ok && spec.Required {
+			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
+		}
+
+		if spec.Default != nil {
+			input.Params[spec.Name] = spec.Default
+		}
+	}
+
 	workdir, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -55,14 +71,14 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		return nil, err
 	}
 
-	command := exec.Command(e.Entrypoint, commandName)
-	command.Stdin = strings.NewReader(string(inputBytes))
-	command.Dir = filepath.Dir(e.Entrypoint)
-	command.Env = os.Environ()
-	command.Env = append(command.Env, "SUNBEAM=0")
-	command.Env = append(command.Env, "NO_COLOR=1")
+	cmd := exec.Command(e.Entrypoint, commandName)
+	cmd.Stdin = strings.NewReader(string(inputBytes))
+	cmd.Dir = filepath.Dir(e.Entrypoint)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "SUNBEAM=0")
+	cmd.Env = append(cmd.Env, "NO_COLOR=1")
 
-	return command, nil
+	return cmd, nil
 }
 
 type Extension struct {
@@ -71,7 +87,10 @@ type Extension struct {
 }
 
 func LoadExtension(entrypoint string) (Extension, error) {
-	b, err := exec.Command(entrypoint).Output()
+	cmd := exec.Command(entrypoint)
+	cmd.Dir = filepath.Dir(entrypoint)
+
+	manifestBytes, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return Extension{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
@@ -80,12 +99,12 @@ func LoadExtension(entrypoint string) (Extension, error) {
 		return Extension{}, err
 	}
 
-	if err := schemas.ValidateManifest(b); err != nil {
+	if err := schemas.ValidateManifest(manifestBytes); err != nil {
 		return Extension{}, err
 	}
 
 	var manifest types.Manifest
-	if err := json.Unmarshal(b, &manifest); err != nil {
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
 		return Extension{}, err
 	}
 

@@ -205,7 +205,7 @@ func IsRootCommand(command types.CommandSpec) bool {
 	}
 
 	for _, param := range command.Params {
-		if !param.Optional {
+		if param.Required {
 			return false
 		}
 	}

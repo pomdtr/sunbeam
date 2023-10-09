@@ -27,7 +27,7 @@ type FormInput interface {
 
 type FormItem struct {
 	FormInput
-	Optional bool
+	Required bool
 	Title    string
 	Name     string
 }
@@ -50,7 +50,7 @@ func NewFormItem(item types.Field) (FormItem, error) {
 	return FormItem{
 		Name:      item.Name,
 		Title:     item.Title,
-		Optional:  item.Optional,
+		Required:  item.Required,
 		FormInput: input,
 	}, nil
 }

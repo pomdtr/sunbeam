@@ -70,7 +70,20 @@
                             "description": {
                                 "type": "string"
                             },
-                            "optional": {
+                            "default": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "type": "number"
+                                    }
+                                ]
+                            },
+                            "required": {
                                 "type": "boolean"
                             }
                         }
