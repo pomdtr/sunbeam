@@ -124,7 +124,10 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 					}
 				}
 
-				if subcommand.Mode == types.CommandModeView {
+				var command types.Command
+				switch subcommand.Mode {
+				case types.CommandModeView:
+
 					if !isatty.IsTerminal(os.Stdout.Fd()) {
 						output, err := extension.Run(subcommand.Name, types.CommandInput{
 							Params: params,
@@ -152,22 +155,42 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 					}
 
 					return tui.Draw(runner, MaxHeight)
-				}
+				case types.CommandModeNoView:
+					out, err := extension.Run(subcommand.Name, types.CommandInput{
+						Params: params,
+					})
+					if err != nil {
+						return err
+					}
 
-				out, err := extension.Run(subcommand.Name, types.CommandInput{
-					Params: params,
-				})
-				if err != nil {
-					return err
-				}
+					if len(out) == 0 {
+						return nil
+					}
 
-				if len(out) == 0 {
-					return nil
-				}
+					if err := jsonc.Unmarshal(out, &command); err != nil {
+						return err
+					}
+				case types.CommandModeTTY:
+					cmd, err := extension.Cmd(subcommand.Name, types.CommandInput{
+						Params: params,
+					})
+					if err != nil {
+						return err
+					}
+					cmd.Stderr = os.Stderr
+					output, err := cmd.Output()
+					if err != nil {
+						return err
+					}
 
-				var command types.Command
-				if err := jsonc.Unmarshal(out, &command); err != nil {
-					return err
+					if len(output) == 0 {
+						return nil
+					}
+
+					var command types.Command
+					if err := jsonc.Unmarshal(output, &command); err != nil {
+						return err
+					}
 				}
 
 				switch command.Type {

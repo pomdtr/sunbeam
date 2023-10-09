@@ -237,19 +237,19 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 				}
 
-				buffer := bytes.Buffer{}
-				cmd.Stdout = &buffer
+				output := bytes.Buffer{}
+				cmd.Stdout = &output
 				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 					if err != nil {
 						return err
 					}
 
-					if len(buffer.Bytes()) == 0 {
+					if len(output.Bytes()) == 0 {
 						return nil
 					}
 
 					var command types.Command
-					if err := json.Unmarshal(buffer.Bytes(), &command); err != nil {
+					if err := json.Unmarshal(output.Bytes(), &command); err != nil {
 						return err
 					}
 

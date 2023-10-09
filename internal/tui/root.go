@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -68,6 +69,14 @@ func (c *RootList) SetSize(width, height int) {
 	c.list.SetSize(width, height)
 }
 
+func (c *RootList) SetError(err error) tea.Cmd {
+	c.err = NewErrorPage(err)
+	c.err.SetSize(c.w, c.h)
+	return func() tea.Msg {
+		return err
+	}
+}
+
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -106,47 +115,70 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.Command:
 		switch msg.Type {
 		case types.CommandTypeRun:
-			return c, func() tea.Msg {
-				extension, ok := c.extensions[msg.Extension]
-				if !ok {
-					return fmt.Errorf("extension %s not found", msg.Extension)
-				}
+			extension, ok := c.extensions[msg.Extension]
+			if !ok {
+				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
+			}
 
-				command, ok := extension.Command(msg.Command)
-				if !ok {
-					return fmt.Errorf("command %s not found", msg.Command)
-				}
+			commandspec, ok := extension.Command(msg.Command)
+			if !ok {
+				return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
+			}
 
-				if command.Mode == types.CommandModeView {
-					runner, err := NewRunner(c.extensions, types.CommandRef{
-						Extension: msg.Extension,
-						Command:   msg.Command,
-						Params:    msg.Params,
+			switch commandspec.Mode {
+			case types.CommandModeView:
+				runner, err := NewRunner(c.extensions, types.CommandRef{
+					Extension: msg.Extension,
+					Command:   msg.Command,
+					Params:    msg.Params,
+				})
+
+				if err != nil {
+					return c, c.SetError(err)
+				}
+				return c, PushPageCmd(runner)
+			case types.CommandModeNoView:
+				return c, func() tea.Msg {
+					out, err := extension.Run(commandspec.Name, types.CommandInput{
+						Params: msg.Params,
 					})
-
 					if err != nil {
 						return err
 					}
-					return PushPageMsg{runner}
-				}
 
-				out, err := extension.Run(command.Name, types.CommandInput{
+					if len(out) == 0 {
+						return ExitCmd()
+					}
+
+					var command types.Command
+					if err := json.Unmarshal(out, &command); err != nil {
+						return err
+					}
+					return command
+				}
+			case types.CommandModeTTY:
+				cmd, err := extension.Cmd(commandspec.Name, types.CommandInput{
 					Params: msg.Params,
 				})
 				if err != nil {
-					return err
+					return c, c.SetError(err)
 				}
 
-				if len(out) == 0 {
-					return ExitMsg{}
-				}
+				output := bytes.Buffer{}
+				cmd.Stdout = &output
 
-				outputCommand := types.Command{}
-				if err := json.Unmarshal(out, &outputCommand); err != nil {
-					return err
-				}
+				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
+					if err != nil {
+						return err
+					}
 
-				return outputCommand
+					var command types.Command
+					if err := json.Unmarshal(output.Bytes(), &command); err != nil {
+						return err
+					}
+
+					return command
+				})
 			}
 		case types.CommandTypeCopy:
 			return c, func() tea.Msg {
