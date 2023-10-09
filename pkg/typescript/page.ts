@@ -6,7 +6,8 @@
  */
 
 export type Page = List | Detail | Form;
-export type Formitem =
+export type Command = Copy | Open | Run | Reload | Pop | Exit;
+export type Field =
   | {
       /**
        * The title of the input.
@@ -122,9 +123,9 @@ export interface List {
   /**
    * The items in the list.
    */
-  items: Listitem[];
+  items: Item[];
 }
-export interface Listitem {
+export interface Item {
   /**
    * The title of the item.
    */
@@ -155,7 +156,7 @@ export interface Action {
    * The key used as a shortcut.
    */
   key?: string;
-  onAction: Copy | Open | Run | Reload | Pop | Exit;
+  onAction: Command;
 }
 export interface Copy {
   /**
@@ -263,5 +264,5 @@ export interface Form {
    * The title of the form.
    */
   title?: string;
-  items: Formitem[];
+  fields?: Field[];
 }

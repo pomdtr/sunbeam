@@ -32,7 +32,7 @@ type FormItem struct {
 	Name     string
 }
 
-func NewFormItem(item types.FormItem) *FormItem {
+func NewFormItem(item types.Field) *FormItem {
 	var input FormInput
 	switch item.Type {
 	case types.TextInput:
@@ -64,7 +64,7 @@ func (ta *TextArea) Title() string {
 	return ta.title
 }
 
-func NewTextArea(formItem types.FormItem) *TextArea {
+func NewTextArea(formItem types.Field) *TextArea {
 	ta := textarea.New()
 	ta.Cursor.SetMode(cursor.CursorStatic)
 	ta.Prompt = ""
@@ -105,7 +105,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(input types.FormItem) *TextInput {
+func NewTextInput(input types.Field) *TextInput {
 	ti := textinput.New()
 	ti.Cursor.SetMode(cursor.CursorStatic)
 	ti.Prompt = ""
@@ -165,7 +165,7 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(input types.FormItem) *Checkbox {
+func NewCheckbox(input types.Field) *Checkbox {
 	var defaultValue bool
 	if input.Default != nil {
 		defaultValue = input.Default.(bool)
@@ -261,7 +261,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewDropDown(formItem types.FormItem) *DropDown {
+func NewDropDown(formItem types.Field) *DropDown {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 

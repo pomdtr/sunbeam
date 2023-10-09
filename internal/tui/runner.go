@@ -118,8 +118,8 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.Form:
 		form := msg
 		var formitems []FormItem
-		for _, item := range form.Items {
-			formitems = append(formitems, *NewFormItem(item))
+		for _, field := range form.Fields {
+			formitems = append(formitems, *NewFormItem(field))
 		}
 
 		page := NewForm(c.extension.Title, formitems...)

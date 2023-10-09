@@ -1,8 +1,8 @@
 import json2ts from "npm:json-schema-to-typescript";
-import { build, emptyDir } from "https://deno.land/x/dnt@0.38.0/mod.ts";
+import { build, emptyDir } from "https://deno.land/x/dnt@0.38.1/mod.ts";
 
 // compile from file
-for (const name of ["manifest", "page", "command"]) {
+for (const name of ["manifest", "page"]) {
   const ts = await json2ts.compileFromFile(`../schemas/${name}.schema.json`, {
     cwd: "../schemas",
   });
@@ -13,10 +13,12 @@ await emptyDir(`./npm`);
 await build({
   entryPoints: ["./mod.ts"],
   outDir: `./npm`,
-  shims: {},
+  shims: {
+    deno: true,
+  },
   package: {
     // package.json properties
-    name: "sunbeam-types",
+    name: "sunbeam-sdk",
     version: Deno.args[0],
     description: "Types for sunbeam.",
     license: "MIT",

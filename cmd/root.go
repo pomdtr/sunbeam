@@ -26,7 +26,7 @@ var (
 )
 
 type Config struct {
-	Commands map[string]types.Command `json:"commands"`
+	Root map[string]types.Command `json:"root"`
 }
 
 func LoadConfig() (Config, error) {
@@ -232,7 +232,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					}
 				}
 
-				for title, command := range config.Commands {
+				for title, command := range config.Root {
 					items = append(items, types.ListItem{
 						Id:       fmt.Sprintf("commands/%s", title),
 						Title:    title,

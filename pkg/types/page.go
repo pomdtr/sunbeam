@@ -50,8 +50,8 @@ func (d Detail) MarshalJSON() ([]byte, error) {
 }
 
 type Form struct {
-	Title string     `json:"title,omitempty"`
-	Items []FormItem `json:"items,omitempty"`
+	Title  string  `json:"title,omitempty"`
+	Fields []Field `json:"fields,omitempty"`
 }
 
 func (f Form) MarshalJSON() ([]byte, error) {
@@ -79,13 +79,13 @@ type Metadata struct {
 	Target string `json:"target,omitempty"`
 }
 
-type FormItemType string
+type InputType string
 
 const (
-	TextInput     FormItemType = "text"
-	TextAreaInput FormItemType = "textarea"
-	SelectInput   FormItemType = "select"
-	CheckboxInput FormItemType = "checkbox"
+	TextInput     InputType = "text"
+	TextAreaInput InputType = "textarea"
+	SelectInput   InputType = "select"
+	CheckboxInput InputType = "checkbox"
 )
 
 type DropDownItem struct {
@@ -93,13 +93,17 @@ type DropDownItem struct {
 	Value string `json:"value"`
 }
 
-type FormItem struct {
-	Type        FormItemType `json:"type"`
-	Name        string       `json:"name,omitempty"`
-	Title       string       `json:"title"`
-	Placeholder string       `json:"placeholder,omitempty"`
-	Default     any          `json:"default,omitempty"`
-	Optional    bool         `json:"optional,omitempty"`
+type Field struct {
+	Title    string `json:"title"`
+	Name     string `json:"name,omitempty"`
+	Optional bool   `json:"optional,omitempty"`
+	Input
+}
+
+type Input struct {
+	Type        InputType `json:"type"`
+	Placeholder string    `json:"placeholder,omitempty"`
+	Default     any       `json:"default,omitempty"`
 
 	// Only for dropdown
 	Items []DropDownItem `json:"items,omitempty"`

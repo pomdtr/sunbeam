@@ -36,7 +36,7 @@
                     "description": "The items in the list.",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/listitem"
+                        "$ref": "#/definitions/item"
                     }
                 }
             }
@@ -87,15 +87,15 @@
                     "type": "string",
                     "description": "The title of the form."
                 },
-                "items": {
+                "fields": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/formitem"
+                        "$ref": "#/definitions/field"
                     }
                 }
             }
         },
-        "listitem": {
+        "item": {
             "additionalProperties": false,
             "required": [
                 "title"
@@ -129,7 +129,7 @@
                 }
             }
         },
-        "formitem": {
+        "field": {
             "oneOf": [
                 {
                     "type": "object",
@@ -303,9 +303,12 @@
                     "description": "The key used as a shortcut."
                 },
                 "onAction": {
-                    "$ref": "command.schema.json"
+                    "$ref": "#/definitions/command"
                 }
             }
+        },
+        "command": {
+            "$ref": "command.schema.json"
         }
     }
 }
