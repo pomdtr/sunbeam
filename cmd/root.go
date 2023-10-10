@@ -150,6 +150,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewCmdExtension())
 	rootCmd.AddCommand(NewCmdServe())
+	rootCmd.AddCommand(NewCmdWrap())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
