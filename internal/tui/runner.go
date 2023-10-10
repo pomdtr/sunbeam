@@ -7,6 +7,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -17,8 +18,8 @@ type Runner struct {
 	width, height int
 
 	alias      string
-	extensions map[string]Extension
-	extension  Extension
+	extensions map[string]extensions.Extension
+	extension  extensions.Extension
 	command    types.CommandSpec
 	params     map[string]any
 }
@@ -41,7 +42,7 @@ type CommandRef struct {
 	Params    map[string]any `json:"params,omitempty"`
 }
 
-func NewRunner(extensions map[string]Extension, ref CommandRef) (*Runner, error) {
+func NewRunner(extensions map[string]extensions.Extension, ref CommandRef) (*Runner, error) {
 	extension, ok := extensions[ref.Extension]
 	if !ok {
 		return nil, fmt.Errorf("extension %s not found", ref.Extension)

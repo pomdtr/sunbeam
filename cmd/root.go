@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
@@ -24,7 +25,7 @@ const (
 )
 
 func NewRootCmd() (*cobra.Command, error) {
-	extensions, err := FindExtensions()
+	extensionMap, err := FindExtensions()
 	if err != nil {
 		return nil, err
 	}
@@ -57,14 +58,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				}
 			}
 
-			generator := func() (map[string]tui.Extension, []types.ListItem, error) {
+			generator := func() (map[string]extensions.Extension, []types.ListItem, error) {
 				config, err := LoadConfig()
 				if err != nil && !os.IsNotExist(err) {
 					return nil, nil, err
 				}
 
 				items := make([]types.ListItem, 0)
-				for alias, extension := range extensions {
+				for alias, extension := range extensionMap {
 					for _, command := range extension.Commands {
 						if !IsRootCommand(command) {
 							continue
@@ -120,7 +121,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return timestampA > timestampB
 				})
 
-				return extensions, items, nil
+				return extensionMap, items, nil
 			}
 
 			rootList := tui.NewRootList("Sunbeam", generator)
@@ -137,7 +138,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		ID:    CommandGroupCore,
 		Title: "Core Commands:",
 	})
-	if len(extensions) > 0 {
+	if len(extensionMap) > 0 {
 		rootCmd.AddGroup(&cobra.Group{
 			ID:    CommandGroupExtension,
 			Title: "Extension Commands:",
@@ -188,8 +189,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	for alias := range extensions {
-		command, err := NewCmdCustom(extensions, alias)
+	for alias := range extensionMap {
+		command, err := NewCmdCustom(extensionMap, alias)
 		if err != nil {
 			return nil, err
 		}

@@ -1,4 +1,4 @@
-package tui
+package extensions
 
 import (
 	"encoding/json"
@@ -13,6 +13,11 @@ import (
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
+
+type Extension struct {
+	types.Manifest
+	Entrypoint string
+}
 
 func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	for _, command := range e.Commands {
@@ -81,12 +86,7 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 	return cmd, nil
 }
 
-type Extension struct {
-	types.Manifest
-	Entrypoint string
-}
-
-func LoadExtension(entrypoint string) (Extension, error) {
+func Load(entrypoint string) (Extension, error) {
 	cmd := exec.Command(entrypoint)
 	cmd.Dir = filepath.Dir(entrypoint)
 

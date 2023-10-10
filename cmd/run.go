@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/spf13/cobra"
 )
 
@@ -89,19 +89,19 @@ func NewCmdRun() *cobra.Command {
 				}
 			}
 
-			extension, err := tui.LoadExtension(scriptPath)
+			extension, err := extensions.Load(scriptPath)
 			if err != nil {
 				return err
 			}
 
-			extensions, err := FindExtensions()
+			extensionMap, err := FindExtensions()
 			if err != nil {
 				return err
 			}
 
-			extensions[args[0]] = extension
+			extensionMap[args[0]] = extension
 
-			rootCmd, err := NewCmdCustom(extensions, args[0])
+			rootCmd, err := NewCmdCustom(extensionMap, args[0])
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}

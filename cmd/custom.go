@@ -9,6 +9,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -17,8 +18,8 @@ import (
 	"muzzammil.xyz/jsonc"
 )
 
-func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Command, error) {
-	extension, ok := extensions[alias]
+func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*cobra.Command, error) {
+	extension, ok := extensionMap[alias]
 	if !ok {
 		return nil, fmt.Errorf("extension %s not found", alias)
 	}
@@ -50,7 +51,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 
 			if len(rootCommands) == 1 {
 				command := rootCommands[0]
-				runner, err := tui.NewRunner(extensions, tui.CommandRef{
+				runner, err := tui.NewRunner(extensionMap, tui.CommandRef{
 					Extension: alias,
 					Command:   command.Name,
 				})
@@ -61,7 +62,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 				return tui.Draw(runner, MaxHeight)
 			}
 
-			page := tui.NewRootList(extension.Title, func() (map[string]tui.Extension, []types.ListItem, error) {
+			page := tui.NewRootList(extension.Title, func() (map[string]extensions.Extension, []types.ListItem, error) {
 				items := make([]types.ListItem, 0)
 				for _, command := range rootCommands {
 					items = append(items, types.ListItem{
@@ -79,7 +80,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 						},
 					})
 				}
-				return extensions, items, nil
+				return extensionMap, items, nil
 			})
 
 			return tui.Draw(page, MaxHeight)
@@ -138,7 +139,7 @@ func NewCmdCustom(extensions map[string]tui.Extension, alias string) (*cobra.Com
 						return nil
 					}
 
-					runner, err := tui.NewRunner(extensions, tui.CommandRef{
+					runner, err := tui.NewRunner(extensionMap, tui.CommandRef{
 						Extension: alias,
 						Command:   subcommand.Name,
 						Params:    params,

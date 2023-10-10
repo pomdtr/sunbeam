@@ -15,7 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
@@ -57,7 +57,7 @@ func NewCmdServe() *cobra.Command {
 				entrypoint = filepath.Join(entrypoint, "sunbeam-extension")
 			}
 
-			extension, err := tui.LoadExtension(entrypoint)
+			extension, err := extensions.Load(entrypoint)
 			if err != nil {
 				return err
 			}

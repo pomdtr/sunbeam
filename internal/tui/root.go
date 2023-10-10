@@ -7,6 +7,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
@@ -16,12 +17,12 @@ type RootList struct {
 	title      string
 	err        *Detail
 	list       *List
-	generator  func() (map[string]Extension, []types.ListItem, error)
+	generator  func() (map[string]extensions.Extension, []types.ListItem, error)
 	OnSelect   func(id string)
-	extensions map[string]Extension
+	extensions map[string]extensions.Extension
 }
 
-func NewRootList(title string, generator func() (map[string]Extension, []types.ListItem, error)) *RootList {
+func NewRootList(title string, generator func() (map[string]extensions.Extension, []types.ListItem, error)) *RootList {
 	return &RootList{
 		title:     title,
 		list:      NewList(),
@@ -34,7 +35,7 @@ func (c *RootList) Init() tea.Cmd {
 }
 
 type RefreshMsg struct {
-	extensions map[string]Extension
+	extensions map[string]extensions.Extension
 	rootItems  []types.ListItem
 }
 

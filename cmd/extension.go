@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
@@ -142,7 +142,7 @@ func installFromLocalDir(srcDir string, targetDir string) (err error) {
 		return fmt.Errorf("extension %s not found", srcDir)
 	}
 
-	extension, err := tui.LoadExtension(entrypoint)
+	extension, err := extensions.Load(entrypoint)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func installFromRepository(origin string, targetDir string) (err error) {
 		return err
 	}
 
-	extension, err := tui.LoadExtension(filepath.Join(srcDir, "sunbeam-extension"))
+	extension, err := extensions.Load(filepath.Join(srcDir, "sunbeam-extension"))
 	if err != nil {
 		return err
 	}
@@ -372,7 +372,7 @@ func upgradeExtension(extensionDir string) error {
 	}
 
 	// refresh manifest
-	extension, err := tui.LoadExtension(filepath.Join(extensionDir, "src", "sunbeam-extension"))
+	extension, err := extensions.Load(filepath.Join(extensionDir, "src", "sunbeam-extension"))
 	if err != nil {
 		return err
 	}
@@ -452,7 +452,7 @@ func NewCmdExtensionRename() *cobra.Command {
 	return cmd
 }
 
-func FindExtensions() (map[string]tui.Extension, error) {
+func FindExtensions() (map[string]extensions.Extension, error) {
 	extensionRoot := filepath.Join(dataHome(), "extensions")
 	if _, err := os.Stat(extensionRoot); err != nil {
 		return nil, nil
@@ -462,7 +462,7 @@ func FindExtensions() (map[string]tui.Extension, error) {
 	if err != nil {
 		return nil, err
 	}
-	extensionMap := make(map[string]tui.Extension)
+	extensionMap := make(map[string]extensions.Extension)
 	for _, entry := range entries {
 		manifestPath := filepath.Join(extensionRoot, entry.Name(), "manifest.json")
 		f, err := os.Open(manifestPath)
@@ -476,7 +476,7 @@ func FindExtensions() (map[string]tui.Extension, error) {
 			continue
 		}
 
-		extensionMap[entry.Name()] = tui.Extension{
+		extensionMap[entry.Name()] = extensions.Extension{
 			Manifest:   manifest,
 			Entrypoint: filepath.Join(extensionRoot, entry.Name(), "src", "sunbeam-extension"),
 		}
