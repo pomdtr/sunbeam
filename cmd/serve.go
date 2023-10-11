@@ -126,46 +126,45 @@ func NewCmdServeSSH() *cobra.Command {
 				}
 
 				if len(rootCommands) == 0 {
-					return cmd.Usage()
+					return fmt.Errorf("no root commands found in extension %s", args[0])
 				}
 
 				if len(rootCommands) == 1 {
 					command := rootCommands[0]
-					runner, err := tui.NewRunner(extensionMap, tui.CommandRef{
-						Extension: args[0],
-						Command:   command.Name,
-					})
 
-					if err != nil {
-						return err
+					middleware = func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+						runner, _ := tui.NewRunner(extensionMap, tui.CommandRef{
+							Extension: args[0],
+							Command:   command.Name,
+						})
+						return tui.NewPaginator(runner), []tea.ProgramOption{tea.WithAltScreen()}
 					}
-					return tui.Draw(runner)
-				}
-
-				generator := func() (map[string]extensions.Extension, []types.ListItem, error) {
-					items := make([]types.ListItem, 0)
-					for _, command := range rootCommands {
-						items = append(items, types.ListItem{
-							Title:    command.Title,
-							Subtitle: extension.Title,
-							Actions: []types.Action{
-								{
-									Title: "Run Command",
-									OnAction: types.Command{
-										Type:      types.CommandTypeRun,
-										Extension: args[0],
-										Command:   command.Name,
+				} else {
+					generator := func() (map[string]extensions.Extension, []types.ListItem, error) {
+						items := make([]types.ListItem, 0)
+						for _, command := range rootCommands {
+							items = append(items, types.ListItem{
+								Title:    command.Title,
+								Subtitle: extension.Title,
+								Actions: []types.Action{
+									{
+										Title: "Run Command",
+										OnAction: types.Command{
+											Type:      types.CommandTypeRun,
+											Extension: args[0],
+											Command:   command.Name,
+										},
 									},
 								},
-							},
-						})
+							})
+						}
+						return extensionMap, items, nil
 					}
-					return extensionMap, items, nil
-				}
 
-				middleware = func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
-					page := tui.NewRootList(extension.Title, generator)
-					return tui.NewPaginator(page), []tea.ProgramOption{tea.WithAltScreen()}
+					middleware = func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+						page := tui.NewRootList(extension.Title, generator)
+						return tui.NewPaginator(page), []tea.ProgramOption{tea.WithAltScreen()}
+					}
 				}
 			}
 
