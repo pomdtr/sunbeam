@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
 
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -21,6 +23,7 @@ var (
 
 const (
 	CommandGroupCore      = "core"
+	CommandGroupDev       = "dev"
 	CommandGroupExtension = "extension"
 )
 
@@ -52,6 +55,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					entries: make(map[string]int64),
 					path:    historyPath,
 				}
+			}
+
+			if len(extensionMap) == 0 {
+				return cmd.Usage()
 			}
 
 			generator := func() (map[string]extensions.Extension, []types.ListItem, error) {
@@ -101,6 +108,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return extensionMap, items, nil
 			}
 
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				_, list, err := generator()
+				if err != nil {
+					return err
+				}
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				return encoder.Encode(list)
+			}
+
 			rootList := tui.NewRootList("Sunbeam", generator)
 			rootList.OnSelect = func(id string) {
 				history.entries[id] = time.Now().Unix()
@@ -114,7 +131,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    CommandGroupCore,
 		Title: "Core Commands:",
+	}, &cobra.Group{
+		ID:    CommandGroupDev,
+		Title: "Development Commands:",
 	})
+
 	if len(extensionMap) > 0 {
 		rootCmd.AddGroup(&cobra.Group{
 			ID:    CommandGroupExtension,

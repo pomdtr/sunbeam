@@ -9,10 +9,10 @@ import (
 
 func NewCmdWrap() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "wrap",
-		Short:  "Wrap a command to be used interactively from a sunbeam extension",
-		Hidden: true,
-		Args:   cobra.MinimumNArgs(1),
+		Use:     "wrap",
+		Short:   "Wrap a command to be used interactively from a sunbeam extension",
+		GroupID: CommandGroupDev,
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tty, err := os.Open("/dev/tty")
 			if err != nil {

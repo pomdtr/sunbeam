@@ -27,7 +27,7 @@ func NewCmdQuery() *cobra.Command {
 		Use:     "query <query> [file]",
 		Short:   "Transform or generate JSON using a jq query",
 		Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
-		GroupID: CommandGroupCore,
+		GroupID: CommandGroupDev,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			vars := make([]string, 0)

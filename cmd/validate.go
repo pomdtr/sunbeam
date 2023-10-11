@@ -13,7 +13,7 @@ import (
 func NewValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "validate",
-		GroupID: CommandGroupCore,
+		GroupID: CommandGroupDev,
 		Short:   "Validate a Sunbeam schema",
 	}
 
