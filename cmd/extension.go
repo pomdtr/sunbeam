@@ -18,6 +18,10 @@ import (
 	"golang.org/x/mod/semver"
 )
 
+var (
+	extensionRoot = filepath.Join(dataHome(), "extensions")
+)
+
 func NewCmdExtension() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "extension",
@@ -30,6 +34,7 @@ func NewCmdExtension() *cobra.Command {
 	cmd.AddCommand(NewCmdExtensionInstall())
 	cmd.AddCommand(NewCmdExtensionUpgrade())
 	cmd.AddCommand(NewCmdExtensionRemove())
+	cmd.AddCommand(NewCmdExtensionReload())
 	cmd.AddCommand(NewCmdExtensionRename())
 	cmd.AddCommand(NewCmdExtensionBrowse())
 
@@ -43,6 +48,30 @@ func NewCmdExtensionBrowse() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return utils.Open("https://github.com/topics/sunbeam-extension")
+		},
+	}
+}
+
+func NewCmdExtensionReload() *cobra.Command {
+	return &cobra.Command{
+		Use:  "reload <alias>",
+		Args: cobra.ExactArgs(1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			extensions, err := FindExtensions()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			var completions []string
+			for alias := range extensions {
+				completions = append(completions, alias)
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			extensionDir := filepath.Join(extensionRoot, args[0])
+			return reloadManifest(filepath.Join(extensionDir, "src", "sunbeam-extension"), filepath.Join(extensionDir, "manifest.json"))
 		},
 	}
 }
@@ -90,7 +119,6 @@ func NewCmdExtensionInstall() *cobra.Command {
 		Short:   "Install an extension",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			extensionRoot := filepath.Join(dataHome(), "extensions")
 			if info, err := os.Stat(args[0]); err == nil {
 				if !info.IsDir() {
 					return fmt.Errorf("src must be a directory")
@@ -110,7 +138,10 @@ func NewCmdExtensionInstall() *cobra.Command {
 					alias = strings.TrimPrefix(alias, "sunbeam-")
 				}
 
-				return installFromLocalDir(origin, filepath.Join(extensionRoot, alias))
+				if err := installFromLocalDir(origin, filepath.Join(extensionRoot, alias)); err != nil {
+					return err
+				}
+
 			}
 
 			origin := args[0]
@@ -167,7 +198,7 @@ func installFromLocalDir(srcDir string, targetDir string) (err error) {
 		return err
 	}
 
-	if err := os.Symlink(srcDir, filepath.Join(targetDir, "src")); err != nil {
+	if err := os.Symlink(srcDir, targetDir); err != nil {
 		return err
 	}
 
@@ -189,37 +220,19 @@ func installFromRepository(origin string, targetDir string) (err error) {
 		}
 	}()
 
-	srcDir := filepath.Join(targetDir, "src")
 	var cloneCmd *exec.Cmd
 	if tag, err := getLatestTag(origin); err == nil {
-		cloneCmd = exec.Command("git", "clone", "--depth=1", fmt.Sprintf("--branch=%s", tag), tag, origin, srcDir)
+		cloneCmd = exec.Command("git", "clone", "--depth=1", fmt.Sprintf("--branch=%s", tag), tag, origin, filepath.Join(targetDir, "src"))
 	} else {
-		cloneCmd = exec.Command("git", "clone", "--depth=1", origin, srcDir)
+		cloneCmd = exec.Command("git", "clone", "--depth=1", origin, filepath.Join(targetDir, "src"))
 	}
 
-	cloneCmd.Stdout = os.Stdout
 	cloneCmd.Stderr = os.Stderr
 	if err := cloneCmd.Run(); err != nil {
 		return err
 	}
 
-	extension, err := extensions.Load(filepath.Join(srcDir, "sunbeam-extension"))
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(filepath.Join(targetDir, "manifest.json"))
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(f)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(extension.Manifest); err != nil {
-		return err
-	}
-
-	return nil
+	return reloadManifest(filepath.Join(targetDir, "src", "sunbeam-extension"), filepath.Join(targetDir, "manifest.json"))
 }
 
 func getLatestTag(origin string) (string, error) {
@@ -288,6 +301,10 @@ func NewCmdExtensionUpgrade() *cobra.Command {
 				return fmt.Errorf("cannot use --all with an extension")
 			}
 
+			if !flags.all && len(args) == 0 {
+				return fmt.Errorf("must specify an extension or use --all")
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -309,13 +326,14 @@ func NewCmdExtensionUpgrade() *cobra.Command {
 			for _, alias := range toUpgrade {
 				cmd.PrintErrln()
 				cmd.PrintErrf("Upgrading %s...\n", alias)
-				extensionDir := filepath.Join(dataHome(), "extensions", alias)
+				extensionDir := filepath.Join(extensionRoot, alias)
 
 				if err := upgradeExtension(extensionDir); err != nil {
 					cmd.PrintErrln(err)
-				} else {
-					cmd.PrintErrln("done")
+					continue
 				}
+
+				cmd.PrintErrln("Done")
 			}
 
 			return nil
@@ -328,68 +346,37 @@ func NewCmdExtensionUpgrade() *cobra.Command {
 }
 
 func upgradeExtension(extensionDir string) error {
-	f, err := os.Open(filepath.Join(extensionDir, "manifest.json"))
+	// check if extensionDir is a symlink
+	if info, err := os.Lstat(extensionDir); err == nil && info.Mode()&os.ModeSymlink != 0 {
+		return nil
+	}
+
+	getOriginCmd := exec.Command("git", "remote", "get-url", "origin")
+	getOriginCmd.Dir = filepath.Join(extensionDir, "src")
+	originBytes, err := getOriginCmd.Output()
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	var manifest types.Manifest
-	if err := json.NewDecoder(f).Decode(&manifest); err != nil {
-		return err
-	}
-	f.Close()
-
-	// check if extensionDir is a symlink
-	if info, err := os.Lstat(extensionDir); err == nil && info.Mode()&os.ModeSymlink == 0 {
-		getOriginCmd := exec.Command("git", "remote", "get-url", "origin")
-		getOriginCmd.Dir = filepath.Join(extensionDir, "src")
-		originBytes, err := getOriginCmd.Output()
-		if err != nil {
+	origin := string(bytes.TrimSpace(originBytes))
+	if tag, err := getLatestTag(origin); err == nil {
+		checkoutCmd := exec.Command("git", "checkout", tag)
+		checkoutCmd.Dir = filepath.Join(extensionDir, "src")
+		checkoutCmd.Stderr = os.Stderr
+		if err := checkoutCmd.Run(); err != nil {
 			return err
 		}
+	} else {
+		pullCmd := exec.Command("git", "pull")
+		pullCmd.Dir = filepath.Join(extensionDir, "src")
+		pullCmd.Stderr = os.Stderr
 
-		origin := string(bytes.TrimSpace(originBytes))
-		if tag, err := getLatestTag(origin); err == nil {
-			checkoutCmd := exec.Command("git", "checkout", tag)
-			checkoutCmd.Dir = filepath.Join(extensionDir, "src")
-			checkoutCmd.Stdout = os.Stdout
-			checkoutCmd.Stderr = os.Stderr
-			if err := checkoutCmd.Run(); err != nil {
-				return err
-			}
-
-		} else {
-			pullCmd := exec.Command("git", "pull")
-			pullCmd.Dir = filepath.Join(extensionDir, "src")
-			pullCmd.Stdout = os.Stdout
-			pullCmd.Stderr = os.Stderr
-
-			if err := pullCmd.Run(); err != nil {
-				return err
-			}
+		if err := pullCmd.Run(); err != nil {
+			return err
 		}
 	}
 
-	// refresh manifest
-	extension, err := extensions.Load(filepath.Join(extensionDir, "src", "sunbeam-extension"))
-	if err != nil {
-		return err
-	}
-
-	f, err = os.Create(filepath.Join(extensionDir, "manifest.json"))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	encoder := json.NewEncoder(f)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(extension.Manifest); err != nil {
-		return err
-	}
-
-	return nil
+	return reloadManifest(filepath.Join(extensionDir, "src", "sunbeam-extension"), filepath.Join(extensionDir, "manifest.json"))
 }
 
 func NewCmdExtensionRemove() *cobra.Command {
@@ -411,7 +398,7 @@ func NewCmdExtensionRemove() *cobra.Command {
 			return completions, cobra.ShellCompDirectiveNoFileComp
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionDir := filepath.Join(dataHome(), "extensions", args[0])
+			extensionDir := filepath.Join(extensionRoot, args[0])
 			return os.RemoveAll(extensionDir)
 		},
 	}
@@ -442,9 +429,8 @@ func NewCmdExtensionRename() *cobra.Command {
 		},
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionDir := filepath.Join(dataHome(), "extensions", args[0])
-			newExtensionDir := filepath.Join(dataHome(), "extensions", args[1])
-
+			extensionDir := filepath.Join(extensionRoot, args[0])
+			newExtensionDir := filepath.Join(extensionRoot, args[1])
 			return os.Rename(extensionDir, newExtensionDir)
 		},
 	}
@@ -453,7 +439,6 @@ func NewCmdExtensionRename() *cobra.Command {
 }
 
 func FindExtensions() (map[string]extensions.Extension, error) {
-	extensionRoot := filepath.Join(dataHome(), "extensions")
 	if _, err := os.Stat(extensionRoot); err != nil {
 		return nil, nil
 	}
@@ -464,12 +449,10 @@ func FindExtensions() (map[string]extensions.Extension, error) {
 	}
 	extensionMap := make(map[string]extensions.Extension)
 	for _, entry := range entries {
-		manifestPath := filepath.Join(extensionRoot, entry.Name(), "manifest.json")
-		f, err := os.Open(manifestPath)
+		f, err := os.Open(filepath.Join(extensionRoot, entry.Name(), "manifest.json"))
 		if err != nil {
 			continue
 		}
-		defer f.Close()
 
 		var manifest types.Manifest
 		if err := json.NewDecoder(f).Decode(&manifest); err != nil {
@@ -483,4 +466,20 @@ func FindExtensions() (map[string]extensions.Extension, error) {
 	}
 
 	return extensionMap, nil
+}
+
+func reloadManifest(entrypoint string, manifestPath string) error {
+	extension, err := extensions.Load(entrypoint)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(manifestPath)
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(extension.Manifest)
 }
