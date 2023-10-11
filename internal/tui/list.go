@@ -13,6 +13,7 @@ type List struct {
 	filter        Filter
 	height        int
 	width         int
+	Actions       []types.Action
 	OnQueryChange func(string) tea.Cmd
 	OnSelect      func(string) tea.Cmd
 }
@@ -34,6 +35,17 @@ func NewList(items ...types.ListItem) *List {
 
 	list.SetItems(items...)
 	return list
+}
+
+func (l *List) SetActions(actions ...types.Action) {
+	l.Actions = actions
+	if l.filter.Selection() == nil {
+		l.statusBar.SetActions(actions...)
+	}
+}
+
+func (l *List) SetEmptyText(text string) {
+	l.filter.EmptyText = text
 }
 
 func (c *List) Init() tea.Cmd {
@@ -85,7 +97,7 @@ func (c *List) SetItems(items ...types.ListItem) {
 
 	selection := c.filter.Selection()
 	if selection == nil {
-		c.statusBar.SetActions()
+		c.statusBar.SetActions(c.Actions...)
 	} else {
 		c.statusBar.SetActions(selection.(ListItem).Actions...)
 	}
@@ -118,6 +130,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		if c.OnQueryChange != nil {
 			query := statusBar.Value()
 			cmds = append(cmds, tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
+				c.filter.EmptyText = "Loading..."
 				if query == c.statusBar.Value() {
 					return QueryChangeMsg(query)
 				}
@@ -129,6 +142,8 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 		if c.filter.Selection() != nil {
 			statusBar.SetActions(c.filter.Selection().(ListItem).Actions...)
+		} else {
+			statusBar.SetActions(c.Actions...)
 		}
 	}
 
@@ -137,7 +152,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	oldSelection := c.filter.Selection()
 	newSelection := filter.Selection()
 	if newSelection == nil {
-		statusBar.SetActions()
+		statusBar.SetActions(c.Actions...)
 	} else if oldSelection == nil || oldSelection.ID() != newSelection.ID() {
 		statusBar.SetActions(newSelection.(ListItem).Actions...)
 	}

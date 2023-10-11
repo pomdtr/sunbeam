@@ -24,6 +24,7 @@ type Filter struct {
 	Query         string
 	Less          func(i, j FilterItem) bool
 	Reversed      bool
+	EmptyText     string
 
 	items    []FilterItem
 	filtered []FilterItem
@@ -122,6 +123,10 @@ func (m Filter) View() string {
 	rows := make([]string, 0)
 
 	if len(m.filtered) == 0 {
+		if m.EmptyText != "" {
+			return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.EmptyText)
+		}
+
 		if len(m.items) != 0 {
 			return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "No matches")
 		}

@@ -11,6 +11,17 @@
             "const": "list",
             "description": "The type of the page."
         },
+        "emptyText": {
+            "type": "string",
+            "description": "The text to show when the list is empty."
+        },
+        "actions": {
+            "type": "array",
+            "description": "The actions to show when the list is empty.",
+            "items": {
+                "$ref": "./action.schema.json"
+            }
+        },
         "reload": {
             "type": "boolean",
             "description": "Whether the list should be reloaded when the query changes."

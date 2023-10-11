@@ -144,6 +144,13 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.List:
 		list := msg
 		page := NewList(list.Items...)
+		if list.EmptyText != "" {
+			page.SetEmptyText(list.EmptyText)
+		}
+		if list.Actions != nil {
+			page.SetActions(list.Actions...)
+		}
+
 		if list.Reload {
 			page.OnQueryChange = func(query string) tea.Cmd {
 				return c.Reload(types.CommandInput{

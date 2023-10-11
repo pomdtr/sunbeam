@@ -16,9 +16,11 @@ const (
 )
 
 type List struct {
-	Title  string     `json:"title,omitempty"`
-	Items  []ListItem `json:"items,omitempty"`
-	Reload bool       `json:"reload,omitempty"`
+	Title     string     `json:"title,omitempty"`
+	Items     []ListItem `json:"items,omitempty"`
+	Reload    bool       `json:"reload,omitempty"`
+	EmptyText string     `json:"emptyText,omitempty"`
+	Actions   []Action   `json:"actions,omitempty"`
 }
 
 func (l List) MarshalJSON() ([]byte, error) {
