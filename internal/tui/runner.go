@@ -90,6 +90,7 @@ func (c *Runner) Focus() tea.Cmd {
 	if c.embed == nil {
 		return nil
 	}
+	termOutput.SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
 	return c.embed.Focus()
 }
 
