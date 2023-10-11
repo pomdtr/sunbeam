@@ -96,7 +96,7 @@ func NewCmdQuery() *cobra.Command {
 				}
 			}
 
-			var outputs []gojq.Iter
+			outputs := make([]gojq.Iter, 0)
 			if jqFlags.Slurp {
 				if jqFlags.RawInput {
 					input := strings.Builder{}
@@ -105,15 +105,9 @@ func NewCmdQuery() *cobra.Command {
 						input.WriteString("\n")
 					}
 					outputs = append(outputs, code.Run(input.String(), values...))
+				} else if jqFlags.NullInput {
+					outputs = append(outputs, code.Run(nil, values...))
 				} else {
-					if len(inputs) == 0 {
-						fmt.Println("[]")
-						return nil
-					} else if len(inputs) == 1 && inputs[0] == nil {
-						fmt.Println("null")
-						return nil
-					}
-
 					outputs = append(outputs, code.Run(inputs, values...))
 				}
 			} else {
@@ -142,6 +136,12 @@ func NewCmdQuery() *cobra.Command {
 							continue
 						}
 					}
+
+					// go encode empty array as null, we want an empty array
+					if s, ok := v.([]interface{}); ok && len(s) == 0 {
+						v = make([]interface{}, 0)
+					}
+
 					err := encoder.Encode(v)
 					if err != nil {
 						return fmt.Errorf("could not encode output: %s", err)
