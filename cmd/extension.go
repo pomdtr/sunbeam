@@ -434,15 +434,15 @@ func NewCmdExtensionRename() *cobra.Command {
 }
 
 func FindExtensions() (map[string]extensions.Extension, error) {
+	extensionMap := make(map[string]extensions.Extension)
 	if _, err := os.Stat(extensionRoot); err != nil {
-		return nil, nil
+		return extensionMap, nil
 	}
 
 	entries, err := os.ReadDir(extensionRoot)
 	if err != nil {
 		return nil, err
 	}
-	extensionMap := make(map[string]extensions.Extension)
 	for _, entry := range entries {
 		f, err := os.Open(filepath.Join(extensionRoot, entry.Name(), "manifest.json"))
 		if err != nil {
