@@ -74,9 +74,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 						}
 
 						items = append(items, types.ListItem{
-							Id:       fmt.Sprintf("extensions/%s/%s", alias, command.Name),
-							Title:    command.Title,
-							Subtitle: extension.Title,
+							Id:          fmt.Sprintf("extensions/%s/%s", alias, command.Name),
+							Title:       command.Title,
+							Subtitle:    extension.Title,
+							Accessories: []string{alias},
 							Actions: []types.Action{
 								{
 									Title: "Run",
