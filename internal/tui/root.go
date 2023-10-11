@@ -93,17 +93,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		case "ctrl+r":
 			return c, c.Reload()
-		case "ctrl+e":
-			editCmd := utils.EditCmd(utils.ConfigPath())
-			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				return types.Command{
-					Type: types.CommandTypeReload,
-				}
-			})
 		}
 	case RefreshMsg:
 		c.list.SetItems(msg.rootItems...)

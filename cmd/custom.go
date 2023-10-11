@@ -59,7 +59,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 				if err != nil {
 					return err
 				}
-				return tui.Draw(runner, MaxHeight)
+				return tui.Draw(runner)
 			}
 
 			page := tui.NewRootList(extension.Title, func() (map[string]extensions.Extension, []types.ListItem, error) {
@@ -83,7 +83,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 				return extensionMap, items, nil
 			})
 
-			return tui.Draw(page, MaxHeight)
+			return tui.Draw(page)
 		},
 	}
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -149,7 +149,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 						return err
 					}
 
-					return tui.Draw(runner, MaxHeight)
+					return tui.Draw(runner)
 				case types.CommandModeNoView:
 					out, err := extension.Run(subcommand.Name, types.CommandInput{
 						Params: params,

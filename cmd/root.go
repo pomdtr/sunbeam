@@ -41,11 +41,7 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cacheDir, err := os.UserCacheDir()
-			if err != nil {
-				return err
-			}
-			historyPath := filepath.Join(cacheDir, "sunbeam", "history.json")
+			historyPath := filepath.Join(cacheHome(), "history.json")
 			history, err := LoadHistory(historyPath)
 			if err != nil {
 				if !os.IsNotExist(err) {
@@ -59,11 +55,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			generator := func() (map[string]extensions.Extension, []types.ListItem, error) {
-				config, err := LoadConfig()
-				if err != nil && !os.IsNotExist(err) {
-					return nil, nil, err
-				}
-
 				items := make([]types.ListItem, 0)
 				for alias, extension := range extensionMap {
 					for _, command := range extension.Commands {
@@ -93,20 +84,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					}
 				}
 
-				for title, command := range config.Root {
-					items = append(items, types.ListItem{
-						Id:       fmt.Sprintf("commands/%s", title),
-						Title:    title,
-						Subtitle: "Command",
-						Actions: []types.Action{
-							{
-								Title:    "Run Action",
-								OnAction: command,
-							},
-						},
-					})
-				}
-
 				sort.Slice(items, func(i, j int) bool {
 					timestampA, ok := history.entries[items[i].Id]
 					if !ok {
@@ -130,7 +107,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				_ = history.Save()
 			}
 
-			return tui.Draw(rootList, MaxHeight)
+			return tui.Draw(rootList)
 		},
 	}
 

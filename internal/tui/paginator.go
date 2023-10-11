@@ -4,7 +4,6 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
 
@@ -46,16 +45,15 @@ func ExitCmd() tea.Msg {
 
 type Paginator struct {
 	width, height int
-	maxHeight     int
 
 	pages  []Page
 	hidden bool
 }
 
-func NewPaginator(root Page, maxHeight int) *Paginator {
+func NewPaginator(root Page) *Paginator {
 	return &Paginator{pages: []Page{
 		root,
-	}, maxHeight: maxHeight}
+	}}
 }
 
 func (m *Paginator) Init() tea.Cmd {
@@ -113,9 +111,6 @@ func (m *Paginator) View() string {
 
 	if len(m.pages) > 0 {
 		currentPage := m.pages[len(m.pages)-1]
-		if m.maxHeight > 0 {
-			return lipgloss.NewStyle().PaddingTop(1).Render(currentPage.View())
-		}
 		return currentPage.View()
 	}
 
@@ -127,25 +122,8 @@ func (m *Paginator) SetSize(width, height int) {
 	m.height = height
 
 	for _, page := range m.pages {
-		page.SetSize(m.pageWidth(), m.pageHeight())
+		page.SetSize(m.width, m.height)
 	}
-}
-
-func (m *Paginator) pageWidth() int {
-	return m.width
-}
-
-func (m *Paginator) pageHeight() int {
-	if m.maxHeight == 0 {
-		return m.height
-	}
-
-	height := min(m.height, m.maxHeight)
-	if height > 0 {
-		return height - 1 // margin top
-	}
-
-	return height
 }
 
 func (m *Paginator) Push(page Page) tea.Cmd {
@@ -153,7 +131,7 @@ func (m *Paginator) Push(page Page) tea.Cmd {
 	if len(m.pages) > 0 {
 		cmd = m.pages[len(m.pages)-1].Blur()
 	}
-	page.SetSize(m.pageWidth(), m.pageHeight())
+	page.SetSize(m.width, m.height)
 	m.pages = append(m.pages, page)
 	return tea.Sequence(cmd, page.Init(), page.Focus())
 }
@@ -172,14 +150,10 @@ func (m *Paginator) Pop() tea.Cmd {
 	return tea.Sequence(cmds...)
 }
 
-func Draw(page Page, maxHeight int) error {
-	paginator := NewPaginator(page, maxHeight)
-	var p *tea.Program
-	if maxHeight > 0 {
-		p = tea.NewProgram(paginator)
-	} else {
-		p = tea.NewProgram(paginator, tea.WithAltScreen())
-	}
+func Draw(page Page) error {
+	paginator := NewPaginator(page)
+	p := tea.NewProgram(paginator, tea.WithAltScreen())
+
 	_, err := p.Run()
 	termOutput.SetWindowTitle("")
 	if err != nil {

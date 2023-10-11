@@ -5,40 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
-	"github.com/tailscale/hujson"
-)
-
-var (
-	MaxHeight = LookupIntEnv("SUNBEAM_HEIGHT", 0)
 )
 
 type Config struct {
 	Root map[string]types.Command `json:"root"`
-}
-
-func LoadConfig() (Config, error) {
-	configBytes, err := os.ReadFile(utils.ConfigPath())
-	if err != nil {
-		if os.IsNotExist(err) {
-			return Config{}, nil
-		}
-
-		return Config{}, err
-	}
-
-	jsonBytes, err := hujson.Standardize(configBytes)
-	if err != nil {
-		return Config{}, err
-	}
-
-	var config Config
-	if err := json.Unmarshal(jsonBytes, &config); err != nil {
-		return Config{}, err
-	}
-
-	return config, nil
 }
 
 type ExtensionCache map[string]types.Manifest
@@ -49,6 +20,14 @@ func dataHome() string {
 	}
 
 	return filepath.Join(os.Getenv("HOME"), ".local", "share", "sunbeam")
+}
+
+func cacheHome() string {
+	if env, ok := os.LookupEnv("XDG_CACHE_HOME"); ok {
+		return filepath.Join(env, "sunbeam")
+	}
+
+	return filepath.Join(os.Getenv("HOME"), ".cache", "sunbeam")
 }
 
 type History struct {

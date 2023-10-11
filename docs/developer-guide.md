@@ -1,17 +1,16 @@
 # Developer Guide
 
-Sunbeam extensions can be written in any language. They are executed as standalone processes, and communicate with the sunbeam core using json payloads. However, some languages are better suited than others for writing sunbeam extensions.
+Sunbeam extensions can be written in any language.
+They are executed as standalone processes, and communicate with the sunbeam using json payloads.
 
-- Bash: sunbeam provides helpers to write bash extensions.
+However, some languages are better suited than others for writing sunbeam extensions:
+
+- shell: Shell scripts are a good choice for writing simple sunbeam extensions. They are easy to write, and can be executed directly by sunbeam.
     - `sunbeam query` allows you to create/transfor json payloads (it's a go port of [jq](https://stedolan.github.io/jq/))
     - `sunbeam fetch` allows you to perform http requests (with an api similar to [curl](https://curl.se/))
-- Deno: Deno is a secure runtime for javascript/typescript. It's a good choice for writing complex sunbeam extensions, since importing external dependencies can be done using a url.
+- deno: Deno is a secure runtime for javascript/typescript. It's a good choice for writing complex sunbeam extensions, since importing external dependencies can be done using a url.
 
-## Example Extensions
-
-Take a look at the extension available in the [extension registry](https://github.com/topics/sunbeam-extension) to get a better idea of what a sunbeam extension looks like.
-
-## Sunbeam Extensions
+## Anatomy of an extension
 
 A sunbeam extension is a directory containing a `sunbeam-extension` file.
 
@@ -22,17 +21,7 @@ The file must respect the following contract:
 - When called with a command name as first argument, it must execute the command, and optionally return a json payload on stdout.
     - The output schema depends on the command mode defined in the manifest.
 
-### Manifest
-
-### Input payload
-
-### Output payload
-
-### Examples
-
-Multiple examples are avaibles on github. Browse the [extension registry](https://github.com/topics/sunbeam-extension) to find them.
-
-## Publishing an extension
+## Releasing an extension
 
 Create a git repository containing your extension, and push it to github.
 
@@ -42,6 +31,10 @@ Users can now install it using the `sunbeam extension install <repo-url>` comman
 
 If you push new commits to the main branch, users can upgrade to the latest version using the `sunbeam extension upgrade <extension-alias>` command.
 
-> ℹ️ Soon sunbeam will support more advanced publushing workflows, including pre-compiled extensions and tagged releases.
+If you prefer, you can use tags instead. Sunbeam will use the latest tag (according to semver) as the extension version.
 
-Then, add the `sunbeam-extension` topic to your repository. It will allow users to find your extension using the `sunbeam extension browse` command.
+## Publishing an extension
+
+Add the `sunbeam-extension` topic to your github repository to make it discoverable.
+
+You can use the `sunbeam extension browse` command from sunbeam to open the extension registry in your browser.
