@@ -155,10 +155,5 @@ func Draw(page Page) error {
 	p := tea.NewProgram(paginator, tea.WithAltScreen())
 
 	_, err := p.Run()
-	termOutput.SetWindowTitle("")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
