@@ -106,6 +106,14 @@ func NewCmdQuery() *cobra.Command {
 					}
 					outputs = append(outputs, code.Run(input.String(), values...))
 				} else {
+					if len(inputs) == 0 {
+						fmt.Println("[]")
+						return nil
+					} else if len(inputs) == 1 && inputs[0] == nil {
+						fmt.Println("null")
+						return nil
+					}
+
 					outputs = append(outputs, code.Run(inputs, values...))
 				}
 			} else {
