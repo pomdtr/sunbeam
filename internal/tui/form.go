@@ -29,7 +29,7 @@ type SubmitMsg map[string]any
 func NewForm(id string, fields ...types.Field) (*Form, error) {
 	viewport := viewport.New(0, 0)
 
-	items := make([]FormItem, 0, len(fields))
+	items := make([]FormItem, len(fields))
 	for i, field := range fields {
 		item, err := NewFormItem(field)
 		if err != nil {
@@ -82,6 +82,14 @@ func (c *Form) CurrentItem() FormInput {
 	return c.items[c.focusIndex]
 }
 
+func (f Form) itemsHeight() int {
+	height := 0
+	for _, item := range f.items {
+		height += item.Height() + 2
+	}
+	return height
+}
+
 func (c *Form) ScrollViewport() {
 	cursorOffset := 0
 	for i := 0; i < c.focusIndex; i++ {
@@ -122,10 +130,10 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			// Cycle focus
-			if c.focusIndex > len(c.items) {
+			if c.focusIndex > len(c.items)-1 {
 				c.focusIndex = 0
 			} else if c.focusIndex < 0 {
-				c.focusIndex = len(c.items)
+				c.focusIndex = len(c.items) - 1
 			}
 
 			cmds := make([]tea.Cmd, len(c.items))
@@ -232,6 +240,9 @@ func (c *Form) SetSize(width, height int) {
 	}
 
 	c.renderInputs()
+
+	itemsHeight := c.itemsHeight()
+	c.viewport.Style = lipgloss.NewStyle().MarginTop(max((c.viewport.Height-itemsHeight)/2, 0))
 	if c.viewport.Height > 0 {
 		c.ScrollViewport()
 	}
@@ -239,14 +250,6 @@ func (c *Form) SetSize(width, height int) {
 
 func (c *Form) View() string {
 	separator := strings.Repeat("─", c.width)
-
-	var submitAction string
-	if c.focusIndex == len(c.items) {
-		submitAction = renderAction("Submit", "enter", true)
-	} else {
-		submitAction = renderAction("Submit", "ctrl+s", false)
-	}
-
-	submitRow := lipgloss.NewStyle().Align(lipgloss.Right).Padding(0, 1).Width(c.width).Render(fmt.Sprintf("%s · %s", submitAction, renderAction("Focus Next", "tab", false)))
+	submitRow := lipgloss.NewStyle().Align(lipgloss.Right).Padding(0, 1).Width(c.width).Render(fmt.Sprintf("%s · %s", renderAction("Submit", "ctrl+s", false), renderAction("Focus Next", "tab", false)))
 	return lipgloss.JoinVertical(lipgloss.Left, c.viewport.View(), separator, submitRow)
 }
