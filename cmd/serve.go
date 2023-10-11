@@ -8,26 +8,47 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
-func BearerMiddleware(token string) func(next http.Handler) http.Handler {
+func AuthMiddleware(token string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// get token from query string
+			queryToken := r.URL.Query().Get("token")
+			if queryToken != "" {
+				if queryToken != token {
+					http.Error(w, "invalid token", http.StatusUnauthorized)
+					return
+				}
 
-			if authorization := r.Header.Get("Authorization"); authorization == fmt.Sprint("Bearer ", token) {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			// get token from authorization header
+			authHeader := r.Header.Get("Authorization")
+			if authHeader != "" {
+				if authHeader != fmt.Sprintf("Bearer %s", token) {
+					http.Error(w, "invalid token", http.StatusUnauthorized)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			http.Error(w, "missing token", http.StatusUnauthorized)
 		})
 	}
 }
@@ -41,16 +62,11 @@ func NewCmdServe() *cobra.Command {
 	}{}
 
 	cmd := &cobra.Command{
-		Use:     "serve <script>",
+		Use:     "serve [src]",
 		Short:   "Serve extensions over HTTP",
-		Args:    cobra.NoArgs,
+		Args:    cobra.MaximumNArgs(1),
 		GroupID: CommandGroupCore,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionMap, err := FindExtensions()
-			if err != nil {
-				return err
-			}
-
 			r := chi.NewRouter()
 			r.Use(middleware.Logger)
 			var token string
@@ -65,50 +81,58 @@ func NewCmdServe() *cobra.Command {
 			}
 
 			if token != "" {
-				r.Use(BearerMiddleware(token))
+				r.Use(AuthMiddleware(token))
 			}
 
-			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				endpoints := make(map[string]string)
-				for alias := range extensionMap {
-					endpoints[alias] = fmt.Sprintf("http://%s/%s", r.Host, alias)
+			if len(args) > 0 {
+				entrypoint, err := filepath.Abs(args[0])
+				if err != nil {
+					return err
 				}
 
-				encoder := json.NewEncoder(w)
-				if err := encoder.Encode(endpoints); err != nil {
-					http.Error(w, fmt.Sprintf("failed to encode endpoints: %s", err.Error()), 500)
-					return
+				if info, err := os.Stat(entrypoint); err != nil {
+					return err
+				} else if info.IsDir() {
+					entrypoint = filepath.Join(entrypoint, "sunbeam-extension")
+					if _, err := os.Stat(entrypoint); err != nil {
+						return err
+					}
 				}
-			})
 
-			for alias, extension := range extensionMap {
-				r.Get(fmt.Sprintf("/%s", alias), func(w http.ResponseWriter, r *http.Request) {
+				extension, err := extensions.Load(entrypoint)
+				if err != nil {
+					return err
+				}
+
+				registerExtension(r, extension)
+			} else {
+				extensionMap, err := FindExtensions()
+				if err != nil {
+					return err
+				}
+				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+					endpoints := make(map[string]string)
+					for alias := range extensionMap {
+						endpoint, err := url.JoinPath(r.URL.String(), alias)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("failed to join path: %s", err.Error()), 500)
+							return
+						}
+						endpoints[alias] = endpoint
+					}
+
 					encoder := json.NewEncoder(w)
-					if err := encoder.Encode(extension.Manifest); err != nil {
-						http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), 500)
+					if err := encoder.Encode(endpoints); err != nil {
+						http.Error(w, fmt.Sprintf("failed to encode endpoints: %s", err.Error()), 500)
 						return
 					}
 				})
 
-				r.Post(fmt.Sprintf("/%s/:command", alias), func(w http.ResponseWriter, r *http.Request) {
-					command := chi.URLParam(r, "command")
-					var input types.CommandInput
-					if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-						http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)
-						return
-					}
-
-					output, err := extension.Run(command, input)
-					if err != nil {
-						http.Error(w, fmt.Sprintf("failed to run command: %s", err.Error()), 500)
-						return
-					}
-
-					if _, err := w.Write(output); err != nil {
-						http.Error(w, fmt.Sprintf("failed to write output: %s", err.Error()), 500)
-						return
-					}
-				})
+				for alias, extension := range extensionMap {
+					group := chi.NewRouter()
+					registerExtension(group, extension)
+					r.Mount(fmt.Sprintf("/%s", alias), group)
+				}
 			}
 
 			server := &http.Server{
@@ -130,11 +154,9 @@ func NewCmdServe() *cobra.Command {
 			}()
 
 			if token != "" {
-				log.Printf("sunbeam command: sunbeam run http://%s@%s:%d\n", token, flags.host, flags.port)
-				log.Printf("curl command: curl -H 'Authorization: Bearer %s' http://%s:%d\n", token, flags.host, flags.port)
+				log.Println("Listening on", fmt.Sprintf("http://%s:%d?token=%s", flags.host, flags.port, token))
 			} else {
-				log.Printf("sunbeam command: sunbeam run http://%s:%d\n", flags.host, flags.port)
-				log.Printf("curl command: curl http://%s:%d\n", flags.host, flags.port)
+				log.Println("Listening on", fmt.Sprintf("http://%s:%d", flags.host, flags.port))
 			}
 
 			if err := server.ListenAndServe(); err != nil {
@@ -146,10 +168,42 @@ func NewCmdServe() *cobra.Command {
 
 	cmd.Flags().IntVarP(&flags.port, "port", "p", 9999, "Port to listen on")
 	cmd.Flags().StringVarP(&flags.host, "host", "H", "localhost", "Host to listen on")
-	cmd.Flags().BoolVar(&flags.withoutToken, "without-token", false, "Disable bearer token authentication")
+	cmd.Flags().BoolVar(&flags.withoutToken, "without-token", false, "Disable token authentication")
 	cmd.Flags().StringVar(&flags.token, "token", "", "Bearer token to use for authentication")
 
 	return cmd
+}
+
+func registerExtension(r chi.Router, extension extensions.Extension) {
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(extension.Manifest); err != nil {
+			http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), 500)
+			return
+		}
+	})
+
+	for _, command := range extension.Commands {
+		command := command
+		r.Post(fmt.Sprintf("/%s", command.Name), func(w http.ResponseWriter, r *http.Request) {
+			var input types.CommandInput
+			if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+				http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)
+				return
+			}
+
+			output, err := extension.Run(command.Name, input)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("failed to run command: %s", err.Error()), 500)
+				return
+			}
+
+			if _, err := w.Write(output); err != nil {
+				http.Error(w, fmt.Sprintf("failed to write output: %s", err.Error()), 500)
+				return
+			}
+		})
+	}
 }
 
 const (

@@ -15,10 +15,10 @@ import (
 var scriptTemplate = `#!/bin/sh
 
 if [ $# -eq 0 ] ; then
-	exec sunbeam fetch {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} '{{ .Origin }}'
+	exec sunbeam fetch {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} '{{ .ManifestEndpoint }}'
 fi
 
-exec sunbeam fetch {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} "{{ .Origin }}/$1" -d @-
+exec sunbeam fetch -X POST {{ if not (eq .Token "") }} -H 'Authorization: Bearer {{ .Token }}' {{ end }} "{{ .CommandEndpoint }}" -d @-
 `
 
 func NewCmdRun() *cobra.Command {
@@ -59,10 +59,21 @@ func NewCmdRun() *cobra.Command {
 				}
 				defer os.Remove(tempfile.Name())
 
+				manifestEnpoint := origin.String()
+				commandEndpoint, err := url.JoinPath(origin.String(), "$1")
+				if err != nil {
+					return err
+				}
+
 				if err := template.Execute(tempfile, struct {
-					Origin string
-					Token  string
-				}{Origin: origin.String(), Token: token}); err != nil {
+					ManifestEndpoint string
+					CommandEndpoint  string
+					Token            string
+				}{
+					Token:            token,
+					ManifestEndpoint: manifestEnpoint,
+					CommandEndpoint:  commandEndpoint,
+				}); err != nil {
 					return err
 				}
 
