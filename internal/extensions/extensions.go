@@ -16,7 +16,7 @@ import (
 
 type Extension struct {
 	types.Manifest
-	Entrypoint string
+	Entrypoint string `json:"-"`
 }
 
 func (e Extension) Command(name string) (types.CommandSpec, bool) {

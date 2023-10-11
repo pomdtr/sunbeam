@@ -10,12 +10,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
@@ -38,26 +36,17 @@ func NewCmdServe() *cobra.Command {
 	flags := struct {
 		port         int
 		host         string
-		bearerToken  string
+		token        string
 		withoutToken bool
 	}{}
 
 	cmd := &cobra.Command{
 		Use:     "serve <script>",
 		Short:   "Serve extensions over HTTP",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.NoArgs,
 		GroupID: CommandGroupCore,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			entrypoint, err := filepath.Abs(args[0])
-			if err != nil {
-				return err
-			}
-
-			if info, err := os.Stat(entrypoint); err == nil && info.IsDir() {
-				entrypoint = filepath.Join(entrypoint, "sunbeam-extension")
-			}
-
-			extension, err := extensions.Load(entrypoint)
+			extensionMap, err := FindExtensions()
 			if err != nil {
 				return err
 			}
@@ -65,8 +54,8 @@ func NewCmdServe() *cobra.Command {
 			r := chi.NewRouter()
 			r.Use(middleware.Logger)
 			var token string
-			if flags.bearerToken != "" {
-				token = flags.bearerToken
+			if flags.token != "" {
+				token = flags.token
 			} else if !flags.withoutToken {
 				t, err := generateRandomToken()
 				if err != nil {
@@ -80,32 +69,47 @@ func NewCmdServe() *cobra.Command {
 			}
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				endpoints := make(map[string]string)
+				for alias := range extensionMap {
+					endpoints[alias] = fmt.Sprintf("http://%s/%s", r.Host, alias)
+				}
+
 				encoder := json.NewEncoder(w)
-				if err := encoder.Encode(extension.Manifest); err != nil {
-					http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), 500)
+				if err := encoder.Encode(endpoints); err != nil {
+					http.Error(w, fmt.Sprintf("failed to encode endpoints: %s", err.Error()), 500)
 					return
 				}
 			})
 
-			r.Post("/:command", func(w http.ResponseWriter, r *http.Request) {
-				command := chi.URLParam(r, "command")
-				var input types.CommandInput
-				if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-					http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)
-					return
-				}
+			for alias, extension := range extensionMap {
+				r.Get(fmt.Sprintf("/%s", alias), func(w http.ResponseWriter, r *http.Request) {
+					encoder := json.NewEncoder(w)
+					if err := encoder.Encode(extension.Manifest); err != nil {
+						http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), 500)
+						return
+					}
+				})
 
-				output, err := extension.Run(command, input)
-				if err != nil {
-					http.Error(w, fmt.Sprintf("failed to run command: %s", err.Error()), 500)
-					return
-				}
+				r.Post(fmt.Sprintf("/%s/:command", alias), func(w http.ResponseWriter, r *http.Request) {
+					command := chi.URLParam(r, "command")
+					var input types.CommandInput
+					if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+						http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)
+						return
+					}
 
-				if _, err := w.Write(output); err != nil {
-					http.Error(w, fmt.Sprintf("failed to write output: %s", err.Error()), 500)
-					return
-				}
-			})
+					output, err := extension.Run(command, input)
+					if err != nil {
+						http.Error(w, fmt.Sprintf("failed to run command: %s", err.Error()), 500)
+						return
+					}
+
+					if _, err := w.Write(output); err != nil {
+						http.Error(w, fmt.Sprintf("failed to write output: %s", err.Error()), 500)
+						return
+					}
+				})
+			}
 
 			server := &http.Server{
 				Addr:    fmt.Sprintf("%s:%d", flags.host, flags.port),
@@ -142,8 +146,8 @@ func NewCmdServe() *cobra.Command {
 
 	cmd.Flags().IntVarP(&flags.port, "port", "p", 9999, "Port to listen on")
 	cmd.Flags().StringVarP(&flags.host, "host", "H", "localhost", "Host to listen on")
-	cmd.Flags().Bool("without-token", false, "Disable bearer token authentication")
-	cmd.Flags().String("token", "", "Bearer token to use for authentication")
+	cmd.Flags().BoolVar(&flags.withoutToken, "without-token", false, "Disable bearer token authentication")
+	cmd.Flags().StringVar(&flags.token, "token", "", "Bearer token to use for authentication")
 
 	return cmd
 }

@@ -83,23 +83,18 @@ func NewCmdExtensionList() *cobra.Command {
 		Aliases: []string{"ls"},
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensions, err := FindExtensions()
+			extensionMap, err := FindExtensions()
 			if err != nil {
 				return err
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				extensionMap := make(map[string]types.Manifest)
-				for alias, extension := range extensions {
-					extensionMap[alias] = extension.Manifest
-				}
-
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
 				return encoder.Encode(extensionMap)
 			}
 
-			for alias, extension := range extensions {
+			for alias, extension := range extensionMap {
 				fmt.Printf("%s\t%s\n", alias, extension.Title)
 			}
 
