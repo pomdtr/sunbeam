@@ -5,6 +5,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func init() {
+	lipgloss.SetHasDarkBackground(true)
+}
+
 func PopPageCmd() tea.Msg {
 	return PopPageMsg{}
 }
@@ -147,7 +151,6 @@ func (m *Paginator) Pop() tea.Cmd {
 }
 
 func Draw(page Page) error {
-	lipgloss.SetHasDarkBackground(true)
 	paginator := NewPaginator(page)
 	p := tea.NewProgram(paginator, tea.WithAltScreen())
 
