@@ -10,9 +10,10 @@ import (
 	"strings"
 
 	"github.com/acarl005/stripansi"
-	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
+
+type ExtensionMap map[string]Extension
 
 type Extension struct {
 	types.Manifest
@@ -41,8 +42,8 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	return types.CommandSpec{}, false
 }
 
-func (e Extension) Run(command string, input types.CommandInput) ([]byte, error) {
-	cmd, err := e.Cmd(command, input)
+func (ext Extension) Run(command string, input types.CommandInput) ([]byte, error) {
+	cmd, err := ext.Cmd(command, input)
 	if err != nil {
 		return nil, err
 	}
@@ -97,32 +98,4 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 	cmd.Env = append(cmd.Env, "NO_COLOR=1")
 
 	return cmd, nil
-}
-
-func Load(entrypoint string) (Extension, error) {
-	cmd := exec.Command(entrypoint)
-	cmd.Dir = filepath.Dir(entrypoint)
-
-	manifestBytes, err := cmd.Output()
-	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			return Extension{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
-		}
-
-		return Extension{}, err
-	}
-
-	if err := schemas.ValidateManifest(manifestBytes); err != nil {
-		return Extension{}, err
-	}
-
-	var manifest types.Manifest
-	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
-		return Extension{}, err
-	}
-
-	return Extension{
-		Manifest:   manifest,
-		Entrypoint: entrypoint,
-	}, nil
 }

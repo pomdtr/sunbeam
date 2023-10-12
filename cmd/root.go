@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
-	"sort"
-	"time"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
@@ -27,10 +24,22 @@ const (
 	CommandGroupExtension = "extension"
 )
 
+func IsSunbeamRunning() bool {
+	return len(os.Getenv("SUNBEAM")) > 0
+}
+
 func NewRootCmd() (*cobra.Command, error) {
-	extensionMap, err := FindExtensions()
-	if err != nil {
-		return nil, err
+	var extensionMap extensions.ExtensionMap
+
+	// If the command is running inside sunbeam, we should not load extensions
+	if IsSunbeamRunning() {
+		extensionMap = make(extensions.ExtensionMap)
+	} else {
+		exts, err := FindExtensions()
+		if err != nil {
+			return nil, err
+		}
+		extensionMap = exts
 	}
 
 	// rootCmd represents the base command when called without any subcommands
@@ -44,87 +53,43 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			historyPath := filepath.Join(cacheHome(), "history.json")
-			history, err := LoadHistory(historyPath)
-			if err != nil {
-				if !os.IsNotExist(err) {
-					return err
-				}
-
-				history = History{
-					entries: make(map[string]int64),
-					path:    historyPath,
-				}
-			}
-
-			if len(extensionMap) == 0 {
-				return cmd.Usage()
-			}
-
-			generator := func() (map[string]extensions.Extension, []types.ListItem, error) {
-				items := make([]types.ListItem, 0)
-				for alias, extension := range extensionMap {
-					for _, command := range extension.Commands {
-						if !IsRootCommand(command) {
-							continue
-						}
-
-						if command.Hidden {
-							continue
-						}
-
-						items = append(items, types.ListItem{
-							Id:          fmt.Sprintf("extensions/%s/%s", alias, command.Name),
-							Title:       command.Title,
-							Subtitle:    extension.Title,
-							Accessories: []string{alias},
-							Actions: []types.Action{
-								{
-									Title: "Run",
-									OnAction: types.Command{
-										Type:      types.CommandTypeRun,
-										Extension: alias,
-										Command:   command.Name,
-									},
-								},
-							},
-						})
-					}
-				}
-
-				sort.Slice(items, func(i, j int) bool {
-					timestampA, ok := history.entries[items[i].Id]
-					if !ok {
-						return false
-					}
-
-					timestampB, ok := history.entries[items[j].Id]
-					if !ok {
-						return true
-					}
-
-					return timestampA > timestampB
-				})
-
-				return extensionMap, items, nil
-			}
-
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				_, list, err := generator()
-				if err != nil {
-					return err
-				}
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
-				return encoder.Encode(list)
+				return encoder.Encode(extensionMap)
 			}
 
-			rootList := tui.NewRootList("Sunbeam", generator)
-			rootList.OnSelect = func(id string) {
-				history.entries[id] = time.Now().Unix()
-				_ = history.Save()
+			items := make([]types.ListItem, 0)
+			for alias, extension := range extensionMap {
+				for _, command := range extension.Commands {
+					if !IsRootCommand(command) {
+						continue
+					}
+
+					if command.Hidden {
+						continue
+					}
+
+					items = append(items, types.ListItem{
+						Id:          fmt.Sprintf("extensions/%s/%s", alias, command.Name),
+						Title:       command.Title,
+						Subtitle:    extension.Title,
+						Accessories: []string{alias},
+						Actions: []types.Action{
+							{
+								Title: "Run",
+								OnAction: types.Command{
+									Type:      types.CommandTypeRun,
+									Extension: alias,
+									Command:   command.Name,
+								},
+							},
+						},
+					})
+				}
 			}
 
+			rootList := tui.NewRootList("Sunbeam", extensionMap, items)
 			return tui.Draw(rootList)
 		},
 	}

@@ -8,15 +8,17 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/acarl005/stripansi"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
 var (
-	extensionRoot = filepath.Join(dataHome(), "extensions")
+	extensionRoot = filepath.Join(utils.DataHome(), "extensions")
 )
 
 func NewCmdExtension() *cobra.Command {
@@ -91,7 +93,7 @@ func NewCmdExtensionInstall() *cobra.Command {
 				subCmds := cmd.Parent().Parent().Commands()
 				for _, subCmd := range subCmds {
 					if subCmd.Name() == alias {
-						return fmt.Errorf("alias %s already exists", alias)
+						return fmt.Errorf("alias %s already existsge", alias)
 					}
 				}
 
@@ -188,7 +190,7 @@ func localInstall(origin string, extensionDir string) (err error) {
 		return err
 	}
 
-	return reloadManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
+	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
 }
 
 func gitInstall(origin string, extensionDir string, entrypoint string) (err error) {
@@ -237,7 +239,7 @@ func gitInstall(origin string, extensionDir string, entrypoint string) (err erro
 		}
 	}
 
-	return reloadManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
+	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
 }
 
 func NewCmdExtensionUpgrade() *cobra.Command {
@@ -331,7 +333,7 @@ func upgradeExtension(extensionDir string) error {
 	}
 
 	if metadata.Type == extensions.ExtensionTypeLocal {
-		return reloadManifest(metadata.Entrypoint, filepath.Join(extensionDir, "manifest.json"))
+		return cacheManifest(metadata.Entrypoint, filepath.Join(extensionDir, "manifest.json"))
 	} else if metadata.Type == extensions.ExtensionTypeGit {
 		pullCmd := exec.Command("git", "pull")
 		pullCmd.Dir = filepath.Join(extensionDir, "src")
@@ -340,7 +342,7 @@ func upgradeExtension(extensionDir string) error {
 			return err
 		}
 
-		return reloadManifest(filepath.Join(extensionDir, "src", "sunbeam-extension"), filepath.Join(extensionDir, "manifest.json"))
+		return cacheManifest(filepath.Join(extensionDir, "src", "sunbeam-extension"), filepath.Join(extensionDir, "manifest.json"))
 	} else {
 		return fmt.Errorf("unknown extension type")
 	}
@@ -405,7 +407,7 @@ func NewCmdExtensionRename() *cobra.Command {
 	return cmd
 }
 
-func FindExtensions() (map[string]extensions.Extension, error) {
+func FindExtensions() (extensions.ExtensionMap, error) {
 	extensionMap := make(map[string]extensions.Extension)
 	if _, err := os.Stat(extensionRoot); err != nil {
 		return extensionMap, nil
@@ -417,15 +419,6 @@ func FindExtensions() (map[string]extensions.Extension, error) {
 	}
 	for _, entry := range entries {
 		extensionDir := filepath.Join(extensionRoot, entry.Name())
-		manifestBytes, err := os.ReadFile(filepath.Join(extensionDir, "manifest.json"))
-		if err != nil {
-			continue
-		}
-
-		var manifest types.Manifest
-		if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
-			continue
-		}
 
 		metadataBytes, err := os.ReadFile(filepath.Join(extensionDir, "metadata.json"))
 		if err != nil {
@@ -444,6 +437,36 @@ func FindExtensions() (map[string]extensions.Extension, error) {
 			entrypoint = filepath.Join(extensionDir, metadata.Entrypoint)
 		}
 
+		manifestPath := filepath.Join(extensionDir, "manifest.json")
+
+		// check if manifest cache is stale
+		if manifestInfo, err := os.Stat(manifestPath); err != nil {
+			if err := cacheManifest(entrypoint, manifestPath); err != nil {
+				continue
+			}
+		} else {
+			entrypointInfo, err := os.Stat(entrypoint)
+			if err != nil {
+				continue
+			}
+
+			if entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
+				if err := cacheManifest(entrypoint, manifestPath); err != nil {
+					continue
+				}
+			}
+		}
+
+		manifestBytes, err := os.ReadFile(manifestPath)
+		if err != nil {
+			continue
+		}
+
+		var manifest types.Manifest
+		if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+			continue
+		}
+
 		extensionMap[entry.Name()] = extensions.Extension{
 			Manifest:   manifest,
 			Entrypoint: entrypoint,
@@ -453,8 +476,8 @@ func FindExtensions() (map[string]extensions.Extension, error) {
 	return extensionMap, nil
 }
 
-func reloadManifest(entrypoint string, manifestPath string) error {
-	extension, err := extensions.Load(entrypoint)
+func cacheManifest(entrypoint string, manifestPath string) error {
+	extension, err := LoadExtension(entrypoint)
 	if err != nil {
 		return err
 	}
@@ -467,4 +490,32 @@ func reloadManifest(entrypoint string, manifestPath string) error {
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(extension.Manifest)
+}
+
+func LoadExtension(entrypoint string) (extensions.Extension, error) {
+	cmd := exec.Command(entrypoint)
+	cmd.Dir = filepath.Dir(entrypoint)
+
+	manifestBytes, err := cmd.Output()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return extensions.Extension{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
+		}
+
+		return extensions.Extension{}, err
+	}
+
+	if err := schemas.ValidateManifest(manifestBytes); err != nil {
+		return extensions.Extension{}, err
+	}
+
+	var manifest types.Manifest
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return extensions.Extension{}, err
+	}
+
+	return extensions.Extension{
+		Manifest:   manifest,
+		Entrypoint: entrypoint,
+	}, nil
 }

@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"time"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,42 +20,34 @@ import (
 type RootList struct {
 	w, h       int
 	title      string
+	history    History
 	err        *Detail
 	list       *List
-	generator  func() (map[string]extensions.Extension, []types.ListItem, error)
-	OnSelect   func(id string)
-	extensions map[string]extensions.Extension
+	extensions extensions.ExtensionMap
 }
 
-func NewRootList(title string, generator func() (map[string]extensions.Extension, []types.ListItem, error)) *RootList {
+func NewRootList(title string, extensions extensions.ExtensionMap, items []types.ListItem) *RootList {
+	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
+	if err != nil {
+		history = History{
+			entries: make(map[string]int64),
+			path:    filepath.Join(utils.CacheHome(), "history.json"),
+		}
+	}
+
+	history.Sort(items)
+	list := NewList(items...)
+
 	return &RootList{
-		title:     title,
-		list:      NewList(),
-		generator: generator,
+		title:      title,
+		history:    history,
+		list:       list,
+		extensions: extensions,
 	}
 }
 
 func (c *RootList) Init() tea.Cmd {
-	return c.Reload()
-}
-
-type RefreshMsg struct {
-	extensions map[string]extensions.Extension
-	rootItems  []types.ListItem
-}
-
-func (c RootList) Reload() tea.Cmd {
-	return tea.Sequence(c.list.SetIsLoading(true), func() tea.Msg {
-		extensions, items, err := c.generator()
-		if err != nil {
-			return err
-		}
-
-		return RefreshMsg{
-			extensions: extensions,
-			rootItems:  items,
-		}
-	})
+	return c.list.Init()
 }
 
 func (c *RootList) Focus() tea.Cmd {
@@ -81,24 +77,6 @@ func (c *RootList) SetError(err error) tea.Cmd {
 
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
-			item, ok := c.list.Selection()
-			if !ok {
-				break
-			}
-
-			if c.OnSelect != nil {
-				c.OnSelect(item.Id)
-			}
-		case "ctrl+r":
-			return c, c.Reload()
-		}
-	case RefreshMsg:
-		c.list.SetItems(msg.rootItems...)
-		c.extensions = msg.extensions
-		return c, c.list.SetIsLoading(false)
 	case error:
 		c.err = NewErrorPage(msg)
 		c.err.SetSize(c.w, c.h)
@@ -106,6 +84,16 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.Command:
 		switch msg.Type {
 		case types.CommandTypeRun:
+			selection, ok := c.list.Selection()
+			if !ok {
+				return c, nil
+			}
+
+			c.history.entries[selection.Id] = time.Now().Unix()
+			if err := c.history.Save(); err != nil {
+				return c, c.SetError(err)
+			}
+
 			extension, ok := c.extensions[msg.Extension]
 			if !ok {
 				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
@@ -196,8 +184,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-		case types.CommandTypeReload:
-			return c, c.Reload()
 		case types.CommandTypeExit, types.CommandTypePop:
 			return c, ExitCmd
 		default:
@@ -222,4 +208,60 @@ func (c *RootList) View() string {
 		return c.err.View()
 	}
 	return c.list.View()
+}
+
+type History struct {
+	entries map[string]int64
+	path    string
+}
+
+func (h History) Sort(items []types.ListItem) {
+	sort.SliceStable(items, func(i, j int) bool {
+		keyI := items[i].Id
+		keyJ := items[j].Id
+
+		return h.entries[keyI] > h.entries[keyJ]
+	})
+}
+
+func LoadHistory(fp string) (History, error) {
+	f, err := os.Open(fp)
+	if err != nil {
+		return History{}, err
+	}
+
+	var entries map[string]int64
+	if err := json.NewDecoder(f).Decode(&entries); err != nil {
+		return History{}, err
+	}
+
+	return History{
+		entries: entries,
+		path:    fp,
+	}, nil
+}
+
+func (h History) Save() error {
+	f, err := os.OpenFile(h.path, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+
+		if err := os.MkdirAll(filepath.Dir(h.path), 0755); err != nil {
+			return err
+		}
+
+		f, err = os.Create(h.path)
+		if err != nil {
+			return err
+		}
+	}
+
+	encoder := json.NewEncoder(f)
+	if err := encoder.Encode(h.entries); err != nil {
+		return err
+	}
+
+	return nil
 }

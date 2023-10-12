@@ -18,11 +18,11 @@ type Runner struct {
 	embed         Page
 	width, height int
 
-	alias      string
-	extensions map[string]extensions.Extension
-	extension  extensions.Extension
-	command    types.CommandSpec
-	params     map[string]any
+	alias     string
+	exts      extensions.ExtensionMap
+	extension extensions.Extension
+	command   types.CommandSpec
+	params    map[string]any
 }
 
 type ReloadMsg struct {
@@ -43,8 +43,8 @@ type CommandRef struct {
 	Params    map[string]any `json:"params,omitempty"`
 }
 
-func NewRunner(extensions map[string]extensions.Extension, ref CommandRef) (*Runner, error) {
-	extension, ok := extensions[ref.Extension]
+func NewRunner(exts extensions.ExtensionMap, ref CommandRef) (*Runner, error) {
+	extension, ok := exts[ref.Extension]
 	if !ok {
 		return nil, fmt.Errorf("extension %s not found", ref.Extension)
 	}
@@ -55,12 +55,12 @@ func NewRunner(extensions map[string]extensions.Extension, ref CommandRef) (*Run
 	}
 
 	return &Runner{
-		extensions: extensions,
-		extension:  extensions[ref.Extension],
-		embed:      NewDetail(""),
-		alias:      ref.Extension,
-		command:    command,
-		params:     ref.Params,
+		exts:      exts,
+		extension: extension,
+		embed:     NewDetail(""),
+		alias:     ref.Extension,
+		command:   command,
+		params:    ref.Params,
 	}, nil
 }
 
@@ -234,7 +234,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return command
 				}
 			case types.CommandModeView:
-				runner, err := NewRunner(c.extensions, CommandRef{
+				runner, err := NewRunner(c.exts, CommandRef{
 					Extension: c.alias,
 					Command:   msg.Command,
 					Params:    msg.Params,

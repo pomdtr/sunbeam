@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +40,7 @@ func NewCmdRun() *cobra.Command {
 				scriptPath = s
 			}
 
-			extension, err := extensions.Load(scriptPath)
+			extension, err := LoadExtension(scriptPath)
 			if err != nil {
 				return err
 			}
@@ -52,7 +51,6 @@ func NewCmdRun() *cobra.Command {
 			}
 
 			extensionMap[args[0]] = extension
-
 			rootCmd, err := NewCmdCustom(extensionMap, args[0])
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)

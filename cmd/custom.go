@@ -18,26 +18,26 @@ import (
 	"muzzammil.xyz/jsonc"
 )
 
-func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*cobra.Command, error) {
-	extension, ok := extensionMap[alias]
+func NewCmdCustom(exts extensions.ExtensionMap, alias string) (*cobra.Command, error) {
+	ext, ok := exts[alias]
 	if !ok {
 		return nil, fmt.Errorf("extension %s not found", alias)
 	}
 	rootCmd := &cobra.Command{
 		Use:     alias,
-		Short:   extension.Title,
-		Long:    extension.Description,
+		Short:   ext.Title,
+		Long:    ext.Description,
 		Args:    cobra.NoArgs,
 		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
-				return encoder.Encode(extension.Manifest)
+				return encoder.Encode(ext.Manifest)
 			}
 
 			rootCommands := make([]types.CommandSpec, 0)
-			for _, command := range extension.Commands {
+			for _, command := range ext.Commands {
 				if !IsRootCommand(command) {
 					continue
 				}
@@ -51,7 +51,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 
 			if len(rootCommands) == 1 {
 				command := rootCommands[0]
-				runner, err := tui.NewRunner(extensionMap, tui.CommandRef{
+				runner, err := tui.NewRunner(exts, tui.CommandRef{
 					Extension: alias,
 					Command:   command.Name,
 				})
@@ -62,26 +62,35 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 				return tui.Draw(runner)
 			}
 
-			page := tui.NewRootList(extension.Title, func() (map[string]extensions.Extension, []types.ListItem, error) {
-				items := make([]types.ListItem, 0)
-				for _, command := range rootCommands {
-					items = append(items, types.ListItem{
-						Title:    command.Title,
-						Subtitle: extension.Title,
-						Actions: []types.Action{
-							{
-								Title: "Run Command",
-								OnAction: types.Command{
-									Type:      types.CommandTypeRun,
-									Extension: alias,
-									Command:   command.Name,
-								},
+			items := make([]types.ListItem, 0)
+			for _, command := range ext.Commands {
+				if !IsRootCommand(command) {
+					continue
+				}
+
+				if command.Hidden {
+					continue
+				}
+
+				items = append(items, types.ListItem{
+					Id:          fmt.Sprintf("extensions/%s/%s", alias, command.Name),
+					Title:       command.Title,
+					Subtitle:    ext.Title,
+					Accessories: []string{alias},
+					Actions: []types.Action{
+						{
+							Title: "Run",
+							OnAction: types.Command{
+								Type:      types.CommandTypeRun,
+								Extension: alias,
+								Command:   command.Name,
 							},
 						},
-					})
-				}
-				return extensionMap, items, nil
-			})
+					},
+				})
+			}
+
+			page := tui.NewRootList(ext.Title, exts, items)
 
 			return tui.Draw(page)
 		},
@@ -89,7 +98,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
-	for _, subcommand := range extension.Commands {
+	for _, subcommand := range ext.Commands {
 		subcommand := subcommand
 		cmd := &cobra.Command{
 			Use:    subcommand.Name,
@@ -124,7 +133,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 				switch subcommand.Mode {
 				case types.CommandModeView:
 					if !isatty.IsTerminal(os.Stdout.Fd()) {
-						output, err := extension.Run(subcommand.Name, types.CommandInput{
+						output, err := ext.Run(subcommand.Name, types.CommandInput{
 							Params: params,
 						})
 
@@ -139,7 +148,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 						return nil
 					}
 
-					runner, err := tui.NewRunner(extensionMap, tui.CommandRef{
+					runner, err := tui.NewRunner(exts, tui.CommandRef{
 						Extension: alias,
 						Command:   subcommand.Name,
 						Params:    params,
@@ -151,7 +160,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 
 					return tui.Draw(runner)
 				case types.CommandModeNoView:
-					out, err := extension.Run(subcommand.Name, types.CommandInput{
+					out, err := ext.Run(subcommand.Name, types.CommandInput{
 						Params: params,
 					})
 					if err != nil {
@@ -166,7 +175,7 @@ func NewCmdCustom(extensionMap map[string]extensions.Extension, alias string) (*
 						return err
 					}
 				case types.CommandModeTTY:
-					cmd, err := extension.Cmd(subcommand.Name, types.CommandInput{
+					cmd, err := ext.Cmd(subcommand.Name, types.CommandInput{
 						Params: params,
 					})
 					if err != nil {
