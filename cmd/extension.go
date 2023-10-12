@@ -31,7 +31,6 @@ func NewCmdExtension() *cobra.Command {
 	cmd.AddCommand(NewCmdExtensionInstall())
 	cmd.AddCommand(NewCmdExtensionUpgrade())
 	cmd.AddCommand(NewCmdExtensionRemove())
-	cmd.AddCommand(NewCmdExtensionReload())
 	cmd.AddCommand(NewCmdExtensionRename())
 	cmd.AddCommand(NewCmdExtensionBrowse())
 
@@ -45,47 +44,6 @@ func NewCmdExtensionBrowse() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return utils.Open("https://github.com/topics/sunbeam-extension")
-		},
-	}
-}
-
-func NewCmdExtensionReload() *cobra.Command {
-	return &cobra.Command{
-		Use:  "reload <alias>",
-		Args: cobra.ExactArgs(1),
-		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			extensions, err := FindExtensions()
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveDefault
-			}
-
-			var completions []string
-			for alias := range extensions {
-				completions = append(completions, alias)
-			}
-
-			return completions, cobra.ShellCompDirectiveNoFileComp
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionDir := filepath.Join(extensionRoot, args[0])
-			metadataBytes, err := os.ReadFile(filepath.Join(extensionDir, "metadata.json"))
-			if err != nil {
-				return err
-			}
-
-			var metadata extensions.Metadata
-			if err := json.Unmarshal(metadataBytes, &metadata); err != nil {
-				return err
-			}
-
-			var entrypoint string
-			if !filepath.IsAbs(metadata.Entrypoint) {
-				entrypoint = filepath.Join(extensionDir, metadata.Entrypoint)
-			} else {
-				entrypoint = metadata.Entrypoint
-			}
-
-			return reloadManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
 		},
 	}
 }
@@ -128,19 +86,17 @@ func NewCmdExtensionInstall() *cobra.Command {
 		Aliases: []string{"add"},
 		Short:   "Install an extension",
 		Args:    cobra.ExactArgs(1),
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			extensions, err := FindExtensions()
-			if err != nil {
-				return err
-			}
-
-			if _, ok := extensions[flags.alias]; ok {
-				return fmt.Errorf("extension %s is already installed", flags.alias)
-			}
-
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			validateAlias := func(alias string) error {
+				subCmds := cmd.Parent().Parent().Commands()
+				for _, subCmd := range subCmds {
+					if subCmd.Name() == alias {
+						return fmt.Errorf("alias %s already exists", alias)
+					}
+				}
+
+				return nil
+			}
 			if _, err := os.Stat(args[0]); err == nil {
 				if cmd.Flags().Changed("entrypoint") {
 					return fmt.Errorf("cannot use --entrypoint with a local extension")
@@ -160,6 +116,10 @@ func NewCmdExtensionInstall() *cobra.Command {
 					alias = strings.TrimPrefix(alias, "sunbeam-")
 				}
 
+				if err := validateAlias(alias); err != nil {
+					return err
+				}
+
 				if err := localInstall(origin, filepath.Join(extensionRoot, alias)); err != nil {
 					return err
 				}
@@ -176,6 +136,10 @@ func NewCmdExtensionInstall() *cobra.Command {
 				alias = parts[len(parts)-1]
 				alias = strings.TrimSuffix(alias, filepath.Ext(alias))
 				alias = strings.TrimPrefix(alias, "sunbeam-")
+			}
+
+			if err := validateAlias(alias); err != nil {
+				return err
 			}
 
 			return gitInstall(origin, filepath.Join(extensionRoot, alias), flags.entrypoint)
