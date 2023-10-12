@@ -16,8 +16,21 @@ import (
 
 type Extension struct {
 	types.Manifest
-	Entrypoint string `json:"-"`
+	Entrypoint string
 }
+
+type Metadata struct {
+	Type       ExtensionType `json:"type"`
+	Origin     string        `json:"origin"`
+	Entrypoint string        `json:"entrypoint"`
+}
+
+type ExtensionType string
+
+const (
+	ExtensionTypeLocal ExtensionType = "local"
+	ExtensionTypeGit   ExtensionType = "git"
+)
 
 func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	for _, command := range e.Commands {
