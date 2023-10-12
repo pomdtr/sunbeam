@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"os"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
@@ -148,6 +150,10 @@ func (m *Paginator) Pop() tea.Cmd {
 }
 
 func Draw(page Page) error {
+	// disable color if we're running in CodeSandbox
+	if _, ok := os.LookupEnv("CSB"); ok {
+		os.Setenv("CI", "1")
+	}
 	lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
 	paginator := NewPaginator(page)
 	p := tea.NewProgram(paginator, tea.WithAltScreen())

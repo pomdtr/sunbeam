@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -56,7 +55,7 @@ func (c RootList) Reload() tea.Cmd {
 }
 
 func (c *RootList) Focus() tea.Cmd {
-	termenv.NewOutput(os.Stdout).SetWindowTitle(c.title)
+	termenv.DefaultOutput().SetWindowTitle(c.title)
 	return c.list.Focus()
 }
 

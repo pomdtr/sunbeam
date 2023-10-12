@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -92,7 +91,7 @@ func (c *Runner) Focus() tea.Cmd {
 	if c.embed == nil {
 		return nil
 	}
-	termenv.NewOutput(os.Stdout).SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
+	termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
 	return c.embed.Focus()
 }
 
@@ -357,9 +356,9 @@ func (c *Runner) Reload(input types.CommandInput) tea.Cmd {
 		}
 
 		if page.Title != "" {
-			termenv.NewOutput(os.Stdout).SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
+			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
 		} else {
-			termenv.NewOutput(os.Stdout).SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
+			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
 		}
 
 		switch page.Type {
