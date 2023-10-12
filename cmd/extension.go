@@ -263,7 +263,17 @@ func gitInstall(origin string, extensionDir string, entrypoint string) (err erro
 		return err
 	}
 
-	return reloadManifest(filepath.Join(extensionDir, "src", entrypoint), filepath.Join(extensionDir, "manifest.json"))
+	entrypoint = filepath.Join(extensionDir, "src", entrypoint)
+	if info, err := os.Stat(entrypoint); err != nil {
+		return fmt.Errorf("entrypoint %s not found", entrypoint)
+	} else if info.IsDir() {
+		entrypoint = filepath.Join(entrypoint, "sunbeam-extension")
+		if _, err := os.Stat(entrypoint); err != nil {
+			return fmt.Errorf("entrypoint %s not found", entrypoint)
+		}
+	}
+
+	return reloadManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
 }
 
 func NewCmdExtensionUpgrade() *cobra.Command {
