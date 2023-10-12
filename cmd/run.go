@@ -45,13 +45,7 @@ func NewCmdRun() *cobra.Command {
 				return err
 			}
 
-			extensionMap, err := FindExtensions()
-			if err != nil {
-				return err
-			}
-
-			extensionMap[args[0]] = extension
-			rootCmd, err := NewCmdCustom(extensionMap, args[0])
+			rootCmd, err := NewCmdCustom(args[0], extension)
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}

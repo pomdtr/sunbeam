@@ -18,79 +18,35 @@ import (
 	"muzzammil.xyz/jsonc"
 )
 
-func NewCmdCustom(exts extensions.ExtensionMap, alias string) (*cobra.Command, error) {
-	ext, ok := exts[alias]
-	if !ok {
-		return nil, fmt.Errorf("extension %s not found", alias)
+func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
+	exts := extensions.ExtensionMap{
+		alias: extension,
 	}
 	rootCmd := &cobra.Command{
 		Use:     alias,
-		Short:   ext.Title,
-		Long:    ext.Description,
+		Short:   extension.Title,
+		Long:    extension.Description,
 		Args:    cobra.NoArgs,
 		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
-				return encoder.Encode(ext.Manifest)
+				return encoder.Encode(extension.Manifest)
 			}
 
-			rootCommands := make([]types.CommandSpec, 0)
-			for _, command := range ext.Commands {
-				if !IsRootCommand(command) {
-					continue
-				}
-
-				rootCommands = append(rootCommands, command)
-			}
-
+			rootCommands := extension.RootCommands()
 			if len(rootCommands) == 0 {
 				return cmd.Usage()
 			}
 
 			if len(rootCommands) == 1 {
-				command := rootCommands[0]
-				runner, err := tui.NewRunner(exts, tui.CommandRef{
-					Extension: alias,
-					Command:   command.Name,
-				})
+				runner := tui.NewRunner(extension, rootCommands[0], make(map[string]any))
 
-				if err != nil {
-					return err
-				}
 				return tui.Draw(runner)
 			}
 
-			items := make([]types.ListItem, 0)
-			for _, command := range ext.Commands {
-				if !IsRootCommand(command) {
-					continue
-				}
-
-				if command.Hidden {
-					continue
-				}
-
-				items = append(items, types.ListItem{
-					Id:          fmt.Sprintf("extensions/%s/%s", alias, command.Name),
-					Title:       command.Title,
-					Subtitle:    ext.Title,
-					Accessories: []string{alias},
-					Actions: []types.Action{
-						{
-							Title: "Run",
-							OnAction: types.Command{
-								Type:      types.CommandTypeRun,
-								Extension: alias,
-								Command:   command.Name,
-							},
-						},
-					},
-				})
-			}
-
-			page := tui.NewRootList(ext.Title, exts, items)
+			page := tui.NewRootList(extension.Title, exts)
 
 			return tui.Draw(page)
 		},
@@ -98,7 +54,7 @@ func NewCmdCustom(exts extensions.ExtensionMap, alias string) (*cobra.Command, e
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
-	for _, subcommand := range ext.Commands {
+	for _, subcommand := range extension.Commands {
 		subcommand := subcommand
 		cmd := &cobra.Command{
 			Use:    subcommand.Name,
@@ -133,7 +89,7 @@ func NewCmdCustom(exts extensions.ExtensionMap, alias string) (*cobra.Command, e
 				switch subcommand.Mode {
 				case types.CommandModeView:
 					if !isatty.IsTerminal(os.Stdout.Fd()) {
-						output, err := ext.Run(subcommand.Name, types.CommandInput{
+						output, err := extension.Run(subcommand.Name, types.CommandInput{
 							Params: params,
 						})
 
@@ -148,19 +104,10 @@ func NewCmdCustom(exts extensions.ExtensionMap, alias string) (*cobra.Command, e
 						return nil
 					}
 
-					runner, err := tui.NewRunner(exts, tui.CommandRef{
-						Extension: alias,
-						Command:   subcommand.Name,
-						Params:    params,
-					})
-
-					if err != nil {
-						return err
-					}
-
+					runner := tui.NewRunner(extension, subcommand, params)
 					return tui.Draw(runner)
 				case types.CommandModeNoView:
-					out, err := ext.Run(subcommand.Name, types.CommandInput{
+					out, err := extension.Run(subcommand.Name, types.CommandInput{
 						Params: params,
 					})
 					if err != nil {
@@ -175,7 +122,7 @@ func NewCmdCustom(exts extensions.ExtensionMap, alias string) (*cobra.Command, e
 						return err
 					}
 				case types.CommandModeTTY:
-					cmd, err := ext.Cmd(subcommand.Name, types.CommandInput{
+					cmd, err := extension.Cmd(subcommand.Name, types.CommandInput{
 						Params: params,
 					})
 					if err != nil {

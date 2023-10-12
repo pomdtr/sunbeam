@@ -438,25 +438,6 @@ func FindExtensions() (extensions.ExtensionMap, error) {
 		}
 
 		manifestPath := filepath.Join(extensionDir, "manifest.json")
-
-		// check if manifest cache is stale
-		if manifestInfo, err := os.Stat(manifestPath); err != nil {
-			if err := cacheManifest(entrypoint, manifestPath); err != nil {
-				continue
-			}
-		} else {
-			entrypointInfo, err := os.Stat(entrypoint)
-			if err != nil {
-				continue
-			}
-
-			if entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
-				if err := cacheManifest(entrypoint, manifestPath); err != nil {
-					continue
-				}
-			}
-		}
-
 		manifestBytes, err := os.ReadFile(manifestPath)
 		if err != nil {
 			continue

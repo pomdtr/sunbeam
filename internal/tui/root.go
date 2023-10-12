@@ -26,7 +26,7 @@ type RootList struct {
 	extensions extensions.ExtensionMap
 }
 
-func NewRootList(title string, extensions extensions.ExtensionMap, items []types.ListItem) *RootList {
+func NewRootList(title string, extensionMap extensions.ExtensionMap) *RootList {
 	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
 	if err != nil {
 		history = History{
@@ -35,6 +35,27 @@ func NewRootList(title string, extensions extensions.ExtensionMap, items []types
 		}
 	}
 
+	items := make([]types.ListItem, 0)
+	for alias, extension := range extensionMap {
+		for _, command := range extension.RootCommands() {
+			items = append(items, types.ListItem{
+				Id:          fmt.Sprintf("extensions/%s/%s", alias, command.Name),
+				Title:       command.Title,
+				Subtitle:    extension.Title,
+				Accessories: []string{alias},
+				Actions: []types.Action{
+					{
+						Title: "Run",
+						OnAction: types.Command{
+							Type:      types.CommandTypeRun,
+							Extension: alias,
+							Command:   command.Name,
+						},
+					},
+				},
+			})
+		}
+	}
 	history.Sort(items)
 	list := NewList(items...)
 
@@ -42,7 +63,7 @@ func NewRootList(title string, extensions extensions.ExtensionMap, items []types
 		title:      title,
 		history:    history,
 		list:       list,
-		extensions: extensions,
+		extensions: extensionMap,
 	}
 }
 
@@ -106,15 +127,12 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			switch commandspec.Mode {
 			case types.CommandModeView:
-				runner, err := NewRunner(c.extensions, CommandRef{
-					Extension: msg.Extension,
-					Command:   msg.Command,
-					Params:    msg.Params,
-				})
-
-				if err != nil {
-					return c, c.SetError(err)
+				command, ok := extension.Command(commandspec.Name)
+				if !ok {
+					return c, c.SetError(fmt.Errorf("command %s not found", commandspec.Name))
 				}
+
+				runner := NewRunner(extension, command, msg.Params)
 				return c, PushPageCmd(runner)
 			case types.CommandModeNoView:
 				return c, func() tea.Msg {

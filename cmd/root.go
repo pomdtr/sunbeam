@@ -6,9 +6,7 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -29,19 +27,6 @@ func IsSunbeamRunning() bool {
 }
 
 func NewRootCmd() (*cobra.Command, error) {
-	var extensionMap extensions.ExtensionMap
-
-	// If the command is running inside sunbeam, we should not load extensions
-	if IsSunbeamRunning() {
-		extensionMap = make(extensions.ExtensionMap)
-	} else {
-		exts, err := FindExtensions()
-		if err != nil {
-			return nil, err
-		}
-		extensionMap = exts
-	}
-
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:          "sunbeam",
@@ -52,46 +37,6 @@ func NewRootCmd() (*cobra.Command, error) {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				encoder := json.NewEncoder(os.Stdout)
-				encoder.SetIndent("", "  ")
-				return encoder.Encode(extensionMap)
-			}
-
-			items := make([]types.ListItem, 0)
-			for alias, extension := range extensionMap {
-				for _, command := range extension.Commands {
-					if !IsRootCommand(command) {
-						continue
-					}
-
-					if command.Hidden {
-						continue
-					}
-
-					items = append(items, types.ListItem{
-						Id:          fmt.Sprintf("extensions/%s/%s", alias, command.Name),
-						Title:       command.Title,
-						Subtitle:    extension.Title,
-						Accessories: []string{alias},
-						Actions: []types.Action{
-							{
-								Title: "Run",
-								OnAction: types.Command{
-									Type:      types.CommandTypeRun,
-									Extension: alias,
-									Command:   command.Name,
-								},
-							},
-						},
-					})
-				}
-			}
-
-			rootList := tui.NewRootList("Sunbeam", extensionMap, items)
-			return tui.Draw(rootList)
-		},
 	}
 
 	rootCmd.AddGroup(&cobra.Group{
@@ -101,18 +46,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		ID:    CommandGroupDev,
 		Title: "Development Commands:",
 	})
-
-	if len(extensionMap) > 0 {
-		rootCmd.AddGroup(&cobra.Group{
-			ID:    CommandGroupExtension,
-			Title: "Extension Commands:",
-		})
-	}
-
-	rootCmd.AddCommand(NewCmdRun())
-	rootCmd.AddCommand(NewCmdFetch())
-	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdQuery())
+	rootCmd.AddCommand(NewValidateCmd())
+	rootCmd.AddCommand(NewCmdFetch())
+	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdExtension())
 	rootCmd.AddCommand(NewCmdWrap())
@@ -153,8 +90,35 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
-	for alias := range extensionMap {
-		command, err := NewCmdCustom(extensionMap, alias)
+	if IsSunbeamRunning() {
+		return rootCmd, nil
+	}
+
+	extensionMap, err := FindExtensions()
+	if err != nil {
+		return nil, err
+	}
+
+	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if !isatty.IsTerminal(os.Stdout.Fd()) {
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			return encoder.Encode(extensionMap)
+		}
+
+		rootList := tui.NewRootList("Sunbeam", extensionMap)
+		return tui.Draw(rootList)
+	}
+
+	if len(extensionMap) > 0 {
+		rootCmd.AddGroup(&cobra.Group{
+			ID:    CommandGroupExtension,
+			Title: "Extension Commands:",
+		})
+	}
+
+	for alias, extension := range extensionMap {
+		command, err := NewCmdCustom(alias, extension)
 		if err != nil {
 			return nil, err
 		}
@@ -163,18 +127,4 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	return rootCmd, nil
-}
-
-func IsRootCommand(command types.CommandSpec) bool {
-	if command.Hidden {
-		return false
-	}
-
-	for _, param := range command.Params {
-		if param.Required {
-			return false
-		}
-	}
-
-	return true
 }

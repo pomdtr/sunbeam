@@ -33,6 +33,20 @@ const (
 	ExtensionTypeGit   ExtensionType = "git"
 )
 
+func IsRootCommand(command types.CommandSpec) bool {
+	if command.Hidden {
+		return false
+	}
+
+	for _, param := range command.Params {
+		if param.Required {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	for _, command := range e.Commands {
 		if command.Name == name {
@@ -40,6 +54,19 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 		}
 	}
 	return types.CommandSpec{}, false
+}
+
+func (e Extension) RootCommands() []types.CommandSpec {
+	rootCommands := make([]types.CommandSpec, 0)
+	for _, command := range e.Commands {
+		if !IsRootCommand(command) {
+			continue
+		}
+
+		rootCommands = append(rootCommands, command)
+	}
+
+	return rootCommands
 }
 
 func (ext Extension) Run(command string, input types.CommandInput) ([]byte, error) {
