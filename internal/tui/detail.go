@@ -104,8 +104,14 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *Detail) RefreshContent() error {
+	var style string
+	if lipgloss.HasDarkBackground() {
+		style = "dark"
+	} else {
+		style = "light"
+	}
 	render, err := glamour.NewTermRenderer(
-		glamour.WithAutoStyle(),
+		glamour.WithStandardStyle(style),
 		glamour.WithWordWrap(c.width-2),
 	)
 	if err != nil {
