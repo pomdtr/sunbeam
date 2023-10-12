@@ -1,13 +1,8 @@
 package tui
 
 import (
-	"os"
-
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
 )
-
-var termOutput = termenv.NewOutput(os.Stdout)
 
 func PopPageCmd() tea.Msg {
 	return PopPageMsg{}

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -54,7 +56,7 @@ func (c RootList) Reload() tea.Cmd {
 }
 
 func (c *RootList) Focus() tea.Cmd {
-	termOutput.SetWindowTitle(c.title)
+	termenv.NewOutput(os.Stdout).SetWindowTitle(c.title)
 	return c.list.Focus()
 }
 
