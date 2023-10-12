@@ -3,7 +3,6 @@ package tui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
 
 func PopPageCmd() tea.Msg {
@@ -148,7 +147,7 @@ func (m *Paginator) Pop() tea.Cmd {
 }
 
 func Draw(page Page) error {
-	lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
+	lipgloss.SetHasDarkBackground(true)
 	paginator := NewPaginator(page)
 	p := tea.NewProgram(paginator, tea.WithAltScreen())
 
