@@ -1,9 +1,9 @@
 export type Manifest = {
   title: string;
-  commands: Command[];
+  commands: CommandSpec[];
 };
 
-type Command = {
+export type CommandSpec = {
   name: string;
   title: string;
   mode: "view" | "no-view" | "tty";
