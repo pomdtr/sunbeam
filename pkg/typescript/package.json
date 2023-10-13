@@ -1,0 +1,18 @@
+{
+    "name": "sunbeam-types",
+    "version": "0.22.0",
+    "description": "Types for sunbeam",
+    "types": "dist/mod.d.ts",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/pomdtr/sunbeam.git"
+    },
+    "scripts": {
+        "build": "npm run clean && tsup",
+        "clean": "rm -r dist"
+    },
+    "devDependencies": {
+        "tsup": "^7.2.0"
+    }
+}

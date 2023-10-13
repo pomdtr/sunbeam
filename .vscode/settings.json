@@ -5,6 +5,4 @@
     "pkg/typescript/npm": true
   },
   "yaml.validate": false,
-  "deno.enable": true,
-  "deno.unstable": true
 }

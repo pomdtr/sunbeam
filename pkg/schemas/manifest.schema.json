@@ -7,6 +7,9 @@
     ],
     "additionalProperties": false,
     "properties": {
+        "$schema": {
+            "type": "string"
+        },
         "title": {
             "type": "string"
         },
