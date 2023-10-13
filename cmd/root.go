@@ -29,11 +29,10 @@ func IsSunbeamRunning() bool {
 func NewRootCmd() (*cobra.Command, error) {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
-		Use:          "sunbeam",
-		Short:        "Command Line Launcher",
-		Version:      fmt.Sprintf("%s (%s)", Version, Date),
-		Args:         cobra.NoArgs,
-		SilenceUsage: true,
+		Use:     "sunbeam",
+		Short:   "Command Line Launcher",
+		Version: fmt.Sprintf("%s (%s)", Version, Date),
+		Args:    cobra.NoArgs,
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
@@ -53,6 +52,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdExtension())
 	rootCmd.AddCommand(NewCmdWrap())
+	rootCmd.AddCommand(NewCmdServe())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",

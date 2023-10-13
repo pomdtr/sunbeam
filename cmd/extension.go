@@ -3,10 +3,13 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/acarl005/stripansi"
 	"github.com/mattn/go-isatty"
@@ -79,8 +82,7 @@ func NewCmdExtensionList() *cobra.Command {
 
 func NewCmdExtensionInstall() *cobra.Command {
 	flags := struct {
-		alias      string
-		entrypoint string
+		alias string
 	}{}
 
 	cmd := &cobra.Command{
@@ -99,11 +101,39 @@ func NewCmdExtensionInstall() *cobra.Command {
 
 				return nil
 			}
-			if _, err := os.Stat(args[0]); err == nil {
-				if cmd.Flags().Changed("entrypoint") {
-					return fmt.Errorf("cannot use --entrypoint with a local extension")
+			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
+				alias := flags.alias
+				if flags.alias == "" {
+					return fmt.Errorf("must specify an alias for http extensions")
 				}
 
+				if err := validateAlias(flags.alias); err != nil {
+					return err
+				}
+
+				return httpInstall(args[0], filepath.Join(extensionRoot, alias))
+			} else if strings.HasPrefix(args[0], "github:") {
+				origin := strings.TrimPrefix(args[0], "github:")
+				parts := strings.Split(origin, "/")
+				if len(parts) < 2 {
+					return fmt.Errorf("invalid github origin")
+				}
+				owner, repo := parts[0], parts[1]
+				entrypoint := filepath.Join(parts[2:]...)
+
+				var alias string
+				if flags.alias != "" {
+					alias = flags.alias
+				} else {
+					alias = strings.TrimPrefix(repo, "sunbeam-")
+				}
+
+				if err := validateAlias(alias); err != nil {
+					return err
+				}
+
+				return gitInstall(fmt.Sprintf("https://github.com/%s/%s", owner, repo), filepath.Join(extensionRoot, alias), entrypoint)
+			} else {
 				origin, err := filepath.Abs(args[0])
 				if err != nil {
 					return err
@@ -122,124 +152,13 @@ func NewCmdExtensionInstall() *cobra.Command {
 					return err
 				}
 
-				if err := localInstall(origin, filepath.Join(extensionRoot, alias)); err != nil {
-					return err
-				}
-
-				return nil
+				return localInstall(origin, filepath.Join(extensionRoot, alias))
 			}
-
-			origin := args[0]
-			var alias string
-			if flags.alias != "" {
-				alias = flags.alias
-			} else {
-				parts := strings.Split(origin, "/")
-				alias = parts[len(parts)-1]
-				alias = strings.TrimSuffix(alias, filepath.Ext(alias))
-				alias = strings.TrimPrefix(alias, "sunbeam-")
-			}
-
-			if err := validateAlias(alias); err != nil {
-				return err
-			}
-
-			return gitInstall(origin, filepath.Join(extensionRoot, alias), flags.entrypoint)
 		},
 	}
 
 	cmd.Flags().StringVarP(&flags.alias, "alias", "a", "", "alias for extension")
-	cmd.Flags().StringVarP(&flags.entrypoint, "entrypoint", "e", "sunbeam-extension", "entrypoint for extension")
 	return cmd
-}
-
-func localInstall(origin string, extensionDir string) (err error) {
-	if err := os.MkdirAll(extensionDir, 0755); err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			os.RemoveAll(extensionDir)
-		}
-	}()
-
-	info, err := os.Stat(origin)
-	if err != nil {
-		return err
-	}
-
-	var entrypoint string
-	if info.IsDir() {
-		entrypoint = filepath.Join(origin, "sunbeam-extension")
-	} else {
-		entrypoint = origin
-	}
-
-	metadataFile, err := os.Create(filepath.Join(extensionDir, "metadata.json"))
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(metadataFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(extensions.Metadata{
-		Type:       extensions.ExtensionTypeLocal,
-		Origin:     origin,
-		Entrypoint: entrypoint,
-	}); err != nil {
-		return err
-	}
-
-	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
-}
-
-func gitInstall(origin string, extensionDir string, entrypoint string) (err error) {
-	// check if git is installed
-	if _, err := exec.LookPath("git"); err != nil {
-		return fmt.Errorf("git not found")
-	}
-
-	if err := os.MkdirAll(extensionDir, 0755); err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			os.RemoveAll(extensionDir)
-		}
-	}()
-
-	cloneCmd := exec.Command("git", "clone", "--depth=1", origin, filepath.Join(extensionDir, "src"))
-	cloneCmd.Stderr = os.Stderr
-	if err := cloneCmd.Run(); err != nil {
-		return err
-	}
-
-	metadataFile, err := os.Create(filepath.Join(extensionDir, "metadata.json"))
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(metadataFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(extensions.Metadata{
-		Type:       extensions.ExtensionTypeGit,
-		Origin:     origin,
-		Entrypoint: filepath.Join("src", entrypoint),
-	}); err != nil {
-		return err
-	}
-
-	entrypoint = filepath.Join(extensionDir, "src", entrypoint)
-	if info, err := os.Stat(entrypoint); err != nil {
-		return fmt.Errorf("entrypoint %s not found", entrypoint)
-	} else if info.IsDir() {
-		entrypoint = filepath.Join(entrypoint, "sunbeam-extension")
-		if _, err := os.Stat(entrypoint); err != nil {
-			return fmt.Errorf("entrypoint %s not found", entrypoint)
-		}
-	}
-
-	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
 }
 
 func NewCmdExtensionUpgrade() *cobra.Command {
@@ -332,7 +251,7 @@ func upgradeExtension(extensionDir string) error {
 		return err
 	}
 
-	if metadata.Type == extensions.ExtensionTypeLocal {
+	if metadata.Type == extensions.ExtensionTypeLocal || metadata.Type == extensions.ExtensionTypeHttp {
 		return cacheManifest(metadata.Entrypoint, filepath.Join(extensionDir, "manifest.json"))
 	} else if metadata.Type == extensions.ExtensionTypeGit {
 		pullCmd := exec.Command("git", "pull")
@@ -499,4 +418,170 @@ func LoadExtension(entrypoint string) (extensions.Extension, error) {
 		Manifest:   manifest,
 		Entrypoint: entrypoint,
 	}, nil
+}
+
+var scriptTemplate = `#!/bin/sh
+
+if [ $# -eq 0 ] ; then
+	exec sunbeam fetch '{{ .ManifestEndpoint }}'
+fi
+
+exec sunbeam fetch -X POST "{{ .CommandEndpoint }}" -d @-
+`
+
+func renderHTTPEntrypoint(origin string, w io.Writer) error {
+	originURL, err := url.Parse(origin)
+	if err != nil {
+		return err
+	}
+
+	template, err := template.New("script").Parse(scriptTemplate)
+	if err != nil {
+		return err
+	}
+
+	manifestEnpoint := originURL.String()
+	commandEndpoint, err := url.JoinPath(originURL.String(), "$1")
+	if err != nil {
+		return err
+	}
+
+	return template.Execute(w, struct {
+		ManifestEndpoint string
+		CommandEndpoint  string
+		Token            string
+	}{
+		ManifestEndpoint: manifestEnpoint,
+		CommandEndpoint:  commandEndpoint,
+	})
+}
+
+func localInstall(origin string, extensionDir string) (err error) {
+	if err := os.MkdirAll(extensionDir, 0755); err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			os.RemoveAll(extensionDir)
+		}
+	}()
+
+	info, err := os.Stat(origin)
+	if err != nil {
+		return err
+	}
+
+	var entrypoint string
+	if info.IsDir() {
+		entrypoint = filepath.Join(origin, "sunbeam-extension")
+	} else {
+		entrypoint = origin
+	}
+
+	metadataFile, err := os.Create(filepath.Join(extensionDir, "metadata.json"))
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(metadataFile)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(extensions.Metadata{
+		Type:       extensions.ExtensionTypeLocal,
+		Origin:     origin,
+		Entrypoint: entrypoint,
+	}); err != nil {
+		return err
+	}
+
+	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
+}
+
+func gitInstall(origin string, extensionDir string, entrypoint string) (err error) {
+	if entrypoint == "" {
+		entrypoint = "sunbeam-extension"
+	}
+
+	if err := os.MkdirAll(extensionDir, 0755); err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			os.RemoveAll(extensionDir)
+		}
+	}()
+
+	cloneCmd := exec.Command("git", "clone", "--depth=1", origin, filepath.Join(extensionDir, "src"))
+	cloneCmd.Stderr = os.Stderr
+	if err := cloneCmd.Run(); err != nil {
+		return err
+	}
+
+	metadataFile, err := os.Create(filepath.Join(extensionDir, "metadata.json"))
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(metadataFile)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(extensions.Metadata{
+		Type:       extensions.ExtensionTypeGit,
+		Origin:     origin,
+		Entrypoint: filepath.Join("src", entrypoint),
+	}); err != nil {
+		return err
+	}
+
+	entrypoint = filepath.Join(extensionDir, "src", entrypoint)
+	if info, err := os.Stat(entrypoint); err != nil {
+		return fmt.Errorf("entrypoint %s not found", entrypoint)
+	} else if info.IsDir() {
+		entrypoint = filepath.Join(entrypoint, "sunbeam-extension")
+		if _, err := os.Stat(entrypoint); err != nil {
+			return fmt.Errorf("entrypoint %s not found", entrypoint)
+		}
+	}
+
+	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
+}
+
+func httpInstall(origin string, extensionDir string) (err error) {
+	if err := os.MkdirAll(extensionDir, 0755); err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			os.RemoveAll(extensionDir)
+		}
+	}()
+
+	entrypointPath := filepath.Join(extensionDir, "sunbeam-extension")
+	entrypointFile, err := os.Create(entrypointPath)
+	if err != nil {
+		return err
+	}
+
+	if err := renderHTTPEntrypoint(origin, entrypointFile); err != nil {
+		return err
+	}
+
+	if err := os.Chmod(entrypointPath, 0755); err != nil {
+		return err
+	}
+
+	metadataFile, err := os.Create(filepath.Join(extensionDir, "metadata.json"))
+	if err != nil {
+		return err
+	}
+
+	encoder := json.NewEncoder(metadataFile)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(extensions.Metadata{
+		Type:       extensions.ExtensionTypeHttp,
+		Origin:     origin,
+		Entrypoint: filepath.Join(extensionDir, "sunbeam-extension"),
+	}); err != nil {
+		return err
+	}
+
+	return cacheManifest(entrypointPath, filepath.Join(extensionDir, "manifest.json"))
 }

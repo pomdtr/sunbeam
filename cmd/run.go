@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -20,24 +21,46 @@ func NewCmdRun() *cobra.Command {
 				return cmd.Help()
 			}
 
-			s, err := filepath.Abs(args[0])
-			if err != nil {
-				return err
-			}
-
-			info, err := os.Stat(s)
-			if err != nil {
-				return fmt.Errorf("error loading extension: %w", err)
-			}
-
 			var scriptPath string
-			if info.IsDir() {
-				scriptPath = filepath.Join(s, "sunbeam-extension")
-				if _, err := os.Stat(scriptPath); err != nil {
-					return fmt.Errorf("no extension found at %s", args[0])
+			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
+				tempfile, err := os.CreateTemp("", "sunbeam-extension-")
+				if err != nil {
+					return err
 				}
+				defer os.Remove(tempfile.Name())
+
+				if err := renderHTTPEntrypoint(args[0], tempfile); err != nil {
+					return err
+				}
+
+				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
+					return err
+				}
+
+				if err := tempfile.Close(); err != nil {
+					return err
+				}
+
+				scriptPath = tempfile.Name()
 			} else {
-				scriptPath = s
+				s, err := filepath.Abs(args[0])
+				if err != nil {
+					return err
+				}
+
+				info, err := os.Stat(s)
+				if err != nil {
+					return fmt.Errorf("error loading extension: %w", err)
+				}
+
+				if info.IsDir() {
+					scriptPath = filepath.Join(s, "sunbeam-extension")
+					if _, err := os.Stat(scriptPath); err != nil {
+						return fmt.Errorf("no extension found at %s", args[0])
+					}
+				} else {
+					scriptPath = s
+				}
 			}
 
 			extension, err := LoadExtension(scriptPath)
