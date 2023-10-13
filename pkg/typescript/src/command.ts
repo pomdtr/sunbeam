@@ -15,7 +15,7 @@ export type OpenCommand = {
 export type RunCommand = {
   type: "run";
   command: string;
-  exit?: boolean;
+  params?: Record<string, string | number | boolean>;
 };
 
 export type ExitCommand = {

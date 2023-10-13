@@ -132,7 +132,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return c, c.SetError(fmt.Errorf("command %s not found", commandspec.Name))
 				}
 
-				runner := NewRunner(extension, command, msg.Params)
+				runner := NewRunner(extension, command, types.CommandInput{
+					Params: msg.Params,
+				})
 				return c, PushPageCmd(runner)
 			case types.CommandModeNoView:
 				return c, func() tea.Msg {

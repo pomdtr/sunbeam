@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -41,7 +42,9 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			}
 
 			if len(rootCommands) == 1 {
-				runner := tui.NewRunner(extension, rootCommands[0], make(map[string]any))
+				runner := tui.NewRunner(extension, rootCommands[0], types.CommandInput{
+					Params: make(map[string]any),
+				})
 
 				return tui.Draw(runner)
 			}
@@ -61,27 +64,46 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			Short:  subcommand.Title,
 			Hidden: subcommand.Hidden,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				params := make(map[string]any)
-				for _, param := range subcommand.Params {
-					switch param.Type {
-					case types.ParamTypeString:
-						value, err := cmd.Flags().GetString(param.Name)
-						if err != nil {
-							return err
+				input := types.CommandInput{
+					Params: make(map[string]any),
+				}
+				if !isatty.IsTerminal(os.Stdin.Fd()) {
+					i, err := io.ReadAll(os.Stdin)
+					if err != nil {
+						return err
+					}
+
+					if err := jsonc.Unmarshal(i, &input); err != nil {
+						return err
+					}
+				} else {
+					for _, param := range subcommand.Params {
+						if !cmd.Flags().Changed(param.Name) {
+							if param.Required {
+								return fmt.Errorf("parameter %s is required", param.Name)
+							}
+							continue
 						}
-						params[param.Name] = value
-					case types.ParamTypeBoolean:
-						value, err := cmd.Flags().GetBool(param.Name)
-						if err != nil {
-							return err
+						switch param.Type {
+						case types.ParamTypeString:
+							value, err := cmd.Flags().GetString(param.Name)
+							if err != nil {
+								return err
+							}
+							input.Params[param.Name] = value
+						case types.ParamTypeBoolean:
+							value, err := cmd.Flags().GetBool(param.Name)
+							if err != nil {
+								return err
+							}
+							input.Params[param.Name] = value
+						case types.ParamTypeNumber:
+							value, err := cmd.Flags().GetInt(param.Name)
+							if err != nil {
+								return err
+							}
+							input.Params[param.Name] = value
 						}
-						params[param.Name] = value
-					case types.ParamTypeNumber:
-						value, err := cmd.Flags().GetInt(param.Name)
-						if err != nil {
-							return err
-						}
-						params[param.Name] = value
 					}
 				}
 
@@ -89,9 +111,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				switch subcommand.Mode {
 				case types.CommandModeView:
 					if !isatty.IsTerminal(os.Stdout.Fd()) {
-						output, err := extension.Run(subcommand.Name, types.CommandInput{
-							Params: params,
-						})
+						output, err := extension.Run(subcommand.Name, input)
 
 						if err != nil {
 							return err
@@ -104,11 +124,11 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 						return nil
 					}
 
-					runner := tui.NewRunner(extension, subcommand, params)
+					runner := tui.NewRunner(extension, subcommand, input)
 					return tui.Draw(runner)
 				case types.CommandModeNoView:
 					out, err := extension.Run(subcommand.Name, types.CommandInput{
-						Params: params,
+						Params: input.Params,
 					})
 					if err != nil {
 						return err
@@ -123,7 +143,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					}
 				case types.CommandModeTTY:
 					cmd, err := extension.Cmd(subcommand.Name, types.CommandInput{
-						Params: params,
+						Params: input.Params,
 					})
 					if err != nil {
 						return err
@@ -188,10 +208,6 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				} else {
 					cmd.Flags().Int(param.Name, 0, param.Description)
 				}
-			}
-
-			if param.Required {
-				_ = cmd.MarkFlagRequired(param.Name)
 			}
 		}
 

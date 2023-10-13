@@ -3,23 +3,23 @@ export type Page = List | Detail | Form;
 
 export type List = {
   type: "list";
-  title: string;
+  title?: string;
   items: ListItem[];
-  actions: Action[];
+  actions?: Action[];
   emptyText?: string;
   reload?: boolean;
 };
 
 export type Detail = {
   type: "detail";
-  title: string;
+  title?: string;
   markdown: string;
   actions?: Action[];
 };
 
 export type Form = {
   type: "form";
-  title: string;
+  title?: string;
   fields: FormField[];
 };
 
