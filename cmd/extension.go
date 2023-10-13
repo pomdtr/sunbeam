@@ -95,7 +95,7 @@ func NewCmdExtensionInstall() *cobra.Command {
 				subCmds := cmd.Parent().Parent().Commands()
 				for _, subCmd := range subCmds {
 					if subCmd.Name() == alias {
-						return fmt.Errorf("alias %s already existsge", alias)
+						return fmt.Errorf("alias %s already exists", alias)
 					}
 				}
 
