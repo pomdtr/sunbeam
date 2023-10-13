@@ -26,7 +26,7 @@ export type Form = {
 export type ListItem = {
   title: string;
   subtitle?: string;
-  accessories?: string;
+  accessories?: string[];
   actions: Action[];
 };
 

@@ -7,8 +7,9 @@ type Command = {
   name: string;
   title: string;
   mode: "view" | "no-view" | "tty";
-  description: string;
-  params: CommandParam[];
+  hidden?: boolean;
+  description?: string;
+  params?: CommandParam[];
 };
 
 type CommandParam = StringParam | NumberParam | BooleanParam;
