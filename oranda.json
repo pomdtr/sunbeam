@@ -14,6 +14,9 @@
         }
     },
     "build": {
+        "additional_pages": {
+            "demo": "./docs/demo.md"
+        },
         "path_prefix": "sunbeam"
     },
     "styles": {

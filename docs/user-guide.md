@@ -1,8 +1,8 @@
-# User Guide
+# Using Sunbeam
 
 ## Managing Extensions
 
-A fresh install of sunbeam is pretty boring. In order to make it useful, you need to add some extensions.
+A fresh install of sunbeam is quite boring. In order to make it useful, you need to add some extensions.
 
 You can manage your extensions using the `sunbeam extension` command.
 To get a list of available extensions, run `sunbeam extension browse` command.
@@ -39,31 +39,5 @@ Other managements commands are available:
 ## Root Commands
 
 By default, if you run sunbeam without any arguments, it will show an usage message.
-
-```
-$ sunbeam
-Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
-
-See https://pomdtr.github.io/sunbeam for more information.
-
-Usage:
-  sunbeam [flags]
-  sunbeam [command]
-
-Available Commands:
-  completion         Generate the autocompletion script for the specified shell
-  extension          Manage extensions
-  fetch              Simple http client inspired by curl
-  help               Help about any command
-  query              Transform or generate JSON using a jq query
-  run                Run an extension without installing it
-  validate           Validate a Sunbeam schema
-
-Flags:
-  -h, --help      help for sunbeam
-  -v, --version   version for sunbeam
-
-Use "sunbeam [command] --help" for more information about a command.
-```
 
 As soon as you install an extension, a list of commands will be shown instead.
