@@ -34,3 +34,10 @@ type BooleanParam = {
   type: "boolean";
   default?: boolean;
 } & ParamsProps;
+
+export type CommandInput = {
+  params: Record<string, string | number | boolean>;
+  formData?: Record<string, string | number | boolean>;
+  query?: string;
+  workDir?: string;
+};
