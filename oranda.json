@@ -1,5 +1,5 @@
 {
-    "$schema": "https://github.com/axodotdev/oranda/releases/download/v0.4.1/oranda-config-schema.json",
+    "$schema": "https://github.com/axodotdev/oranda/releases/download/v0.5.0/oranda-config-schema.json",
     "project": {
         "name": "sunbeam",
         "description": "Generate complex TUIs from simple scripts written in any language.",
@@ -14,9 +14,6 @@
         }
     },
     "build": {
-        "additional_pages": {
-            "demo": "./docs/demo.md"
-        },
         "path_prefix": "sunbeam"
     },
     "styles": {
