@@ -22,7 +22,7 @@ archives:
   - format_overrides:
       - goos: windows
         format: zip
-    name_template: "{{ .Binary }}-{{ .Arch }}-{{ .Os }}"
+    name_template: "{{ .Binary }}-{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
       - LICENSE-MIT
@@ -31,7 +31,7 @@ nfpms:
   - vendor: pomdtr
     homepage: https://pomdtr.github.io/sunbeam
     maintainer: Achille Lacoin
-    file_name_template: "{{ .Binary }}-{{ .Arch }}-{{ .Os }}"
+    file_name_template: "{{ .Binary }}-{{ .Os }}_{{ .Arch }}"
     description: Generate powerful UIs from simple scripts written in any language.
     license: MIT
     formats:
