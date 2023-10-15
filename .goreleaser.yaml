@@ -22,7 +22,10 @@ archives:
   - format_overrides:
       - goos: windows
         format: zip
+    name_template: "{{ .Binary }}-{{ .Arch }}-{{ .Os }}"
     files:
+      - src: pkg/schemas/manifest.schema.json
+        strip_parent: true
       - README.md
       - LICENSE-MIT
       - completions/*
