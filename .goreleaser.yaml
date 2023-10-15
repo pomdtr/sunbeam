@@ -48,6 +48,8 @@ nfpms:
         dst: /usr/share/zsh/site-functions/_{{ .ProjectName }}
 checksum:
   name_template: "checksums.txt"
+release:
+  prerelease: auto
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
