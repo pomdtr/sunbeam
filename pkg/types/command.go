@@ -1,10 +1,5 @@
 package types
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 type CommandRef struct {
 	Extension string         `json:"extension,omitempty"`
 	Command   string         `json:"command,omitempty"`
@@ -17,8 +12,8 @@ type Command struct {
 
 	Text string `json:"text,omitempty"`
 
-	App    Applications `json:"app,omitempty"`
-	Target string       `json:"target,omitempty"`
+	App    Application `json:"app,omitempty"`
+	Target string      `json:"target,omitempty"`
 
 	Exit bool `json:"exit,omitempty"`
 
@@ -40,36 +35,11 @@ const (
 	CommandTypePop    CommandType = "pop"
 )
 
-type Applications []Application
-
 type Application struct {
-	Name     string   `json:"name"`
-	Platform Platform `json:"platform"`
+	Windows string `json:"windows,omitempty"`
+	Mac     string `json:"mac,omitempty"`
+	Linux   string `json:"linux,omitempty"`
 }
-
-type Platform string
-
-func (a *Applications) UnmarshalJSON(b []byte) error {
-	var app Application
-	if err := json.Unmarshal(b, &app); err == nil {
-		*a = []Application{app}
-		return nil
-	}
-
-	var apps []Application
-	if err := json.Unmarshal(b, &apps); err == nil {
-		*a = apps
-		return nil
-	}
-
-	return fmt.Errorf("invalid application")
-}
-
-var (
-	PlatformWindows = "windows"
-	PlatformMac     = "mac"
-	PlatformLinux   = "linux"
-)
 
 type CommandInput struct {
 	Params   map[string]any `json:"params"`

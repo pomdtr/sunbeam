@@ -9,39 +9,36 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-func OpenWith(target string, application types.Applications) error {
-	if len(application) == 0 {
-		return open.Run(target)
-	}
-
-	var platform string
+func OpenWith(target string, application types.Application) error {
+	var applicationName string
 	switch runtime.GOOS {
 	case "windows":
-		platform = types.PlatformWindows
+		applicationName = application.Windows
 	case "darwin":
-		platform = types.PlatformMac
+		applicationName = application.Mac
 	case "linux":
-		platform = types.PlatformLinux
+		applicationName = application.Linux
 	default:
 		return fmt.Errorf("unsupported platform")
 	}
 
-	for _, app := range application {
-		if app.Platform != "" && app.Platform != types.Platform(platform) {
-			continue
-		}
-		if err := open.RunWith(target, app.Name); err != nil {
-			return err
-		}
-
-		// hack: wait for the application to open
-		time.Sleep(500 * time.Millisecond)
-		return nil
+	if err := open.RunWith(target, applicationName); err != nil {
+		return err
 	}
 
-	return fmt.Errorf("no application found")
+	// hack: wait for the application to open
+	time.Sleep(500 * time.Millisecond)
+
+	return nil
 }
 
 func Open(target string) error {
-	return OpenWith(target, nil)
+	if err := open.Run(target); err != nil {
+		return err
+	}
+
+	// hack: wait for the application to open
+	time.Sleep(500 * time.Millisecond)
+
+	return nil
 }

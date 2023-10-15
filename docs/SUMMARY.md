@@ -1,6 +1,4 @@
-<!-- markdownlint-disable MD041 -->
-
-# Docs
+# Summary
 
 - [Installation](./installation.md)
 - [Using Sunbeam](./user-guide.md)
@@ -11,4 +9,10 @@
 
 # Reference
 
-- [CLI](./cli.md)
+- [Schemas]()
+    - [Manifest](./reference/manifest.md)
+    - [View](./reference/view.md)
+    - [Command](./reference/command.md)
+
+- [CLI](./reference/cli.md)
+

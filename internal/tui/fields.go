@@ -270,9 +270,9 @@ func NewDropDown(formItem types.Field) *DropDown {
 		defaultValue = formItem.Default.(string)
 	}
 
-	choices := make([]FilterItem, len(formItem.Items))
+	choices := make([]FilterItem, len(formItem.Choices))
 	var defaultId string
-	for i, formItem := range formItem.Items {
+	for i, formItem := range formItem.Choices {
 
 		item := DropDownItem{
 			id:    strconv.Itoa(i),

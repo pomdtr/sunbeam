@@ -16,7 +16,7 @@ You can use a package manager
 brew install pomdtr/tap/sunbeam
 
 # from source
-go install github.com/pomdtr/sunbeam@main
+go install github.com/pomdtr/sunbeam@latest
 ```
 
 or use binaries / packages from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).

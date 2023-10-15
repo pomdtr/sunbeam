@@ -18,7 +18,7 @@ const (
 type List struct {
 	Title     string     `json:"title,omitempty"`
 	Items     []ListItem `json:"items,omitempty"`
-	Reload    bool       `json:"reload,omitempty"`
+	Dynamic   bool       `json:"dynamic,omitempty"`
 	EmptyText string     `json:"emptyText,omitempty"`
 	Actions   []Action   `json:"actions,omitempty"`
 }
@@ -104,7 +104,7 @@ type Input struct {
 	Default     any       `json:"default,omitempty"`
 
 	// Only for dropdown
-	Items []DropDownItem `json:"items,omitempty"`
+	Choices []DropDownItem `json:"choices,omitempty"`
 
 	// Only for checkbox
 	Label string `json:"label,omitempty"`

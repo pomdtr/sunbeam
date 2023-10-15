@@ -19,7 +19,7 @@
                 "$ref": "./action.schema.json"
             }
         },
-        "reload": {
+        "dynamic": {
             "type": "boolean"
         },
         "title": {

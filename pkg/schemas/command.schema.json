@@ -208,19 +208,15 @@
         },
         "application": {
             "type": "object",
-            "required": [
-                "name"
-            ],
             "additionalProperties": false,
             "properties": {
-                "platform": {
-                    "enum": [
-                        "windows",
-                        "mac",
-                        "linux"
-                    ]
+                "windows": {
+                    "type": "string"
                 },
-                "name": {
+                "mac": {
+                    "type": "string"
+                },
+                "linux": {
                     "type": "string"
                 }
             }

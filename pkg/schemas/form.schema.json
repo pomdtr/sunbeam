@@ -169,14 +169,14 @@
             "type": "object",
             "required": [
                 "type",
-                "items"
+                "choices"
             ],
             "additionalProperties": false,
             "properties": {
                 "type": {
                     "const": "select"
                 },
-                "items": {
+                "choices": {
                     "type": "array",
                     "items": {
                         "type": "object",

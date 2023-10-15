@@ -127,7 +127,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			page.SetActions(list.Actions...)
 		}
 
-		if list.Reload {
+		if list.Dynamic {
 			page.OnQueryChange = func(query string) tea.Cmd {
 				c.input.Query = query
 				return c.Reload(c.input)

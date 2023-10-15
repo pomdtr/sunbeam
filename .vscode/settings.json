@@ -2,7 +2,6 @@
   "search.exclude": {
     "book": true,
     "public": true,
-    "pkg/typescript/npm": true
   },
   "yaml.validate": false,
 }
