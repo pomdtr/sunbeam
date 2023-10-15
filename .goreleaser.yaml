@@ -24,8 +24,6 @@ archives:
         format: zip
     name_template: "{{ .Binary }}-{{ .Arch }}-{{ .Os }}"
     files:
-      - src: pkg/schemas/manifest.schema.json
-        strip_parent: true
       - README.md
       - LICENSE-MIT
       - completions/*
@@ -51,6 +49,9 @@ checksum:
   name_template: "checksums.txt"
 release:
   prerelease: auto
+  extra_files:
+    - glob: pkg/schemas/manifest.schema.json
+
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
