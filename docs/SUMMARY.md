@@ -16,10 +16,9 @@
 
 # Reference
 
+- [Manifest](./reference/manifest.md)
+- [View](./reference/view.md)
+- [Command](./reference/command.md)
 - [CLI](./reference/cli.md)
-- [Schemas]()
-    - [Manifest](./reference/manifest.md)
-    - [View](./reference/view.md)
-    - [Command](./reference/command.md)
 
 
