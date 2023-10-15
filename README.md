@@ -1,4 +1,6 @@
-Sunbeam is a TUI framework for creating keyboard-driven applications from simple scripts.
+Sunbeam is a general purpose command-line launcher.
+
+Define UIs composed of a succession of list / form / detail views from simple scripts written in any language.
 
 <p align="center" style="text-align: center">
   <a href="https://asciinema.org/a/614506">
@@ -7,7 +9,6 @@ Sunbeam is a TUI framework for creating keyboard-driven applications from simple
 </p>
 
 You can think of it as a mix between an application launcher like [raycast](https://raycast.com) or [rofi](https://github.com/davatorium/rofi) and a fuzzy-finder like [fzf](https://github.com/junegunn/fzf) or [telescope](https://github.com/nvim-telescope/telescope.nvim).
-
 
 ## Features
 
