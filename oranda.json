@@ -20,10 +20,20 @@
         "theme": "axodark"
     },
     "components": {
-        "changelog": false,
+        "artifacts": {
+            "package_managers": {
+                "preferred": {
+                    "brew": "brew install pomdtr/tap/sunbeam",
+                    "go": "go install github.com/pomdtr/sunbeam@latest"
+                }
+            }
+        },
         "mdbook": {
             "path": "./",
             "theme": true
+        },
+        "changelog": {
+            "read_changelog_file": true
         }
     }
 }
