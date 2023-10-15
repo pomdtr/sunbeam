@@ -17,17 +17,17 @@ func NewValidateCmd() *cobra.Command {
 		Short:   "Validate a Sunbeam schema",
 	}
 
-	cmd.AddCommand(NewCmdValidatePage())
+	cmd.AddCommand(NewCmdValidateView())
 	cmd.AddCommand(NewCmdValidateManifest())
 	cmd.AddCommand(NewCmdValidateCommand())
 
 	return cmd
 }
 
-func NewCmdValidatePage() *cobra.Command {
+func NewCmdValidateView() *cobra.Command {
 	return &cobra.Command{
-		Use:   "page",
-		Short: "Validate a page",
+		Use:   "view",
+		Short: "Validate a view",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
@@ -42,7 +42,7 @@ func NewCmdValidatePage() *cobra.Command {
 				return fmt.Errorf("unable to read stdin: %s", err)
 			}
 
-			if err := schemas.ValidatePage(input); err != nil {
+			if err := schemas.ValidateView(input); err != nil {
 				return err
 			}
 

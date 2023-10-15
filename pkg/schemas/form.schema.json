@@ -8,12 +8,10 @@
     "additionalProperties": false,
     "properties": {
         "type": {
-            "const": "form",
-            "description": "The type of the page."
+            "const": "form"
         },
         "title": {
-            "type": "string",
-            "description": "The title of the form."
+            "type": "string"
         },
         "fields": {
             "type": "array",
@@ -119,20 +117,13 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "const": "text",
-                    "description": "The type of the input."
+                    "const": "text"
                 },
                 "placeholder": {
-                    "type": "string",
-                    "description": "The placeholder of the input."
+                    "type": "string"
                 },
                 "default": {
-                    "type": "string",
-                    "description": "The default value of the input."
-                },
-                "secure": {
-                    "type": "boolean",
-                    "description": "Whether the input should be secure."
+                    "type": "string"
                 }
             }
         },
@@ -145,16 +136,13 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "const": "textarea",
-                    "description": "The type of the input."
+                    "const": "textarea"
                 },
                 "placeholder": {
-                    "type": "string",
-                    "description": "The placeholder of the input."
+                    "type": "string"
                 },
                 "default": {
-                    "type": "string",
-                    "description": "The default value of the input."
+                    "type": "string"
                 }
             }
         },
@@ -167,16 +155,13 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "const": "checkbox",
-                    "description": "The type of the input."
+                    "const": "checkbox"
                 },
                 "label": {
-                    "type": "string",
-                    "description": "The label of the input."
+                    "type": "string"
                 },
                 "default": {
-                    "type": "boolean",
-                    "description": "The default value of the input."
+                    "type": "boolean"
                 }
             }
         },
@@ -189,8 +174,7 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "const": "select",
-                    "description": "The type of the input."
+                    "const": "select"
                 },
                 "items": {
                     "type": "array",
@@ -203,19 +187,16 @@
                         "additionalProperties": false,
                         "properties": {
                             "title": {
-                                "type": "string",
-                                "description": "The title of the item."
+                                "type": "string"
                             },
                             "value": {
                                 "type": "string"
                             }
                         }
-                    },
-                    "description": "The items of the input."
+                    }
                 },
                 "default": {
-                    "type": "string",
-                    "description": "The default value of the input."
+                    "type": "string"
                 }
             }
         }

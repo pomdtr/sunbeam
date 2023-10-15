@@ -8,30 +8,24 @@
     ],
     "properties": {
         "type": {
-            "const": "list",
-            "description": "The type of the page."
+            "const": "list"
         },
         "emptyText": {
-            "type": "string",
-            "description": "The text to show when the list is empty."
+            "type": "string"
         },
         "actions": {
             "type": "array",
-            "description": "The actions to show when the list is empty.",
             "items": {
                 "$ref": "./action.schema.json"
             }
         },
         "reload": {
-            "type": "boolean",
-            "description": "Whether the list should be reloaded when the query changes."
+            "type": "boolean"
         },
         "title": {
-            "type": "string",
-            "description": "The title of the list."
+            "type": "string"
         },
         "items": {
-            "description": "The items in the list.",
             "type": "array",
             "items": {
                 "$ref": "#/definitions/item"
@@ -46,30 +40,25 @@
             ],
             "properties": {
                 "title": {
-                    "type": "string",
-                    "description": "The title of the item."
+                    "type": "string"
                 },
                 "id": {
-                    "type": "string",
-                    "description": "The id of the item."
+                    "type": "string"
                 },
                 "subtitle": {
-                    "type": "string",
-                    "description": "The subtitle of the item."
+                    "type": "string"
                 },
                 "accessories": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    },
-                    "description": "The accessories to show on the right side of the item."
+                    }
                 },
                 "actions": {
                     "type": "array",
                     "items": {
                         "$ref": "./action.schema.json"
-                    },
-                    "description": "The actions attached to the item."
+                    }
                 }
             }
         }

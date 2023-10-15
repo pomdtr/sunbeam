@@ -99,16 +99,13 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "const": "copy",
-                    "description": "The type of the action."
+                    "const": "copy"
                 },
                 "exit": {
-                    "type": "boolean",
-                    "description": "Whether to exit the app after copying."
+                    "type": "boolean"
                 },
                 "text": {
-                    "type": "string",
-                    "description": "The text to copy."
+                    "type": "string"
                 }
             }
         },
@@ -120,16 +117,13 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "const": "open",
-                    "description": "The type of the action."
+                    "const": "open"
                 },
                 "exit": {
-                    "type": "boolean",
-                    "description": "Whether to exit the app after opening."
+                    "type": "boolean"
                 },
                 "target": {
-                    "type": "string",
-                    "description": "The target to open."
+                    "type": "string"
                 },
                 "app": {
                     "oneOf": [
@@ -154,16 +148,13 @@
             "additionalProperties": false,
             "properties": {
                 "type": {
-                    "const": "run",
-                    "description": "The type of the action."
+                    "const": "run"
                 },
                 "command": {
-                    "type": "string",
-                    "description": "The name of the command to run."
+                    "type": "string"
                 },
                 "params": {
                     "type": "object",
-                    "description": "The parameters to pass to the command.",
                     "patternProperties": {
                         ".+": true
                     }
@@ -182,7 +173,6 @@
                 },
                 "params": {
                     "type": "object",
-                    "description": "The parameters to pass to the command.",
                     "patternProperties": {
                         ".+": true
                     }
@@ -212,8 +202,7 @@
                     "const": "pop"
                 },
                 "reload": {
-                    "type": "boolean",
-                    "description": "Whether to reload the page after popping."
+                    "type": "boolean"
                 }
             }
         },

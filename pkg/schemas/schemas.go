@@ -19,7 +19,7 @@ var schemaUrls = []string{
 	"list.schema.json",
 	"detail.schema.json",
 	"form.schema.json",
-	"page.schema.json",
+	"view.schema.json",
 	"manifest.schema.json",
 }
 
@@ -73,8 +73,8 @@ func validateSchema(schema string, input []byte) error {
 	return nil
 }
 
-func ValidatePage(input []byte) error {
-	return validateSchema("page.schema.json", input)
+func ValidateView(input []byte) error {
+	return validateSchema("view.schema.json", input)
 }
 
 func ValidateCommand(input []byte) error {

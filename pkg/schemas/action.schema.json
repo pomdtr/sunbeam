@@ -8,12 +8,10 @@
     "additionalProperties": false,
     "properties": {
         "title": {
-            "type": "string",
-            "description": "The title of the action."
+            "type": "string"
         },
         "key": {
-            "type": "string",
-            "description": "The key used as a shortcut."
+            "type": "string"
         },
         "onAction": {
             "$ref": "./command.schema.json"

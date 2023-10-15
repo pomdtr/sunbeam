@@ -308,37 +308,37 @@ func (c *Runner) Reload(input types.CommandInput) tea.Cmd {
 			return err
 		}
 
-		if err := schemas.ValidatePage(output); err != nil {
+		if err := schemas.ValidateView(output); err != nil {
 			return err
 		}
 
-		var page types.Page
-		if err := json.Unmarshal(output, &page); err != nil {
+		var view types.View
+		if err := json.Unmarshal(output, &view); err != nil {
 			return err
 		}
 
-		if page.Title != "" {
-			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
+		if view.Title != "" {
+			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", view.Title, c.extension.Title))
 		} else {
 			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
 		}
 
-		switch page.Type {
-		case types.PageTypeDetail:
+		switch view.Type {
+		case types.ViewTypeDetail:
 			var detail types.Detail
 			if err := json.Unmarshal(output, &detail); err != nil {
 				return err
 			}
 
 			return detail
-		case types.PageTypeList:
+		case types.ViewTypeList:
 			var list types.List
 			if err := json.Unmarshal(output, &list); err != nil {
 				return err
 			}
 
 			return list
-		case types.PageTypeForm:
+		case types.ViewTypeForm:
 			var form types.Form
 			if err := json.Unmarshal(output, &form); err != nil {
 				return err

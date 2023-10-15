@@ -2,17 +2,17 @@ package types
 
 import "encoding/json"
 
-type Page struct {
-	Type  PageType `json:"type"`
+type View struct {
+	Type  ViewType `json:"type"`
 	Title string   `json:"title,omitempty"`
 }
 
-type PageType string
+type ViewType string
 
 const (
-	PageTypeList   PageType = "list"
-	PageTypeForm   PageType = "form"
-	PageTypeDetail PageType = "detail"
+	ViewTypeList   ViewType = "list"
+	ViewTypeForm   ViewType = "form"
+	ViewTypeDetail ViewType = "detail"
 )
 
 type List struct {
