@@ -2,7 +2,7 @@ Sunbeam is a TUI framework for creating keyboard-driven applications from simple
 
 <p align="center">
   <a href="https://asciinema.org/a/614506">
-        <img width="460" height="300" src="https://asciinema.org/a/614506.svg">
+        <img src="https://asciinema.org/a/614506.svg">
   </a>
 </p>
 
