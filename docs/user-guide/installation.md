@@ -15,6 +15,9 @@ You can use a package manager
 # using brew
 brew install pomdtr/tap/sunbeam
 
+# usign eget (https://github.com/zyedidia/eget)
+eget install pomdtr/sunbeam --pre-release
+
 # from source
 go install github.com/pomdtr/sunbeam@latest
 ```
