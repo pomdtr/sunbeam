@@ -16,7 +16,6 @@ import (
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"muzzammil.xyz/jsonc"
 )
 
 func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
@@ -73,7 +72,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 						return err
 					}
 
-					if err := jsonc.Unmarshal(i, &input); err != nil {
+					if err := json.Unmarshal(i, &input); err != nil {
 						return err
 					}
 				} else {
@@ -108,22 +107,23 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				}
 
 				var command types.Command
-				switch subcommand.Mode {
-				case types.CommandModeView:
-					if !isatty.IsTerminal(os.Stdout.Fd()) {
-						output, err := extension.Run(subcommand.Name, input)
 
-						if err != nil {
-							return err
-						}
+				if !isatty.IsTerminal(os.Stdout.Fd()) {
+					output, err := extension.Run(subcommand.Name, input)
 
-						if _, err := os.Stdout.Write(output); err != nil {
-							return err
-						}
-
-						return nil
+					if err != nil {
+						return err
 					}
 
+					if _, err := os.Stdout.Write(output); err != nil {
+						return err
+					}
+
+					return nil
+				}
+
+				switch subcommand.Mode {
+				case types.CommandModeView:
 					runner := tui.NewRunner(extension, subcommand, input)
 					return tui.Draw(runner)
 				case types.CommandModeNoView:
@@ -138,7 +138,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 						return nil
 					}
 
-					if err := jsonc.Unmarshal(out, &command); err != nil {
+					if err := json.Unmarshal(out, &command); err != nil {
 						return err
 					}
 				case types.CommandModeTTY:
@@ -159,7 +159,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					}
 
 					var command types.Command
-					if err := jsonc.Unmarshal(output, &command); err != nil {
+					if err := json.Unmarshal(output, &command); err != nil {
 						return err
 					}
 				}
