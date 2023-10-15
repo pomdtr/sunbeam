@@ -51,6 +51,7 @@ release:
   prerelease: auto
   extra_files:
     - glob: pkg/schemas/manifest.schema.json
+    - glob: install.sh
 
 snapshot:
   name_template: "{{ incpatch .Version }}-next"

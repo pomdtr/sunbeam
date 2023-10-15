@@ -87,3 +87,5 @@ public/
 completions/
 catalog.md
 docs/cli.md
+
+/install.sh
