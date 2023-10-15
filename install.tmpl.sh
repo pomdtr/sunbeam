@@ -77,14 +77,11 @@ printf "Downloading https://github.com/pomdtr/sunbeam/releases/download/%s/sunbe
 curl -L "https://github.com/pomdtr/sunbeam/releases/download/{{tag}}/sunbeam-$platform.$extension" > "sunbeam.$extension"
 
 case "$extension" in
-  "zip") unzip -j "sunbeam.$extension" -d "sunbeam-$platform" ;;
-  "tar.gz") tar -xvzf "sunbeam.$extension" "sunbeam-$platform/sunbeam" ;;
+  "zip") unzip -j "sunbeam.$extension" -d "sunbeam" ;;
+  "tar.gz") tar -xvzf "sunbeam.$extension" "sunbeam" ;;
 esac
 
-mv "sunbeam-{{tag}}-$platform/sunbeam" ./sunbeam
-
 rm "sunbeam.$extension"
-rm -rf "sunbeam-{{tag}}-$platform"
 
 cat <<-'EOM'
 Eget has been downloaded to the current directory.
