@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,11 +34,31 @@ func NewCmdRun() *cobra.Command {
 					return err
 				}
 
+				if err := tempfile.Close(); err != nil {
+					return err
+				}
+
 				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
 					return err
 				}
 
+				scriptPath = tempfile.Name()
+			} else if args[0] == "-" {
+				tempfile, err := os.CreateTemp("", "sunbeam-extension-")
+				if err != nil {
+					return err
+				}
+				defer os.Remove(tempfile.Name())
+
+				if _, err := io.Copy(tempfile, os.Stdin); err != nil {
+					return err
+				}
+
 				if err := tempfile.Close(); err != nil {
+					return err
+				}
+
+				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
 					return err
 				}
 

@@ -66,43 +66,40 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				input := types.CommandInput{
 					Params: make(map[string]any),
 				}
+
 				if !isatty.IsTerminal(os.Stdin.Fd()) {
 					i, err := io.ReadAll(os.Stdin)
 					if err != nil {
 						return err
 					}
 
-					if err := json.Unmarshal(i, &input); err != nil {
-						return err
+					if len(i) > 0 {
+						if err := json.Unmarshal(i, &input); err != nil {
+							return err
+						}
 					}
-				} else {
-					for _, param := range subcommand.Params {
-						if !cmd.Flags().Changed(param.Name) {
-							if param.Required {
-								return fmt.Errorf("parameter %s is required", param.Name)
-							}
-							continue
+				}
+
+				for _, param := range subcommand.Params {
+					switch param.Type {
+					case types.ParamTypeString:
+						value, err := cmd.Flags().GetString(param.Name)
+						if err != nil {
+							return err
 						}
-						switch param.Type {
-						case types.ParamTypeString:
-							value, err := cmd.Flags().GetString(param.Name)
-							if err != nil {
-								return err
-							}
-							input.Params[param.Name] = value
-						case types.ParamTypeBoolean:
-							value, err := cmd.Flags().GetBool(param.Name)
-							if err != nil {
-								return err
-							}
-							input.Params[param.Name] = value
-						case types.ParamTypeNumber:
-							value, err := cmd.Flags().GetInt(param.Name)
-							if err != nil {
-								return err
-							}
-							input.Params[param.Name] = value
+						input.Params[param.Name] = value
+					case types.ParamTypeBoolean:
+						value, err := cmd.Flags().GetBool(param.Name)
+						if err != nil {
+							return err
 						}
+						input.Params[param.Name] = value
+					case types.ParamTypeNumber:
+						value, err := cmd.Flags().GetInt(param.Name)
+						if err != nil {
+							return err
+						}
+						input.Params[param.Name] = value
 					}
 				}
 
