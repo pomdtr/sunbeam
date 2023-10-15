@@ -2,7 +2,7 @@
 
 ## Initial setup
 
-To create a sunbeam extension, we only need a single script!
+To create a sunbeam extension, we only need a single script.
 
 ```sh
 # Create a script named sunbeam-devdocs and make it executable

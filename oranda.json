@@ -10,7 +10,9 @@
     },
     "marketing": {
         "social": {
-            "twitter_account": "@pomdtr"
+            "twitter_account": "@pomdtr",
+            "image": "./static/alacritty.png",
+            "image_alt": "Sunbeam running in Alacritty."
         }
     },
     "build": {

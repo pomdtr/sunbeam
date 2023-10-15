@@ -2,6 +2,18 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "release",
+      "type": "process",
+      "command": "goreleaser",
+      "args": [
+        "release",
+        "--skip=publish",
+        "--skip=validate",
+        "--clean"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "preview docs",
       "type": "process",
       "command": "oranda",
