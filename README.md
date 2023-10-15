@@ -1,8 +1,13 @@
 Sunbeam is a TUI framework for creating keyboard-driven applications from simple scripts.
 
-You can think of it as a mix between an application launcher like [raycast](https://raycast.com) and a fuzzy-finder like [fzf](https://github.com/junegunn/fzf).
+<p align="center">
+  <a href="https://asciinema.org/a/614506">
+        <img width="460" height="300" src="https://asciinema.org/a/614506.svg">
+  </a>
+</p>
 
-[![asciicast](https://asciinema.org/a/614506.svg)](https://asciinema.org/a/614506)
+You can think of it as a mix between an application launcher like [raycast](https://raycast.com) or [rofi](https://github.com/davatorium/rofi) and a fuzzy-finder like [fzf](https://github.com/junegunn/fzf) or [telescope](https://github.com/nvim-telescope/telescope.nvim).
+
 
 ## Features
 
@@ -50,7 +55,7 @@ See the client section for more details.
 
 Sunbeam wouldn't exist without taking inspirations from incredible tools. Make sure to checkout:
 
-- [raycast](https://raycast.com): Sunbeam shamelessly copy most of raycast UX. Even the project name is a reference to raycast.
+- [raycast](https://raycast.com): Sunbeam shamelessly copy most of raycast UX, and nomenclature in it's api. Even the project name is a reference to raycast.
 - [fzf](https://github.com/junegunn/fzf): Sunbeam tries to take inspiration from fzf, but it's not a drop-in replacement. Sunbeam is designed to be used as a launcher, not as a fuzzy finder.
-- [slapdash](https://slapdash.com): The sunbeam event loop was inspired by slapdash. Sadly, it looks like the slapdash development has been discontinued.
-- [gh](https://cli.github.com): The sunbeam extension system was inspired by gh, with some modifications to make it more flexible.
+- [slapdash](https://slapdash.com): Slapdash feature-set is quite close to sunbeam. Sadly, slapdash development seems to be stalled, and it's not open source.
+- [gh](https://cli.github.com): Sunbeam extension system is taking inspiration from gh one.
