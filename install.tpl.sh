@@ -71,10 +71,10 @@ else
   extension='tar.gz'
 fi
 
-printf "Latest Version: %s\n" "{{tag}}"
-printf "Downloading https://github.com/pomdtr/sunbeam/releases/download/%s/sunbeam-%s.%s\n" "{{tag}}" "$platform" "$extension"
+printf "Latest Version: %s\n" "TAG"
+printf "Downloading https://github.com/pomdtr/sunbeam/releases/download/%s/sunbeam-%s.%s\n" "TAG" "$platform" "$extension"
 
-curl -L "https://github.com/pomdtr/sunbeam/releases/download/{{tag}}/sunbeam-$platform.$extension" > "sunbeam.$extension"
+curl -L "https://github.com/pomdtr/sunbeam/releases/download/TAG/sunbeam-$platform.$extension" > "sunbeam.$extension"
 
 case "$extension" in
   "zip") unzip -j "sunbeam.$extension" -d "sunbeam" ;;
