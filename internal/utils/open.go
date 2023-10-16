@@ -9,7 +9,11 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-func OpenWith(target string, application types.Application) error {
+func OpenWith(target string, application *types.Application) error {
+	if application == nil {
+		return Open(target)
+	}
+
 	var applicationName string
 	switch runtime.GOOS {
 	case "windows":

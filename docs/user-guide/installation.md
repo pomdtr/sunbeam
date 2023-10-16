@@ -2,10 +2,8 @@
 
 ## Requirements
 
-A lot of extensions rely on having bash installed on your system.
-MacOS and Linux devices comes with bash pre-installed, but you will need to install it on windows.
-
-You can install bash on windows using [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10) or [git bash](https://gitforwindows.org/).
+- sh (used as an interpreter for most extensions)
+- git (used to install extensions from git repositories)
 
 ## Installation
 
@@ -15,11 +13,14 @@ You can use a package manager
 # using brew
 brew install pomdtr/tap/sunbeam
 
-# usign eget (https://github.com/zyedidia/eget)
-eget install pomdtr/sunbeam --pre-release
+# install script
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/pomdtr/sunbeam/releases/latest/download/install.sh | sh
 
 # from source
 go install github.com/pomdtr/sunbeam@latest
+
+# usign eget (https://github.com/zyedidia/eget)
+eget install pomdtr/sunbeam --pre-release
 ```
 
 or use binaries / packages from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).

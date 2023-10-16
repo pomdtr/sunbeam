@@ -12,8 +12,8 @@ type Command struct {
 
 	Text string `json:"text,omitempty"`
 
-	App    Application `json:"app,omitempty"`
-	Target string      `json:"target,omitempty"`
+	App    *Application `json:"app,omitempty"`
+	Target string       `json:"target,omitempty"`
 
 	Exit bool `json:"exit,omitempty"`
 
