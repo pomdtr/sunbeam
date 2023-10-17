@@ -34,4 +34,5 @@ type ParamType string
 const (
 	ParamTypeString  ParamType = "string"
 	ParamTypeBoolean ParamType = "boolean"
+	ParamTypeNumber  ParamType = "number"
 )

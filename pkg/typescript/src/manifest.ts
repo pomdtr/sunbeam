@@ -12,7 +12,7 @@ export type CommandSpec = {
   params?: CommandParam[];
 };
 
-type CommandParam = StringParam | BooleanParam;
+type CommandParam = StringParam | BooleanParam | NumberParam;
 
 type ParamsProps = {
   name: string;
@@ -30,8 +30,12 @@ type BooleanParam = {
   default?: boolean;
 } & ParamsProps;
 
+type NumberParam = {
+  type: "number";
+  default?: number;
+};
+
 export type CommandInput = {
   params: Record<string, string | number | boolean>;
-  formData?: Record<string, string | number | boolean>;
   query?: string;
 };

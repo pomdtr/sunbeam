@@ -88,9 +88,11 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 							continue
 						}
 
-						if param.Required {
-							return fmt.Errorf("%s is a required parameter", param.Name)
+						if !param.Required {
+							continue
 						}
+
+						return fmt.Errorf("%s is a required parameter", param.Name)
 					}
 
 					switch param.Type {
@@ -102,6 +104,12 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 						input.Params[param.Name] = value
 					case types.ParamTypeBoolean:
 						value, err := cmd.Flags().GetBool(param.Name)
+						if err != nil {
+							return err
+						}
+						input.Params[param.Name] = value
+					case types.ParamTypeNumber:
+						value, err := cmd.Flags().GetInt(param.Name)
 						if err != nil {
 							return err
 						}
@@ -173,26 +181,11 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 		for _, param := range command.Params {
 			switch param.Type {
 			case types.ParamTypeString:
-				if param.Default != nil {
-					defaultValue, ok := param.Default.(string)
-					if !ok {
-						return nil, fmt.Errorf("invalid default value for parameter %s", param.Name)
-					}
-					cmd.Flags().String(param.Name, defaultValue, param.Description)
-				} else {
-					cmd.Flags().String(param.Name, "", param.Description)
-				}
+				cmd.Flags().String(param.Name, "", param.Description)
 			case types.ParamTypeBoolean:
-				if param.Default != nil {
-					defaultValue, ok := param.Default.(bool)
-					if !ok {
-						return nil, fmt.Errorf("invalid default value for parameter %s", param.Name)
-					}
-
-					cmd.Flags().Bool(param.Name, defaultValue, param.Description)
-				} else {
-					cmd.Flags().Bool(param.Name, false, param.Description)
-				}
+				cmd.Flags().Bool(param.Name, false, param.Description)
+			case types.ParamTypeNumber:
+				cmd.Flags().Int(param.Name, 0, param.Description)
 			}
 		}
 

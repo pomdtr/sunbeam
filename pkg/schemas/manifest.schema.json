@@ -65,7 +65,8 @@
                                 "type": "string",
                                 "enum": [
                                     "string",
-                                    "boolean"
+                                    "boolean",
+                                    "number"
                                 ]
                             },
                             "description": {
