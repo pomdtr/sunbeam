@@ -8,7 +8,6 @@
         "type": {
             "enum": [
                 "list",
-                "form",
                 "detail"
             ]
         }
@@ -24,18 +23,6 @@
             },
             "then": {
                 "$ref": "./list.schema.json"
-            }
-        },
-        {
-            "if": {
-                "properties": {
-                    "type": {
-                        "const": "form"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "./form.schema.json"
             }
         },
         {

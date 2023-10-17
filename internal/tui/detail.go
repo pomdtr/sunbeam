@@ -70,6 +70,10 @@ func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
 	return d.statusBar.SetIsLoading(isLoading)
 }
 
+func (c *Detail) Reload() tea.Cmd {
+	return nil
+}
+
 func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

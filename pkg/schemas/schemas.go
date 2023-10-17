@@ -18,7 +18,6 @@ var schemaUrls = []string{
 	"action.schema.json",
 	"list.schema.json",
 	"detail.schema.json",
-	"form.schema.json",
 	"view.schema.json",
 	"manifest.schema.json",
 }

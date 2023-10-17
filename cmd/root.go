@@ -49,9 +49,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewCmdRun())
-	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdExtension())
-	rootCmd.AddCommand(NewCmdWrap())
 	rootCmd.AddCommand(NewCmdServe())
 
 	docCmd := &cobra.Command{

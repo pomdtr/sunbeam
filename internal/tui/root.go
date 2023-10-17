@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -96,6 +96,10 @@ func (c *RootList) SetError(err error) tea.Cmd {
 	}
 }
 
+func (c *RootList) Reload() tea.Cmd {
+	return nil
+}
+
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case error:
@@ -120,64 +124,37 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
 			}
 
-			commandspec, ok := extension.Command(msg.Command)
+			command, ok := extension.Command(msg.Command)
 			if !ok {
 				return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
 			}
 
-			switch commandspec.Mode {
+			switch command.Mode {
 			case types.CommandModeView:
-				command, ok := extension.Command(commandspec.Name)
-				if !ok {
-					return c, c.SetError(fmt.Errorf("command %s not found", commandspec.Name))
-				}
-
 				runner := NewRunner(extension, command, types.CommandInput{
 					Params: msg.Params,
 				})
 				return c, PushPageCmd(runner)
 			case types.CommandModeNoView:
 				return c, func() tea.Msg {
-					out, err := extension.Run(commandspec.Name, types.CommandInput{
+					output, err := extension.Run(command.Name, types.CommandInput{
 						Params: msg.Params,
 					})
 					if err != nil {
 						return err
 					}
 
-					if len(out) == 0 {
-						return ExitCmd()
-					}
-
-					var command types.Command
-					if err := json.Unmarshal(out, &command); err != nil {
+					if err := schemas.ValidateCommand(output); err != nil {
 						return err
 					}
-					return command
+
+					var res types.Command
+					if err := json.Unmarshal(output, &res); err != nil {
+						return err
+					}
+
+					return res
 				}
-			case types.CommandModeTTY:
-				cmd, err := extension.Cmd(commandspec.Name, types.CommandInput{
-					Params: msg.Params,
-				})
-				if err != nil {
-					return c, c.SetError(err)
-				}
-
-				output := bytes.Buffer{}
-				cmd.Stdout = &output
-
-				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
-					if err != nil {
-						return err
-					}
-
-					var command types.Command
-					if err := json.Unmarshal(output.Bytes(), &command); err != nil {
-						return err
-					}
-
-					return command
-				})
 			}
 		case types.CommandTypeCopy:
 			return c, func() tea.Msg {
@@ -191,7 +168,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-
 		case types.CommandTypeOpen:
 			return c, func() tea.Msg {
 				if err := utils.OpenWith(msg.Target, msg.App); err != nil {
@@ -204,7 +180,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-		case types.CommandTypeExit, types.CommandTypePop:
+		case types.CommandTypeReload:
+			return c, nil
+		case types.CommandTypeExit:
 			return c, ExitCmd
 		default:
 			return c, nil

@@ -8,7 +8,9 @@ func PopPageCmd() tea.Msg {
 	return PopPageMsg{}
 }
 
-type PopPageMsg struct{}
+type PopPageMsg struct {
+	reload bool
+}
 
 func PushPageCmd(page Page) tea.Cmd {
 	return func() tea.Msg {
@@ -25,6 +27,7 @@ type PushPageMsg struct {
 type Page interface {
 	Init() tea.Cmd
 	SetSize(width, height int)
+	Reload() tea.Cmd
 	Focus() tea.Cmd
 	Blur() tea.Cmd
 	Update(tea.Msg) (Page, tea.Cmd)
@@ -75,8 +78,7 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case PopPageMsg:
 		if len(m.pages) > 1 {
-			cmd := m.Pop()
-			return m, cmd
+			return m, m.Pop(msg.reload)
 		}
 
 		m.hidden = true
@@ -131,7 +133,7 @@ func (m *Paginator) Push(page Page) tea.Cmd {
 	return tea.Sequence(cmd, page.Init(), page.Focus())
 }
 
-func (m *Paginator) Pop() tea.Cmd {
+func (m *Paginator) Pop(reload bool) tea.Cmd {
 	var cmds []tea.Cmd
 	if len(m.pages) > 0 {
 		cmds = append(cmds, m.pages[len(m.pages)-1].Blur())
@@ -140,6 +142,9 @@ func (m *Paginator) Pop() tea.Cmd {
 
 	if len(m.pages) > 0 {
 		cmds = append(cmds, m.pages[len(m.pages)-1].Focus())
+		if reload {
+			cmds = append(cmds, m.pages[len(m.pages)-1].Reload())
+		}
 	}
 
 	return tea.Sequence(cmds...)

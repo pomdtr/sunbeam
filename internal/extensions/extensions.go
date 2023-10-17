@@ -107,12 +107,6 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		}
 	}
 
-	workdir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	input.WorkDir = workdir
-
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
@@ -126,4 +120,26 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 	cmd.Env = append(cmd.Env, "NO_COLOR=1")
 
 	return cmd, nil
+}
+
+func HasMissingParams(command types.CommandSpec, params map[string]any) bool {
+	return len(FindMissingParams(command, params)) > 0
+}
+
+func FindMissingParams(command types.CommandSpec, params map[string]any) []types.Param {
+	missing := make([]types.Param, 0)
+	for _, spec := range command.Params {
+		if !spec.Required {
+			continue
+		}
+
+		_, ok := params[spec.Name]
+		if ok {
+			continue
+		}
+
+		missing = append(missing, spec)
+	}
+
+	return missing
 }

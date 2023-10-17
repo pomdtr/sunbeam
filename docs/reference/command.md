@@ -1,6 +1,6 @@
 # Command
 
-Command can be attached to actions array in a view, or returned from a script extension when the mode is `no-view` or `tty`.
+Command can be attached to actions array in a view, or returned from a script extension when the mode is `no-view`.
 
 ## Copy
 
@@ -77,17 +77,5 @@ Exit sunbeam.
 ```json
 {
     "type": "exit"
-}
-```
-
-## Pop
-
-Pop the current view from the navigation stack.
-
-```json
-{
-    "type": "pop",
-    // wether the view should be reloaded after popping (optional)
-    "reload": true
 }
 ```

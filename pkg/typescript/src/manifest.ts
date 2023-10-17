@@ -6,13 +6,13 @@ export type Manifest = {
 export type CommandSpec = {
   name: string;
   title: string;
-  mode: "view" | "no-view" | "tty";
+  mode: "view" | "no-view";
   hidden?: boolean;
   description?: string;
   params?: CommandParam[];
 };
 
-type CommandParam = StringParam | NumberParam | BooleanParam;
+type CommandParam = StringParam | BooleanParam;
 
 type ParamsProps = {
   name: string;
@@ -25,11 +25,6 @@ type StringParam = {
   default?: string;
 } & ParamsProps;
 
-type NumberParam = {
-  type: "number";
-  default?: number;
-} & ParamsProps;
-
 type BooleanParam = {
   type: "boolean";
   default?: boolean;
@@ -39,5 +34,4 @@ export type CommandInput = {
   params: Record<string, string | number | boolean>;
   formData?: Record<string, string | number | boolean>;
   query?: string;
-  workDir?: string;
 };

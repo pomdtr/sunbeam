@@ -45,8 +45,7 @@
                 "mode": {
                     "enum": [
                         "view",
-                        "no-view",
-                        "tty"
+                        "no-view"
                     ]
                 },
                 "params": {
@@ -66,8 +65,7 @@
                                 "type": "string",
                                 "enum": [
                                     "string",
-                                    "boolean",
-                                    "number"
+                                    "boolean"
                                 ]
                             },
                             "description": {

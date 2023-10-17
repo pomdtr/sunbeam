@@ -13,6 +13,7 @@ import (
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -56,17 +57,18 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
-	for _, subcommand := range extension.Commands {
-		subcommand := subcommand
+	for _, command := range extension.Commands {
+		command := command
 		cmd := &cobra.Command{
-			Use:    subcommand.Name,
-			Short:  subcommand.Title,
-			Hidden: subcommand.Hidden,
+			Use:    command.Name,
+			Short:  command.Title,
+			Hidden: command.Hidden,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				input := types.CommandInput{
 					Params: make(map[string]any),
 				}
 
+				// load params from stdin
 				if !isatty.IsTerminal(os.Stdin.Fd()) {
 					i, err := io.ReadAll(os.Stdin)
 					if err != nil {
@@ -80,7 +82,17 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					}
 				}
 
-				for _, param := range subcommand.Params {
+				for _, param := range command.Params {
+					if !cmd.Flags().Changed(param.Name) {
+						if _, ok := input.Params[param.Name]; ok {
+							continue
+						}
+
+						if param.Required {
+							return fmt.Errorf("%s is a required parameter", param.Name)
+						}
+					}
+
 					switch param.Type {
 					case types.ParamTypeString:
 						value, err := cmd.Flags().GetString(param.Name)
@@ -94,19 +106,11 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 							return err
 						}
 						input.Params[param.Name] = value
-					case types.ParamTypeNumber:
-						value, err := cmd.Flags().GetInt(param.Name)
-						if err != nil {
-							return err
-						}
-						input.Params[param.Name] = value
 					}
 				}
 
-				var command types.Command
-
 				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					output, err := extension.Run(subcommand.Name, input)
+					output, err := extension.Run(command.Name, input)
 
 					if err != nil {
 						return err
@@ -119,34 +123,14 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return nil
 				}
 
-				switch subcommand.Mode {
-				case types.CommandModeView:
-					runner := tui.NewRunner(extension, subcommand, input)
-					return tui.Draw(runner)
-				case types.CommandModeNoView:
-					out, err := extension.Run(subcommand.Name, types.CommandInput{
-						Params: input.Params,
-					})
-					if err != nil {
-						return err
+				var runCommand func(command types.CommandSpec, input types.CommandInput) error
+				runCommand = func(command types.CommandSpec, input types.CommandInput) error {
+					if command.Mode == types.CommandModeView {
+						runner := tui.NewRunner(extension, command, input)
+						return tui.Draw(runner)
 					}
 
-					if len(out) == 0 {
-						return nil
-					}
-
-					if err := json.Unmarshal(out, &command); err != nil {
-						return err
-					}
-				case types.CommandModeTTY:
-					cmd, err := extension.Cmd(subcommand.Name, types.CommandInput{
-						Params: input.Params,
-					})
-					if err != nil {
-						return err
-					}
-					cmd.Stderr = os.Stderr
-					output, err := cmd.Output()
+					output, err := extension.Run(command.Name, input)
 					if err != nil {
 						return err
 					}
@@ -155,24 +139,38 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 						return nil
 					}
 
-					var command types.Command
-					if err := json.Unmarshal(output, &command); err != nil {
+					if err := schemas.ValidateCommand(output); err != nil {
 						return err
+					}
+
+					var res types.Command
+					if err := json.Unmarshal(output, &res); err != nil {
+						return err
+					}
+
+					switch res.Type {
+					case types.CommandTypeCopy:
+						return clipboard.WriteAll(res.Text)
+					case types.CommandTypeOpen:
+						return utils.OpenWith(res.Target, res.App)
+					case types.CommandTypeRun:
+						target, ok := extension.Command(res.Command)
+						if !ok {
+							return fmt.Errorf("command %s not found", res.Command)
+						}
+						return runCommand(target, input)
+					case types.CommandTypeExit, types.CommandTypeReload:
+						return nil
+					default:
+						return fmt.Errorf("unknown command type %s", res.Type)
 					}
 				}
 
-				switch command.Type {
-				case types.CommandTypeCopy:
-					return clipboard.WriteAll(command.Text)
-				case types.CommandTypeOpen:
-					return utils.OpenWith(command.Target, command.App)
-				default:
-					return nil
-				}
+				return runCommand(command, input)
 			},
 		}
 
-		for _, param := range subcommand.Params {
+		for _, param := range command.Params {
 			switch param.Type {
 			case types.ParamTypeString:
 				if param.Default != nil {
@@ -194,16 +192,6 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					cmd.Flags().Bool(param.Name, defaultValue, param.Description)
 				} else {
 					cmd.Flags().Bool(param.Name, false, param.Description)
-				}
-			case types.ParamTypeNumber:
-				if param.Default != nil {
-					defaultValue, ok := param.Default.(int)
-					if !ok {
-						return nil, fmt.Errorf("invalid default value for parameter %s", param.Name)
-					}
-					cmd.Flags().Int(param.Name, defaultValue, param.Description)
-				} else {
-					cmd.Flags().Int(param.Name, 0, param.Description)
 				}
 			}
 		}

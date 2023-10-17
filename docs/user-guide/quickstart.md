@@ -57,7 +57,3 @@ Sunbeam is designed to be used with your keyboard. Depending on the current view
     - `ctrl+d` -> scroll half a page down
     - `q` -> exit sunbeam
     - `tab` -> show the available actions
-- form view:
-    - `tab` -> move to the next field
-    - `shift+tab` -> move to the previous field
-    - `ctrl+s` -> submit the form

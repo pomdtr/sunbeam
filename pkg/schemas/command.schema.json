@@ -11,7 +11,6 @@
                 "open",
                 "run",
                 "reload",
-                "pop",
                 "exit"
             ]
         }
@@ -63,30 +62,6 @@
             },
             "then": {
                 "$ref": "#/definitions/reload"
-            }
-        },
-        {
-            "if": {
-                "properties": {
-                    "type": {
-                        "const": "pop"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "#/definitions/pop"
-            }
-        },
-        {
-            "if": {
-                "properties": {
-                    "type": {
-                        "const": "exit"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "#/definitions/exit"
             }
         }
     ],
@@ -188,21 +163,6 @@
             "properties": {
                 "type": {
                     "const": "exit"
-                }
-            }
-        },
-        "pop": {
-            "type": "object",
-            "required": [
-                "type"
-            ],
-            "additionalProperties": false,
-            "properties": {
-                "type": {
-                    "const": "pop"
-                },
-                "reload": {
-                    "type": "boolean"
                 }
             }
         },

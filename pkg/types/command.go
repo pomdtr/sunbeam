@@ -32,7 +32,6 @@ const (
 	CommandTypeCopy   CommandType = "copy"
 	CommandTypeReload CommandType = "reload"
 	CommandTypeExit   CommandType = "exit"
-	CommandTypePop    CommandType = "pop"
 )
 
 type Application struct {
@@ -42,8 +41,6 @@ type Application struct {
 }
 
 type CommandInput struct {
-	Params   map[string]any `json:"params"`
-	FormData map[string]any `json:"formData,omitempty"`
-	Query    string         `json:"query,omitempty"`
-	WorkDir  string         `json:"workDir,omitempty"`
+	Params map[string]any `json:"params"`
+	Query  string         `json:"query,omitempty"`
 }
