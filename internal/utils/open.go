@@ -31,7 +31,7 @@ func OpenWith(target string, application *types.Application) error {
 	}
 
 	// hack: wait for the application to open
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	return nil
 }
@@ -42,7 +42,7 @@ func Open(target string) error {
 	}
 
 	// hack: wait for the application to open
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	return nil
 }
