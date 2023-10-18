@@ -37,10 +37,6 @@ func NewList(items ...types.ListItem) *List {
 	return list
 }
 
-func (l *List) Reload() tea.Cmd {
-	return nil
-}
-
 func (l *List) SetActions(actions ...types.Action) {
 	l.Actions = actions
 	if l.filter.Selection() == nil {

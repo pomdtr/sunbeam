@@ -96,10 +96,6 @@ func (c *RootList) SetError(err error) tea.Cmd {
 	}
 }
 
-func (c *RootList) Reload() tea.Cmd {
-	return nil
-}
-
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case error:
