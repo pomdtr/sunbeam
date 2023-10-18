@@ -1,6 +1,6 @@
 {
     "name": "sunbeam-types",
-    "version": "0.22.8",
+    "version": "0.22.12",
     "description": "Types for sunbeam",
     "types": "dist/mod.d.ts",
     "license": "MIT",
@@ -14,7 +14,7 @@
     "scripts": {
         "build": "npm run clean && tsup",
         "clean": "rm -rf dist",
-        "push": "npm run build && npm publish"
+        "release": "npm run build && npm publish"
     },
     "devDependencies": {
         "tsup": "^7.2.0",

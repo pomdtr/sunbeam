@@ -7,7 +7,7 @@ export type List = {
   items: ListItem[];
   actions?: Action[];
   emptyText?: string;
-  reload?: boolean;
+  dynamic?: boolean;
 };
 
 export type Detail = {

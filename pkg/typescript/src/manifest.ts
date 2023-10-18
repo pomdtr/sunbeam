@@ -1,5 +1,6 @@
 export type Manifest = {
   title: string;
+  description?: string;
   commands: CommandSpec[];
 };
 
@@ -33,7 +34,7 @@ type BooleanParam = {
 type NumberParam = {
   type: "number";
   default?: number;
-};
+} & ParamsProps;
 
 export type CommandInput = {
   params: Record<string, string | number | boolean>;
