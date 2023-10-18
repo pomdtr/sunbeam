@@ -95,7 +95,7 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 	if err != nil {
 		return nil, err
 	}
-	input.WorkDir = cwd
+	input.Cwd = cwd
 
 	command, ok := e.Command(commandName)
 	if !ok {
