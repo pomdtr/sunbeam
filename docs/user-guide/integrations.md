@@ -16,7 +16,7 @@ You can use it as a sunbeam client with this config.
 
 ```yml
 shell:
-  program: /opt/homebrew/bin/fish
+  program: /bin/bash
   args: ["-lic", "sunbeam"]
 
 window:

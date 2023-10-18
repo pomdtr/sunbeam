@@ -42,7 +42,7 @@ Open a url or a file with the default app or a specific app.
 
 ## Run
 
-Run a command defined in the manifest of the current extension.
+Run a custom command defined in the extension manifest.
 
 ```json
 {
@@ -65,7 +65,7 @@ Reload the current view.
     "type": "reload",
     // override the current params (optional)
     "params": {
-        "show-hidden": true
+        "full_name": "pomdtr/sunbeam" // key must match the name of the param
     }
 }
 ```
