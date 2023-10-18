@@ -124,7 +124,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 		case types.CommandTypeCopy:
 			return c, func() tea.Msg {
-
 				if err := clipboard.WriteAll(msg.Text); err != nil {
 					return err
 				}
@@ -184,12 +183,26 @@ func (c *Runner) Reload() tea.Cmd {
 		}
 
 		if err := schemas.ValidateView(output); err != nil {
-			return err
+			return NewErrorPage(err, types.Action{
+				Title: "Copy Script Output",
+				OnAction: types.Command{
+					Type: types.CommandTypeCopy,
+					Text: string(output),
+					Exit: true,
+				},
+			})
 		}
 
 		var view types.View
 		if err := json.Unmarshal(output, &view); err != nil {
-			return err
+			return NewErrorPage(err, types.Action{
+				Title: "Copy Output",
+				OnAction: types.Command{
+					Type: types.CommandTypeCopy,
+					Text: string(output),
+					Exit: true,
+				},
+			})
 		}
 
 		if view.Title != "" {
