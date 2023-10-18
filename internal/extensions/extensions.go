@@ -91,6 +91,12 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		input.Params = make(map[string]any)
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	input.WorkDir = cwd
+
 	command, ok := e.Command(commandName)
 	if !ok {
 		return nil, fmt.Errorf("command %s not found", commandName)

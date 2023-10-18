@@ -38,5 +38,6 @@ type NumberParam = {
 
 export type CommandInput = {
   params: Record<string, string | number | boolean>;
+  workdir: string;
   query?: string;
 };
