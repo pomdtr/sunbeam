@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -532,7 +533,7 @@ func httpInstall(origin string, extensionDir string) (err error) {
 		return err
 	}
 
-	if err := resp.Write(entrypointFile); err != nil {
+	if _, err := io.Copy(entrypointFile, resp.Body); err != nil {
 		return err
 	}
 
