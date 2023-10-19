@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"math/big"
 	"net/http"
 	"os"
@@ -18,6 +19,14 @@ import (
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
+
+var scriptTemplate = template.Must(template.New("entrypoint").Parse(`#!/bin/sh
+if [ $# -eq 0 ] ; then
+  exec sunbeam fetch '{{ .RootEndpoint }}'
+fi
+
+exec sunbeam fetch -X POST "{{ .RootEndpoint }}/$1" -d @-
+`))
 
 func NewCmdServe() *cobra.Command {
 	var flags struct {
@@ -70,6 +79,12 @@ func NewCmdServe() *cobra.Command {
 			}
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				scriptTemplate.Execute(w, map[string]string{
+					"RootEndpoint": fmt.Sprintf("http://%s/extension", r.Host),
+				})
+			})
+
+			r.Get("/extension", func(w http.ResponseWriter, r *http.Request) {
 				encoder := json.NewEncoder(w)
 				if err := encoder.Encode(extension.Manifest); err != nil {
 					http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), 500)
@@ -79,7 +94,7 @@ func NewCmdServe() *cobra.Command {
 
 			for _, command := range extension.Commands {
 				command := command
-				r.Post(fmt.Sprintf("/%s", command.Name), func(w http.ResponseWriter, r *http.Request) {
+				r.Post(fmt.Sprintf("/extension/%s", command.Name), func(w http.ResponseWriter, r *http.Request) {
 					var input types.CommandInput
 					if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 						http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)

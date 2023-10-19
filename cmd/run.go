@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +31,17 @@ func NewCmdRun() *cobra.Command {
 				}
 				defer os.Remove(tempfile.Name())
 
-				if err := renderHTTPEntrypoint(args[0], tempfile); err != nil {
+				resp, err := http.Get(args[0])
+				if err != nil {
+					return err
+				}
+				defer resp.Body.Close()
+
+				if resp.StatusCode != http.StatusOK {
+					return fmt.Errorf("error downloading extension: %s", resp.Status)
+				}
+
+				if _, err := io.Copy(tempfile, resp.Body); err != nil {
 					return err
 				}
 

@@ -3,13 +3,11 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/url"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/acarl005/stripansi"
 	"github.com/mattn/go-isatty"
@@ -420,42 +418,6 @@ func LoadExtension(entrypoint string) (extensions.Extension, error) {
 	}, nil
 }
 
-var scriptTemplate = `#!/bin/sh
-
-if [ $# -eq 0 ] ; then
-	exec sunbeam fetch '{{ .ManifestEndpoint }}'
-fi
-
-exec sunbeam fetch -X POST "{{ .CommandEndpoint }}" -d @-
-`
-
-func renderHTTPEntrypoint(origin string, w io.Writer) error {
-	originURL, err := url.Parse(origin)
-	if err != nil {
-		return err
-	}
-
-	template, err := template.New("script").Parse(scriptTemplate)
-	if err != nil {
-		return err
-	}
-
-	manifestEnpoint := originURL.String()
-	commandEndpoint, err := url.JoinPath(originURL.String(), "$1")
-	if err != nil {
-		return err
-	}
-
-	return template.Execute(w, struct {
-		ManifestEndpoint string
-		CommandEndpoint  string
-		Token            string
-	}{
-		ManifestEndpoint: manifestEnpoint,
-		CommandEndpoint:  commandEndpoint,
-	})
-}
-
 func localInstall(origin string, extensionDir string) (err error) {
 	if err := os.MkdirAll(extensionDir, 0755); err != nil {
 		return err
@@ -554,13 +516,23 @@ func httpInstall(origin string, extensionDir string) (err error) {
 		}
 	}()
 
+	resp, err := http.Get(origin)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("error downloading extension: %s", resp.Status)
+	}
+
 	entrypointPath := filepath.Join(extensionDir, "sunbeam-extension")
 	entrypointFile, err := os.Create(entrypointPath)
 	if err != nil {
 		return err
 	}
 
-	if err := renderHTTPEntrypoint(origin, entrypointFile); err != nil {
+	if err := resp.Write(entrypointFile); err != nil {
 		return err
 	}
 
