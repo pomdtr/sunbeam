@@ -9,6 +9,11 @@ export type CopyCommand = {
 export type OpenCommand = {
   type: "open";
   target: string;
+  app?: {
+    mac?: string;
+    windows?: string;
+    linux?: string;
+  };
   exit?: boolean;
 };
 
