@@ -1,4 +1,4 @@
-# Script Extensions
+# Writing your Extension
 
 ## Initial setup
 

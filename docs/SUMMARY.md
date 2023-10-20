@@ -11,8 +11,7 @@
 
 # Developer Guide
 
-- [Scripts Extensions](./developer-guide/script-extensions.md)
-- [HTTP Extensions](./developer-guide/http-extensions.md)
+- [Writing your Extension](./developer-guide/script-extensions.md)
 
 # Reference
 
