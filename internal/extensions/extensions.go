@@ -7,9 +7,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/cli/cli/pkg/findsh"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -118,7 +120,18 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		return nil, err
 	}
 
-	cmd := exec.Command(e.Entrypoint, commandName)
+	var args []string
+	if runtime.GOOS == "windows" {
+		sh, err := findsh.Find()
+		if err != nil {
+			return nil, err
+		}
+		args = []string{sh, "-s", "-c", `command "$@"`, "--", e.Entrypoint, commandName}
+	} else {
+		args = []string{e.Entrypoint, commandName}
+	}
+
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdin = strings.NewReader(string(inputBytes))
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()

@@ -8,9 +8,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/cli/cli/pkg/findsh"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
@@ -392,7 +394,17 @@ func cacheManifest(entrypoint string, manifestPath string) error {
 }
 
 func LoadExtension(entrypoint string) (extensions.Extension, error) {
-	cmd := exec.Command(entrypoint)
+	var args []string
+	if runtime.GOOS == "windows" {
+		sh, err := findsh.Find()
+		if err != nil {
+			return extensions.Extension{}, err
+		}
+		args = []string{sh, "-c", `command "$@"`, "--", entrypoint}
+	} else {
+		args = []string{entrypoint}
+	}
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = filepath.Dir(entrypoint)
 
 	manifestBytes, err := cmd.Output()
@@ -467,11 +479,12 @@ func gitInstall(origin string, extensionDir string, entrypoint string) (err erro
 	if err := os.MkdirAll(extensionDir, 0755); err != nil {
 		return err
 	}
-	defer func() {
-		if err != nil {
-			os.RemoveAll(extensionDir)
-		}
-	}()
+
+	// defer func() {
+	// 	if err != nil {
+	// 		os.RemoveAll(extensionDir)
+	// 	}
+	// }()
 
 	cloneCmd := exec.Command("git", "clone", "--depth=1", origin, filepath.Join(extensionDir, "src"))
 	cloneCmd.Stderr = os.Stderr
@@ -493,6 +506,7 @@ func gitInstall(origin string, extensionDir string, entrypoint string) (err erro
 	}); err != nil {
 		return err
 	}
+	metadataFile.Close()
 
 	entrypoint = filepath.Join(extensionDir, "src", entrypoint)
 	if info, err := os.Stat(entrypoint); err != nil {

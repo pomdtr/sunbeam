@@ -14,7 +14,8 @@ func DataHome() string {
 		return filepath.Join(env, "sunbeam")
 	}
 
-	return filepath.Join(os.Getenv("HOME"), ".local", "share", "sunbeam")
+	homedir, _ := os.UserHomeDir()
+	return filepath.Join(homedir, ".local", "share", "sunbeam")
 }
 
 func CacheHome() string {
@@ -22,5 +23,6 @@ func CacheHome() string {
 		return filepath.Join(env, "sunbeam")
 	}
 
-	return filepath.Join(os.Getenv("HOME"), ".cache", "sunbeam")
+	homedir, _ := os.UserHomeDir()
+	return filepath.Join(homedir, ".cache", "sunbeam")
 }
