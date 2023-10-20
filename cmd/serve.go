@@ -79,15 +79,18 @@ func NewCmdServe() *cobra.Command {
 			}
 
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				scriptTemplate.Execute(w, map[string]string{
+				if err := scriptTemplate.Execute(w, map[string]string{
 					"RootEndpoint": fmt.Sprintf("http://%s/extension", r.Host),
-				})
+				}); err != nil {
+					http.Error(w, fmt.Sprintf("failed to render script: %s", err.Error()), http.StatusInternalServerError)
+					return
+				}
 			})
 
 			r.Get("/extension", func(w http.ResponseWriter, r *http.Request) {
 				encoder := json.NewEncoder(w)
 				if err := encoder.Encode(extension.Manifest); err != nil {
-					http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), 500)
+					http.Error(w, fmt.Sprintf("failed to encode manifest: %s", err.Error()), http.StatusInternalServerError)
 					return
 				}
 			})
@@ -97,18 +100,18 @@ func NewCmdServe() *cobra.Command {
 				r.Post(fmt.Sprintf("/extension/%s", command.Name), func(w http.ResponseWriter, r *http.Request) {
 					var input types.CommandInput
 					if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-						http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), 400)
+						http.Error(w, fmt.Sprintf("failed to decode input: %s", err.Error()), http.StatusBadRequest)
 						return
 					}
 
 					output, err := extension.Run(command.Name, input)
 					if err != nil {
-						http.Error(w, fmt.Sprintf("failed to run command: %s", err.Error()), 500)
+						http.Error(w, fmt.Sprintf("failed to run command: %s", err.Error()), http.StatusInternalServerError)
 						return
 					}
 
 					if _, err := w.Write(output); err != nil {
-						http.Error(w, fmt.Sprintf("failed to write output: %s", err.Error()), 500)
+						http.Error(w, fmt.Sprintf("failed to write output: %s", err.Error()), http.StatusInternalServerError)
 						return
 					}
 				})
