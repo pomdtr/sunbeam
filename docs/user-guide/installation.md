@@ -10,8 +10,12 @@
 You can use a package manager
 
 ```bash
-# using brew
+# using brew (macOS / Linux)
 brew install pomdtr/tap/sunbeam
+
+# using scoop (Windows)
+scoop bucket add pomdtr https://github.com/pomdtr/scoop-bucket.git
+scoop install pomdtr/sunbeam
 
 # install script
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/pomdtr/sunbeam/releases/latest/download/install.sh | sh
