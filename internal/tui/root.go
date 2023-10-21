@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -131,6 +132,34 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					Params: msg.Params,
 				})
 				return c, PushPageCmd(runner)
+			case types.CommandModeTTY:
+				cmd, err := extension.Cmd(command.Name, types.CommandInput{
+					Params: msg.Params,
+				})
+				if err != nil {
+					c.err = NewErrorPage(err)
+					c.err.SetSize(c.w, c.h)
+					return c, c.err.Init()
+				}
+
+				output := bytes.Buffer{}
+				cmd.Stdout = &output
+				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
+					if err != nil {
+						return err
+					}
+
+					if len(output.Bytes()) == 0 {
+						return nil
+					}
+
+					var res types.Command
+					if err := json.Unmarshal(output.Bytes(), &res); err != nil {
+						return err
+					}
+
+					return res
+				})
 			case types.CommandModeNoView:
 				return c, func() tea.Msg {
 					output, err := extension.Run(command.Name, types.CommandInput{

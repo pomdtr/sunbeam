@@ -133,6 +133,10 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdin = strings.NewReader(string(inputBytes))
+	if command.Mode == types.CommandModeTTY {
+		cmd.Stderr = os.Stdout
+	}
+
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "SUNBEAM=0")
