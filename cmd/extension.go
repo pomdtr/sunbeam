@@ -252,9 +252,31 @@ func upgradeExtension(extensionDir string) error {
 		return err
 	}
 
-	if metadata.Type == extensions.ExtensionTypeLocal || metadata.Type == extensions.ExtensionTypeHttp {
+	switch metadata.Type {
+	case extensions.ExtensionTypeLocal:
 		return cacheManifest(metadata.Entrypoint, filepath.Join(extensionDir, "manifest.json"))
-	} else if metadata.Type == extensions.ExtensionTypeGit {
+	case extensions.ExtensionTypeHttp:
+		resp, err := http.Get(metadata.Origin)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("error downloading extension: %s", resp.Status)
+		}
+
+		f, err := os.OpenFile(filepath.Join(extensionDir, "sunbeam-extension"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+		if err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(f, resp.Body); err != nil {
+			return err
+		}
+
+		return cacheManifest(metadata.Entrypoint, filepath.Join(extensionDir, "manifest.json"))
+	case extensions.ExtensionTypeGit:
 		pullCmd := exec.Command("git", "pull")
 		pullCmd.Dir = filepath.Join(extensionDir, "src")
 		pullCmd.Stderr = os.Stderr
@@ -263,7 +285,7 @@ func upgradeExtension(extensionDir string) error {
 		}
 
 		return cacheManifest(filepath.Join(extensionDir, "src", "sunbeam-extension"), filepath.Join(extensionDir, "manifest.json"))
-	} else {
+	default:
 		return fmt.Errorf("unknown extension type")
 	}
 }
