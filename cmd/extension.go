@@ -13,12 +13,14 @@ import (
 
 	"github.com/acarl005/stripansi"
 	"github.com/cli/cli/pkg/findsh"
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var (
@@ -66,17 +68,27 @@ func NewCmdExtensionList() *cobra.Command {
 				return err
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				encoder := json.NewEncoder(os.Stdout)
-				encoder.SetIndent("", "  ")
-				return encoder.Encode(extensionMap)
+			isTTY := isatty.IsTerminal(os.Stdout.Fd())
+			var table tableprinter.TablePrinter
+			if isTTY {
+				width, _, err := term.GetSize(int(os.Stdout.Fd()))
+				if err != nil {
+					return err
+				}
+
+				table = tableprinter.New(os.Stdout, true, width)
+			} else {
+				table = tableprinter.New(os.Stdout, false, 0)
 			}
 
 			for alias, extension := range extensionMap {
-				fmt.Printf("%s\t%s\n", alias, extension.Title)
+				table.AddField(alias)
+				table.AddField(extension.Title)
+				table.AddField(extension.Origin)
+				table.EndRow()
 			}
 
-			return nil
+			return table.Render()
 		},
 	}
 }
@@ -392,6 +404,7 @@ func FindExtensions() (extensions.ExtensionMap, error) {
 
 		extensionMap[entry.Name()] = extensions.Extension{
 			Manifest:   manifest,
+			Origin:     metadata.Origin,
 			Entrypoint: entrypoint,
 		}
 	}

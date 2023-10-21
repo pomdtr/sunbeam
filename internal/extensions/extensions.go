@@ -19,6 +19,7 @@ type ExtensionMap map[string]Extension
 
 type Extension struct {
 	types.Manifest
+	Origin     string
 	Entrypoint string
 }
 
