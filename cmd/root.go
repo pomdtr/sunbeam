@@ -100,6 +100,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		return nil, err
 	}
 
+	if len(extensionMap) == 0 {
+		return rootCmd, nil
+	}
+
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if !isatty.IsTerminal(os.Stdout.Fd()) {
 			encoder := json.NewEncoder(os.Stdout)
@@ -111,12 +115,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		return tui.Draw(rootList)
 	}
 
-	if len(extensionMap) > 0 {
-		rootCmd.AddGroup(&cobra.Group{
-			ID:    CommandGroupExtension,
-			Title: "Extension Commands:",
-		})
-	}
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    CommandGroupExtension,
+		Title: "Extension Commands:",
+	})
 
 	for alias, extension := range extensionMap {
 		command, err := NewCmdCustom(alias, extension)
