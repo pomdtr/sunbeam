@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,23 +38,11 @@ func NewCmdExtension() *cobra.Command {
 
 	cmd.AddCommand(NewCmdExtensionList())
 	cmd.AddCommand(NewCmdExtensionInstall())
-	cmd.AddCommand(NewCmdExtensionUpgrade())
+	cmd.AddCommand(NewCmdExtensionUpdate())
 	cmd.AddCommand(NewCmdExtensionRemove())
 	cmd.AddCommand(NewCmdExtensionRename())
-	cmd.AddCommand(NewCmdExtensionBrowse())
 
 	return cmd
-}
-
-func NewCmdExtensionBrowse() *cobra.Command {
-	return &cobra.Command{
-		Use:   "browse",
-		Short: "Browse extensions",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return utils.Open("https://github.com/topics/sunbeam-extension")
-		},
-	}
 }
 
 func NewCmdExtensionList() *cobra.Command {
@@ -114,38 +103,34 @@ func NewCmdExtensionInstall() *cobra.Command {
 
 				return nil
 			}
+
 			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
+				origin, err := url.Parse(args[0])
+				if err != nil {
+					return err
+				}
+
 				alias := flags.alias
 				if flags.alias == "" {
-					return fmt.Errorf("must specify an alias for http extensions")
+					alias = filepath.Base(origin.Path)
+					if alias == "." || alias == "/" {
+						return fmt.Errorf("could not determine alias, please specify with --alias")
+					}
+
+					alias = strings.TrimPrefix(alias, "sunbeam-")
+					alias = strings.TrimSuffix(alias, filepath.Ext(alias))
 				}
 
 				if err := validateAlias(flags.alias); err != nil {
 					return err
 				}
 
-				return httpInstall(args[0], filepath.Join(extensionRoot, alias))
-			} else if strings.HasPrefix(args[0], "github:") {
-				origin := strings.TrimPrefix(args[0], "github:")
-				parts := strings.Split(origin, "/")
-				if len(parts) < 2 {
-					return fmt.Errorf("invalid github origin")
-				}
-				owner, repo := parts[0], parts[1]
-				entrypoint := filepath.Join(parts[2:]...)
-
-				var alias string
-				if flags.alias != "" {
-					alias = flags.alias
-				} else {
-					alias = strings.TrimPrefix(repo, "sunbeam-")
-				}
-
-				if err := validateAlias(alias); err != nil {
+				if err := httpInstall(origin, filepath.Join(extensionRoot, alias)); err != nil {
 					return err
 				}
 
-				return gitInstall(fmt.Sprintf("https://github.com/%s/%s", owner, repo), filepath.Join(extensionRoot, alias), entrypoint)
+				cmd.Printf("Installed %s\n", alias)
+				return nil
 			} else {
 				origin, err := filepath.Abs(args[0])
 				if err != nil {
@@ -157,15 +142,20 @@ func NewCmdExtensionInstall() *cobra.Command {
 					alias = flags.alias
 				} else {
 					alias = filepath.Base(origin)
-					alias = strings.TrimSuffix(alias, filepath.Ext(alias))
 					alias = strings.TrimPrefix(alias, "sunbeam-")
+					alias = strings.TrimSuffix(alias, filepath.Ext(alias))
 				}
 
 				if err := validateAlias(alias); err != nil {
 					return err
 				}
 
-				return localInstall(origin, filepath.Join(extensionRoot, alias))
+				if err := localInstall(origin, filepath.Join(extensionRoot, alias)); err != nil {
+					return err
+				}
+
+				cmd.Printf("Installed %s\n", alias)
+				return nil
 			}
 		},
 	}
@@ -174,15 +164,14 @@ func NewCmdExtensionInstall() *cobra.Command {
 	return cmd
 }
 
-func NewCmdExtensionUpgrade() *cobra.Command {
+func NewCmdExtensionUpdate() *cobra.Command {
 	flags := struct {
 		all bool
 	}{}
 	cmd := &cobra.Command{
-		Use:     "upgrade",
-		Aliases: []string{"update"},
-		Short:   "Upgrade an extension",
-		Args:    cobra.MaximumNArgs(1),
+		Use:   "upgrade",
+		Short: "Upgrade an extension",
+		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if flags.all {
 				return nil, cobra.ShellCompDirectiveNoFileComp
@@ -216,7 +205,6 @@ func NewCmdExtensionUpgrade() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// check if git is installed
 			toUpgrade := make([]string, 0)
 			if flags.all {
 				extensions, err := FindExtensions()
@@ -278,7 +266,8 @@ func upgradeExtension(extensionDir string) error {
 			return fmt.Errorf("error downloading extension: %s", resp.Status)
 		}
 
-		f, err := os.OpenFile(filepath.Join(extensionDir, "sunbeam-extension"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+		entrypointPath := filepath.Join(extensionDir, metadata.Entrypoint)
+		f, err := os.OpenFile(entrypointPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			return err
 		}
@@ -287,16 +276,7 @@ func upgradeExtension(extensionDir string) error {
 			return err
 		}
 
-		return cacheManifest(metadata.Entrypoint, filepath.Join(extensionDir, "manifest.json"))
-	case extensions.ExtensionTypeGit:
-		pullCmd := exec.Command("git", "pull")
-		pullCmd.Dir = filepath.Join(extensionDir, "src")
-		pullCmd.Stderr = os.Stderr
-		if err := pullCmd.Run(); err != nil {
-			return err
-		}
-
-		return cacheManifest(filepath.Join(extensionDir, "src", "sunbeam-extension"), filepath.Join(extensionDir, "manifest.json"))
+		return cacheManifest(entrypointPath, filepath.Join(extensionDir, "manifest.json"))
 	default:
 		return fmt.Errorf("unknown extension type")
 	}
@@ -306,7 +286,7 @@ func NewCmdExtensionRemove() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove an extension",
-		Args:  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+		Args:  cobra.MatchAll(cobra.MinimumNArgs(1), cobra.OnlyValidArgs),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			extensions, err := FindExtensions()
 			if err != nil {
@@ -321,8 +301,14 @@ func NewCmdExtensionRemove() *cobra.Command {
 			return completions, cobra.ShellCompDirectiveNoFileComp
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			extensionDir := filepath.Join(extensionRoot, args[0])
-			return os.RemoveAll(extensionDir)
+			for _, alias := range args {
+				extensionDir := filepath.Join(extensionRoot, alias)
+				if err := os.RemoveAll(extensionDir); err != nil {
+					return err
+				}
+			}
+
+			return nil
 		},
 	}
 
@@ -476,18 +462,7 @@ func localInstall(origin string, extensionDir string) (err error) {
 		}
 	}()
 
-	info, err := os.Stat(origin)
-	if err != nil {
-		return err
-	}
-
-	var entrypoint string
-	if info.IsDir() {
-		entrypoint = filepath.Join(origin, "sunbeam-extension")
-	} else {
-		entrypoint = origin
-	}
-
+	entrypoint := origin
 	metadataFile, err := os.Create(filepath.Join(extensionDir, "metadata.json"))
 	if err != nil {
 		return err
@@ -506,57 +481,7 @@ func localInstall(origin string, extensionDir string) (err error) {
 	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
 }
 
-func gitInstall(origin string, extensionDir string, entrypoint string) (err error) {
-	if entrypoint == "" {
-		entrypoint = "sunbeam-extension"
-	}
-
-	if err := os.MkdirAll(extensionDir, 0755); err != nil {
-		return err
-	}
-
-	// defer func() {
-	// 	if err != nil {
-	// 		os.RemoveAll(extensionDir)
-	// 	}
-	// }()
-
-	cloneCmd := exec.Command("git", "clone", "--depth=1", origin, filepath.Join(extensionDir, "src"))
-	cloneCmd.Stderr = os.Stderr
-	if err := cloneCmd.Run(); err != nil {
-		return err
-	}
-
-	metadataFile, err := os.Create(filepath.Join(extensionDir, "metadata.json"))
-	if err != nil {
-		return err
-	}
-
-	encoder := json.NewEncoder(metadataFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(extensions.Metadata{
-		Type:       extensions.ExtensionTypeGit,
-		Origin:     origin,
-		Entrypoint: filepath.Join("src", entrypoint),
-	}); err != nil {
-		return err
-	}
-	metadataFile.Close()
-
-	entrypoint = filepath.Join(extensionDir, "src", entrypoint)
-	if info, err := os.Stat(entrypoint); err != nil {
-		return fmt.Errorf("entrypoint %s not found", entrypoint)
-	} else if info.IsDir() {
-		entrypoint = filepath.Join(entrypoint, "sunbeam-extension")
-		if _, err := os.Stat(entrypoint); err != nil {
-			return fmt.Errorf("entrypoint %s not found", entrypoint)
-		}
-	}
-
-	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
-}
-
-func httpInstall(origin string, extensionDir string) (err error) {
+func httpInstall(origin *url.URL, extensionDir string) (err error) {
 	if err := os.MkdirAll(extensionDir, 0755); err != nil {
 		return err
 	}
@@ -566,7 +491,7 @@ func httpInstall(origin string, extensionDir string) (err error) {
 		}
 	}()
 
-	resp, err := http.Get(origin)
+	resp, err := http.Get(origin.String())
 	if err != nil {
 		return err
 	}
@@ -576,7 +501,15 @@ func httpInstall(origin string, extensionDir string) (err error) {
 		return fmt.Errorf("error downloading extension: %s", resp.Status)
 	}
 
-	entrypointPath := filepath.Join(extensionDir, "sunbeam-extension")
+	var filename string
+	extension := filepath.Ext(filepath.Base(origin.Path))
+	if extension != "" {
+		filename = fmt.Sprintf("extension%s", extension)
+	} else {
+		filename = "extension"
+	}
+
+	entrypointPath := filepath.Join(extensionDir, filename)
 	entrypointFile, err := os.Create(entrypointPath)
 	if err != nil {
 		return err
@@ -599,8 +532,8 @@ func httpInstall(origin string, extensionDir string) (err error) {
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(extensions.Metadata{
 		Type:       extensions.ExtensionTypeHttp,
-		Origin:     origin,
-		Entrypoint: filepath.Join(extensionDir, "sunbeam-extension"),
+		Origin:     origin.String(),
+		Entrypoint: filename,
 	}); err != nil {
 		return err
 	}

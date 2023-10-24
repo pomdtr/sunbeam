@@ -33,7 +33,6 @@ type ExtensionType string
 
 const (
 	ExtensionTypeLocal ExtensionType = "local"
-	ExtensionTypeGit   ExtensionType = "git"
 	ExtensionTypeHttp  ExtensionType = "http"
 )
 

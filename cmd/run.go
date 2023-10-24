@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,7 +26,13 @@ func NewCmdRun() *cobra.Command {
 
 			var scriptPath string
 			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
-				tempfile, err := os.CreateTemp("", "sunbeam-extension-")
+				origin, err := url.Parse(args[0])
+				if err != nil {
+					return err
+				}
+				pattern := fmt.Sprintf("entrypoint-*%s", filepath.Ext(origin.Path))
+
+				tempfile, err := os.CreateTemp("", pattern)
 				if err != nil {
 					return err
 				}
@@ -55,7 +62,7 @@ func NewCmdRun() *cobra.Command {
 
 				scriptPath = tempfile.Name()
 			} else if args[0] == "-" {
-				tempfile, err := os.CreateTemp("", "sunbeam-extension-")
+				tempfile, err := os.CreateTemp("", "entrypoint-*%s")
 				if err != nil {
 					return err
 				}
@@ -80,19 +87,11 @@ func NewCmdRun() *cobra.Command {
 					return err
 				}
 
-				info, err := os.Stat(s)
-				if err != nil {
+				if _, err := os.Stat(s); err != nil {
 					return fmt.Errorf("error loading extension: %w", err)
 				}
 
-				if info.IsDir() {
-					scriptPath = filepath.Join(s, "sunbeam-extension")
-					if _, err := os.Stat(scriptPath); err != nil {
-						return fmt.Errorf("no extension found at %s", args[0])
-					}
-				} else {
-					scriptPath = s
-				}
+				scriptPath = s
 			}
 
 			extension, err := LoadExtension(scriptPath)
