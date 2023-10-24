@@ -26,21 +26,17 @@ The only requirement is that your language of choice can read and write JSON.
 
 Example Extensions:
 
-- [VS Code (typescript)](https://github.com/pomdtr/sunbeam-vscode)
-- [File Browser (python)](https://github.com/pomdtr/sunbeam-files)
-- [Bitwarden (sh)](https://github.com/pomdtr/sunbeam-bitwarden)
-- [Github (sh)](https://github.com/pomdtr/sunbeam-github)
-- [TLDR Pages (sh)](https://github.com/pomdtr/sunbeam-tldr)
-- [Devdocs (sh)](https://github.com/pomdtr/sunbeam-devdocs)
+- [VS Code (typescript)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/vscode.ts)
+- [File Browser (python)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/files.py)
+- [Bitwarden (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/bitwarden.sh)
+- [Github (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/github.sh)
+- [TLDR Pages (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/tldr.sh)
+- [Devdocs (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/devdocs.sh)
 
 ### Easy to extend
 
-Instead of reiventing the wheel, sunbeam relies on your familiarity with git and github to make it easy to create, update, publish and install extensions.
-
-Creating a new extension is as easy as writing a script.\
-Sharing an extension is as easy as pushing it to github.
-
-If you prefer, you can also distribute your extensions as http endpoints, and use sunbeam as a client.
+Creating a new extension is as easy as writing a script.
+You can share your scripts with others by just hosting them on a public url.
 
 ![sunbeam running in vscode](./static/vscode.png)
 

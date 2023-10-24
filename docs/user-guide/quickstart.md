@@ -6,18 +6,16 @@ A fresh install of sunbeam is quite boring. In order to make it useful, you need
 
 You can manage your extensions using the `sunbeam extension` command.
 
-To get a list of available extensions, run `sunbeam extension browse`.
-It will open the [extension registry](https://github.com/topics/sunbeam-extension) in your browser.
+Sunbeam extensions are just shell scripts. You can install an extension by running `sunbeam extension install <path-or-url>`.
 
-Once you find an extension you like, you can install it using `sunbeam extension install <url>`.
+For example, to install the [devdocs extension](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/devdocs.sh), run:
+
+```sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/devdocs.sh
+```
 
 > ⚠️ Extensions are not verified, nor sandboxed. They can do anything you can do on your computer. Make sure you trust the source before installing an extension.
 
-For example, to install the [devdocs extension](https://github.com/pomdtr/sunbeam-devdocs), run:
-
-```sh
-sunbeam extension install github:pomdtr/sunbeam-devdocs
-```
 
 Other managements commands are available:
 

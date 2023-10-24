@@ -325,29 +325,21 @@ Note that if you update the manifest of the extension, you will need to upgrade 
 sunbeam extension upgrade devdocs
 ```
 
-> ℹ️ The source code of this extension is available here: <https://github.com/pomdtr/sunbeam-devdocs/blob/main/sunbeam-extension>. Use `sunbeam extension install github:pomdtr/sunbeam-devdocs` to install it.
+> ℹ️ The source code of this extension is available here: <https://github.com/pomdtr/sunbeam-devdocs/blob/main/sunbeam-extension>. Use `sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/devdocs.sh` to install it.
 
 ## Publishing an extension
 
 Just create a git repository containing your extension, and push it to github. User will be able to install it using:
 
 ```console
-sunbeam extension install github:<username>/<repository>/sunbeam-devdocs
+sunbeam extension install <raw-url>
 ```
-
-If you name your script `sunbeam-extension`, users will be able to install it using:
-
-```console
-sunbeam extension install github:<username>/<repository>
-```
-
-Sunbeam use `git` to clone the repository. If your repository is private, make sure that your user git credentials are set up correctly.
 
 ## Make your extension discoverable
 
-Add the `sunbeam-extension` topic to your github repository to make it discoverable to all sunbeam users.
+Add the `sunbeam` topic to your github repository to make it discoverable to all sunbeam users.
 
-Make sure to add a `README.md` file to your repository, so that users can learn more about your extension before installing it.
+Make sure to add a `README.md` file to your repository, so that users can learn more about your extensions before installing them.
 
 ## What's next?
 
