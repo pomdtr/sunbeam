@@ -378,6 +378,16 @@ func FindExtensions() (extensions.ExtensionMap, error) {
 		}
 
 		manifestPath := filepath.Join(extensionDir, "manifest.json")
+		shouldCache, err := IsNewer(entrypoint, manifestPath)
+		if err != nil {
+			return nil, fmt.Errorf("error checking manifest: %w", err)
+		}
+		if shouldCache {
+			if err := cacheManifest(entrypoint, manifestPath); err != nil {
+				return nil, fmt.Errorf("error caching manifest: %w", err)
+			}
+		}
+
 		manifestBytes, err := os.ReadFile(manifestPath)
 		if err != nil {
 			continue
@@ -539,4 +549,22 @@ func httpInstall(origin *url.URL, extensionDir string) (err error) {
 	}
 
 	return cacheManifest(entrypointPath, filepath.Join(extensionDir, "manifest.json"))
+}
+
+func IsNewer(pathA, pathB string) (bool, error) {
+	if pathA == pathB {
+		return true, nil
+	}
+
+	infoA, err := os.Stat(pathA)
+	if err != nil {
+		return false, err
+	}
+
+	infoB, err := os.Stat(pathB)
+	if err != nil {
+		return false, err
+	}
+
+	return infoA.ModTime().After(infoB.ModTime()), nil
 }
