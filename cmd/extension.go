@@ -437,6 +437,8 @@ func LoadExtension(entrypoint string) (extensions.Extension, error) {
 	}
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = filepath.Dir(entrypoint)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 
 	manifestBytes, err := cmd.Output()
 	if err != nil {

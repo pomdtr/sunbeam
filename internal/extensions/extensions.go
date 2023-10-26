@@ -139,7 +139,7 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "SUNBEAM=0")
+	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	cmd.Env = append(cmd.Env, "NO_COLOR=1")
 
 	return cmd, nil
