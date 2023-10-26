@@ -133,7 +133,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 
 				var runCommand func(command types.CommandSpec, input types.CommandInput) error
 				runCommand = func(command types.CommandSpec, input types.CommandInput) error {
-					if command.Mode == types.CommandModeView {
+					if command.Mode == types.CommandModePage {
 						runner := tui.NewRunner(extension, command, input)
 						return tui.Draw(runner)
 					}

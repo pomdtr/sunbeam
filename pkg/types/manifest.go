@@ -17,8 +17,8 @@ type CommandSpec struct {
 type CommandMode string
 
 const (
-	CommandModeView   CommandMode = "view"
-	CommandModeNoView CommandMode = "no-view"
+	CommandModePage   CommandMode = "page"
+	CommandModeSilent CommandMode = "silent"
 	CommandModeTTY    CommandMode = "tty"
 )
 

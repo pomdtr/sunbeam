@@ -37,7 +37,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "view"
+                mode: "page"
             }
         ]
     }'
@@ -56,7 +56,7 @@ $ ./sunbeam-devdocs
 {
   "commands": [
     {
-      "mode": "view",
+      "mode": "page",
       "name": "search-docsets",
       "title": "Search docsets"
     }
@@ -107,7 +107,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "view"
+                mode: "page"
             }
         ]
     }'
@@ -169,12 +169,12 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "view"
+                mode: "page"
             },
             {
                 name: "search-entries",
                 title: "Search entries",
-                mode: "view",
+                mode: "page",
                 params: [
                     {
                         name: "docset",

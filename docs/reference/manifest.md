@@ -16,17 +16,17 @@ It contains the title, description and the list of commands provided by the exte
       "name": "list-entries",
       // the title of the command, will be shown in the root list (required)
       "title": "List Entries from Docset",
-      // the mode of the command, can be "view", "no-view" (required)
-      // if the mode is "view", the command is required to return a view on stdout when executed
-      // if the mode is "no-view", the command can optionally return a command on stdout when executed
-      "mode": "view",
+      // the mode of the command, can be "page", "silent" or "tty" (required)
+      // if the mode is "page", the command is required to return a view on stdout when executed
+      // if the mode is "silent" or "tty", the command can optionally return a command on stdout when executed
+      "mode": "page",
       // the list of parameters for the command (optional)
       "params": [
         {
           // unique identifier of the parameter (required)
           "name": "slug",
           // type of the parameter (required)
-          // can be "view" or "no-view"
+          // can be "string", "number", or "boolean"
           "type": "string",
           // whether the parameter is required or not (default: false)
           // if a a command has a required parameter, it will not be shown in the root list

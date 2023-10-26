@@ -94,7 +94,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			switch command.Mode {
-			case types.CommandModeView:
+			case types.CommandModePage:
 				runner := NewRunner(c.extension, command, types.CommandInput{
 					Params: msg.Params,
 				})
@@ -129,7 +129,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 					return res
 				})
-			case types.CommandModeNoView:
+			case types.CommandModeSilent:
 				return c, func() tea.Msg {
 					output, err := c.extension.Run(command.Name, types.CommandInput{
 						Params: msg.Params,

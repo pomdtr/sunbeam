@@ -38,7 +38,7 @@ func NewCmdExtension() *cobra.Command {
 
 	cmd.AddCommand(NewCmdExtensionList())
 	cmd.AddCommand(NewCmdExtensionInstall())
-	cmd.AddCommand(NewCmdExtensionUpdate())
+	cmd.AddCommand(NewCmdExtensionUpgrade())
 	cmd.AddCommand(NewCmdExtensionRemove())
 	cmd.AddCommand(NewCmdExtensionRename())
 
@@ -164,13 +164,13 @@ func NewCmdExtensionInstall() *cobra.Command {
 	return cmd
 }
 
-func NewCmdExtensionUpdate() *cobra.Command {
+func NewCmdExtensionUpgrade() *cobra.Command {
 	flags := struct {
 		all bool
 	}{}
 	cmd := &cobra.Command{
-		Use:   "upgrade",
-		Short: "Upgrade an extension",
+		Use:   "update",
+		Short: "Update an extension",
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if flags.all {

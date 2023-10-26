@@ -127,7 +127,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			switch command.Mode {
-			case types.CommandModeView:
+			case types.CommandModePage:
 				runner := NewRunner(extension, command, types.CommandInput{
 					Params: msg.Params,
 				})
@@ -160,7 +160,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 					return res
 				})
-			case types.CommandModeNoView:
+			case types.CommandModeSilent:
 				return c, func() tea.Msg {
 					output, err := extension.Run(command.Name, types.CommandInput{
 						Params: msg.Params,

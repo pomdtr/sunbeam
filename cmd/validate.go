@@ -26,8 +26,8 @@ func NewValidateCmd() *cobra.Command {
 
 func NewCmdValidateView() *cobra.Command {
 	return &cobra.Command{
-		Use:   "view",
-		Short: "Validate a view",
+		Use:   "page",
+		Short: "Validate a page",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {

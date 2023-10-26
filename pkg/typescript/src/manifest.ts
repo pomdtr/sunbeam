@@ -7,7 +7,7 @@ export type Manifest = {
 export type CommandSpec = {
   name: string;
   title: string;
-  mode: "view" | "no-view" | "tty";
+  mode: "page" | "silent" | "tty";
   hidden?: boolean;
   description?: string;
   params?: CommandParam[];

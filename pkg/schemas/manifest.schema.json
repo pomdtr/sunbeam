@@ -44,8 +44,8 @@
                 },
                 "mode": {
                     "enum": [
-                        "view",
-                        "no-view",
+                        "page",
+                        "silent",
                         "tty"
                     ]
                 },

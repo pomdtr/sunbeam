@@ -8,11 +8,11 @@ require (
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/glamour v0.6.0
-	github.com/charmbracelet/lipgloss v0.9.0
+	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/cli/cli v1.14.0
 	github.com/cli/go-gh/v2 v2.4.0
 	github.com/itchyny/gojq v0.12.13
-	github.com/junegunn/fzf v0.0.0-20231011041747-a8f9432a3a10
+	github.com/junegunn/fzf v0.0.0-20231026143046-ec208af474fa
 	github.com/muesli/termenv v0.15.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
@@ -24,7 +24,7 @@ require (
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/cli/safeexec v1.0.0 // indirect
+	github.com/cli/safeexec v1.0.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
@@ -54,6 +54,6 @@ require (
 )
 
 require (
-	github.com/mattn/go-isatty v0.0.19
+	github.com/mattn/go-isatty v0.0.20
 	golang.org/x/sys v0.13.0 // indirect
 )
