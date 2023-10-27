@@ -2,19 +2,237 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "required": [
-        "title",
-        "onAction"
+        "type"
     ],
-    "additionalProperties": false,
     "properties": {
-        "title": {
-            "type": "string"
+        "type": {
+            "enum": [
+                "copy",
+                "open",
+                "run",
+                "reload",
+                "exit"
+            ]
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "copy"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "title",
+                    "type",
+                    "text"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "const": "copy"
+                    },
+                    "exit": {
+                        "type": "boolean"
+                    },
+                    "text": {
+                        "type": "string"
+                    }
+                }
+            }
         },
-        "key": {
-            "type": "string"
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "open"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "title",
+                    "type",
+                    "target"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "const": "open"
+                    },
+                    "exit": {
+                        "type": "boolean"
+                    },
+                    "target": {
+                        "type": "string"
+                    },
+                    "app": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/definitions/application"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/application"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
         },
-        "onAction": {
-            "$ref": "./command.schema.json"
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "run"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "title",
+                    "type",
+                    "command"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "reload": {
+                        "type": "boolean"
+                    },
+                    "exit": {
+                        "type": "boolean"
+                    },
+                    "type": {
+                        "const": "run"
+                    },
+                    "command": {
+                        "type": "string"
+                    },
+                    "params": {
+                        "type": "object",
+                        "patternProperties": {
+                            ".+": true
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "reload"
+                    }
+                }
+            },
+            "then": {
+                "type": "object",
+                "required": [
+                    "title",
+                    "type"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "const": "reload"
+                    },
+                    "params": {
+                        "type": "object",
+                        "patternProperties": {
+                            ".+": true
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "exit"
+                    }
+                }
+            },
+            "then": {
+                "type": "object",
+                "required": [
+                    "title",
+                    "type"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "const": "exit"
+                    }
+                }
+            }
+        }
+    ],
+    "definitions": {
+        "application": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "windows": {
+                    "type": "string"
+                },
+                "mac": {
+                    "type": "string"
+                },
+                "linux": {
+                    "type": "string"
+                }
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-import type { Command } from "./command";
+import type { Action } from "./action";
 export type Page = List | Detail;
 
 export type List = {
@@ -22,10 +22,4 @@ export type ListItem = {
   subtitle?: string;
   accessories?: string[];
   actions: Action[];
-};
-
-export type Action = {
-  title: string;
-  key?: string;
-  onAction: Command;
 };

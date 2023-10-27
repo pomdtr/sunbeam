@@ -1,13 +1,16 @@
 # Command
 
-Command can be attached to actions array in a view, or returned from a script extension when the mode is `no-view`.
-
 ## Copy
 
 Copy text to the clipboard.
 
 ```json
 {
+    // the title of the action (required)
+    "title": "Copy",
+    // the key to trigger the action (optional)
+    "key": "c",
+    // the type of the action (required)
     "type": "copy",
     // the text to copy (required)
     "text": "hello world",
@@ -23,6 +26,12 @@ Open a url or a file with the default app or a specific app.
 
 ```json
 {
+
+    // the title of the action (required)
+    "title": "Open",
+    // the key to trigger the action (optional)
+    "key": "o",
+    // the title of the action (required)
     "type": "open",
     // the target to open (required)
     // target can be a url or a path to a file
@@ -46,6 +55,11 @@ Run a custom command defined in the extension manifest.
 
 ```json
 {
+    // the title of the action (required)
+    "title": "View Readme",
+    // the key to trigger the action (optional)
+    "key": "v",
+    // the type of the action (required)
     "type": "run",
     // the command to run (must be defined in the extension manifest) (required)
     "command": "view-readme",
@@ -62,6 +76,11 @@ Reload the current view.
 
 ```json
 {
+    // the title of the action (required)
+    "title": "Reload",
+    // the key to trigger the action (optional)
+    "key": "r",
+    // the type of the action (required)
     "type": "reload",
     // override the current params (optional)
     "params": {
@@ -76,6 +95,11 @@ Exit sunbeam.
 
 ```json
 {
+    // the title of the action (required)
+    "title": "Exit",
+    // the key to trigger the action (optional)
+    "key": "q",
+    // the type of the action (required)
     "type": "exit"
 }
 ```

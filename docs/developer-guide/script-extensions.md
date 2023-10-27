@@ -124,12 +124,10 @@ if [ "$1" = "search-docsets" ]; then
       accessories: [ .slug ],
       actions: [
         {
+            type: "open",
             title: "Open in Browser",
-            onAction: {
-                type: "open",
-                target: "https://devdocs.io/\(.slug)",
-                exit: true
-            }
+            target: "https://devdocs.io/\(.slug)",
+            exit: true
         }
       ]
     })
@@ -202,20 +200,16 @@ elif [ "$1" = "search-entries" ]; then
             actions: [
                 {
                     title: "Open in Browser",
-                    onAction: {
-                        type: "open",
-                        target: "https://devdocs.io/\($docset)/\(.path)",
-                        exit: true
-                    }
+                    type: "open",
+                    target: "https://devdocs.io/\($docset)/\(.path)",
+                    exit: true
                 },
                 {
+                    type: "copy",
                     title: "Copy URL",
                     key: "c",
-                    onAction: {
-                        type: "copy",
-                        text: "https://devdocs.io/\($docset)/\(.path)",
-                        exit: true
-                    }
+                    text: "https://devdocs.io/\($docset)/\(.path)",
+                    exit: true
                 }
             ]
         })
@@ -274,22 +268,18 @@ if [ "$1" = "search-docsets" ]; then
           accessories: [ .slug ],
           actions: [
             {
+                type: "run",
                 title: "Search \(.name) entries",
-                onAction: {
-                    type: "run",
-                    command: "search-entries",
-                    params: {
-                        docset: .slug
-                    }
+                command: "search-entries",
+                params: {
+                    docset: .slug
                 }
             },
             {
+                type: "open",
                 title: "Open in Browser",
-                onAction: {
-                    type: "open",
-                    target: "https://devdocs.io/\(.slug)",
-                    exit: true
-                }
+                target: "https://devdocs.io/\(.slug)",
+                exit: true
             }
           ]
         })

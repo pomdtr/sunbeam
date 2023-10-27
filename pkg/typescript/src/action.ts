@@ -1,10 +1,13 @@
-export type Command = CopyCommand | OpenCommand | RunCommand | ExitCommand;
+type ActionProps = {
+  title: string;
+  key?: string;
+}
 
 export type CopyCommand = {
   type: "copy";
   text: string;
   exit?: boolean;
-};
+} & ActionProps;
 
 export type OpenCommand = {
   type: "open";
@@ -15,14 +18,16 @@ export type OpenCommand = {
     linux?: string;
   };
   exit?: boolean;
-};
+} & ActionProps;
 
 export type RunCommand = {
   type: "run";
   command: string;
   params?: Record<string, string | number | boolean>;
-};
+} & ActionProps;
 
 export type ExitCommand = {
   type: "exit";
-};
+} & ActionProps;
+
+export type Action = CopyCommand | OpenCommand | RunCommand | ExitCommand;

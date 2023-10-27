@@ -39,7 +39,14 @@ func NewCmdEdit() *cobra.Command {
 				return editCmd.Run()
 			}
 
-			tempfile, err := os.CreateTemp("", "sunbeam-edit-")
+			var pattern string
+			if flags.extension != "" {
+				pattern = fmt.Sprintf("sunbeam-*.%s", flags.extension)
+			} else {
+				pattern = "sunbeam-*"
+			}
+
+			tempfile, err := os.CreateTemp("", pattern)
 			if err != nil {
 				return err
 			}

@@ -91,7 +91,7 @@ func NewCmdFetch() *cobra.Command {
 				return err
 			}
 
-			if resp.StatusCode != http.StatusOK {
+			if resp.StatusCode >= 400 {
 				return fmt.Errorf("failed to fetch url: %s", resp.Status)
 			}
 

@@ -122,7 +122,7 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			p.cursor = 0
 
 			return p, func() tea.Msg {
-				return action.OnAction
+				return action
 			}
 
 		case "esc":
@@ -145,7 +145,7 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			for _, action := range p.actions {
 				if fmt.Sprintf("alt+%s", action.Key) == msg.String() {
 					return p, func() tea.Msg {
-						return action.OnAction
+						return action
 					}
 				}
 			}

@@ -2,7 +2,7 @@ package types
 
 import "encoding/json"
 
-type View struct {
+type Page struct {
 	Type  ViewType `json:"type"`
 	Title string   `json:"title,omitempty"`
 }
@@ -56,10 +56,4 @@ type ListItem struct {
 	Subtitle    string   `json:"subtitle,omitempty"`
 	Accessories []string `json:"accessories,omitempty"`
 	Actions     []Action `json:"actions,omitempty"`
-}
-
-type Action struct {
-	Title    string  `json:"title,omitempty"`
-	Key      string  `json:"key,omitempty"`
-	OnAction Command `json:"onAction,omitempty"`
 }

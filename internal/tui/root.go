@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,7 +13,6 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
-	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -46,12 +44,10 @@ func NewRootList(title string, extensionMap extensions.ExtensionMap) *RootList {
 				Accessories: []string{alias},
 				Actions: []types.Action{
 					{
-						Title: "Run",
-						OnAction: types.Command{
-							Type:      types.CommandTypeRun,
-							Extension: alias,
-							Command:   command.Name,
-						},
+						Title:     "Run",
+						Type:      types.CommandTypeRun,
+						Extension: alias,
+						Command:   command.Name,
 					},
 				},
 			})
@@ -103,7 +99,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		c.err = NewErrorPage(msg)
 		c.err.SetSize(c.w, c.h)
 		return c, c.err.Init()
-	case types.Command:
+	case types.Action:
 		switch msg.Type {
 		case types.CommandTypeRun:
 			selection, ok := c.list.Selection()
@@ -142,43 +138,30 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return c, c.err.Init()
 				}
 
-				output := bytes.Buffer{}
-				cmd.Stdout = &output
 				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 					if err != nil {
 						return err
 					}
 
-					if len(output.Bytes()) == 0 {
-						return nil
+					if msg.Reload {
+						return types.Action{
+							Type: types.CommandTypeReload,
+						}
 					}
 
-					var res types.Command
-					if err := json.Unmarshal(output.Bytes(), &res); err != nil {
-						return err
+					if msg.Exit {
+						return ExitMsg{}
 					}
 
-					return res
+					return nil
 				})
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					output, err := extension.Run(command.Name, types.CommandInput{
+					_, err := extension.Run(command.Name, types.CommandInput{
 						Params: msg.Params,
 					})
-					if err != nil {
-						return err
-					}
 
-					if err := schemas.ValidateCommand(output); err != nil {
-						return err
-					}
-
-					var res types.Command
-					if err := json.Unmarshal(output, &res); err != nil {
-						return err
-					}
-
-					return res
+					return err
 				}
 			}
 		case types.CommandTypeCopy:

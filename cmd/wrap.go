@@ -21,7 +21,8 @@ func NewCmdWrap() *cobra.Command {
 
 			wrapped := exec.Command(args[0], args[1:]...)
 			wrapped.Stdin = tty
-			wrapped.Stdout = os.Stderr
+			wrapped.Stdout = os.Stdout
+			wrapped.Stderr = os.Stderr
 
 			return wrapped.Run()
 		},

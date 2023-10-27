@@ -8,12 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/atotto/clipboard"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/internal/utils"
-	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -131,50 +128,18 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return nil
 				}
 
-				var runCommand func(command types.CommandSpec, input types.CommandInput) error
-				runCommand = func(command types.CommandSpec, input types.CommandInput) error {
-					if command.Mode == types.CommandModePage {
-						runner := tui.NewRunner(extension, command, input)
-						return tui.Draw(runner)
-					}
-
-					output, err := extension.Run(command.Name, input)
-					if err != nil {
-						return err
-					}
-
-					if len(output) == 0 {
-						return nil
-					}
-
-					if err := schemas.ValidateCommand(output); err != nil {
-						return err
-					}
-
-					var res types.Command
-					if err := json.Unmarshal(output, &res); err != nil {
-						return err
-					}
-
-					switch res.Type {
-					case types.CommandTypeCopy:
-						return clipboard.WriteAll(res.Text)
-					case types.CommandTypeOpen:
-						return utils.OpenWith(res.Target, res.App)
-					case types.CommandTypeRun:
-						target, ok := extension.Command(res.Command)
-						if !ok {
-							return fmt.Errorf("command %s not found", res.Command)
-						}
-						return runCommand(target, input)
-					case types.CommandTypeExit, types.CommandTypeReload:
-						return nil
-					default:
-						return fmt.Errorf("unknown command type %s", res.Type)
-					}
+				if command.Mode == types.CommandModePage {
+					runner := tui.NewRunner(extension, command, input)
+					return tui.Draw(runner)
 				}
 
-				return runCommand(command, input)
+				_, err := extension.Run(command.Name, input)
+				if err != nil {
+					return err
+				}
+
+				return nil
+
 			},
 		}
 

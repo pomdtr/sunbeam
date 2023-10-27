@@ -1,4 +1,4 @@
-# View
+# Page
 
 ## List
 
@@ -32,12 +32,8 @@
             "actions": [
                 {
                     "title": "Open in Browser",
-                    // a command to execute when the action is triggered (required)
-                    // see the command section for more details
-                    "onAction": {
-                        "type": "open",
-                        "target": "https://github.com/pomdtr/sunbeam"
-                    }
+                    "type": "open",
+                    "target": "https://github.com/pomdtr/sunbeam"
                 }
             ]
         }
@@ -59,10 +55,8 @@
     "actions": [
         {
             "title": "Open Sunbeam Website",
-            "onAction": {
-                "type": "open"
-                "target": "https://pomdtr.github.io/sunbeam"
-            }
+            "type": "open",
+            "target": "https://pomdtr.github.io/sunbeam"
         }
     ]
 }

@@ -1,3 +1,3 @@
-export type * from "./command";
+export type * from "./page";
 export type * from "./manifest";
-export type * from "./view";
+export type * from "./action";

@@ -14,11 +14,10 @@ var embedFS embed.FS
 var schemas map[string]*jsonschema.Schema
 
 var schemaUrls = []string{
-	"command.schema.json",
 	"action.schema.json",
 	"list.schema.json",
 	"detail.schema.json",
-	"view.schema.json",
+	"page.schema.json",
 	"manifest.schema.json",
 }
 
@@ -72,12 +71,8 @@ func validateSchema(schema string, input []byte) error {
 	return nil
 }
 
-func ValidateView(input []byte) error {
-	return validateSchema("view.schema.json", input)
-}
-
-func ValidateCommand(input []byte) error {
-	return validateSchema("command.schema.json", input)
+func ValidatePage(input []byte) error {
+	return validateSchema("page.schema.json", input)
 }
 
 func ValidateManifest(input []byte) error {

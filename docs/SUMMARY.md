@@ -15,8 +15,8 @@
 # Reference
 
 - [Manifest](./reference/manifest.md)
-- [View](./reference/view.md)
-- [Command](./reference/command.md)
+- [View](./reference/page.md)
+- [Command](./reference/action.md)
 - [CLI](./reference/cli.md)
 
 

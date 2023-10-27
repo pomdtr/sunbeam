@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -83,7 +82,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		c.embed = msg
 		c.embed.SetSize(c.width, c.height)
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
-	case types.Command:
+	case types.Action:
 		switch msg.Type {
 		case types.CommandTypeRun:
 			command, ok := c.extension.Command(msg.Command)
@@ -110,46 +109,30 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return c, c.embed.Init()
 				}
 
-				output := bytes.Buffer{}
-				cmd.Stdout = &output
-
 				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 					if err != nil {
 						return err
 					}
 
-					if len(output.Bytes()) == 0 {
-						return nil
+					if msg.Reload {
+						return types.Action{
+							Type: types.CommandTypeReload,
+						}
 					}
 
-					var res types.Command
-					if err := json.Unmarshal(output.Bytes(), &res); err != nil {
-						return err
+					if msg.Exit {
+						return ExitMsg{}
 					}
 
-					return res
+					return nil
 				})
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					output, err := c.extension.Run(command.Name, types.CommandInput{
+					_, err := c.extension.Run(command.Name, types.CommandInput{
 						Params: msg.Params,
 					})
-					if err != nil {
-						return err
-					}
-
-					if err := schemas.ValidateCommand(output); err != nil {
-						return err
-					}
-
-					var res types.Command
-					if err := json.Unmarshal(output, &res); err != nil {
-						return err
-					}
-
-					return res
+					return err
 				}
-
 			}
 
 		case types.CommandTypeCopy:
@@ -212,26 +195,22 @@ func (c *Runner) Reload() tea.Cmd {
 			return err
 		}
 
-		if err := schemas.ValidateView(output); err != nil {
+		if err := schemas.ValidatePage(output); err != nil {
 			return NewErrorPage(err, types.Action{
 				Title: "Copy Script Output",
-				OnAction: types.Command{
-					Type: types.CommandTypeCopy,
-					Text: string(output),
-					Exit: true,
-				},
+				Type:  types.CommandTypeCopy,
+				Text:  string(output),
+				Exit:  true,
 			})
 		}
 
-		var view types.View
+		var view types.Page
 		if err := json.Unmarshal(output, &view); err != nil {
 			return NewErrorPage(err, types.Action{
 				Title: "Copy Output",
-				OnAction: types.Command{
-					Type: types.CommandTypeCopy,
-					Text: string(output),
-					Exit: true,
-				},
+				Type:  types.CommandTypeCopy,
+				Text:  string(output),
+				Exit:  true,
 			})
 		}
 

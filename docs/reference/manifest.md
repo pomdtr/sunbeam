@@ -18,7 +18,6 @@ It contains the title, description and the list of commands provided by the exte
       "title": "List Entries from Docset",
       // the mode of the command, can be "page", "silent" or "tty" (required)
       // if the mode is "page", the command is required to return a view on stdout when executed
-      // if the mode is "silent" or "tty", the command can optionally return a command on stdout when executed
       "mode": "page",
       // the list of parameters for the command (optional)
       "params": [
