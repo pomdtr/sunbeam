@@ -93,12 +93,6 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		input.Params = make(map[string]any)
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	input.Cwd = cwd
-
 	command, ok := e.Command(commandName)
 	if !ok {
 		return nil, fmt.Errorf("command %s not found", commandName)
@@ -131,12 +125,18 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		args = []string{e.Entrypoint, commandName}
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdin = strings.NewReader(string(inputBytes))
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	cmd.Env = append(cmd.Env, "NO_COLOR=1")
+	cmd.Dir = cwd
 
 	return cmd, nil
 }
