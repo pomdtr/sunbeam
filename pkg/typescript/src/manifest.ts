@@ -7,7 +7,7 @@ export type Manifest = {
 export type CommandSpec = {
   name: string;
   title: string;
-  mode: "page" | "silent" | "tty";
+  mode: "page" | "silent";
   hidden?: boolean;
   description?: string;
   params?: CommandParam[];
@@ -36,8 +36,9 @@ type NumberParam = {
   default?: number;
 } & ParamsProps;
 
-export type CommandInput = {
-  params: Record<string, string | number | boolean>;
+type InputParams = Record<string, string | number | boolean>;
+export type CommandInput<T extends InputParams = InputParams> = {
+  params: T;
   cwd: string;
   query?: string;
 };

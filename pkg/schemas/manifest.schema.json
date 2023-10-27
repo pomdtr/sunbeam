@@ -45,8 +45,7 @@
                 "mode": {
                     "enum": [
                         "page",
-                        "silent",
-                        "tty"
+                        "silent"
                     ]
                 },
                 "params": {

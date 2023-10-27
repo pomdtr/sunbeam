@@ -19,7 +19,6 @@ type CommandMode string
 const (
 	CommandModePage   CommandMode = "page"
 	CommandModeSilent CommandMode = "silent"
-	CommandModeTTY    CommandMode = "tty"
 )
 
 type Param struct {

@@ -128,33 +128,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					Params: msg.Params,
 				})
 				return c, PushPageCmd(runner)
-			case types.CommandModeTTY:
-				cmd, err := extension.Cmd(command.Name, types.CommandInput{
-					Params: msg.Params,
-				})
-				if err != nil {
-					c.err = NewErrorPage(err)
-					c.err.SetSize(c.w, c.h)
-					return c, c.err.Init()
-				}
-
-				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
-					if err != nil {
-						return err
-					}
-
-					if msg.Reload {
-						return types.Action{
-							Type: types.CommandTypeReload,
-						}
-					}
-
-					if msg.Exit {
-						return ExitMsg{}
-					}
-
-					return nil
-				})
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
 					_, err := extension.Run(command.Name, types.CommandInput{

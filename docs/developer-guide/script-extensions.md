@@ -337,5 +337,4 @@ This guide is only a quick introduction to sunbeam extensions. There are many mo
   - Gathering user input using `form` view
   - Displaying markdown using the `detail` view
   - Dynamically generate items using the `reload` property of the `list` view
-  - Run TUIs using the `tty` mode in your manifest
   - Interact with remote extension using http requests

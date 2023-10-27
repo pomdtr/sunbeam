@@ -99,33 +99,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				})
 
 				return c, PushPageCmd(runner)
-			case types.CommandModeTTY:
-				cmd, err := c.extension.Cmd(command.Name, types.CommandInput{
-					Params: msg.Params,
-				})
-				if err != nil {
-					c.embed = NewErrorPage(err)
-					c.embed.SetSize(c.width, c.height)
-					return c, c.embed.Init()
-				}
-
-				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
-					if err != nil {
-						return err
-					}
-
-					if msg.Reload {
-						return types.Action{
-							Type: types.CommandTypeReload,
-						}
-					}
-
-					if msg.Exit {
-						return ExitMsg{}
-					}
-
-					return nil
-				})
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
 					_, err := c.extension.Run(command.Name, types.CommandInput{
