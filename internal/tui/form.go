@@ -11,11 +11,12 @@ import (
 )
 
 type Form struct {
-	id            string
 	width, height int
 	viewport      viewport.Model
 	isLoading     bool
 	spinner       spinner.Model
+
+	submitMsg func(map[string]any) tea.Msg
 
 	scrollOffset int
 	focusIndex   int
@@ -23,15 +24,13 @@ type Form struct {
 	items []FormItem
 }
 
-type SubmitMsg map[string]any
-
-func NewForm(id string, items ...FormItem) *Form {
+func NewForm(submitMsg func(map[string]any) tea.Msg, items ...FormItem) *Form {
 	viewport := viewport.New(0, 0)
 
 	form := &Form{
-		id:       id,
-		viewport: viewport,
-		items:    items,
+		submitMsg: submitMsg,
+		viewport:  viewport,
+		items:     items,
 	}
 
 	return form
@@ -152,13 +151,13 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 				values := make(map[string]any)
 				for _, input := range c.items {
 					if input.Value() == "" && input.Required {
-						return fmt.Errorf("field %s is required", input.Name)
+						return fmt.Errorf("%s is required", input.Title)
 					}
 					values[input.Name] = input.Value()
 				}
-
-				return SubmitMsg(values)
+				return c.submitMsg(values)
 			}
+
 		}
 	}
 

@@ -15,6 +15,7 @@ import (
 
 type Runner struct {
 	embed         Page
+	form          *Form
 	width, height int
 
 	extension extensions.Extension
@@ -62,6 +63,10 @@ func (c *Runner) SetSize(w int, h int) {
 	c.width = w
 	c.height = h
 
+	if c.form != nil {
+		c.form.SetSize(w, h)
+	}
+
 	c.embed.SetSize(w, h)
 }
 
@@ -70,6 +75,11 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
+			if c.form != nil {
+				c.form = nil
+				return c, nil
+			}
+
 			if c.embed != nil {
 				break
 			}
@@ -84,7 +94,47 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
 	case types.Action:
 		switch msg.Type {
-		case types.CommandTypeRun:
+		case types.ActionTypeRun:
+			var formItems []FormItem
+			for k, v := range msg.Params {
+				switch v := v.(type) {
+				case types.Text:
+					formItems = append(formItems, NewTextItem(k, v))
+				case types.TextArea:
+					formItems = append(formItems, NewTextArea(k, v))
+				case types.Checkbox:
+					formItems = append(formItems, NewCheckbox(k, v))
+				case types.Select:
+					formItems = append(formItems, NewSelect(k, v))
+				}
+			}
+
+			if len(formItems) > 0 {
+				c.form = NewForm(func(values map[string]any) tea.Msg {
+					params := make(map[string]any)
+					for k, v := range c.input.Params {
+						params[k] = v
+					}
+
+					for k, v := range values {
+						params[k] = v
+					}
+
+					return types.Action{
+						Title:   msg.Title,
+						Type:    types.ActionTypeRun,
+						Command: msg.Command,
+						Params:  params,
+						Exit:    msg.Exit,
+						Reload:  msg.Reload,
+					}
+				}, formItems...)
+
+				c.form.SetSize(c.width, c.height)
+				return c, c.form.Init()
+			}
+			c.form = nil
+
 			command, ok := c.extension.Command(msg.Command)
 			if !ok {
 				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Command))
@@ -108,7 +158,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 
-		case types.CommandTypeCopy:
+		case types.ActionTypeCopy:
 			return c, func() tea.Msg {
 				if err := clipboard.WriteAll(msg.Text); err != nil {
 					return err
@@ -120,7 +170,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-		case types.CommandTypeOpen:
+		case types.ActionTypeOpen:
 			command := msg
 			return c, func() tea.Msg {
 				if err := utils.OpenWith(command.Target, command.App); err != nil {
@@ -133,7 +183,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-		case types.CommandTypeReload:
+		case types.ActionTypeReload:
 			if c.input.Params == nil {
 				c.input.Params = make(map[string]any)
 			}
@@ -143,7 +193,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return c, c.Reload()
-		case types.CommandTypeExit:
+		case types.ActionTypeExit:
 			return c, ExitCmd
 		}
 	case error:
@@ -152,12 +202,22 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, c.embed.Init()
 	}
 
+	if c.form != nil {
+		form, cmd := c.form.Update(msg)
+		c.form = form.(*Form)
+		return c, cmd
+	}
+
 	var cmd tea.Cmd
 	c.embed, cmd = c.embed.Update(msg)
 	return c, cmd
 }
 
 func (c *Runner) View() string {
+	if c.form != nil {
+		return c.form.View()
+	}
+
 	return c.embed.View()
 }
 
@@ -171,29 +231,29 @@ func (c *Runner) Reload() tea.Cmd {
 		if err := schemas.ValidatePage(output); err != nil {
 			return NewErrorPage(err, types.Action{
 				Title: "Copy Script Output",
-				Type:  types.CommandTypeCopy,
+				Type:  types.ActionTypeCopy,
 				Text:  string(output),
 				Exit:  true,
 			})
 		}
 
-		var view types.Page
-		if err := json.Unmarshal(output, &view); err != nil {
+		var page types.Page
+		if err := json.Unmarshal(output, &page); err != nil {
 			return NewErrorPage(err, types.Action{
 				Title: "Copy Output",
-				Type:  types.CommandTypeCopy,
+				Type:  types.ActionTypeCopy,
 				Text:  string(output),
 				Exit:  true,
 			})
 		}
 
-		if view.Title != "" {
-			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", view.Title, c.extension.Title))
+		if page.Title != "" {
+			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
 		} else {
 			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
 		}
 
-		switch view.Type {
+		switch page.Type {
 		case types.ViewTypeDetail:
 			var detail types.Detail
 			if err := json.Unmarshal(output, &detail); err != nil {

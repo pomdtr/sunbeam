@@ -41,18 +41,23 @@ func (ta *TextArea) Title() string {
 	return ta.title
 }
 
-func NewTextArea(formItem types.TextArea) *TextArea {
+func NewTextArea(name string, input types.TextArea) FormItem {
 	ta := textarea.New()
 	ta.Cursor.SetMode(cursor.CursorStatic)
 	ta.Prompt = ""
-	ta.SetValue(formItem.Default)
+	ta.SetValue(input.Default)
 
-	ta.Placeholder = formItem.Placeholder
+	ta.Placeholder = input.Placeholder
 	ta.SetHeight(5)
 
-	return &TextArea{
-		Model: ta,
-		title: formItem.Title,
+	return FormItem{
+		Name:     name,
+		Title:    input.Title,
+		Required: input.Required,
+		FormInput: &TextArea{
+			Model: ta,
+			title: input.Title,
+		},
 	}
 }
 
@@ -80,7 +85,7 @@ type TextInput struct {
 	placeholder string
 }
 
-func NewTextInput(input types.Text) *TextInput {
+func NewTextItem(name string, input types.Text) FormItem {
 	ti := textinput.New()
 	ti.Cursor.SetMode(cursor.CursorStatic)
 	ti.Prompt = ""
@@ -91,10 +96,15 @@ func NewTextInput(input types.Text) *TextInput {
 	placeholder := input.Placeholder
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
-	return &TextInput{
-		title:       input.Title,
-		Model:       ti,
-		placeholder: placeholder,
+	return FormItem{
+		Name:     name,
+		Title:    input.Title,
+		Required: input.Required,
+		FormInput: &TextInput{
+			title:       input.Title,
+			Model:       ti,
+			placeholder: placeholder,
+		},
 	}
 }
 
@@ -132,7 +142,6 @@ func (ti TextInput) View() string {
 }
 
 type Checkbox struct {
-	title string
 	label string
 	width int
 
@@ -140,11 +149,15 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(title string, input types.Checkbox) *Checkbox {
-	return &Checkbox{
-		label:   input.Label,
-		title:   title,
-		checked: input.Default,
+func NewCheckbox(name string, input types.Checkbox) FormItem {
+	return FormItem{
+		Name:     name,
+		Title:    input.Label,
+		Required: input.Required,
+		FormInput: &Checkbox{
+			label:   input.Label,
+			checked: input.Default,
+		},
 	}
 }
 
@@ -231,7 +244,7 @@ type DropDown struct {
 	selection DropDownItem
 }
 
-func NewSelect(input types.Select) *DropDown {
+func NewSelect(name string, input types.Select) FormItem {
 	dropdown := DropDown{}
 	dropdown.items = make(map[string]DropDownItem)
 
@@ -275,7 +288,12 @@ func NewSelect(input types.Select) *DropDown {
 	dropdown.filter = filter
 	dropdown.title = input.Title
 
-	return &dropdown
+	return FormItem{
+		Name:      name,
+		Title:     input.Title,
+		Required:  input.Required,
+		FormInput: &dropdown,
+	}
 }
 
 func (dd DropDown) HasMatch() bool {

@@ -5,10 +5,12 @@ type Text struct {
 	Type        string `json:"type"`
 	Placeholder string `json:"placeholder,omitempty"`
 	Default     string `json:"default,omitempty"`
+	Required    bool   `json:"required,omitempty"`
 }
 
 type TextArea struct {
 	Title       string `json:"title"`
+	Required    bool   `json:"required,omitempty"`
 	Type        string `json:"type"`
 	Placeholder string `json:"placeholder,omitempty"`
 	Default     string `json:"default,omitempty"`
@@ -16,6 +18,7 @@ type TextArea struct {
 
 type Checkbox struct {
 	Title       string `json:"title"`
+	Required    bool   `json:"required,omitempty"`
 	Type        string `json:"type"`
 	Label       string `json:"label,omitempty"`
 	Placeholder string `json:"placeholder,omitempty"`
@@ -24,6 +27,7 @@ type Checkbox struct {
 
 type Select struct {
 	Title       string         `json:"title"`
+	Required    bool           `json:"required,omitempty"`
 	Type        string         `json:"type"`
 	Placeholder string         `json:"placeholder,omitempty"`
 	Default     any            `json:"default,omitempty"`

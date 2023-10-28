@@ -45,7 +45,7 @@ func NewRootList(title string, extensionMap extensions.ExtensionMap) *RootList {
 				Actions: []types.Action{
 					{
 						Title:     "Run",
-						Type:      types.CommandTypeRun,
+						Type:      types.ActionTypeRun,
 						Extension: alias,
 						Command:   command.Name,
 					},
@@ -101,7 +101,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, c.err.Init()
 	case types.Action:
 		switch msg.Type {
-		case types.CommandTypeRun:
+		case types.ActionTypeRun:
 			selection, ok := c.list.Selection()
 			if !ok {
 				return c, nil
@@ -137,7 +137,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return err
 				}
 			}
-		case types.CommandTypeCopy:
+		case types.ActionTypeCopy:
 			return c, func() tea.Msg {
 				if err := clipboard.WriteAll(msg.Text); err != nil {
 					return err
@@ -149,7 +149,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-		case types.CommandTypeOpen:
+		case types.ActionTypeOpen:
 			return c, func() tea.Msg {
 				if err := utils.OpenWith(msg.Target, msg.App); err != nil {
 					return err
@@ -161,9 +161,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
-		case types.CommandTypeReload:
+		case types.ActionTypeReload:
 			return c, nil
-		case types.CommandTypeExit:
+		case types.ActionTypeExit:
 			return c, ExitCmd
 		default:
 			return c, nil
