@@ -1,3 +1,5 @@
+import { Input } from "./input";
+
 type ActionProps = {
   title: string;
   key?: string;
@@ -23,7 +25,7 @@ export type OpenCommand = {
 export type RunCommand = {
   type: "run";
   command: string;
-  params?: Record<string, string | number | boolean>;
+  params?: Record<string, string | number | boolean | Input>;
 } & ActionProps;
 
 export type ExitCommand = {

@@ -141,10 +141,7 @@
                         "type": "string"
                     },
                     "params": {
-                        "type": "object",
-                        "patternProperties": {
-                            ".+": true
-                        }
+                        "$ref": "#/definitions/params"
                     }
                 }
             }
@@ -178,10 +175,7 @@
                         "const": "reload"
                     },
                     "params": {
-                        "type": "object",
-                        "patternProperties": {
-                            ".+": true
-                        }
+                        "$ref": "#/definitions/params"
                     }
                 }
             }
@@ -219,6 +213,27 @@
         }
     ],
     "definitions": {
+        "params": {
+            "type": "object",
+            "patternProperties": {
+                ".+": {
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "boolean"
+                        },
+                        {
+                            "$ref": "./input.schema.json"
+                        }
+                    ]
+                }
+            }
+        },
         "application": {
             "type": "object",
             "additionalProperties": false,
