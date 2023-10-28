@@ -154,7 +154,22 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					_, err := c.extension.Run(command.Name, types.CommandInput{
 						Params: msg.Params,
 					})
-					return err
+
+					if err != nil {
+						return err
+					}
+
+					if msg.Reload {
+						return types.Action{
+							Type: types.ActionTypeReload,
+						}
+					}
+
+					if msg.Exit {
+						return ExitMsg{}
+					}
+
+					return nil
 				}
 			}
 
