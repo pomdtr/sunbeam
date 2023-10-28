@@ -51,6 +51,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdExtension())
+	rootCmd.AddCommand(NewCmdWrap())
+	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
 	rootCmd.AddCommand(NewCmdOpen())

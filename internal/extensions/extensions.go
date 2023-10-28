@@ -74,7 +74,12 @@ func (e Extension) RootCommands() []types.CommandSpec {
 	return rootCommands
 }
 
-func (ext Extension) Run(command string, input types.CommandInput) ([]byte, error) {
+func (e Extension) Run(commandName string, input types.CommandInput) error {
+	_, err := e.Output(commandName, input)
+	return err
+}
+
+func (ext Extension) Output(command string, input types.CommandInput) ([]byte, error) {
 	cmd, err := ext.Cmd(command, input)
 	if err != nil {
 		return nil, err

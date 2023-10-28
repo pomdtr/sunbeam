@@ -17,12 +17,12 @@ import (
 )
 
 type RootList struct {
-	w, h       int
-	title      string
-	history    History
-	err        *Detail
-	list       *List
-	extensions extensions.ExtensionMap
+	width, height int
+	title         string
+	history       History
+	err           *Detail
+	list          *List
+	extensions    extensions.ExtensionMap
 }
 
 func NewRootList(title string, extensionMap extensions.ExtensionMap) *RootList {
@@ -78,7 +78,7 @@ func (c *RootList) Blur() tea.Cmd {
 }
 
 func (c *RootList) SetSize(width, height int) {
-	c.w, c.h = width, height
+	c.width, c.height = width, height
 	if c.err != nil {
 		c.err.SetSize(width, height)
 	}
@@ -87,7 +87,7 @@ func (c *RootList) SetSize(width, height int) {
 
 func (c *RootList) SetError(err error) tea.Cmd {
 	c.err = NewErrorPage(err)
-	c.err.SetSize(c.w, c.h)
+	c.err.SetSize(c.width, c.height)
 	return func() tea.Msg {
 		return err
 	}
@@ -97,7 +97,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case error:
 		c.err = NewErrorPage(msg)
-		c.err.SetSize(c.w, c.h)
+		c.err.SetSize(c.width, c.height)
 		return c, c.err.Init()
 	case types.Action:
 		switch msg.Type {
@@ -130,12 +130,40 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					_, err := extension.Run(command.Name, types.CommandInput{
+					_, err := extension.Output(command.Name, types.CommandInput{
 						Params: msg.Params,
 					})
 
 					return err
 				}
+			case types.CommandModeTTY:
+				cmd, err := extension.Cmd(command.Name, types.CommandInput{
+					Params: msg.Params,
+				})
+
+				if err != nil {
+					c.err = NewErrorPage(err)
+					c.err.SetSize(c.width, c.height)
+					return c, c.err.Init()
+				}
+
+				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
+					if err != nil {
+						return err
+					}
+
+					if msg.Reload {
+						return types.Action{
+							Type: types.ActionTypeReload,
+						}
+					}
+
+					if msg.Exit {
+						return ExitMsg{}
+					}
+
+					return nil
+				})
 			}
 		case types.ActionTypeCopy:
 			return c, func() tea.Msg {

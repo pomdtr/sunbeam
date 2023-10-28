@@ -72,8 +72,8 @@ func (ta *TextArea) Value() any {
 }
 
 func (ta *TextArea) Update(msg tea.Msg) (FormInput, tea.Cmd) {
-	var cmd tea.Cmd
-	ta.Model, cmd = ta.Model.Update(msg)
+	model, cmd := ta.Model.Update(msg)
+	ta.Model = model
 	return ta, cmd
 }
 

@@ -151,7 +151,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					_, err := c.extension.Run(command.Name, types.CommandInput{
+					_, err := c.extension.Output(command.Name, types.CommandInput{
 						Params: msg.Params,
 					})
 
@@ -171,8 +171,35 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 					return nil
 				}
-			}
+			case types.CommandModeTTY:
+				cmd, err := c.extension.Cmd(command.Name, types.CommandInput{
+					Params: msg.Params,
+				})
 
+				if err != nil {
+					c.embed = NewErrorPage(err)
+					c.embed.SetSize(c.width, c.height)
+					return c, c.embed.Init()
+				}
+
+				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
+					if err != nil {
+						return err
+					}
+
+					if msg.Reload {
+						return types.Action{
+							Type: types.ActionTypeReload,
+						}
+					}
+
+					if msg.Exit {
+						return ExitMsg{}
+					}
+
+					return nil
+				})
+			}
 		case types.ActionTypeCopy:
 			return c, func() tea.Msg {
 				if err := clipboard.WriteAll(msg.Text); err != nil {
@@ -238,7 +265,7 @@ func (c *Runner) View() string {
 
 func (c *Runner) Reload() tea.Cmd {
 	return tea.Sequence(c.SetIsLoading(true), func() tea.Msg {
-		output, err := c.extension.Run(c.command.Name, c.input)
+		output, err := c.extension.Output(c.command.Name, c.input)
 		if err != nil {
 			return err
 		}

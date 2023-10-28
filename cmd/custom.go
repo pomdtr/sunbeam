@@ -115,7 +115,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				}
 
 				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					output, err := extension.Run(command.Name, input)
+					output, err := extension.Output(command.Name, input)
 
 					if err != nil {
 						return err
@@ -128,17 +128,24 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return nil
 				}
 
-				if command.Mode == types.CommandModePage {
+				switch command.Mode {
+				case types.CommandModePage:
 					runner := tui.NewRunner(extension, command, input)
 					return tui.Draw(runner)
-				}
+				case types.CommandModeSilent:
+					return extension.Run(command.Name, input)
+				case types.CommandModeTTY:
+					cmd, err := extension.Cmd(command.Name, input)
+					if err != nil {
+						return err
+					}
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
 
-				_, err := extension.Run(command.Name, input)
-				if err != nil {
-					return err
+					return cmd.Run()
+				default:
+					return fmt.Errorf("unknown command mode: %s", command.Mode)
 				}
-
-				return nil
 
 			},
 		}
