@@ -137,12 +137,14 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					_, err := extension.Output(types.CommandInput{
+					if err := extension.Run(types.CommandInput{
 						Command: command.Name,
 						Params:  msg.Params,
-					})
+					}); err != nil {
+						return err
+					}
 
-					return err
+					return ExitMsg{}
 				}
 			case types.CommandModeTTY:
 				cmd, err := extension.Cmd(types.CommandInput{
@@ -161,17 +163,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return err
 					}
 
-					if msg.Reload {
-						return types.Action{
-							Type: types.ActionTypeReload,
-						}
-					}
-
-					if msg.Exit {
-						return ExitMsg{}
-					}
-
-					return nil
+					return ExitMsg{}
 				})
 			}
 		case types.ActionTypeCopy:
