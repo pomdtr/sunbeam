@@ -144,7 +144,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return err
 					}
 
-					return ExitMsg{}
+					return nil
 				}
 			case types.CommandModeTTY:
 				cmd, err := extension.Cmd(types.CommandInput{
@@ -163,7 +163,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return err
 					}
 
-					return ExitMsg{}
+					return nil
 				})
 			}
 		case types.ActionTypeCopy:

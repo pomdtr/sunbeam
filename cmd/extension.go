@@ -380,11 +380,11 @@ func FindExtensions() (extensions.ExtensionMap, error) {
 		manifestPath := filepath.Join(extensionDir, "manifest.json")
 		shouldCache, err := IsNewer(entrypoint, manifestPath)
 		if err != nil {
-			return nil, fmt.Errorf("error checking manifest: %w", err)
+			continue
 		}
 		if shouldCache {
 			if err := cacheManifest(entrypoint, manifestPath); err != nil {
-				return nil, fmt.Errorf("error caching manifest: %w", err)
+				continue
 			}
 		}
 

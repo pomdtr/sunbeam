@@ -147,7 +147,6 @@ func (m *Paginator) Pop() tea.Cmd {
 }
 
 func Draw(page Page) error {
-	// disable color if we're running in CodeSandbox
 	paginator := NewPaginator(page)
 	p := tea.NewProgram(paginator, tea.WithAltScreen())
 

@@ -125,6 +125,16 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 				return action
 			}
 
+		case "ctrl+d":
+			if p.expanded {
+				break
+			}
+
+			if p.showInput && p.input.Value() != "" {
+				break
+			}
+
+			return p, PopPageCmd
 		case "esc":
 			if p.expanded {
 				if p.showInput {
