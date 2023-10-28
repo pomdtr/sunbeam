@@ -18,6 +18,15 @@ func DataHome() string {
 	return filepath.Join(homedir, ".local", "share", "sunbeam")
 }
 
+func ConfigHome() string {
+	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
+		return filepath.Join(env, "sunbeam")
+	}
+
+	homedir, _ := os.UserHomeDir()
+	return filepath.Join(homedir, ".config", "sunbeam")
+}
+
 func CacheHome() string {
 	if env, ok := os.LookupEnv("XDG_CACHE_HOME"); ok {
 		return filepath.Join(env, "sunbeam")

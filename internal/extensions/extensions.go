@@ -12,6 +12,8 @@ import (
 
 	"github.com/acarl005/stripansi"
 	"github.com/cli/cli/pkg/findsh"
+	"github.com/joho/godotenv"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -125,17 +127,30 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		args = []string{e.Entrypoint, commandName}
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdin = strings.NewReader(string(inputBytes))
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
+
+	dotenvPath := filepath.Join(utils.ConfigHome(), "sunbeam.env")
+	if _, err := os.Stat(dotenvPath); err == nil {
+		envMap, err := godotenv.Read(dotenvPath)
+		if err != nil {
+			return nil, err
+		}
+
+		for k, v := range envMap {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+		}
+	}
+
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	cmd.Env = append(cmd.Env, "NO_COLOR=1")
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
 	cmd.Dir = cwd
 
 	return cmd, nil

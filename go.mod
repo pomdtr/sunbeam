@@ -12,6 +12,7 @@ require (
 	github.com/cli/cli v1.14.0
 	github.com/cli/go-gh/v2 v2.4.0
 	github.com/itchyny/gojq v0.12.13
+	github.com/joho/godotenv v1.5.1
 	github.com/junegunn/fzf v0.0.0-20231026143046-ec208af474fa
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/muesli/termenv v0.15.2
