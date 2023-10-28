@@ -23,9 +23,17 @@ type Runner struct {
 	input     types.CommandInput
 }
 
-func NewRunner(extension extensions.Extension, command types.CommandSpec, input types.CommandInput) *Runner {
+func NewRunner(extension extensions.Extension, input types.CommandInput) *Runner {
+	command, ok := extension.Command(input.Command)
+	var embed Page
+	if ok {
+		embed = NewDetail("")
+	} else {
+		embed = NewErrorPage(fmt.Errorf("command %s not found", input.Command))
+	}
+
 	return &Runner{
-		embed:     NewDetail(""),
+		embed:     embed,
 		extension: extension,
 		command:   command,
 		input:     input,
@@ -144,15 +152,17 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			switch command.Mode {
 			case types.CommandModePage:
-				runner := NewRunner(c.extension, command, types.CommandInput{
-					Params: msg.Params,
+				runner := NewRunner(c.extension, types.CommandInput{
+					Command: command.Name,
+					Params:  msg.Params,
 				})
 
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					_, err := c.extension.Output(command.Name, types.CommandInput{
-						Params: msg.Params,
+					_, err := c.extension.Output(types.CommandInput{
+						Command: command.Name,
+						Params:  msg.Params,
 					})
 
 					if err != nil {
@@ -172,8 +182,9 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return nil
 				}
 			case types.CommandModeTTY:
-				cmd, err := c.extension.Cmd(command.Name, types.CommandInput{
-					Params: msg.Params,
+				cmd, err := c.extension.Cmd(types.CommandInput{
+					Command: command.Name,
+					Params:  msg.Params,
 				})
 
 				if err != nil {
@@ -265,7 +276,7 @@ func (c *Runner) View() string {
 
 func (c *Runner) Reload() tea.Cmd {
 	return tea.Sequence(c.SetIsLoading(true), func() tea.Msg {
-		output, err := c.extension.Output(c.command.Name, c.input)
+		output, err := c.extension.Output(c.input)
 		if err != nil {
 			return err
 		}

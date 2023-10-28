@@ -38,6 +38,7 @@ type NumberParam = {
 
 type InputParams = Record<string, string | number | boolean>;
 export type CommandInput<T extends InputParams = InputParams> = {
+  command: string;
   params: T;
   query?: string;
 };

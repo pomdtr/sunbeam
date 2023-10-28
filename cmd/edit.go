@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,7 @@ func NewCmdEdit() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				editor := findEditor()
+				editor := utils.FindEditor()
 				editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, args[0]))
 				editCmd.Stdin = tty
 				editCmd.Stdout = os.Stderr
@@ -70,7 +71,7 @@ func NewCmdEdit() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			editor := findEditor()
+			editor := utils.FindEditor()
 			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, tempfile.Name()))
 			editCmd.Stdin = tty
 			editCmd.Stdout = os.Stderr
@@ -94,16 +95,4 @@ func NewCmdEdit() *cobra.Command {
 	cmd.Flags().StringVarP(&flags.extension, "extension", "e", "", "File extension to use for temporary file")
 	return cmd
 
-}
-
-func findEditor() string {
-	if editor, ok := os.LookupEnv("VISUAL"); ok {
-		return editor
-	}
-
-	if editor, ok := os.LookupEnv("EDITOR"); ok {
-		return editor
-	}
-
-	return "vim"
 }

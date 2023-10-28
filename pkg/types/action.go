@@ -104,6 +104,7 @@ type Application struct {
 }
 
 type CommandInput struct {
-	Params map[string]any `json:"params"`
-	Query  string         `json:"query,omitempty"`
+	Command string         `json:"command"`
+	Params  map[string]any `json:"params"`
+	Query   string         `json:"query,omitempty"`
 }

@@ -39,11 +39,36 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			}
 
 			if len(rootCommands) == 1 {
-				runner := tui.NewRunner(extension, rootCommands[0], types.CommandInput{
-					Params: make(map[string]any),
-				})
+				switch rootCommands[0].Mode {
+				case types.CommandModeSilent:
+					return extension.Run(types.CommandInput{
+						Command: rootCommands[0].Name,
+						Params:  make(map[string]any),
+					})
+				case types.CommandModeTTY:
+					cmd, err := extension.Cmd(types.CommandInput{
+						Command: rootCommands[0].Name,
+						Params:  make(map[string]any),
+					})
+					if err != nil {
+						return err
+					}
 
-				return tui.Draw(runner)
+					cmd.Stdin = os.Stdin
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+
+					return cmd.Run()
+				case types.CommandModePage:
+					runner := tui.NewRunner(extension, types.CommandInput{
+						Command: rootCommands[0].Name,
+						Params:  make(map[string]any),
+					})
+
+					return tui.Draw(runner)
+				default:
+					return fmt.Errorf("unknown command mode: %s", rootCommands[0].Mode)
+				}
 			}
 
 			page := tui.NewRootList(extension.Title, exts)
@@ -62,7 +87,8 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			Hidden: command.Hidden,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				input := types.CommandInput{
-					Params: make(map[string]any),
+					Command: command.Name,
+					Params:  make(map[string]any),
 				}
 
 				// load params from stdin
@@ -115,7 +141,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				}
 
 				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					output, err := extension.Output(command.Name, input)
+					output, err := extension.Output(input)
 
 					if err != nil {
 						return err
@@ -130,12 +156,12 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 
 				switch command.Mode {
 				case types.CommandModePage:
-					runner := tui.NewRunner(extension, command, input)
+					runner := tui.NewRunner(extension, input)
 					return tui.Draw(runner)
 				case types.CommandModeSilent:
-					return extension.Run(command.Name, input)
+					return extension.Run(input)
 				case types.CommandModeTTY:
-					cmd, err := extension.Cmd(command.Name, input)
+					cmd, err := extension.Cmd(input)
 					if err != nil {
 						return err
 					}

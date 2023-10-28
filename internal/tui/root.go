@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"time"
@@ -95,10 +96,15 @@ func (c *RootList) SetError(err error) tea.Cmd {
 
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
-	case error:
-		c.err = NewErrorPage(msg)
-		c.err.SetSize(c.width, c.height)
-		return c, c.err.Init()
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+e":
+			envFile := filepath.Join(utils.ConfigHome(), "sunbeam.env")
+			editCmd := exec.Command("sh", "-c", fmt.Sprintf("$EDITOR %s", envFile))
+			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
+				return err
+			})
+		}
 	case types.Action:
 		switch msg.Type {
 		case types.ActionTypeRun:
@@ -124,21 +130,24 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			switch command.Mode {
 			case types.CommandModePage:
-				runner := NewRunner(extension, command, types.CommandInput{
-					Params: msg.Params,
+				runner := NewRunner(extension, types.CommandInput{
+					Command: command.Name,
+					Params:  msg.Params,
 				})
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					_, err := extension.Output(command.Name, types.CommandInput{
-						Params: msg.Params,
+					_, err := extension.Output(types.CommandInput{
+						Command: command.Name,
+						Params:  msg.Params,
 					})
 
 					return err
 				}
 			case types.CommandModeTTY:
-				cmd, err := extension.Cmd(command.Name, types.CommandInput{
-					Params: msg.Params,
+				cmd, err := extension.Cmd(types.CommandInput{
+					Command: command.Name,
+					Params:  msg.Params,
 				})
 
 				if err != nil {
@@ -196,6 +205,11 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		default:
 			return c, nil
 		}
+	case error:
+		c.err = NewErrorPage(msg)
+		c.err.SetSize(c.width, c.height)
+		return c, c.err.Init()
+
 	}
 
 	if c.err != nil {

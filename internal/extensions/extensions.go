@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/acarl005/stripansi"
 	"github.com/cli/cli/pkg/findsh"
@@ -74,13 +73,13 @@ func (e Extension) RootCommands() []types.CommandSpec {
 	return rootCommands
 }
 
-func (e Extension) Run(commandName string, input types.CommandInput) error {
-	_, err := e.Output(commandName, input)
+func (e Extension) Run(input types.CommandInput) error {
+	_, err := e.Output(input)
 	return err
 }
 
-func (ext Extension) Output(command string, input types.CommandInput) ([]byte, error) {
-	cmd, err := ext.Cmd(command, input)
+func (ext Extension) Output(input types.CommandInput) ([]byte, error) {
+	cmd, err := ext.Cmd(input)
 	if err != nil {
 		return nil, err
 	}
@@ -95,14 +94,14 @@ func (ext Extension) Output(command string, input types.CommandInput) ([]byte, e
 	}
 }
 
-func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd, error) {
+func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 	if input.Params == nil {
 		input.Params = make(map[string]any)
 	}
 
-	command, ok := e.Command(commandName)
+	command, ok := e.Command(input.Command)
 	if !ok {
-		return nil, fmt.Errorf("command %s not found", commandName)
+		return nil, fmt.Errorf("command %s not found", input.Command)
 	}
 
 	for _, spec := range command.Params {
@@ -127,13 +126,12 @@ func (e Extension) Cmd(commandName string, input types.CommandInput) (*exec.Cmd,
 		if err != nil {
 			return nil, err
 		}
-		args = []string{sh, "-s", "-c", `command "$@"`, "--", e.Entrypoint, commandName}
+		args = []string{sh, "-s", "-c", `command "$@"`, "--", e.Entrypoint, string(inputBytes)}
 	} else {
-		args = []string{e.Entrypoint, commandName}
+		args = []string{e.Entrypoint, string(inputBytes)}
 	}
 
 	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdin = strings.NewReader(string(inputBytes))
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
 
