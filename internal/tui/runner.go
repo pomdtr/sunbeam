@@ -77,7 +77,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case "esc":
 			if c.form != nil {
 				c.form = nil
-				return c, nil
+				return c, c.embed.Focus()
 			}
 
 			if c.embed != nil {
@@ -131,7 +131,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}, formItems...)
 
 				c.form.SetSize(c.width, c.height)
-				return c, c.form.Init()
+				return c, tea.Sequence(c.form.Init(), c.form.Focus())
 			}
 			c.form = nil
 
