@@ -37,25 +37,7 @@
                     "type": "string"
                 },
                 "params": {
-                    "type": "object",
-                    "patternProperties": {
-                        ".+": {
-                            "oneOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "$ref": "./input.schema.json"
-                                }
-                            ]
-                        }
-                    }
+                    "$ref": "params.schema.json"
                 }
             }
         },

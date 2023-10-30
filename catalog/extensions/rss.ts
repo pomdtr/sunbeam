@@ -8,9 +8,6 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "RSS",
         description: "Manage your RSS feeds",
-        root: [
-            { title: "Julia Evans Feed", command: "show", params: { url: "https://jvns.ca/atom.xml" } }
-        ],
         commands: [
             {
                 name: "show",
