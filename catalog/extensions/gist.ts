@@ -1,7 +1,7 @@
 #!/usr/bin/env deno run -A
 
-import { Octokit } from "https://esm.sh/octokit?dts";
-import * as sunbeam from "npm:sunbeam-types@0.23.12"
+import { Octokit } from "https://esm.sh/octokit@3.1.1?dts";
+import * as sunbeam from "npm:sunbeam-types@0.23.15"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -11,12 +11,12 @@ if (Deno.args.length === 0) {
             {
                 name: "list",
                 title: "List Gists",
-                mode: "page",
+                mode: "list",
             },
             {
                 name: "browse",
                 title: "Browser Gist Files",
-                mode: "page",
+                mode: "list",
                 params: [
                     {
                         name: "id",
@@ -48,7 +48,7 @@ if (Deno.args.length === 0) {
             {
                 name: "view",
                 title: "View Gist File",
-                mode: "page",
+                mode: "detail",
                 params: [
                     {
                         name: "id",
@@ -145,7 +145,7 @@ if (payload.command == "list") {
     })
 
     const list: sunbeam.List = {
-        type: "list",
+
         title: "Gists",
         items,
     }
@@ -186,7 +186,7 @@ if (payload.command == "list") {
     })
 
     const list: sunbeam.List = {
-        type: "list",
+
         title: "Gist Files",
         items,
     }
@@ -216,7 +216,7 @@ if (payload.command == "list") {
     const file = gist.data.files![params.file]
 
     const page: sunbeam.Detail = {
-        type: "detail",
+
         highlight: "markdown",
         text: ["```" + file?.language?.toLowerCase() || "txt", file?.content, "```"].join("\n"),
         actions: [

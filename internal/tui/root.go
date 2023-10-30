@@ -45,8 +45,7 @@ func NewRootList(title string, generator func() (extensions.ExtensionMap, []type
 	}
 
 	return &RootList{
-		title:     title,
-		list:      NewList(),
+		list:      NewList(title),
 		history:   history,
 		generator: generator,
 	}
@@ -232,7 +231,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			switch command.Mode {
-			case types.CommandModePage:
+			case types.CommandModeList, types.CommandModeDetail:
 				runner := NewRunner(extension, types.CommandInput{
 					Command: command.Name,
 					Params:  msg.Params,

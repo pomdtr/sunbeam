@@ -15,7 +15,7 @@ type CommandRef = {
 export type CommandSpec = {
   name: string;
   title: string;
-  mode: "page" | "silent" | "tty";
+  mode: "list" | "detail" | "tty" | "silent";
   hidden?: boolean;
   description?: string;
   params?: CommandParam[];

@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "npm:sunbeam-types@0.23.7"
+import * as sunbeam from "npm:sunbeam-types@0.23.15"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -9,7 +9,7 @@ if (Deno.args.length === 0) {
             {
                 title: "Search Bookmarks",
                 name: "search-bookmarks",
-                mode: "page",
+                mode: "list",
             },
         ],
     };
@@ -30,28 +30,35 @@ if (payload.command == "search-bookmarks") {
         },
     });
 
-    const { items: bookmarks } = await resp.json();
+    const { items: bookmarks } = await resp.json() as {
+        items: {
+            title: string;
+            link: string;
+            domain: string;
+        }[]
+    }
 
-    const items: sunbeam.ListItem[] = bookmarks.map((bookmark: any) => ({
-        title: bookmark.title,
-        subtitle: bookmark.domain,
-        actions: [
-            {
-                title: "Open URL",
-                type: "open",
-                target: bookmark.link,
-                exit: true,
-            },
-            {
-                title: "Copy URL",
-                key: "c",
-                type: "copy",
-                text: bookmark.link,
-                exit: true,
-            },
-        ],
-    }));
-    const list: sunbeam.List = { type: "list", items };
+    const list: sunbeam.List = {
+        items: bookmarks.map((bookmark) => ({
+            title: bookmark.title,
+            subtitle: bookmark.domain,
+            actions: [
+                {
+                    title: "Open URL",
+                    type: "open",
+                    target: bookmark.link,
+                    exit: true,
+                },
+                {
+                    title: "Copy URL",
+                    key: "c",
+                    type: "copy",
+                    text: bookmark.link,
+                    exit: true,
+                },
+            ],
+        }))
+    }
 
     console.log(JSON.stringify(list));
 }

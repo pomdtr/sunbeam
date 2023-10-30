@@ -8,7 +8,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "list-passwords",
                 title: "List Passwords",
-                mode: "page"
+                mode: "list"
             }
         ]
     }'
@@ -46,5 +46,5 @@ if [ "$COMMAND" = "list-passwords" ]; then
                 exit: true
             }
         ]
-    }) | {type: "list", items: .}'
+    }) | { items: .}'
 fi

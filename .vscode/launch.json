@@ -9,7 +9,7 @@
       "program": "${workspaceFolder}",
       "args": [
         "run",
-        "/Users/pomdtr/Developer/github.com/pomdtr/sunbeam-extensions/extensions/manage.sh"
+        "./catalog/extensions/tldr.sh"
       ]
     },
   ],

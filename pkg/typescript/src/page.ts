@@ -1,8 +1,6 @@
 import type { Action } from "./action";
-export type Page = List | Detail;
 
 export type List = {
-  type: "list";
   title?: string;
   items: ListItem[];
   actions?: Action[];
@@ -11,7 +9,6 @@ export type List = {
 };
 
 export type Detail = {
-  type: "detail";
   title?: string;
   text: string;
   highlight?: "markdown" | "ansi";

@@ -37,7 +37,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "page"
+                mode: "list"
             }
         ]
     }'
@@ -107,7 +107,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "page"
+                mode: "list"
             }
         ]
     }'
@@ -117,7 +117,7 @@ fi
 # When the command name is "search-docsets", the list of docsets is returned
 if [ "$1" = "search-docsets" ]; then
   sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query '{
-    type: "list",
+
     items: map({
       title: .name,
       subtitle: (.release // "latest"),
@@ -167,12 +167,12 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "page"
+                mode: "list"
             },
             {
                 name: "search-entries",
                 title: "Search entries",
-                mode: "page",
+                mode: "list",
                 params: [
                     {
                         name: "docset",
@@ -193,7 +193,7 @@ elif [ "$1" = "search-entries" ]; then
     DOCSET=$(sunbeam query -r '.params.docset')
 
     sunbeam fetch "https://devdocs.io/docs/$DOCSET/index.json" | sunbeam query --arg docset="$DOCSET" '.entries | {
-        type: "list",
+
         items: map({
             title: .name,
             subtitle: .type,
@@ -261,7 +261,7 @@ fi
 
 if [ "$1" = "search-docsets" ]; then
     sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query '{
-        type: "list",
+
         items: map({
           title: .name,
           subtitle: (.release // "latest"),

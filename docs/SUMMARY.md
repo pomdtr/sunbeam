@@ -14,9 +14,13 @@
 
 # Reference
 
-- [Manifest](./reference/manifest.md)
-- [View](./reference/page.md)
-- [Command](./reference/action.md)
+- [Config](./reference/schemas/config.md)
+- [Schema](./reference/schemas/index.md)
+    - [Manifest](./reference/schemas/manifest.md)
+    - [List](./reference/schemas/list.md)
+    - [Detail](./reference/schemas/detail.md)
+    - [Input](./reference/schemas/input.md)
+    - [Action](./reference/schemas/action.md)
 - [CLI](./reference/cli.md)
 
 

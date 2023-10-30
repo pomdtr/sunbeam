@@ -62,9 +62,10 @@
                 "mode": {
                     "type": "string",
                     "enum": [
-                        "page",
-                        "silent",
-                        "tty"
+                        "list",
+                        "detail",
+                        "tty",
+                        "silent"
                     ]
                 },
                 "params": {

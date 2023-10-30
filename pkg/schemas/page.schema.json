@@ -1,41 +1,11 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "required": [
-        "type"
-    ],
-    "properties": {
-        "type": {
-            "enum": [
-                "list",
-                "detail"
-            ]
-        }
-    },
-    "allOf": [
+    "oneOf": [
         {
-            "if": {
-                "properties": {
-                    "type": {
-                        "const": "list"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "./list.schema.json"
-            }
+            "$ref": "./list.schema.json"
         },
         {
-            "if": {
-                "properties": {
-                    "type": {
-                        "const": "detail"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "./detail.schema.json"
-            }
+            "$ref": "./detail.schema.json"
         }
     ]
 }

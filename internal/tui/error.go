@@ -14,5 +14,8 @@ func NewErrorPage(err error, additionalActions ...types.Action) *Detail {
 	})
 	actions = append(actions, additionalActions...)
 
-	return NewDetail(err.Error(), actions...)
+	detail := NewDetail("Error", err.Error(), actions...)
+	detail.Highlight = types.HighlightMarkdown
+
+	return detail
 }

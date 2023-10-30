@@ -98,14 +98,12 @@ func NewCmdRun() *cobra.Command {
 				scriptPath = s
 			}
 
-			alias := filepath.Base(scriptPath)
 			extension, err := LoadExtension(scriptPath)
-			extension.Alias = alias
 			if err != nil {
 				return err
 			}
 
-			rootCmd, err := NewCmdCustom(extension)
+			rootCmd, err := NewCmdCustom(filepath.Base(scriptPath), extension)
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}

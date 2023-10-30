@@ -13,7 +13,7 @@ if (Deno.args.length == 0) {
             {
                 name: "list-projects",
                 title: "List Projects",
-                mode: "page",
+                mode: "list",
             },
         ],
     };
@@ -83,7 +83,7 @@ if (payload.command == "list-projects") {
         }
     });
 
-    const list: sunbeam.List = { type: "list", items };
+    const list: sunbeam.List = { items };
 
     console.log(
         JSON.stringify(list),

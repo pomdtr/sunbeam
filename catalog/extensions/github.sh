@@ -7,8 +7,8 @@ sunbeam query -n '{
     title: "GitHub",
     description: "Search GitHub Repositories",
     commands: [
-        {name: "search-repos", mode: "page", title: "Search Repositories"},
-        {name: "list-prs", mode: "page", title: "List Pull Requests", params: [{name: "repo", type: "string", required: true}]}
+        {name: "search-repos", mode: "list", title: "Search Repositories"},
+        {name: "list-prs", mode: "list", title: "List Pull Requests", params: [{name: "repo", type: "string", required: true}]}
     ]
 }'
 exit 0
@@ -26,7 +26,6 @@ if [ "$COMMAND" = "search-repos" ]; then
     QUERY=$(echo "$1" | sunbeam query '.query')
     if [ "$QUERY" = "null" ]; then
         gh api "/user/repos?sort=updated" | sunbeam query '{
-            type: "list",
             dynamic: true,
             items: map({
                 title: .full_name,
@@ -41,7 +40,6 @@ if [ "$COMMAND" = "search-repos" ]; then
         exit 0
     fi
     gh api "search/repositories?q=$QUERY" | sunbeam query '.items | {
-        type: "list",
         dynamic : true,
         items: map({
                 title: .full_name,
@@ -55,15 +53,17 @@ if [ "$COMMAND" = "search-repos" ]; then
         }'
 elif [ "$1" = "list-prs" ]; then
     REPOSITORY=$(echo "$1" | sunbeam query -r '.params.repo')
-    gh pr list --repo "$REPOSITORY" --json author,title,url,number | sunbeam query 'map({
-        title: .title,
-        subtitle: .author.login,
-        accessories: [
-            "#\(.number)"
-        ],
-        actions: [
-            {title: "Open in Browser", type: "open", target: .url, exit: true},
-            {title: "Copy URL", key: "c", type: "copy", text: .url, exit: true}
-        ]
-    }) | {type: "list", items: .}'
+    gh pr list --repo "$REPOSITORY" --json author,title,url,number | sunbeam query ' {
+        items: map({
+            title: .title,
+            subtitle: .author.login,
+            accessories: [
+                "#\(.number)"
+            ],
+            actions: [
+                {title: "Open in Browser", type: "open", target: .url, exit: true},
+                {title: "Copy URL", key: "c", type: "copy", text: .url, exit: true}
+            ]
+        })
+    }'
 fi

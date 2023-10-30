@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "list",
                 title: "List All Apps",
-                mode: "page"
+                mode: "list"
             }
         ]
     }'
@@ -28,5 +28,5 @@ if [ "$COMMAND" = "list" ]; then
             target: .,
             exit: true
         }]
-    }' | sunbeam query -s '{ type: "list", items: . }'
+    }' | sunbeam query -s '{  items: . }'
 fi

@@ -48,9 +48,9 @@ type Paginator struct {
 }
 
 func NewPaginator(root Page) *Paginator {
-	return &Paginator{pages: []Page{
-		root,
-	}}
+	return &Paginator{
+		pages: []Page{root},
+	}
 }
 
 func (m *Paginator) Init() tea.Cmd {
@@ -70,7 +70,11 @@ func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		m.SetSize(msg.Width, msg.Height)
+		if msg.Height%2 == 0 {
+			m.SetSize(msg.Width, msg.Height-1)
+		} else {
+			m.SetSize(msg.Width, msg.Height)
+		}
 		return m, nil
 	case PushPageMsg:
 		cmd := m.Push(msg.Page)

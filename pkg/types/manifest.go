@@ -24,9 +24,10 @@ type CommandSpec struct {
 type CommandMode string
 
 const (
-	CommandModePage   CommandMode = "page"
-	CommandModeSilent CommandMode = "silent"
+	CommandModeList   CommandMode = "list"
+	CommandModeDetail CommandMode = "detail"
 	CommandModeTTY    CommandMode = "tty"
+	CommandModeSilent CommandMode = "silent"
 )
 
 type Param struct {

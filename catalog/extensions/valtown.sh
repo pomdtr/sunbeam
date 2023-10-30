@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "home",
                 title: "List Home Vals",
-                mode: "page"
+                mode: "list"
             },
             {
                 name: "create",
@@ -45,7 +45,7 @@ COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "home" ]; then
     USER_ID=$(sunbeam fetch -H "Authorization: Bearer $VALTOWN_TOKEN" "$API_ROOT/v1/me" | sunbeam query -r '.id')
     sunbeam fetch -H "Autorization: Bearer $VALTOWN_TOKEN" "$API_ROOT/v1/users/$USER_ID/vals" | sunbeam query '.data | {
-        type: "list",
+
         items: map({
             title: .name,
             subtitle: "v\(.version)",

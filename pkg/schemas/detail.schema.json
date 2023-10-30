@@ -3,13 +3,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
         "text"
     ],
     "properties": {
-        "type": {
-            "const": "detail"
-        },
         "title": {
             "type": "string"
         },

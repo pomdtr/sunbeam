@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
@@ -11,27 +13,22 @@ import (
 
 type Detail struct {
 	actionsFocused bool
-	width, height  int
 
-	statusBar StatusBar
-	Style     lipgloss.Style
 	viewport  viewport.Model
-	Highlight types.Highlight
+	statusBar StatusBar
 
-	text string
+	text          string
+	width, height int
+
+	Style     lipgloss.Style
+	Highlight types.Highlight
 }
 
-func NewDetail(text string, actions ...types.Action) *Detail {
+func NewDetail(title string, text string, actions ...types.Action) *Detail {
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle()
 
-	var statusBar StatusBar
-	if len(actions) == 0 {
-		statusBar = NewStatusBar()
-	} else {
-		statusBar = NewStatusBar(actions...)
-	}
-
+	statusBar := NewStatusBar(title, actions...)
 	items := make([]FilterItem, 0)
 	for _, action := range actions {
 		items = append(items, ListItem{
@@ -56,7 +53,7 @@ func NewDetail(text string, actions ...types.Action) *Detail {
 }
 
 func (d *Detail) Init() tea.Cmd {
-	return d.statusBar.Init()
+	return nil
 }
 
 func (d *Detail) Focus() tea.Cmd {
@@ -87,7 +84,9 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		case "esc":
 			if c.statusBar.expanded {
-				break
+				c.statusBar.expanded = false
+				c.statusBar.cursor = 0
+				return c, nil
 			}
 			return c, func() tea.Msg {
 				return PopPageMsg{}
@@ -132,7 +131,7 @@ func (c *Detail) RefreshContent() error {
 func (c *Detail) SetSize(width, height int) {
 	c.width, c.height = width, height
 
-	c.viewport.Height = height - lipgloss.Height(c.statusBar.View())
+	c.viewport.Height = height - 4
 	c.viewport.Width = width
 
 	c.statusBar.Width = width
@@ -140,5 +139,6 @@ func (c *Detail) SetSize(width, height int) {
 }
 
 func (c *Detail) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.viewport.View(), c.statusBar.View())
+	blanks := strings.Repeat(" ", c.width)
+	return lipgloss.JoinVertical(lipgloss.Left, blanks, separator(c.width), c.viewport.View(), c.statusBar.View())
 }

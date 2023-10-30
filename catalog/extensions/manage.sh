@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "list-extensions",
                 title: "List Extensions",
-                mode: "page"
+                mode: "list"
             },
             {
                 name: "remove-extension",
@@ -46,7 +46,7 @@ fi
 COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "list-extensions" ]; then
     sunbeam extension list --json | sunbeam query '{
-        type: "list",
+
         items: map({
             title: .alias,
             subtitle: .manifest.title,

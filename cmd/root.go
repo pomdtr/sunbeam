@@ -135,8 +135,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extension Commands:",
 	})
 
-	for _, extension := range extensionMap {
-		command, err := NewCmdCustom(extension)
+	for alias, extension := range extensionMap {
+		command, err := NewCmdCustom(alias, extension)
 		if err != nil {
 			return nil, err
 		}

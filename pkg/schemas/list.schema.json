@@ -3,13 +3,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
         "items"
     ],
     "properties": {
-        "type": {
-            "const": "list"
-        },
         "emptyText": {
             "type": "string"
         },

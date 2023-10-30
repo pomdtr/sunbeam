@@ -17,12 +17,9 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-func NewCmdCustom(extension extensions.Extension) (*cobra.Command, error) {
-	exts := extensions.ExtensionMap{
-		extension.Alias: extension,
-	}
+func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
-		Use:     extension.Alias,
+		Use:     alias,
 		Short:   extension.Title,
 		Long:    extension.Description,
 		Args:    cobra.NoArgs,
@@ -35,15 +32,11 @@ func NewCmdCustom(extension extensions.Extension) (*cobra.Command, error) {
 			}
 
 			page := tui.NewRootList(extension.Title, func() (extensions.ExtensionMap, []types.RootItem, error) {
-				extensions, err := FindExtensions()
+				extension, err := LoadExtension(extension.Entrypoint)
 				if err != nil {
 					return nil, nil, err
 				}
-
-				extension, ok := extensions[extension.Alias]
-				if !ok {
-					return nil, nil, fmt.Errorf("extension not found: %s", extension.Alias)
-				}
+				extension.Alias = alias
 
 				var rootItems []types.RootItem
 				rootItems = append(rootItems, extension.RootItems()...)
@@ -60,7 +53,9 @@ func NewCmdCustom(extension extensions.Extension) (*cobra.Command, error) {
 					rootItems = append(rootItems, rootItem)
 				}
 
-				return exts, rootItems, nil
+				return extensions.ExtensionMap{
+					alias: extension,
+				}, rootItems, nil
 			})
 			return tui.Draw(page)
 		},
@@ -144,7 +139,7 @@ func NewCmdCustom(extension extensions.Extension) (*cobra.Command, error) {
 				}
 
 				switch command.Mode {
-				case types.CommandModePage:
+				case types.CommandModeList, types.CommandModeDetail:
 					runner := tui.NewRunner(extension, input)
 					return tui.Draw(runner)
 				case types.CommandModeSilent:

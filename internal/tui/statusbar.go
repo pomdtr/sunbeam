@@ -5,21 +5,34 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
+func separator(n int) string {
+	separator := strings.Repeat("─", n)
+	return lipgloss.NewStyle().Bold(true).Render(separator)
+}
+
 type StatusBar struct {
-	Width     int
-	showInput bool
-	input     textinput.Model
+	title string
+	Width int
+
 	isLoading bool
-	actions   []types.Action
-	expanded  bool
-	cursor    int
 	spinner   spinner.Model
+
+	cursor   int
+	actions  []types.Action
+	expanded bool
+}
+
+func NewStatusBar(title string, actions ...types.Action) StatusBar {
+	return StatusBar{
+		title:   title,
+		actions: actions,
+		spinner: spinner.New(),
+	}
 }
 
 func (c *StatusBar) SetActions(actions ...types.Action) {
@@ -28,44 +41,14 @@ func (c *StatusBar) SetActions(actions ...types.Action) {
 	c.actions = actions
 }
 
-func NewStatusBar(actions ...types.Action) StatusBar {
-	spinner := spinner.New()
-	spinner.Style = lipgloss.NewStyle().Padding(0, 1)
-	return StatusBar{
-		actions: actions,
-		spinner: spinner,
+func (c *StatusBar) SetIsLoading(isLoading bool) tea.Cmd {
+	c.isLoading = isLoading
+	if isLoading {
+		return c.spinner.Tick
 	}
-}
 
-func (h *StatusBar) ShowInput() {
-	ti := textinput.New()
-	ti.Prompt = ""
-	ti.Placeholder = ""
-	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
-
-	h.showInput = true
-	h.input = ti
-}
-
-func (h *StatusBar) Focus() tea.Cmd {
-	if h.showInput {
-		return h.input.Focus()
-	}
 	return nil
 }
-
-func (h StatusBar) Init() tea.Cmd {
-	if h.isLoading {
-		return h.spinner.Tick
-	}
-	return nil
-}
-
-func (h StatusBar) Value() string {
-	return h.input.Value()
-}
-
-type IsLoadingMsg struct{}
 
 func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -86,9 +69,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 				return p, nil
 			}
 
-			if p.showInput {
-				p.input.Blur()
-			}
 			p.expanded = true
 			return p, nil
 		case "right":
@@ -103,7 +83,7 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			}
 			return p, nil
 
-		case "left":
+		case "left", "shift+tab":
 			if !p.expanded {
 				break
 			}
@@ -124,30 +104,9 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			return p, func() tea.Msg {
 				return action
 			}
-
 		case "ctrl+d":
 			if p.expanded {
 				break
-			}
-
-			if p.showInput && p.input.Value() != "" {
-				break
-			}
-
-			return p, PopPageCmd
-		case "esc":
-			if p.expanded {
-				if p.showInput {
-					p.input.Focus()
-				}
-				p.expanded = false
-				p.cursor = 0
-				return p, nil
-			}
-
-			if p.showInput && p.input.Value() != "" {
-				p.input.SetValue("")
-				return p, nil
 			}
 
 			return p, PopPageCmd
@@ -160,53 +119,18 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 				}
 			}
 		}
-
-	case IsLoadingMsg:
-		cmd := p.SetIsLoading(true)
-		return p, cmd
-	}
-
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
-
-	if p.showInput {
-		input, cmd := p.input.Update(msg)
-		p.input = input
-		cmds = append(cmds, cmd)
 	}
 
 	if p.isLoading {
+		var cmd tea.Cmd
 		p.spinner, cmd = p.spinner.Update(msg)
-		cmds = append(cmds, cmd)
+		return p, cmd
 	}
 
-	return p, tea.Batch(cmds...)
-}
-
-func (p *StatusBar) SetIsLoading(isLoading bool) tea.Cmd {
-	p.isLoading = isLoading
-	if isLoading {
-		return p.spinner.Tick
-	}
-	return nil
+	return p, nil
 }
 
 func (c StatusBar) View() string {
-	separator := strings.Repeat("─", c.Width)
-	separator = lipgloss.NewStyle().Bold(true).Render(separator)
-
-	var prefix string
-	if c.isLoading {
-		prefix = c.spinner.View()
-	} else {
-		prefix = "   "
-	}
-
-	var input string
-	if c.showInput && c.input.Focused() {
-		input = c.input.View()
-	}
-
 	var accessory string
 	if len(c.actions) == 1 {
 		accessory = renderAction(c.actions[0].Title, "enter", c.expanded)
@@ -222,7 +146,7 @@ func (c StatusBar) View() string {
 				}
 				accessories[i] = renderAction(action.Title, subtitle, i == c.cursor)
 			}
-			availableWidth := c.Width - lipgloss.Width(prefix) - 1
+			availableWidth := c.Width - 1
 			for i, accessory := range accessories {
 				availableWidth -= lipgloss.Width(accessory) + 3
 				if availableWidth < 0 {
@@ -239,18 +163,24 @@ func (c StatusBar) View() string {
 			accessory = fmt.Sprintf("%s · Actions %s", renderAction(c.actions[0].Title, "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
 		}
 	}
-	accessory = fmt.Sprintf("%s ", accessory)
 
-	var statusBar string
-	if !c.expanded {
-		availableWidth := c.Width - lipgloss.Width(prefix) - lipgloss.Width(input) - lipgloss.Width(accessory)
-		blanks := strings.Repeat(" ", max(0, availableWidth))
-		statusBar = lipgloss.JoinHorizontal(lipgloss.Top, prefix, input, blanks, accessory)
+	var spinnerView string
+	if c.isLoading {
+		spinnerView = c.spinner.View()
 	} else {
-		statusBar = fmt.Sprintf("%s%s", prefix, accessory)
+		spinnerView = " "
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, separator, statusBar)
+	var statusbar string
+	if c.expanded {
+		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-4, 0))
+		statusbar = fmt.Sprintf(" %s %s%s ", spinnerView, blanks, accessory)
+	} else {
+		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-lipgloss.Width(c.title)-4, 0))
+		statusbar = fmt.Sprintf(" %s %s%s%s ", spinnerView, c.title, blanks, accessory)
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, separator(c.Width), statusbar)
 }
 
 func renderAction(title string, subtitle string, selected bool) string {

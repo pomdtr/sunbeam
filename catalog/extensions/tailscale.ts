@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "npm:sunbeam-types@0.23.12";
+import type * as sunbeam from "npm:sunbeam-types@0.23.15";
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
@@ -9,7 +9,7 @@ if (Deno.args.length == 0) {
             {
                 name: "list-devices",
                 title: "Search My Devices",
-                mode: "page",
+                mode: "list",
             },
             {
                 name: "ssh-to-device",
@@ -74,7 +74,7 @@ if (payload.command == "list-devices") {
         ],
     }));
 
-    const list: sunbeam.List = { type: "list", items };
+    const list: sunbeam.List = { items };
 
     console.log(JSON.stringify(list));
 } else if (payload.command == "ssh-to-device") {

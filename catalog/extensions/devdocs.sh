@@ -11,14 +11,14 @@ if [ $# -eq 0 ]; then
       {
         name: "list-docsets",
         title: "List Docsets",
-        mode: "page"
+        mode: "list"
       },
       {
         name: "list-entries",
         title: "List Entries from Docset",
-        mode: "page",
+        mode: "list",
         params: [
-          { name: "slug", title: "Slug", type: "string", required: true }
+          { name: "slug", description: "Slug", type: "string", required: true }
         ]
       }
     ]
@@ -43,7 +43,7 @@ if [ "$COMMAND" = "list-docsets" ]; then
           }
         }
       ]
-    }) | { type: "list", items: . }'
+    }) | {  items: . }'
 elif [ "$COMMAND" = "list-entries" ]; then
   SLUG=$(echo "$1" | sunbeam query -r '.params.slug')
   # shellcheck disable=SC2016
@@ -54,5 +54,5 @@ elif [ "$COMMAND" = "list-entries" ]; then
         {title: "Open in Browser", type: "open", target: "https://devdocs.io/\($slug)/\(.path)", exit: true},
         {title: "Copy URL", key: "c", type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}
       ]
-    }) | { type: "list", items: . }'
+    }) | {  items: . }'
 fi

@@ -25,10 +25,17 @@ type Runner struct {
 }
 
 func NewRunner(extension extensions.Extension, input types.CommandInput) *Runner {
-	command, ok := extension.Command(input.Command)
 	var embed Page
+	command, ok := extension.Command(input.Command)
 	if ok {
-		embed = NewDetail("")
+		switch command.Mode {
+		case types.CommandModeList:
+			embed = NewList(command.Title)
+		case types.CommandModeDetail:
+			embed = NewDetail(command.Title, "")
+		default:
+			embed = NewErrorPage(fmt.Errorf("invalid view type"))
+		}
 	} else {
 		embed = NewErrorPage(fmt.Errorf("command %s not found", input.Command))
 	}
@@ -167,7 +174,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			switch command.Mode {
-			case types.CommandModePage:
+			case types.CommandModeList, types.CommandModeDetail:
 				runner := NewRunner(c.extension, types.CommandInput{
 					Command: command.Name,
 					Params:  msg.Params,
@@ -323,43 +330,40 @@ func (c *Runner) Reload() tea.Cmd {
 			})
 		}
 
-		var page types.Page
-		if err := json.Unmarshal(output, &page); err != nil {
-			return NewErrorPage(err, types.Action{
-				Title: "Copy Output",
-				Type:  types.ActionTypeCopy,
-				Text:  string(output),
-				Exit:  true,
-			})
-		}
-
-		if page.Title != "" {
-			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", page.Title, c.extension.Title))
-		} else {
-			termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
-		}
-
-		switch page.Type {
-		case types.ViewTypeDetail:
+		switch c.command.Mode {
+		case types.CommandModeDetail:
 			var detail types.Detail
 			if err := json.Unmarshal(output, &detail); err != nil {
 				return err
 			}
 
-			page := NewDetail(detail.Text, detail.Actions...)
+			var title string
+			if detail.Title != "" {
+				title = detail.Title
+			} else {
+				title = c.command.Title
+			}
+			page := NewDetail(title, detail.Text, detail.Actions...)
 
 			if detail.Highlight != "" {
 				page.Highlight = detail.Highlight
 			}
 
 			return page
-		case types.ViewTypeList:
+		case types.CommandModeList:
 			var list types.List
 			if err := json.Unmarshal(output, &list); err != nil {
 				return err
 			}
 
-			page := NewList(list.Items...)
+			var title string
+			if list.Title != "" {
+				title = list.Title
+			} else {
+				title = c.command.Title
+			}
+
+			page := NewList(title, list.Items...)
 			if list.EmptyText != "" {
 				page.SetEmptyText(list.EmptyText)
 			}

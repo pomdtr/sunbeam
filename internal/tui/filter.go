@@ -4,8 +4,6 @@ import (
 	"sort"
 	"strings"
 
-	"slices"
-
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -23,7 +21,6 @@ type Filter struct {
 	Width, Height int
 	Query         string
 	Less          func(i, j FilterItem) bool
-	Reversed      bool
 	EmptyText     string
 
 	items    []FilterItem
@@ -155,17 +152,13 @@ func (m Filter) View() string {
 		}
 	}
 
-	if m.Reversed {
-		slices.Reverse(rows)
-	}
-
 	if len(rows) == 0 {
 		return ""
 	}
 
 	filteredView := lipgloss.JoinVertical(lipgloss.Left, rows...)
 	filteredView = lipgloss.NewStyle().Padding(0, 1).Render(filteredView)
-	return lipgloss.Place(m.Width, m.Height, lipgloss.Left, lipgloss.Bottom, filteredView)
+	return lipgloss.Place(m.Width, m.Height, lipgloss.Left, lipgloss.Top, filteredView)
 }
 
 func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
@@ -173,17 +166,9 @@ func (f Filter) Update(msg tea.Msg) (Filter, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "down", "ctrl+j", "ctrl+n":
-			if f.Reversed {
-				f.CursorUp()
-			} else {
-				f.CursorDown()
-			}
+			f.CursorDown()
 		case "up", "ctrl+k", "ctrl+p":
-			if f.Reversed {
-				f.CursorDown()
-			} else {
-				f.CursorUp()
-			}
+			f.CursorUp()
 		case "ctrl+u":
 			shift := min(f.nbVisibleItems(), f.cursor)
 			for i := 0; i < shift; i++ {
