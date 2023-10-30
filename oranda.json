@@ -16,7 +16,10 @@
         }
     },
     "build": {
-        "path_prefix": "sunbeam"
+        "path_prefix": "sunbeam",
+        "additional_pages": {
+            "Extension Catalog": "./catalog.md"
+        }
     },
     "styles": {
         "theme": "axodark"
