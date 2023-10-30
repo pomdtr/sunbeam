@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/pomdtr/sunbeam/internal/config"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
@@ -107,18 +108,25 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		config, err := config.Load()
-		if err != nil {
-			return err
-		}
+		rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.RootItem, error) {
+			config, err := config.Load()
+			if err != nil {
+				return nil, nil, err
+			}
 
-		var rootItems []types.RootItem
-		rootItems = append(rootItems, config.Root...)
-		for _, extension := range extensionMap {
-			rootItems = append(rootItems, extension.RootItems()...)
-		}
+			var rootItems []types.RootItem
+			rootItems = append(rootItems, config.Root...)
+			extensionMap, err := FindExtensions()
+			if err != nil {
+				return nil, nil, err
+			}
 
-		rootList := tui.NewRootList("Sunbeam", extensionMap, rootItems...)
+			for _, extension := range extensionMap {
+				rootItems = append(rootItems, extension.RootItems()...)
+			}
+
+			return extensionMap, rootItems, nil
+		})
 		return tui.Draw(rootList)
 	}
 
@@ -127,8 +135,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extension Commands:",
 	})
 
-	for alias, extension := range extensionMap {
-		command, err := NewCmdCustom(alias, extension)
+	for _, extension := range extensionMap {
+		command, err := NewCmdCustom(extension)
 		if err != nil {
 			return nil, err
 		}

@@ -131,7 +131,7 @@ func (m Filter) View() string {
 			return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "No matches")
 		}
 
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "No Items")
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "")
 	}
 
 	index := m.minIndex

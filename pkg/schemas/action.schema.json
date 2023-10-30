@@ -9,6 +9,7 @@
             "enum": [
                 "copy",
                 "open",
+                "edit",
                 "run",
                 "reload",
                 "exit"
@@ -99,6 +100,46 @@
                                 }
                             }
                         ]
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "edit"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "title",
+                    "type",
+                    "target"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "const": "edit"
+                    },
+                    "target": {
+                        "type": "string"
+                    },
+                    "reload": {
+                        "type": "boolean"
+                    },
+                    "exit": {
+                        "type": "boolean"
                     }
                 }
             }

@@ -94,6 +94,7 @@ const (
 	ActionTypeOpen   ActionType = "open"
 	ActionTypeCopy   ActionType = "copy"
 	ActionTypeReload ActionType = "reload"
+	ActionTypeEdit   ActionType = "edit"
 	ActionTypeExit   ActionType = "exit"
 )
 

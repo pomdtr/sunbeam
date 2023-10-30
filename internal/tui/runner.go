@@ -94,7 +94,9 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return err
 				}
 
-				return ExitMsg{}
+				return types.Action{
+					Type: types.ActionTypeReload,
+				}
 			})
 		case "esc":
 			if c.form != nil {
@@ -225,6 +227,23 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return nil
 				})
 			}
+		case types.ActionTypeEdit:
+			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), msg.Target))
+			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
+				if err != nil {
+					return err
+				}
+
+				if msg.Reload {
+					return c.Reload()
+				}
+
+				if msg.Exit {
+					return ExitMsg{}
+				}
+
+				return nil
+			})
 		case types.ActionTypeCopy:
 			return c, func() tea.Msg {
 				if err := clipboard.WriteAll(msg.Text); err != nil {

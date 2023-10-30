@@ -26,6 +26,7 @@ type RootList struct {
 	list          *List
 	form          *Form
 	extensions    extensions.ExtensionMap
+	generator     func() (extensions.ExtensionMap, []types.RootItem, error)
 }
 
 var nonAlphanumericRegex = regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
@@ -34,13 +35,31 @@ func cleanString(str string) string {
 	return nonAlphanumericRegex.ReplaceAllString(str, "")
 }
 
-func NewRootList(title string, extensionMap extensions.ExtensionMap, rootItems ...types.RootItem) *RootList {
+func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.RootItem, error)) *RootList {
 	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
 	if err != nil {
 		history = History{
 			entries: make(map[string]int64),
 			path:    filepath.Join(utils.CacheHome(), "history.json"),
 		}
+	}
+
+	return &RootList{
+		title:     title,
+		list:      NewList(),
+		history:   history,
+		generator: generator,
+	}
+}
+
+func (c *RootList) Init() tea.Cmd {
+	return tea.Batch(c.list.Init(), c.list.SetIsLoading(true), c.Reload)
+}
+
+func (c *RootList) Reload() tea.Msg {
+	extensionMap, rootItems, err := c.generator()
+	if err != nil {
+		return err
 	}
 
 	items := make([]types.ListItem, 0)
@@ -52,7 +71,7 @@ func NewRootList(title string, extensionMap extensions.ExtensionMap, rootItems .
 
 		itemID := fmt.Sprintf("%s/%s", cleanString(extension.Alias), cleanString(rootItem.Title))
 
-		items = append(items, types.ListItem{
+		item := types.ListItem{
 			Id:          itemID,
 			Title:       rootItem.Title,
 			Subtitle:    extension.Title,
@@ -66,22 +85,31 @@ func NewRootList(title string, extensionMap extensions.ExtensionMap, rootItems .
 					Params:    rootItem.Params,
 				},
 			},
+		}
+
+		if extension.Type == extensions.ExtensionTypeLocal {
+			item.Actions = append(item.Actions, types.Action{
+				Title:  "Edit Extension",
+				Key:    "e",
+				Reload: true,
+				Type:   types.ActionTypeEdit,
+				Target: extension.Entrypoint,
+			})
+		}
+
+		item.Actions = append(item.Actions, types.Action{
+			Title: "Copy Origin",
+			Key:   "c",
+			Type:  types.ActionTypeCopy,
+			Text:  extension.Origin,
+			Exit:  true,
 		})
+
+		items = append(items, item)
 	}
 
-	history.Sort(items)
-	list := NewList(items...)
-
-	return &RootList{
-		title:      title,
-		history:    history,
-		list:       list,
-		extensions: extensionMap,
-	}
-}
-
-func (c *RootList) Init() tea.Cmd {
-	return c.list.Init()
+	c.extensions = extensionMap
+	return items
 }
 
 func (c *RootList) Focus() tea.Cmd {
@@ -115,6 +143,12 @@ func (c *RootList) SetError(err error) tea.Cmd {
 
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
+	case []types.ListItem:
+		items := msg
+		c.list.SetIsLoading(false)
+		c.history.Sort(items)
+		c.list.SetItems(items...)
+		return c, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+e":
@@ -122,8 +156,17 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			editor := utils.FindEditor()
 			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, configFile))
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
-				return err
+				if err != nil {
+					return err
+				}
+
+				return types.Action{
+					Type: types.ActionTypeReload,
+				}
 			})
+		case "ctrl+r":
+			c.list.SetIsLoading(true)
+			return c, c.Reload
 		}
 	case types.Action:
 		switch msg.Type {
@@ -234,6 +277,23 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			}
+		case types.ActionTypeEdit:
+			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), msg.Target))
+			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
+				if err != nil {
+					return err
+				}
+
+				if msg.Reload {
+					return c.Reload()
+				}
+
+				if msg.Exit {
+					return ExitMsg{}
+				}
+
+				return nil
+			})
 		case types.ActionTypeOpen:
 			return c, func() tea.Msg {
 				if err := utils.OpenWith(msg.Target, msg.App); err != nil {
@@ -247,7 +307,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}
 		case types.ActionTypeReload:
-			return c, nil
+			return c, tea.Sequence(c.list.SetIsLoading(true), c.Reload)
 		case types.ActionTypeExit:
 			return c, ExitCmd
 		default:

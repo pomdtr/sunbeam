@@ -17,12 +17,12 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
+func NewCmdCustom(extension extensions.Extension) (*cobra.Command, error) {
 	exts := extensions.ExtensionMap{
-		alias: extension,
+		extension.Alias: extension,
 	}
 	rootCmd := &cobra.Command{
-		Use:     alias,
+		Use:     extension.Alias,
 		Short:   extension.Title,
 		Long:    extension.Description,
 		Args:    cobra.NoArgs,
@@ -31,30 +31,37 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
-				return encoder.Encode(extension.Manifest)
+				return encoder.Encode(extension)
 			}
 
-			config, err := config.Load()
-			if err != nil {
-				return err
-			}
-
-			var rootItems []types.RootItem
-			rootItems = append(rootItems, extension.RootItems()...)
-
-			for _, rootItem := range config.Root {
-				if rootItem.Extension != alias {
-					continue
+			page := tui.NewRootList(extension.Title, func() (extensions.ExtensionMap, []types.RootItem, error) {
+				extensions, err := FindExtensions()
+				if err != nil {
+					return nil, nil, err
 				}
 
-				rootItems = append(rootItems, rootItem)
-			}
+				extension, ok := extensions[extension.Alias]
+				if !ok {
+					return nil, nil, fmt.Errorf("extension not found: %s", extension.Alias)
+				}
 
-			if len(rootItems) == 0 {
-				return cmd.Usage()
-			}
+				var rootItems []types.RootItem
+				rootItems = append(rootItems, extension.RootItems()...)
 
-			page := tui.NewRootList(extension.Title, exts, rootItems...)
+				config, err := config.Load()
+				if err != nil {
+					return nil, nil, err
+				}
+				for _, rootItem := range config.Root {
+					if rootItem.Extension != extension.Alias {
+						continue
+					}
+
+					rootItems = append(rootItems, rootItem)
+				}
+
+				return exts, rootItems, nil
+			})
 			return tui.Draw(page)
 		},
 	}
