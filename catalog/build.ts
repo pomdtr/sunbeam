@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 import { markdownTable } from 'npm:markdown-table';
-import { join, basename } from "https://deno.land/std/path/mod.ts";
+import { join, basename } from "https://deno.land/std@0.186.0/path/mod.ts";
 import * as sunbeam from "npm:sunbeam-types@0.23.12";
 
 const dirname = new URL(".", import.meta.url).pathname;

@@ -7,7 +7,6 @@ import (
 
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
-	"github.com/tailscale/hujson"
 )
 
 type Config struct {
@@ -15,30 +14,20 @@ type Config struct {
 	Env  map[string]string `json:"env"`
 }
 
+var Path = filepath.Join(utils.ConfigHome(), "config.json")
+
 func Load() (Config, error) {
-	var configBytes []byte
-	if _, err := os.Stat(filepath.Join(utils.ConfigHome(), "config.json")); err == nil {
-		bts, err := os.ReadFile(filepath.Join(utils.ConfigHome(), "config.json"))
-		if err != nil {
-			return Config{}, err
-		}
-		configBytes = bts
-	} else if _, err := os.Stat(filepath.Join(utils.ConfigHome(), "config.jsonc")); err == nil {
-		bts, err := os.ReadFile(filepath.Join(utils.ConfigHome(), "config.jsonc"))
-		if err != nil {
-			return Config{}, err
-		}
-		jsonBytes, err := hujson.Standardize(bts)
-		if err != nil {
-			return Config{}, err
-		}
-		configBytes = jsonBytes
-	} else {
-		return Config{
-			Root: []types.RootItem{},
-			Env:  map[string]string{},
-		}, nil
+	configPath := Path
+	if _, err := os.Stat(configPath); err != nil {
+		return Config{}, err
 	}
+
+	var configBytes []byte
+	bts, err := os.ReadFile(configPath)
+	if err != nil {
+		return Config{}, err
+	}
+	configBytes = bts
 
 	var config Config
 	if err := json.Unmarshal(configBytes, &config); err != nil {

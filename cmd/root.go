@@ -55,6 +55,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
 	rootCmd.AddCommand(NewCmdOpen())
+	rootCmd.AddCommand(NewCmdConfig())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -106,16 +107,16 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		var rootItems []types.RootItem
-		for _, extension := range extensionMap {
-			rootItems = append(rootItems, extension.RootItems()...)
-		}
-
 		config, err := config.Load()
 		if err != nil {
 			return err
 		}
+
+		var rootItems []types.RootItem
 		rootItems = append(rootItems, config.Root...)
+		for _, extension := range extensionMap {
+			rootItems = append(rootItems, extension.RootItems()...)
+		}
 
 		rootList := tui.NewRootList("Sunbeam", extensionMap, rootItems...)
 		return tui.Draw(rootList)
