@@ -17,9 +17,7 @@
     },
     "build": {
         "path_prefix": "sunbeam",
-        "additional_pages": {
-            "Extension Catalog": "./catalog.md"
-        }
+        "additional_pages": {}
     },
     "styles": {
         "theme": "axodark"

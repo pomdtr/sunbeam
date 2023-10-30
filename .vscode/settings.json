@@ -4,4 +4,7 @@
     "public": true,
   },
   "yaml.validate": false,
+  "deno.enablePaths": [
+    "./catalog"
+  ]
 }

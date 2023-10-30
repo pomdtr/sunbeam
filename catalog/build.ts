@@ -30,6 +30,6 @@ const table = markdownTable([
     ...extensions.map(({ entrypoint, title, description }) => [`[${title}](https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/${entrypoint})`, description])
 ]);
 
-const template = await Deno.readTextFileSync(join(dirname, "catalog.tmpl.md"));
+const template = await Deno.readTextFileSync(join(dirname, "README.tmpl.md"));
 const readme = template.replace("{{catalog}}", table);
-await Deno.writeTextFile(join(dirname, "..", "catalog.md"), readme);
+await Deno.writeTextFile(join(dirname, "README.md"), readme);
