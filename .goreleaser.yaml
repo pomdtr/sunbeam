@@ -51,6 +51,7 @@ release:
   prerelease: auto
   extra_files:
     - glob: pkg/schemas/manifest.schema.json
+    - glob: pkg/schemas/config.schema.json
     - glob: install.sh
 
 snapshot:
