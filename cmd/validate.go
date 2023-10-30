@@ -19,7 +19,6 @@ func NewValidateCmd() *cobra.Command {
 
 	cmd.AddCommand(NewCmdValidateView())
 	cmd.AddCommand(NewCmdValidateManifest())
-	cmd.AddCommand(NewCmdValidateConfig())
 
 	return cmd
 }
@@ -79,33 +78,4 @@ func NewCmdValidateManifest() *cobra.Command {
 			return nil
 		},
 	}
-}
-
-func NewCmdValidateConfig() *cobra.Command {
-	return &cobra.Command{
-		Use:   "manifest",
-		Short: "Validate a manifest",
-		Args:  cobra.NoArgs,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if isatty.IsTerminal(os.Stdin.Fd()) {
-				return fmt.Errorf("no input provided")
-			}
-
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			input, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return fmt.Errorf("unable to read stdin: %s", err)
-			}
-
-			if err := schemas.ValidateManifest(input); err != nil {
-				return err
-			}
-
-			fmt.Println("✅ Input is valid!")
-			return nil
-		},
-	}
-
 }
