@@ -17,6 +17,7 @@ func NewCmdFetch() *cobra.Command {
 		method  string
 		data    string
 		user    string
+		agent   string
 	}{}
 	cmd := &cobra.Command{
 		Use:     "fetch <url> [body]",
@@ -27,6 +28,10 @@ func NewCmdFetch() *cobra.Command {
 			origin, err := url.Parse(args[0])
 			if err != nil {
 				return err
+			}
+
+			if origin.Scheme == "" {
+				origin.Scheme = "http"
 			}
 
 			var method string
@@ -81,6 +86,12 @@ func NewCmdFetch() *cobra.Command {
 				req.SetBasicAuth(parts[0], parts[1])
 			}
 
+			if flags.agent != "" {
+				req.Header.Set("User-Agent", flags.agent)
+			} else {
+				req.Header.Set("User-Agent", fmt.Sprintf("sunbeam/%s", cmd.Parent().Version))
+			}
+
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				return err
@@ -103,6 +114,7 @@ func NewCmdFetch() *cobra.Command {
 	cmd.Flags().StringVarP(&flags.method, "method", "X", "", "HTTP method to use")
 	cmd.Flags().StringVarP(&flags.data, "data", "d", "", "HTTP body to send. Use @- to read from stdin, or @<file> to read from a file.")
 	cmd.Flags().StringVarP(&flags.user, "user", "u", "", "HTTP basic auth to use")
+	cmd.Flags().StringVarP(&flags.agent, "user-agent", "A", "", "HTTP user agent to use")
 
 	return cmd
 }
