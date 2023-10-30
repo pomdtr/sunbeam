@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 import { markdownTable } from 'npm:markdown-table';
-import { join } from "https://deno.land/std/path/mod.ts";
+import { join, basename } from "https://deno.land/std/path/mod.ts";
 import * as sunbeam from "npm:sunbeam-types@0.23.12";
 
 const dirname = new URL(".", import.meta.url).pathname;
@@ -27,7 +27,7 @@ for (const entry of entries) {
 
 const table = markdownTable([
     ["Extension", "Description"],
-    ...extensions.map(({ entrypoint, title, description }) => [`[${title}](https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/${entrypoint})`, description])
+    ...extensions.map(({ entrypoint, title, description }) => [`[${title}](https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/extensions/${basename(entrypoint)})`, description])
 ]);
 
 const template = await Deno.readTextFileSync(join(dirname, "README.tmpl.md"));
