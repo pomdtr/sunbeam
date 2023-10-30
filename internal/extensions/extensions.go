@@ -153,6 +153,12 @@ func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	cmd.Dir = cwd
+
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil
 }

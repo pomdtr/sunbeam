@@ -15,8 +15,8 @@ if len(sys.argv) == 1:
                     "title": "List files",
                     "mode": "list",
                     "params": [
-                        {"name": "dir", "title": "Directory", "type": "string"},
-                        {"name": "show-hidden", "title": "Show Hidden Files", "type": "boolean"},
+                        {"name": "dir", "description": "Directory", "type": "string"},
+                        {"name": "show-hidden", "description": "Show Hidden Files", "type": "boolean"},
                     ],
                 }
             ],
@@ -27,7 +27,7 @@ if len(sys.argv) == 1:
     sys.exit(0)
 
 
-payload = json.load(sys.argv[1])
+payload = json.loads(sys.argv[1])
 if payload["command"] == "ls":
     params = payload.get("params", {})
     root = pathlib.Path(params.get("dir", "."))
@@ -78,7 +78,6 @@ if payload["command"] == "ls":
 
     json.dump(
         {
-            "type": "list",
             "items": items,
         },
         sys.stdout,
