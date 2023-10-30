@@ -8,10 +8,10 @@ You can manage your extensions using the `sunbeam extension` command.
 
 Sunbeam extensions are just shell scripts. You can install an extension by running `sunbeam extension install <path-or-url>`.
 
-For example, to install the [devdocs extension](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/devdocs.sh), run:
+For example, to install the [devdocs extension](https://github.com/pomdtr/sunbeam/tree/main/catalog/extensions/devdocs.sh), run:
 
 ```sh
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/devdocs.sh
+sunbeam extension install https://github.com/pomdtr/sunbeam/tree/main/catalog/extensions/devdocs.sh
 ```
 
 > ⚠️ Extensions are not verified, nor sandboxed. They can do anything you can do on your computer. Make sure you trust the source before installing an extension.
