@@ -338,3 +338,5 @@ This guide is only a quick introduction to sunbeam extensions. There are many mo
   - Displaying markdown or ANSI text using the `detail` view
   - Dynamically generate items using the `reload` property of the `list` view
   - Interact with remote extension using http requests
+
+This section of the documentation is still a work in progress, but you can already check out the [existing extensions](https://github.com/pomdtr/sunbeam/tree/main/catalog) to see what's possible.

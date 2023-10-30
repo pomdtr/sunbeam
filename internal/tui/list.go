@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -31,7 +30,7 @@ func NewList(title string, items ...types.ListItem) *List {
 
 	statusBar := NewStatusBar(title)
 	input := textinput.New()
-	input.Prompt = ""
+	input.Prompt = "   "
 
 	list := &List{
 		input:  input,
@@ -194,6 +193,5 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c List) View() string {
-	inputRow := fmt.Sprintf("   %s", c.input.View())
-	return lipgloss.JoinVertical(lipgloss.Left, inputRow, separator(c.width), c.filter.View(), c.footer.View())
+	return lipgloss.JoinVertical(lipgloss.Left, c.input.View(), separator(c.width), c.filter.View(), c.footer.View())
 }

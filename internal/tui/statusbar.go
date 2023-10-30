@@ -166,7 +166,7 @@ func (c StatusBar) View() string {
 
 	var spinnerView string
 	if c.isLoading {
-		spinnerView = c.spinner.View()
+		spinnerView = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true).Render(c.spinner.View())
 	} else {
 		spinnerView = " "
 	}
@@ -192,7 +192,7 @@ func renderAction(title string, subtitle string, selected bool) string {
 	}
 
 	if selected {
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Render(view)
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true).Render(view)
 	}
 
 	return view

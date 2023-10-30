@@ -29,12 +29,12 @@ func RenderItem(title string, subtitle string, accessories []string, width int, 
 		return ""
 	}
 	title = strings.Split(title, "\n")[0]
-	titleStyle := lipgloss.NewStyle().Bold(true)
+	titleStyle := lipgloss.NewStyle()
 	subtitleStyle := lipgloss.NewStyle()
 	accessoryStyle := lipgloss.NewStyle()
 	if selected {
 		title = fmt.Sprintf("> %s", title)
-		titleStyle = titleStyle.Foreground(lipgloss.Color("13"))
+		titleStyle = titleStyle.Foreground(lipgloss.Color("13")).Bold(true)
 		accessoryStyle = accessoryStyle.Foreground(lipgloss.Color("13"))
 		subtitleStyle = subtitleStyle.Foreground(lipgloss.Color("13"))
 	} else {
