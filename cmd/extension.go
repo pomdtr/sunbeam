@@ -37,6 +37,7 @@ func NewCmdExtension() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewCmdExtensionList())
+	cmd.AddCommand(NewCmdExtensionEdit())
 	cmd.AddCommand(NewCmdExtensionInstall())
 	cmd.AddCommand(NewCmdExtensionUpgrade())
 	cmd.AddCommand(NewCmdExtensionRemove())
@@ -46,7 +47,10 @@ func NewCmdExtension() *cobra.Command {
 }
 
 func NewCmdExtensionList() *cobra.Command {
-	return &cobra.Command{
+	flags := struct {
+		json bool
+	}{}
+	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List installed extensions",
 		Aliases: []string{"ls"},
@@ -55,6 +59,17 @@ func NewCmdExtensionList() *cobra.Command {
 			extensionMap, err := FindExtensions()
 			if err != nil {
 				return err
+			}
+
+			if flags.json {
+				extensions := make([]extensions.Extension, 0)
+				for _, extension := range extensionMap {
+					extensions = append(extensions, extension)
+				}
+
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				return encoder.Encode(extensions)
 			}
 
 			isTTY := isatty.IsTerminal(os.Stdout.Fd())
@@ -80,6 +95,9 @@ func NewCmdExtensionList() *cobra.Command {
 			return table.Render()
 		},
 	}
+
+	cmd.Flags().BoolVar(&flags.json, "json", false, "output as json")
+	return cmd
 }
 
 func NewCmdExtensionInstall() *cobra.Command {
@@ -347,6 +365,52 @@ func NewCmdExtensionRename() *cobra.Command {
 	return cmd
 }
 
+func NewCmdExtensionEdit() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit",
+		Short: "Edit an extension",
+		Args:  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			extensions, err := FindExtensions()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			var completions []string
+			for alias := range extensions {
+				completions = append(completions, alias)
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			extensionMap, err := FindExtensions()
+			if err != nil {
+				return err
+			}
+
+			extension, ok := extensionMap[args[0]]
+			if !ok {
+				return fmt.Errorf("extension %s not found", args[0])
+			}
+
+			if extension.Type != extensions.ExtensionTypeLocal {
+				return fmt.Errorf("cannot edit extension %s", args[0])
+			}
+
+			editor := utils.FindEditor()
+			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, extension.Entrypoint))
+			editCmd.Stdin = os.Stdin
+			editCmd.Stdout = os.Stdout
+			editCmd.Stderr = os.Stderr
+
+			return editCmd.Run()
+		},
+	}
+
+	return cmd
+}
+
 func FindExtensions() (extensions.ExtensionMap, error) {
 	extensionMap := make(map[string]extensions.Extension)
 	if _, err := os.Stat(extensionRoot); err != nil {
@@ -399,9 +463,9 @@ func FindExtensions() (extensions.ExtensionMap, error) {
 		}
 
 		extensionMap[entry.Name()] = extensions.Extension{
-			Manifest:   manifest,
-			Origin:     metadata.Origin,
-			Entrypoint: entrypoint,
+			Manifest: manifest,
+			Alias:    entry.Name(),
+			Metadata: metadata,
 		}
 	}
 
@@ -459,8 +523,12 @@ func LoadExtension(entrypoint string) (extensions.Extension, error) {
 	}
 
 	return extensions.Extension{
-		Manifest:   manifest,
-		Entrypoint: entrypoint,
+		Manifest: manifest,
+		Metadata: extensions.Metadata{
+			Type:       extensions.ExtensionTypeLocal,
+			Origin:     entrypoint,
+			Entrypoint: entrypoint,
+		},
 	}, nil
 }
 
@@ -487,6 +555,10 @@ func localInstall(origin string, extensionDir string) (err error) {
 		Origin:     origin,
 		Entrypoint: entrypoint,
 	}); err != nil {
+		return err
+	}
+
+	if err := os.Chmod(entrypoint, 0755); err != nil {
 		return err
 	}
 

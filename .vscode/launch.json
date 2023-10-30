@@ -7,7 +7,10 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "args": []
+      "args": [
+        "run",
+        "/Users/pomdtr/Developer/github.com/pomdtr/sunbeam-extensions/extensions/manage.sh"
+      ]
     },
   ],
 }

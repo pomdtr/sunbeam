@@ -34,10 +34,18 @@ func (l List) MarshalJSON() ([]byte, error) {
 }
 
 type Detail struct {
-	Title    string   `json:"title,omitempty"`
-	Actions  []Action `json:"actions,omitempty"`
-	Markdown string   `json:"markdown,omitempty"`
+	Title     string    `json:"title,omitempty"`
+	Actions   []Action  `json:"actions,omitempty"`
+	Highlight Highlight `json:"highlight,omitempty"`
+	Text      string    `json:"text,omitempty"`
 }
+
+type Highlight string
+
+const (
+	HighlightMarkdown Highlight = "markdown"
+	HighlightAnsi     Highlight = "ansi"
+)
 
 func (d Detail) MarshalJSON() ([]byte, error) {
 	type Alias Detail

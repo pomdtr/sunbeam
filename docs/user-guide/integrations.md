@@ -2,12 +2,6 @@
 
 Sunbeam is a built for the terminal first, but it can be used in other contexts. This section lists the available clients (outside of the TUI bundled with sunbeam).
 
-## Raycast
-
-[Raycast](https://raycast.com) is a macOS app that lets you control your tools with a few keystrokes.
-
-You can use you sunbeam extension from raycast using the [sunbeam-raycast extension](https://github.com/pomdtr/sunbeam-raycast).
-
 ## Alacritty
 
 [Alacritty](https://github.com/alacritty/alacritty) is a cross-platform terminal emulator.

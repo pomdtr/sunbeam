@@ -11,17 +11,16 @@ import (
 
 	"github.com/acarl005/stripansi"
 	"github.com/cli/cli/pkg/findsh"
-	"github.com/joho/godotenv"
-	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type ExtensionMap map[string]Extension
 
 type Extension struct {
-	types.Manifest
-	Origin     string
-	Entrypoint string
+	types.Manifest `json:"manifest"`
+	Alias          string `json:"alias"`
+	Metadata
 }
 
 type Metadata struct {
@@ -60,17 +59,27 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	return types.CommandSpec{}, false
 }
 
-func (e Extension) RootCommands() []types.CommandSpec {
-	rootCommands := make([]types.CommandSpec, 0)
+func (e Extension) RootItems() []types.RootItem {
+	rootItems := make([]types.RootItem, 0)
 	for _, command := range e.Commands {
 		if !IsRootCommand(command) {
 			continue
 		}
 
-		rootCommands = append(rootCommands, command)
+		rootItems = append(rootItems, types.RootItem{
+			Title:     command.Title,
+			Extension: e.Alias,
+			Command:   command.Name,
+			Params:    make(map[string]any),
+		})
 	}
 
-	return rootCommands
+	for _, rootItem := range e.Root {
+		rootItem.Extension = e.Alias
+		rootItems = append(rootItems, rootItem)
+	}
+
+	return rootItems
 }
 
 func (e Extension) Run(input types.CommandInput) error {
@@ -135,27 +144,16 @@ func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
 
-	dotenvPath := filepath.Join(utils.ConfigHome(), "sunbeam.env")
-	if _, err := os.Stat(dotenvPath); err == nil {
-		envMap, err := godotenv.Read(dotenvPath)
-		if err != nil {
-			return nil, err
-		}
-
-		for k, v := range envMap {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
-		}
-	}
-
-	cmd.Env = append(cmd.Env, "SUNBEAM=1")
-	cmd.Env = append(cmd.Env, "NO_COLOR=1")
-
-	cwd, err := os.Getwd()
+	cfg, err := config.Load()
 	if err != nil {
 		return nil, err
 	}
-	cmd.Dir = cwd
 
+	for k, v := range cfg.Env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil
 }
 

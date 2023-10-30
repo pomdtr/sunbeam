@@ -13,7 +13,8 @@ export type List = {
 export type Detail = {
   type: "detail";
   title?: string;
-  markdown: string;
+  text: string;
+  highlight?: "markdown" | "ansi";
   actions?: Action[];
 };
 

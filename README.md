@@ -40,14 +40,6 @@ You can share your scripts with others by just hosting them on a public url.
 
 ![sunbeam running in vscode](./static/vscode.png)
 
-### Bring your own UI
-
-Sunbeam comes with a built-in TUI to interact with your scripts, but you can also use any other client.
-
-See the client section for more details.
-
-![raycast integration](./static/raycast.png)
-
 ## Inspirations / Alternatives
 
 Sunbeam wouldn't exist without taking inspirations from incredible tools. Make sure to checkout:

@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
-	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -54,7 +54,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
-	rootCmd.AddCommand(NewCmdLoop())
 	rootCmd.AddCommand(NewCmdOpen())
 
 	docCmd := &cobra.Command{
@@ -107,13 +106,18 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if !isatty.IsTerminal(os.Stdout.Fd()) {
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "  ")
-			return encoder.Encode(extensionMap)
+		var rootItems []types.RootItem
+		for _, extension := range extensionMap {
+			rootItems = append(rootItems, extension.RootItems()...)
 		}
 
-		rootList := tui.NewRootList("Sunbeam", extensionMap)
+		config, err := config.Load()
+		if err != nil {
+			return err
+		}
+		rootItems = append(rootItems, config.Root...)
+
+		rootList := tui.NewRootList("Sunbeam", extensionMap, rootItems...)
 		return tui.Draw(rootList)
 	}
 

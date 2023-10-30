@@ -3,6 +3,7 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"os/exec"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -82,6 +83,19 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+e":
+			if c.extension.Type != extensions.ExtensionTypeLocal {
+				break
+			}
+			editor := utils.FindEditor()
+			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, c.extension.Entrypoint))
+			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
+				if err != nil {
+					return err
+				}
+
+				return ExitMsg{}
+			})
 		case "esc":
 			if c.form != nil {
 				c.form = nil
@@ -120,7 +134,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if len(formItems) > 0 {
 				c.form = NewForm(func(values map[string]any) tea.Msg {
 					params := make(map[string]any)
-					for k, v := range c.input.Params {
+					for k, v := range msg.Params {
 						params[k] = v
 					}
 
@@ -313,7 +327,13 @@ func (c *Runner) Reload() tea.Cmd {
 				return err
 			}
 
-			return NewDetail(detail.Markdown, detail.Actions...)
+			page := NewDetail(detail.Text, detail.Actions...)
+
+			if detail.Highlight != "" {
+				page.Highlight = detail.Highlight
+			}
+
+			return page
 		case types.ViewTypeList:
 			var list types.List
 			if err := json.Unmarshal(output, &list); err != nil {

@@ -5,6 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -15,13 +16,14 @@ type Detail struct {
 	statusBar StatusBar
 	Style     lipgloss.Style
 	viewport  viewport.Model
+	Highlight types.Highlight
 
-	markdown string
+	text string
 }
 
-func NewDetail(markdown string, actions ...types.Action) *Detail {
+func NewDetail(text string, actions ...types.Action) *Detail {
 	viewport := viewport.New(0, 0)
-	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
+	viewport.Style = lipgloss.NewStyle()
 
 	var statusBar StatusBar
 	if len(actions) == 0 {
@@ -45,7 +47,8 @@ func NewDetail(markdown string, actions ...types.Action) *Detail {
 	d := Detail{
 		viewport:  viewport,
 		statusBar: statusBar,
-		markdown:  markdown,
+		Highlight: types.HighlightAnsi,
+		text:      text,
 	}
 
 	_ = d.RefreshContent()
@@ -104,23 +107,22 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 }
 
 func (c *Detail) RefreshContent() error {
-	var style string
-	if lipgloss.HasDarkBackground() {
-		style = "dark"
-	} else {
-		style = "light"
-	}
-	render, err := glamour.NewTermRenderer(
-		glamour.WithStandardStyle(style),
-		glamour.WithWordWrap(c.width-2),
-	)
-	if err != nil {
-		return err
-	}
+	var content string
+	if c.Highlight == types.HighlightMarkdown {
+		render, err := glamour.NewTermRenderer(
+			glamour.WithAutoStyle(),
+			glamour.WithWordWrap(c.width),
+		)
+		if err != nil {
+			return err
+		}
 
-	content, err := render.Render(c.markdown)
-	if err != nil {
-		return err
+		content, err = render.Render(c.text)
+		if err != nil {
+			return err
+		}
+	} else {
+		content = wordwrap.String(c.text, c.width)
 	}
 
 	c.viewport.SetContent(content)

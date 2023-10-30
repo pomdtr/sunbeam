@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -33,46 +34,27 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				return encoder.Encode(extension.Manifest)
 			}
 
-			rootCommands := extension.RootCommands()
-			if len(rootCommands) == 0 {
+			config, err := config.Load()
+			if err != nil {
+				return err
+			}
+
+			var rootItems []types.RootItem
+			rootItems = append(rootItems, extension.RootItems()...)
+
+			for _, rootItem := range config.Root {
+				if rootItem.Extension != alias {
+					continue
+				}
+
+				rootItems = append(rootItems, rootItem)
+			}
+
+			if len(rootItems) == 0 {
 				return cmd.Usage()
 			}
 
-			if len(rootCommands) == 1 {
-				switch rootCommands[0].Mode {
-				case types.CommandModeSilent:
-					return extension.Run(types.CommandInput{
-						Command: rootCommands[0].Name,
-						Params:  make(map[string]any),
-					})
-				case types.CommandModeTTY:
-					cmd, err := extension.Cmd(types.CommandInput{
-						Command: rootCommands[0].Name,
-						Params:  make(map[string]any),
-					})
-					if err != nil {
-						return err
-					}
-
-					cmd.Stdin = os.Stdin
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
-
-					return cmd.Run()
-				case types.CommandModePage:
-					runner := tui.NewRunner(extension, types.CommandInput{
-						Command: rootCommands[0].Name,
-						Params:  make(map[string]any),
-					})
-
-					return tui.Draw(runner)
-				default:
-					return fmt.Errorf("unknown command mode: %s", rootCommands[0].Mode)
-				}
-			}
-
-			page := tui.NewRootList(extension.Title, exts)
-
+			page := tui.NewRootList(extension.Title, exts, rootItems...)
 			return tui.Draw(page)
 		},
 	}
