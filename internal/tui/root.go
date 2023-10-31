@@ -244,7 +244,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						Command: command.Name,
 						Params:  msg.Params,
 					}); err != nil {
-						return err
+						return PushPageMsg{NewErrorPage(err)}
 					}
 
 					return ExitMsg{}
@@ -262,7 +262,11 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
-					return err
+					if err != nil {
+						return PushPageMsg{NewErrorPage(err)}
+					}
+
+					return nil
 				})
 			}
 		case types.ActionTypeCopy:

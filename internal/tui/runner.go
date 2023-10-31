@@ -189,7 +189,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					})
 
 					if err != nil {
-						return err
+						return PushPageMsg{NewErrorPage(err)}
 					}
 
 					if msg.Reload {
@@ -218,7 +218,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 					if err != nil {
-						return err
+						return PushPageMsg{NewErrorPage(err)}
 					}
 
 					if msg.Reload {
