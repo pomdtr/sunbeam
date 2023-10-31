@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -19,7 +20,7 @@ var Path = filepath.Join(utils.ConfigHome(), "config.json")
 func Load() (Config, error) {
 	configPath := Path
 	if _, err := os.Stat(configPath); err != nil {
-		return Config{}, err
+		return Config{}, nil
 	}
 
 	var configBytes []byte
@@ -31,7 +32,7 @@ func Load() (Config, error) {
 
 	var config Config
 	if err := json.Unmarshal(configBytes, &config); err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	return config, nil
