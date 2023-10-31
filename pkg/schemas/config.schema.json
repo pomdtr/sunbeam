@@ -6,7 +6,7 @@
         "$schema": {
             "type": "string"
         },
-        "roo": {
+        "root": {
             "type": "array",
             "items": {
                 "type": "object",
