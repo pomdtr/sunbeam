@@ -144,13 +144,7 @@ if (payload.command == "list") {
         } as sunbeam.ListItem
     })
 
-    const list: sunbeam.List = {
-
-        title: "Gists",
-        items,
-    }
-
-    console.log(JSON.stringify(list))
+    console.log(JSON.stringify({ items }))
     Deno.exit(0)
 } else if (payload.command == "browse") {
     const params = payload.params as {
@@ -185,13 +179,7 @@ if (payload.command == "list") {
         }
     })
 
-    const list: sunbeam.List = {
-
-        title: "Gist Files",
-        items,
-    }
-
-    console.log(JSON.stringify(list))
+    console.log(JSON.stringify({ items }))
     Deno.exit(0)
 } else if (payload.command == "delete") {
     const params = payload.params as {
@@ -216,7 +204,6 @@ if (payload.command == "list") {
     const file = gist.data.files![params.file]
 
     const page: sunbeam.Detail = {
-
         highlight: "markdown",
         text: ["```" + file?.language?.toLowerCase() || "txt", file?.content, "```"].join("\n"),
         actions: [
