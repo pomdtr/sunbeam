@@ -30,9 +30,9 @@ func NewRunner(extension extensions.Extension, input types.CommandInput) *Runner
 	if ok {
 		switch command.Mode {
 		case types.CommandModeList:
-			embed = NewList(command.Title)
+			embed = NewList()
 		case types.CommandModeDetail:
-			embed = NewDetail(command.Title, "")
+			embed = NewDetail("")
 		default:
 			embed = NewErrorPage(fmt.Errorf("invalid view type"))
 		}
@@ -337,14 +337,11 @@ func (c *Runner) Reload() tea.Cmd {
 				return err
 			}
 
-			var title string
 			if detail.Title != "" {
-				title = detail.Title
-			} else {
-				title = c.command.Title
+				termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", detail.Title, c.extension.Title))
 			}
-			page := NewDetail(title, detail.Text, detail.Actions...)
 
+			page := NewDetail(detail.Text, detail.Actions...)
 			if detail.Highlight != "" {
 				page.Highlight = detail.Highlight
 			}
@@ -356,14 +353,11 @@ func (c *Runner) Reload() tea.Cmd {
 				return err
 			}
 
-			var title string
 			if list.Title != "" {
-				title = list.Title
-			} else {
-				title = c.command.Title
+				termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", list.Title, c.extension.Title))
 			}
 
-			page := NewList(title, list.Items...)
+			page := NewList(list.Items...)
 			if list.EmptyText != "" {
 				page.SetEmptyText(list.EmptyText)
 			}

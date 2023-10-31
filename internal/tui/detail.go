@@ -25,11 +25,11 @@ type Detail struct {
 	Highlight types.Highlight
 }
 
-func NewDetail(title string, text string, actions ...types.Action) *Detail {
+func NewDetail(text string, actions ...types.Action) *Detail {
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle()
 
-	statusBar := NewStatusBar(title, actions...)
+	statusBar := NewStatusBar(actions...)
 	items := make([]FilterItem, 0)
 	for _, action := range actions {
 		items = append(items, ListItem{
@@ -153,8 +153,7 @@ func (c *Detail) SetSize(width, height int) {
 func (c *Detail) View() string {
 	var headerRow string
 	if c.isLoading {
-		spinnerView := lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true).Render(c.spinner.View())
-		headerRow = " " + spinnerView
+		headerRow = " " + c.spinner.View()
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, headerRow, separator(c.width), c.viewport.View(), c.statusBar.View())

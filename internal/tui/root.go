@@ -45,13 +45,15 @@ func NewRootList(title string, generator func() (extensions.ExtensionMap, []type
 	}
 
 	return &RootList{
-		list:      NewList(title),
+		title:     title,
+		list:      NewList(),
 		history:   history,
 		generator: generator,
 	}
 }
 
 func (c *RootList) Init() tea.Cmd {
+	termenv.DefaultOutput().SetWindowTitle(c.title)
 	return tea.Batch(c.list.Init(), c.list.SetIsLoading(true), c.Reload)
 }
 

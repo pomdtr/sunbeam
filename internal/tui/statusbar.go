@@ -15,7 +15,6 @@ func separator(n int) string {
 }
 
 type StatusBar struct {
-	title string
 	Width int
 
 	cursor   int
@@ -23,9 +22,8 @@ type StatusBar struct {
 	expanded bool
 }
 
-func NewStatusBar(title string, actions ...types.Action) StatusBar {
+func NewStatusBar(actions ...types.Action) StatusBar {
 	return StatusBar{
-		title:   title,
 		actions: actions,
 	}
 }
@@ -137,8 +135,8 @@ func (c StatusBar) View() string {
 		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-2, 0))
 		statusbar = fmt.Sprintf(" %s%s ", blanks, accessory)
 	} else {
-		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-lipgloss.Width(c.title)-2, 0))
-		statusbar = fmt.Sprintf(" %s%s%s ", c.title, blanks, accessory)
+		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-2, 0))
+		statusbar = fmt.Sprintf(" %s%s ", blanks, accessory)
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, separator(c.Width), statusbar)

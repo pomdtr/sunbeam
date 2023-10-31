@@ -27,11 +27,11 @@ type List struct {
 
 type QueryChangeMsg string
 
-func NewList(title string, items ...types.ListItem) *List {
+func NewList(items ...types.ListItem) *List {
 	filter := NewFilter()
 	filter.DrawLines = true
 
-	statusBar := NewStatusBar(title)
+	statusBar := NewStatusBar()
 	input := textinput.New()
 	input.Prompt = ""
 
@@ -209,8 +209,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 func (c List) View() string {
 	var headerRow string
 	if c.isLoading {
-		spinnerView := lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true).Render(c.spinner.View())
-		headerRow = fmt.Sprintf(" %s %s", spinnerView, c.input.View())
+		headerRow = fmt.Sprintf(" %s %s", c.spinner.View(), c.input.View())
 	} else {
 		headerRow = fmt.Sprintf("   %s", c.input.View())
 	}
