@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/acarl005/stripansi"
 	"github.com/cli/cli/pkg/findsh"
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
@@ -42,6 +44,7 @@ func NewCmdExtension() *cobra.Command {
 	cmd.AddCommand(NewCmdExtensionUpgrade())
 	cmd.AddCommand(NewCmdExtensionRemove())
 	cmd.AddCommand(NewCmdExtensionRename())
+	cmd.AddCommand(NewCmdExtensionCreate())
 
 	return cmd
 }
@@ -97,6 +100,71 @@ func NewCmdExtensionList() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&flags.json, "json", false, "output as json")
+	return cmd
+}
+
+//go:embed templates/*
+var embedFs embed.FS
+
+func NewCmdExtensionCreate() *cobra.Command {
+	flags := struct {
+		language string
+		output   string
+	}{}
+
+	cmd := &cobra.Command{
+		Use:   "create <output>",
+		Short: "Create an extension",
+		Args:  cobra.ExactArgs(1),
+		Example: heredoc.Doc(`
+			sunbeam extension create my-extension.sh
+			sunbeam extension create --language sh my-extension
+		`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var templatePath string
+			switch flags.language {
+			case "sh":
+				templatePath = "templates/extension.sh"
+			case "python":
+				templatePath = "templates/extension.py"
+			case "deno":
+				templatePath = "templates/extension.ts"
+			default:
+				extension := filepath.Ext(args[0])
+				switch extension {
+				case ".sh":
+					templatePath = "templates/extension.sh"
+				case ".py":
+					templatePath = "templates/extension.py"
+				case ".ts":
+					templatePath = "templates/extension.ts"
+				default:
+					return fmt.Errorf("language flag was not specified and could not determine language from extension")
+				}
+			}
+
+			embedBytes, err := embedFs.ReadFile(templatePath)
+			if err != nil {
+				return err
+			}
+
+			if err := os.WriteFile(args[0], embedBytes, 0755); err != nil {
+				return err
+			}
+
+			if err := os.Chmod(args[0], 0755); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&flags.language, "language", "l", "", "language for extension")
+	cmd.RegisterFlagCompletionFunc("language", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"sh", "python", "deno"}, cobra.ShellCompDirectiveNoFileComp
+	})
+
 	return cmd
 }
 

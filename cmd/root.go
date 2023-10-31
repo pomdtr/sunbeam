@@ -56,7 +56,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
 	rootCmd.AddCommand(NewCmdOpen())
-	rootCmd.AddCommand(NewCmdConfig())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
