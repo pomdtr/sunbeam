@@ -16,13 +16,15 @@ You can think of it as a mix between an application launcher like [raycast](http
 
 Sunbeam is distributed as a single binary, available for all major platforms. Sunbeam also comes with a lot of utilities to make it easy to create cross-platform scripts.
 
-![sunbeam running in alacritty](./static/alacritty.png)
+![sunbeam running in hyper](./static/hyper.jpeg)
 
 ## Supports any language
 
 Sunbeam provides multiple helpers for writing scripts in POSIX shell, but you can also use any other language.
-
 The only requirement is that your language of choice can read and write JSON.
+
+Creating a new extension is as easy as writing a script.
+You can share your scripts with others by just hosting them on a public url.
 
 Example Extensions:
 
@@ -33,18 +35,10 @@ Example Extensions:
 - [TLDR Pages (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/tldr.sh)
 - [Devdocs (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/devdocs.sh)
 
-### Easy to extend
+## Integrates with your favorite apps
 
-Creating a new extension is as easy as writing a script.
-You can share your scripts with others by just hosting them on a public url.
+It is trivial to integrate sunbeam with existings apps since it's just a command-line tool.
+
+More information in the [integrations](https://pomdtr.github.io/sunbeam/book/user-guide/integrations.html) section.
 
 ![sunbeam running in vscode](./static/vscode.png)
-
-## Inspirations / Alternatives
-
-Sunbeam wouldn't exist without taking inspirations from incredible tools. Make sure to checkout:
-
-- [raycast](https://raycast.com): Sunbeam shamelessly copy most of raycast UX, and nomenclature in it's api. Even the project name is a reference to raycast.
-- [fzf](https://github.com/junegunn/fzf): Sunbeam tries to take inspiration from fzf, but it's not a drop-in replacement. Sunbeam is designed to be used as a launcher, not as a fuzzy finder.
-- [slapdash](https://slapdash.com): Slapdash feature-set is quite close to sunbeam. Sadly, slapdash development seems to be stalled, and it's not open source.
-- [gh](https://cli.github.com): Sunbeam extension system is taking inspiration from gh one.

@@ -23,4 +23,6 @@
     - [Action](./reference/schemas/action.md)
 - [CLI](./reference/cli.md)
 
+---
 
+- [Alternatives](./alternatives.md)
