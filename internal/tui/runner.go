@@ -337,10 +337,6 @@ func (c *Runner) Reload() tea.Cmd {
 				return err
 			}
 
-			if detail.Title != "" {
-				termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", detail.Title, c.extension.Title))
-			}
-
 			page := NewDetail(detail.Text, detail.Actions...)
 			if detail.Highlight != "" {
 				page.Highlight = detail.Highlight
@@ -351,10 +347,6 @@ func (c *Runner) Reload() tea.Cmd {
 			var list types.List
 			if err := json.Unmarshal(output, &list); err != nil {
 				return err
-			}
-
-			if list.Title != "" {
-				termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", list.Title, c.extension.Title))
 			}
 
 			page := NewList(list.Items...)

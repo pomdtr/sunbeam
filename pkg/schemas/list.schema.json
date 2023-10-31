@@ -18,9 +18,6 @@
         "dynamic": {
             "type": "boolean"
         },
-        "title": {
-            "type": "string"
-        },
         "items": {
             "type": "array",
             "items": {

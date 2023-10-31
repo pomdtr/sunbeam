@@ -6,9 +6,6 @@
         "text"
     ],
     "properties": {
-        "title": {
-            "type": "string"
-        },
         "highlight": {
             "type": "string",
             "enum": [

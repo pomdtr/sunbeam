@@ -2,13 +2,6 @@
 
 ```json
 {
-    // the type of the view (required)
-    "type": "list",
-    // the title of the view (optional)
-    "title": "Github Repositories",
-    // whether the list is dynamic or not (optional)
-    // if true, the list will be refreshed every time the user types a character
-    "dynamic": false,
     // the list of items to display (required)
     "items": [
         {
@@ -34,6 +27,18 @@
                     "target": "https://github.com/pomdtr/sunbeam"
                 }
             ]
+        }
+    ],
+    // whether the list is dynamic or not (optional)
+    // if true, the list will be refreshed every time the user types a character
+    "dynamic": false,
+    // the text to display when the list is empty (optional)
+    "emptyText": "No items found",
+    // the list of actions shown when no item is selected (optional)
+    "actions": [
+        {
+            "title": "Refresh Items",
+            "type": "reload"
         }
     ]
 }

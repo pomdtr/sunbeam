@@ -53,7 +53,6 @@ func NewRootList(title string, generator func() (extensions.ExtensionMap, []type
 }
 
 func (c *RootList) Init() tea.Cmd {
-	termenv.DefaultOutput().SetWindowTitle(c.title)
 	return tea.Batch(c.list.Init(), c.list.SetIsLoading(true), c.Reload)
 }
 
