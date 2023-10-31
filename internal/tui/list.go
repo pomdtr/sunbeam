@@ -1,8 +1,10 @@
 package tui
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -12,11 +14,12 @@ import (
 type List struct {
 	width, height int
 
-	input textinput.Model
+	input     textinput.Model
+	spinner   spinner.Model
+	filter    Filter
+	statusBar StatusBar
 
-	filter Filter
-	footer StatusBar
-
+	isLoading     bool
 	Actions       []types.Action
 	OnQueryChange func(string) tea.Cmd
 	OnSelect      func(string) tea.Cmd
@@ -30,12 +33,13 @@ func NewList(title string, items ...types.ListItem) *List {
 
 	statusBar := NewStatusBar(title)
 	input := textinput.New()
-	input.Prompt = "   "
+	input.Prompt = ""
 
 	list := &List{
-		input:  input,
-		filter: filter,
-		footer: statusBar,
+		spinner:   spinner.New(),
+		input:     input,
+		filter:    filter,
+		statusBar: statusBar,
 	}
 
 	list.SetItems(items...)
@@ -45,7 +49,7 @@ func NewList(title string, items ...types.ListItem) *List {
 func (l *List) SetActions(actions ...types.Action) {
 	l.Actions = actions
 	if l.filter.Selection() == nil {
-		l.footer.SetActions(actions...)
+		l.statusBar.SetActions(actions...)
 	}
 }
 
@@ -76,7 +80,7 @@ func (c *List) SetSize(width, height int) {
 	c.width, c.height = width, height
 	availableHeight := max(0, height-4)
 
-	c.footer.Width = width
+	c.statusBar.Width = width
 	c.filter.SetSize(width, availableHeight)
 }
 
@@ -101,14 +105,18 @@ func (c *List) SetItems(items ...types.ListItem) {
 
 	selection := c.filter.Selection()
 	if selection == nil {
-		c.footer.SetActions(c.Actions...)
+		c.statusBar.SetActions(c.Actions...)
 	} else {
-		c.footer.SetActions(selection.(ListItem).Actions...)
+		c.statusBar.SetActions(selection.(ListItem).Actions...)
 	}
 }
 
 func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
-	return c.footer.SetIsLoading(isLoading)
+	c.isLoading = isLoading
+	if isLoading {
+		return c.spinner.Tick
+	}
+	return nil
 }
 
 func (c List) Query() string {
@@ -120,9 +128,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if c.footer.expanded {
-				c.footer.expanded = false
-				c.footer.cursor = 0
+			if c.statusBar.expanded {
+				c.statusBar.expanded = false
+				c.statusBar.cursor = 0
 				return c, nil
 			}
 
@@ -149,8 +157,13 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	input, cmd := c.input.Update(msg)
+	statusBar, cmd := c.statusBar.Update(msg)
+	c.statusBar = statusBar
+	if cmd != nil {
+		return c, cmd
+	}
 
+	input, cmd := c.input.Update(msg)
 	if input.Value() != c.input.Value() {
 		if c.OnQueryChange != nil {
 			query := input.Value()
@@ -166,9 +179,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.filter.FilterItems(input.Value())
 		}
 		if c.filter.Selection() != nil {
-			c.footer.SetActions(c.filter.Selection().(ListItem).Actions...)
+			c.statusBar.SetActions(c.filter.Selection().(ListItem).Actions...)
 		} else {
-			c.footer.SetActions(c.Actions...)
+			c.statusBar.SetActions(c.Actions...)
 		}
 	}
 	c.input = input
@@ -178,20 +191,28 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	oldSelection := c.filter.Selection()
 	newSelection := filter.Selection()
 	if newSelection == nil {
-		c.footer.SetActions(c.Actions...)
+		c.statusBar.SetActions(c.Actions...)
 	} else if oldSelection == nil || oldSelection.ID() != newSelection.ID() {
-		c.footer.SetActions(newSelection.(ListItem).Actions...)
+		c.statusBar.SetActions(newSelection.(ListItem).Actions...)
 	}
 	c.filter = filter
 	cmds = append(cmds, cmd)
 
-	footer, cmd := c.footer.Update(msg)
-	c.footer = footer
-	cmds = append(cmds, cmd)
+	if c.isLoading {
+		c.spinner, cmd = c.spinner.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	return c, tea.Batch(cmds...)
 }
 
 func (c List) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, c.input.View(), separator(c.width), c.filter.View(), c.footer.View())
+	var headerRow string
+	if c.isLoading {
+		spinnerView := lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true).Render(c.spinner.View())
+		headerRow = fmt.Sprintf(" %s %s", spinnerView, c.input.View())
+	} else {
+		headerRow = fmt.Sprintf("   %s", c.input.View())
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, headerRow, separator(c.width), c.filter.View(), c.statusBar.View())
 }

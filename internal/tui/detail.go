@@ -1,8 +1,7 @@
 package tui
 
 import (
-	"strings"
-
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
@@ -14,6 +13,8 @@ import (
 type Detail struct {
 	actionsFocused bool
 
+	isLoading bool
+	spinner   spinner.Model
 	viewport  viewport.Model
 	statusBar StatusBar
 
@@ -42,6 +43,7 @@ func NewDetail(title string, text string, actions ...types.Action) *Detail {
 	filter.DrawLines = true
 
 	d := Detail{
+		spinner:   spinner.New(),
 		viewport:  viewport,
 		statusBar: statusBar,
 		Highlight: types.HighlightAnsi,
@@ -67,7 +69,12 @@ func (d *Detail) Blur() tea.Cmd {
 type DetailMsg string
 
 func (d *Detail) SetIsLoading(isLoading bool) tea.Cmd {
-	return d.statusBar.SetIsLoading(isLoading)
+	d.isLoading = isLoading
+	if isLoading {
+		return d.spinner.Tick
+	}
+
+	return nil
 }
 
 func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -95,6 +102,11 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
+	if c.isLoading {
+		c.spinner, cmd = c.spinner.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	c.viewport, cmd = c.viewport.Update(msg)
 	cmds = append(cmds, cmd)
@@ -139,6 +151,11 @@ func (c *Detail) SetSize(width, height int) {
 }
 
 func (c *Detail) View() string {
-	blanks := strings.Repeat(" ", c.width)
-	return lipgloss.JoinVertical(lipgloss.Left, blanks, separator(c.width), c.viewport.View(), c.statusBar.View())
+	var headerRow string
+	if c.isLoading {
+		spinnerView := lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true).Render(c.spinner.View())
+		headerRow = " " + spinnerView
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, headerRow, separator(c.width), c.viewport.View(), c.statusBar.View())
 }

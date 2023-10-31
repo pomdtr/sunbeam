@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -19,9 +18,6 @@ type StatusBar struct {
 	title string
 	Width int
 
-	isLoading bool
-	spinner   spinner.Model
-
 	cursor   int
 	actions  []types.Action
 	expanded bool
@@ -31,7 +27,6 @@ func NewStatusBar(title string, actions ...types.Action) StatusBar {
 	return StatusBar{
 		title:   title,
 		actions: actions,
-		spinner: spinner.New(),
 	}
 }
 
@@ -39,15 +34,6 @@ func (c *StatusBar) SetActions(actions ...types.Action) {
 	c.expanded = false
 	c.cursor = 0
 	c.actions = actions
-}
-
-func (c *StatusBar) SetIsLoading(isLoading bool) tea.Cmd {
-	c.isLoading = isLoading
-	if isLoading {
-		return c.spinner.Tick
-	}
-
-	return nil
 }
 
 func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
@@ -71,19 +57,7 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 
 			p.expanded = true
 			return p, nil
-		case "right":
-			if !p.expanded {
-				break
-			}
-
-			if p.cursor < len(p.actions)-1 {
-				p.cursor++
-			} else {
-				p.cursor = 0
-			}
-			return p, nil
-
-		case "left", "shift+tab":
+		case "shift+tab":
 			if !p.expanded {
 				break
 			}
@@ -119,12 +93,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 				}
 			}
 		}
-	}
-
-	if p.isLoading {
-		var cmd tea.Cmd
-		p.spinner, cmd = p.spinner.Update(msg)
-		return p, cmd
 	}
 
 	return p, nil
@@ -164,20 +132,13 @@ func (c StatusBar) View() string {
 		}
 	}
 
-	var spinnerView string
-	if c.isLoading {
-		spinnerView = lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true).Render(c.spinner.View())
-	} else {
-		spinnerView = " "
-	}
-
 	var statusbar string
 	if c.expanded {
-		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-4, 0))
-		statusbar = fmt.Sprintf(" %s %s%s ", spinnerView, blanks, accessory)
+		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-2, 0))
+		statusbar = fmt.Sprintf(" %s%s ", blanks, accessory)
 	} else {
-		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-lipgloss.Width(c.title)-4, 0))
-		statusbar = fmt.Sprintf(" %s %s%s%s ", spinnerView, c.title, blanks, accessory)
+		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-lipgloss.Width(c.title)-2, 0))
+		statusbar = fmt.Sprintf(" %s%s%s ", c.title, blanks, accessory)
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, separator(c.Width), statusbar)
