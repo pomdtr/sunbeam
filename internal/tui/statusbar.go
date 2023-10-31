@@ -112,19 +112,31 @@ func (c StatusBar) View() string {
 				}
 				accessories[i] = renderAction(action.Title, subtitle, i == c.cursor)
 			}
-			availableWidth := c.Width - 1
-			for i, accessory := range accessories {
-				availableWidth -= lipgloss.Width(accessory) + 3
-				if availableWidth < 0 {
-					accessories = accessories[1:]
-				}
 
-				if i == c.cursor {
+			availableWidth := c.Width
+			availableWidth -= 3 * (len(c.actions) - 2) // 3 spaces between each action
+			availableWidth -= 2                        // 2 spaces for the margins
+			startIdx := 0
+			endIdx := len(accessories)
+
+			for lipgloss.Width(strings.Join(accessories[startIdx:endIdx], " · ")) > availableWidth {
+				if endIdx-1 > c.cursor {
+					endIdx--
+				} else if startIdx < c.cursor {
+					startIdx++
+				} else {
 					break
 				}
 			}
 
-			accessory = strings.Join(accessories, " · ")
+			accessory = strings.Join(accessories[startIdx:endIdx], " · ")
+			if startIdx > 0 {
+				accessory = fmt.Sprintf("… · %s", accessory)
+			}
+			if endIdx < len(accessories) {
+				accessory = fmt.Sprintf("%s · …", accessory)
+			}
+
 		} else {
 			accessory = fmt.Sprintf("%s · Actions %s", renderAction(c.actions[0].Title, "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
 		}
