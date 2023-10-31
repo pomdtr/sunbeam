@@ -30,7 +30,7 @@ if len(sys.argv) == 1:
 payload = json.loads(sys.argv[1])
 if payload["command"] == "ls":
     params = payload.get("params", {})
-    root = pathlib.Path(params.get("dir", "."))
+    root = pathlib.Path(params.get("dir", payload["cwd"]))
     show_hidden = params.get("show-hidden", False)
 
     items = []

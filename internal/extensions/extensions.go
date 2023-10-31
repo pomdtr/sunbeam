@@ -108,6 +108,12 @@ func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 		input.Params = make(map[string]any)
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	input.Cwd = cwd
+
 	command, ok := e.Command(input.Command)
 	if !ok {
 		return nil, fmt.Errorf("command %s not found", input.Command)
@@ -152,12 +158,6 @@ func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 	for k, v := range cfg.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	cmd.Dir = cwd
 
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil

@@ -49,4 +49,5 @@ export type CommandInput<T extends InputParams = InputParams> = {
   command: string;
   params: T;
   query?: string;
+  cwd?: string;
 };
