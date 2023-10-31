@@ -161,7 +161,7 @@ func NewCmdExtensionCreate() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&flags.language, "language", "l", "", "language for extension")
-	cmd.RegisterFlagCompletionFunc("language", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	_ = cmd.RegisterFlagCompletionFunc("language", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"sh", "python", "deno"}, cobra.ShellCompDirectiveNoFileComp
 	})
 
