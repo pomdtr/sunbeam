@@ -38,8 +38,8 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "tab":
-			if len(p.actions) == 0 {
+		case "tab", "right":
+			if msg.String() == "tab" && len(p.actions) == 0 {
 				return p, nil
 			}
 
@@ -55,7 +55,7 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 
 			p.expanded = true
 			return p, nil
-		case "shift+tab":
+		case "shift+tab", "left":
 			if !p.expanded {
 				break
 			}

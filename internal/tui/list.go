@@ -141,6 +141,16 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return c, PopPageCmd
+		case "right", "left":
+			if c.statusBar.expanded {
+				statusBar, cmd := c.statusBar.Update(msg)
+				c.statusBar = statusBar
+				return c, cmd
+			}
+
+			input, cmd := c.input.Update(msg)
+			c.input = input
+			return c, cmd
 		}
 	case QueryChangeMsg:
 		if c.OnQueryChange == nil {
