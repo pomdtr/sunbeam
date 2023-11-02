@@ -19,7 +19,6 @@ type ExtensionMap map[string]Extension
 
 type Extension struct {
 	types.Manifest `json:"manifest"`
-	Alias          string `json:"alias"`
 	Metadata
 }
 
@@ -67,18 +66,13 @@ func (e Extension) RootItems() []types.RootItem {
 		}
 
 		rootItems = append(rootItems, types.RootItem{
-			Title:     command.Title,
-			Extension: e.Alias,
-			Command:   command.Name,
-			Params:    make(map[string]any),
+			Title:   command.Title,
+			Command: command.Name,
+			Params:  make(map[string]any),
 		})
 	}
 
-	for _, rootItem := range e.Root {
-		rootItem.Extension = e.Alias
-		rootItems = append(rootItems, rootItem)
-	}
-
+	rootItems = append(rootItems, e.Root...)
 	return rootItems
 }
 

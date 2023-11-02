@@ -31,28 +31,51 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				return encoder.Encode(extension)
 			}
 
+			var rootItems []types.RootItem
+			for _, rootItem := range extension.RootItems() {
+				rootItem.Extension = alias
+				rootItems = append(rootItems, rootItem)
+			}
+
+			cfg, err := config.Load()
+			if err != nil {
+				return err
+			}
+			for _, rootItem := range cfg.Root {
+				if rootItem.Extension != alias {
+					continue
+				}
+
+				rootItems = append(rootItems, rootItem)
+			}
+
+			if len(rootItems) == 0 {
+				return cmd.Usage()
+			}
+
 			page := tui.NewRootList(extension.Title, func() (extensions.ExtensionMap, []types.RootItem, error) {
 				extension, err := LoadExtension(extension.Entrypoint)
 				if err != nil {
 					return nil, nil, err
 				}
-				extension.Alias = alias
 
 				var rootItems []types.RootItem
-				rootItems = append(rootItems, extension.RootItems()...)
+				for _, rootItem := range extension.RootItems() {
+					rootItem.Extension = alias
+					rootItems = append(rootItems, rootItem)
+				}
 
-				config, err := config.Load()
+				cfg, err := config.Load()
 				if err != nil {
 					return nil, nil, err
 				}
-				for _, rootItem := range config.Root {
-					if rootItem.Extension != extension.Alias {
+				for _, rootItem := range cfg.Root {
+					if rootItem.Extension != alias {
 						continue
 					}
 
 					rootItems = append(rootItems, rootItem)
 				}
-
 				return extensions.ExtensionMap{
 					alias: extension,
 				}, rootItems, nil
@@ -149,6 +172,8 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					if err != nil {
 						return err
 					}
+
+					cmd.Stdin = os.Stdin
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
 

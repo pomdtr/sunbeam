@@ -532,7 +532,6 @@ func FindExtensions() (extensions.ExtensionMap, error) {
 
 		extensionMap[entry.Name()] = extensions.Extension{
 			Manifest: manifest,
-			Alias:    entry.Name(),
 			Metadata: metadata,
 		}
 	}

@@ -69,7 +69,7 @@ func (c *RootList) Reload() tea.Msg {
 			continue
 		}
 
-		itemID := fmt.Sprintf("%s/%s", cleanString(extension.Alias), cleanString(rootItem.Title))
+		itemID := fmt.Sprintf("%s/%s", cleanString(rootItem.Extension), cleanString(rootItem.Title))
 
 		item := types.ListItem{
 			Id:          itemID,

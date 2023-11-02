@@ -120,8 +120,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return nil, nil, err
 			}
 
-			for _, extension := range extensionMap {
-				rootItems = append(rootItems, extension.RootItems()...)
+			for alias, extension := range extensionMap {
+				for _, rootItem := range extension.RootItems() {
+					rootItem.Extension = alias
+					rootItems = append(rootItems, rootItem)
+				}
 			}
 
 			return extensionMap, rootItems, nil
