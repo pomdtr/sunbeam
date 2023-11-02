@@ -64,16 +64,10 @@ Run a custom command defined in the extension manifest.
     // the command to run (must be defined in the extension manifest) (required)
     "command": "edit-readme",
     // the arguments to pass to the command (optional)
-    // you can either pass a value directly (string, number, boolean) or use an input
+    // you can either pass a string, number or boolean
     "params": {
         // key must match the name of the param of the edit-readme command
-        "full_name": "pomdtr/sunbeam",
-        // if you pass an input, a form will be displayed to the user
-        "text": {
-            "type": "textarea",
-            "title": "Text",
-            "required": true
-        }
+        "full_name": "pomdtr/sunbeam"
     },
 }
 ```

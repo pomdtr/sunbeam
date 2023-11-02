@@ -27,15 +27,6 @@ if (Deno.args.length === 0) {
                 ]
             },
             {
-                name: "create",
-                title: "Create Gist",
-                mode: "silent",
-                params: [
-                    { name: "filename", description: "Filename", type: "string", required: true },
-                    { name: "content", description: "Filename", type: "string", required: true }
-                ]
-            },
-            {
                 name: "delete",
                 title: "Delete Gist",
                 mode: "silent",
@@ -101,21 +92,6 @@ if (payload.command == "list") {
                     params: {
                         id: gist.id,
                         file: Object.values(gist.files)[0].filename!
-                    }
-                },
-                {
-                    title: "Create Gist",
-                    type: "run",
-                    command: "create",
-                    params: {
-                        filename: {
-                            type: "text",
-                            title: "Filename",
-                        },
-                        content: {
-                            type: "textarea",
-                            title: "Content",
-                        }
                     }
                 },
                 {

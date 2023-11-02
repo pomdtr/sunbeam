@@ -19,7 +19,6 @@
     - [Manifest](./reference/schemas/manifest.md)
     - [List](./reference/schemas/list.md)
     - [Detail](./reference/schemas/detail.md)
-    - [Input](./reference/schemas/input.md)
     - [Action](./reference/schemas/action.md)
 - [CLI](./reference/cli.md)
 

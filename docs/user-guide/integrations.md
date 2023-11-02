@@ -2,7 +2,9 @@
 
 Sunbeam is a built for the terminal first, but it can be used in other contexts. This section lists the available clients (outside of the TUI bundled with sunbeam).
 
-## Hyper
+## Terminals
+
+### Hyper
 
 [Hyper](https://hyper.is/) is a cross-platform terminal emulator, built on web technologies.
 
@@ -56,7 +58,7 @@ module.exports = {
 //# sourceMappingURL=config-default.js.map
 ```
 
-## Alacritty
+### Alacritty
 
 [Alacritty](https://github.com/alacritty/alacritty) is a cross-platform terminal emulator.
 
@@ -90,7 +92,9 @@ font:
 If you don't plan to use Alacritty as your primary terminal, you can just save it as `~/.config/alacritty/alacritty.yml`.
 Otherwise, use the `config-file` flag when launching alacritty: `alacritty -c ~/.config/alacritty/sunbeam.yml`.
 
-## Visual Studio Code
+## Editors
+
+### Visual Studio Code
 
 Run the `Tasks: Open User Tasks` item from the command palette, then paste the following text:
 
