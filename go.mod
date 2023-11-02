@@ -13,6 +13,7 @@ require (
 	github.com/cli/cli v1.14.0
 	github.com/cli/go-gh/v2 v2.4.0
 	github.com/itchyny/gojq v0.12.13
+	github.com/joho/godotenv v1.5.1
 	github.com/junegunn/fzf v0.0.0-20231029150554-1cfa3ee4c7c1
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2
@@ -20,6 +21,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/term v0.13.0
+	mvdan.cc/sh v2.6.4+incompatible
 )
 
 require (
@@ -42,11 +44,13 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rogpeppe/go-internal v1.10.1-0.20230524175051-ec119421bb97 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/yuin/goldmark v1.6.0 // indirect
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/text v0.13.0 // indirect

@@ -8,27 +8,29 @@
         },
         "root": {
             "type": "array",
+            "description": "A list of commands that will be shown in the root list",
             "items": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
                     "title": {
-                        "type": "string"
-                    },
-                    "extension": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "An friendly title for the command"
                     },
                     "command": {
-                        "type": "string"
-                    },
-                    "params": {
-                        "type": "array"
+                        "type": "string",
+                        "description": "The command to run"
                     }
                 }
             }
         },
+        "envFile": {
+            "type": "string",
+            "description": "A path to a file that contains environment variables to be set before running commands"
+        },
         "env": {
             "type": "object",
+            "description": "A map of environment variables to be set before running commands",
             "patternProperties": {
                 "^[a-zA-Z_]+[a-zA-Z0-9_]*$": {
                     "type": "string"

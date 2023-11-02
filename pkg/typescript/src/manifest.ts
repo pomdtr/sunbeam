@@ -1,4 +1,3 @@
-import type { Input } from "./input";
 export type Manifest = {
   title: string;
   description?: string;
@@ -9,7 +8,7 @@ export type Manifest = {
 type CommandRef = {
   title: string;
   command: string;
-  params?: Record<string, string | number | boolean | Input>;
+  params?: Record<string, string | number | boolean>;
 };
 
 export type CommandSpec = {

@@ -11,11 +11,18 @@ import (
 
 	"github.com/acarl005/stripansi"
 	"github.com/cli/cli/pkg/findsh"
-	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type ExtensionMap map[string]Extension
+
+func (e ExtensionMap) List() []Extension {
+	extensions := make([]Extension, 0)
+	for _, extension := range e {
+		extensions = append(extensions, extension)
+	}
+	return extensions
+}
 
 type Extension struct {
 	types.Manifest `json:"manifest"`
@@ -60,6 +67,10 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 
 func (e Extension) RootItems() []types.RootItem {
 	rootItems := make([]types.RootItem, 0)
+	if e.Root != nil {
+		return e.Root
+	}
+
 	for _, command := range e.Commands {
 		if !IsRootCommand(command) {
 			continue
@@ -72,17 +83,16 @@ func (e Extension) RootItems() []types.RootItem {
 		})
 	}
 
-	rootItems = append(rootItems, e.Root...)
 	return rootItems
 }
 
-func (e Extension) Run(input types.CommandInput) error {
-	_, err := e.Output(input)
+func (e Extension) Run(input types.CommandInput, environ map[string]string) error {
+	_, err := e.Output(input, environ)
 	return err
 }
 
-func (ext Extension) Output(input types.CommandInput) ([]byte, error) {
-	cmd, err := ext.Cmd(input)
+func (ext Extension) Output(input types.CommandInput, environ map[string]string) ([]byte, error) {
+	cmd, err := ext.Cmd(input, environ)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +107,7 @@ func (ext Extension) Output(input types.CommandInput) ([]byte, error) {
 	}
 }
 
-func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
+func (e Extension) Cmd(input types.CommandInput, environ map[string]string) (*exec.Cmd, error) {
 	if input.Params == nil {
 		input.Params = make(map[string]any)
 	}
@@ -143,16 +153,9 @@ func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
-
-	cfg, err := config.Load()
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range cfg.Env {
+	for k, v := range environ {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
-
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil
 }

@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"time"
 
@@ -25,17 +24,14 @@ type RootList struct {
 	err           *Detail
 	list          *List
 	form          *Form
-	extensions    extensions.ExtensionMap
-	generator     func() (extensions.ExtensionMap, []types.RootItem, error)
+
+	environ    map[string]string
+	extensions extensions.ExtensionMap
+
+	generator func() (extensions.ExtensionMap, []types.ListItem, map[string]string, error)
 }
 
-var nonAlphanumericRegex = regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
-
-func cleanString(str string) string {
-	return nonAlphanumericRegex.ReplaceAllString(str, "")
-}
-
-func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.RootItem, error)) *RootList {
+func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, map[string]string, error)) *RootList {
 	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
 	if err != nil {
 		history = History{
@@ -57,59 +53,17 @@ func (c *RootList) Init() tea.Cmd {
 }
 
 func (c *RootList) Reload() tea.Msg {
-	extensionMap, rootItems, err := c.generator()
+	extensionMap, rootItems, environ, err := c.generator()
 	if err != nil {
 		return err
 	}
 
-	items := make([]types.ListItem, 0)
-	for _, rootItem := range rootItems {
-		extension, ok := extensionMap[rootItem.Extension]
-		if !ok {
-			continue
-		}
-
-		itemID := fmt.Sprintf("%s/%s", cleanString(rootItem.Extension), cleanString(rootItem.Title))
-
-		item := types.ListItem{
-			Id:          itemID,
-			Title:       rootItem.Title,
-			Subtitle:    extension.Title,
-			Accessories: []string{rootItem.Extension},
-			Actions: []types.Action{
-				{
-					Title:     "Run",
-					Type:      types.ActionTypeRun,
-					Extension: rootItem.Extension,
-					Command:   rootItem.Command,
-					Params:    rootItem.Params,
-				},
-			},
-		}
-
-		if extension.Type == extensions.ExtensionTypeLocal {
-			item.Actions = append(item.Actions, types.Action{
-				Title:  "Edit Extension",
-				Key:    "e",
-				Reload: true,
-				Type:   types.ActionTypeEdit,
-				Target: extension.Entrypoint,
-			})
-		}
-
-		item.Actions = append(item.Actions, types.Action{
-			Title: "Copy Origin",
-			Key:   "c",
-			Type:  types.ActionTypeCopy,
-			Text:  extension.Origin,
-			Exit:  true,
-		})
-
-		items = append(items, item)
-	}
-
+	c.environ = environ
 	c.extensions = extensionMap
-	return items
+	c.history.Sort(rootItems)
+	c.list.SetIsLoading(false)
+	c.list.SetItems(rootItems...)
+	return nil
 }
 
 func (c *RootList) Focus() tea.Cmd {
@@ -143,12 +97,6 @@ func (c *RootList) SetError(err error) tea.Cmd {
 
 func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
-	case []types.ListItem:
-		items := msg
-		c.list.SetIsLoading(false)
-		c.history.Sort(items)
-		c.list.SetItems(items...)
-		return c, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+e":
@@ -223,14 +171,14 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				runner := NewRunner(extension, types.CommandInput{
 					Command: command.Name,
 					Params:  msg.Params,
-				})
+				}, c.environ)
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
 					if err := extension.Run(types.CommandInput{
 						Command: command.Name,
 						Params:  msg.Params,
-					}); err != nil {
+					}, c.environ); err != nil {
 						return PushPageMsg{NewErrorPage(err)}
 					}
 
@@ -240,7 +188,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				cmd, err := extension.Cmd(types.CommandInput{
 					Command: command.Name,
 					Params:  msg.Params,
-				})
+				}, c.environ)
 
 				if err != nil {
 					c.err = NewErrorPage(err)
@@ -251,6 +199,10 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 					if err != nil {
 						return PushPageMsg{NewErrorPage(err)}
+					}
+
+					if msg.Exit {
+						return ExitMsg{}
 					}
 
 					return nil
@@ -277,6 +229,19 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				if msg.Reload {
 					return c.Reload()
+				}
+
+				if msg.Exit {
+					return ExitMsg{}
+				}
+
+				return nil
+			})
+		case types.ActionTypeExec:
+			cmd := exec.Command(msg.Args[0], msg.Args[1:]...)
+			return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
+				if err != nil {
+					return err
 				}
 
 				if msg.Exit {

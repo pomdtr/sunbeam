@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
@@ -25,6 +28,12 @@ const (
 
 func IsSunbeamRunning() bool {
 	return len(os.Getenv("SUNBEAM")) > 0
+}
+
+type NonInteractiveOutput struct {
+	Env        map[string]string      `json:"env"`
+	Extensions []extensions.Extension `json:"extensions"`
+	Items      []types.ListItem       `json:"items"`
 }
 
 func NewRootCmd() (*cobra.Command, error) {
@@ -102,32 +111,39 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		return nil, err
 	}
 
-	if len(extensionMap) == 0 {
-		return rootCmd, nil
-	}
-
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.RootItem, error) {
-			config, err := config.Load()
+		if !isatty.IsTerminal(os.Stdout.Fd()) {
+			cfg, err := config.Load()
 			if err != nil {
-				return nil, nil, err
+				return err
 			}
 
-			var rootItems []types.RootItem
-			rootItems = append(rootItems, config.Root...)
 			extensionMap, err := FindExtensions()
 			if err != nil {
-				return nil, nil, err
+				return err
 			}
 
-			for alias, extension := range extensionMap {
-				for _, rootItem := range extension.RootItems() {
-					rootItem.Extension = alias
-					rootItems = append(rootItems, rootItem)
-				}
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+
+			return encoder.Encode(NonInteractiveOutput{
+				Env:        cfg.Env,
+				Extensions: extensionMap.List(),
+				Items:      RootItems(cfg, extensionMap),
+			})
+		}
+		rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, map[string]string, error) {
+			cfg, err := config.Load()
+			if err != nil {
+				return nil, nil, nil, err
 			}
 
-			return extensionMap, rootItems, nil
+			extensionMap, err := FindExtensions()
+			if err != nil {
+				return nil, nil, nil, err
+			}
+
+			return extensionMap, RootItems(cfg, extensionMap), cfg.Env, nil
 		})
 		return tui.Draw(rootList)
 	}
@@ -147,4 +163,89 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	return rootCmd, nil
+}
+
+func buildDoc(command *cobra.Command) (string, error) {
+	var page strings.Builder
+	err := doc.GenMarkdown(command, &page)
+	if err != nil {
+		return "", err
+	}
+
+	out := strings.Builder{}
+	for _, line := range strings.Split(page.String(), "\n") {
+		if strings.Contains(line, "SEE ALSO") {
+			break
+		}
+
+		out.WriteString(line + "\n")
+	}
+
+	for _, child := range command.Commands() {
+		childPage, err := buildDoc(child)
+		if err != nil {
+			return "", err
+		}
+		out.WriteString(childPage)
+	}
+
+	return out.String(), nil
+}
+
+func RootItems(cfg config.Config, extensionMap extensions.ExtensionMap) []types.ListItem {
+	var items []types.ListItem
+	for _, rootItem := range cfg.Root {
+		item, err := cfg.RootItem(rootItem, extensionMap)
+		item.Id = fmt.Sprintf("root - %s", item.Title)
+		if err != nil {
+			continue
+		}
+
+		items = append(items, item)
+	}
+
+	for alias, extension := range extensionMap {
+		items = append(items, ExtensionRootItems(alias, extension)...)
+	}
+
+	return items
+}
+
+func ExtensionRootItems(alias string, extension extensions.Extension) []types.ListItem {
+	var items []types.ListItem
+	for _, rootItem := range extension.RootItems() {
+		listItem := types.ListItem{
+			Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
+			Title:       rootItem.Title,
+			Subtitle:    extension.Title,
+			Accessories: []string{alias},
+			Actions: []types.Action{
+				{
+					Title:     "Run",
+					Type:      types.ActionTypeRun,
+					Extension: alias,
+					Command:   rootItem.Command,
+					Params:    rootItem.Params,
+				},
+			},
+		}
+
+		if extension.Type == extensions.ExtensionTypeLocal {
+			listItem.Actions = append(listItem.Actions, types.Action{
+				Title:  "Edit",
+				Type:   types.ActionTypeEdit,
+				Target: extension.Entrypoint,
+			})
+		}
+
+		listItem.Actions = append(listItem.Actions, types.Action{
+			Title:  "Copy Origin",
+			Type:   types.ActionTypeCopy,
+			Target: extension.Origin,
+		})
+
+		items = append(items, listItem)
+	}
+
+	return items
 }

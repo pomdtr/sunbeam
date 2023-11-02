@@ -18,7 +18,8 @@ type Action struct {
 
 	Exit bool `json:"exit,omitempty"`
 
-	Reload bool `json:"reload,omitempty"`
+	Reload bool     `json:"reload,omitempty"`
+	Args   []string `json:"args,omitempty"`
 
 	Extension string `json:"extension,omitempty"`
 	Command   string `json:"command,omitempty"`
@@ -35,6 +36,7 @@ const (
 	ActionTypeCopy   ActionType = "copy"
 	ActionTypeReload ActionType = "reload"
 	ActionTypeEdit   ActionType = "edit"
+	ActionTypeExec   ActionType = "exec"
 	ActionTypeExit   ActionType = "exit"
 )
 

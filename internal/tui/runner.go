@@ -22,9 +22,10 @@ type Runner struct {
 	extension extensions.Extension
 	command   types.CommandSpec
 	input     types.CommandInput
+	environ   map[string]string
 }
 
-func NewRunner(extension extensions.Extension, input types.CommandInput) *Runner {
+func NewRunner(extension extensions.Extension, input types.CommandInput, environ map[string]string) *Runner {
 	var embed Page
 	command, ok := extension.Command(input.Command)
 	if ok {
@@ -45,6 +46,7 @@ func NewRunner(extension extensions.Extension, input types.CommandInput) *Runner
 		extension: extension,
 		command:   command,
 		input:     input,
+		environ:   environ,
 	}
 }
 
@@ -165,7 +167,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				runner := NewRunner(c.extension, types.CommandInput{
 					Command: command.Name,
 					Params:  msg.Params,
-				})
+				}, c.environ)
 
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
@@ -173,7 +175,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					_, err := c.extension.Output(types.CommandInput{
 						Command: command.Name,
 						Params:  msg.Params,
-					})
+					}, c.environ)
 
 					if err != nil {
 						return PushPageMsg{NewErrorPage(err)}
@@ -195,7 +197,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				cmd, err := c.extension.Cmd(types.CommandInput{
 					Command: command.Name,
 					Params:  msg.Params,
-				})
+				}, c.environ)
 
 				if err != nil {
 					c.embed = NewErrorPage(err)
@@ -303,7 +305,7 @@ func (c *Runner) View() string {
 
 func (c *Runner) Reload() tea.Cmd {
 	return tea.Sequence(c.SetIsLoading(true), func() tea.Msg {
-		output, err := c.extension.Output(c.input)
+		output, err := c.extension.Output(c.input, c.environ)
 		if err != nil {
 			return err
 		}

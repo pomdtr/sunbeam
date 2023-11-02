@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,7 +14,6 @@ import (
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/doc"
 )
 
 func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
@@ -26,60 +24,52 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 		Args:    cobra.NoArgs,
 		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load()
+			if err != nil {
+				return err
+			}
+
+			var inputBytes []byte
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				b, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+				inputBytes = b
+			}
+
+			if len(inputBytes) > 0 {
+				var input types.CommandInput
+				if err := json.Unmarshal(inputBytes, &input); err != nil {
+					return err
+				}
+
+				return runExtension(extension, input, cfg.Env)
+			}
+
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
 				return encoder.Encode(extension)
 			}
 
-			var rootItems []types.RootItem
-			for _, rootItem := range extension.RootItems() {
-				rootItem.Extension = alias
-				rootItems = append(rootItems, rootItem)
-			}
-
-			cfg, err := config.Load()
-			if err != nil {
-				return err
-			}
-			for _, rootItem := range cfg.Root {
-				if rootItem.Extension != alias {
-					continue
-				}
-
-				rootItems = append(rootItems, rootItem)
-			}
-
-			if len(rootItems) == 0 {
+			if len(extension.RootItems()) == 0 {
 				return cmd.Usage()
 			}
 
-			page := tui.NewRootList(extension.Title, func() (extensions.ExtensionMap, []types.RootItem, error) {
-				extension, err := LoadExtension(extension.Entrypoint)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				var rootItems []types.RootItem
-				for _, rootItem := range extension.RootItems() {
-					rootItem.Extension = alias
-					rootItems = append(rootItems, rootItem)
-				}
-
+			page := tui.NewRootList(extension.Title, func() (extensions.ExtensionMap, []types.ListItem, map[string]string, error) {
 				cfg, err := config.Load()
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
 				}
-				for _, rootItem := range cfg.Root {
-					if rootItem.Extension != alias {
-						continue
-					}
 
-					rootItems = append(rootItems, rootItem)
+				extension, err := LoadExtension(extension.Entrypoint)
+				if err != nil {
+					return nil, nil, nil, err
 				}
-				return extensions.ExtensionMap{
-					alias: extension,
-				}, rootItems, nil
+
+				extensionMap := extensions.ExtensionMap{alias: extension}
+				return extensionMap, ExtensionRootItems(alias, extension), cfg.Env, nil
 			})
 			return tui.Draw(page)
 		},
@@ -94,6 +84,11 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			Short:  command.Title,
 			Hidden: command.Hidden,
 			RunE: func(cmd *cobra.Command, args []string) error {
+				cfg, err := config.Load()
+				if err != nil {
+					return err
+				}
+
 				params := make(map[string]any)
 
 				for _, param := range command.Params {
@@ -137,69 +132,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					input.Query = string(stdin)
 				}
 
-				missing := tui.FindMissingParams(command.Params, params)
-				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					if len(missing) > 0 {
-						names := make([]string, len(missing))
-						for i, param := range missing {
-							names[i] = param.Name
-						}
-						return fmt.Errorf("missing required params: %s", strings.Join(names, ", "))
-					}
-					output, err := extension.Output(input)
-
-					if err != nil {
-						return err
-					}
-
-					if _, err := os.Stdout.Write(output); err != nil {
-						return err
-					}
-
-					return nil
-				}
-
-				if len(missing) > 0 {
-					cancelled := true
-					form := tui.NewForm(func(values map[string]any) tea.Msg {
-						cancelled = false
-						for k, v := range values {
-							input.Params[k] = v
-						}
-
-						return tui.ExitMsg{}
-					}, missing...)
-
-					if err := tui.Draw(form); err != nil {
-						return err
-					}
-
-					if cancelled {
-						return nil
-					}
-				}
-
-				switch command.Mode {
-				case types.CommandModeList, types.CommandModeDetail:
-					runner := tui.NewRunner(extension, input)
-					return tui.Draw(runner)
-				case types.CommandModeSilent:
-					return extension.Run(input)
-				case types.CommandModeTTY:
-					cmd, err := extension.Cmd(input)
-					if err != nil {
-						return err
-					}
-
-					cmd.Stdin = os.Stdin
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
-
-					return cmd.Run()
-				default:
-					return fmt.Errorf("unknown command mode: %s", command.Mode)
-				}
-
+				return runExtension(extension, input, cfg.Env)
 			},
 		}
 
@@ -220,59 +153,72 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 	return rootCmd, nil
 }
 
-func buildDoc(command *cobra.Command) (string, error) {
-	var page strings.Builder
-	err := doc.GenMarkdown(command, &page)
-	if err != nil {
-		return "", err
+func runExtension(extension extensions.Extension, input types.CommandInput, env map[string]string) error {
+	command, ok := extension.Command(input.Command)
+	if !ok {
+		return fmt.Errorf("command %s not found", input.Command)
 	}
 
-	out := strings.Builder{}
-	for _, line := range strings.Split(page.String(), "\n") {
-		if strings.Contains(line, "SEE ALSO") {
-			break
+	missing := tui.FindMissingParams(command.Params, input.Params)
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		if len(missing) > 0 {
+			names := make([]string, len(missing))
+			for i, param := range missing {
+				names[i] = param.Name
+			}
+			return fmt.Errorf("missing required params: %s", strings.Join(names, ", "))
 		}
+		output, err := extension.Output(input, env)
 
-		out.WriteString(line + "\n")
-	}
-
-	for _, child := range command.Commands() {
-		childPage, err := buildDoc(child)
 		if err != nil {
-			return "", err
+			return err
 		}
-		out.WriteString(childPage)
+
+		if _, err := os.Stdout.Write(output); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	return out.String(), nil
-}
+	if len(missing) > 0 {
+		cancelled := true
+		form := tui.NewForm(func(values map[string]any) tea.Msg {
+			cancelled = false
+			for k, v := range values {
+				input.Params[k] = v
+			}
 
-func LookupIntEnv(key string, fallback int) int {
-	env, ok := os.LookupEnv(key)
-	if !ok {
-		return fallback
+			return tui.ExitMsg{}
+		}, missing...)
 
+		if err := tui.Draw(form); err != nil {
+			return err
+		}
+
+		if cancelled {
+			return nil
+		}
 	}
 
-	value, err := strconv.Atoi(env)
-	if err != nil {
-		return fallback
+	switch command.Mode {
+	case types.CommandModeList, types.CommandModeDetail:
+		runner := tui.NewRunner(extension, input, env)
+		return tui.Draw(runner)
+	case types.CommandModeSilent:
+		return extension.Run(input, env)
+	case types.CommandModeTTY:
+		cmd, err := extension.Cmd(input, env)
+		if err != nil {
+			return err
+		}
+
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		return cmd.Run()
+	default:
+		return fmt.Errorf("unknown command mode: %s", command.Mode)
 	}
-
-	return value
-}
-
-func LookupBoolEnv(key string, fallback bool) bool {
-	env, ok := os.LookupEnv(key)
-	if !ok {
-		return fallback
-
-	}
-
-	b, err := strconv.ParseBool(env)
-	if err != nil {
-		return fallback
-	}
-
-	return b
 }

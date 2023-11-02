@@ -7,10 +7,7 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
-      "args": [
-        "run",
-        "./catalog/extensions/tldr.sh"
-      ]
+      "args": []
     },
   ],
 }
