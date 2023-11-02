@@ -1,5 +1,3 @@
-import { Input } from "./input";
-
 type ActionProps = {
   title: string;
   key?: string;
@@ -22,24 +20,25 @@ export type OpenAction = {
   exit?: boolean;
 } & ActionProps;
 
+export type EditAction = {
+  type: "edit";
+  target: string;
+  exit?: boolean;
+} & ActionProps;
+
 export type RunAction = {
   type: "run";
   command: string;
-  params?: Record<string, string | number | boolean | Input>;
+  params?: Record<string, string | number | boolean>;
   reload?: boolean;
   exit?: boolean;
 } & ActionProps;
 
-export type EditAction = {
-  type: "edit";
-  command: string;
-  params?: Record<string, string | number | boolean | Input>;
-} & ActionProps;
 
 export type ReloadAction = {
   type: "reload";
   command: string;
-  params?: Record<string, string | number | boolean | Input>;
+  params?: Record<string, string | number | boolean>;
 } & ActionProps;
 
 

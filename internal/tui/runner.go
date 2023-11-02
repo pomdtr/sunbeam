@@ -16,7 +16,6 @@ import (
 
 type Runner struct {
 	embed         Page
-	form          *Form
 	width, height int
 
 	extension extensions.Extension
@@ -78,11 +77,6 @@ func (c *Runner) Blur() tea.Cmd {
 func (c *Runner) SetSize(w int, h int) {
 	c.width = w
 	c.height = h
-
-	if c.form != nil {
-		c.form.SetSize(w, h)
-	}
-
 	c.embed.SetSize(w, h)
 }
 
@@ -106,11 +100,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			})
 		case "esc":
-			if c.form != nil {
-				c.form = nil
-				return c, c.embed.Focus()
-			}
-
 			if c.embed != nil {
 				break
 			}
@@ -132,53 +121,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.embed.SetSize(c.width, c.height)
 				return c, c.embed.Init()
 			}
-
-			var formItems []FormItem
-			for _, param := range command.Params {
-				v, ok := msg.Params[param.Name]
-				if !ok && param.Required {
-					c.embed = NewErrorPage(fmt.Errorf("missing required parameter %s", param.Name))
-					c.embed.SetSize(c.width, c.height)
-					return c, c.embed.Init()
-				}
-
-				switch v := v.(type) {
-				case types.Text:
-					formItems = append(formItems, NewTextItem(param.Name, v))
-				case types.TextArea:
-					formItems = append(formItems, NewTextArea(param.Name, v))
-				case types.Checkbox:
-					formItems = append(formItems, NewCheckbox(param.Name, v))
-				case types.Select:
-					formItems = append(formItems, NewSelect(param.Name, v))
-				}
-			}
-
-			if len(formItems) > 0 {
-				c.form = NewForm(func(values map[string]any) tea.Msg {
-					params := make(map[string]any)
-					for k, v := range msg.Params {
-						params[k] = v
-					}
-
-					for k, v := range values {
-						params[k] = v
-					}
-
-					return types.Action{
-						Title:   msg.Title,
-						Type:    types.ActionTypeRun,
-						Command: msg.Command,
-						Params:  params,
-						Exit:    msg.Exit,
-						Reload:  msg.Reload,
-					}
-				}, formItems...)
-
-				c.form.SetSize(c.width, c.height)
-				return c, tea.Sequence(c.form.Init(), c.form.Focus())
-			}
-			c.form = nil
 
 			switch command.Mode {
 			case types.CommandModeList, types.CommandModeDetail:
@@ -302,22 +244,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, c.embed.Init()
 	}
 
-	if c.form != nil {
-		form, cmd := c.form.Update(msg)
-		c.form = form.(*Form)
-		return c, cmd
-	}
-
 	var cmd tea.Cmd
 	c.embed, cmd = c.embed.Update(msg)
 	return c, cmd
 }
 
 func (c *Runner) View() string {
-	if c.form != nil {
-		return c.form.View()
-	}
-
 	return c.embed.View()
 }
 

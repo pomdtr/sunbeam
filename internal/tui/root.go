@@ -24,7 +24,6 @@ type RootList struct {
 	history       History
 	err           *Detail
 	list          *List
-	form          *Form
 	extensions    extensions.ExtensionMap
 	generator     func() (extensions.ExtensionMap, []types.RootItem, error)
 }
@@ -126,9 +125,6 @@ func (c *RootList) SetSize(width, height int) {
 	if c.err != nil {
 		c.err.SetSize(width, height)
 	}
-	if c.form != nil {
-		c.form.SetSize(width, height)
-	}
 
 	c.list.SetSize(width, height)
 }
@@ -169,48 +165,18 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, c.Reload
 		}
 	case types.Action:
+		extension, ok := c.extensions[msg.Extension]
+		if !ok {
+			return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
+		}
+
+		command, ok := extension.Command(msg.Command)
+		if !ok {
+			return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
+		}
+
 		switch msg.Type {
 		case types.ActionTypeRun:
-			var formItems []FormItem
-			for k, v := range msg.Params {
-				switch v := v.(type) {
-				case types.Text:
-					formItems = append(formItems, NewTextItem(k, v))
-				case types.TextArea:
-					formItems = append(formItems, NewTextArea(k, v))
-				case types.Checkbox:
-					formItems = append(formItems, NewCheckbox(k, v))
-				case types.Select:
-					formItems = append(formItems, NewSelect(k, v))
-				}
-			}
-
-			if len(formItems) > 0 {
-				c.form = NewForm(func(values map[string]any) tea.Msg {
-					params := make(map[string]any)
-					for k, v := range msg.Params {
-						params[k] = v
-					}
-
-					for k, v := range values {
-						params[k] = v
-					}
-
-					return types.Action{
-						Title:   msg.Title,
-						Type:    types.ActionTypeRun,
-						Command: msg.Command,
-						Params:  params,
-						Exit:    msg.Exit,
-						Reload:  msg.Reload,
-					}
-				}, formItems...)
-
-				c.form.SetSize(c.width, c.height)
-				return c, tea.Sequence(c.form.Init(), c.form.Focus())
-			}
-			c.form = nil
-
 			selection, ok := c.list.Selection()
 			if !ok {
 				return c, nil
@@ -219,16 +185,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.history.entries[selection.Id] = time.Now().Unix()
 			if err := c.history.Save(); err != nil {
 				return c, c.SetError(err)
-			}
-
-			extension, ok := c.extensions[msg.Extension]
-			if !ok {
-				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
-			}
-
-			command, ok := extension.Command(msg.Command)
-			if !ok {
-				return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
 			}
 
 			switch command.Mode {
@@ -330,12 +286,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, cmd
 	}
 
-	if c.form != nil {
-		page, cmd := c.form.Update(msg)
-		c.form = page.(*Form)
-		return c, cmd
-	}
-
 	page, cmd := c.list.Update(msg)
 	c.list = page.(*List)
 
@@ -345,9 +295,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 func (c *RootList) View() string {
 	if c.err != nil {
 		return c.err.View()
-	}
-	if c.form != nil {
-		return c.form.View()
 	}
 	return c.list.View()
 }
