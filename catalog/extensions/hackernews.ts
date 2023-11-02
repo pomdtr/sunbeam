@@ -6,13 +6,31 @@ import * as sunbeam from "npm:sunbeam-types@0.23.15"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
-        title: "Hacker ",
-        description: "Manage your RSS feeds",
+        title: "Hacker News",
+        root: [
+            {
+                title: "Front Page",
+                command: "browse",
+                params: {
+                    topic: "frontpage"
+                }
+            },
+            {
+                title: "Show Hacker News",
+                command: "browse",
+                params: {
+                    topic: "show"
+                }
+            }
+        ],
         commands: [
             {
-                name: "frontpage",
+                name: "browse",
                 title: "Show a feed",
                 mode: "list",
+                params: [
+                    { name: "topic", description: "Topic", required: true, type: "string" }
+                ],
             },
         ]
     };
@@ -22,8 +40,9 @@ if (Deno.args.length == 0) {
 }
 
 const payload = JSON.parse(Deno.args[0]) as sunbeam.CommandInput;
-if (payload.command == "frontpage") {
-    const feed = await new Parser().parseURL("https://hnrss.org/frontpage?description=0&count=25");
+if (payload.command == "browse") {
+    const { topic } = payload.params as { topic: string };
+    const feed = await new Parser().parseURL(`https://hnrss.org/${topic}?description=0&count=25`);
     const page: sunbeam.List = {
         items: feed.items.map((item) => ({
             title: item.title || "",
