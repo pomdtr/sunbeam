@@ -8,14 +8,17 @@ if [ $# -eq 0 ]; then
         description: "Open your favorite websites",
         commands: [
             {
-                name: "google",
-                title: "Open Google",
-                mode: "silent"
-            },
-            {
-                name: "workflowy-sunbeam",
-                title: "Open Sunbeam Tree",
-                mode: "silent"
+                name: "open",
+                title: "Open link",
+                mode: "silent",
+                params: [
+                    {
+                        name: "url",
+                        description: "URL",
+                        type: "string",
+                        required: true
+                    }
+                ],
             }
         ]
     }'
@@ -23,8 +26,7 @@ if [ $# -eq 0 ]; then
 fi
 
 COMMAND=$(echo "$1" | jq -r '.command')
-if [ "$COMMAND" = "google" ]; then
-    sunbeam open https://google.com
-elif [ "$COMMAND" = "workflowy-sunbeam" ]; then
-    sunbeam open https://workflowy.com/#/56ff341c7433
+if [ "$COMMAND" = "open" ]; then
+    URL=$(echo "$1" | jq -r '.params.url')
+    sunbeam open "$URL"
 fi
