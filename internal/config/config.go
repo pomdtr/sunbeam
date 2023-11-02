@@ -12,6 +12,7 @@ import (
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
+	"github.com/tailscale/hujson"
 	"mvdan.cc/sh/shell"
 )
 
@@ -27,20 +28,33 @@ type RootItem struct {
 	Command string `json:"command"`
 }
 
-var Path = filepath.Join(utils.ConfigHome(), "config.json")
+func Path() string {
+	if _, err := os.Stat(filepath.Join(utils.ConfigHome(), "config.jsonc")); err == nil {
+		return filepath.Join(utils.ConfigHome(), "config.jsonc")
+	}
+
+	return filepath.Join(utils.ConfigHome(), "config.json")
+
+}
 
 func Load() (Config, error) {
 	configPath := Path
-	if _, err := os.Stat(configPath); err != nil {
+	if _, err := os.Stat(configPath()); err != nil {
 		return Config{}, nil
 	}
 
 	var configBytes []byte
-	bts, err := os.ReadFile(configPath)
+	bts, err := os.ReadFile(configPath())
 	if err != nil {
 		return Config{}, err
 	}
-	configBytes = bts
+
+	if filepath.Ext(configPath()) == ".jsonc" {
+		configBytes, err = hujson.Standardize(bts)
+		if err != nil {
+			return Config{}, err
+		}
+	}
 
 	var config Config
 	if err := json.Unmarshal(configBytes, &config); err != nil {

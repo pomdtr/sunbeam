@@ -43,7 +43,7 @@ func NewCmdEdit() *cobra.Command {
 			}
 
 			if flags.config {
-				editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), config.Path))
+				editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), config.Path()))
 				editCmd.Stdin = os.Stdin
 				editCmd.Stdout = os.Stdout
 				editCmd.Stderr = os.Stderr

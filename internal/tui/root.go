@@ -12,6 +12,7 @@ import (
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -100,9 +101,8 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+e":
-			configFile := filepath.Join(utils.ConfigHome(), "config.json")
 			editor := utils.FindEditor()
-			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, configFile))
+			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, config.Path()))
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
@@ -142,12 +142,13 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 
 					return types.Action{
-						Title:   msg.Title,
-						Type:    types.ActionTypeRun,
-						Command: msg.Command,
-						Params:  params,
-						Exit:    msg.Exit,
-						Reload:  msg.Reload,
+						Title:     msg.Title,
+						Type:      types.ActionTypeRun,
+						Extension: msg.Extension,
+						Command:   msg.Command,
+						Params:    params,
+						Exit:      msg.Exit,
+						Reload:    msg.Reload,
 					}
 				}, missing...)
 
