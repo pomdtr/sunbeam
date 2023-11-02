@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
@@ -93,36 +94,11 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			Short:  command.Title,
 			Hidden: command.Hidden,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				input := types.CommandInput{
-					Command: command.Name,
-					Params:  make(map[string]any),
-				}
-
-				// load params from stdin
-				if !isatty.IsTerminal(os.Stdin.Fd()) {
-					i, err := io.ReadAll(os.Stdin)
-					if err != nil {
-						return err
-					}
-
-					if len(i) > 0 {
-						if err := json.Unmarshal(i, &input); err != nil {
-							return err
-						}
-					}
-				}
+				params := make(map[string]any)
 
 				for _, param := range command.Params {
 					if !cmd.Flags().Changed(param.Name) {
-						if _, ok := input.Params[param.Name]; ok {
-							continue
-						}
-
-						if !param.Required {
-							continue
-						}
-
-						return fmt.Errorf("%s is a required parameter", param.Name)
+						continue
 					}
 
 					switch param.Type {
@@ -131,23 +107,45 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 						if err != nil {
 							return err
 						}
-						input.Params[param.Name] = value
+						params[param.Name] = value
 					case types.ParamTypeBoolean:
 						value, err := cmd.Flags().GetBool(param.Name)
 						if err != nil {
 							return err
 						}
-						input.Params[param.Name] = value
+						params[param.Name] = value
 					case types.ParamTypeNumber:
 						value, err := cmd.Flags().GetInt(param.Name)
 						if err != nil {
 							return err
 						}
-						input.Params[param.Name] = value
+						params[param.Name] = value
 					}
 				}
 
+				input := types.CommandInput{
+					Command: command.Name,
+					Params:  params,
+				}
+
+				if !isatty.IsTerminal(os.Stdin.Fd()) {
+					stdin, err := io.ReadAll(os.Stdin)
+					if err != nil {
+						return err
+					}
+
+					input.Query = string(stdin)
+				}
+
+				missing := tui.FindMissingParams(command.Params, params)
 				if !isatty.IsTerminal(os.Stdout.Fd()) {
+					if len(missing) > 0 {
+						names := make([]string, len(missing))
+						for i, param := range missing {
+							names[i] = param.Name
+						}
+						return fmt.Errorf("missing required params: %s", strings.Join(names, ", "))
+					}
 					output, err := extension.Output(input)
 
 					if err != nil {
@@ -159,6 +157,26 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					}
 
 					return nil
+				}
+
+				if len(missing) > 0 {
+					cancelled := true
+					form := tui.NewForm(func(values map[string]any) tea.Msg {
+						cancelled = false
+						for k, v := range values {
+							input.Params[k] = v
+						}
+
+						return tui.ExitMsg{}
+					}, missing...)
+
+					if err := tui.Draw(form); err != nil {
+						return err
+					}
+
+					if cancelled {
+						return nil
+					}
 				}
 
 				switch command.Mode {
