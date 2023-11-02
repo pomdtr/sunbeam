@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/tailscale/hujson"
 	"mvdan.cc/sh/shell"
@@ -56,6 +57,10 @@ func Load() (Config, error) {
 		}
 	}
 
+	if err := schemas.ValidateConfig(configBytes); err != nil {
+		return Config{}, fmt.Errorf("invalid config: %w", err)
+	}
+
 	var config Config
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
@@ -81,6 +86,7 @@ func Load() (Config, error) {
 }
 
 func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (types.ListItem, error) {
+	// extract args from the command
 	args, err := shell.Fields(item.Command, func(s string) string {
 		if v, ok := os.LookupEnv(s); ok {
 			return v
@@ -93,7 +99,6 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 		return ""
 	})
 
-	// If the command is not a sunbeam command, just run it
 	if err != nil {
 		return types.ListItem{
 			Title:       item.Title,

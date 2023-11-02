@@ -11,6 +11,10 @@
             "description": "A list of commands that will be shown in the root list",
             "items": {
                 "type": "object",
+                "required": [
+                    "title",
+                    "command"
+                ],
                 "additionalProperties": false,
                 "properties": {
                     "title": {
