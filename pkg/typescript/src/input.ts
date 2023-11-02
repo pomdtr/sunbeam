@@ -1,6 +1,5 @@
 type InputProps = {
     title: string;
-    required?: boolean;
 }
 
 type TextInput = {

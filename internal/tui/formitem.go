@@ -49,9 +49,8 @@ func NewTextArea(name string, input types.TextArea) FormItem {
 	ta.SetHeight(5)
 
 	return FormItem{
-		Name:     name,
-		Title:    input.Title,
-		Required: input.Required,
+		Name:  name,
+		Title: input.Title,
 		FormInput: &TextArea{
 			Model: ta,
 			title: input.Title,
@@ -94,9 +93,8 @@ func NewTextItem(name string, input types.Text) FormItem {
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
 	return FormItem{
-		Name:     name,
-		Title:    input.Title,
-		Required: input.Required,
+		Name:  name,
+		Title: input.Title,
 		FormInput: &TextInput{
 			title:       input.Title,
 			Model:       ti,
@@ -148,9 +146,8 @@ type Checkbox struct {
 
 func NewCheckbox(name string, input types.Checkbox) FormItem {
 	return FormItem{
-		Name:     name,
-		Title:    input.Label,
-		Required: input.Required,
+		Name:  name,
+		Title: input.Label,
 		FormInput: &Checkbox{
 			label:   input.Label,
 			checked: input.Default,
@@ -287,7 +284,6 @@ func NewSelect(name string, input types.Select) FormItem {
 	return FormItem{
 		Name:      name,
 		Title:     input.Title,
-		Required:  input.Required,
 		FormInput: &dropdown,
 	}
 }

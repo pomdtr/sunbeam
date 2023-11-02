@@ -126,17 +126,31 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.Action:
 		switch msg.Type {
 		case types.ActionTypeRun:
+			command, ok := c.extension.Command(msg.Command)
+			if !ok {
+				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Command))
+				c.embed.SetSize(c.width, c.height)
+				return c, c.embed.Init()
+			}
+
 			var formItems []FormItem
-			for k, v := range msg.Params {
+			for _, param := range command.Params {
+				v, ok := msg.Params[param.Name]
+				if !ok && param.Required {
+					c.embed = NewErrorPage(fmt.Errorf("missing required parameter %s", param.Name))
+					c.embed.SetSize(c.width, c.height)
+					return c, c.embed.Init()
+				}
+
 				switch v := v.(type) {
 				case types.Text:
-					formItems = append(formItems, NewTextItem(k, v))
+					formItems = append(formItems, NewTextItem(param.Name, v))
 				case types.TextArea:
-					formItems = append(formItems, NewTextArea(k, v))
+					formItems = append(formItems, NewTextArea(param.Name, v))
 				case types.Checkbox:
-					formItems = append(formItems, NewCheckbox(k, v))
+					formItems = append(formItems, NewCheckbox(param.Name, v))
 				case types.Select:
-					formItems = append(formItems, NewSelect(k, v))
+					formItems = append(formItems, NewSelect(param.Name, v))
 				}
 			}
 
@@ -165,13 +179,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, tea.Sequence(c.form.Init(), c.form.Focus())
 			}
 			c.form = nil
-
-			command, ok := c.extension.Command(msg.Command)
-			if !ok {
-				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Command))
-				c.embed.SetSize(c.width, c.height)
-				return c, c.embed.Init()
-			}
 
 			switch command.Mode {
 			case types.CommandModeList, types.CommandModeDetail:

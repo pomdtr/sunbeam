@@ -8,8 +8,6 @@
     "type": "text",
     // the title of the input (required)
     "title": "Name",
-    // whether the input is required (optional)
-    "required": true,
     // the placeholder of the input (optional)
     "placeholder": "Your name",
     // the default value of the input (optional)
@@ -25,8 +23,6 @@
     "type": "textarea",
     // the title of the input (required)
     "title": "Query",
-    // whether the input is required (optional)
-    "required": true,
     // the placeholder of the input (optional)
     "placeholder": "Query",
     // the default value of the input (optional)
@@ -42,8 +38,6 @@
     "type": "checkbox",
     // the title of the input (required)
     "title": "Admin",
-    // whether the input is required (optional)
-    "required": true,
     // the default value of the input (required)
     "label": "Is admin?",
     // the default value of the input (optional)
@@ -59,8 +53,6 @@
     "type": "select",
     // the title of the input (required)
     "title": "Language",
-    // whether the input is required (optional)
-    "required": true,
     // the options of the input (required)
     "options": [
         {
