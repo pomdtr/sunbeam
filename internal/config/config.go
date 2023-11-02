@@ -93,8 +93,21 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 		return ""
 	})
 
+	// If the command is not a sunbeam command, just run it
 	if err != nil {
-		return types.ListItem{}, err
+		return types.ListItem{
+			Title:       item.Title,
+			Subtitle:    "Root Command",
+			Accessories: []string{"root"},
+			Actions: []types.Action{
+				{
+					Title: item.Title,
+					Type:  types.ActionTypeExec,
+					Args:  []string{"sh", "-c", item.Command},
+					Exit:  true,
+				},
+			},
+		}, nil
 	}
 
 	if len(args) == 0 {
