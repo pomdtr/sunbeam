@@ -24,16 +24,8 @@ Sunbeam provides multiple helpers for writing scripts in POSIX shell, but you ca
 The only requirement is that your language of choice can read and write JSON.
 
 Creating a new extension is as easy as writing a script.
+
 You can share your scripts with others by just hosting them on a public url.
-
-Example Extensions:
-
-- [VS Code (typescript)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/vscode.ts)
-- [File Browser (python)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/files.py)
-- [Bitwarden (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/bitwarden.sh)
-- [Github (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/github.sh)
-- [TLDR Pages (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/tldr.sh)
-- [Devdocs (sh)](https://github.com/pomdtr/sunbeam-extensions/tree/main/extensions/devdocs.sh)
 
 ## Integrates with your favorite apps
 

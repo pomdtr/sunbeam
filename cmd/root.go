@@ -233,6 +233,7 @@ func ExtensionRootItems(alias string, extension extensions.Extension) []types.Li
 		if extension.Type == extensions.ExtensionTypeLocal {
 			listItem.Actions = append(listItem.Actions, types.Action{
 				Title:  "Edit",
+				Key:    "e",
 				Type:   types.ActionTypeEdit,
 				Target: extension.Entrypoint,
 			})
@@ -240,6 +241,7 @@ func ExtensionRootItems(alias string, extension extensions.Extension) []types.Li
 
 		listItem.Actions = append(listItem.Actions, types.Action{
 			Title:  "Copy Origin",
+			Key:    "c",
 			Type:   types.ActionTypeCopy,
 			Target: extension.Origin,
 		})

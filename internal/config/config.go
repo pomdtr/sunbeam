@@ -155,7 +155,6 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 					Key:   "c",
 					Type:  types.ActionTypeCopy,
 					Text:  item.Command,
-					Exit:  true,
 				},
 			},
 		}, nil
@@ -183,7 +182,6 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 					Key:   "c",
 					Type:  types.ActionTypeCopy,
 					Text:  item.Command,
-					Exit:  true,
 				},
 			},
 		}, nil
@@ -208,7 +206,6 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 					Key:   "c",
 					Type:  types.ActionTypeCopy,
 					Text:  item.Command,
-					Exit:  true,
 				},
 			},
 		}, nil
@@ -234,7 +231,7 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 		}
 
 		return types.ListItem{
-			Id:          fmt.Sprintf("root - %s", item.Title),
+			Id:          fmt.Sprintf("%s - %s", alias, item.Title),
 			Title:       item.Title,
 			Subtitle:    extension.Title,
 			Accessories: []string{alias},
@@ -246,6 +243,12 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 					Command:   command.Name,
 					Params:    params,
 					Exit:      true,
+				},
+				{
+					Title: "Copy Command",
+					Key:   "c",
+					Type:  types.ActionTypeCopy,
+					Text:  item.Command,
 				},
 			},
 		}, nil
