@@ -62,7 +62,7 @@ func (c *RootList) Reload() tea.Msg {
 	c.environ = environ
 	c.extensions = extensionMap
 	c.history.Sort(rootItems)
-	c.list.SetEmptyText("No results found, hit alt+enter to run as shell command")
+	c.list.SetEmptyText("No results found, hit enter to run as shell command")
 	c.list.SetIsLoading(false)
 	c.list.SetItems(rootItems...)
 	return nil
@@ -101,8 +101,8 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "alt+enter":
-			if _, ok := c.list.Selection(); ok {
+		case "enter", "alt+enter":
+			if _, ok := c.list.Selection(); ok && msg.String() == "enter" {
 				break
 			}
 
