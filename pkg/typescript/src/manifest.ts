@@ -43,8 +43,8 @@ type NumberParam = {
   default?: number;
 } & ParamsProps;
 
-type InputParams = Record<string, string | number | boolean>;
-export type CommandInput<T extends InputParams = InputParams> = {
+type PayloadParams = Record<string, string | number | boolean>;
+export type Payload<T extends PayloadParams = PayloadParams> = {
   command: string;
   params: T;
   query?: string;
