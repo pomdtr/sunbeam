@@ -16,7 +16,7 @@ if (Deno.args.length == 0) {
                 }
             },
             {
-                title: "Show Hacker News",
+                title: "Show HN",
                 command: "browse",
                 params: {
                     topic: "show"
