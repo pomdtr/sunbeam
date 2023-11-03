@@ -4,55 +4,42 @@ Sunbeam is a built for the terminal first, but it can be used in other contexts.
 
 ## Terminals
 
-### Hyper
+### Hyper (recommended)
 
 [Hyper](https://hyper.is/) is a cross-platform terminal emulator, built on web technologies.
+
+Hyper is highly extensible, making it a great host for sunbeam.
 
 You can use the [sunbeam plugin](https://www.npmjs.com/package/hyper-sunbeam) to make hyper behave as an application launcher.
 The plugin has been tested on macOS, but it should work on other platforms as well.
 
-Here is is my config:
+Here is an example config:
 
 ```js
 "use strict";
 // See https://hyper.is#cfg for all currently supported options.
 module.exports = {
     config: {
-        // default font size in pixels for all tabs
         fontSize: 13,
-        // custom padding (CSS format, i.e.: `top right bottom left`)
         padding: '10px 0px 5px 5px',
-        // the shell to run when spawning a new session (i.e. /usr/local/bin/fish)
-        // if left empty, your system's login shell will be used by default
-        shell: '/opt/homebrew/bin/fish',
-        // for setting shell arguments (i.e. for using interactive shellArgs: `['-i']`)
-        // by default `['--login']` will be used
+        shell: '/opt/homebrew/bin/fish', // set this to your shell
         shellArgs: ['--login', '-c', 'sunbeam'],
-        // for environment variables
         env: {
-            "EDITOR": "kak"
+            "EDITOR": "vim",
         },
         windowSize: [600, 350],
-        // for advanced config flags please refer to https://hyper.is/#cfg
         modifierKeys: {
             altIsMeta: true
         },
         sunbeam: {
-            hotkey: 'Alt+Super+Shift+Control+Space',
-        },
-        hypest: {
-            vibrancy: true,
-            hideControls: true,
-            darkmode: true,
-            borders: true
+            hotkey: 'Alt+Super+Space', // tweak this to your liking
         }
     },
     // a list of plugins to fetch and install from npm
     plugins: [
-        "hyper-sunbeam",
-        "hyperminimal",
-        "hyperborder",
-        "hyper-hypest",
+        "hyper-sunbeam", // transform hyper into a launcher
+        "hyperminimal", // strip title bar
+        "hyperborder", // add a gradient border around the window
     ]
 };
 //# sourceMappingURL=config-default.js.map
@@ -64,13 +51,13 @@ module.exports = {
 
 Alacritty is not easily extensible, so you will have to handle the application launcher features yourself (hotkey, centering, blur, ect.).
 
-It is a good choice if you use a tiling window manager, as they usually have built-in support for advanced window management.
+It is a good choice if you are already using tiling window manager, as they usually allow you to setup an hotkey to launch a program, and to center it on the screen.
 
 Use this config as a starting point:
 
 ```yml
 shell:
-  program: /bin/bash
+  program: /bin/bash # set this to your shell
   args: ["-lic", "sunbeam"]
 
 window:
@@ -90,7 +77,7 @@ font:
 ```
 
 If you don't plan to use Alacritty as your primary terminal, you can just save it as `~/.config/alacritty/alacritty.yml`.
-Otherwise, use the `config-file` flag when launching alacritty: `alacritty -c ~/.config/alacritty/sunbeam.yml`.
+Otherwise, use the `config-file` flag when launching alacritty: `alacritty --config-file ~/.config/alacritty/sunbeam.yml`.
 
 ## Editors
 
@@ -127,3 +114,34 @@ Then run the `Preferences: Open Default Keyboard Shortcuts (JSON)` command and a
 ```
 
 Trigger the keybinding and you should see the sunbeam menu appear in the terminal panel.
+
+## Multiplexers
+
+Sunbeam can easily be integrated with terminal multiplexers like tmux or zellij.
+
+### tmux
+
+```sh
+tmux popup -E sunbeam # open sunbeam in a popup
+tmux display-popup -E sunbeam devdocs list-docsets # list devdocs docsets in a popup
+```
+
+To bind it to a key, add this line to your tmux config:
+
+```tmux
+bind-key -n C-Space display-popup -E sunbeam
+```
+
+### zellij
+
+```sh
+zellij run --floating --close-on-exit -- htop
+```
+
+Binding this command to a key is not supported yet, as zellij [does not support floating panes in its config file yet](https://github.com/zellij-org/zellij/discussions/2518).
+
+## GUI
+
+A sunbeam GUI is in the works, but it is not ready yet.
+
+It will be close to the current hyper integration, but available as a standalone app.

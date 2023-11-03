@@ -4,11 +4,6 @@
 
 To create a sunbeam extension, we only need a single script.
 
-```sh
-# Create a script named sunbeam-devdocs and make it executable
-touch sunbeam-extension && chmod +x sunbeam-devdocs
-```
-
 ## Writing the manifest
 
 When the script is called without arguments, it must return a json manifest describing the extension and its commands.
@@ -21,7 +16,6 @@ The `query` command allows you to manipulate json using the jq syntax.
 If you are not familiar with jq, I recommend reading this tutorial: <https://earthly.dev/blog/jq-select/>
 
 Note that the script must be executable, and must have a shebang line at the top indicating the interpreter to use.
-The following tutorial will use `#!/bin/sh`, but you can use any interpreter you want (e.g. `/usr/bin/env python3` or `/usr/bin/env -S deno run -A`).
 
 ```sh
 #!/bin/sh
@@ -44,7 +38,8 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-# TODO: handle commands
+echo "Not implemented" >&2
+exit 1
 ```
 
 Here we define a single command named `search-docsets`, with a `view` mode.
@@ -56,7 +51,7 @@ $ ./sunbeam-devdocs
 {
   "commands": [
     {
-      "mode": "page",
+      "mode": "list",
       "name": "search-docsets",
       "title": "Search docsets"
     }
@@ -114,10 +109,12 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-# When the command name is "search-docsets", the list of docsets is returned
-if [ "$1" = "search-docsets" ]; then
-  sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query '{
+# extract the command name from the payload passed as first argument to the script
+COMMAND=$(echo "$1" | jq -r '.command')
 
+# When the command name is "search-docsets", the list of docsets is returned
+if [ "$COMMAND" = "search-docsets" ]; then
+  sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query '{
     items: map({
       title: .name,
       subtitle: (.release // "latest"),
@@ -158,7 +155,6 @@ This extension is still pretty basic. Sunbeam really shines when you start chain
 
 set -eu
 
-# When the number of arguments is 0, return the manifest
 if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Devdocs",
@@ -186,11 +182,12 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-if [ "$1" = "search-docsets" ]; then
+COMMAND=$(echo "$1" | jq -r '.command')
+if [ "$COMMAND" = "search-docsets" ]; then
     # ...
-elif [ "$1" = "search-entries" ]; then
-    # we extract the slug param from stdin
-    DOCSET=$(sunbeam query -r '.params.docset')
+elif [ "$COMMAND" = "search-entries" ]; then
+    # we extract the slug param from the payload
+    DOCSET=$(echo "$1" | sunbeam query -r '.params.docset')
 
     sunbeam fetch "https://devdocs.io/docs/$DOCSET/index.json" | sunbeam query --arg docset="$DOCSET" '.entries | {
 
@@ -244,8 +241,10 @@ Use "extension [command] --help" for more information about a command.
 Let's run the command to see the generated view:
 
 ```console
-sunbeam run ./sunbeam-devdocs  search-entries --docset=go
+sunbeam run ./sunbeam-devdocs search-entries --docset=go
 ```
+
+If you run the `search-entries` command without providing the `docset` parameter, a form will will be shown for you to fill the missing parameters.
 
 If we want to be able to go from the docsets list to the entries list, we can add `run` action to the docsets list:
 
@@ -261,7 +260,6 @@ fi
 
 if [ "$1" = "search-docsets" ]; then
     sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query '{
-
         items: map({
           title: .name,
           subtitle: (.release // "latest"),
@@ -333,8 +331,11 @@ Make sure to add a `README.md` file to your repository, so that users can learn 
 
 ## What's next?
 
-This guide is only a quick introduction to sunbeam extensions. There are many more features available, such as:
-  - Displaying markdown or ANSI text using the `detail` view
-  - Dynamically generate items using the `reload` property of the `list` view
+Sunbeam provides a lot of additional features, like:
+
+- displaying text content highlighted as ANSI or markdown using the `detail` mode
+- Running tuis using the `tty` mode
+- Refresh list items each time the query changes by setting the `dynamic` field to true in a `list` payload
+- and more...
 
 This section of the documentation is still a work in progress, but you can already check out the [existing extensions](https://github.com/pomdtr/sunbeam/tree/main/catalog) to see what's possible.

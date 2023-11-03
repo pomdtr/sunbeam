@@ -10,7 +10,9 @@
 
 # Developer Guide
 
-- [Writing your Extension](./developer-guide/script-extensions.md)
+- [Writing your first Extension](./developer-guide/script-extensions.md)
+- [Leveraging Shebangs](./developer-guide/leveraging-shebangs.md)
+- [Handling Dependencies](./developer-guide/handling-dependencies.md)
 
 # Reference
 

@@ -18,10 +18,28 @@ import (
 )
 
 type Config struct {
+	Schema  string            `json:"$schema,omitempty"`
 	Root    []RootItem        `json:"root,omitempty"`
 	EnvMap  map[string]string `json:"env,omitempty"`
 	EnvFile string            `json:"envFile,omitempty"`
 	Env     map[string]string `json:"-"`
+}
+
+var DefaultConfig = Config{
+	Schema: "https://github.com/pomdtr/sunbeam/releases/latest/download/config.schema.json",
+	Root: []RootItem{
+		{
+			Title:   "Open Sunbeam Docs",
+			Command: "sunbeam open https://pomdtr.github.io/sunbeam/book/introduction.html",
+		},
+		{
+			Title:   "Edit Config",
+			Command: "sunbeam edit --config",
+		},
+	},
+	EnvMap: map[string]string{
+		"HELLO": "world",
+	},
 }
 
 type RootItem struct {
@@ -39,22 +57,43 @@ func Path() string {
 }
 
 func Load() (Config, error) {
-	configPath := Path
-	if _, err := os.Stat(configPath()); err != nil {
-		return Config{}, nil
+	configPath := Path()
+	if _, err := os.Stat(configPath); err != nil {
+		configBytes, err := json.MarshalIndent(DefaultConfig, "", "  ")
+		if err != nil {
+			return Config{}, err
+		}
+
+		if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+			return Config{}, err
+		}
+
+		f, err := os.Create(configPath)
+		if err != nil {
+			return Config{}, err
+		}
+		defer f.Close()
+
+		if _, err := f.Write(configBytes); err != nil {
+			return Config{}, err
+		}
+
+		return DefaultConfig, nil
 	}
 
 	var configBytes []byte
-	bts, err := os.ReadFile(configPath())
+	configBytes, err := os.ReadFile(configPath)
 	if err != nil {
 		return Config{}, err
 	}
 
-	if filepath.Ext(configPath()) == ".jsonc" {
-		configBytes, err = hujson.Standardize(bts)
+	if filepath.Ext(configPath) == ".jsonc" {
+		bts, err := hujson.Standardize(configBytes)
 		if err != nil {
 			return Config{}, err
 		}
+
+		configBytes = bts
 	}
 
 	if err := schemas.ValidateConfig(configBytes); err != nil {
@@ -98,9 +137,9 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 
 		return ""
 	})
-
 	if err != nil {
 		return types.ListItem{
+			Id:          fmt.Sprintf("root - %s", item.Title),
 			Title:       item.Title,
 			Subtitle:    "Root Command",
 			Accessories: []string{"root"},
@@ -109,6 +148,13 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 					Title: item.Title,
 					Type:  types.ActionTypeExec,
 					Args:  []string{"sh", "-c", item.Command},
+					Exit:  true,
+				},
+				{
+					Title: "Copy Command",
+					Key:   "c",
+					Type:  types.ActionTypeCopy,
+					Text:  item.Command,
 					Exit:  true,
 				},
 			},
@@ -121,6 +167,7 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 
 	if args[0] != "sunbeam" {
 		return types.ListItem{
+			Id:          fmt.Sprintf("root - %s", item.Title),
 			Title:       item.Title,
 			Subtitle:    "Root Command",
 			Accessories: []string{"root"},
@@ -131,6 +178,13 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 					Args:  []string{"sh", "-c", item.Command},
 					Exit:  true,
 				},
+				{
+					Title: "Copy Command",
+					Key:   "c",
+					Type:  types.ActionTypeCopy,
+					Text:  item.Command,
+					Exit:  true,
+				},
 			},
 		}, nil
 	}
@@ -138,6 +192,7 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 	switch args[1] {
 	case "open", "edit":
 		return types.ListItem{
+			Id:          fmt.Sprintf("root - %s", item.Title),
 			Title:       item.Title,
 			Subtitle:    "Root Command",
 			Accessories: []string{"root"},
@@ -146,6 +201,13 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 					Title: "Run",
 					Type:  types.ActionTypeExec,
 					Args:  args,
+					Exit:  true,
+				},
+				{
+					Title: "Copy Command",
+					Key:   "c",
+					Type:  types.ActionTypeCopy,
+					Text:  item.Command,
 					Exit:  true,
 				},
 			},
@@ -172,6 +234,7 @@ func (c Config) RootItem(item RootItem, extensions extensions.ExtensionMap) (typ
 		}
 
 		return types.ListItem{
+			Id:          fmt.Sprintf("root - %s", item.Title),
 			Title:       item.Title,
 			Subtitle:    extension.Title,
 			Accessories: []string{alias},

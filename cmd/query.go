@@ -24,9 +24,9 @@ func NewCmdQuery() *cobra.Command {
 	}
 
 	queryCmd := &cobra.Command{
-		Use:     "query <query> [file]",
+		Use:     "query [query] [file]",
 		Short:   "Transform or generate JSON using a jq query",
-		Args:    cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+		Args:    cobra.MatchAll(cobra.MaximumNArgs(2)),
 		GroupID: CommandGroupDev,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
@@ -55,7 +55,14 @@ func NewCmdQuery() *cobra.Command {
 				values = append(values, value)
 			}
 
-			query, err := gojq.Parse(args[0])
+			var rawQuery string
+			if len(args) > 0 {
+				rawQuery = args[0]
+			} else {
+				rawQuery = "."
+			}
+
+			query, err := gojq.Parse(rawQuery)
 			if err != nil {
 				return fmt.Errorf("could not parse query: %s", err)
 			}
