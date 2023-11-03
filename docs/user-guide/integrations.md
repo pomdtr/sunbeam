@@ -1,6 +1,8 @@
 # Integrations
 
-Sunbeam is a built for the terminal first, but it can be used in other contexts. This section lists the available clients (outside of the TUI bundled with sunbeam).
+Sunbeam is a terminal-based application, so it can be integrated with any terminal, multiplexer or editor.
+
+Here is a non-exhaustive list of integrations. If you have an integration you would like to share, feel free to open a PR.
 
 ## Terminals
 
@@ -79,6 +81,31 @@ font:
 If you don't plan to use Alacritty as your primary terminal, you can just save it as `~/.config/alacritty/alacritty.yml`.
 Otherwise, use the `config-file` flag when launching alacritty: `alacritty --config-file ~/.config/alacritty/sunbeam.yml`.
 
+## Multiplexers
+
+Sunbeam can easily be integrated with terminal multiplexers like tmux or zellij.
+
+### tmux
+
+```sh
+tmux popup -E sunbeam # open sunbeam in a popup
+tmux display-popup -E sunbeam devdocs list-docsets # list devdocs docsets in a popup
+```
+
+To bind it to a key, add this line to your tmux config:
+
+```tmux
+bind-key -n C-Space display-popup -E sunbeam
+```
+
+### zellij
+
+```sh
+zellij run --floating --close-on-exit -- htop
+```
+
+Binding this command to a key is not supported yet, as zellij [does not support floating panes in its config file yet](https://github.com/zellij-org/zellij/discussions/2518).
+
 ## Editors
 
 ### Visual Studio Code
@@ -115,30 +142,27 @@ Then run the `Preferences: Open Default Keyboard Shortcuts (JSON)` command and a
 
 Trigger the keybinding and you should see the sunbeam menu appear in the terminal panel.
 
-## Multiplexers
+### Kakoune
 
-Sunbeam can easily be integrated with terminal multiplexers like tmux or zellij.
+You can use the [popup.kak](https://github.com/enricozb/popup.kak) plugin to show sunbeam in a popup.
 
-### tmux
+```
+evaluate-commands %sh{kak-popup init}
 
-```sh
-tmux popup -E sunbeam # open sunbeam in a popup
-tmux display-popup -E sunbeam devdocs list-docsets # list devdocs docsets in a popup
+define-command -override -params .. sunbeam %{ popup --title open -- sunbeam %arg{@} }
+
+map global user <space> ':sunbeam<ret>' -docstring "Show Sunbeam"
 ```
 
-To bind it to a key, add this line to your tmux config:
+### Vim / Neovim
 
-```tmux
-bind-key -n C-Space display-popup -E sunbeam
-```
+Checkout the following plugins:
 
-### zellij
+- [floaterm](https://github.com/voldikss/vim-floaterm)
+- [FTerm.nvim](https://github.com/numToStr/FTerm.nvim)
+- [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim)
 
-```sh
-zellij run --floating --close-on-exit -- htop
-```
-
-Binding this command to a key is not supported yet, as zellij [does not support floating panes in its config file yet](https://github.com/zellij-org/zellij/discussions/2518).
+or just use the `:terminal` command.
 
 ## GUI
 
