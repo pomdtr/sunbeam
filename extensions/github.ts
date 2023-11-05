@@ -1,9 +1,7 @@
 #!/usr/bin/env deno run -A
 
-import type * as sunbeam from "npm:sunbeam-types@0.23.16";
+import type * as sunbeam from "npm:sunbeam-types@0.23.18";
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
-
-
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
@@ -114,6 +112,13 @@ async function run(payload: sunbeam.Payload) {
                         }
                     },
                     {
+                        title: "Open In Browser",
+                        key: "o",
+                        type: "open",
+                        target: item.html_url,
+                        exit: true
+                    },
+                    {
                         title: "List Issues",
                         key: "i",
                         type: "run",
@@ -169,7 +174,14 @@ async function run(payload: sunbeam.Payload) {
                 ],
                 actions: [
                     {
+                        title: "Open In Browser",
+                        type: "open",
+                        target: item.html_url,
+                        exit: true
+                    },
+                    {
                         title: "Copy URL",
+                        key: "c",
                         type: "copy",
                         text: item.html_url,
                         exit: true
@@ -200,7 +212,14 @@ async function run(payload: sunbeam.Payload) {
                 ],
                 actions: [
                     {
+                        title: "Open In Browser",
+                        type: "open",
+                        target: item.html_url,
+                        exit: true
+                    },
+                    {
                         title: "Copy URL",
+                        key: "c",
                         type: "copy",
                         text: item.html_url,
                         exit: true
@@ -227,7 +246,7 @@ async function run(payload: sunbeam.Payload) {
 
         const detail: sunbeam.Detail = {
             text: markdown,
-            highlight: "markdown",
+            format: "markdown",
             actions: [
                 {
                     title: "List Issues",

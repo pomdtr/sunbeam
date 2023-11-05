@@ -80,7 +80,7 @@ Sleep 1s Type "excalidraw" Sleep 3s Tab Sleep 1s  Enter
 Sleep 1s Type "jjjjjjj" Sleep 500ms Tab Sleep 500ms Tab Sleep 1s Enter
 
 # Pull Requests
-Sleep 3s Down Sleep 500ms Down Sleep 500ms Tab Sleep 1s Enter
+Sleep 3s Down Sleep 500ms Down Sleep 500ms Tab Sleep 500ms Tab Sleep 1s Enter
 
 # Shell
 Sleep 1s Type 'printf "Copied PR link: %s\n" "$(pbpaste)"' Sleep 500ms Enter
