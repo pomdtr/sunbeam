@@ -1,3 +1,5 @@
+# Sunbeam
+
 Sunbeam is a general purpose command-line launcher.
 
 Define UIs composed of a succession of views from simple scripts written in any language.
