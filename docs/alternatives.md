@@ -1,4 +1,4 @@
-## Alternatives
+# Alternatives
 
 Sunbeam wouldn't exist without taking inspirations from these incredible tools.
 

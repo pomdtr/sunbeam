@@ -5,7 +5,8 @@
   },
   "yaml.validate": false,
   "deno.enablePaths": [
-    "./catalog",
-    "./cmd/templates"
+    "./extensions",
+    "./cmd/templates",
+    "./scripts"
   ]
 }

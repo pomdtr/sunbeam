@@ -1,4 +1,8 @@
-# Sunbeam Extensions
+---
+sidebar: false
+---
+
+# Extension Catalog
 
 ## Installing an Extension
 

@@ -8,6 +8,8 @@ Here is a non-exhaustive list of integrations. If you have an integration you wo
 
 ### Hyper (recommended)
 
+![](../assets/hyper.jpeg)
+
 [Hyper](https://hyper.is/) is a cross-platform terminal emulator, built on web technologies.
 
 Hyper is highly extensible, making it a great host for sunbeam.
@@ -48,6 +50,8 @@ module.exports = {
 ```
 
 ### Alacritty
+
+![](../assets/alacritty.jpeg)
 
 [Alacritty](https://github.com/alacritty/alacritty) is a cross-platform terminal emulator.
 
@@ -94,7 +98,7 @@ tmux display-popup -E sunbeam devdocs list-docsets # list devdocs docsets in a p
 
 To bind it to a key, add this line to your tmux config:
 
-```tmux
+```
 bind-key -n C-Space display-popup -E sunbeam
 ```
 
@@ -109,6 +113,8 @@ Binding this command to a key is not supported yet, as zellij [does not support 
 ## Editors
 
 ### Visual Studio Code
+
+![](../assets/vscode.png)
 
 Run the `Tasks: Open User Tasks` item from the command palette, then paste the following text:
 
@@ -164,7 +170,7 @@ Checkout the following plugins:
 
 or just use the `:terminal` command.
 
-## GUI
+## GUI (TODO)
 
 A sunbeam GUI is in the works, but it is not ready yet.
 

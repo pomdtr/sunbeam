@@ -1,3 +1,9 @@
+---
+outline: 2
+---
+
+# CLI
+
 ## sunbeam
 
 Command Line Launcher
@@ -190,18 +196,34 @@ sunbeam completion zsh [flags]
       --no-descriptions   disable completion descriptions
 ```
 
-## sunbeam docs
+## sunbeam copy
 
-Generate documentation for sunbeam
+Copy text from stdin or paste text to stdout
 
 ```
-sunbeam docs [flags]
+sunbeam copy [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for docs
+  -h, --help   help for copy
+```
+
+## sunbeam edit
+
+Open a file in your editor
+
+```
+sunbeam edit [file] [flags]
+```
+
+### Options
+
+```
+  -c, --config             Edit the config file
+  -e, --extension string   File extension to use for temporary file
+  -h, --help               help for edit
 ```
 
 ## sunbeam extension
@@ -212,6 +234,29 @@ Manage extensions
 
 ```
   -h, --help   help for extension
+```
+
+## sunbeam extension create
+
+Create an extension
+
+```
+sunbeam extension create <output> [flags]
+```
+
+### Examples
+
+```
+sunbeam extension create my-extension.sh
+sunbeam extension create --language sh my-extension
+
+```
+
+### Options
+
+```
+  -h, --help              help for create
+  -l, --language string   language for extension
 ```
 
 ## sunbeam extension edit
@@ -247,6 +292,21 @@ sunbeam extension help [command] [flags]
   -h, --help   help for help
 ```
 
+## sunbeam extension install
+
+Install an extension
+
+```
+sunbeam extension install <src> [flags]
+```
+
+### Options
+
+```
+  -a, --alias string   alias for extension
+  -h, --help           help for install
+```
+
 ## sunbeam extension list
 
 List installed extensions
@@ -259,6 +319,50 @@ sunbeam extension list [flags]
 
 ```
   -h, --help   help for list
+      --json   output as json
+```
+
+## sunbeam extension remove
+
+Remove an extension
+
+```
+sunbeam extension remove [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for remove
+```
+
+## sunbeam extension rename
+
+Rename an extension
+
+```
+sunbeam extension rename [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for rename
+```
+
+## sunbeam extension update
+
+Update an extension
+
+```
+sunbeam extension update [flags]
+```
+
+### Options
+
+```
+  -a, --all    upgrade all extensions
+  -h, --help   help for update
 ```
 
 ## sunbeam fetch
@@ -277,20 +381,7 @@ sunbeam fetch <url> [body] [flags]
   -h, --help                 help for fetch
   -X, --method string        HTTP method to use
   -u, --user string          HTTP basic auth to use
-```
-
-## sunbeam generate-man-pages
-
-Generate Man Pages for sunbeam
-
-```
-sunbeam generate-man-pages [path] [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for generate-man-pages
+  -A, --user-agent string    HTTP user agent to use
 ```
 
 ## sunbeam help
@@ -312,12 +403,40 @@ sunbeam help [command] [flags]
   -h, --help   help for help
 ```
 
+## sunbeam open
+
+Open a file or url in your default application
+
+```
+sunbeam open [target] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for open
+```
+
+## sunbeam paste
+
+Paste text from clipboard to stdout
+
+```
+sunbeam paste [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for paste
+```
+
 ## sunbeam query
 
 Transform or generate JSON using a jq query
 
 ```
-sunbeam query <query> [file] [flags]
+sunbeam query [query] [file] [flags]
 ```
 
 ### Options
@@ -334,7 +453,7 @@ sunbeam query <query> [file] [flags]
 
 ## sunbeam run
 
-Run an extension without installing it
+Run an extension from a script, directory, or URL
 
 ```
 sunbeam run <origin> [args...] [flags]
@@ -344,24 +463,6 @@ sunbeam run <origin> [args...] [flags]
 
 ```
   -h, --help   help for run
-```
-
-## sunbeam serve
-
-Serve extensions over HTTP
-
-```
-sunbeam serve <script> [flags]
-```
-
-### Options
-
-```
-  -h, --help            help for serve
-  -H, --host string     Host to listen on (default "localhost")
-  -p, --port int        Port to listen on (default 9999)
-      --token string    Bearer token to use for authentication
-      --without-token   Disable bearer token authentication
 ```
 
 ## sunbeam validate

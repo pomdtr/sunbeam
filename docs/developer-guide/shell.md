@@ -1,8 +1,4 @@
-# Writing your Extension
-
-## Initial setup
-
-To create a sunbeam extension, we only need a single script.
+# Shell Extensions
 
 ## Writing the manifest
 
@@ -314,28 +310,3 @@ sunbeam extension upgrade devdocs
 ```
 
 > ℹ️ The source code of this extension is available here: <https://github.com/pomdtr/sunbeam-devdocs/blob/main/sunbeam-extension>. Use `sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/devdocs.sh` to install it.
-
-## Publishing an extension
-
-Just create a git repository containing your extension, and push it to github. User will be able to install it using:
-
-```console
-sunbeam extension install <raw-url>
-```
-
-## Make your extension discoverable
-
-Add the `sunbeam` topic to your github repository to make it discoverable to all sunbeam users.
-
-Make sure to add a `README.md` file to your repository, so that users can learn more about your extensions before installing them.
-
-## What's next?
-
-Sunbeam provides a lot of additional features, like:
-
-- displaying text content highlighted as ANSI or markdown using the `detail` mode
-- Running tuis using the `tty` mode
-- Refresh list items each time the query changes by setting the `dynamic` field to true in a `list` payload
-- and more...
-
-This section of the documentation is still a work in progress, but you can already check out the [existing extensions](https://github.com/pomdtr/sunbeam/tree/main/catalog) to see what's possible.

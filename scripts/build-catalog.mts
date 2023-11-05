@@ -1,18 +1,20 @@
-#!/usr/bin/env -S deno run -A
+#!/usr/bin/env deno run -A
+
 import { markdownTable } from 'npm:markdown-table';
-import { join, basename } from "https://deno.land/std@0.186.0/path/mod.ts";
-import * as sunbeam from "npm:sunbeam-types@0.23.12";
+import * as path from "https://deno.land/std@0.205.0/path/mod.ts";
+import * as sunbeam from "npm:sunbeam-types@0.23.16";
 
 const dirname = new URL(".", import.meta.url).pathname;
 
-const entries = Deno.readDirSync(join(dirname, "extensions"));
+const extensionDir = path.join(dirname, "..", "extensions");
+const entries = Deno.readDirSync(extensionDir);
 const extensions: {
     entrypoint: string;
     title: string;
     description: string;
 }[] = []
 for (const entry of entries) {
-    const entrypoint = join(dirname, "extensions", entry.name);
+    const entrypoint = path.join(extensionDir, entry.name);
     const command = new Deno.Command(entrypoint)
     console.error(`Loading manifest from ${entry.name}`)
     const { stdout } = await command.output()
@@ -27,9 +29,9 @@ for (const entry of entries) {
 
 const table = markdownTable([
     ["Extension", "Description"],
-    ...extensions.map(({ entrypoint, title, description }) => [`[${title}](https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/extensions/${basename(entrypoint)})`, description])
+    ...extensions.map(({ entrypoint, title, description }) => [`[${title}](https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/extensions/${path.basename(entrypoint)})`, description])
 ]);
 
-const template = await Deno.readTextFileSync(join(dirname, "README.tmpl.md"));
+const template = await Deno.readTextFileSync(path.join(dirname, "catalog.tmpl.md"));
 const readme = template.replace("{{catalog}}", table);
-await Deno.writeTextFile(join(dirname, "README.md"), readme);
+await Deno.writeTextFile(path.join(dirname, "..", "docs", "catalog.md"), readme);

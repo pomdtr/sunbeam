@@ -392,6 +392,7 @@ func NewCmdExtensionRemove() *cobra.Command {
 				if err := os.RemoveAll(extensionDir); err != nil {
 					return err
 				}
+				cmd.Println("Removed", alias)
 			}
 
 			return nil

@@ -2,8 +2,7 @@
 
 ## Requirements
 
-- sh (used as an interpreter for most extensions)
-- git (used to install extensions from git repositories)
+- a POSIX shell installed at `/bin/sh`
 
 ## Installation
 

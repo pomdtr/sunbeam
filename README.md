@@ -3,9 +3,7 @@ Sunbeam is a general purpose command-line launcher.
 Define UIs composed of a succession of views from simple scripts written in any language.
 
 <p align="center" style="text-align: center">
-  <a href="https://asciinema.org/a/614506">
-        <img src="https://asciinema.org/a/614506.svg">
-  </a>
+  <img style="border-radius: 10px;" src="./docs/assets/demo.gif">
 </p>
 
 You can think of it as a mix between an application launcher like [raycast](https://raycast.com) or [rofi](https://github.com/davatorium/rofi) and a fuzzy-finder like [fzf](https://github.com/junegunn/fzf) or [telescope](https://github.com/nvim-telescope/telescope.nvim).
@@ -16,7 +14,7 @@ You can think of it as a mix between an application launcher like [raycast](http
 
 Sunbeam is distributed as a single binary, available for all major platforms. Sunbeam also comes with a lot of utilities to make it easy to create cross-platform scripts.
 
-![sunbeam running in hyper](./static/hyper.jpeg)
+![sunbeam running in hyper](./docs/assets/hyper.jpeg)
 
 ## Supports any language
 
@@ -33,4 +31,4 @@ It is trivial to integrate sunbeam with existings apps since it's just a command
 
 More information in the [integrations](https://pomdtr.github.io/sunbeam/book/user-guide/integrations.html) section.
 
-![sunbeam running in vscode](./static/vscode.png)
+![sunbeam running in vscode](./docs/assets/vscode.png)

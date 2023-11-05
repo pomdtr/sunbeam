@@ -6,12 +6,12 @@ A fresh install of sunbeam is quite boring. In order to make it useful, you need
 
 You can manage your extensions using the `sunbeam extension` command.
 
-Sunbeam extensions are just shell scripts. You can install an extension by running `sunbeam extension install <path-or-url>`.
+Sunbeam extensions are just scripts. You can install an extension by running `sunbeam extension install <path-or-url>`.
 
 For example, to install the [devdocs extension](https://github.com/pomdtr/sunbeam/tree/main/catalog/extensions/devdocs.sh), run:
 
 ```sh
-sunbeam extension install https://github.com/pomdtr/sunbeam/tree/main/catalog/extensions/devdocs.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/extensions/devdocs.sh
 ```
 
 > ⚠️ Extensions are not verified, nor sandboxed. They can do anything you can do on your computer. Make sure you trust the source before installing an extension.
@@ -43,6 +43,9 @@ Sunbeam is designed to be used with your keyboard. Depending on the current view
     - `ctrl+r` -> refresh the current view
     - `ctrl+c` -> exit sunbeam
     - `escape` -> go back to the previous page
+- root view:
+    - `ctrl+e` -> edit sunbeam config
+    - `alt+enter` -> run query as a shell command
 - list view:
     - `up` / `ctrl+k` -> move selection up
     - `down` / `ctrl+j` -> move selection down

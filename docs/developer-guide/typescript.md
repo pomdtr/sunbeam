@@ -1,14 +1,4 @@
-# Leveraging Shebangs
-
-Shebangs are a mechanism for specifying the interpreter to use to execute a script. You are probably already familiar with them, since they are commonly used in shell scripts.
-
-```sh
-#!/bin/sh
-
-echo "Hello World"
-```
-
-Sunbeam is not aware of the underlying interpreter, so you can use any language you want to write your scripts. For example, if you want to write your scripts in python, you can use the `#!/usr/bin/env python3` shebang.
+# Typescript Extensions
 
 Let's write a hackernews extension using deno. Deno is an alternative runtime for javascript and typescript, which among other features allows you to easily write single-file scripts that use external dependencies.
 

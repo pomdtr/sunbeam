@@ -76,7 +76,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return err
 			}
 
-			fmt.Println(doc)
+			fmt.Printf("# CLI\n\n%s\n", doc)
 			return nil
 		},
 	}
@@ -182,6 +182,14 @@ func buildDoc(command *cobra.Command) (string, error) {
 	}
 
 	for _, child := range command.Commands() {
+		if child.GroupID == CommandGroupExtension {
+			continue
+		}
+
+		if child.Hidden {
+			continue
+		}
+
 		childPage, err := buildDoc(child)
 		if err != nil {
 			return "", err

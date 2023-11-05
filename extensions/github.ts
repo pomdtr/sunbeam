@@ -1,0 +1,271 @@
+#!/usr/bin/env deno run -A
+
+import type * as sunbeam from "npm:sunbeam-types@0.23.16";
+import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
+
+
+
+if (Deno.args.length == 0) {
+    const manifest: sunbeam.Manifest = {
+        title: "GitHub",
+        commands: [
+            {
+                title: "Search Repositories",
+                name: "search-repos",
+                mode: "list"
+            },
+            {
+                title: "List Issues",
+                name: "list-issues",
+                mode: "list",
+                params: [
+                    {
+                        name: "repo",
+                        description: "The repository to list issues for",
+                        type: "string",
+                        required: true
+                    }
+                ]
+            },
+            {
+                title: "List Pull Requests",
+                name: "list-prs",
+                mode: "list",
+                params: [
+                    {
+                        name: "repo",
+                        description: "The repository to list pull requests for",
+                        type: "string",
+                        required: true
+                    }
+                ]
+            },
+            {
+                title: "View Readme",
+                name: "view-readme",
+                mode: "detail",
+                params: [
+                    {
+                        name: "repo",
+                        description: "The repository to view the readme for",
+                        type: "string",
+                        required: true
+                    }
+                ]
+            }
+        ]
+    }
+
+    console.log(JSON.stringify(manifest, null, 2));
+    Deno.exit(0);
+}
+
+const payload: sunbeam.Payload = JSON.parse(Deno.args[0]);
+try {
+    await run(payload);
+} catch (err) {
+    console.error(err);
+    Deno.exit(1);
+}
+
+async function run(payload: sunbeam.Payload) {
+    const token = loadToken();
+    if (!token) {
+        throw new Error("Missing GitHub token");
+    }
+
+    if (payload.command == "search-repos") {
+        const query = payload.query
+        if (!query) {
+            const list: sunbeam.List = {
+                dynamic: true,
+                emptyText: "Enter a query to search for repositories",
+                items: []
+            }
+            console.log(JSON.stringify(list, null, 2));
+            return;
+        }
+
+        const resp = await fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(query)}`, {
+            headers: {
+                "Authorization": `token ${token}`
+            }
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Failed to search repositories: ${resp.status} ${resp.statusText}`);
+        }
+
+        const data = await resp.json();
+        const list: sunbeam.List = {
+            dynamic: true,
+            items: data.items.map((item: any) => ({
+                title: item.full_name,
+                accessories: [
+                    `${item.stargazers_count} *`,
+                ],
+                actions: [
+                    {
+                        title: "View README",
+                        type: "run",
+                        command: "view-readme",
+                        params: {
+                            repo: item.full_name
+                        }
+                    },
+                    {
+                        title: "List Issues",
+                        key: "i",
+                        type: "run",
+                        command: "list-issues",
+                        params: {
+                            repo: item.full_name
+                        }
+                    },
+                    {
+                        title: "List Pull Requests",
+                        key: "p",
+                        type: "run",
+                        command: "list-prs",
+                        params: {
+                            repo: item.full_name
+                        }
+                    },
+                    {
+                        title: "Copy URL",
+                        key: "c",
+                        type: "copy",
+                        text: item.html_url,
+                        exit: true
+                    }
+                ]
+            } as sunbeam.ListItem))
+        }
+
+        console.log(JSON.stringify(list, null, 2));
+    } else if (payload.command == "list-issues") {
+        const repo = payload.params.repo;
+        if (!repo) {
+            throw new Error("Missing required parameter: repo");
+        }
+
+        const resp = await fetch(`https://api.github.com/repos/${repo}/issues`, {
+            headers: {
+                "Authorization": `token ${token}`
+            }
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Failed to list issues: ${resp.status} ${resp.statusText}`);
+        }
+
+        const data = await resp.json();
+        const list: sunbeam.List = {
+            dynamic: true,
+            items: data.map((item: any) => ({
+                title: item.title,
+                accessories: [
+                    `#${item.number}`,
+                ],
+                actions: [
+                    {
+                        title: "Copy URL",
+                        type: "copy",
+                        text: item.html_url,
+                        exit: true
+                    }
+                ]
+            } as sunbeam.ListItem))
+        }
+
+        console.log(JSON.stringify(list, null, 2));
+    } else if (payload.command == "list-prs") {
+        const repo = payload.params.repo as string;
+        const resp = await fetch(`https://api.github.com/repos/${repo}/pulls`, {
+            headers: {
+                "Authorization": `token ${token}`
+            }
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Failed to list pull requests: ${resp.status} ${resp.statusText}`);
+        }
+
+        const data = await resp.json();
+        const list: sunbeam.List = {
+            items: data.map((item: any) => ({
+                title: item.title,
+                accessories: [
+                    `#${item.number}`,
+                ],
+                actions: [
+                    {
+                        title: "Copy URL",
+                        type: "copy",
+                        text: item.html_url,
+                        exit: true
+                    }
+                ]
+            } as sunbeam.ListItem))
+        }
+
+        console.log(JSON.stringify(list, null, 2));
+    } else if (payload.command == "view-readme") {
+        const repo = payload.params.repo as string;
+        const resp = await fetch(`https://api.github.com/repos/${repo}/readme`, {
+            headers: {
+                "Authorization": `token ${token}`
+            }
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Failed to view readme: ${resp.status} ${resp.statusText}`);
+        }
+
+        const data = await resp.json();
+        const markdown = new TextDecoder().decode(base64.decode(data.content));
+
+        const detail: sunbeam.Detail = {
+            text: markdown,
+            highlight: "markdown",
+            actions: [
+                {
+                    title: "List Issues",
+                    key: "i",
+                    type: "run",
+                    command: "list-issues",
+                    params: {
+                        repo: repo
+                    }
+                },
+                {
+                    title: "List Pull Requests",
+                    key: "p",
+                    type: "run",
+                    command: "list-prs",
+                    params: {
+                        repo: repo
+                    }
+                }
+            ]
+        }
+
+        console.log(JSON.stringify(detail, null, 2));
+    } else {
+        throw new Error(`Unknown command: ${payload.command}`);
+    }
+}
+
+
+
+function loadToken() {
+    if (Deno.env.get("SUNBEAM_GITHUB_TOKEN")) {
+        return Deno.env.get("SUNBEAM_GITHUB_TOKEN");
+    }
+
+    if (Deno.env.get("GITHUB_TOKEN")) {
+        return Deno.env.get("GITHUB_TOKEN");
+    }
+
+    return null;
+}
