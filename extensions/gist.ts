@@ -1,7 +1,7 @@
 #!/usr/bin/env deno run -A
 
 import { Octokit } from "https://esm.sh/octokit@3.1.1?dts";
-import * as sunbeam from "npm:sunbeam-types@0.23.15"
+import * as sunbeam from "npm:sunbeam-types@0.23.18"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -69,7 +69,7 @@ if (!token) {
 
 const oktokit = new Octokit({ auth: token });
 
-const payload = JSON.parse(Deno.args[0]) as sunbeam.CommandInput
+const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload
 if (payload.command == "list") {
     const gists = await oktokit.request("GET /gists");
     const items = gists.data.map((gist) => {
@@ -180,7 +180,7 @@ if (payload.command == "list") {
     const file = gist.data.files![params.file]
 
     const page: sunbeam.Detail = {
-        highlight: "markdown",
+        format: "markdown",
         text: ["```" + file?.language?.toLowerCase() || "txt", file?.content, "```"].join("\n"),
         actions: [
             {

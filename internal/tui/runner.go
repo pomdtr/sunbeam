@@ -310,29 +310,28 @@ func (c *Runner) Reload() tea.Cmd {
 			return err
 		}
 
-		if err := schemas.ValidatePage(output); err != nil {
-			return NewErrorPage(err, types.Action{
-				Title: "Copy Script Output",
-				Type:  types.ActionTypeCopy,
-				Text:  string(output),
-				Exit:  true,
-			})
-		}
-
 		switch c.command.Mode {
 		case types.CommandModeDetail:
+			if err := schemas.ValidateDetail(output); err != nil {
+				return err
+			}
+
 			var detail types.Detail
 			if err := json.Unmarshal(output, &detail); err != nil {
 				return err
 			}
 
 			page := NewDetail(detail.Text, detail.Actions...)
-			if detail.Highlight != "" {
-				page.Highlight = detail.Highlight
+			if detail.Format != "" {
+				page.Format = detail.Format
 			}
 
 			return page
 		case types.CommandModeList:
+			if err := schemas.ValidateList(output); err != nil {
+				return err
+			}
+
 			var list types.List
 			if err := json.Unmarshal(output, &list); err != nil {
 				return err

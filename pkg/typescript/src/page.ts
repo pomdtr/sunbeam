@@ -9,7 +9,7 @@ export type List = {
 
 export type Detail = {
   text: string;
-  highlight?: "markdown" | "ansi";
+  format?: "markdown" | "ansi" | "template";
   actions?: Action[];
 };
 

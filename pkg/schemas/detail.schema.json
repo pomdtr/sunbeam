@@ -6,11 +6,12 @@
         "text"
     ],
     "properties": {
-        "highlight": {
+        "format": {
             "type": "string",
             "enum": [
                 "markdown",
-                "ansi"
+                "ansi",
+                "template"
             ]
         },
         "text": {

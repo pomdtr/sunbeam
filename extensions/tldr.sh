@@ -37,7 +37,7 @@ if [ "$COMMAND" = "list" ]; then
 elif [ "$COMMAND" = "view" ]; then
     PAGE=$(echo "$1" | sunbeam query -r '.params.page')
     tldr --color=always "$PAGE" | sunbeam query --arg page="$PAGE" -sR '{
-            highlight: "ansi", text: ., actions: [
+            format: "ansi", text: ., actions: [
                 {title: "Copy Page", type: "copy", text: ., exit: true},
                 {title: "Copy Command", key: "c", type: "copy", text: $page, exit: true}
             ]

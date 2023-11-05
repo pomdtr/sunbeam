@@ -16,14 +16,15 @@ type ListItem struct {
 }
 
 type Detail struct {
-	Actions   []Action  `json:"actions,omitempty"`
-	Highlight Highlight `json:"highlight,omitempty"`
-	Text      string    `json:"text,omitempty"`
+	Actions []Action `json:"actions,omitempty"`
+	Format  Format   `json:"format,omitempty"`
+	Text    string   `json:"text,omitempty"`
 }
 
-type Highlight string
+type Format string
 
 const (
-	HighlightMarkdown Highlight = "markdown"
-	HighlightAnsi     Highlight = "ansi"
+	MarkdownFormat Format = "markdown"
+	ANSIFormat     Format = "ansi"
+	TemplateFormat Format = "template"
 )

@@ -1,12 +1,16 @@
 package tui
 
 import (
+	"bytes"
+	"text/template"
+
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
+	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -21,8 +25,8 @@ type Detail struct {
 	text          string
 	width, height int
 
-	Style     lipgloss.Style
-	Highlight types.Highlight
+	Style  lipgloss.Style
+	Format types.Format
 }
 
 func NewDetail(text string, actions ...types.Action) *Detail {
@@ -46,7 +50,7 @@ func NewDetail(text string, actions ...types.Action) *Detail {
 		spinner:   spinner.New(),
 		viewport:  viewport,
 		statusBar: statusBar,
-		Highlight: types.HighlightAnsi,
+		Format:    types.ANSIFormat,
 		text:      text,
 	}
 
@@ -119,7 +123,8 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 func (c *Detail) RefreshContent() error {
 	var content string
-	if c.Highlight == types.HighlightMarkdown {
+	switch c.Format {
+	case types.MarkdownFormat:
 		render, err := glamour.NewTermRenderer(
 			glamour.WithAutoStyle(),
 			glamour.WithWordWrap(c.width),
@@ -132,8 +137,22 @@ func (c *Detail) RefreshContent() error {
 		if err != nil {
 			return err
 		}
-	} else {
+	case types.ANSIFormat:
 		content = wordwrap.String(c.text, c.width)
+	case types.TemplateFormat:
+		funcs := termenv.TemplateFuncs(termenv.DefaultOutput().Profile)
+		tpl := template.New("detail").Funcs(funcs)
+		tpl, err := tpl.Parse(c.text)
+		if err != nil {
+			return err
+		}
+
+		var buf bytes.Buffer
+		if err := tpl.Execute(&buf, nil); err != nil {
+			return err
+		}
+
+		content = buf.String()
 	}
 
 	c.viewport.SetContent(content)

@@ -4,9 +4,9 @@
 {
     // the text to display (required)
     "text": "# Sunbeam\n\n***the love child of raycast and fzf***",
-    // highlighter to use (optional, default: "ansi")
-    // Can be "markdown" or "ansi"
-    "highlight": "markdown",
+    // Format to use (optional, default: "ansi")
+    // Can be "markdown", "ansi" or "template"
+    "format": "markdown",
     // the list of actions that can be performed on the view (optional)
     "actions": [
         {
