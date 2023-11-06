@@ -190,6 +190,10 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, PushPageCmd(NewErrorPage(err))
 			}
 
+			if err := extension.CheckEnv(); err != nil {
+				return c, PushPageCmd(NewErrorPage(err))
+			}
+
 			switch command.Mode {
 			case types.CommandModeList, types.CommandModeDetail:
 				runner := NewRunner(extension, types.CommandInput{

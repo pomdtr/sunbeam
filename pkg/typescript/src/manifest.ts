@@ -2,6 +2,7 @@ export type Manifest = {
   title: string;
   description?: string;
   requirements?: Requirement[];
+  env?: Env[];
   root?: CommandRef[];
   commands: CommandSpec[];
 };
@@ -10,6 +11,12 @@ type Requirement = {
   name: string;
   link?: string;
 };
+
+type Env = {
+  name: string;
+  description?: string;
+  required?: boolean;
+}
 
 type CommandRef = {
   command: string;
@@ -37,17 +44,14 @@ type ParamsProps = {
 
 type StringParam = {
   type: "string";
-  default?: string;
 } & ParamsProps;
 
 type BooleanParam = {
   type: "boolean";
-  default?: boolean;
 } & ParamsProps;
 
 type NumberParam = {
   type: "number";
-  default?: number;
 } & ParamsProps;
 
 type PayloadParams = Record<string, string | number | boolean>;
@@ -55,5 +59,5 @@ export type Payload<T extends PayloadParams = PayloadParams> = {
   command: string;
   params: T;
   query?: string;
-  cwd?: string;
+  cwd: string;
 };

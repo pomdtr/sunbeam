@@ -31,6 +31,27 @@
                 }
             }
         },
+        "env": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    }
+                }
+            }
+        },
         "description": {
             "type": "string"
         },
@@ -110,61 +131,10 @@
                             "description": {
                                 "type": "string"
                             },
-                            "default": true,
                             "required": {
                                 "type": "boolean"
                             }
-                        },
-                        "allOf": [
-                            {
-                                "if": {
-                                    "properties": {
-                                        "type": {
-                                            "const": "string"
-                                        }
-                                    }
-                                },
-                                "then": {
-                                    "properties": {
-                                        "default": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            {
-                                "if": {
-                                    "properties": {
-                                        "type": {
-                                            "const": "boolean"
-                                        }
-                                    }
-                                },
-                                "then": {
-                                    "properties": {
-                                        "default": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            },
-                            {
-                                "if": {
-                                    "properties": {
-                                        "type": {
-                                            "const": "number"
-                                        }
-                                    }
-                                },
-                                "then": {
-                                    "properties": {
-                                        "default": {
-                                            "type": "number"
-                                        }
-                                    }
-                                }
-                            }
-                        ]
+                        }
                     }
                 }
             }

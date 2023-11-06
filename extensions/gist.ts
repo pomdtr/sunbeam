@@ -1,7 +1,7 @@
 #!/usr/bin/env deno run -A
 
 import { Octokit } from "https://esm.sh/octokit@3.1.1?dts";
-import * as sunbeam from "npm:sunbeam-types@0.23.19"
+import * as sunbeam from "npm:sunbeam-types@0.23.21"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -11,6 +11,13 @@ if (Deno.args.length === 0) {
             {
                 name: "deno",
                 link: "https://deno.com"
+            }
+        ],
+        env: [
+            {
+                name: "GITHUB_TOKEN",
+                description: "GitHub Personal Access Token",
+                required: true,
             }
         ],
         commands: [
@@ -65,12 +72,6 @@ if (Deno.args.length === 0) {
     }
     console.log(JSON.stringify(manifest))
     Deno.exit(0)
-}
-
-const token = Deno.env.get("GITHUB_TOKEN");
-if (!token) {
-    console.error("GITHUB_TOKEN not found in env")
-    Deno.exit(1)
 }
 
 const oktokit = new Octokit({ auth: token });

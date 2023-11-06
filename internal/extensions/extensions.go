@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/acarl005/stripansi"
 	"github.com/cli/cli/pkg/findsh"
@@ -92,28 +91,21 @@ func (e Extension) Run(input types.CommandInput, environ map[string]string) erro
 	return err
 }
 
-type MissingRequirementError struct {
-	Missing []types.Requirement
-}
-
-func (e MissingRequirementError) Error() string {
-	names := make([]string, len(e.Missing))
-	for i, requirement := range e.Missing {
-		names[i] = requirement.Name
-	}
-
-	return fmt.Sprintf("missing requirements: %s", strings.Join(names, ", "))
-}
-
 func (ext Extension) CheckRequirements() error {
-	missing := make([]types.Requirement, 0)
 	for _, requirement := range ext.Require {
 		if _, err := exec.LookPath(requirement.Name); err != nil {
-			missing = append(missing, requirement)
+			return fmt.Errorf("missing requirement %s", requirement.Name)
 		}
 	}
-	if len(missing) > 0 {
-		return MissingRequirementError{Missing: missing}
+
+	return nil
+}
+
+func (ext Extension) CheckEnv() error {
+	for _, env := range ext.Env {
+		if _, ok := os.LookupEnv(env.Name); !ok && env.Required {
+			return fmt.Errorf("missing required environment variable %s", env.Name)
+		}
 	}
 
 	return nil
@@ -155,10 +147,6 @@ func (e Extension) Cmd(input types.CommandInput, environ map[string]string) (*ex
 		_, ok := input.Params[spec.Name]
 		if !ok && spec.Required {
 			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
-		}
-
-		if spec.Default != nil {
-			input.Params[spec.Name] = spec.Default
 		}
 	}
 

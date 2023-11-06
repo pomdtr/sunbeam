@@ -23,7 +23,13 @@ for (const entry of entries) {
     const command = new Deno.Command(entrypoint)
     const { stdout } = await command.output()
 
-    const manifest: sunbeam.Manifest = JSON.parse(new TextDecoder().decode(stdout));
+    let manifest: sunbeam.Manifest
+    try {
+        manifest = JSON.parse(new TextDecoder().decode(stdout));
+    } catch (_) {
+        console.error(`Failed to parse manifest for ${entry.name}`)
+        Deno.exit(1)
+    }
     rows.push(
         "",
         `## [${manifest.title}](https://github.com/pomdtr/sunbeam/tree/main/extensions/${entry.name})`,
@@ -41,6 +47,20 @@ for (const entry of entries) {
         for (const requirement of manifest.requirements) {
             rows.push(
                 requirement.link ? `- [\`${requirement.name}\`](${requirement.link})` : `- \`${requirement.name}\``
+            )
+        }
+    }
+
+    if (manifest.env?.length) {
+        rows.push(
+            "",
+            "### Environment Variables",
+            ""
+        )
+
+        for (const env of manifest.env) {
+            rows.push(
+                `- \`${env.name}\` (${env.required ? "required" : "optional"}): ${env.description}`
             )
         }
     }

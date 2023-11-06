@@ -4,6 +4,7 @@ type Manifest struct {
 	Title       string        `json:"title"`
 	Description string        `json:"description,omitempty"`
 	Require     []Requirement `json:"requirements,omitempty"`
+	Env         []Env         `json:"env,omitempty"`
 	Root        []RootItem    `json:"root,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
 }
@@ -11,6 +12,12 @@ type Manifest struct {
 type Requirement struct {
 	Name string `json:"name"`
 	Link string `json:"link,omitempty"`
+}
+
+type Env struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Required    bool   `json:"required,omitempty"`
 }
 
 type RootItem struct {
@@ -41,7 +48,6 @@ type Param struct {
 	Type        ParamType `json:"type"`
 	Description string    `json:"description,omitempty"`
 	Required    bool      `json:"required,omitempty"`
-	Default     any       `json:"default,omitempty"`
 }
 
 type ParamType string

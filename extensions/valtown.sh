@@ -6,6 +6,9 @@ if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Val Town",
         description: "Manage your Vals",
+        env: [
+            { name: "VALTOWN_TOKEN", description: "Val Town API Token", required: true }
+        ],
         commands: [
             {
                 name: "home",
@@ -33,11 +36,6 @@ if [ $# -eq 0 ]; then
         ]
     }'
     exit 0
-fi
-
-if [ -z "$VALTOWN_TOKEN" ]; then
-    echo "VALTOWN_TOKEN is not set"
-    exit 1
 fi
 
 API_ROOT="https://api.val.town"

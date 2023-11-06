@@ -64,6 +64,10 @@ Search GitHub repositories
 
 - [`deno`](https://deno.com)
 
+### Environment Variables
+
+- `GITHUB_TOKEN` (required): GitHub API token
+
 ### Commands
 
 - `search-repos`: Search Repositories
@@ -121,6 +125,10 @@ Manage your gists
 
 - [`deno`](https://deno.com)
 
+### Environment Variables
+
+- `GITHUB_TOKEN` (required): GitHub Personal Access Token
+
 ### Commands
 
 - `list`: List Gists
@@ -141,6 +149,10 @@ Search your Bitwarden passwords
 ### Requirements
 
 - [`bw`](https://bitwarden.com/help/article/cli/)
+
+### Environment Variables
+
+- `BW_SESSION` (required): Bitwarden Session Token
 
 ### Commands
 
@@ -224,6 +236,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 Manage your Vals
 
+### Environment Variables
+
+- `VALTOWN_TOKEN` (required): Val Town API Token
+
 ### Commands
 
 - `home`: List Home Vals
@@ -294,6 +310,10 @@ Manage your raindrop bookmarks
 ### Requirements
 
 - [`deno`](https://deno.com)
+
+### Environment Variables
+
+- `RAINDROP_TOKEN` (required): Raindrop API token
 
 ### Commands
 

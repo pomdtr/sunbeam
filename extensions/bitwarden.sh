@@ -4,6 +4,9 @@ if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Bitwarden Vault",
         description: "Search your Bitwarden passwords",
+        env: [
+            { name: "BW_SESSION", description: "Bitwarden Session Token", required: true }
+        ],
         requirements: [
             { name: "bw", link: "https://bitwarden.com/help/article/cli/" }
         ],
@@ -16,11 +19,6 @@ if [ $# -eq 0 ]; then
         ]
     }'
     exit 0
-fi
-
-if [ -z "$BW_SESSION" ]; then
-    echo "Please set BW_SESSION environment variable"
-    exit 1
 fi
 
 COMMAND=$(echo "$1" | jq -r '.command')

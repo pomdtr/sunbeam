@@ -36,10 +36,6 @@ type TextInput struct {
 func NewTextInput(param types.Param) *TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
-	defaultValue, ok := param.Default.(string)
-	if ok {
-		ti.SetValue(defaultValue)
-	}
 
 	placeholder := param.Description
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
@@ -101,10 +97,6 @@ type BooleanInput struct {
 func NewBooleanInput(param types.Param) *BooleanInput {
 	checkbox := BooleanInput{
 		label: param.Description,
-	}
-
-	if checked, ok := param.Default.(bool); ok {
-		checkbox.checked = checked
 	}
 
 	return &checkbox
