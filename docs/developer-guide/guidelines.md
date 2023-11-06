@@ -26,9 +26,8 @@ Sunbam provides multiple helpers to make it easier to share sunbeam extensions, 
 - `sunbeam copy/paste`: copy/paste text from/to the clipboard
 
 ```sh
-#! /bin/sh
+#!/bin/sh
 
-# fail on error
 set -eu
 
 if [ $# -eq 0 ]; then
@@ -36,16 +35,16 @@ if [ $# -eq 0 ]; then
         title: "Hello World!",
         commands: [{
             name: "say-hello",
-            type: "string",
-            required: true
+            title: "Say Hello",
+            mode: "detail"
         }]
     }'
     exit 0
 fi
 
-COMMAND=(echo "$1" | jq -r '.command')
+COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "say-hello" ]; then
-    sunbeam query -n { text: "Hello, World!" }
+    sunbeam query -n '{ text: "Hello, World!" }'
 fi
 ```
 
@@ -60,26 +59,27 @@ Deno allows you to use any npm package by just importing it from a url. This mak
 To make it easier to write extensions in deno, sunbeam provides a [npm package](https://www.npmjs.com/package/sunbeam-types) that provides types for validating the manifest and payloads.
 
 ```ts
-#! /usr/bin/env -S deno run -A
+#!/usr/bin/env -S deno run -A
 
 // import the types
-import type * as sunbeam from "npm:sunbeam-types@0.23.16"
+import type * as sunbeam from "npm:sunbeam-types@0.23.18"
 
 // import any npm package
 // @deno-types="npm:@types/lodash"
 import _ from "npm:lodash"
 
-if (Deno.length == 0) {
+if (Deno.args.length == 0) {
     // if invoked without arguments, print the manifest
     const manifest: sunbeam.Manifest = {
         title: "Hello World!",
         commands: [{
             name: "say-hello",
-            type: "string",
-            required: true
+            title: "Say Hello",
+            mode: "detail",
         }]
     }
 
+    console.log(JSON.stringify(manifest))
     Deno.exit(0)
 }
 
@@ -88,11 +88,12 @@ const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload
 
 if (payload.command == "say-hello") {
     const detail: sunbeam.Detail = {
-        text: _.uppercase("Hello, World!")
+        text: _.upperCase("Hello, World!")
     }
 
     console.log(JSON.stringify(detail))
 }
+
 ```
 
 A more complex typescript extension can be found [here](./typescript.md).
