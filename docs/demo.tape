@@ -55,6 +55,7 @@
 Require sunbeam
 
 Output ./assets/demo.gif
+Output ./assets/demo.webm
 
 Set Framerate 30
 Set Shell "bash"
@@ -63,7 +64,6 @@ Set Width 1200
 Set Height 630
 Set Padding 20
 Set Theme "Tomorrow Night"
-Set BorderRadius 20
 
 Type "sunbeam" Sleep 500ms Enter
 

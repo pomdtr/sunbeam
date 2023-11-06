@@ -7,9 +7,6 @@ hero:
   name: Sunbeam
   text: CLI Launcher
   tagline: Elevate Your Command Line Experience
-  image:
-    src: /demo.gif
-    alt: VitePress
   actions:
     - theme: brand
       text: Get Started
@@ -21,7 +18,7 @@ hero:
 features:
   - title: Augment your tools
     icon: 🦾
-    details: Wrap your tools in slicks, keyboard-driven UIs with a few lines of code, using the language of your choice.
+    details: Wrap your tools in slick, keyboard-driven TUIs with a few lines of code, using the language of your choice.
   - title: Cross-platform
     icon: 🌍
     details: Sunbeam is distributed as a single binary, available for windows, macos and linux.
@@ -32,7 +29,7 @@ features:
     details: Since sunbeam extensions are just scripts, they are easy to write, easy to share, and easy to install.
   - title: UNIX philosophy
     icon: 🐧
-    details: Sunbeams relies on shebangs to run scripts. It integrates well with the rest of the UNIX ecosystem.
+    details: Sunbeam relies on shebangs to run scripts. It integrates well with the rest of the UNIX ecosystem.
     link: /developer-guide/guidelines
     linkText: Learn more
 ---

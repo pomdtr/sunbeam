@@ -38,7 +38,7 @@ echo "Not implemented" >&2
 exit 1
 ```
 
-Here we define a single command named `search-docsets`, with a `view` mode.
+Here we define a single command named `search-docsets`, with a mode set to `list`.
 
 We can run our script to see the generated manifest:
 
@@ -80,7 +80,7 @@ Use "extension [command] --help" for more information about a command.
 
 When the user run a command, the script is called with the command name as first argument.
 
-Here the command name is `search-docsets`, and the command mode is `view`, so the script must return a view when called with this argument.
+Here the command name is `search-docsets`, and the command mode is `list`, so the script must return a view when called with this argument.
 
 We will use the `sunbeam fetch` command to fetch the list of docsets from the devdocs api. The `fetch` command allows you to perform http requests (with an api similar to curl).
 
@@ -210,7 +210,7 @@ elif [ "$COMMAND" = "search-entries" ]; then
 fi
 ```
 
-Here we add a new command named `search-entries`, with a `view` mode. We also add a `docset` parameter, which is required.
+Here we add a new command named `search-entries`, with a `list` mode. We also add a `docset` parameter, which is required.
 
 When the user run this command, the script is called with the command name as first argument, and the parameters as json on stdin.
 
