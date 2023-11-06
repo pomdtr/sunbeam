@@ -154,6 +154,10 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 }
 
 func runExtension(extension extensions.Extension, input types.CommandInput, env map[string]string) error {
+	if err := extension.CheckRequirements(); err != nil {
+		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
+	}
+
 	command, ok := extension.Command(input.Command)
 	if !ok {
 		return fmt.Errorf("command %s not found", input.Command)

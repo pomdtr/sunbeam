@@ -3,9 +3,16 @@ package types
 type Manifest struct {
 	Title       string        `json:"title"`
 	Description string        `json:"description,omitempty"`
+	Require     []Requirement `json:"requirements,omitempty"`
 	Root        []RootItem    `json:"root,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
 }
+
+type Requirement struct {
+	Name string `json:"name"`
+	Link string `json:"link,omitempty"`
+}
+
 type RootItem struct {
 	Title   string         `json:"title"`
 	Command string         `json:"command"`

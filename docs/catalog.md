@@ -23,6 +23,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 Browse files and folders
 
+### Requirements
+
+- [`python`](https://www.python.org/)
+
 ### Commands
 
 - `ls`: List files
@@ -37,6 +41,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 Pipe your clipboard through various commands
 
+### Requirements
+
+- [`deno`](https://deno.com)
+
 ### Commands
 
 - `urldecode`: URL Decode Clipboard
@@ -50,7 +58,11 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 ## [GitHub](https://github.com/pomdtr/sunbeam/tree/main/extensions/github.ts)
 
-undefined
+Search GitHub repositories
+
+### Requirements
+
+- [`deno`](https://deno.com)
 
 ### Commands
 
@@ -68,6 +80,11 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 ## [Tailscale](https://github.com/pomdtr/sunbeam/tree/main/extensions/tailscale.ts)
 
 Manage your tailscale devices
+
+### Requirements
+
+- [`deno`](https://deno.com)
+- [`tailscale`](https://tailscale.com)
 
 ### Commands
 
@@ -100,6 +117,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 Manage your gists
 
+### Requirements
+
+- [`deno`](https://deno.com)
+
 ### Commands
 
 - `list`: List Gists
@@ -115,7 +136,11 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 ## [Bitwarden Vault](https://github.com/pomdtr/sunbeam/tree/main/extensions/bitwarden.sh)
 
-List your Bitwarden passwords
+Search your Bitwarden passwords
+
+### Requirements
+
+- [`bw`](https://bitwarden.com/help/article/cli/)
 
 ### Commands
 
@@ -130,6 +155,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 ## [VS Code](https://github.com/pomdtr/sunbeam/tree/main/extensions/vscode.ts)
 
 Manage your VS Code projects
+
+### Requirements
+
+- [`deno`](https://deno.com)
 
 ### Commands
 
@@ -176,6 +205,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 Browse TLDR Pages
 
+### Requirements
+
+- [`tldr`](https://dbrgn.github.io/tealdeer/installing.html)
+
 ### Commands
 
 - `list`: Search Pages
@@ -207,6 +240,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 Manage your RSS feeds
 
+### Requirements
+
+- [`deno`](https://deno.com)
+
 ### Commands
 
 - `show`: Show a feed
@@ -220,6 +257,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 ## [Hacker News](https://github.com/pomdtr/sunbeam/tree/main/extensions/hackernews.ts)
 
 Browse Hacker News
+
+### Requirements
+
+- [`deno`](https://deno.com)
 
 ### Commands
 
@@ -250,6 +291,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 Manage your raindrop bookmarks
 
+### Requirements
+
+- [`deno`](https://deno.com)
+
 ### Commands
 
 - `search-bookmarks`: Search Bookmarks
@@ -259,4 +304,3 @@ Manage your raindrop bookmarks
 ```
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/raindrop.ts
 ```
-

@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/acarl005/stripansi"
 	"github.com/cli/cli/pkg/findsh"
@@ -89,6 +90,33 @@ func (e Extension) RootItems() []types.RootItem {
 func (e Extension) Run(input types.CommandInput, environ map[string]string) error {
 	_, err := e.Output(input, environ)
 	return err
+}
+
+type MissingRequirementError struct {
+	Missing []types.Requirement
+}
+
+func (e MissingRequirementError) Error() string {
+	names := make([]string, len(e.Missing))
+	for i, requirement := range e.Missing {
+		names[i] = requirement.Name
+	}
+
+	return fmt.Sprintf("missing requirements: %s", strings.Join(names, ", "))
+}
+
+func (ext Extension) CheckRequirements() error {
+	missing := make([]types.Requirement, 0)
+	for _, requirement := range ext.Require {
+		if _, err := exec.LookPath(requirement.Name); err != nil {
+			missing = append(missing, requirement)
+		}
+	}
+	if len(missing) > 0 {
+		return MissingRequirementError{Missing: missing}
+	}
+
+	return nil
 }
 
 func (ext Extension) Output(input types.CommandInput, environ map[string]string) ([]byte, error) {

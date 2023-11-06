@@ -3,7 +3,10 @@
 if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Bitwarden Vault",
-        description: "List your Bitwarden passwords",
+        description: "Search your Bitwarden passwords",
+        requirements: [
+            { name: "bw", link: "https://bitwarden.com/help/article/cli/" }
+        ],
         commands: [
             {
                 name: "list-passwords",
@@ -15,20 +18,14 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-# check for dependencies
-if ! command -v bkt &> /dev/null; then
-    echo "bkt could not be found"
-    exit 1
-fi
-
-if ! command -v bw &> /dev/null; then
-    echo "bw could not be found"
+if [ -z "$BW_SESSION" ]; then
+    echo "Please set BW_SESSION environment variable"
     exit 1
 fi
 
 COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "list-passwords" ]; then
-    bkt --ttl 24h --stale 1h -- bw --nointeraction list items --session "$BW_SESSION" | sunbeam query 'map({
+    bw --nointeraction list items --session "$BW_SESSION" | sunbeam query 'map({
         title: .name,
         subtitle: (.login.username // ""),
         actions: [

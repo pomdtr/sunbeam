@@ -1,18 +1,20 @@
 #!/usr/bin/env deno run -A
 
-import { markdownTable } from 'npm:markdown-table';
 import * as path from "https://deno.land/std@0.205.0/path/mod.ts";
-import * as sunbeam from "npm:sunbeam-types@0.23.16";
+import * as sunbeam from "../pkg/typescript/src/manifest.ts";
 
 const dirname = new URL(".", import.meta.url).pathname;
+const rows = []
 
-console.log(`---
-sidebar: false
-outline: 2
----
+rows.push(
+    "---",
+    "sidebar: false",
+    "outline: 2",
+    "---",
+    "",
+    "# Extension Catalog"
+)
 
-# Extension Catalog
-`)
 
 const extensionDir = path.join(dirname, "..", "extensions");
 const entries = Deno.readDirSync(extensionDir);
@@ -22,21 +24,47 @@ for (const entry of entries) {
     const { stdout } = await command.output()
 
     const manifest: sunbeam.Manifest = JSON.parse(new TextDecoder().decode(stdout));
+    rows.push(
+        "",
+        `## [${manifest.title}](https://github.com/pomdtr/sunbeam/tree/main/extensions/${entry.name})`,
+        "",
+        `${manifest.description}`,
+    )
 
-    console.log(`## [${manifest.title}](https://github.com/pomdtr/sunbeam/tree/main/extensions/${entry.name})
+    if (manifest.requirements?.length) {
+        rows.push(
+            "",
+            "### Requirements",
+            ""
+        )
 
-${manifest.description}
+        for (const requirement of manifest.requirements) {
+            rows.push(
+                requirement.link ? `- [\`${requirement.name}\`](${requirement.link})` : `- \`${requirement.name}\``
+            )
+        }
+    }
 
-### Commands
+    rows.push(
+        "",
+        "### Commands",
+        ""
+    )
 
-${manifest.commands.map((command) => (
-        `- \`${command.name}\`: ${command.title}`
-    )).join("\n")}
+    for (const command of manifest.commands) {
+        rows.push(
+            `- \`${command.name}\`: ${command.title}`
+        )
+    }
 
-### Installation
-
-\`\`\`
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name}
-\`\`\`
-`)
+    rows.push(
+        "",
+        "### Installation",
+        "",
+        "```",
+        `sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name}`,
+        "```"
+    )
 }
+
+console.log(rows.join("\n"))

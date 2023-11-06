@@ -13,6 +13,24 @@
         "title": {
             "type": "string"
         },
+        "requirements": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "link"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "link": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "description": {
             "type": "string"
         },

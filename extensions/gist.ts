@@ -1,12 +1,18 @@
 #!/usr/bin/env deno run -A
 
 import { Octokit } from "https://esm.sh/octokit@3.1.1?dts";
-import * as sunbeam from "npm:sunbeam-types@0.23.18"
+import * as sunbeam from "npm:sunbeam-types@0.23.19"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
         title: "Gist",
         description: "Manage your gists",
+        requirements: [
+            {
+                name: "deno",
+                link: "https://deno.com"
+            }
+        ],
         commands: [
             {
                 name: "list",

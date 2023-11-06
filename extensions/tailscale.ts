@@ -1,10 +1,20 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "npm:sunbeam-types@0.23.15";
+import type * as sunbeam from "npm:sunbeam-types@0.23.19";
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Tailscale",
         description: "Manage your tailscale devices",
+        requirements: [
+            {
+                name: "deno",
+                link: "https://deno.com"
+            },
+            {
+                name: "tailscale",
+                link: "https://tailscale.com"
+            }
+        ],
         commands: [
             {
                 name: "list-devices",
@@ -38,7 +48,7 @@ type Device = {
     Online: boolean;
 }
 
-const payload = JSON.parse(Deno.args[0]) as sunbeam.CommandInput;
+const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
 
 if (payload.command == "list-devices") {
     const command = new Deno.Command("tailscale", { args: ["status", "--json"] });

@@ -1,11 +1,18 @@
 #!/usr/bin/env deno run -A
 
-import type * as sunbeam from "npm:sunbeam-types@0.23.18";
+import type * as sunbeam from "npm:sunbeam-types@0.23.19";
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "GitHub",
+        description: "Search GitHub repositories",
+        requirements: [
+            {
+                name: "deno",
+                link: "https://deno.com"
+            }
+        ],
         commands: [
             {
                 title: "Search Repositories",

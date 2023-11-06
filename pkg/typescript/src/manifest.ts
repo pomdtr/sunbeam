@@ -1,13 +1,20 @@
 export type Manifest = {
   title: string;
   description?: string;
+  requirements?: Requirement[];
   root?: CommandRef[];
   commands: CommandSpec[];
 };
 
+type Requirement = {
+  name: string;
+  link?: string;
+};
+
 type CommandRef = {
-  title: string;
   command: string;
+  title: string;
+  description?: string;
   params?: Record<string, string | number | boolean>;
 };
 

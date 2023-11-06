@@ -1,5 +1,5 @@
 #!/usr/bin/env deno run -A
-import * as sunbeam from "npm:sunbeam-types@0.23.16"
+import * as sunbeam from "npm:sunbeam-types@0.23.19"
 import * as clipboard from "https://deno.land/x/copy_paste@v1.1.3/mod.ts";
 
 
@@ -7,6 +7,12 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Pipe Commands",
         description: "Pipe your clipboard through various commands",
+        requirements: [
+            {
+                name: "deno",
+                link: "https://deno.com"
+            }
+        ],
         commands: [
             {
                 name: "urldecode",

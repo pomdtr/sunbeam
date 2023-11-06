@@ -10,6 +10,9 @@ if [ $# -eq 0 ]; then
 {
     title: "Browse TLDR Pages",
     description: "Browse TLDR Pages",
+    requirements: [
+        { name: "tldr", link: "https://dbrgn.github.io/tealdeer/installing.html" }
+    ],
     # each command can be called through the cli
     commands: [
         { name: "list", mode: "list", title: "Search Pages" },
@@ -17,12 +20,6 @@ if [ $# -eq 0 ]; then
     ]
 }'
 exit 0
-fi
-
-# check if tldr is installed
-if ! command -v tldr >/dev/null 2>&1; then
-    echo "tldr is not installed. Please install it from https://dbrgn.github.io/tealdeer/installing.html"
-    exit 1
 fi
 
 COMMAND=$(echo "$1" | jq -r '.command')

@@ -2,13 +2,19 @@
 
 import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
 import * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
-import type * as sunbeam from "npm:sunbeam-types@0.23.15";
+import type * as sunbeam from "npm:sunbeam-types@0.23.19";
 import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "VS Code",
         description: "Manage your VS Code projects",
+        requirements: [
+            {
+                name: "deno",
+                link: "https://deno.com",
+            },
+        ],
         commands: [
             {
                 name: "list-projects",
@@ -21,7 +27,7 @@ if (Deno.args.length == 0) {
     Deno.exit(0);
 }
 
-const payload = JSON.parse(Deno.args[0]) as sunbeam.CommandInput;
+const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
 
 if (payload.command == "list-projects") {
     const homedir = Deno.env.get("HOME");

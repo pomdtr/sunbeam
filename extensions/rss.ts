@@ -2,12 +2,18 @@
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "npm:sunbeam-types@0.23.15"
+import * as sunbeam from "npm:sunbeam-types@0.23.19"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "RSS",
         description: "Manage your RSS feeds",
+        requirements: [
+            {
+                name: "deno",
+                link: "https://deno.com"
+            }
+        ],
         commands: [
             {
                 name: "show",
@@ -29,7 +35,7 @@ if (Deno.args.length == 0) {
     Deno.exit(0);
 }
 
-const payload = JSON.parse(Deno.args[0]) as sunbeam.CommandInput;
+const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
 if (payload.command == "show") {
     const params = payload.params as { url: string };
     const feed = await new Parser().parseURL(params.url);
