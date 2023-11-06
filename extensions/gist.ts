@@ -28,7 +28,7 @@ if (Deno.args.length === 0) {
             },
             {
                 name: "browse",
-                title: "Browser Gist Files",
+                title: "Browse Gist Files",
                 mode: "list",
                 params: [
                     {

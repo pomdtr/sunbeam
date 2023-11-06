@@ -13,7 +13,7 @@ export type OpenAction = {
   type: "open";
   target: string;
   app?: {
-    mac?: string;
+    macos?: string;
     windows?: string;
     linux?: string;
   };

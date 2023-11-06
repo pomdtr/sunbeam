@@ -6,6 +6,7 @@ if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "System",
         description: "Control your system",
+        platforms: ["macos"],
         commands: [
             {
                 name: "toggle-dark-mode",

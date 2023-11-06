@@ -9,7 +9,7 @@ if len(sys.argv) == 1:
         {
             "title": "File Browser",
             "description": "Browse files and folders",
-            "requirements": [{"name": "python", "link": "https://www.python.org/"}],
+            "requirements": [{"name": "python3", "link": "https://www.python.org/"}],
             "commands": [
                 {
                     "name": "ls",

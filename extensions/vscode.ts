@@ -2,7 +2,7 @@
 
 import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
 import * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
-import type * as sunbeam from "npm:sunbeam-types@0.23.19";
+import type * as sunbeam from "npm:sunbeam-types@0.23.24";
 import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 
 if (Deno.args.length == 0) {
@@ -67,7 +67,7 @@ if (payload.command == "list-projects") {
                     type: "open",
                     target: entry.folderUri,
                     app: {
-                        mac: "Visual Studio Code",
+                        macos: "Visual Studio Code",
                     },
                     exit: true,
                 },

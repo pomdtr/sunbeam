@@ -19,7 +19,7 @@ func OpenWith(target string, application *types.Application) error {
 	case "windows":
 		applicationName = application.Windows
 	case "darwin":
-		applicationName = application.Mac
+		applicationName = application.Macos
 	case "linux":
 		applicationName = application.Linux
 	default:

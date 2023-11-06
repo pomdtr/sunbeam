@@ -13,7 +13,7 @@
         "title": {
             "type": "string"
         },
-        "platform": {
+        "platforms": {
             "type": "array",
             "items": {
                 "enum": [
