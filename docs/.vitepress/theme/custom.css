@@ -1,0 +1,9 @@
+.VPImage.image-src {
+    max-width: 640px;
+}
+
+@media screen and (max-width: 960px) {
+    .VPHero.has-image .image {
+        display: none;
+    }
+}

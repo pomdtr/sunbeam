@@ -55,16 +55,14 @@
 Require sunbeam
 
 Output ./assets/demo.gif
-Output ./assets/demo.webm
 
 Set Framerate 30
 Set Shell "bash"
 Set FontSize 25
 Set Width 1200
-Set Height 800
+Set Height 640
 Set Padding 20
-Set Margin 20
-Set MarginFill "#F5A3E2"
+Set Theme "Tomorrow Night"
 Set BorderRadius 20
 
 Type "sunbeam" Sleep 500ms Enter

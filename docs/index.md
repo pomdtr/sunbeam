@@ -7,6 +7,9 @@ hero:
   name: Sunbeam
   text: CLI Launcher
   tagline: The love child of raycast and fzf
+  image:
+    src: /assets/demo.gif
+    alt: VitePress
   actions:
     - theme: brand
       text: Get Started
