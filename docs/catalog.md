@@ -9,6 +9,10 @@ outline: 2
 
 Open your favorite apps
 
+### Platform
+
+- `macos`
+
 ### Commands
 
 - `list`: List All Apps
@@ -25,7 +29,7 @@ Browse files and folders
 
 ### Requirements
 
-- [`python`](https://www.python.org/)
+- [`python3`](https://www.python.org/)
 
 ### Commands
 
@@ -101,22 +105,6 @@ Manage your tailscale devices
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tailscale.ts
 ```
 
-## [Manage Extensions](https://github.com/pomdtr/sunbeam/tree/main/extensions/manage.sh)
-
-Manage Sunbeam Extensions
-
-### Commands
-
-- `list-extensions`: List Extensions
-- `remove-extension`: Remove Extension
-- `edit-extension`: Edit Extension
-
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/manage.sh
-```
-
 ## [Gist](https://github.com/pomdtr/sunbeam/tree/main/extensions/gist.ts)
 
 Manage your gists
@@ -132,7 +120,7 @@ Manage your gists
 ### Commands
 
 - `list`: List Gists
-- `browse`: Browser Gist Files
+- `browse`: Browse Gist Files
 - `delete`: Delete Gist
 - `view`: View Gist File
 
@@ -200,6 +188,10 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 Control your system
 
+### Platform
+
+- `macos`
+
 ### Commands
 
 - `toggle-dark-mode`: Toggle Dark Mode
@@ -230,26 +222,6 @@ Browse TLDR Pages
 
 ```
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tldr.sh
-```
-
-## [Val Town](https://github.com/pomdtr/sunbeam/tree/main/extensions/valtown.sh)
-
-Manage your Vals
-
-### Environment Variables
-
-- `VALTOWN_TOKEN` (required): Val Town API Token
-
-### Commands
-
-- `home`: List Home Vals
-- `create`: Create Val
-- `edit`: Edit Val
-
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/valtown.sh
 ```
 
 ## [RSS](https://github.com/pomdtr/sunbeam/tree/main/extensions/rss.ts)
