@@ -13,13 +13,6 @@ if (Deno.args.length === 0) {
                 link: "https://deno.com"
             }
         ],
-        env: [
-            {
-                name: "GITHUB_TOKEN",
-                description: "GitHub Personal Access Token",
-                required: true,
-            }
-        ],
         commands: [
             {
                 name: "list",
@@ -74,7 +67,13 @@ if (Deno.args.length === 0) {
     Deno.exit(0)
 }
 
-const oktokit = new Octokit({ auth: Deno.env.get("GITHUB_TOKEN") });
+const token = Deno.env.get("GITHUB_TOKEN")
+if (!token) {
+    console.error("GITHUB_TOKEN environment variable not set")
+    Deno.exit(1)
+}
+
+const oktokit = new Octokit({ auth: token });
 const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload
 if (payload.command == "list") {
     const gists = await oktokit.request("GET /gists");

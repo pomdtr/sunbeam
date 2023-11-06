@@ -13,13 +13,6 @@ if (Deno.args.length == 0) {
                 link: "https://deno.com"
             }
         ],
-        env: [
-            {
-                name: "GITHUB_TOKEN",
-                description: "GitHub API token",
-                required: true
-            }
-        ],
         commands: [
             {
                 title: "Search Repositories",
@@ -71,17 +64,21 @@ if (Deno.args.length == 0) {
     console.log(JSON.stringify(manifest, null, 2));
     Deno.exit(0);
 }
+const token = Deno.env.get("GITHUB_TOKEN");
+if (!token) {
+    console.error("Missing required environment variable: GITHUB_TOKEN");
+    Deno.exit(1);
+}
 
 const payload: sunbeam.Payload = JSON.parse(Deno.args[0]);
 try {
-    await run(payload);
+    await run(payload, token);
 } catch (err) {
     console.error(err);
     Deno.exit(1);
 }
 
-async function run(payload: sunbeam.Payload) {
-    const token = Deno.env.get("GITHUB_TOKEN");
+async function run(payload: sunbeam.Payload, token: string) {
     if (payload.command == "search-repos") {
         const query = payload.query
         if (!query) {

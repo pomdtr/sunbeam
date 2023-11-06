@@ -5,13 +5,6 @@ if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
         title: "Raindrop",
         description: "Manage your raindrop bookmarks",
-        env: [
-            {
-                name: "RAINDROP_TOKEN",
-                description: "Raindrop API token",
-                required: true,
-            }
-        ],
         requirements: [
             {
                 name: "deno",
@@ -31,6 +24,11 @@ if (Deno.args.length === 0) {
 }
 
 const raindropToken = Deno.env.get("RAINDROP_TOKEN");
+if (!raindropToken) {
+    console.error("RAINDROP_TOKEN environment variable not set");
+    Deno.exit(1);
+}
+
 const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
 if (payload.command == "search-bookmarks") {
     const resp = await fetch("https://api.raindrop.io/rest/v1/raindrops/0", {

@@ -3,7 +3,6 @@ export type Manifest = {
   platforms?: Platform[];
   description?: string;
   requirements?: Requirement[];
-  env?: Env[];
   root?: CommandRef[];
   commands: CommandSpec[];
 };
@@ -14,12 +13,6 @@ type Requirement = {
   name: string;
   link?: string;
 };
-
-type Env = {
-  name: string;
-  description?: string;
-  required?: boolean;
-}
 
 type CommandRef = {
   command: string;

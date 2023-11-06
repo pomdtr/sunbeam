@@ -6,7 +6,7 @@ title: Home
 hero:
   name: Sunbeam
   text: CLI Launcher
-  tagline: The love child of raycast and fzf
+  tagline: Elevate Your Command Line Experience
   image:
     src: /demo.gif
     alt: VitePress

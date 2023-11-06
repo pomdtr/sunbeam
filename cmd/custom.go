@@ -158,22 +158,6 @@ func runExtension(extension extensions.Extension, input types.CommandInput, envi
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
 	}
 
-	for _, env := range extension.Env {
-		if !env.Required {
-			continue
-		}
-
-		if _, ok := os.LookupEnv(env.Name); ok {
-			continue
-		}
-
-		if _, ok := environ[env.Name]; ok {
-			continue
-		}
-
-		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing required environment variable: %s", env.Name)))
-	}
-
 	command, ok := extension.Command(input.Command)
 	if !ok {
 		return fmt.Errorf("command %s not found", input.Command)

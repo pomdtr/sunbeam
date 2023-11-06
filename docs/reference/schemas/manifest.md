@@ -24,10 +24,6 @@ It contains the title, description and the list of commands provided by the exte
     "name": "jq",
     "link": "https://stedolan.github.io/jq/"
   },
-  // the list of environment variables required by the extension (optional)
-  "env": [
-    { "name": "API_KEY", "description": "API key", "required": true },
-  ],
   "commands": [
     {
       // unique identifier of the command (required)

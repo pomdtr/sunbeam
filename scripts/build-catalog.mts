@@ -3,10 +3,6 @@
 import * as path from "https://deno.land/std@0.205.0/path/mod.ts";
 import * as sunbeam from "../pkg/typescript/src/manifest.ts";
 
-const skip = [
-    ""
-]
-
 const dirname = new URL(".", import.meta.url).pathname;
 const rows = []
 
@@ -23,10 +19,6 @@ rows.push(
 const extensionDir = path.join(dirname, "..", "extensions");
 const entries = Deno.readDirSync(extensionDir);
 for (const entry of entries) {
-    if (skip.includes(entry.name)) {
-        continue
-    }
-
     const entrypoint = path.join(extensionDir, entry.name);
     const command = new Deno.Command(entrypoint)
     const { stdout } = await command.output()
@@ -69,20 +61,6 @@ for (const entry of entries) {
         for (const requirement of manifest.requirements) {
             rows.push(
                 requirement.link ? `- [\`${requirement.name}\`](${requirement.link})` : `- \`${requirement.name}\``
-            )
-        }
-    }
-
-    if (manifest.env?.length) {
-        rows.push(
-            "",
-            "### Environment Variables",
-            ""
-        )
-
-        for (const env of manifest.env) {
-            rows.push(
-                `- \`${env.name}\` (${env.required ? "required" : "optional"}): ${env.description}`
             )
         }
     }

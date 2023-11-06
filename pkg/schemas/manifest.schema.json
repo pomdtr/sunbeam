@@ -41,27 +41,6 @@
                 }
             }
         },
-        "env": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "name"
-                ],
-                "additionalProperties": true,
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "required": {
-                        "type": "boolean"
-                    }
-                }
-            }
-        },
         "description": {
             "type": "string"
         },

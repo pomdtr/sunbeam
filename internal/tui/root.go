@@ -152,22 +152,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, PushPageCmd(NewErrorPage(err))
 			}
 
-			for _, env := range extension.Env {
-				if !env.Required {
-					continue
-				}
-
-				if _, ok := os.LookupEnv(env.Name); ok {
-					continue
-				}
-
-				if _, ok := c.environ[env.Name]; ok {
-					continue
-				}
-
-				return c, PushPageCmd(NewErrorPage(fmt.Errorf("missing required environment variable: %s", env.Name)))
-			}
-
 			missing := FindMissingParams(command.Params, msg.Params)
 			if len(missing) > 0 {
 				c.form = NewForm(func(values map[string]any) tea.Msg {

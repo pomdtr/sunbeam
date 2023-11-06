@@ -5,7 +5,6 @@ type Manifest struct {
 	Platforms   []Platfom     `json:"platforms,omitempty"`
 	Description string        `json:"description,omitempty"`
 	Require     []Requirement `json:"requirements,omitempty"`
-	Env         []Env         `json:"env,omitempty"`
 	Root        []RootItem    `json:"root,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
 }
@@ -21,12 +20,6 @@ const (
 type Requirement struct {
 	Name string `json:"name"`
 	Link string `json:"link,omitempty"`
-}
-
-type Env struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Required    bool   `json:"required,omitempty"`
 }
 
 type RootItem struct {
