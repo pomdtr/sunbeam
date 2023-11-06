@@ -153,13 +153,25 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 	return rootCmd, nil
 }
 
-func runExtension(extension extensions.Extension, input types.CommandInput, env map[string]string) error {
+func runExtension(extension extensions.Extension, input types.CommandInput, environ map[string]string) error {
 	if err := extension.CheckRequirements(); err != nil {
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
 	}
 
-	if err := extension.CheckEnv(); err != nil {
-		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing env: %w", err)))
+	for _, env := range extension.Env {
+		if !env.Required {
+			continue
+		}
+
+		if _, ok := os.LookupEnv(env.Name); ok {
+			continue
+		}
+
+		if _, ok := environ[env.Name]; ok {
+			continue
+		}
+
+		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing required environment variable: %s", env.Name)))
 	}
 
 	command, ok := extension.Command(input.Command)
@@ -176,7 +188,7 @@ func runExtension(extension extensions.Extension, input types.CommandInput, env 
 			}
 			return fmt.Errorf("missing required params: %s", strings.Join(names, ", "))
 		}
-		output, err := extension.Output(input, env)
+		output, err := extension.Output(input, environ)
 
 		if err != nil {
 			return err
@@ -211,12 +223,12 @@ func runExtension(extension extensions.Extension, input types.CommandInput, env 
 
 	switch command.Mode {
 	case types.CommandModeList, types.CommandModeDetail:
-		runner := tui.NewRunner(extension, input, env)
+		runner := tui.NewRunner(extension, input, environ)
 		return tui.Draw(runner)
 	case types.CommandModeSilent:
-		return extension.Run(input, env)
+		return extension.Run(input, environ)
 	case types.CommandModeTTY:
-		cmd, err := extension.Cmd(input, env)
+		cmd, err := extension.Cmd(input, environ)
 		if err != nil {
 			return err
 		}

@@ -101,16 +101,6 @@ func (ext Extension) CheckRequirements() error {
 	return nil
 }
 
-func (ext Extension) CheckEnv() error {
-	for _, env := range ext.Env {
-		if _, ok := os.LookupEnv(env.Name); !ok && env.Required {
-			return fmt.Errorf("missing required environment variable %s", env.Name)
-		}
-	}
-
-	return nil
-}
-
 func (ext Extension) Output(input types.CommandInput, environ map[string]string) ([]byte, error) {
 	cmd, err := ext.Cmd(input, environ)
 	if err != nil {

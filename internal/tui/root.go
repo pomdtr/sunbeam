@@ -148,6 +148,26 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
 			}
 
+			if err := extension.CheckRequirements(); err != nil {
+				return c, PushPageCmd(NewErrorPage(err))
+			}
+
+			for _, env := range extension.Env {
+				if !env.Required {
+					continue
+				}
+
+				if _, ok := os.LookupEnv(env.Name); ok {
+					continue
+				}
+
+				if _, ok := c.environ[env.Name]; ok {
+					continue
+				}
+
+				return c, PushPageCmd(NewErrorPage(fmt.Errorf("missing required environment variable: %s", env.Name)))
+			}
+
 			missing := FindMissingParams(command.Params, msg.Params)
 			if len(missing) > 0 {
 				c.form = NewForm(func(values map[string]any) tea.Msg {
@@ -184,14 +204,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.history.entries[selection.Id] = time.Now().Unix()
 			if err := c.history.Save(); err != nil {
 				return c, c.SetError(err)
-			}
-
-			if err := extension.CheckRequirements(); err != nil {
-				return c, PushPageCmd(NewErrorPage(err))
-			}
-
-			if err := extension.CheckEnv(); err != nil {
-				return c, PushPageCmd(NewErrorPage(err))
 			}
 
 			switch command.Mode {
