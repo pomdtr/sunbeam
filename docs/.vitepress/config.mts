@@ -5,7 +5,7 @@ export default defineConfig({
   title: 'Sunbeam',
   base: '/sunbeam/',
   head: [
-    ['link', { rel: 'icon', href: '/assets/favicon.png' }]
+    ['link', { rel: 'icon', href: '/favicon.png' }]
   ],
   cleanUrls: true,
   themeConfig: {

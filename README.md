@@ -5,7 +5,7 @@ Sunbeam is a general purpose command-line launcher.
 Define UIs composed of a succession of views from simple scripts written in any language.
 
 <p align="center" style="text-align: center">
-  <img src="./docs/assets/demo.gif">
+  <img src="./docs/public/demo.gif">
 </p>
 
 You can think of it as a mix between an application launcher like [raycast](https://raycast.com) or [rofi](https://github.com/davatorium/rofi) and a fuzzy-finder like [fzf](https://github.com/junegunn/fzf) or [telescope](https://github.com/nvim-telescope/telescope.nvim).

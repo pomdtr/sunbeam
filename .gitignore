@@ -83,7 +83,6 @@ go.work
 book
 
 .env
-public/
 completions/
 docs/cli.md
 

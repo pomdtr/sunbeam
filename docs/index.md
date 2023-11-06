@@ -8,7 +8,7 @@ hero:
   text: CLI Launcher
   tagline: The love child of raycast and fzf
   image:
-    src: /assets/demo.gif
+    src: /demo.gif
     alt: VitePress
   actions:
     - theme: brand
