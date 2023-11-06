@@ -74,8 +74,7 @@ if (Deno.args.length === 0) {
     Deno.exit(0)
 }
 
-const oktokit = new Octokit({ auth: token });
-
+const oktokit = new Octokit({ auth: Deno.env.get("GITHUB_TOKEN") });
 const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload
 if (payload.command == "list") {
     const gists = await oktokit.request("GET /gists");

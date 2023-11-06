@@ -13,6 +13,16 @@
         "title": {
             "type": "string"
         },
+        "platform": {
+            "type": "array",
+            "items": {
+                "enum": [
+                    "linux",
+                    "macos",
+                    "windows"
+                ]
+            }
+        },
         "requirements": {
             "type": "array",
             "items": {

@@ -31,15 +31,6 @@
         "envFile": {
             "type": "string",
             "description": "A path to a file that contains environment variables to be set before running commands"
-        },
-        "env": {
-            "type": "object",
-            "description": "A map of environment variables to be set before running commands",
-            "patternProperties": {
-                "^[a-zA-Z_]+[a-zA-Z0-9_]*$": {
-                    "type": "string"
-                }
-            }
         }
     }
 }

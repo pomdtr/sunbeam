@@ -23,11 +23,6 @@ If no config is found, sunbeam will create one.
             "command": "htop"
         }
     ],
-    // env variables loaded by sunbeam before running extensions
-    "env": {
-        "GITHUB_TOKEN": "ghp_xxx",
-        "RAINDROP_TOKEN": "xxx"
-    },
     // load env variables from a file
     // relative paths are resolved from the config file location
     "envFile": "secrets.env",

@@ -2,12 +2,21 @@ package types
 
 type Manifest struct {
 	Title       string        `json:"title"`
+	Platforms   []Platfom     `json:"platforms,omitempty"`
 	Description string        `json:"description,omitempty"`
 	Require     []Requirement `json:"requirements,omitempty"`
 	Env         []Env         `json:"env,omitempty"`
 	Root        []RootItem    `json:"root,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
 }
+
+type Platfom string
+
+const (
+	PlatformWindows Platfom = "windows"
+	PlatformLinux   Platfom = "linux"
+	PlatformMac     Platfom = "macos"
+)
 
 type Requirement struct {
 	Name string `json:"name"`

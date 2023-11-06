@@ -1,11 +1,14 @@
 export type Manifest = {
   title: string;
+  platforms?: Platform[];
   description?: string;
   requirements?: Requirement[];
   env?: Env[];
   root?: CommandRef[];
   commands: CommandSpec[];
 };
+
+type Platform = "linux" | "macos" | "windows";
 
 type Requirement = {
   name: string;

@@ -20,7 +20,6 @@ import (
 type Config struct {
 	Schema  string            `json:"$schema,omitempty"`
 	Root    []RootItem        `json:"root,omitempty"`
-	EnvMap  map[string]string `json:"env,omitempty"`
 	EnvFile string            `json:"envFile,omitempty"`
 	Env     map[string]string `json:"-"`
 }
@@ -36,9 +35,6 @@ var DefaultConfig = Config{
 			Title:   "Edit Config",
 			Command: "sunbeam edit --config",
 		},
-	},
-	EnvMap: map[string]string{
-		"HELLO": "world",
 	},
 }
 
@@ -115,10 +111,6 @@ func Load() (Config, error) {
 		for k, v := range env {
 			config.Env[k] = v
 		}
-	}
-
-	for k, v := range config.EnvMap {
-		config.Env[k] = v
 	}
 
 	return config, nil
