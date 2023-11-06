@@ -7,6 +7,7 @@ import * as sunbeam from "npm:sunbeam-types@0.23.15"
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Hacker News",
+        description: "Browse Hacker News",
         root: [
             {
                 title: "Front Page",
