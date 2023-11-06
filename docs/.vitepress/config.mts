@@ -7,6 +7,8 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: '/sunbeam/favicon.png' }],
     ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:image', content: 'https://pomdtr.github.io/sunbeam/screenshot.png' }],
+    ['meta', { property: 'og:description', content: 'Wrap your tools in keyboard-friendly TUIs' }]
   ],
   cleanUrls: true,
   themeConfig: {

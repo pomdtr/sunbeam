@@ -60,16 +60,15 @@ Set Framerate 30
 Set Shell "bash"
 Set FontSize 25
 Set Width 1200
-Set Height 640
+Set Height 630
 Set Padding 20
 Set Theme "Tomorrow Night"
 Set BorderRadius 20
 
 Type "sunbeam" Sleep 500ms Enter
 
-
-# Root
-Sleep 2s Type "Search repos" Sleep 1s Enter
+Sleep 500ms Screenshot "public/screenshot.png"
+Sleep 1s Type "Search repos" Sleep 1s Enter
 
 # Repos List
 Sleep 1s Type "excalidraw" Sleep 3s Tab Sleep 1s  Enter
@@ -83,4 +82,4 @@ Sleep 3s Down Sleep 500ms Down Sleep 500ms Tab Sleep 500ms Tab Sleep 1s Enter
 # Shell
 Sleep 1s Type 'printf "Copied PR link: %s\n" "$(pbpaste)"' Sleep 500ms Enter
 
-Sleep 5s
+Sleep 3s
