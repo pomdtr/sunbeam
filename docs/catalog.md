@@ -16,7 +16,7 @@ Open your favorite apps
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/macapps.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/macapps.sh
 ```
 
 ## [File Browser](https://github.com/pomdtr/sunbeam/tree/main/extensions/files.py)
@@ -30,7 +30,7 @@ Browse files and folders
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/files.py
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py
 ```
 
 ## [Pipe Commands](https://github.com/pomdtr/sunbeam/tree/main/extensions/pipe.ts)
@@ -45,7 +45,7 @@ Pipe your clipboard through various commands
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/pipe.ts
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/pipe.ts
 ```
 
 ## [GitHub](https://github.com/pomdtr/sunbeam/tree/main/extensions/github.ts)
@@ -62,7 +62,7 @@ undefined
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/github.ts
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/github.ts
 ```
 
 ## [Tailscale](https://github.com/pomdtr/sunbeam/tree/main/extensions/tailscale.ts)
@@ -77,7 +77,7 @@ Manage your tailscale devices
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/tailscale.ts
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tailscale.ts
 ```
 
 ## [Manage Extensions](https://github.com/pomdtr/sunbeam/tree/main/extensions/manage.sh)
@@ -93,7 +93,7 @@ Manage Sunbeam Extensions
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/manage.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/manage.sh
 ```
 
 ## [Gist](https://github.com/pomdtr/sunbeam/tree/main/extensions/gist.ts)
@@ -110,7 +110,7 @@ Manage your gists
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/gist.ts
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/gist.ts
 ```
 
 ## [Bitwarden Vault](https://github.com/pomdtr/sunbeam/tree/main/extensions/bitwarden.sh)
@@ -124,7 +124,7 @@ List your Bitwarden passwords
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/bitwarden.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/bitwarden.sh
 ```
 
 ## [VS Code](https://github.com/pomdtr/sunbeam/tree/main/extensions/vscode.ts)
@@ -138,7 +138,7 @@ Manage your VS Code projects
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/vscode.ts
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/vscode.ts
 ```
 
 ## [Meteo](https://github.com/pomdtr/sunbeam/tree/main/extensions/meteo.sh)
@@ -152,7 +152,7 @@ Show Meteo
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/meteo.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/meteo.sh
 ```
 
 ## [System](https://github.com/pomdtr/sunbeam/tree/main/extensions/system.sh)
@@ -169,7 +169,7 @@ Control your system
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/system.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/system.sh
 ```
 
 ## [Browse TLDR Pages](https://github.com/pomdtr/sunbeam/tree/main/extensions/tldr.sh)
@@ -184,7 +184,7 @@ Browse TLDR Pages
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/tldr.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tldr.sh
 ```
 
 ## [Val Town](https://github.com/pomdtr/sunbeam/tree/main/extensions/valtown.sh)
@@ -200,7 +200,7 @@ Manage your Vals
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/valtown.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/valtown.sh
 ```
 
 ## [RSS](https://github.com/pomdtr/sunbeam/tree/main/extensions/rss.ts)
@@ -214,7 +214,7 @@ Manage your RSS feeds
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/rss.ts
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/rss.ts
 ```
 
 ## [Hacker News](https://github.com/pomdtr/sunbeam/tree/main/extensions/hackernews.ts)
@@ -228,7 +228,7 @@ Browse Hacker News
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/hackernews.ts
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/hackernews.ts
 ```
 
 ## [DevDocs](https://github.com/pomdtr/sunbeam/tree/main/extensions/devdocs.sh)
@@ -243,7 +243,7 @@ Search DevDocs.io
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/devdocs.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh
 ```
 
 ## [Raindrop](https://github.com/pomdtr/sunbeam/tree/main/extensions/raindrop.ts)
@@ -257,6 +257,6 @@ Manage your raindrop bookmarks
 ### Installation
 
 ```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/raindrop.ts
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/raindrop.ts
 ```
 

@@ -36,7 +36,7 @@ ${manifest.commands.map((command) => (
 ### Installation
 
 \`\`\`
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/${entry.name}
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name}
 \`\`\`
 `)
 }
