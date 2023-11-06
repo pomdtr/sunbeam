@@ -1,5 +1,10 @@
 .VPImage.image-src {
     max-width: 640px;
+    border: double 4px transparent;
+    border-radius: 10px;
+    background-image: linear-gradient(white, white), radial-gradient(circle at top left, #f00, #3020ff);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
 }
 
 @media screen and (max-width: 960px) {
