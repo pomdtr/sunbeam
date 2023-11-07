@@ -35,7 +35,7 @@ It contains the title, description and the list of commands provided by the exte
       // if you want to display a detail view, use the detail mode
       // use the tty mode if you want to use the terminal directly
       // or use the silent mode if you don't want to display anything
-      "mode": "page",
+      "mode": "list",
       // the list of parameters for the command (optional)
       "params": [
         {
