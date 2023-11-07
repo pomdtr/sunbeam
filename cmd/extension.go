@@ -152,10 +152,6 @@ func NewCmdExtensionCreate() *cobra.Command {
 				return err
 			}
 
-			if err := os.Chmod(args[0], 0755); err != nil {
-				return err
-			}
-
 			return nil
 		},
 	}
@@ -557,6 +553,10 @@ func cacheManifest(entrypoint string, manifestPath string) error {
 }
 
 func LoadExtension(entrypoint string) (extensions.Extension, error) {
+	if err := os.Chmod(entrypoint, 0755); err != nil {
+		return extensions.Extension{}, err
+	}
+
 	var args []string
 	if runtime.GOOS == "windows" {
 		sh, err := findsh.Find()
@@ -626,10 +626,6 @@ func localInstall(origin string, extensionDir string) (err error) {
 		return err
 	}
 
-	if err := os.Chmod(entrypoint, 0755); err != nil {
-		return err
-	}
-
 	return cacheManifest(entrypoint, filepath.Join(extensionDir, "manifest.json"))
 }
 
@@ -668,10 +664,6 @@ func httpInstall(origin *url.URL, extensionDir string) (err error) {
 	}
 
 	if _, err := io.Copy(entrypointFile, resp.Body); err != nil {
-		return err
-	}
-
-	if err := os.Chmod(entrypointPath, 0755); err != nil {
 		return err
 	}
 

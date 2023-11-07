@@ -18,7 +18,33 @@ func NewCmdRun() *cobra.Command {
 		Short:              "Run an extension from a script, directory, or URL",
 		Args:               cobra.MinimumNArgs(1),
 		DisableFlagParsing: true,
-		GroupID:            CommandGroupCore,
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) == 0 {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			if len(args) == 1 {
+				entrypoint, err := filepath.Abs(args[0])
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveNoFileComp
+				}
+
+				extension, err := LoadExtension(entrypoint)
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveNoFileComp
+				}
+
+				var commands []string
+				for _, command := range extension.Commands {
+					commands = append(commands, command.Name)
+				}
+
+				return commands, cobra.ShellCompDirectiveNoFileComp
+			}
+
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		},
+		GroupID: CommandGroupCore,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "--help" || args[0] == "-h" {
 				return cmd.Help()
@@ -56,10 +82,6 @@ func NewCmdRun() *cobra.Command {
 					return err
 				}
 
-				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
-					return err
-				}
-
 				scriptPath = tempfile.Name()
 			} else if args[0] == "-" {
 				tempfile, err := os.CreateTemp("", "entrypoint-*%s")
@@ -76,10 +98,6 @@ func NewCmdRun() *cobra.Command {
 					return err
 				}
 
-				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
-					return err
-				}
-
 				scriptPath = tempfile.Name()
 			} else {
 				s, err := filepath.Abs(args[0])
@@ -89,10 +107,6 @@ func NewCmdRun() *cobra.Command {
 
 				if _, err := os.Stat(s); err != nil {
 					return fmt.Errorf("error loading extension: %w", err)
-				}
-
-				if err := os.Chmod(s, 0755); err != nil {
-					return err
 				}
 
 				scriptPath = s
