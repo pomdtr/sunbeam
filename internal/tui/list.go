@@ -72,7 +72,17 @@ func (c *List) Blur() tea.Cmd {
 func (c *List) SetQuery(query string) {
 	c.input.SetValue(query)
 	if c.OnQueryChange == nil {
-		c.filter.FilterItems(query)
+		c.FilterItems(query)
+	}
+}
+
+func (c *List) FilterItems(query string) {
+	c.filter.FilterItems(query)
+	selection := c.filter.Selection()
+	if selection == nil {
+		c.statusBar.SetActions(c.Actions...)
+	} else {
+		c.statusBar.SetActions(selection.(ListItem).Actions...)
 	}
 }
 
@@ -101,14 +111,7 @@ func (c *List) SetItems(items ...types.ListItem) {
 	}
 
 	c.filter.SetItems(filterItems...)
-	c.filter.FilterItems(c.Query())
-
-	selection := c.filter.Selection()
-	if selection == nil {
-		c.statusBar.SetActions(c.Actions...)
-	} else {
-		c.statusBar.SetActions(selection.(ListItem).Actions...)
-	}
+	c.FilterItems(c.Query())
 }
 
 func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
@@ -136,7 +139,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			if c.input.Value() != "" {
 				c.input.SetValue("")
-				c.filter.FilterItems("")
+				c.FilterItems("")
 				return c, nil
 			}
 
@@ -186,12 +189,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}))
 		} else {
-			c.filter.FilterItems(input.Value())
-		}
-		if c.filter.Selection() != nil {
-			c.statusBar.SetActions(c.filter.Selection().(ListItem).Actions...)
-		} else {
-			c.statusBar.SetActions(c.Actions...)
+			c.FilterItems(input.Value())
 		}
 	}
 	c.input = input
