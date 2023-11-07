@@ -1,7 +1,9 @@
 package tui
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 
@@ -18,6 +20,7 @@ type Runner struct {
 	embed         Page
 	form          *Form
 	width, height int
+	cancel        context.CancelFunc
 
 	extension extensions.Extension
 	command   types.CommandSpec
@@ -74,6 +77,7 @@ func (c *Runner) Focus() tea.Cmd {
 }
 
 func (c *Runner) Blur() tea.Cmd {
+	c.cancel()
 	return nil
 }
 
@@ -305,8 +309,24 @@ func (c *Runner) View() string {
 
 func (c *Runner) Reload() tea.Cmd {
 	return tea.Sequence(c.SetIsLoading(true), func() tea.Msg {
-		output, err := c.extension.Output(c.input, c.environ)
+		if c.cancel != nil {
+			c.cancel()
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		c.cancel = cancel
+		defer cancel()
+
+		cmd, err := c.extension.CmdContext(ctx, c.input, c.environ)
 		if err != nil {
+			return err
+		}
+
+		output, err := cmd.Output()
+		if err != nil {
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return nil
+			}
 			return err
 		}
 

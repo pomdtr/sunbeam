@@ -1,6 +1,7 @@
 package extensions
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -118,6 +119,10 @@ func (ext Extension) Output(input types.CommandInput, environ map[string]string)
 }
 
 func (e Extension) Cmd(input types.CommandInput, environ map[string]string) (*exec.Cmd, error) {
+	return e.CmdContext(context.Background(), input, environ)
+}
+
+func (e Extension) CmdContext(ctx context.Context, input types.CommandInput, environ map[string]string) (*exec.Cmd, error) {
 	if input.Params == nil {
 		input.Params = make(map[string]any)
 	}
@@ -156,7 +161,7 @@ func (e Extension) Cmd(input types.CommandInput, environ map[string]string) (*ex
 		args = []string{e.Entrypoint, string(inputBytes)}
 	}
 
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
 	for k, v := range environ {
