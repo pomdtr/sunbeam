@@ -25,11 +25,11 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 		Args:    cobra.NoArgs,
 		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var jsonOutput bool
-			if cmd.Flags().Changed("json") {
-				jsonOutput, _ = cmd.Flags().GetBool("json")
+			var rawOutput bool
+			if cmd.Flags().Changed("raw") {
+				rawOutput, _ = cmd.Flags().GetBool("raw")
 			} else {
-				jsonOutput = !isatty.IsTerminal(os.Stdout.Fd())
+				rawOutput = !isatty.IsTerminal(os.Stdout.Fd())
 			}
 
 			cfg, err := config.Load()
@@ -52,10 +52,10 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return err
 				}
 
-				return runExtension(extension, input, cfg.Env, jsonOutput)
+				return runExtension(extension, input, cfg.Env, rawOutput)
 			}
 
-			if jsonOutput {
+			if rawOutput {
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
 				return encoder.Encode(extension)
@@ -83,7 +83,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 		},
 	}
 
-	rootCmd.Flags().Bool("json", false, "output as json")
+	rootCmd.Flags().Bool("raw", false, "raw output")
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
@@ -163,7 +163,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 	return rootCmd, nil
 }
 
-func runExtension(extension extensions.Extension, input types.CommandInput, environ map[string]string, jsonOutput bool) error {
+func runExtension(extension extensions.Extension, input types.CommandInput, environ map[string]string, rawOutput bool) error {
 	if err := extension.CheckRequirements(); err != nil {
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
 	}
@@ -174,7 +174,7 @@ func runExtension(extension extensions.Extension, input types.CommandInput, envi
 	}
 
 	missing := tui.FindMissingParams(command.Params, input.Params)
-	if jsonOutput {
+	if rawOutput {
 		if len(missing) > 0 {
 			names := make([]string, len(missing))
 			for i, param := range missing {
@@ -182,17 +182,16 @@ func runExtension(extension extensions.Extension, input types.CommandInput, envi
 			}
 			return fmt.Errorf("missing required params: %s", strings.Join(names, ", "))
 		}
-		output, err := extension.Output(input, environ)
-
+		cmd, err := extension.Cmd(input, environ)
 		if err != nil {
 			return err
 		}
 
-		if _, err := os.Stdout.Write(output); err != nil {
-			return err
-		}
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 
-		return nil
+		return cmd.Run()
 	}
 
 	if len(missing) > 0 {
