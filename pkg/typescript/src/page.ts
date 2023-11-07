@@ -1,7 +1,7 @@
 import type { Action } from "./action";
 
 export type List = {
-  items: ListItem[];
+  items?: ListItem[];
   actions?: Action[];
   emptyText?: string;
   dynamic?: boolean;

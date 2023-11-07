@@ -2,7 +2,7 @@
 
 ```json
 {
-    // the list of items to display (required)
+    // the list of items to display (optional)
     "items": [
         {
             // title of the item (required)
