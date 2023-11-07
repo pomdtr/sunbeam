@@ -280,3 +280,17 @@ Manage your raindrop bookmarks
 ```
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/raindrop.ts
 ```
+
+## [Google Search](https://github.com/pomdtr/sunbeam/tree/main/extensions/google.sh)
+
+undefined
+
+### Commands
+
+- `search`: Search
+
+### Installation
+
+```
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh
+```
