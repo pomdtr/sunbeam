@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
@@ -25,13 +24,6 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 		Args:    cobra.NoArgs,
 		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var rawOutput bool
-			if cmd.Flags().Changed("raw") {
-				rawOutput, _ = cmd.Flags().GetBool("raw")
-			} else {
-				rawOutput = !isatty.IsTerminal(os.Stdout.Fd())
-			}
-
 			cfg, err := config.Load()
 			if err != nil {
 				return err
@@ -52,34 +44,17 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return err
 				}
 
+				var rawOutput bool
+				if cmd.Flags().Changed("raw") {
+					rawOutput, _ = cmd.Flags().GetBool("raw")
+				} else {
+					rawOutput = !isatty.IsTerminal(os.Stdout.Fd())
+				}
+
 				return runExtension(extension, input, cfg.Env, rawOutput)
 			}
 
-			if rawOutput {
-				encoder := json.NewEncoder(os.Stdout)
-				encoder.SetIndent("", "  ")
-				return encoder.Encode(extension)
-			}
-
-			if len(extension.RootItems()) == 0 {
-				return cmd.Usage()
-			}
-
-			page := tui.NewRootList(extension.Title, func() (extensions.ExtensionMap, []types.ListItem, map[string]string, error) {
-				cfg, err := config.Load()
-				if err != nil {
-					return nil, nil, nil, err
-				}
-
-				extension, err := LoadExtension(extension.Entrypoint)
-				if err != nil {
-					return nil, nil, nil, err
-				}
-
-				extensionMap := extensions.ExtensionMap{alias: extension}
-				return extensionMap, ExtensionRootItems(alias, extension), cfg.Env, nil
-			})
-			return tui.Draw(page)
+			return cmd.Usage()
 		},
 	}
 
@@ -155,6 +130,10 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			case types.ParamTypeNumber:
 				cmd.Flags().Int(param.Name, 0, param.Description)
 			}
+
+			if param.Required {
+				_ = cmd.MarkFlagRequired(param.Name)
+			}
 		}
 
 		rootCmd.AddCommand(cmd)
@@ -174,14 +153,15 @@ func runExtension(extension extensions.Extension, input types.CommandInput, envi
 	}
 
 	missing := tui.FindMissingParams(command.Params, input.Params)
-	if rawOutput {
-		if len(missing) > 0 {
-			names := make([]string, len(missing))
-			for i, param := range missing {
-				names[i] = param.Name
-			}
-			return fmt.Errorf("missing required params: %s", strings.Join(names, ", "))
+	if len(missing) > 0 {
+		names := make([]string, len(missing))
+		for i, param := range missing {
+			names[i] = param.Name
 		}
+		return fmt.Errorf("missing required params: %s", strings.Join(names, ", "))
+	}
+
+	if rawOutput {
 		cmd, err := extension.Cmd(input, environ)
 		if err != nil {
 			return err
@@ -192,26 +172,6 @@ func runExtension(extension extensions.Extension, input types.CommandInput, envi
 		cmd.Stderr = os.Stderr
 
 		return cmd.Run()
-	}
-
-	if len(missing) > 0 {
-		cancelled := true
-		form := tui.NewForm(func(values map[string]any) tea.Msg {
-			cancelled = false
-			for k, v := range values {
-				input.Params[k] = v
-			}
-
-			return tui.ExitMsg{}
-		}, missing...)
-
-		if err := tui.Draw(form); err != nil {
-			return err
-		}
-
-		if cancelled {
-			return nil
-		}
 	}
 
 	switch command.Mode {

@@ -49,10 +49,7 @@ It contains the title, description and the list of commands provided by the exte
           "required": false,
           // description of the parameter (optional)
           // will be shown in the usage string
-          "description": "docset to search",
-          // default value of the parameter (optional)
-          // the type of the default value must match the type of the parameter
-          "default": "go"
+          "description": "docset to search"
         }
       ]
     }
