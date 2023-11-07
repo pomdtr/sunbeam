@@ -140,7 +140,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if c.input.Value() != "" {
 				c.input.SetValue("")
 				c.FilterItems("")
-				return c, nil
+				return c, func() tea.Msg {
+					return QueryChangeMsg("")
+				}
 			}
 
 			return c, PopPageCmd

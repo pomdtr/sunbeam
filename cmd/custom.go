@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,6 +25,13 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 		Args:    cobra.NoArgs,
 		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var jsonOutput bool
+			if cmd.Flags().Changed("json") {
+				jsonOutput, _ = cmd.Flags().GetBool("json")
+			} else {
+				jsonOutput = !isatty.IsTerminal(os.Stdout.Fd())
+			}
+
 			cfg, err := config.Load()
 			if err != nil {
 				return err
@@ -44,10 +52,10 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return err
 				}
 
-				return runExtension(extension, input, cfg.Env)
+				return runExtension(extension, input, cfg.Env, jsonOutput)
 			}
 
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
+			if jsonOutput {
 				encoder := json.NewEncoder(os.Stdout)
 				encoder.SetIndent("", "  ")
 				return encoder.Encode(extension)
@@ -74,6 +82,8 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			return tui.Draw(page)
 		},
 	}
+
+	rootCmd.Flags().Bool("json", false, "output as json")
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
@@ -129,10 +139,10 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 						return err
 					}
 
-					input.Query = string(stdin)
+					input.Query = string(bytes.Trim(stdin, "\n"))
 				}
 
-				return runExtension(extension, input, cfg.Env)
+				return runExtension(extension, input, cfg.Env, !isatty.IsTerminal(os.Stdout.Fd()))
 			},
 		}
 
@@ -153,7 +163,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 	return rootCmd, nil
 }
 
-func runExtension(extension extensions.Extension, input types.CommandInput, environ map[string]string) error {
+func runExtension(extension extensions.Extension, input types.CommandInput, environ map[string]string, jsonOutput bool) error {
 	if err := extension.CheckRequirements(); err != nil {
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
 	}
@@ -164,7 +174,7 @@ func runExtension(extension extensions.Extension, input types.CommandInput, envi
 	}
 
 	missing := tui.FindMissingParams(command.Params, input.Params)
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
+	if jsonOutput {
 		if len(missing) > 0 {
 			names := make([]string, len(missing))
 			for i, param := range missing {

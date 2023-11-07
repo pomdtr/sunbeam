@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os/exec"
 
+	"github.com/acarl005/stripansi"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
@@ -34,7 +35,12 @@ func NewRunner(extension extensions.Extension, input types.CommandInput, environ
 	if ok {
 		switch command.Mode {
 		case types.CommandModeList:
-			embed = NewList()
+			list := NewList()
+			if input.Query != "" {
+				list.SetQuery(input.Query)
+			}
+
+			embed = list
 		case types.CommandModeDetail:
 			embed = NewDetail("")
 		default:
@@ -327,6 +333,11 @@ func (c *Runner) Reload() tea.Cmd {
 			if errors.Is(ctx.Err(), context.Canceled) {
 				return nil
 			}
+			var exitErr *exec.ExitError
+			if errors.As(err, &exitErr) {
+				return fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
+			}
+
 			return err
 		}
 
