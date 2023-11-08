@@ -26,10 +26,9 @@ type Runner struct {
 	extension extensions.Extension
 	command   types.CommandSpec
 	input     types.CommandInput
-	environ   map[string]string
 }
 
-func NewRunner(extension extensions.Extension, input types.CommandInput, environ map[string]string) *Runner {
+func NewRunner(extension extensions.Extension, input types.CommandInput) *Runner {
 	var embed Page
 	command, ok := extension.Command(input.Command)
 	if ok {
@@ -55,7 +54,6 @@ func NewRunner(extension extensions.Extension, input types.CommandInput, environ
 		extension: extension,
 		command:   command,
 		input:     input,
-		environ:   environ,
 	}
 }
 
@@ -172,20 +170,20 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			c.form = nil
 
+			input := types.CommandInput{
+				Command:     msg.Command,
+				Params:      msg.Params,
+				Preferences: c.input.Preferences,
+			}
+
 			switch command.Mode {
 			case types.CommandModeList, types.CommandModeDetail:
-				runner := NewRunner(c.extension, types.CommandInput{
-					Command: command.Name,
-					Params:  msg.Params,
-				}, c.environ)
+				runner := NewRunner(c.extension, input)
 
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					_, err := c.extension.Output(types.CommandInput{
-						Command: command.Name,
-						Params:  msg.Params,
-					}, c.environ)
+					_, err := c.extension.Output(input)
 
 					if err != nil {
 						return PushPageMsg{NewErrorPage(err)}
@@ -204,10 +202,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return nil
 				}
 			case types.CommandModeTTY:
-				cmd, err := c.extension.Cmd(types.CommandInput{
-					Command: command.Name,
-					Params:  msg.Params,
-				}, c.environ)
+				cmd, err := c.extension.Cmd(input)
 
 				if err != nil {
 					c.embed = NewErrorPage(err)
@@ -323,7 +318,7 @@ func (c *Runner) Reload() tea.Cmd {
 		c.cancel = cancel
 		defer cancel()
 
-		cmd, err := c.extension.CmdContext(ctx, c.input, c.environ)
+		cmd, err := c.extension.CmdContext(ctx, c.input)
 		if err != nil {
 			return err
 		}

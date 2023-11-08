@@ -1,7 +1,7 @@
 #!/usr/bin/env deno run -A
 
 import { Octokit } from "https://esm.sh/octokit@3.1.1?dts";
-import * as sunbeam from "npm:sunbeam-types@0.23.21"
+import * as sunbeam from "npm:sunbeam-types@0.23.27"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -11,6 +11,14 @@ if (Deno.args.length === 0) {
             {
                 name: "deno",
                 link: "https://deno.com"
+            }
+        ],
+        preferences: [
+            {
+                name: "token",
+                description: "GitHub API token",
+                type: "string",
+                required: true,
             }
         ],
         commands: [
@@ -67,14 +75,11 @@ if (Deno.args.length === 0) {
     Deno.exit(0)
 }
 
-const token = Deno.env.get("GITHUB_TOKEN")
-if (!token) {
-    console.error("GITHUB_TOKEN environment variable not set")
-    Deno.exit(1)
-}
+const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload
+const token = payload.preferences.token as string
 
 const oktokit = new Octokit({ auth: token });
-const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload
+
 if (payload.command == "list") {
     const gists = await oktokit.request("GET /gists");
     const items = gists.data.map((gist) => {

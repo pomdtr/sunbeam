@@ -37,6 +37,10 @@ func NewTextInput(param types.Param) *TextInput {
 	ti := textinput.New()
 	ti.Prompt = ""
 
+	if defaultValue, ok := param.Default.(string); ok {
+		ti.SetValue(defaultValue)
+	}
+
 	placeholder := param.Description
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
@@ -96,7 +100,13 @@ type BooleanInput struct {
 
 func NewBooleanInput(param types.Param) *BooleanInput {
 	checkbox := BooleanInput{
-		label: param.Description,
+		name:     param.Name,
+		label:    param.Description,
+		required: param.Required,
+	}
+
+	if defaultValue, ok := param.Default.(bool); ok {
+		checkbox.checked = defaultValue
 	}
 
 	return &checkbox
@@ -169,8 +179,19 @@ type NumberInput struct {
 }
 
 func NewNumberInput(param types.Param) Input {
+	defaultValue, ok := param.Default.(int)
+	if !ok {
+		defaultValue = 0
+	}
+
 	ni := NumberInput{
-		TextInput: NewTextInput(param),
+		TextInput: NewTextInput(types.Param{
+			Name:        param.Name,
+			Description: param.Description,
+			Type:        types.ParamTypeString,
+			Required:    param.Required,
+			Default:     strconv.Itoa(defaultValue),
+		}),
 	}
 	return &ni
 }

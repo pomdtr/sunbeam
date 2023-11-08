@@ -31,7 +31,6 @@ func IsSunbeamRunning() bool {
 }
 
 type NonInteractiveOutput struct {
-	Env        map[string]string      `json:"env"`
 	Extensions []extensions.Extension `json:"extensions"`
 	Items      []types.ListItem       `json:"items"`
 }
@@ -126,24 +125,28 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			encoder := json.NewEncoder(os.Stdout)
 			encoder.SetIndent("", "  ")
 
+			exts := make([]extensions.Extension, 0)
+			for _, ext := range extensionMap {
+				exts = append(exts, ext)
+			}
+
 			return encoder.Encode(NonInteractiveOutput{
-				Env:        cfg.Env,
-				Extensions: extensionMap.List(),
+				Extensions: exts,
 				Items:      RootItems(cfg, extensionMap),
 			})
 		}
-		rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, map[string]string, error) {
-			cfg, err := config.Load()
-			if err != nil {
-				return nil, nil, nil, err
-			}
-
+		rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, map[string]map[string]any, error) {
 			extensionMap, err := FindExtensions()
 			if err != nil {
 				return nil, nil, nil, err
 			}
 
-			return extensionMap, RootItems(cfg, extensionMap), cfg.Env, nil
+			cfg, err := config.Load()
+			if err != nil {
+				return nil, nil, nil, err
+			}
+
+			return extensionMap, RootItems(cfg, extensionMap), cfg.Preferences, nil
 		})
 		return tui.Draw(rootList)
 	}
@@ -200,9 +203,9 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func RootItems(cfg config.Config, extensionMap extensions.ExtensionMap) []types.ListItem {
+func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) []types.ListItem {
 	var items []types.ListItem
-	for _, rootItem := range cfg.Root {
+	for _, rootItem := range cfg.Oneliners {
 		item, err := cfg.RootItem(rootItem, extensionMap)
 		item.Id = fmt.Sprintf("root - %s", item.Title)
 		if err != nil {
@@ -225,8 +228,7 @@ func ExtensionRootItems(alias string, extension extensions.Extension) []types.Li
 		listItem := types.ListItem{
 			Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
 			Title:       rootItem.Title,
-			Subtitle:    extension.Title,
-			Accessories: []string{alias},
+			Accessories: []string{extension.Title},
 			Actions: []types.Action{
 				{
 					Title:     "Run",

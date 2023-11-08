@@ -1,6 +1,6 @@
 #!/usr/bin/env deno run -A
 
-import type * as sunbeam from "npm:sunbeam-types@0.23.20";
+import type * as sunbeam from "npm:sunbeam-types@0.23.27";
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 
 if (Deno.args.length == 0) {
@@ -12,6 +12,9 @@ if (Deno.args.length == 0) {
                 name: "deno",
                 link: "https://deno.com"
             }
+        ],
+        preferences: [
+            { name: "token", description: "GitHub API token", type: "string", required: true }
         ],
         commands: [
             {
@@ -64,21 +67,17 @@ if (Deno.args.length == 0) {
     console.log(JSON.stringify(manifest, null, 2));
     Deno.exit(0);
 }
-const token = Deno.env.get("GITHUB_TOKEN");
-if (!token) {
-    console.error("Missing required environment variable: GITHUB_TOKEN");
-    Deno.exit(1);
-}
 
 const payload: sunbeam.Payload = JSON.parse(Deno.args[0]);
 try {
-    await run(payload, token);
+    await run(payload);
 } catch (err) {
     console.error(err);
     Deno.exit(1);
 }
 
-async function run(payload: sunbeam.Payload, token: string) {
+async function run(payload: sunbeam.Payload) {
+    const token = payload.preferences.token as string;
     if (payload.command == "search-repos") {
         const query = payload.query
         if (!query) {

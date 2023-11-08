@@ -33,7 +33,7 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-COMMAND=$(echo "$1" | jq -r '.command')
+COMMAND=$(echo "$1" | sunbeam query -r '.command')
 if [ "$COMMAND" = "toggle-dark-mode" ]; then
     osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to not dark mode'
 elif [ "$COMMAND" = "lock-screen" ]; then

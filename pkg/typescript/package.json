@@ -1,6 +1,6 @@
 {
     "name": "sunbeam-types",
-    "version": "0.23.26",
+    "version": "0.23.27",
     "description": "Types for sunbeam",
     "types": "dist/mod.d.ts",
     "license": "MIT",

@@ -7,6 +7,7 @@ type Manifest struct {
 	Require     []Requirement `json:"requirements,omitempty"`
 	Root        []RootItem    `json:"root,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
+	Preferences []Param       `json:"preferences,omitempty"`
 }
 
 type Platfom string
@@ -50,6 +51,7 @@ type Param struct {
 	Type        ParamType `json:"type"`
 	Description string    `json:"description,omitempty"`
 	Required    bool      `json:"required,omitempty"`
+	Default     any       `json:"default,omitempty"`
 }
 
 type ParamType string

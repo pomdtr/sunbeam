@@ -1,4 +1,4 @@
-# Typescript Extensions
+# Hacker News
 
 Let's write a hackernews extension using deno. Deno is an alternative runtime for javascript and typescript, which among other features allows you to easily write single-file scripts that use external dependencies.
 

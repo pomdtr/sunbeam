@@ -30,6 +30,8 @@ type Extension struct {
 	Metadata
 }
 
+type Preferences map[string]any
+
 type Metadata struct {
 	Type       ExtensionType `json:"type"`
 	Origin     string        `json:"origin"`
@@ -87,8 +89,8 @@ func (e Extension) RootItems() []types.RootItem {
 	return rootItems
 }
 
-func (e Extension) Run(input types.CommandInput, environ map[string]string) error {
-	_, err := e.Output(input, environ)
+func (e Extension) Run(input types.CommandInput) error {
+	_, err := e.Output(input)
 	return err
 }
 
@@ -102,8 +104,8 @@ func (ext Extension) CheckRequirements() error {
 	return nil
 }
 
-func (ext Extension) Output(input types.CommandInput, environ map[string]string) ([]byte, error) {
-	cmd, err := ext.Cmd(input, environ)
+func (ext Extension) Output(input types.CommandInput) ([]byte, error) {
+	cmd, err := ext.Cmd(input)
 	if err != nil {
 		return nil, err
 	}
@@ -118,11 +120,11 @@ func (ext Extension) Output(input types.CommandInput, environ map[string]string)
 	}
 }
 
-func (e Extension) Cmd(input types.CommandInput, environ map[string]string) (*exec.Cmd, error) {
-	return e.CmdContext(context.Background(), input, environ)
+func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
+	return e.CmdContext(context.Background(), input)
 }
 
-func (e Extension) CmdContext(ctx context.Context, input types.CommandInput, environ map[string]string) (*exec.Cmd, error) {
+func (e Extension) CmdContext(ctx context.Context, input types.CommandInput) (*exec.Cmd, error) {
 	if input.Params == nil {
 		input.Params = make(map[string]any)
 	}
@@ -139,9 +141,30 @@ func (e Extension) CmdContext(ctx context.Context, input types.CommandInput, env
 	}
 
 	for _, spec := range command.Params {
+		if !spec.Required {
+			if spec.Default != nil {
+				input.Params[spec.Name] = spec.Default
+			}
+
+			continue
+		}
 		_, ok := input.Params[spec.Name]
-		if !ok && spec.Required {
+		if !ok {
 			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
+		}
+	}
+
+	for _, spec := range e.Preferences {
+		if !spec.Required {
+			if spec.Default != nil {
+				input.Params[spec.Name] = spec.Default
+			}
+
+			continue
+		}
+		_, ok := input.Preferences[spec.Name]
+		if !ok {
+			return nil, fmt.Errorf("missing required preference %s", spec.Name)
 		}
 	}
 
@@ -164,31 +187,6 @@ func (e Extension) CmdContext(ctx context.Context, input types.CommandInput, env
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
-	for k, v := range environ {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
-	}
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil
-}
-
-func HasMissingParams(command types.CommandSpec, params map[string]any) bool {
-	return len(FindMissingParams(command, params)) > 0
-}
-
-func FindMissingParams(command types.CommandSpec, params map[string]any) []types.Param {
-	missing := make([]types.Param, 0)
-	for _, spec := range command.Params {
-		if !spec.Required {
-			continue
-		}
-
-		_, ok := params[spec.Name]
-		if ok {
-			continue
-		}
-
-		missing = append(missing, spec)
-	}
-
-	return missing
 }

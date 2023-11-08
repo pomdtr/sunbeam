@@ -48,7 +48,7 @@ if [ "$COMMAND" = "say-hello" ]; then
 fi
 ```
 
-A more complex shell extension can be found [here](./shell).
+A more complex shell extension can be found [here](./examples/devdocs).
 
 ### Deno
 
@@ -96,4 +96,4 @@ if (payload.command == "say-hello") {
 
 ```
 
-A more complex typescript extension can be found [here](./typescript.md).
+A more complex typescript extension can be found [here](./examples/hackernews.md).

@@ -6,7 +6,7 @@
         "$schema": {
             "type": "string"
         },
-        "root": {
+        "oneliners": {
             "type": "array",
             "description": "A list of commands that will be shown in the root list",
             "items": {
@@ -28,9 +28,13 @@
                 }
             }
         },
-        "envFile": {
-            "type": "string",
-            "description": "A path to a file that contains environment variables to be set before running commands"
+        "preferences": {
+            "type": "object",
+            "patternProperties": {
+                ".+": {
+                    "type": "object"
+                }
+            }
         }
     }
 }

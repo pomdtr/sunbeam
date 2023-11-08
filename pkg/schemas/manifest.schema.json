@@ -50,6 +50,9 @@
                 "$ref": "#/definitions/commandref"
             }
         },
+        "preferences": {
+            "$ref": "#/definitions/entries"
+        },
         "commands": {
             "type": "array",
             "items": {
@@ -97,36 +100,96 @@
                     ]
                 },
                 "params": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": [
-                            "name",
-                            "type"
-                        ],
-                        "additionalProperties": false,
+                    "$ref": "#/definitions/entries"
+                }
+            }
+        },
+        "entries": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "type"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "string",
+                            "boolean",
+                            "number"
+                        ]
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "default": {
+                        "type": [
+                            "string",
+                            "boolean",
+                            "number"
+                        ]
+                    }
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
                         "properties": {
-                            "name": {
-                                "type": "string"
-                            },
                             "type": {
-                                "type": "string",
-                                "enum": [
-                                    "string",
-                                    "boolean",
-                                    "number"
-                                ]
-                            },
-                            "description": {
-                                "type": "string"
-                            },
-                            "required": {
+                                "const": "boolean"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "default": {
                                 "type": "boolean"
                             }
                         }
                     }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "number"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "default": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "string"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "default": {
+                                "type": "string"
+                            }
+                        }
+                    }
                 }
-            }
+            ]
         }
     }
 }

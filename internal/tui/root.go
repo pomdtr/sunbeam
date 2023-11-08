@@ -26,13 +26,13 @@ type RootList struct {
 	list          *List
 	form          *Form
 
-	environ    map[string]string
-	extensions extensions.ExtensionMap
+	extensions  extensions.ExtensionMap
+	preferences map[string]map[string]any
 
-	generator func() (extensions.ExtensionMap, []types.ListItem, map[string]string, error)
+	generator func() (extensions.ExtensionMap, []types.ListItem, map[string]map[string]any, error)
 }
 
-func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, map[string]string, error)) *RootList {
+func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, map[string]map[string]any, error)) *RootList {
 	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
 	if err != nil {
 		history = History{
@@ -54,13 +54,13 @@ func (c *RootList) Init() tea.Cmd {
 }
 
 func (c *RootList) Reload() tea.Msg {
-	extensionMap, rootItems, environ, err := c.generator()
+	extensionMap, rootItems, preferences, err := c.generator()
 	if err != nil {
 		return err
 	}
 
-	c.environ = environ
 	c.extensions = extensionMap
+	c.preferences = preferences
 	c.history.Sort(rootItems)
 	c.list.SetEmptyText("No results found, hit enter to run as shell command")
 	c.list.SetIsLoading(false)
@@ -190,29 +190,26 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(err)
 			}
 
+			input := types.CommandInput{
+				Command:     command.Name,
+				Preferences: c.preferences[msg.Extension],
+				Params:      msg.Params,
+			}
+
 			switch command.Mode {
 			case types.CommandModeList, types.CommandModeDetail:
-				runner := NewRunner(extension, types.CommandInput{
-					Command: command.Name,
-					Params:  msg.Params,
-				}, c.environ)
+				runner := NewRunner(extension, input)
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:
 				return c, func() tea.Msg {
-					if err := extension.Run(types.CommandInput{
-						Command: command.Name,
-						Params:  msg.Params,
-					}, c.environ); err != nil {
+					if err := extension.Run(input); err != nil {
 						return PushPageMsg{NewErrorPage(err)}
 					}
 
 					return ExitMsg{}
 				}
 			case types.CommandModeTTY:
-				cmd, err := extension.Cmd(types.CommandInput{
-					Command: command.Name,
-					Params:  msg.Params,
-				}, c.environ)
+				cmd, err := extension.Cmd(input)
 
 				if err != nil {
 					c.err = NewErrorPage(err)

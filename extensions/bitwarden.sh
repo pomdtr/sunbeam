@@ -7,6 +7,9 @@ if [ $# -eq 0 ]; then
         requirements: [
             { name: "bw", link: "https://bitwarden.com/help/article/cli/" }
         ],
+        preferences: [
+            { name: "session", title: "Bitwarden Session", type: "string", required: true }
+        ],
         commands: [
             {
                 name: "list-passwords",
@@ -18,12 +21,9 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-if [ -z "$BW_SESSION" ]; then
-    echo "Please set BW_SESSION environment variable"
-    exit 1
-fi
+BW_SESSION=$(echo "$1" | sunbeam query -r '.preferences.session')
 
-COMMAND=$(echo "$1" | jq -r '.command')
+COMMAND=$(echo "$1" | sunbeam query -r '.command')
 if [ "$COMMAND" = "list-passwords" ]; then
     bw --nointeraction list items --session "$BW_SESSION" | sunbeam query 'map({
         title: .name,

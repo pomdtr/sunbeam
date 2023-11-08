@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "npm:sunbeam-types@0.23.21"
+import * as sunbeam from "npm:sunbeam-types@0.23.27"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -9,6 +9,14 @@ if (Deno.args.length === 0) {
             {
                 name: "deno",
                 link: "https://deno.com"
+            }
+        ],
+        preferences: [
+            {
+                name: "token",
+                description: "Raindrop API token",
+                type: "string",
+                required: true,
             }
         ],
         commands: [
@@ -23,13 +31,9 @@ if (Deno.args.length === 0) {
     Deno.exit(0);
 }
 
-const raindropToken = Deno.env.get("RAINDROP_TOKEN");
-if (!raindropToken) {
-    console.error("RAINDROP_TOKEN environment variable not set");
-    Deno.exit(1);
-}
-
 const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
+const raindropToken = payload.preferences.token as string;
+
 if (payload.command == "search-bookmarks") {
     const resp = await fetch("https://api.raindrop.io/rest/v1/raindrops/0", {
         headers: {
@@ -68,4 +72,7 @@ if (payload.command == "search-bookmarks") {
     }
 
     console.log(JSON.stringify(list));
+} else {
+    console.error(`Unknown command: ${payload.command}`);
+    Deno.exit(1);
 }

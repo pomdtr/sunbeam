@@ -65,6 +65,20 @@ for (const entry of entries) {
         }
     }
 
+    if (manifest.preferences?.length) {
+        rows.push(
+            "",
+            "### Preferences",
+            ""
+        )
+
+        for (const preference of manifest.preferences) {
+            rows.push(
+                `- \`${preference.name}\` (${preference.type}): ${preference.description}`
+            )
+        }
+    }
+
     rows.push(
         "",
         "### Commands",

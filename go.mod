@@ -13,7 +13,6 @@ require (
 	github.com/cli/cli v1.14.0
 	github.com/cli/go-gh/v2 v2.4.0
 	github.com/itchyny/gojq v0.12.13
-	github.com/joho/godotenv v1.5.1
 	github.com/junegunn/fzf v0.0.0-20231029150554-1cfa3ee4c7c1
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2

@@ -26,7 +26,7 @@ if [ $# -eq 0 ]; then
   exit 0
 fi
 
-COMMAND=$(echo "$1" | jq -r '.command')
+COMMAND=$(echo "$1" | sunbeam query -r '.command')
 if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
   sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query 'map({

@@ -11,7 +11,7 @@ If no config is found, sunbeam will create one.
 ```json
 {
     // additional items to show in the root list
-    "root": [
+    "oneliners": [
         {
             // title of the item shown in the list
             "title": "Search Overreact Feed",
@@ -23,8 +23,12 @@ If no config is found, sunbeam will create one.
             "command": "htop"
         }
     ],
-    // load env variables from a file
-    // relative paths are resolved from the config file location
-    "envFile": "secrets.env",
+    // set preferences for extensions
+    "preferences": {
+        // the alias of the extension the preference belongs to
+        "github": {
+            "token": "xxx"
+        }
+    }
 }
 ```

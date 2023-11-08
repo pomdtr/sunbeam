@@ -8,6 +8,7 @@ set -eu
 if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Google Search",
+        description: "Search the web with Google",
         commands: [
             {
                 name: "search",

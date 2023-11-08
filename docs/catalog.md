@@ -68,6 +68,10 @@ Search GitHub repositories
 
 - [`deno`](https://deno.com)
 
+### Preferences
+
+- `token` (string): GitHub API token
+
 ### Commands
 
 - `search-repos`: Search Repositories
@@ -109,6 +113,10 @@ Manage your gists
 
 - [`deno`](https://deno.com)
 
+### Preferences
+
+- `token` (string): GitHub API token
+
 ### Commands
 
 - `list`: List Gists
@@ -129,6 +137,10 @@ Search your Bitwarden passwords
 ### Requirements
 
 - [`bw`](https://bitwarden.com/help/article/cli/)
+
+### Preferences
+
+- `session` (string): undefined
 
 ### Commands
 
@@ -271,6 +283,10 @@ Manage your raindrop bookmarks
 
 - [`deno`](https://deno.com)
 
+### Preferences
+
+- `token` (string): Raindrop API token
+
 ### Commands
 
 - `search-bookmarks`: Search Bookmarks
@@ -283,7 +299,7 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 ## [Google Search](https://github.com/pomdtr/sunbeam/tree/main/extensions/google.sh)
 
-undefined
+Search Google
 
 ### Commands
 

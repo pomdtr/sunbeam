@@ -24,11 +24,6 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 		Args:    cobra.NoArgs,
 		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Load()
-			if err != nil {
-				return err
-			}
-
 			var inputBytes []byte
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
 				b, err := io.ReadAll(os.Stdin)
@@ -44,6 +39,12 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return err
 				}
 
+				cfg, err := config.Load()
+				if err != nil {
+					return err
+				}
+				input.Preferences = cfg.Preferences[alias]
+
 				var rawOutput bool
 				if cmd.Flags().Changed("raw") {
 					rawOutput, _ = cmd.Flags().GetBool("raw")
@@ -51,7 +52,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					rawOutput = !isatty.IsTerminal(os.Stdout.Fd())
 				}
 
-				return runExtension(extension, input, cfg.Env, rawOutput)
+				return runExtension(extension, input, rawOutput)
 			}
 
 			return cmd.Usage()
@@ -69,11 +70,6 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			Short:  command.Title,
 			Hidden: command.Hidden,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				cfg, err := config.Load()
-				if err != nil {
-					return err
-				}
-
 				params := make(map[string]any)
 
 				for _, param := range command.Params {
@@ -103,9 +99,15 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					}
 				}
 
+				cfg, err := config.Load()
+				if err != nil {
+					return err
+				}
+
 				input := types.CommandInput{
-					Command: command.Name,
-					Params:  params,
+					Command:     command.Name,
+					Params:      params,
+					Preferences: cfg.Preferences[alias],
 				}
 
 				if !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -117,7 +119,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					input.Query = string(bytes.Trim(stdin, "\n"))
 				}
 
-				return runExtension(extension, input, cfg.Env, !isatty.IsTerminal(os.Stdout.Fd()))
+				return runExtension(extension, input, !isatty.IsTerminal(os.Stdout.Fd()))
 			},
 		}
 
@@ -142,7 +144,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 	return rootCmd, nil
 }
 
-func runExtension(extension extensions.Extension, input types.CommandInput, environ map[string]string, rawOutput bool) error {
+func runExtension(extension extensions.Extension, input types.CommandInput, rawOutput bool) error {
 	if err := extension.CheckRequirements(); err != nil {
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
 	}
@@ -162,7 +164,7 @@ func runExtension(extension extensions.Extension, input types.CommandInput, envi
 	}
 
 	if rawOutput {
-		cmd, err := extension.Cmd(input, environ)
+		cmd, err := extension.Cmd(input)
 		if err != nil {
 			return err
 		}
@@ -176,12 +178,12 @@ func runExtension(extension extensions.Extension, input types.CommandInput, envi
 
 	switch command.Mode {
 	case types.CommandModeList, types.CommandModeDetail:
-		runner := tui.NewRunner(extension, input, environ)
+		runner := tui.NewRunner(extension, input)
 		return tui.Draw(runner)
 	case types.CommandModeSilent:
-		return extension.Run(input, environ)
+		return extension.Run(input)
 	case types.CommandModeTTY:
-		cmd, err := extension.Cmd(input, environ)
+		cmd, err := extension.Cmd(input)
 		if err != nil {
 			return err
 		}

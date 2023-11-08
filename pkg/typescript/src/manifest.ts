@@ -3,6 +3,7 @@ export type Manifest = {
   platforms?: Platform[];
   description?: string;
   requirements?: Requirement[];
+  preferences?: Param[];
   root?: CommandRef[];
   commands: CommandSpec[];
 };
@@ -27,10 +28,10 @@ export type CommandSpec = {
   mode: "list" | "detail" | "tty" | "silent";
   hidden?: boolean;
   description?: string;
-  params?: CommandParam[];
+  params?: Param[];
 };
 
-type CommandParam = StringParam | BooleanParam | NumberParam;
+type Param = StringParam | BooleanParam | NumberParam;
 
 type ParamsProps = {
   name: string;
@@ -40,20 +41,24 @@ type ParamsProps = {
 
 type StringParam = {
   type: "string";
+  default?: string;
 } & ParamsProps;
 
 type BooleanParam = {
   type: "boolean";
+  default?: boolean;
 } & ParamsProps;
 
 type NumberParam = {
   type: "number";
+  default?: number;
 } & ParamsProps;
 
 type PayloadParams = Record<string, string | number | boolean>;
-export type Payload<T extends PayloadParams = PayloadParams> = {
+export type Payload<T extends PayloadParams = PayloadParams, V extends PayloadParams = PayloadParams> = {
   command: string;
   params: T;
+  preferences: V;
   query?: string;
   cwd: string;
 };
