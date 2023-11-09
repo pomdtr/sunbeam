@@ -74,6 +74,10 @@ type Oneliner struct {
 }
 
 func Path() string {
+	if env, ok := os.LookupEnv("SUNBEAM_CONFIG"); ok {
+		return env
+	}
+
 	if _, err := os.Stat(filepath.Join(utils.ConfigHome(), "config.jsonc")); err == nil {
 		return filepath.Join(utils.ConfigHome(), "config.jsonc")
 	}
