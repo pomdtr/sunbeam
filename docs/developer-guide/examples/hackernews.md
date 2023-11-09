@@ -1,8 +1,8 @@
 # Hacker News
 
-Let's write a hackernews extension using deno. Deno is an alternative runtime for javascript and typescript, which among other features allows you to easily write single-file scripts that use external dependencies.
+This script leverages the `root` property to contribute two items to the root menu.
 
-We will use the `#!/usr/bin/env -S deno run -A` shebang to run our script using deno. The `-S` splits the command into arguments.
+The first item will list the articles from the front page, and the second item will list the articles from the "Show HN" section.
 
 ```ts
 #!/usr/bin/env deno run -A
@@ -90,4 +90,17 @@ if (payload.command == "browse") {
     console.error("Unknown command");
     Deno.exit(1);
 }
+```
+
+You can add a new item to the root menu by adding a new oneliner to your sunbeam config:
+
+```json
+{
+    "oneliners": [
+        {
+            "title": "Ask HN",
+            "command": "sunbeam hackernews browse --topic ask"
+        }
+    ]
+
 ```

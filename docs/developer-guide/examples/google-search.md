@@ -1,5 +1,7 @@
 # Google Search
 
+This scripts allows you to search Google from Sunbeam. The list of suggestions is refreshed every time the user types a character, thanks to the `dynamic` property.
+
 ```bash
 #!/bin/sh
 

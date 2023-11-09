@@ -62,12 +62,20 @@ export default defineConfig({
             items: [
               {
                 text: "DevDocs (Shell)",
-                link: "/developer-guide/shell"
+                link: "/developer-guide/examples/devdocs"
               },
               {
                 text: "Hackernews (Typescript)",
-                link: "/developer-guide/typescript"
+                link: "/developer-guide/examples/hackernews"
               },
+              {
+                text: "File Browser (Python)",
+                link: "/developer-guide/examples/file-browser"
+              },
+              {
+                text: "Google Search (Shell)",
+                link: "/developer-guide/examples/google-search"
+              }
             ]
           },
 
