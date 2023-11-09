@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "search",
                 mode: "list",
-                title: "Search",
+                title: "Google Search",
             }
         ]
     }'

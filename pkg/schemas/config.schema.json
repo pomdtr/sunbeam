@@ -38,6 +38,9 @@
                         },
                         {
                             "type": "object",
+                            "required": [
+                                "origin"
+                            ],
                             "additionalProperties": false,
                             "properties": {
                                 "origin": {

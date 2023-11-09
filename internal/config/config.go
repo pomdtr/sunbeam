@@ -24,7 +24,7 @@ type Config struct {
 
 type ExtensionRef struct {
 	Origin      string         `json:"origin"`
-	Preferences map[string]any `json:"preferences"`
+	Preferences map[string]any `json:"preferences,omitempty"`
 }
 
 func (e *ExtensionRef) UnmarshalJSON(b []byte) error {
@@ -58,7 +58,14 @@ var DefaultConfig = Config{
 			Command: "sunbeam edit --config",
 		},
 	},
-	Extensions: map[string]ExtensionRef{},
+	Extensions: map[string]ExtensionRef{
+		"devdocs": {
+			Origin: "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh",
+		},
+		"google": {
+			Origin: "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh",
+		},
+	},
 }
 
 type Oneliner struct {
