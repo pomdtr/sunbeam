@@ -11,5 +11,5 @@ func FindEditor() string {
 		return editor
 	}
 
-	return "vim"
+	return "vi"
 }
