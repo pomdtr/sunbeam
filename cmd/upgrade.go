@@ -144,8 +144,13 @@ func ExtractManifest(origin string) (extensions.Extension, error) {
 		if err != nil {
 			return extensions.Extension{}, err
 		}
+		defer f.Close()
 
 		if _, err := io.Copy(f, resp.Body); err != nil {
+			return extensions.Extension{}, err
+		}
+
+		if err := f.Close(); err != nil {
 			return extensions.Extension{}, err
 		}
 	} else {
