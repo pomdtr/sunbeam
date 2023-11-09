@@ -29,7 +29,7 @@ func NewCmdRun() *cobra.Command {
 					return nil, cobra.ShellCompDirectiveNoFileComp
 				}
 
-				extension, err := LoadExtension(entrypoint)
+				extension, err := ExtractManifest(entrypoint)
 				if err != nil {
 					return nil, cobra.ShellCompDirectiveNoFileComp
 				}
@@ -112,12 +112,12 @@ func NewCmdRun() *cobra.Command {
 				scriptPath = s
 			}
 
-			extension, err := LoadExtension(scriptPath)
+			extension, err := ExtractManifest(scriptPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("error loading extension: %w", err)
 			}
 
-			rootCmd, err := NewCmdCustom(filepath.Base(scriptPath), extension)
+			rootCmd, err := NewCmdCustom(filepath.Base(scriptPath), extension, nil)
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}

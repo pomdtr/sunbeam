@@ -8,7 +8,7 @@ if [ $# -eq 0 ]; then
             { name: "bw", link: "https://bitwarden.com/help/article/cli/" }
         ],
         preferences: [
-            { name: "session", title: "Bitwarden Session", type: "string", required: true }
+            { name: "session", description: "Bitwarden Session", type: "string", required: true }
         ],
         commands: [
             {

@@ -287,26 +287,23 @@ Now we can start by listing the docsets, select the one we are interested in, an
 
 ## Installing your extension
 
-Now that we have a working extension, we can install it using the `sunbeam extension install` command.
+Now that we have a working extension, we can install it by editing the `extensions` dict in the config file.
 
-```console
-sunbeam extension install ./sunbeam-devdocs
-sunbeam devdocs --help
+```json
+// ~/.config/sunbeam/config.json
+{
+    "extensions": {
+      "devdocs": "~/sunbeam/devdocs.sh"
+    }
+}
 ```
 
-Now we can run the extension from anywhere using the `sunbeam devdocs` command. The `devdocs` alias is based on the name of the script, stripped of the `sunbeam-` prefix if it exists. If you prefer, you can specify a custom alias using the `--alias` flag.
+Now we can run the extension from anywhere using the `sunbeam devdocs` command.
 
 ```console
-sunbeam extension install ./sunbeam-devdocs --alias=dd
 sunbeam dd --help
 ```
 
 The search-docsets command will also appears in the root list (only commands without required parameters are shown in the root list).
 
-Note that if you update the manifest of the extension, you will need to upgrade it using the `sunbeam extension upgrade` to see the changes.
-
-```console
-sunbeam extension upgrade devdocs
-```
-
-> ℹ️ The source code of this extension is available here: <https://github.com/pomdtr/sunbeam-devdocs/blob/main/sunbeam-extension>. Use `sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam-extensions/main/extensions/devdocs.sh` to install it.
+> ℹ️ The source code of this extension is available here: <https://github.com/pomdtr/sunbeam-devdocs/blob/main/sunbeam-extension>.

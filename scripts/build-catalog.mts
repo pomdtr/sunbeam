@@ -15,7 +15,6 @@ rows.push(
     "# Extension Catalog"
 )
 
-
 const extensionDir = path.join(dirname, "..", "extensions");
 const entries = Deno.readDirSync(extensionDir);
 for (const entry of entries) {
@@ -32,7 +31,7 @@ for (const entry of entries) {
     }
     rows.push(
         "",
-        `## [${manifest.title}](https://github.com/pomdtr/sunbeam/tree/main/extensions/${entry.name})`,
+        `## [${manifest.title}](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name})`,
         "",
         `${manifest.description}`,
     )
@@ -90,15 +89,6 @@ for (const entry of entries) {
             `- \`${command.name}\`: ${command.title}`
         )
     }
-
-    rows.push(
-        "",
-        "### Installation",
-        "",
-        "```",
-        `sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name}`,
-        "```"
-    )
 }
 
 console.log(rows.join("\n"))

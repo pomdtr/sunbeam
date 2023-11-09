@@ -9,14 +9,14 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension, preferences map[string]any) (*cobra.Command, error) {
+
 	rootCmd := &cobra.Command{
 		Use:     alias,
 		Short:   extension.Title,
@@ -39,12 +39,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return err
 				}
 
-				cfg, err := config.Load()
-				if err != nil {
-					return err
-				}
-				input.Preferences = cfg.Preferences[alias]
-
+				input.Preferences = preferences
 				var rawOutput bool
 				if cmd.Flags().Changed("raw") {
 					rawOutput, _ = cmd.Flags().GetBool("raw")
@@ -99,15 +94,10 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					}
 				}
 
-				cfg, err := config.Load()
-				if err != nil {
-					return err
-				}
-
 				input := types.CommandInput{
 					Command:     command.Name,
 					Params:      params,
-					Preferences: cfg.Preferences[alias],
+					Preferences: preferences,
 				}
 
 				if !isatty.IsTerminal(os.Stdin.Fd()) {

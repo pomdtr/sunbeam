@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
@@ -36,6 +34,11 @@ type NonInteractiveOutput struct {
 }
 
 func NewRootCmd() (*cobra.Command, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:          "sunbeam",
@@ -46,6 +49,29 @@ func NewRootCmd() (*cobra.Command, error) {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, map[string]map[string]any, error) {
+				cfg, err := config.Load()
+				if err != nil {
+					return nil, nil, nil, err
+				}
+
+				extensionMap := make(map[string]extensions.Extension)
+				preferences := make(map[string]map[string]any)
+				for alias, ext := range cfg.Extensions {
+					extension, err := LoadExtension(alias, ext.Origin)
+					if err != nil {
+						continue
+					}
+
+					extensionMap[alias] = extension
+					preferences[alias] = ext.Preferences
+				}
+
+				return extensionMap, RootItems(cfg, extensionMap), preferences, nil
+			})
+			return tui.Draw(rootList)
+		},
 	}
 
 	rootCmd.AddGroup(&cobra.Group{
@@ -59,10 +85,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewCmdRun())
-	rootCmd.AddCommand(NewCmdExtension())
 	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
+	rootCmd.AddCommand(NewCmdUpgrade(cfg))
 	rootCmd.AddCommand(NewCmdOpen())
 
 	docCmd := &cobra.Command{
@@ -105,59 +131,19 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		return rootCmd, nil
 	}
 
-	extensionMap, err := FindExtensions()
-	if err != nil {
-		return nil, err
-	}
-
-	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if !isatty.IsTerminal(os.Stdout.Fd()) {
-			cfg, err := config.Load()
-			if err != nil {
-				return err
-			}
-
-			extensionMap, err := FindExtensions()
-			if err != nil {
-				return err
-			}
-
-			encoder := json.NewEncoder(os.Stdout)
-			encoder.SetIndent("", "  ")
-
-			exts := make([]extensions.Extension, 0)
-			for _, ext := range extensionMap {
-				exts = append(exts, ext)
-			}
-
-			return encoder.Encode(NonInteractiveOutput{
-				Extensions: exts,
-				Items:      RootItems(cfg, extensionMap),
-			})
-		}
-		rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, map[string]map[string]any, error) {
-			extensionMap, err := FindExtensions()
-			if err != nil {
-				return nil, nil, nil, err
-			}
-
-			cfg, err := config.Load()
-			if err != nil {
-				return nil, nil, nil, err
-			}
-
-			return extensionMap, RootItems(cfg, extensionMap), cfg.Preferences, nil
-		})
-		return tui.Draw(rootList)
-	}
-
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    CommandGroupExtension,
 		Title: "Extension Commands:",
 	})
 
-	for alias, extension := range extensionMap {
-		command, err := NewCmdCustom(alias, extension)
+	for alias, ref := range cfg.Extensions {
+		extension, err := LoadExtension(alias, ref.Origin)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error loading extension %s: %s\n", alias, err)
+			continue
+		}
+
+		command, err := NewCmdCustom(alias, extension, ref.Preferences)
 		if err != nil {
 			return nil, err
 		}

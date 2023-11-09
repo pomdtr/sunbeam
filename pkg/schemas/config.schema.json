@@ -28,11 +28,42 @@
                 }
             }
         },
-        "preferences": {
+        "extensions": {
             "type": "object",
             "patternProperties": {
                 ".+": {
-                    "type": "object"
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "origin": {
+                                    "type": "string"
+                                },
+                                "preferences": {
+                                    "type": "object",
+                                    "patternProperties": {
+                                        ".+": {
+                                            "oneOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "number"
+                                                },
+                                                {
+                                                    "type": "boolean"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
                 }
             }
         }

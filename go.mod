@@ -3,7 +3,6 @@ module github.com/pomdtr/sunbeam
 go 1.21
 
 require (
-	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/atotto/clipboard v0.1.4
 	github.com/charmbracelet/bubbles v0.16.1
@@ -11,7 +10,6 @@ require (
 	github.com/charmbracelet/glamour v0.6.0
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/cli/cli v1.14.0
-	github.com/cli/go-gh/v2 v2.4.0
 	github.com/itchyny/gojq v0.12.13
 	github.com/junegunn/fzf v0.0.0-20231029150554-1cfa3ee4c7c1
 	github.com/muesli/reflow v0.3.0
@@ -20,7 +18,6 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.7.0
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
-	golang.org/x/term v0.13.0
 	mvdan.cc/sh v2.6.4+incompatible
 )
 
@@ -54,6 +51,7 @@ require (
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

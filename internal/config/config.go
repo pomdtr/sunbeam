@@ -17,9 +17,33 @@ import (
 )
 
 type Config struct {
-	Schema      string                    `json:"$schema,omitempty"`
-	Oneliners   []Oneliner                `json:"oneliners,omitempty"`
-	Preferences map[string]map[string]any `json:"preferences,omitempty"`
+	Schema     string                  `json:"$schema,omitempty"`
+	Oneliners  []Oneliner              `json:"oneliners,omitempty"`
+	Extensions map[string]ExtensionRef `json:"extensions,omitempty"`
+}
+
+type ExtensionRef struct {
+	Origin      string         `json:"origin"`
+	Preferences map[string]any `json:"preferences"`
+}
+
+func (e *ExtensionRef) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		e.Origin = s
+		return nil
+	}
+
+	type Alias ExtensionRef
+	var a Alias
+	if err := json.Unmarshal(b, &a); err == nil {
+		e.Origin = a.Origin
+		e.Preferences = a.Preferences
+
+		return nil
+	}
+
+	return fmt.Errorf("invalid extension ref: %s", string(b))
 }
 
 var DefaultConfig = Config{
@@ -34,7 +58,7 @@ var DefaultConfig = Config{
 			Command: "sunbeam edit --config",
 		},
 	},
-	Preferences: make(map[string]map[string]any),
+	Extensions: map[string]ExtensionRef{},
 }
 
 type Oneliner struct {

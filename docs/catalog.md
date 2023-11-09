@@ -5,7 +5,7 @@ outline: 2
 
 # Extension Catalog
 
-## [Mac Apps](https://github.com/pomdtr/sunbeam/tree/main/extensions/macapps.sh)
+## [Mac Apps](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/macapps.sh)
 
 Open your favorite apps
 
@@ -17,13 +17,7 @@ Open your favorite apps
 
 - `list`: List All Apps
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/macapps.sh
-```
-
-## [File Browser](https://github.com/pomdtr/sunbeam/tree/main/extensions/files.py)
+## [File Browser](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py)
 
 Browse files and folders
 
@@ -35,13 +29,7 @@ Browse files and folders
 
 - `ls`: List files
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py
-```
-
-## [Pipe Commands](https://github.com/pomdtr/sunbeam/tree/main/extensions/pipe.ts)
+## [Pipe Commands](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/pipe.ts)
 
 Pipe your clipboard through various commands
 
@@ -54,13 +42,7 @@ Pipe your clipboard through various commands
 - `urldecode`: URL Decode Clipboard
 - `urlencode`: URL Encode Clipboard
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/pipe.ts
-```
-
-## [GitHub](https://github.com/pomdtr/sunbeam/tree/main/extensions/github.ts)
+## [GitHub](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/github.ts)
 
 Search GitHub repositories
 
@@ -79,13 +61,7 @@ Search GitHub repositories
 - `list-prs`: List Pull Requests
 - `view-readme`: View Readme
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/github.ts
-```
-
-## [Tailscale](https://github.com/pomdtr/sunbeam/tree/main/extensions/tailscale.ts)
+## [Tailscale](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tailscale.ts)
 
 Manage your tailscale devices
 
@@ -99,13 +75,7 @@ Manage your tailscale devices
 - `list-devices`: Search My Devices
 - `ssh-to-device`: SSH to Device
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tailscale.ts
-```
-
-## [Gist](https://github.com/pomdtr/sunbeam/tree/main/extensions/gist.ts)
+## [Gist](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/gist.ts)
 
 Manage your gists
 
@@ -124,13 +94,7 @@ Manage your gists
 - `delete`: Delete Gist
 - `view`: View Gist File
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/gist.ts
-```
-
-## [Bitwarden Vault](https://github.com/pomdtr/sunbeam/tree/main/extensions/bitwarden.sh)
+## [Bitwarden Vault](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/bitwarden.sh)
 
 Search your Bitwarden passwords
 
@@ -140,19 +104,13 @@ Search your Bitwarden passwords
 
 ### Preferences
 
-- `session` (string): undefined
+- `session` (string): Bitwarden Session
 
 ### Commands
 
 - `list-passwords`: List Passwords
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/bitwarden.sh
-```
-
-## [VS Code](https://github.com/pomdtr/sunbeam/tree/main/extensions/vscode.ts)
+## [VS Code](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/vscode.ts)
 
 Manage your VS Code projects
 
@@ -164,13 +122,7 @@ Manage your VS Code projects
 
 - `list-projects`: List Projects
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/vscode.ts
-```
-
-## [Meteo](https://github.com/pomdtr/sunbeam/tree/main/extensions/meteo.sh)
+## [Meteo](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/meteo.sh)
 
 Show Meteo
 
@@ -178,13 +130,7 @@ Show Meteo
 
 - `show`: Show Meteo
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/meteo.sh
-```
-
-## [System](https://github.com/pomdtr/sunbeam/tree/main/extensions/system.sh)
+## [System](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/system.sh)
 
 Control your system
 
@@ -199,13 +145,7 @@ Control your system
 - `empty-trash`: Empty Trash
 - `open-trash`: Open Trash
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/system.sh
-```
-
-## [Browse TLDR Pages](https://github.com/pomdtr/sunbeam/tree/main/extensions/tldr.sh)
+## [Browse TLDR Pages](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tldr.sh)
 
 Browse TLDR Pages
 
@@ -218,13 +158,7 @@ Browse TLDR Pages
 - `list`: Search Pages
 - `view`: View page
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tldr.sh
-```
-
-## [RSS](https://github.com/pomdtr/sunbeam/tree/main/extensions/rss.ts)
+## [RSS](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/rss.ts)
 
 Manage your RSS feeds
 
@@ -236,13 +170,7 @@ Manage your RSS feeds
 
 - `show`: Show a feed
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/rss.ts
-```
-
-## [Hacker News](https://github.com/pomdtr/sunbeam/tree/main/extensions/hackernews.ts)
+## [Hacker News](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/hackernews.ts)
 
 Browse Hacker News
 
@@ -254,13 +182,7 @@ Browse Hacker News
 
 - `browse`: Show a feed
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/hackernews.ts
-```
-
-## [DevDocs](https://github.com/pomdtr/sunbeam/tree/main/extensions/devdocs.sh)
+## [DevDocs](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh)
 
 Search DevDocs.io
 
@@ -269,13 +191,7 @@ Search DevDocs.io
 - `list-docsets`: List Docsets
 - `list-entries`: List Entries from Docset
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh
-```
-
-## [Raindrop](https://github.com/pomdtr/sunbeam/tree/main/extensions/raindrop.ts)
+## [Raindrop](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/raindrop.ts)
 
 Manage your raindrop bookmarks
 
@@ -291,22 +207,10 @@ Manage your raindrop bookmarks
 
 - `search-bookmarks`: Search Bookmarks
 
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/raindrop.ts
-```
-
-## [Google Search](https://github.com/pomdtr/sunbeam/tree/main/extensions/google.sh)
+## [Google Search](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh)
 
 Search Google
 
 ### Commands
 
 - `search`: Search
-
-### Installation
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh
-```

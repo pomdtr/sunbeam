@@ -1,7 +1,3 @@
----
-outline: 2
----
-
 # CLI
 
 ## sunbeam
@@ -226,145 +222,6 @@ sunbeam edit [file] [flags]
   -h, --help               help for edit
 ```
 
-## sunbeam extension
-
-Manage extensions
-
-### Options
-
-```
-  -h, --help   help for extension
-```
-
-## sunbeam extension create
-
-Create an extension
-
-```
-sunbeam extension create <output> [flags]
-```
-
-### Examples
-
-```
-sunbeam extension create my-extension.sh
-sunbeam extension create --language sh my-extension
-
-```
-
-### Options
-
-```
-  -h, --help              help for create
-  -l, --language string   language for extension
-```
-
-## sunbeam extension edit
-
-Edit an extension
-
-```
-sunbeam extension edit [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for edit
-```
-
-## sunbeam extension help
-
-Help about any command
-
-### Synopsis
-
-Help provides help for any command in the application.
-Simply type extension help [path to command] for full details.
-
-```
-sunbeam extension help [command] [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for help
-```
-
-## sunbeam extension install
-
-Install an extension
-
-```
-sunbeam extension install <src> [flags]
-```
-
-### Options
-
-```
-  -a, --alias string   alias for extension
-  -h, --help           help for install
-```
-
-## sunbeam extension list
-
-List installed extensions
-
-```
-sunbeam extension list [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for list
-      --json   output as json
-```
-
-## sunbeam extension remove
-
-Remove an extension
-
-```
-sunbeam extension remove [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for remove
-```
-
-## sunbeam extension rename
-
-Rename an extension
-
-```
-sunbeam extension rename [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for rename
-```
-
-## sunbeam extension update
-
-Update an extension
-
-```
-sunbeam extension update [flags]
-```
-
-### Options
-
-```
-  -a, --all    upgrade all extensions
-  -h, --help   help for update
-```
-
 ## sunbeam fetch
 
 Simple http client inspired by curl
@@ -465,6 +322,21 @@ sunbeam run <origin> [args...] [flags]
   -h, --help   help for run
 ```
 
+## sunbeam upgrade
+
+
+
+```
+sunbeam upgrade [flags]
+```
+
+### Options
+
+```
+  -a, --all    upgrade all extensions
+  -h, --help   help for upgrade
+```
+
 ## sunbeam validate
 
 Validate a Sunbeam schema
@@ -473,6 +345,20 @@ Validate a Sunbeam schema
 
 ```
   -h, --help   help for validate
+```
+
+## sunbeam validate detail
+
+Validate a detail
+
+```
+sunbeam validate detail [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for detail
 ```
 
 ## sunbeam validate help
@@ -494,6 +380,20 @@ sunbeam validate help [command] [flags]
   -h, --help   help for help
 ```
 
+## sunbeam validate list
+
+Validate a list
+
+```
+sunbeam validate list [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for list
+```
+
 ## sunbeam validate manifest
 
 Validate a manifest
@@ -506,20 +406,6 @@ sunbeam validate manifest [flags]
 
 ```
   -h, --help   help for manifest
-```
-
-## sunbeam validate page
-
-Validate a page
-
-```
-sunbeam validate page [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for page
 ```
 
 

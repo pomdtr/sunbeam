@@ -4,32 +4,46 @@
 
 A fresh install of sunbeam is quite boring. In order to make it useful, you need to add some extensions.
 
-You can manage your extensions using the `sunbeam extension` command.
+Sunbeam extensions are just scripts. In order to install an extension, you only need to add it's path or url to the config file.
 
-Sunbeam extensions are just scripts. You can install an extension by running `sunbeam extension install <path-or-url>`.
-
-For example, to install the [devdocs extension](https://github.com/pomdtr/sunbeam/tree/main/catalog/extensions/devdocs.sh), run:
-
-```sh
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/extensions/devdocs.sh
+```json
+{
+    "extensions": {
+        "tldr": "~/sunbeam/tldr.sh",
+        "devdocs": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/extensions/devdocs.sh",
+    }
+}
 ```
 
 > ⚠️ Extensions are not verified, nor sandboxed. They can do anything you can do on your computer. Make sure you trust the source before installing an extension.
 
+## Configuring Extensions
 
-Other managements commands are available:
+Some extensions require additional configuration. You can configure an extension by adding a `preferences` dict to the config file.
 
-- `sunbeam extension list` -> list installed extensions
-- `sunbeam extension remove` -> uninstall an extension
-- `sunbeam extension rename` -> rename an extension
-- `sunbeam extension upgrade` -> upgrade an extension
+```json
+{
+    "extensions": {
+        "github": {
+            "origin": "~/sunbeam/github.sh",
+            "preferences": {
+                "token": "xxxx"
+            }
+        }
+    },
+}
+```
+
+## Upgrading Extensions
+
+Use the `sunbeam upgrade` command to upgrade all your extensions. `sunbeam upgrade <extension>` will upgrade a specific extension.
 
 ## Running Commands
 
 If you run `sunbeam` without any arguments, it will open the default view, which is a list of all the available commands.
 
 You can also run a command directly using `sunbeam <extension> [command]`.\
-For example, `sunbeam devdocs list-docsets` will open the devdocs extension.
+For example, `sunbeam devdocs list-docsets` will show a list of all the available docsets.
 
 You can also pass parameters to the command using `sunbeam <extension> [command] --param1 value1 --param2 value2`. \
 For example, `sunbeam devdocs list-entries --docset go` will list all the entries in the go docset.

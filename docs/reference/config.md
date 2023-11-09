@@ -16,18 +16,19 @@ If no config is found, sunbeam will create one.
             // title of the item shown in the list
             "title": "Search Overreact Feed",
             // command to run when the item is chosen
-            "command": "sunbeam rss show --url https://overreacted.io/rss.xml"
+            "command":\ "sunbeam rss show --url https://overreacted.io/rss.xml"
         },
         {
             "title": "View System Resources",
             "command": "htop"
         }
     ],
-    // set preferences for extensions
-    "preferences": {
-        // the alias of the extension the preference belongs to
+    "extensions": {
         "github": {
-            "token": "xxx"
+            "origin": "~/Developer/github.com/pomdtr/sunbeam/extensions/github.sh",
+            "preferences": {
+                "token": "xxxx"
+            }
         }
     }
 }
