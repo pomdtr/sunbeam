@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
@@ -141,6 +142,15 @@ func runExtension(extension extensions.Extension, input types.CommandInput, rawO
 	command, ok := extension.Command(input.Command)
 	if !ok {
 		return fmt.Errorf("command %s not found", input.Command)
+	}
+
+	missing := tui.FindMissingParams(command.Params, input.Params)
+	if len(missing) > 0 {
+		names := make([]string, len(missing))
+		for i, param := range missing {
+			names[i] = param.Name
+		}
+		return fmt.Errorf("missing required params: %s", strings.Join(names, ", "))
 	}
 
 	if rawOutput {

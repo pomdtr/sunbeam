@@ -19,6 +19,7 @@ import (
 
 type Runner struct {
 	embed         Page
+	form          *Form
 	width, height int
 	cancel        context.CancelFunc
 
@@ -88,6 +89,10 @@ func (c *Runner) SetSize(w int, h int) {
 	c.width = w
 	c.height = h
 
+	if c.form != nil {
+		c.form.SetSize(w, h)
+	}
+
 	c.embed.SetSize(w, h)
 }
 
@@ -111,6 +116,11 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			})
 		case "esc":
+			if c.form != nil {
+				c.form = nil
+				return c, c.embed.Focus()
+			}
+
 			if c.embed != nil {
 				break
 			}
@@ -132,6 +142,33 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.embed.SetSize(c.width, c.height)
 				return c, c.embed.Init()
 			}
+
+			missing := FindMissingParams(command.Params, msg.Params)
+			if len(missing) > 0 {
+				c.form = NewForm(func(values map[string]any) tea.Msg {
+					params := make(map[string]any)
+					for k, v := range msg.Params {
+						params[k] = v
+					}
+
+					for k, v := range values {
+						params[k] = v
+					}
+
+					return types.Action{
+						Title:   msg.Title,
+						Type:    types.ActionTypeRun,
+						Command: msg.Command,
+						Params:  params,
+						Exit:    msg.Exit,
+						Reload:  msg.Reload,
+					}
+				}, missing...)
+
+				c.form.SetSize(c.width, c.height)
+				return c, tea.Sequence(c.form.Init(), c.form.Focus())
+			}
+			c.form = nil
 
 			input := types.CommandInput{
 				Command:     msg.Command,
@@ -252,12 +289,22 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, c.embed.Init()
 	}
 
+	if c.form != nil {
+		form, cmd := c.form.Update(msg)
+		c.form = form.(*Form)
+		return c, cmd
+	}
+
 	var cmd tea.Cmd
 	c.embed, cmd = c.embed.Update(msg)
 	return c, cmd
 }
 
 func (c *Runner) View() string {
+	if c.form != nil {
+		return c.form.View()
+	}
+
 	return c.embed.View()
 }
 

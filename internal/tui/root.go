@@ -24,6 +24,7 @@ type RootList struct {
 	history       History
 	err           *Detail
 	list          *List
+	form          *Form
 
 	extensions  extensions.ExtensionMap
 	preferences map[string]map[string]any
@@ -80,6 +81,9 @@ func (c *RootList) SetSize(width, height int) {
 	c.width, c.height = width, height
 	if c.err != nil {
 		c.err.SetSize(width, height)
+	}
+	if c.form != nil {
+		c.form.SetSize(width, height)
 	}
 
 	c.list.SetSize(width, height)
@@ -147,6 +151,34 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if err := extension.CheckRequirements(); err != nil {
 				return c, PushPageCmd(NewErrorPage(err))
 			}
+
+			missing := FindMissingParams(command.Params, msg.Params)
+			if len(missing) > 0 {
+				c.form = NewForm(func(values map[string]any) tea.Msg {
+					params := make(map[string]any)
+					for k, v := range msg.Params {
+						params[k] = v
+					}
+
+					for k, v := range values {
+						params[k] = v
+					}
+
+					return types.Action{
+						Title:     msg.Title,
+						Type:      types.ActionTypeRun,
+						Extension: msg.Extension,
+						Command:   msg.Command,
+						Params:    params,
+						Exit:      msg.Exit,
+						Reload:    msg.Reload,
+					}
+				}, missing...)
+
+				c.form.SetSize(c.width, c.height)
+				return c, tea.Sequence(c.form.Init(), c.form.Focus())
+			}
+			c.form = nil
 
 			selection, ok := c.list.Selection()
 			if !ok {
@@ -271,6 +303,12 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, cmd
 	}
 
+	if c.form != nil {
+		page, cmd := c.form.Update(msg)
+		c.form = page.(*Form)
+		return c, cmd
+	}
+
 	page, cmd := c.list.Update(msg)
 	c.list = page.(*List)
 
@@ -281,7 +319,9 @@ func (c *RootList) View() string {
 	if c.err != nil {
 		return c.err.View()
 	}
-
+	if c.form != nil {
+		return c.form.View()
+	}
 	return c.list.View()
 }
 
