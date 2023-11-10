@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
@@ -107,6 +108,28 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					prefs = make(map[string]any)
 				}
 				input.Preferences = prefs
+				if missing := tui.FindMissingInputs(extension.Preferences, input.Preferences); len(missing) > 0 {
+					cancelled := true
+					var formError error
+					form := tui.NewForm(func(values map[string]any) tea.Msg {
+						cancelled = false
+						input.Preferences = values
+						formError = utils.SavePrefs(alias, prefs)
+						return tui.ExitMsg{}
+					}, missing...)
+
+					if err := tui.Draw(form); err != nil {
+						return err
+					}
+
+					if cancelled {
+						return nil
+					}
+
+					if formError != nil {
+						return formError
+					}
+				}
 
 				return runExtension(extension, input, !isatty.IsTerminal(os.Stdout.Fd()))
 			},
@@ -134,15 +157,6 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 func runExtension(extension extensions.Extension, input types.CommandInput, rawOutput bool) error {
 	if err := extension.CheckRequirements(); err != nil {
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
-	}
-
-	if missing := tui.FindMissingInputs(extension.Preferences, input.Params); len(missing) > 0 {
-		names := make([]string, len(missing))
-		for i, param := range missing {
-			names[i] = param.Name
-		}
-
-		return fmt.Errorf("missing required preferences: %s", strings.Join(names, ", "))
 	}
 
 	command, ok := extension.Command(input.Command)

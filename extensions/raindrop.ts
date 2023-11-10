@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "npm:sunbeam-types@0.23.28"
+import * as sunbeam from "npm:sunbeam-types@0.23.29"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -10,6 +10,9 @@ if (Deno.args.length === 0) {
                 name: "deno",
                 link: "https://deno.com"
             }
+        ],
+        root: [
+            { command: "search-bookmarks" }
         ],
         preferences: [
             {
