@@ -11,8 +11,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	preferences "github.com/pomdtr/sunbeam/internal/storage"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
@@ -103,23 +103,19 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					input.Query = string(bytes.Trim(stdin, "\n"))
 				}
 
-				keyring, err := utils.LoadKeyring()
+				prefs, err := preferences.Load(alias, extension.Origin)
 				if err != nil {
 					return err
 				}
-				prefs, ok := keyring.Get(alias)
-				if !ok {
-					prefs = make(map[string]any)
-				}
-
 				input.Preferences = prefs
+
 				if missing := tui.FindMissingInputs(extension.Preferences, input.Preferences); len(missing) > 0 {
 					cancelled := true
 					var formError error
 					form := tui.NewForm(func(values map[string]any) tea.Msg {
 						cancelled = false
 						input.Preferences = values
-						formError = keyring.Save(alias, values)
+						formError = preferences.Save(alias, extension.Origin, values)
 						return tui.ExitMsg{}
 					}, missing...)
 

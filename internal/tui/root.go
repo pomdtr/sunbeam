@@ -14,6 +14,7 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	preferences "github.com/pomdtr/sunbeam/internal/storage"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
@@ -145,20 +146,15 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
 			}
 
-			keyring, err := utils.LoadKeyring()
+			prefs, err := preferences.Load(msg.Extension, extension.Origin)
 			if err != nil {
 				return c, c.SetError(err)
 			}
 
-			prefs, ok := keyring.Get(msg.Extension)
-			if !ok {
-				prefs = make(map[string]any)
-			}
-
 			if missing := FindMissingInputs(extension.Preferences, prefs); len(missing) > 0 {
-				c.form = NewForm(func(m map[string]any) tea.Msg {
-					if err := keyring.Save(msg.Extension, m); err != nil {
-						return err
+				c.form = NewForm(func(values map[string]any) tea.Msg {
+					if err := preferences.Save(msg.Extension, extension.Origin, values); err != nil {
+						return c.SetError(err)
 					}
 
 					return msg
@@ -166,7 +162,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				c.form.SetSize(c.width, c.height)
 				return c, tea.Sequence(c.form.Init(), c.form.Focus())
-
 			}
 			c.form = nil
 

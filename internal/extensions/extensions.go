@@ -56,17 +56,30 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 
 func (e Extension) RootItems() []types.RootItem {
 	rootItems := make([]types.RootItem, 0)
-	for _, rootItem := range e.Root {
-		command, ok := e.Command(rootItem.Command)
-		if !ok {
-			continue
-		}
+	if e.Root != nil {
+		for _, rootItem := range e.Root {
+			command, ok := e.Command(rootItem.Command)
+			if !ok {
+				continue
+			}
 
-		if rootItem.Title == "" {
-			rootItem.Title = command.Title
-		}
+			if rootItem.Title == "" {
+				rootItem.Title = command.Title
+			}
 
-		rootItems = append(rootItems, rootItem)
+			rootItems = append(rootItems, rootItem)
+		}
+	} else {
+		for _, command := range e.Commands {
+			if command.Hidden {
+				continue
+			}
+
+			rootItems = append(rootItems, types.RootItem{
+				Title:   command.Title,
+				Command: command.Name,
+			})
+		}
 	}
 
 	return rootItems

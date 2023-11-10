@@ -50,10 +50,6 @@ Search GitHub repositories
 
 - [`deno`](https://deno.com)
 
-### Preferences
-
-- `token` (string): GitHub API token
-
 ### Commands
 
 - `search-repos`: Search Repositories
@@ -75,25 +71,6 @@ Manage your tailscale devices
 - `list-devices`: Search My Devices
 - `ssh-to-device`: SSH to Device
 
-## [Gist](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/gist.ts)
-
-Manage your gists
-
-### Requirements
-
-- [`deno`](https://deno.com)
-
-### Preferences
-
-- `token` (string): GitHub API token
-
-### Commands
-
-- `list`: List Gists
-- `browse`: Browse Gist Files
-- `delete`: Delete Gist
-- `view`: View Gist File
-
 ## [Bitwarden Vault](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/bitwarden.sh)
 
 Search your Bitwarden passwords
@@ -101,10 +78,6 @@ Search your Bitwarden passwords
 ### Requirements
 
 - [`bw`](https://bitwarden.com/help/article/cli/)
-
-### Preferences
-
-- `session` (string): Bitwarden Session
 
 ### Commands
 
@@ -199,10 +172,6 @@ Manage your raindrop bookmarks
 
 - [`deno`](https://deno.com)
 
-### Preferences
-
-- `token` (string): Raindrop API token
-
 ### Commands
 
 - `search-bookmarks`: Search Bookmarks
@@ -213,4 +182,4 @@ Search Google
 
 ### Commands
 
-- `search`: Search
+- `search`: Google Search

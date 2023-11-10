@@ -1,4 +1,4 @@
-import { Input } from "./input";
+import { Input } from "./input.ts";
 
 export type Manifest = {
   title: string;
