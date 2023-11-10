@@ -11,12 +11,12 @@ require (
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/cli/cli v1.14.0
 	github.com/itchyny/gojq v0.12.13
-	github.com/junegunn/fzf v0.0.0-20231029150554-1cfa3ee4c7c1
+	github.com/junegunn/fzf v0.0.0-20231110041611-38e3694d1ca5
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
 	mvdan.cc/sh v2.6.4+incompatible
 )
@@ -30,7 +30,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/gorilla/css v1.0.0 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
@@ -49,16 +49,16 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/yuin/goldmark v1.6.0 // indirect
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/sync v0.5.0 // indirect
+	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/mattn/go-isatty v0.0.20
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.14.0 // indirect
 )
