@@ -50,25 +50,23 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, map[string]map[string]any, error) {
+			rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, error) {
 				cfg, err := config.Load()
 				if err != nil {
-					return nil, nil, nil, err
+					return nil, nil, err
 				}
 
 				extensionMap := make(map[string]extensions.Extension)
-				preferences := make(map[string]map[string]any)
-				for alias, ext := range cfg.Extensions {
-					extension, err := LoadExtension(alias, ext.Origin)
+				for alias, origin := range cfg.Extensions {
+					extension, err := LoadExtension(alias, origin)
 					if err != nil {
 						continue
 					}
 
 					extensionMap[alias] = extension
-					preferences[alias] = ext.Preferences
 				}
 
-				return extensionMap, RootItems(cfg, extensionMap), preferences, nil
+				return extensionMap, RootItems(cfg, extensionMap), nil
 			})
 			return tui.Draw(rootList)
 		},
@@ -136,14 +134,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extension Commands:",
 	})
 
-	for alias, ref := range cfg.Extensions {
-		extension, err := LoadExtension(alias, ref.Origin)
+	for alias, origin := range cfg.Extensions {
+		extension, err := LoadExtension(alias, origin)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error loading extension %s: %s\n", alias, err)
 			continue
 		}
 
-		command, err := NewCmdCustom(alias, extension, ref.Preferences)
+		command, err := NewCmdCustom(alias, extension)
 		if err != nil {
 			return nil, err
 		}

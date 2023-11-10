@@ -143,7 +143,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.embed.Init()
 			}
 
-			missing := FindMissingParams(command.Params, msg.Params)
+			missing := FindMissingInputs(command.Inputs, msg.Params)
 			if len(missing) > 0 {
 				c.form = NewForm(func(values map[string]any) tea.Msg {
 					params := make(map[string]any)

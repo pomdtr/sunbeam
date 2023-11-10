@@ -51,7 +51,10 @@
             }
         },
         "preferences": {
-            "$ref": "#/definitions/entries"
+            "type": "array",
+            "items": {
+                "$ref": "./input.schema.json"
+            }
         },
         "commands": {
             "type": "array",
@@ -64,11 +67,21 @@
         "commandref": {
             "type": "object",
             "properties": {
+                "title": {
+                    "type": "string"
+                },
                 "command": {
                     "type": "string"
                 },
                 "params": {
-                    "$ref": "params.schema.json"
+                    "patternProperties": {
+                        ".+": {
+                            "type": [
+                                "string",
+                                "boolean"
+                            ]
+                        }
+                    }
                 }
             }
         },
@@ -100,96 +113,12 @@
                     ]
                 },
                 "params": {
-                    "$ref": "#/definitions/entries"
+                    "type": "array",
+                    "items": {
+                        "$ref": "./input.schema.json"
+                    }
                 }
             }
-        },
-        "entries": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "name",
-                    "type"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "string",
-                            "boolean",
-                            "number"
-                        ]
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "required": {
-                        "type": "boolean"
-                    },
-                    "default": {
-                        "type": [
-                            "string",
-                            "boolean",
-                            "number"
-                        ]
-                    }
-                }
-            },
-            "allOf": [
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "boolean"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "default": {
-                                "type": "boolean"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "number"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "default": {
-                                "type": "number"
-                            }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "properties": {
-                            "type": {
-                                "const": "string"
-                            }
-                        }
-                    },
-                    "then": {
-                        "properties": {
-                            "default": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            ]
         }
     }
 }

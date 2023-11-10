@@ -1,6 +1,6 @@
 #!/usr/bin/env deno run -A
 
-import type * as sunbeam from "npm:sunbeam-types@0.23.27";
+import type * as sunbeam from "npm:sunbeam-types@0.23.29";
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 
 if (Deno.args.length == 0) {
@@ -13,8 +13,13 @@ if (Deno.args.length == 0) {
                 link: "https://deno.com"
             }
         ],
+        root: [
+            {
+                command: "search-repos"
+            }
+        ],
         preferences: [
-            { name: "token", description: "GitHub API token", type: "string", required: true }
+            { name: "token", title: "GitHub API token", type: "text", required: true }
         ],
         commands: [
             {
@@ -29,8 +34,8 @@ if (Deno.args.length == 0) {
                 params: [
                     {
                         name: "repo",
-                        description: "The repository to list issues for",
-                        type: "string",
+                        title: "The repository to list issues for",
+                        type: "text",
                         required: true
                     }
                 ]
@@ -42,8 +47,8 @@ if (Deno.args.length == 0) {
                 params: [
                     {
                         name: "repo",
-                        description: "The repository to list pull requests for",
-                        type: "string",
+                        title: "The repository to list pull requests for",
+                        type: "text",
                         required: true
                     }
                 ]
@@ -55,8 +60,8 @@ if (Deno.args.length == 0) {
                 params: [
                     {
                         name: "repo",
-                        description: "The repository to view the readme for",
-                        type: "string",
+                        title: "The repository to view the readme for",
+                        type: "text",
                         required: true
                     }
                 ]

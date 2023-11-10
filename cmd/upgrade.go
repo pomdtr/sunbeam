@@ -34,12 +34,12 @@ func NewCmdUpgrade(cfg config.Config) *cobra.Command {
 				}
 			}
 
-			for alias, extensionRef := range cfg.Extensions {
+			for alias, origin := range cfg.Extensions {
 				if len(args) > 0 && alias != args[0] {
 					continue
 				}
 
-				extension, err := ExtractManifest(extensionRef.Origin)
+				extension, err := ExtractManifest(origin)
 				if err != nil {
 					return err
 				}

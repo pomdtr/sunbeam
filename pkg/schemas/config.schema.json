@@ -32,41 +32,7 @@
             "type": "object",
             "patternProperties": {
                 ".+": {
-                    "oneOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "object",
-                            "required": [
-                                "origin"
-                            ],
-                            "additionalProperties": false,
-                            "properties": {
-                                "origin": {
-                                    "type": "string"
-                                },
-                                "preferences": {
-                                    "type": "object",
-                                    "patternProperties": {
-                                        ".+": {
-                                            "oneOf": [
-                                                {
-                                                    "type": "string"
-                                                },
-                                                {
-                                                    "type": "number"
-                                                },
-                                                {
-                                                    "type": "boolean"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    ]
+                    "type": "string"
                 }
             }
         }

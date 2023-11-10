@@ -11,11 +11,12 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension, preferences map[string]any) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
 
 	rootCmd := &cobra.Command{
 		Use:     alias,
@@ -39,7 +40,6 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 					return err
 				}
 
-				input.Preferences = preferences
 				var rawOutput bool
 				if cmd.Flags().Changed("raw") {
 					rawOutput, _ = cmd.Flags().GetBool("raw")
@@ -67,26 +67,20 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 			RunE: func(cmd *cobra.Command, args []string) error {
 				params := make(map[string]any)
 
-				for _, param := range command.Params {
+				for _, param := range command.Inputs {
 					if !cmd.Flags().Changed(param.Name) {
 						continue
 					}
 
 					switch param.Type {
-					case types.ParamTypeString:
+					case types.InputTextField, types.InputTypePassword:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
 						}
 						params[param.Name] = value
-					case types.ParamTypeBoolean:
+					case types.InputCheckbox:
 						value, err := cmd.Flags().GetBool(param.Name)
-						if err != nil {
-							return err
-						}
-						params[param.Name] = value
-					case types.ParamTypeNumber:
-						value, err := cmd.Flags().GetInt(param.Name)
 						if err != nil {
 							return err
 						}
@@ -95,9 +89,8 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 				}
 
 				input := types.CommandInput{
-					Command:     command.Name,
-					Params:      params,
-					Preferences: preferences,
+					Command: command.Name,
+					Params:  params,
 				}
 
 				if !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -109,22 +102,26 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 					input.Query = string(bytes.Trim(stdin, "\n"))
 				}
 
+				prefs, err := utils.LoadPreferences(alias)
+				if err != nil {
+					prefs = make(map[string]any)
+				}
+				input.Preferences = prefs
+
 				return runExtension(extension, input, !isatty.IsTerminal(os.Stdout.Fd()))
 			},
 		}
 
-		for _, param := range command.Params {
-			switch param.Type {
-			case types.ParamTypeString:
-				cmd.Flags().String(param.Name, "", param.Description)
-			case types.ParamTypeBoolean:
-				cmd.Flags().Bool(param.Name, false, param.Description)
-			case types.ParamTypeNumber:
-				cmd.Flags().Int(param.Name, 0, param.Description)
+		for _, input := range command.Inputs {
+			switch input.Type {
+			case types.InputTextField, types.InputTypePassword:
+				cmd.Flags().String(input.Name, "", input.Title)
+			case types.InputCheckbox:
+				cmd.Flags().Bool(input.Name, false, input.Title)
 			}
 
-			if param.Required {
-				_ = cmd.MarkFlagRequired(param.Name)
+			if input.Required {
+				_ = cmd.MarkFlagRequired(input.Name)
 			}
 		}
 
@@ -139,13 +136,21 @@ func runExtension(extension extensions.Extension, input types.CommandInput, rawO
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
 	}
 
+	if missing := tui.FindMissingInputs(extension.Preferences, input.Params); len(missing) > 0 {
+		names := make([]string, len(missing))
+		for i, param := range missing {
+			names[i] = param.Name
+		}
+
+		return fmt.Errorf("missing required preferences: %s", strings.Join(names, ", "))
+	}
+
 	command, ok := extension.Command(input.Command)
 	if !ok {
 		return fmt.Errorf("command %s not found", input.Command)
 	}
 
-	missing := tui.FindMissingParams(command.Params, input.Params)
-	if len(missing) > 0 {
+	if missing := tui.FindMissingInputs(command.Inputs, input.Params); len(missing) > 0 {
 		names := make([]string, len(missing))
 		for i, param := range missing {
 			names[i] = param.Name

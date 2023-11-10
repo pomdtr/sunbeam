@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -13,6 +12,7 @@ import (
 
 type Input interface {
 	Name() string
+	Title() string
 	Required() bool
 	Value() any
 
@@ -26,70 +26,81 @@ type Input interface {
 	View() string
 }
 
-type TextInput struct {
+type TextField struct {
+	title    string
 	name     string
 	required bool
 	textinput.Model
 	placeholder string
 }
 
-func NewTextInput(param types.Param) *TextInput {
+func NewTextInput(param types.Input, secure bool) *TextField {
 	ti := textinput.New()
 	ti.Prompt = ""
+
+	if secure {
+		ti.EchoMode = textinput.EchoPassword
+	}
 
 	if defaultValue, ok := param.Default.(string); ok {
 		ti.SetValue(defaultValue)
 	}
 
-	placeholder := param.Description
+	placeholder := param.Placeholder
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
-	return &TextInput{
+	return &TextField{
 		name:        param.Name,
+		title:       param.Title,
 		Model:       ti,
 		placeholder: placeholder,
 	}
 }
 
-func (ti *TextInput) Name() string {
+func (ti *TextField) Name() string {
 	return ti.name
 }
 
-func (ti *TextInput) Required() bool {
+func (ti *TextField) Title() string {
+	return ti.title
+}
+
+func (ti *TextField) Required() bool {
 	return ti.required
 }
 
-func (ti *TextInput) SetHidden() {
+func (ti *TextField) SetHidden() {
 	ti.EchoMode = textinput.EchoPassword
 }
 
-func (ti *TextInput) Height() int {
+func (ti *TextField) Height() int {
 	return 1
 }
 
-func (ti *TextInput) SetWidth(width int) {
+func (ti *TextField) SetWidth(width int) {
 	ti.Model.Width = width - 1
 	ti.Model.SetValue(ti.Model.Value())
 	placeholderPadding := max(0, width-len(ti.placeholder))
 	ti.Model.Placeholder = fmt.Sprintf("%s%s", ti.placeholder, strings.Repeat(" ", placeholderPadding))
 }
 
-func (ti *TextInput) Value() any {
+func (ti *TextField) Value() any {
 	return ti.Model.Value()
 }
 
-func (ti *TextInput) Update(msg tea.Msg) (Input, tea.Cmd) {
+func (ti *TextField) Update(msg tea.Msg) (Input, tea.Cmd) {
 	var cmd tea.Cmd
 	ti.Model, cmd = ti.Model.Update(msg)
 	return ti, cmd
 }
 
-func (ti TextInput) View() string {
+func (ti TextField) View() string {
 	return ti.Model.View()
 }
 
 type BooleanInput struct {
 	name     string
+	title    string
 	label    string
 	width    int
 	required bool
@@ -98,10 +109,11 @@ type BooleanInput struct {
 	checked bool
 }
 
-func NewBooleanInput(param types.Param) *BooleanInput {
+func NewCheckbox(param types.Input) *BooleanInput {
 	checkbox := BooleanInput{
 		name:     param.Name,
-		label:    param.Description,
+		title:    param.Title,
+		label:    param.Label,
 		required: param.Required,
 	}
 
@@ -114,6 +126,10 @@ func NewBooleanInput(param types.Param) *BooleanInput {
 
 func (cb *BooleanInput) Name() string {
 	return cb.name
+}
+
+func (cb *BooleanInput) Title() string {
+	return cb.title
 }
 
 func (cb *BooleanInput) Required() bool {
@@ -172,40 +188,4 @@ func (cb BooleanInput) Value() any {
 
 func (cb *BooleanInput) Toggle() {
 	cb.checked = !cb.checked
-}
-
-type NumberInput struct {
-	*TextInput
-}
-
-func NewNumberInput(param types.Param) Input {
-	defaultValue, ok := param.Default.(int)
-	if !ok {
-		defaultValue = 0
-	}
-
-	ni := NumberInput{
-		TextInput: NewTextInput(types.Param{
-			Name:        param.Name,
-			Description: param.Description,
-			Type:        types.ParamTypeString,
-			Required:    param.Required,
-			Default:     strconv.Itoa(defaultValue),
-		}),
-	}
-	return &ni
-}
-
-func (ni *NumberInput) Value() any {
-	text, ok := ni.TextInput.Value().(string)
-	if !ok {
-		return 0
-	}
-
-	value, err := strconv.Atoi(text)
-	if err != nil {
-		return 0
-	}
-
-	return value
 }

@@ -26,13 +26,12 @@ type RootList struct {
 	list          *List
 	form          *Form
 
-	extensions  extensions.ExtensionMap
-	preferences map[string]map[string]any
+	extensions extensions.ExtensionMap
 
-	generator func() (extensions.ExtensionMap, []types.ListItem, map[string]map[string]any, error)
+	generator func() (extensions.ExtensionMap, []types.ListItem, error)
 }
 
-func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, map[string]map[string]any, error)) *RootList {
+func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, error)) *RootList {
 	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
 	if err != nil {
 		history = History{
@@ -54,13 +53,12 @@ func (c *RootList) Init() tea.Cmd {
 }
 
 func (c *RootList) Reload() tea.Msg {
-	extensionMap, rootItems, preferences, err := c.generator()
+	extensionMap, rootItems, err := c.generator()
 	if err != nil {
 		return err
 	}
 
 	c.extensions = extensionMap
-	c.preferences = preferences
 	c.history.Sort(rootItems)
 	c.list.SetEmptyText("No results found, hit enter to run as shell command")
 	c.list.SetIsLoading(false)
@@ -143,6 +141,26 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
 			}
 
+			prefs, err := utils.LoadPreferences(msg.Extension)
+			if err != nil {
+				prefs = make(map[string]any)
+			}
+
+			if missing := FindMissingInputs(extension.Preferences, prefs); len(missing) > 0 {
+				c.form = NewForm(func(m map[string]any) tea.Msg {
+					if err := utils.SavePrefs(msg.Extension, m); err != nil {
+						return err
+					}
+
+					return msg
+				}, missing...)
+
+				c.form.SetSize(c.width, c.height)
+				return c, tea.Sequence(c.form.Init(), c.form.Focus())
+
+			}
+			c.form = nil
+
 			command, ok := extension.Command(msg.Command)
 			if !ok {
 				return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
@@ -152,8 +170,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, PushPageCmd(NewErrorPage(err))
 			}
 
-			missing := FindMissingParams(command.Params, msg.Params)
-			if len(missing) > 0 {
+			if missing := FindMissingInputs(command.Inputs, msg.Params); len(missing) > 0 {
 				c.form = NewForm(func(values map[string]any) tea.Msg {
 					params := make(map[string]any)
 					for k, v := range msg.Params {
@@ -190,9 +207,14 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(err)
 			}
 
+			prefs, err = utils.LoadPreferences(msg.Extension)
+			if err != nil {
+				prefs = make(map[string]any)
+			}
+
 			input := types.CommandInput{
 				Command:     command.Name,
-				Preferences: c.preferences[msg.Extension],
+				Preferences: prefs,
 				Params:      msg.Params,
 			}
 

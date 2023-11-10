@@ -1,9 +1,11 @@
+import { Input } from "./input";
+
 export type Manifest = {
   title: string;
   platforms?: Platform[];
   description?: string;
   requirements?: Requirement[];
-  preferences?: Param[];
+  preferences?: Input[];
   root?: CommandRef[];
   commands: CommandSpec[];
 };
@@ -17,8 +19,7 @@ type Requirement = {
 
 type CommandRef = {
   command: string;
-  title: string;
-  description?: string;
+  title?: string;
   params?: Record<string, string | number | boolean>;
 };
 
@@ -28,33 +29,10 @@ export type CommandSpec = {
   mode: "list" | "detail" | "tty" | "silent";
   hidden?: boolean;
   description?: string;
-  params?: Param[];
+  params?: Input[];
 };
 
-type Param = StringParam | BooleanParam | NumberParam;
-
-type ParamsProps = {
-  name: string;
-  description?: string;
-  required?: boolean;
-};
-
-type StringParam = {
-  type: "string";
-  default?: string;
-} & ParamsProps;
-
-type BooleanParam = {
-  type: "boolean";
-  default?: boolean;
-} & ParamsProps;
-
-type NumberParam = {
-  type: "number";
-  default?: number;
-} & ParamsProps;
-
-type PayloadParams = Record<string, string | number | boolean>;
+type PayloadParams = Record<string, string | boolean>;
 export type Payload<T extends PayloadParams = PayloadParams, V extends PayloadParams = PayloadParams> = {
   command: string;
   params: T;

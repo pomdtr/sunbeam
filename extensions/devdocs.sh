@@ -7,6 +7,9 @@ if [ $# -eq 0 ]; then
   sunbeam query -n '{
     title: "DevDocs",
     description: "Search DevDocs.io",
+    root: [
+      { command: "list-docsets" }
+    ],
     commands: [
       {
         name: "list-docsets",
@@ -18,7 +21,7 @@ if [ $# -eq 0 ]; then
         title: "List Entries from Docset",
         mode: "list",
         params: [
-          { name: "slug", description: "Slug", type: "string", required: true }
+          { name: "slug", title: "Slug", type: "textfield", required: true }
         ]
       }
     ]

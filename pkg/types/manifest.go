@@ -7,7 +7,7 @@ type Manifest struct {
 	Require     []Requirement `json:"requirements,omitempty"`
 	Root        []RootItem    `json:"root,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
-	Preferences []Param       `json:"preferences,omitempty"`
+	Preferences []Input       `json:"preferences,omitempty"`
 }
 
 type Platfom string
@@ -33,7 +33,7 @@ type CommandSpec struct {
 	Name   string      `json:"name"`
 	Title  string      `json:"title"`
 	Hidden bool        `json:"hidden,omitempty"`
-	Params []Param     `json:"params,omitempty"`
+	Inputs []Input     `json:"params,omitempty"`
 	Mode   CommandMode `json:"mode,omitempty"`
 }
 
@@ -46,18 +46,20 @@ const (
 	CommandModeSilent CommandMode = "silent"
 )
 
-type Param struct {
+type Input struct {
+	Type        InputType `json:"type"`
 	Name        string    `json:"name"`
-	Type        ParamType `json:"type"`
-	Description string    `json:"description,omitempty"`
+	Title       string    `json:"title"`
 	Required    bool      `json:"required,omitempty"`
 	Default     any       `json:"default,omitempty"`
+	Placeholder string    `json:"placeholder,omitempty"`
+	Label       string    `json:"label,omitempty"`
 }
 
-type ParamType string
+type InputType string
 
 const (
-	ParamTypeString  ParamType = "string"
-	ParamTypeBoolean ParamType = "boolean"
-	ParamTypeNumber  ParamType = "number"
+	InputTextField    InputType = "text"
+	InputTypePassword InputType = "password"
+	InputCheckbox     InputType = "checkbox"
 )

@@ -1,7 +1,7 @@
 #!/usr/bin/env deno run -A
 
 import { Octokit } from "https://esm.sh/octokit@3.1.1?dts";
-import * as sunbeam from "npm:sunbeam-types@0.23.27"
+import * as sunbeam from "npm:sunbeam-types@0.23.28"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -16,8 +16,8 @@ if (Deno.args.length === 0) {
         preferences: [
             {
                 name: "token",
-                description: "GitHub API token",
-                type: "string",
+                title: "GitHub API token",
+                type: "text",
                 required: true,
             }
         ],
@@ -34,8 +34,8 @@ if (Deno.args.length === 0) {
                 params: [
                     {
                         name: "id",
-                        description: "Gist ID",
-                        type: "string",
+                        title: "Gist ID",
+                        type: "text",
                         required: true,
                     }
                 ]
@@ -46,7 +46,7 @@ if (Deno.args.length === 0) {
                 mode: "silent",
                 params: [
                     {
-                        name: "id", description: "Gist ID", type: "string", required: true,
+                        name: "id", title: "Gist ID", type: "text", required: true,
                     }
                 ]
             },
@@ -57,14 +57,14 @@ if (Deno.args.length === 0) {
                 params: [
                     {
                         name: "id",
-                        description: "Gist ID",
-                        type: "string",
+                        title: "Gist ID",
+                        type: "text",
                         required: true,
                     },
                     {
                         name: "file",
-                        description: "File Name",
-                        type: "string",
+                        title: "File Name",
+                        type: "text",
                         required: true,
                     }
                 ]

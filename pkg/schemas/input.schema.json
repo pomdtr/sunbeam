@@ -1,0 +1,133 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "oneOf": [
+        {
+            "$ref": "#/definitions/textfield"
+        },
+        {
+            "$ref": "#/definitions/password"
+        },
+        {
+            "$ref": "#/definitions/checkbox"
+        }
+    ],
+    "definitions": {
+        "textfield": {
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "title",
+                "required"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "const": "text"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "placeholder": {
+                    "type": "string"
+                },
+                "default": {
+                    "type": "string"
+                }
+            }
+        },
+        "password": {
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "title",
+                "required"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "const": "password"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "placeholder": {
+                    "type": "string"
+                },
+                "default": {
+                    "type": "string"
+                }
+            }
+        },
+        "textarea": {
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "title",
+                "required"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "const": "textarea"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "placeholder": {
+                    "type": "string"
+                },
+                "default": {
+                    "type": "string"
+                }
+            }
+        },
+        "checkbox": {
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "required",
+                "label"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "const": "checkbox"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "default": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "npm:sunbeam-types@0.23.27"
+import * as sunbeam from "npm:sunbeam-types@0.23.28"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
@@ -14,8 +14,8 @@ if (Deno.args.length === 0) {
         preferences: [
             {
                 name: "token",
-                description: "Raindrop API token",
-                type: "string",
+                title: "Raindrop API token",
+                type: "text",
                 required: true,
             }
         ],

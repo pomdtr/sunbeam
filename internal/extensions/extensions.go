@@ -45,20 +45,6 @@ const (
 	ExtensionTypeHttp  ExtensionType = "http"
 )
 
-func IsRootCommand(command types.CommandSpec) bool {
-	if command.Hidden {
-		return false
-	}
-
-	for _, param := range command.Params {
-		if param.Required {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	for _, command := range e.Commands {
 		if command.Name == name {
@@ -70,20 +56,17 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 
 func (e Extension) RootItems() []types.RootItem {
 	rootItems := make([]types.RootItem, 0)
-	if e.Root != nil {
-		return e.Root
-	}
-
-	for _, command := range e.Commands {
-		if !IsRootCommand(command) {
+	for _, rootItem := range e.Root {
+		command, ok := e.Command(rootItem.Command)
+		if !ok {
 			continue
 		}
 
-		rootItems = append(rootItems, types.RootItem{
-			Title:   command.Title,
-			Command: command.Name,
-			Params:  make(map[string]any),
-		})
+		if rootItem.Title == "" {
+			rootItem.Title = command.Title
+		}
+
+		rootItems = append(rootItems, rootItem)
 	}
 
 	return rootItems
@@ -140,7 +123,7 @@ func (e Extension) CmdContext(ctx context.Context, input types.CommandInput) (*e
 		return nil, fmt.Errorf("command %s not found", input.Command)
 	}
 
-	for _, spec := range command.Params {
+	for _, spec := range command.Inputs {
 		if !spec.Required {
 			if spec.Default != nil {
 				input.Params[spec.Name] = spec.Default

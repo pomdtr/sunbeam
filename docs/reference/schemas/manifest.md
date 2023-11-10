@@ -24,18 +24,15 @@ It contains the title, description and the list of commands provided by the exte
     "name": "jq",
     "link": "https://stedolan.github.io/jq/"
   },
-  "preferences": {
-    // unique identifier of the preference (required)
-    "name": "show-hidden-files",
-    // type of the preference (required)
-    "type": "boolean",
-    // description of the preference (optional)
-    "description": "Show hidden files",
-    // whether the preference is required or not (default: false)
-    "required": false,
-    // default value of the preference (optional)
-    "default": false
-  },
+  // see input schema
+  "preferences": [
+    {
+      "name": "hidden",
+      "label": "Show hidden entries",
+      "type": "boolean",
+      "default": false
+    }
+  ],
   "commands": [
     {
       // unique identifier of the command (required)
@@ -49,19 +46,13 @@ It contains the title, description and the list of commands provided by the exte
       // or use the silent mode if you don't want to display anything
       "mode": "list",
       // the list of parameters for the command (optional)
+      // see input schema
       "params": [
         {
-          // unique identifier of the parameter (required)
           "name": "slug",
-          // type of the parameter (required)
-          // can be "string", "number", or "boolean"
-          "type": "string",
-          // whether the parameter is required or not (default: false)
-          // if a a command has a required parameter, it will not be shown in the root list
+          "type": "text",
           "required": false,
-          // description of the parameter (optional)
-          // will be shown in the usage string
-          "description": "docset to search"
+          "title": "Docset Slug",
         }
       ]
     }

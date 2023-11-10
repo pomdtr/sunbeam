@@ -5,19 +5,47 @@ import json
 import pathlib
 
 if len(sys.argv) == 1:
+    home = str(pathlib.Path.home().absolute())
     json.dump(
         {
             "title": "File Browser",
             "description": "Browse files and folders",
             "requirements": [{"name": "python3", "link": "https://www.python.org/"}],
+            "preferences": [
+                {
+                    "name": "show-hidden",
+                    "label": "Show hidden files",
+                    "type": "checkbox",
+                    "required": False
+                }
+            ],
+            "root": [
+                {
+                    "title": "Browse Home Directory",
+                    "command": "ls",
+                    "params": {
+                        "dir": home,
+                    },
+                },
+                {
+                    "title": "Browse Current Directory",
+                    "command": "ls"
+                },
+                {
+                    "title": "Browse Root Directory",
+                    "command": "ls",
+                    "params": {
+                        "dir": "/",
+                    },
+                }
+            ],
             "commands": [
                 {
                     "name": "ls",
                     "title": "List files",
                     "mode": "list",
                     "params": [
-                        {"name": "dir", "description": "Directory", "type": "string"},
-                        {"name": "show-hidden", "description": "Show Hidden Files", "type": "boolean"},
+                        {"name": "dir", "title": "Directory", "type": "text", "required": False}
                     ],
                 }
             ],
@@ -65,16 +93,7 @@ if payload["command"] == "ls":
                     "type": "open",
                     "target": str(file.absolute()),
                     "exit": True,
-                },
-                {
-                    "title": "Show Hidden Files" if not show_hidden else "Hide Hidden Files",
-                    "key": "h",
-                    "type": "reload",
-                    "params": {
-                        "show-hidden": not show_hidden,
-                        "dir": str(root.absolute()),
-                    },
-                },
+                }
             ]
         )
 

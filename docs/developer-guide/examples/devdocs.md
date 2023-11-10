@@ -240,8 +240,6 @@ Let's run the command to see the generated view:
 sunbeam run ./sunbeam-devdocs search-entries --docset=go
 ```
 
-If you run the `search-entries` command without providing the `docset` parameter, a form will will be shown for you to fill the missing parameters.
-
 If we want to be able to go from the docsets list to the entries list, we can add `run` action to the docsets list:
 
 ```sh

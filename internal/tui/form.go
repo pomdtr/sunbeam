@@ -25,9 +25,9 @@ type Form struct {
 	inputs []Input
 }
 
-func FindMissingParams(params []types.Param, values map[string]any) []types.Param {
-	var missing []types.Param
-	for _, param := range params {
+func FindMissingInputs(inputs []types.Input, values map[string]any) []types.Input {
+	var missing []types.Input
+	for _, param := range inputs {
 		if _, ok := values[param.Name]; !ok {
 			if !param.Required {
 				continue
@@ -40,18 +40,18 @@ func FindMissingParams(params []types.Param, values map[string]any) []types.Para
 	return missing
 }
 
-func NewForm(submitMsg func(map[string]any) tea.Msg, params ...types.Param) *Form {
+func NewForm(submitMsg func(map[string]any) tea.Msg, params ...types.Input) *Form {
 	viewport := viewport.New(0, 0)
 
 	var inputs []Input
 	for _, param := range params {
 		switch param.Type {
-		case types.ParamTypeString:
-			inputs = append(inputs, NewTextInput(param))
-		case types.ParamTypeBoolean:
-			inputs = append(inputs, NewBooleanInput(param))
-		case types.ParamTypeNumber:
-			inputs = append(inputs, NewNumberInput(param))
+		case types.InputTextField:
+			inputs = append(inputs, NewTextInput(param, false))
+		case types.InputTypePassword:
+			inputs = append(inputs, NewTextInput(param, true))
+		case types.InputCheckbox:
+			inputs = append(inputs, NewCheckbox(param))
 		}
 	}
 
@@ -213,9 +213,9 @@ func (c *Form) renderInputs() {
 		var titleView string
 		if input.Required() {
 			asterisk := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render("*")
-			titleView = fmt.Sprintf("%s%s ", input.Name(), asterisk)
+			titleView = fmt.Sprintf("%s%s ", input.Title(), asterisk)
 		} else {
-			titleView = fmt.Sprintf("%s ", input.Name())
+			titleView = fmt.Sprintf("%s ", input.Title())
 		}
 
 		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(titleView), inputView)

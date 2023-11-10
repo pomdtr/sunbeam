@@ -17,33 +17,9 @@ import (
 )
 
 type Config struct {
-	Schema     string                  `json:"$schema,omitempty"`
-	Oneliners  []Oneliner              `json:"oneliners,omitempty"`
-	Extensions map[string]ExtensionRef `json:"extensions,omitempty"`
-}
-
-type ExtensionRef struct {
-	Origin      string         `json:"origin"`
-	Preferences map[string]any `json:"preferences,omitempty"`
-}
-
-func (e *ExtensionRef) UnmarshalJSON(b []byte) error {
-	var s string
-	if err := json.Unmarshal(b, &s); err == nil {
-		e.Origin = s
-		return nil
-	}
-
-	type Alias ExtensionRef
-	var a Alias
-	if err := json.Unmarshal(b, &a); err == nil {
-		e.Origin = a.Origin
-		e.Preferences = a.Preferences
-
-		return nil
-	}
-
-	return fmt.Errorf("invalid extension ref: %s", string(b))
+	Schema     string            `json:"$schema,omitempty"`
+	Oneliners  []Oneliner        `json:"oneliners,omitempty"`
+	Extensions map[string]string `json:"extensions,omitempty"`
 }
 
 var DefaultConfig = Config{
@@ -58,13 +34,9 @@ var DefaultConfig = Config{
 			Command: "sunbeam edit --config",
 		},
 	},
-	Extensions: map[string]ExtensionRef{
-		"devdocs": {
-			Origin: "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh",
-		},
-		"google": {
-			Origin: "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh",
-		},
+	Extensions: map[string]string{
+		"devdocs": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh",
+		"google":  "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh",
 	},
 }
 
@@ -264,33 +236,21 @@ func ExtractParams(args []string, command types.CommandSpec) (map[string]any, er
 
 		parts := strings.SplitN(args[0][2:], "=", 2)
 		if len(parts) == 1 {
-			spec, ok := CommandParam(command, parts[0])
+			input, ok := CommandParam(command, parts[0])
 			if !ok {
 				return nil, fmt.Errorf("unknown parameter: %s", parts[0])
 			}
 
-			switch spec.Type {
-			case types.ParamTypeBoolean:
+			switch input.Type {
+			case types.InputCheckbox:
 				params[parts[0]] = true
 				args = args[1:]
-			case types.ParamTypeString:
+			case types.InputTextField, types.InputTypePassword:
 				if len(args) < 2 {
 					return nil, fmt.Errorf("missing value for parameter: %s", parts[0])
 				}
 
 				params[parts[0]] = args[1]
-				args = args[2:]
-			case types.ParamTypeNumber:
-				if len(args) < 2 {
-					return nil, fmt.Errorf("missing value for parameter: %s", parts[0])
-				}
-
-				value, err := strconv.Atoi(args[1])
-				if err != nil {
-					return nil, err
-				}
-
-				params[parts[0]] = value
 				args = args[2:]
 			}
 
@@ -303,16 +263,10 @@ func ExtractParams(args []string, command types.CommandSpec) (map[string]any, er
 		}
 
 		switch spec.Type {
-		case types.ParamTypeString:
+		case types.InputTextField, types.InputTypePassword:
 			params[parts[0]] = parts[1]
-		case types.ParamTypeBoolean:
+		case types.InputCheckbox:
 			value, err := strconv.ParseBool(parts[1])
-			if err != nil {
-				return nil, err
-			}
-			params[parts[0]] = value
-		case types.ParamTypeNumber:
-			value, err := strconv.Atoi(parts[1])
 			if err != nil {
 				return nil, err
 			}
@@ -325,12 +279,12 @@ func ExtractParams(args []string, command types.CommandSpec) (map[string]any, er
 	return params, nil
 }
 
-func CommandParam(command types.CommandSpec, name string) (types.Param, bool) {
-	for _, param := range command.Params {
+func CommandParam(command types.CommandSpec, name string) (types.Input, bool) {
+	for _, param := range command.Inputs {
 		if param.Name == name {
 			return param, true
 		}
 	}
 
-	return types.Param{}, false
+	return types.Input{}, false
 }
