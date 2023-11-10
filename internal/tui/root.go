@@ -103,6 +103,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case "esc":
 			if c.form != nil {
 				c.form = nil
+				return c, c.list.Focus()
 			}
 		case "enter", "alt+enter":
 			if _, ok := c.list.Selection(); ok && msg.String() == "enter" {
