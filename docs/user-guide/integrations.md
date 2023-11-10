@@ -6,7 +6,7 @@ Here is a non-exhaustive list of integrations. If you have an integration you wo
 
 ## Terminals
 
-### Hyper (recommended)
+### Hyper (Recommended on macOS)
 
 ![](../assets/hyper.jpeg)
 
@@ -49,13 +49,14 @@ module.exports = {
 //# sourceMappingURL=config-default.js.map
 ```
 
-### Alacritty
+### Alacritty (Recommended on Linux)
 
 ![](../assets/alacritty.jpeg)
 
 [Alacritty](https://github.com/alacritty/alacritty) is a cross-platform terminal emulator.
 
 Alacritty is not easily extensible, so you will have to handle the application launcher features yourself (hotkey, centering, blur, ect.).
+If you are a gnome user, you can use the [toggle-alacritty extension](https://extensions.gnome.org/extension/3942/toggle-alacritty/).
 
 It is a good choice if you are already using tiling window manager, as they usually allow you to setup an hotkey to launch a program, and to center it on the screen.
 
@@ -68,7 +69,7 @@ shell:
 
 window:
   opacity: 0.9
-  decorations: buttonless
+  decorations: none
   dimensions:
     columns: 90
     lines: 23

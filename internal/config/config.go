@@ -51,7 +51,7 @@ var DefaultConfig = Config{
 	Oneliners: []Oneliner{
 		{
 			Title:   "Open Sunbeam Docs",
-			Command: "sunbeam open https://pomdtr.github.io/sunbeam/book/introduction.html",
+			Command: "sunbeam open https://pomdtr.github.io/sunbeam/introduction",
 		},
 		{
 			Title:   "Edit Config",
