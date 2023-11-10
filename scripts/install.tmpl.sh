@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# This script installs Eget.
+# This script installs sunbeam.
 #
-# Quick install: `curl https://pomdtr.github.io/sunbeam | bash`
+# Quick install: `curl https://pomdtr.github.io/sunbeam | sh`
 #
 # Acknowledgments:
 #   - getmic.ro: https://github.com/benweissmann/getmic.ro
@@ -83,8 +83,14 @@ esac
 
 rm "sunbeam.$extension"
 
-cat <<-'EOM'
-Eget has been downloaded to the current directory.
+if [ -n "$GETSUNBEAM_DEST" ]; then
+  mv sunbeam "$GETSUNBEAM_DEST"
+  echo "sunbeam installed to $GETSUNBEAM_DEST"
+  exit 0
+else
+cat << EOF
+sunbeam installed!
 You can run it with:
-./sunbeam
-EOM
+  ./sunbeam
+EOF
+fi
