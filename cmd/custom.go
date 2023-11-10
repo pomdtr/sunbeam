@@ -103,10 +103,15 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					input.Query = string(bytes.Trim(stdin, "\n"))
 				}
 
-				prefs, err := utils.LoadPreferences(alias)
+				keyring, err := utils.LoadKeyring()
 				if err != nil {
+					return err
+				}
+				prefs, ok := keyring.Get(alias)
+				if !ok {
 					prefs = make(map[string]any)
 				}
+
 				input.Preferences = prefs
 				if missing := tui.FindMissingInputs(extension.Preferences, input.Preferences); len(missing) > 0 {
 					cancelled := true
@@ -114,7 +119,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					form := tui.NewForm(func(values map[string]any) tea.Msg {
 						cancelled = false
 						input.Preferences = values
-						formError = utils.SavePrefs(alias, prefs)
+						formError = keyring.Save(alias, values)
 						return tui.ExitMsg{}
 					}, missing...)
 

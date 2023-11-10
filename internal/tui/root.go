@@ -99,6 +99,10 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "esc":
+			if c.form != nil {
+				c.form = nil
+			}
 		case "enter", "alt+enter":
 			if _, ok := c.list.Selection(); ok && msg.String() == "enter" {
 				break
@@ -141,14 +145,19 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
 			}
 
-			prefs, err := utils.LoadPreferences(msg.Extension)
+			keyring, err := utils.LoadKeyring()
 			if err != nil {
+				return c, c.SetError(err)
+			}
+
+			prefs, ok := keyring.Get(msg.Extension)
+			if !ok {
 				prefs = make(map[string]any)
 			}
 
 			if missing := FindMissingInputs(extension.Preferences, prefs); len(missing) > 0 {
 				c.form = NewForm(func(m map[string]any) tea.Msg {
-					if err := utils.SavePrefs(msg.Extension, m); err != nil {
+					if err := keyring.Save(msg.Extension, m); err != nil {
 						return err
 					}
 
@@ -205,11 +214,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.history.entries[selection.Id] = time.Now().Unix()
 			if err := c.history.Save(); err != nil {
 				return c, c.SetError(err)
-			}
-
-			prefs, err = utils.LoadPreferences(msg.Extension)
-			if err != nil {
-				prefs = make(map[string]any)
 			}
 
 			input := types.CommandInput{
