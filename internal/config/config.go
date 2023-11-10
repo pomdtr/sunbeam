@@ -5,21 +5,25 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
-	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
-	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/tailscale/hujson"
-	"mvdan.cc/sh/shell"
 )
 
 type Config struct {
 	Schema     string            `json:"$schema,omitempty"`
 	Oneliners  []Oneliner        `json:"oneliners,omitempty"`
 	Extensions map[string]string `json:"extensions,omitempty"`
+}
+
+func (cfg Config) Aliases() []string {
+	var aliases []string
+	for alias := range cfg.Extensions {
+		aliases = append(aliases, alias)
+	}
+
+	return aliases
 }
 
 var DefaultConfig = Config{
@@ -108,183 +112,4 @@ func Load() (Config, error) {
 	}
 
 	return config, nil
-}
-
-func (c Config) RootItem(item Oneliner, extensionMap map[string]extensions.Extension) (types.ListItem, error) {
-	// extract args from the command
-	args, err := shell.Fields(item.Command, os.Getenv)
-	if err != nil {
-		return types.ListItem{
-			Id:          fmt.Sprintf("root - %s", item.Title),
-			Title:       item.Title,
-			Accessories: []string{"Oneliner"},
-			Actions: []types.Action{
-				{
-					Title: item.Title,
-					Type:  types.ActionTypeExec,
-					Args:  []string{"sh", "-c", item.Command},
-					Exit:  true,
-				},
-				{
-					Title: "Copy Command",
-					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  item.Command,
-				},
-			},
-		}, nil
-	}
-
-	if len(args) == 0 {
-		return types.ListItem{}, fmt.Errorf("invalid command: %s", item.Command)
-	}
-
-	if args[0] != "sunbeam" {
-		return types.ListItem{
-			Id:          fmt.Sprintf("root - %s", item.Title),
-			Title:       item.Title,
-			Accessories: []string{"Oneliner"},
-			Actions: []types.Action{
-				{
-					Title: item.Title,
-					Type:  types.ActionTypeExec,
-					Args:  []string{"sh", "-c", item.Command},
-					Exit:  true,
-				},
-				{
-					Title: "Copy Command",
-					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  item.Command,
-				},
-			},
-		}, nil
-	}
-
-	switch args[1] {
-	case "open", "edit":
-		return types.ListItem{
-			Id:          fmt.Sprintf("root - %s", item.Title),
-			Title:       item.Title,
-			Accessories: []string{"Oneliner"},
-			Actions: []types.Action{
-				{
-					Title: "Run",
-					Type:  types.ActionTypeExec,
-					Args:  args,
-					Exit:  true,
-				},
-				{
-					Title: "Copy Command",
-					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  item.Command,
-				},
-			},
-		}, nil
-	default:
-		if len(args) < 3 {
-			return types.ListItem{}, fmt.Errorf("invalid command: %s", item.Command)
-		}
-
-		alias := args[1]
-		extension, ok := extensionMap[alias]
-		if !ok {
-			return types.ListItem{}, fmt.Errorf("extension %s not found", alias)
-		}
-
-		command, ok := extension.Command(args[2])
-		if !ok {
-			return types.ListItem{}, fmt.Errorf("command %s not found", args[2])
-		}
-
-		params, err := ExtractParams(args[3:], command)
-		if err != nil {
-			return types.ListItem{}, err
-		}
-
-		return types.ListItem{
-			Id:          fmt.Sprintf("%s - %s", alias, item.Title),
-			Title:       item.Title,
-			Accessories: []string{extension.Title},
-			Actions: []types.Action{
-				{
-					Title:     item.Title,
-					Type:      types.ActionTypeRun,
-					Extension: args[1],
-					Command:   command.Name,
-					Params:    params,
-					Exit:      true,
-				},
-				{
-					Title: "Copy Command",
-					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  item.Command,
-				},
-			},
-		}, nil
-	}
-}
-
-func ExtractParams(args []string, command types.CommandSpec) (map[string]any, error) {
-	params := make(map[string]any)
-	for len(args) > 0 {
-		if !strings.HasPrefix(args[0], "--") {
-			return nil, fmt.Errorf("invalid argument: %s", args[0])
-		}
-
-		parts := strings.SplitN(args[0][2:], "=", 2)
-		if len(parts) == 1 {
-			input, ok := CommandParam(command, parts[0])
-			if !ok {
-				return nil, fmt.Errorf("unknown parameter: %s", parts[0])
-			}
-
-			switch input.Type {
-			case types.InputCheckbox:
-				params[parts[0]] = true
-				args = args[1:]
-			case types.InputTextField, types.InputTypePassword:
-				if len(args) < 2 {
-					return nil, fmt.Errorf("missing value for parameter: %s", parts[0])
-				}
-
-				params[parts[0]] = args[1]
-				args = args[2:]
-			}
-
-			continue
-		}
-
-		spec, ok := CommandParam(command, parts[0])
-		if !ok {
-			return nil, fmt.Errorf("unknown parameter: %s", parts[0])
-		}
-
-		switch spec.Type {
-		case types.InputTextField, types.InputTypePassword:
-			params[parts[0]] = parts[1]
-		case types.InputCheckbox:
-			value, err := strconv.ParseBool(parts[1])
-			if err != nil {
-				return nil, err
-			}
-			params[parts[0]] = value
-		}
-
-		args = args[1:]
-	}
-
-	return params, nil
-}
-
-func CommandParam(command types.CommandSpec, name string) (types.Input, bool) {
-	for _, param := range command.Inputs {
-		if param.Name == name {
-			return param, true
-		}
-	}
-
-	return types.Input{}, false
 }
