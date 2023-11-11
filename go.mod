@@ -18,6 +18,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.0
 	github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a
+	gopkg.in/yaml.v3 v3.0.1
 	mvdan.cc/sh v2.6.4+incompatible
 )
 
@@ -55,7 +56,6 @@ require (
 	golang.org/x/term v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

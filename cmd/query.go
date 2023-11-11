@@ -11,16 +11,19 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 func NewCmdQuery() *cobra.Command {
-	var jqFlags struct {
-		NullInput bool
-		RawInput  bool
-		RawOutput bool
-		Slurp     bool
-		Arg       []string
-		ArgJSON   []string
+	var flags struct {
+		NullInput  bool
+		YamlInput  bool
+		YamlOutput bool
+		RawInput   bool
+		RawOutput  bool
+		Slurp      bool
+		Arg        []string
+		ArgJSON    []string
 	}
 
 	queryCmd := &cobra.Command{
@@ -32,7 +35,7 @@ func NewCmdQuery() *cobra.Command {
 			var err error
 			vars := make([]string, 0)
 			values := make([]interface{}, 0)
-			for _, arg := range jqFlags.Arg {
+			for _, arg := range flags.Arg {
 				tokens := strings.SplitN(arg, "=", 2)
 				if len(tokens) != 2 {
 					log.Fatalln("invalid argument:", arg)
@@ -41,7 +44,7 @@ func NewCmdQuery() *cobra.Command {
 				values = append(values, tokens[1])
 			}
 
-			for _, arg := range jqFlags.ArgJSON {
+			for _, arg := range flags.ArgJSON {
 				tokens := strings.SplitN(arg, "=", 2)
 				if len(tokens) != 2 {
 					log.Fatalln("invalid argument:", arg)
@@ -81,9 +84,9 @@ func NewCmdQuery() *cobra.Command {
 				inputFile = os.Stdin
 			}
 			var inputs []interface{}
-			if jqFlags.NullInput {
+			if flags.NullInput {
 				inputs = append(inputs, nil)
-			} else if jqFlags.RawInput {
+			} else if flags.RawInput {
 				reader := bufio.NewReader(inputFile)
 				for {
 					line, err := reader.ReadString('\n')
@@ -93,7 +96,16 @@ func NewCmdQuery() *cobra.Command {
 					inputs = append(inputs, strings.TrimRight(line, "\n"))
 				}
 			} else {
-				decoder := json.NewDecoder(inputFile)
+				var decoder interface {
+					Decode(any) error
+				}
+
+				if flags.YamlInput {
+					decoder = yaml.NewDecoder(inputFile)
+				} else {
+					decoder = json.NewDecoder(inputFile)
+				}
+
 				for {
 					var v interface{}
 					if err := decoder.Decode(&v); err != nil {
@@ -104,15 +116,15 @@ func NewCmdQuery() *cobra.Command {
 			}
 
 			outputs := make([]gojq.Iter, 0)
-			if jqFlags.Slurp {
-				if jqFlags.RawInput {
+			if flags.Slurp {
+				if flags.RawInput {
 					input := strings.Builder{}
 					for _, v := range inputs {
 						input.WriteString(v.(string))
 						input.WriteString("\n")
 					}
 					outputs = append(outputs, code.Run(input.String(), values...))
-				} else if jqFlags.NullInput {
+				} else if flags.NullInput {
 					outputs = append(outputs, code.Run(nil, values...))
 				} else {
 					outputs = append(outputs, code.Run(inputs, values...))
@@ -124,9 +136,19 @@ func NewCmdQuery() *cobra.Command {
 				}
 			}
 
-			encoder := json.NewEncoder(os.Stdout)
-			if isatty.IsTerminal(os.Stdout.Fd()) {
-				encoder.SetIndent("", "  ")
+			var encoder interface {
+				Encode(any) error
+			}
+
+			if flags.YamlOutput {
+				encoder = yaml.NewEncoder(os.Stdout)
+			} else {
+				jsonEncoder := json.NewEncoder(os.Stdout)
+				if isatty.IsTerminal(os.Stdout.Fd()) {
+					jsonEncoder.SetIndent("", "  ")
+				}
+
+				encoder = jsonEncoder
 			}
 			for _, output := range outputs {
 				for {
@@ -137,7 +159,7 @@ func NewCmdQuery() *cobra.Command {
 					if err, ok := v.(error); ok {
 						return fmt.Errorf("could not run query: %s", err)
 					}
-					if jqFlags.RawOutput {
+					if flags.RawOutput {
 						if s, ok := v.(string); ok {
 							fmt.Println(s)
 							continue
@@ -159,12 +181,14 @@ func NewCmdQuery() *cobra.Command {
 		},
 	}
 
-	queryCmd.Flags().BoolVarP(&jqFlags.NullInput, "null-input", "n", false, "use null as input value")
-	queryCmd.Flags().BoolVarP(&jqFlags.RawInput, "raw-input", "R", false, "read input as raw strings")
-	queryCmd.Flags().BoolVarP(&jqFlags.RawOutput, "raw-output", "r", false, "output raw strings, not JSON texts")
-	queryCmd.Flags().BoolVarP(&jqFlags.Slurp, "slurp", "s", false, "read all inputs into an array")
-	queryCmd.Flags().StringArrayVar(&jqFlags.Arg, "arg", []string{}, "add string variable in the form of name=value")
-	queryCmd.Flags().StringArrayVar(&jqFlags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
+	queryCmd.Flags().BoolVarP(&flags.NullInput, "null-input", "n", false, "use null as input value")
+	queryCmd.Flags().BoolVarP(&flags.RawInput, "raw-input", "R", false, "read input as raw strings")
+	queryCmd.Flags().BoolVarP(&flags.RawOutput, "raw-output", "r", false, "output raw strings, not JSON texts")
+	queryCmd.Flags().BoolVarP(&flags.Slurp, "slurp", "s", false, "read all inputs into an array")
+	queryCmd.Flags().BoolVar(&flags.YamlInput, "yaml-input", false, "read input as YAML format")
+	queryCmd.Flags().BoolVar(&flags.YamlOutput, "yaml-output", false, "output as YAML")
+	queryCmd.Flags().StringArrayVar(&flags.Arg, "arg", []string{}, "add string variable in the form of name=value")
+	queryCmd.Flags().StringArrayVar(&flags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
 
 	return queryCmd
 }

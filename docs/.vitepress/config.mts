@@ -134,5 +134,8 @@ export default defineConfig({
     socialLinks: [
       { icon: 'github', link: 'https://github.com/pomdtr/sunbeam' },
     ]
+  },
+  sitemap: {
+    hostname: "https://pomdtr.github.io/sunbeam"
   }
 })

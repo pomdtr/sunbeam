@@ -177,7 +177,6 @@ async function run(payload: sunbeam.Payload) {
 
         const data = await resp.json();
         const list: sunbeam.List = {
-            dynamic: true,
             items: data.map((item: any) => ({
                 title: item.title,
                 accessories: [
