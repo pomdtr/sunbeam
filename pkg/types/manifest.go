@@ -59,7 +59,8 @@ type Input struct {
 type InputType string
 
 const (
-	InputTextField    InputType = "text"
-	InputTypePassword InputType = "password"
-	InputCheckbox     InputType = "checkbox"
+	InputTextField InputType = "text"
+	InputTextArea  InputType = "textarea"
+	InputPassword  InputType = "password"
+	InputCheckbox  InputType = "checkbox"
 )

@@ -6,6 +6,9 @@
             "$ref": "#/definitions/textfield"
         },
         {
+            "$ref": "#/definitions/textarea"
+        },
+        {
             "$ref": "#/definitions/password"
         },
         {

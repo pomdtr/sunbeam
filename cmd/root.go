@@ -384,7 +384,7 @@ func ExtractParams(args []string, command types.CommandSpec) (map[string]any, er
 			case types.InputCheckbox:
 				params[parts[0]] = true
 				args = args[1:]
-			case types.InputTextField, types.InputTypePassword:
+			case types.InputTextField, types.InputPassword:
 				if len(args) < 2 {
 					return nil, fmt.Errorf("missing value for parameter: %s", parts[0])
 				}
@@ -402,7 +402,7 @@ func ExtractParams(args []string, command types.CommandSpec) (map[string]any, er
 		}
 
 		switch spec.Type {
-		case types.InputTextField, types.InputTypePassword:
+		case types.InputTextField, types.InputPassword:
 			params[parts[0]] = parts[1]
 		case types.InputCheckbox:
 			value, err := strconv.ParseBool(parts[1])

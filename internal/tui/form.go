@@ -48,7 +48,9 @@ func NewForm(submitMsg func(map[string]any) tea.Msg, params ...types.Input) *For
 		switch param.Type {
 		case types.InputTextField:
 			inputs = append(inputs, NewTextInput(param, false))
-		case types.InputTypePassword:
+		case types.InputTextArea:
+			inputs = append(inputs, NewTextArea(param))
+		case types.InputPassword:
 			inputs = append(inputs, NewTextInput(param, true))
 		case types.InputCheckbox:
 			inputs = append(inputs, NewCheckbox(param))

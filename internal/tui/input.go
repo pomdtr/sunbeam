@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -69,10 +70,6 @@ func (ti *TextField) Required() bool {
 	return ti.required
 }
 
-func (ti *TextField) SetHidden() {
-	ti.EchoMode = textinput.EchoPassword
-}
-
 func (ti *TextField) Height() int {
 	return 1
 }
@@ -98,7 +95,63 @@ func (ti TextField) View() string {
 	return ti.Model.View()
 }
 
-type BooleanInput struct {
+type TextArea struct {
+	textarea.Model
+	title    string
+	required bool
+	name     string
+}
+
+func (ta *TextArea) Title() string {
+	return ta.title
+}
+
+func (ta *TextArea) Required() bool {
+	return ta.required
+}
+
+func (ta *TextArea) Name() string {
+	return ta.name
+}
+
+func NewTextArea(input types.Input) Input {
+	ta := textarea.New()
+	ta.Prompt = ""
+
+	if input.Default != nil {
+		ta.SetValue(input.Default.(string))
+	}
+
+	ta.Placeholder = input.Placeholder
+	ta.SetHeight(5)
+
+	return &TextArea{
+		title:    input.Title,
+		required: input.Required,
+		name:     input.Name,
+		Model:    ta,
+	}
+}
+
+func (ta *TextArea) Height() int {
+	return ta.Model.Height()
+}
+
+func (ta *TextArea) SetWidth(w int) {
+	ta.Model.SetWidth(w)
+}
+
+func (ta *TextArea) Value() any {
+	return ta.Model.Value()
+}
+
+func (ta *TextArea) Update(msg tea.Msg) (Input, tea.Cmd) {
+	model, cmd := ta.Model.Update(msg)
+	ta.Model = model
+	return ta, cmd
+}
+
+type Checkbox struct {
 	name     string
 	title    string
 	label    string
@@ -109,8 +162,8 @@ type BooleanInput struct {
 	checked bool
 }
 
-func NewCheckbox(param types.Input) *BooleanInput {
-	checkbox := BooleanInput{
+func NewCheckbox(param types.Input) *Checkbox {
+	checkbox := Checkbox{
 		name:     param.Name,
 		title:    param.Title,
 		label:    param.Label,
@@ -124,36 +177,36 @@ func NewCheckbox(param types.Input) *BooleanInput {
 	return &checkbox
 }
 
-func (cb *BooleanInput) Name() string {
+func (cb *Checkbox) Name() string {
 	return cb.name
 }
 
-func (cb *BooleanInput) Title() string {
+func (cb *Checkbox) Title() string {
 	return cb.title
 }
 
-func (cb *BooleanInput) Required() bool {
+func (cb *Checkbox) Required() bool {
 	return cb.required
 }
 
-func (cb *BooleanInput) Height() int {
+func (cb *Checkbox) Height() int {
 	return 1
 }
 
-func (cb *BooleanInput) Focus() tea.Cmd {
+func (cb *Checkbox) Focus() tea.Cmd {
 	cb.focused = true
 	return nil
 }
 
-func (cb *BooleanInput) Blur() {
+func (cb *Checkbox) Blur() {
 	cb.focused = false
 }
 
-func (cb *BooleanInput) SetWidth(width int) {
+func (cb *Checkbox) SetWidth(width int) {
 	cb.width = width
 }
 
-func (cb BooleanInput) Update(msg tea.Msg) (Input, tea.Cmd) {
+func (cb Checkbox) Update(msg tea.Msg) (Input, tea.Cmd) {
 	if !cb.focused {
 		return &cb, nil
 	}
@@ -169,7 +222,7 @@ func (cb BooleanInput) Update(msg tea.Msg) (Input, tea.Cmd) {
 	return &cb, nil
 }
 
-func (cb BooleanInput) View() string {
+func (cb Checkbox) View() string {
 	var checkbox string
 	if cb.checked {
 		checkbox = fmt.Sprintf("[x] %s", cb.label)
@@ -182,10 +235,10 @@ func (cb BooleanInput) View() string {
 	return fmt.Sprintf("%s%s", checkbox, strings.Repeat(" ", padding))
 }
 
-func (cb BooleanInput) Value() any {
+func (cb Checkbox) Value() any {
 	return cb.checked
 }
 
-func (cb *BooleanInput) Toggle() {
+func (cb *Checkbox) Toggle() {
 	cb.checked = !cb.checked
 }

@@ -74,7 +74,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					}
 
 					switch param.Type {
-					case types.InputTextField, types.InputTypePassword:
+					case types.InputTextField, types.InputPassword:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
@@ -138,7 +138,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 
 		for _, input := range command.Inputs {
 			switch input.Type {
-			case types.InputTextField, types.InputTypePassword:
+			case types.InputTextField, types.InputPassword:
 				cmd.Flags().String(input.Name, "", input.Title)
 			case types.InputCheckbox:
 				cmd.Flags().Bool(input.Name, false, input.Title)
