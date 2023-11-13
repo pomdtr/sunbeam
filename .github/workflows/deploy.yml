@@ -5,8 +5,8 @@ name: Deploy VitePress site to Pages
 on:
   push:
     # run only against tags
-    tags:
-      - "v*"
+    branches:
+      - main
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
