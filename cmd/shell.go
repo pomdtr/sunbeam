@@ -32,14 +32,7 @@ func NewCmdShell() *cobra.Command {
 		Use:     "shell [script]",
 		Short:   `Execute a command or script in a shell`,
 		GroupID: CommandGroupCore,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if flags.Command == "" && len(args) == 0 {
-				return fmt.Errorf("must specify either a command or a file")
-			}
-
-			return nil
-		},
-		Args: cobra.ArbitraryArgs,
+		Args:    cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r, err := interp.New(interp.StdIO(os.Stdin, os.Stdout, os.Stderr))
 			if err != nil {
@@ -48,6 +41,31 @@ func NewCmdShell() *cobra.Command {
 
 			if flags.Command != "" {
 				return run(r, strings.NewReader(flags.Command), "command", args)
+			}
+
+			if len(args) == 0 {
+				parser := syntax.NewParser()
+				fmt.Printf("$ ")
+				var runErr error
+				fn := func(stmts []*syntax.Stmt) bool {
+					if parser.Incomplete() {
+						fmt.Printf("> ")
+						return true
+					}
+					ctx := context.Background()
+					for _, stmt := range stmts {
+						runErr = r.Run(ctx, stmt)
+						if r.Exited() {
+							return false
+						}
+					}
+					fmt.Printf("$ ")
+					return true
+				}
+				if err := parser.Interactive(os.Stdin, fn); err != nil {
+					return err
+				}
+				return runErr
 			}
 
 			f, err := os.Open(args[0])
