@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/cli/cli v1.14.0
 	github.com/itchyny/gojq v0.12.13
-	github.com/junegunn/fzf v0.0.0-20231110041611-38e3694d1ca5
+	github.com/junegunn/fzf v0.0.0-20231112130808-7320b7df6203
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
@@ -51,7 +51,6 @@ require (
 	golang.org/x/term v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
-	mvdan.cc/sh/v3 v3.7.0 // indirect
 )
 
 require (
