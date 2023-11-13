@@ -70,14 +70,14 @@ if [ "$COMMAND" = "list" ]; then
             title: .value.title,
             subtitle: .value.command,
             actions: [
-                { title: "Run Oneliner", type: "run", command: "run", params: { index: .key }, exit: (.value.exit // false) },
-                { title: "Copy Command", key: "c", type: "copy", text: .value.command, exit: true },
-                { title: "Edit Oneliner", key: "e", type: "run", "command": "edit", params: {
+                { title: "Edit Oneliner", type: "run", "command": "edit", params: {
                     index: .key,
                     title: { default: .value.title },
                     command: { default: .value.command },
                     exit: { default: (.value.exit // false) }
                 }, reload: true},
+                { title: "Copy Command", key: "c", type: "copy", text: .value.command, exit: true },
+                { title: "Run Oneliner", key: "r", type: "run", command: "run", params: { index: .key }, exit: (.value.exit // false) },
                 { title: "Delete Oneliner", key: "d", type: "run", command: "delete", params: { index: .key }, reload: true },
                 { title: "Create Oneliner", key: "n", type: "run", command: "create", reload: true }
             ]
@@ -85,7 +85,8 @@ if [ "$COMMAND" = "list" ]; then
     }' "$CONFIG_PATH"
 elif [ "$COMMAND" = "run" ]; then
     INDEX=$(echo "$1" | sunbeam query -r ".params.index")
-    sunbeam query -r ".oneliners[$INDEX].command" "$CONFIG_PATH" | sh
+    ONELINER_COMMAND=$(sunbeam query -r ".oneliners[$INDEX].command" "$CONFIG_PATH")
+    sh -c "$ONELINER_COMMAND"
 elif [ "$COMMAND" = "delete" ]; then
     INDEX=$(echo "$1" | sunbeam query -r ".params.index")
     # shellcheck disable=SC2016

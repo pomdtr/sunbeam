@@ -60,6 +60,13 @@ if (payload.command == "list") {
                     params: {
                         url
                     },
+                },
+                {
+                    title: "Copy URL",
+                    type: "copy",
+                    key: "c",
+                    text: url,
+                    exit: true
                 }
             ]
         })),
