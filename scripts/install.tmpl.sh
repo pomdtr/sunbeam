@@ -83,14 +83,5 @@ esac
 
 rm "sunbeam.$extension"
 
-if [ -n "$GETSUNBEAM_DEST" ]; then
-  mv sunbeam "$GETSUNBEAM_DEST"
-  echo "sunbeam installed to $GETSUNBEAM_DEST"
-  exit 0
-else
-cat << EOF
-sunbeam installed!
-You can run it with:
-  ./sunbeam
-EOF
-fi
+mv sunbeam "${GETSUNBEAM_DEST:-/usr/local/bin/sunbeam}"
+echo "sunbeam installed to $GETSUNBEAM_DEST"
