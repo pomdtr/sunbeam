@@ -14,19 +14,20 @@ Sunbeam extensions are just scripts, so you can use any language you want (as lo
 
 Sunbeam is not aware of the language you are using, so you will have to make sure that your script is executable and that it has the right shebang.
 
-Even though you can use any language, sunbeam provides multiple helpers to make it easier to write extensions in POSIX shell and deno.
+Even though you can use any language, here are some recommendations:
 
-### Shell
+### Sunbeam Shell
 
 Sunbam provides multiple helpers to make it easier to share sunbeam extensions, without requiring the user to install additional dependencies (other than sunbeam itself).
 
+- `sunbeam shell`: POSIX shell (replaces /bin/sh,  which is not available on windows by default)
 - `sunbeam query`: generate and transform json using the jq syntax.
 - `sunbeam fetch`: fetch a remote script using a subset of curl options.
 - `sunbeam open`: open an url or a file using the default application.
 - `sunbeam copy/paste`: copy/paste text from/to the clipboard
 
 ```sh
-#!/bin/sh
+#!/usr/bin/env -S sunbeam shell
 
 set -eu
 
@@ -50,11 +51,51 @@ fi
 
 A more complex shell extension can be found [here](./examples/devdocs).
 
+### Python 3
+
+If your shell script is getting too complex, consider rewriting it in python.
+
+Python3 comes preinstalled in macOS and on most linux distributions, so it is a good choice if you want to write an extension that can be used without requiring the user to install additional dependencies.
+
+Make sure to use the `#!/usr/bin/env python3` shebang, as it will make your script more portable.
+
+```python
+#!/usr/bin/env python3
+
+import sys
+import json
+
+if len(sys.argv) == 1:
+    manifest = {
+        "title": "Hello World!",
+        "commands": [{
+            "name": "say-hello",
+            "title": "Say Hello",
+            "mode": "detail"
+        }]
+    }
+
+    print(json.dumps(manifest))
+    sys.exit(0)
+
+payload = json.loads(sys.argv[1])
+if payload["command"] == "say-hello":
+    detail = {
+        "text": "Hello, World!"
+    }
+
+    print(json.dumps(detail))
+```
+
+Prefer to not use any external dependencies, as the user will have to install them manually.
+
+See the [file-browser extension](./examples/file-browser.md) for an example.
+
 ### Deno
 
 [Deno](https://deno.land) is a secure runtime for javascript and typescript. It is an [excellent choice](https://matklad.github.io/2023/02/12/a-love-letter-to-deno.html) for writing scripts that require external dependencies.
 
-Deno allows you to use any npm package by just importing it from a url. This makes it easy to use any library without requiring the user to install it first.
+Deno allows you to use any npm package by just importing it from a url. This makes it easy to use any library without requiring the user to install it first. The only requirement is that the user already has deno installed.
 
 To make it easier to write extensions in deno, sunbeam provides a [npm package](https://www.npmjs.com/package/sunbeam-types) that provides types for validating the manifest and payloads.
 

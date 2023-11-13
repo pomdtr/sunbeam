@@ -87,3 +87,5 @@ completions/
 docs/cli.md
 
 /install.sh
+/.envrc
+/config.json

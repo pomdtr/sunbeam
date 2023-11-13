@@ -13,6 +13,9 @@
         },
         {
             "$ref": "#/definitions/checkbox"
+        },
+        {
+            "$ref": "#/definitions/number"
         }
     ],
     "definitions": {
@@ -129,6 +132,35 @@
                 },
                 "default": {
                     "type": "boolean"
+                }
+            }
+        },
+        "number": {
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "title",
+                "required"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "const": "number"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "placeholder": {
+                    "type": "string"
+                },
+                "default": {
+                    "type": "number"
                 }
             }
         }

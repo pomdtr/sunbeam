@@ -1,0 +1,25 @@
+{
+    "extensions": {
+        "devdocs": {
+            "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh",
+            "root": [
+                {
+                    "title": "Search Bash Docs",
+                    "command": "list-entries",
+                    "params": {
+                        "slug": "bash"
+                    }
+                }
+            ]
+        },
+        "files": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py",
+        "google": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh"
+    },
+    "oneliners": [
+        {
+            "title": "Open Sunbeam Docs",
+            "command": "sunbeam open https://pomdtr.github.io/sunbeam/introduction",
+            "exit": "true"
+        }
+    ]
+}

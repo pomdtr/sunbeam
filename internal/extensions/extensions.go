@@ -11,7 +11,6 @@ import (
 	"runtime"
 
 	"github.com/acarl005/stripansi"
-	"github.com/cli/cli/pkg/findsh"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -85,7 +84,7 @@ func (e Extension) RootItems() []types.RootItem {
 	return rootItems
 }
 
-func (e Extension) Run(input types.CommandInput) error {
+func (e Extension) Run(input types.Payload) error {
 	_, err := e.Output(input)
 	return err
 }
@@ -100,7 +99,7 @@ func (ext Extension) CheckRequirements() error {
 	return nil
 }
 
-func (ext Extension) Output(input types.CommandInput) ([]byte, error) {
+func (ext Extension) Output(input types.Payload) ([]byte, error) {
 	cmd, err := ext.Cmd(input)
 	if err != nil {
 		return nil, err
@@ -116,13 +115,17 @@ func (ext Extension) Output(input types.CommandInput) ([]byte, error) {
 	}
 }
 
-func (e Extension) Cmd(input types.CommandInput) (*exec.Cmd, error) {
+func (e Extension) Cmd(input types.Payload) (*exec.Cmd, error) {
 	return e.CmdContext(context.Background(), input)
 }
 
-func (e Extension) CmdContext(ctx context.Context, input types.CommandInput) (*exec.Cmd, error) {
+func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.Cmd, error) {
 	if input.Params == nil {
 		input.Params = make(map[string]any)
+	}
+
+	if input.Preferences == nil {
+		input.Preferences = make(map[string]any)
 	}
 
 	cwd, err := os.Getwd()
@@ -150,20 +153,6 @@ func (e Extension) CmdContext(ctx context.Context, input types.CommandInput) (*e
 		}
 	}
 
-	for _, spec := range e.Preferences {
-		if !spec.Required {
-			if spec.Default != nil {
-				input.Params[spec.Name] = spec.Default
-			}
-
-			continue
-		}
-		_, ok := input.Preferences[spec.Name]
-		if !ok {
-			return nil, fmt.Errorf("missing required preference %s", spec.Name)
-		}
-	}
-
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
@@ -171,11 +160,7 @@ func (e Extension) CmdContext(ctx context.Context, input types.CommandInput) (*e
 
 	var args []string
 	if runtime.GOOS == "windows" {
-		sh, err := findsh.Find()
-		if err != nil {
-			return nil, err
-		}
-		args = []string{sh, "-s", "-c", `command "$@"`, "--", e.Entrypoint, string(inputBytes)}
+		args = []string{"sunbeam", "shell", e.Entrypoint, string(inputBytes)}
 	} else {
 		args = []string{e.Entrypoint, string(inputBytes)}
 	}

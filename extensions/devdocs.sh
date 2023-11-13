@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env -S sunbeam shell
 
 set -e
 
@@ -21,7 +21,7 @@ if [ $# -eq 0 ]; then
         title: "List Entries from Docset",
         mode: "list",
         params: [
-          { name: "slug", title: "Slug", type: "textfield", required: true }
+          { name: "slug", title: "Slug", type: "text", required: true }
         ]
       }
     ]

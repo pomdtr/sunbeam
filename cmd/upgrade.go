@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/acarl005/stripansi"
-	"github.com/cli/cli/pkg/findsh"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
@@ -25,8 +24,11 @@ import (
 
 func NewCmdUpgrade(cfg config.Config) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "upgrade",
-		Args: cobra.MatchAll(cobra.OnlyValidArgs, cobra.MaximumNArgs(1)),
+		Use:       "upgrade",
+		Short:     "Upgrade extensions",
+		GroupID:   CommandGroupCore,
+		Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.MaximumNArgs(1)),
+		ValidArgs: cfg.Aliases(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if _, ok := cfg.Extensions[args[0]]; !ok {
@@ -34,12 +36,12 @@ func NewCmdUpgrade(cfg config.Config) *cobra.Command {
 				}
 			}
 
-			for alias, origin := range cfg.Extensions {
+			for alias, ref := range cfg.Extensions {
 				if len(args) > 0 && alias != args[0] {
 					continue
 				}
 
-				extension, err := ExtractManifest(origin)
+				extension, err := ExtractManifest(ref.Origin)
 				if err != nil {
 					return err
 				}
@@ -172,11 +174,7 @@ func ExtractManifest(origin string) (extensions.Extension, error) {
 
 	var args []string
 	if runtime.GOOS == "windows" {
-		sh, err := findsh.Find()
-		if err != nil {
-			return extensions.Extension{}, err
-		}
-		args = []string{sh, "-c", `command "$@"`, "--", entrypoint}
+		args = []string{"sunbeam", "shell", entrypoint}
 	} else {
 		args = []string{entrypoint}
 	}

@@ -24,6 +24,10 @@
                     "command": {
                         "type": "string",
                         "description": "The command to run"
+                    },
+                    "exit": {
+                        "type": "boolean",
+                        "description": "If true, sunbeam will close after running the command"
                     }
                 }
             }
@@ -32,7 +36,47 @@
             "type": "object",
             "patternProperties": {
                 ".+": {
-                    "type": "string"
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "object",
+                            "required": [
+                                "origin"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                                "origin": {
+                                    "type": "string"
+                                },
+                                "root": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "required": [
+                                            "command"
+                                        ],
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "command": {
+                                                "type": "string"
+                                            },
+                                            "params": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                },
+                                "preferences": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    ]
                 }
             }
         }

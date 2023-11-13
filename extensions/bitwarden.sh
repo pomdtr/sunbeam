@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env -S sunbeam shell
 
 if [ $# -eq 0 ]; then
     sunbeam query -n '{
@@ -9,9 +9,6 @@ if [ $# -eq 0 ]; then
         ],
         requirements: [
             { name: "bw", link: "https://bitwarden.com/help/article/cli/" }
-        ],
-        preferences: [
-            { name: "session", title: "Bitwarden Session", type: "text", required: true }
         ],
         commands: [
             {
@@ -25,6 +22,10 @@ if [ $# -eq 0 ]; then
 fi
 
 BW_SESSION=$(echo "$1" | sunbeam query -r '.preferences.session')
+if [ "$BW_SESSION" = "null" ]; then
+    echo "Bitwarden session not found. Please set it in your config." >&2
+    exit 1
+fi
 
 COMMAND=$(echo "$1" | sunbeam query -r '.command')
 if [ "$COMMAND" = "list-passwords" ]; then

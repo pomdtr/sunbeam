@@ -7,9 +7,10 @@ import (
 
 func NewCmdOpen() *cobra.Command {
 	return &cobra.Command{
-		Use:   "open [target]",
-		Short: "Open a file or url in your default application",
-		Args:  cobra.ExactArgs(1),
+		Use:     "open [target]",
+		GroupID: CommandGroupCore,
+		Short:   "Open a file or url in your default application",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return utils.Open(args[0])
 		},

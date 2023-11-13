@@ -14,7 +14,7 @@ If you are not familiar with jq, I recommend reading this tutorial: <https://ear
 Note that the script must be executable, and must have a shebang line at the top indicating the interpreter to use.
 
 ```sh
-#!/bin/sh
+#!/usr/bin/env -S sunbeam shell
 
 set -eu
 
@@ -60,7 +60,7 @@ $ ./sunbeam-devdocs
 Or use sunbeam to see the generated command:
 
 ```console
-$ sunbeam run ./sunbeam-devdocs --help
+$ sunbeam ./sunbeam-devdocs --help
 Search the devdocs.io documentation
 
 Usage:
@@ -85,7 +85,7 @@ Here the command name is `search-docsets`, and the command mode is `list`, so th
 We will use the `sunbeam fetch` command to fetch the list of docsets from the devdocs api. The `fetch` command allows you to perform http requests (with an api similar to curl).
 
 ```sh
-#!/bin/sh
+#!/usr/bin/env -S sunbeam shell
 
 set -eu
 
@@ -133,13 +133,13 @@ Here we pipe the json catalog to the `query` command to transform it into a list
 Let's run our script to see the generated view:
 
 ```console
-sunbeam run ./sunbeam-devdocs search-docsets
+sunbeam ./sunbeam-devdocs search-docsets
 ```
 
 Note that since we only have one command, we can omit the command name:
 
 ```console
-sunbeam run ./sunbeam-devdocs
+sunbeam ./sunbeam-devdocs
 ```
 
 ## Chaining Commands
@@ -147,7 +147,7 @@ sunbeam run ./sunbeam-devdocs
 This extension is still pretty basic. Sunbeam really shines when you start chaining commands together. Let's add a new command to search the documentation of a specific docset.
 
 ```sh
-#!/bin/sh
+#!/usr/bin/env -S sunbeam shell
 
 set -eu
 
@@ -212,12 +212,12 @@ fi
 
 Here we add a new command named `search-entries`, with a `list` mode. We also add a `docset` parameter, which is required.
 
-When the user run this command, the script is called with the command name as first argument, and the parameters as json on stdin.
+When the user run this command, the script is called with a first argument containing the [command payload](../../reference/schemas/payload.md) serialized as JSON.
 
-If we run run `sunbeam run ./sunbeam-devdoc --help` again, we can see the new command:
+If we run `sunbeam ./sunbeam-devdoc --help` again, we can see the new command help:
 
 ```console
-$ sunbeam run ./sunbeam-devdocs --help
+$ sunbeam ./sunbeam-devdocs --help
 Search the devdocs.io documentation
 
 Usage:
@@ -237,13 +237,13 @@ Use "extension [command] --help" for more information about a command.
 Let's run the command to see the generated view:
 
 ```console
-sunbeam run ./sunbeam-devdocs search-entries --docset=go
+sunbeam ./sunbeam-devdocs search-entries --docset=go
 ```
 
 If we want to be able to go from the docsets list to the entries list, we can add `run` action to the docsets list:
 
 ```sh
-#!/bin/sh
+#!/usr/bin/env -S sunbeam shell
 
 set -eu
 

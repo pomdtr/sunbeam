@@ -18,8 +18,7 @@ type Action struct {
 
 	Exit bool `json:"exit,omitempty"`
 
-	Reload bool     `json:"reload,omitempty"`
-	Args   []string `json:"args,omitempty"`
+	Reload bool `json:"reload,omitempty"`
 
 	Extension string `json:"extension,omitempty"`
 	Command   string `json:"command,omitempty"`
@@ -46,10 +45,12 @@ type Application struct {
 	Linux   string `json:"linux,omitempty"`
 }
 
-type CommandInput struct {
+type Payload struct {
 	Command     string         `json:"command"`
-	Preferences map[string]any `json:"preferences"`
+	Preferences Preferences    `json:"preferences"`
 	Params      map[string]any `json:"params"`
 	Cwd         string         `json:"cwd"`
 	Query       string         `json:"query,omitempty"`
 }
+
+type Preferences map[string]any

@@ -12,9 +12,7 @@ import (
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
-	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
-	preferences "github.com/pomdtr/sunbeam/internal/storage"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
@@ -27,12 +25,13 @@ type RootList struct {
 	list          *List
 	form          *Form
 
-	extensions extensions.ExtensionMap
+	extensions  extensions.ExtensionMap
+	preferences map[string]types.Preferences
 
-	generator func() (extensions.ExtensionMap, []types.ListItem, error)
+	generator func() (extensions.ExtensionMap, []types.ListItem, map[string]types.Preferences, error)
 }
 
-func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, error)) *RootList {
+func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, map[string]types.Preferences, error)) *RootList {
 	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
 	if err != nil {
 		history = History{
@@ -54,14 +53,15 @@ func (c *RootList) Init() tea.Cmd {
 }
 
 func (c *RootList) Reload() tea.Msg {
-	extensionMap, rootItems, err := c.generator()
+	extensionMap, rootItems, preferences, err := c.generator()
 	if err != nil {
 		return err
 	}
 
 	c.extensions = extensionMap
+	c.preferences = preferences
 	c.history.Sort(rootItems)
-	c.list.SetEmptyText("No results found, hit enter to run as shell command")
+	c.list.SetEmptyText("No item found, use ctrl+e to edit your config.")
 	c.list.SetIsLoading(false)
 	c.list.SetItems(rootItems...)
 	return nil
@@ -105,27 +105,11 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.form = nil
 				return c, c.list.Focus()
 			}
-		case "enter", "alt+enter":
-			if _, ok := c.list.Selection(); ok && msg.String() == "enter" {
-				break
-			}
-
-			query := c.list.Query()
-			if query == "" {
-				break
-			}
-
-			cmd := exec.Command("sh", "-c", c.list.Query())
-			return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				return ExitMsg{}
-			})
 		case "ctrl+e":
-			editor := utils.FindEditor()
-			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, config.Path()))
+			if c.form != nil {
+				break
+			}
+			editCmd := exec.Command("sunbeam", "edit", "--config")
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
@@ -146,25 +130,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if !ok {
 				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
 			}
-
-			prefs, err := preferences.Load(msg.Extension, extension.Origin)
-			if err != nil {
-				return c, c.SetError(err)
-			}
-
-			if missing := FindMissingInputs(extension.Preferences, prefs); len(missing) > 0 {
-				c.form = NewForm(func(values map[string]any) tea.Msg {
-					if err := preferences.Save(msg.Extension, extension.Origin, values); err != nil {
-						return c.SetError(err)
-					}
-
-					return msg
-				}, missing...)
-
-				c.form.SetSize(c.width, c.height)
-				return c, tea.Sequence(c.form.Init(), c.form.Focus())
-			}
-			c.form = nil
 
 			command, ok := extension.Command(msg.Command)
 			if !ok {
@@ -212,9 +177,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(err)
 			}
 
-			input := types.CommandInput{
+			input := types.Payload{
 				Command:     command.Name,
-				Preferences: prefs,
+				Preferences: c.preferences[msg.Extension],
 				Params:      msg.Params,
 			}
 
@@ -264,7 +229,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}
 		case types.ActionTypeEdit:
-			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), msg.Target))
+			editCmd := exec.Command("sunbeam", "edit", msg.Target)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
@@ -281,7 +246,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			})
 		case types.ActionTypeExec:
-			cmd := exec.Command(msg.Args[0], msg.Args[1:]...)
+			cmd := exec.Command("sunbeam", "shell", "-c", msg.Command)
 			return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				if err != nil {
 					return err

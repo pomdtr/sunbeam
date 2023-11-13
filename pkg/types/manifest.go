@@ -7,7 +7,6 @@ type Manifest struct {
 	Require     []Requirement `json:"requirements,omitempty"`
 	Root        []RootItem    `json:"root,omitempty"`
 	Commands    []CommandSpec `json:"commands"`
-	Preferences []Input       `json:"preferences,omitempty"`
 }
 
 type Platfom string
@@ -59,8 +58,9 @@ type Input struct {
 type InputType string
 
 const (
-	InputTextField InputType = "text"
-	InputTextArea  InputType = "textarea"
-	InputPassword  InputType = "password"
-	InputCheckbox  InputType = "checkbox"
+	InputText     InputType = "text"
+	InputTextArea InputType = "textarea"
+	InputPassword InputType = "password"
+	InputCheckbox InputType = "checkbox"
+	InputNumber   InputType = "number"
 )

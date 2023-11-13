@@ -8,16 +8,14 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
-	preferences "github.com/pomdtr/sunbeam/internal/storage"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension, preferences map[string]any) (*cobra.Command, error) {
 
 	rootCmd := &cobra.Command{
 		Use:     alias,
@@ -36,9 +34,12 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			}
 
 			if len(inputBytes) > 0 {
-				var input types.CommandInput
+				var input types.Payload
 				if err := json.Unmarshal(inputBytes, &input); err != nil {
 					return err
+				}
+				if input.Preferences == nil {
+					input.Preferences = preferences
 				}
 
 				var rawOutput bool
@@ -74,7 +75,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					}
 
 					switch param.Type {
-					case types.InputTextField, types.InputPassword:
+					case types.InputText, types.InputTextArea, types.InputPassword:
 						value, err := cmd.Flags().GetString(param.Name)
 						if err != nil {
 							return err
@@ -86,12 +87,19 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 							return err
 						}
 						params[param.Name] = value
+					case types.InputNumber:
+						value, err := cmd.Flags().GetInt(param.Name)
+						if err != nil {
+							return err
+						}
+						params[param.Name] = value
 					}
 				}
 
-				input := types.CommandInput{
-					Command: command.Name,
-					Params:  params,
+				input := types.Payload{
+					Command:     command.Name,
+					Preferences: preferences,
+					Params:      params,
 				}
 
 				if !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -103,45 +111,18 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					input.Query = string(bytes.Trim(stdin, "\n"))
 				}
 
-				prefs, err := preferences.Load(alias, extension.Origin)
-				if err != nil {
-					return err
-				}
-				input.Preferences = prefs
-
-				if missing := tui.FindMissingInputs(extension.Preferences, input.Preferences); len(missing) > 0 {
-					cancelled := true
-					var formError error
-					form := tui.NewForm(func(values map[string]any) tea.Msg {
-						cancelled = false
-						input.Preferences = values
-						formError = preferences.Save(alias, extension.Origin, values)
-						return tui.ExitMsg{}
-					}, missing...)
-
-					if err := tui.Draw(form); err != nil {
-						return err
-					}
-
-					if cancelled {
-						return nil
-					}
-
-					if formError != nil {
-						return formError
-					}
-				}
-
 				return runExtension(extension, input, !isatty.IsTerminal(os.Stdout.Fd()))
 			},
 		}
 
 		for _, input := range command.Inputs {
 			switch input.Type {
-			case types.InputTextField, types.InputPassword:
+			case types.InputText, types.InputTextArea, types.InputPassword:
 				cmd.Flags().String(input.Name, "", input.Title)
 			case types.InputCheckbox:
 				cmd.Flags().Bool(input.Name, false, input.Title)
+			case types.InputNumber:
+				cmd.Flags().Int(input.Name, 0, input.Title)
 			}
 
 			if input.Required {
@@ -155,7 +136,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 	return rootCmd, nil
 }
 
-func runExtension(extension extensions.Extension, input types.CommandInput, rawOutput bool) error {
+func runExtension(extension extensions.Extension, input types.Payload, rawOutput bool) error {
 	if err := extension.CheckRequirements(); err != nil {
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
 	}

@@ -20,7 +20,7 @@ func NewCmdEdit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "edit [file]",
 		Short:   "Open a file in your editor",
-		GroupID: CommandGroupDev,
+		GroupID: CommandGroupCore,
 		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 && flags.extension != "" {
@@ -35,7 +35,7 @@ func NewCmdEdit() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 {
-				editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), args[0]))
+				editCmd := exec.Command("sunbeam", "shell", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), args[0]))
 				editCmd.Stdin = os.Stdin
 				editCmd.Stdout = os.Stdout
 				editCmd.Stderr = os.Stderr
@@ -43,7 +43,7 @@ func NewCmdEdit() *cobra.Command {
 			}
 
 			if flags.config {
-				editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), config.Path()))
+				editCmd := exec.Command("sunbeam", "shell", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), config.Path()))
 				editCmd.Stdin = os.Stdin
 				editCmd.Stdout = os.Stdout
 				editCmd.Stderr = os.Stderr
@@ -82,7 +82,7 @@ func NewCmdEdit() *cobra.Command {
 				return err
 			}
 			editor := utils.FindEditor()
-			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, tempfile.Name()))
+			editCmd := exec.Command("sunbeam", "shell", "-c", fmt.Sprintf("%s %s", editor, tempfile.Name()))
 			editCmd.Stdin = tty
 			editCmd.Stdout = os.Stderr
 			if err := editCmd.Run(); err != nil {

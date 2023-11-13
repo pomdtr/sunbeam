@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env -S sunbeam shell
 
 set -eu
 
@@ -21,6 +21,5 @@ exit 0
 fi
 
 sunbeam fetch -A "curl/7.75.0 (x86_64-pc-linux-gnu)" 'wttr.in/?3n' | sunbeam query -sR '{
-
     text: .
 }'

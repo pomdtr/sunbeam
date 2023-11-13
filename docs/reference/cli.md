@@ -301,25 +301,15 @@ sunbeam query [query] [file] [flags]
 ```
       --arg stringArray       add string variable in the form of name=value
       --argjson stringArray   add JSON variable in the form of name=value
+  -c, --compact-output        output without pretty-printing
   -h, --help                  help for query
+  -i, --in-place              read and write to the same file
   -n, --null-input            use null as input value
   -R, --raw-input             read input as raw strings
   -r, --raw-output            output raw strings, not JSON texts
   -s, --slurp                 read all inputs into an array
-```
-
-## sunbeam run
-
-Run an extension from a script, directory, or URL
-
-```
-sunbeam run <origin> [args...] [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for run
+      --yaml-input            read input as YAML format
+      --yaml-output           output as YAML
 ```
 
 ## sunbeam upgrade
@@ -333,7 +323,6 @@ sunbeam upgrade [flags]
 ### Options
 
 ```
-  -a, --all    upgrade all extensions
   -h, --help   help for upgrade
 ```
 

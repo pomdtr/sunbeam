@@ -6,50 +6,7 @@ Here is a non-exhaustive list of integrations. If you have an integration you wo
 
 ## Terminals
 
-### Hyper (Recommended on macOS)
-
-![](../assets/hyper.jpeg)
-
-[Hyper](https://hyper.is/) is a cross-platform terminal emulator, built on web technologies.
-
-Hyper is highly extensible, making it a great host for sunbeam.
-
-You can use the [sunbeam plugin](https://www.npmjs.com/package/hyper-sunbeam) to make hyper behave as an application launcher.
-The plugin has been tested on macOS, but it should work on other platforms as well.
-
-Here is an example config:
-
-```js
-"use strict";
-// See https://hyper.is#cfg for all currently supported options.
-module.exports = {
-    config: {
-        fontSize: 13,
-        padding: '10px 0px 5px 5px',
-        shell: '/opt/homebrew/bin/fish', // set this to your shell
-        shellArgs: ['--login', '-c', 'sunbeam'],
-        env: {
-            "EDITOR": "vim",
-        },
-        windowSize: [600, 350],
-        modifierKeys: {
-            altIsMeta: true
-        },
-        sunbeam: {
-            hotkey: 'Alt+Super+Space', // tweak this to your liking
-        }
-    },
-    // a list of plugins to fetch and install from npm
-    plugins: [
-        "hyper-sunbeam", // transform hyper into a launcher
-        "hyperminimal", // strip title bar
-        "hyperborder", // add a gradient border around the window
-    ]
-};
-//# sourceMappingURL=config-default.js.map
-```
-
-### Alacritty (Recommended on Linux)
+### Alacritty
 
 ![](../assets/alacritty.jpeg)
 
@@ -170,6 +127,17 @@ Checkout the following plugins:
 - [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim)
 
 or just use the `:terminal` command.
+
+## Shells
+
+### Fish
+
+To bind sunbeam to a key, use the `bind` command:
+
+```fish
+# bind sunbeam to ctrl+space
+bind -k nul 'sunbeam'
+```
 
 ## GUI (TODO)
 

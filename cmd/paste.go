@@ -11,7 +11,7 @@ func NewCmdPaste() *cobra.Command {
 	return &cobra.Command{
 		Use:     "paste",
 		Short:   "Paste text from clipboard to stdout",
-		GroupID: CommandGroupDev,
+		GroupID: CommandGroupCore,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, err := clipboard.ReadAll()
 			if err != nil {

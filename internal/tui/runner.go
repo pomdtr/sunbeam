@@ -25,10 +25,10 @@ type Runner struct {
 
 	extension extensions.Extension
 	command   types.CommandSpec
-	input     types.CommandInput
+	input     types.Payload
 }
 
-func NewRunner(extension extensions.Extension, input types.CommandInput) *Runner {
+func NewRunner(extension extensions.Extension, input types.Payload) *Runner {
 	var embed Page
 	command, ok := extension.Command(input.Command)
 	if ok {
@@ -100,21 +100,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+e":
-			if c.extension.Type != extensions.ExtensionTypeLocal {
-				break
-			}
-			editor := utils.FindEditor()
-			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, c.extension.Entrypoint))
-			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				return types.Action{
-					Type: types.ActionTypeReload,
-				}
-			})
 		case "esc":
 			if c.form != nil {
 				c.form = nil
@@ -170,7 +155,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			c.form = nil
 
-			input := types.CommandInput{
+			input := types.Payload{
 				Command:     msg.Command,
 				Params:      msg.Params,
 				Preferences: c.input.Preferences,
@@ -203,7 +188,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			case types.CommandModeTTY:
 				cmd, err := c.extension.Cmd(input)
-
 				if err != nil {
 					c.embed = NewErrorPage(err)
 					c.embed.SetSize(c.width, c.height)
@@ -229,7 +213,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				})
 			}
 		case types.ActionTypeEdit:
-			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), msg.Target))
+			editCmd := exec.Command("sunbeam", "edit", msg.Target)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err

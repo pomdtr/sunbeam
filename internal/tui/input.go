@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"bytes"
 	"fmt"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
@@ -35,7 +38,7 @@ type TextField struct {
 	placeholder string
 }
 
-func NewTextInput(param types.Input, secure bool) *TextField {
+func NewTextField(param types.Input, secure bool) *TextField {
 	ti := textinput.New()
 	ti.Prompt = ""
 
@@ -86,8 +89,31 @@ func (ti *TextField) Value() any {
 }
 
 func (ti *TextField) Update(msg tea.Msg) (Input, tea.Cmd) {
-	var cmd tea.Cmd
-	ti.Model, cmd = ti.Model.Update(msg)
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+e":
+			if !ti.Model.Focused() {
+				break
+			}
+			cmd := exec.Command("sunbeam", "edit")
+
+			buffer := bytes.Buffer{}
+			cmd.Stdout = &buffer
+			cmd.Stdin = strings.NewReader(ti.Model.Value())
+
+			return ti, tea.ExecProcess(cmd, func(err error) tea.Msg {
+				if err != nil {
+					return err
+				}
+
+				ti.Model.SetValue(buffer.String())
+				return nil
+			})
+		}
+	}
+	model, cmd := ti.Model.Update(msg)
+	ti.Model = model
 	return ti, cmd
 }
 
@@ -146,6 +172,30 @@ func (ta *TextArea) Value() any {
 }
 
 func (ta *TextArea) Update(msg tea.Msg) (Input, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+e":
+			if !ta.Model.Focused() {
+				break
+			}
+
+			cmd := exec.Command("sunbeam", "edit")
+
+			buffer := bytes.Buffer{}
+			cmd.Stdout = &buffer
+			cmd.Stdin = strings.NewReader(ta.Model.Value())
+
+			return ta, tea.ExecProcess(cmd, func(err error) tea.Msg {
+				if err != nil {
+					return err
+				}
+
+				ta.Model.SetValue(buffer.String())
+				return nil
+			})
+		}
+	}
 	model, cmd := ta.Model.Update(msg)
 	ta.Model = model
 	return ta, cmd
@@ -241,4 +291,42 @@ func (cb Checkbox) Value() any {
 
 func (cb *Checkbox) Toggle() {
 	cb.checked = !cb.checked
+}
+
+type NumberField struct {
+	*TextField
+}
+
+func NewNumberField(param types.Input) Input {
+	if param.Default != nil {
+		defaultValue := strconv.Itoa(param.Default.(int))
+		param.Default = defaultValue
+	}
+
+	return NumberField{
+		TextField: NewTextField(param, false),
+	}
+}
+
+func (n NumberField) Value() any {
+	value, err := strconv.Atoi(n.TextField.Value().(string))
+	if err != nil {
+		return err
+	}
+
+	return value
+}
+
+func (n NumberField) Update(msg tea.Msg) (Input, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "1", "2", "3", "4", "5", "6", "7", "8", "9":
+			t, cmd := n.TextField.Update(msg)
+			n.TextField = t.(*TextField)
+			return n, cmd
+		}
+	}
+
+	return n, nil
 }

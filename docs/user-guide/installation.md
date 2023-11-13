@@ -1,9 +1,5 @@
 # Installation
 
-## Requirements
-
-- a POSIX shell installed at `/bin/sh`
-
 ## Installation
 
 You can use a package manager

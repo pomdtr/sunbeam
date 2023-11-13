@@ -11,14 +11,6 @@ if len(sys.argv) == 1:
             "title": "File Browser",
             "description": "Browse files and folders",
             "requirements": [{"name": "python3", "link": "https://www.python.org/"}],
-            "preferences": [
-                {
-                    "name": "show-hidden",
-                    "label": "Show hidden files",
-                    "type": "checkbox",
-                    "required": False
-                }
-            ],
             "root": [
                 {
                     "title": "Browse Home Directory",

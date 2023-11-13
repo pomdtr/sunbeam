@@ -14,14 +14,6 @@ if (Deno.args.length === 0) {
         root: [
             { command: "search-bookmarks" }
         ],
-        preferences: [
-            {
-                name: "token",
-                title: "Raindrop API token",
-                type: "text",
-                required: true,
-            }
-        ],
         commands: [
             {
                 title: "Search Bookmarks",
@@ -36,6 +28,10 @@ if (Deno.args.length === 0) {
 
 const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
 const raindropToken = payload.preferences.token as string;
+if (!raindropToken) {
+    console.error("No raindrop token found, please set it in your config");
+    Deno.exit(1);
+}
 
 if (payload.command == "search-bookmarks") {
     const resp = await fetch("https://api.raindrop.io/rest/v1/raindrops/0", {

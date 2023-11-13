@@ -1,6 +1,7 @@
 package config
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -8,13 +9,45 @@ import (
 
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
-	"github.com/tailscale/hujson"
+	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
+//go:embed config.json
+var configBytes []byte
+
 type Config struct {
-	Schema     string            `json:"$schema,omitempty"`
-	Oneliners  []Oneliner        `json:"oneliners,omitempty"`
-	Extensions map[string]string `json:"extensions,omitempty"`
+	Schema     string                     `json:"$schema,omitempty"`
+	Oneliners  []Oneliner                 `json:"oneliners,omitempty"`
+	Extensions map[string]ExtensionConfig `json:"extensions,omitempty"`
+}
+
+type ExtensionConfig struct {
+	Origin      string            `json:"origin,omitempty"`
+	Preferences types.Preferences `json:"preferences,omitempty"`
+	Root        []types.RootItem  `json:"root,omitempty"`
+}
+
+func (e *ExtensionConfig) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		e.Origin = s
+		return nil
+	}
+
+	var extensionRef struct {
+		Origin      string         `json:"origin,omitempty"`
+		Preferences map[string]any `json:"preferences,omitempty"`
+		Root        []types.RootItem
+	}
+
+	if err := json.Unmarshal(b, &extensionRef); err == nil {
+		e.Origin = extensionRef.Origin
+		e.Preferences = extensionRef.Preferences
+		e.Root = extensionRef.Root
+		return nil
+	}
+
+	return fmt.Errorf("invalid extension ref: %s", string(b))
 }
 
 func (cfg Config) Aliases() []string {
@@ -26,36 +59,15 @@ func (cfg Config) Aliases() []string {
 	return aliases
 }
 
-var DefaultConfig = Config{
-	Schema: "https://github.com/pomdtr/sunbeam/releases/latest/download/config.schema.json",
-	Oneliners: []Oneliner{
-		{
-			Title:   "Open Sunbeam Docs",
-			Command: "sunbeam open https://pomdtr.github.io/sunbeam/introduction",
-		},
-		{
-			Title:   "Edit Config",
-			Command: "sunbeam edit --config",
-		},
-	},
-	Extensions: map[string]string{
-		"devdocs": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh",
-		"google":  "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh",
-	},
-}
-
 type Oneliner struct {
 	Title   string `json:"title"`
 	Command string `json:"command"`
+	Exit    bool   `json:"exit"`
 }
 
 func Path() string {
 	if env, ok := os.LookupEnv("SUNBEAM_CONFIG"); ok {
 		return env
-	}
-
-	if _, err := os.Stat(filepath.Join(utils.ConfigHome(), "config.jsonc")); err == nil {
-		return filepath.Join(utils.ConfigHome(), "config.jsonc")
 	}
 
 	return filepath.Join(utils.ConfigHome(), "config.json")
@@ -65,10 +77,6 @@ func Path() string {
 func Load() (Config, error) {
 	configPath := Path()
 	if _, err := os.Stat(configPath); err != nil {
-		configBytes, err := json.MarshalIndent(DefaultConfig, "", "  ")
-		if err != nil {
-			return Config{}, err
-		}
 
 		if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
 			return Config{}, err
@@ -83,23 +91,12 @@ func Load() (Config, error) {
 		if _, err := f.Write(configBytes); err != nil {
 			return Config{}, err
 		}
-
-		return DefaultConfig, nil
 	}
 
 	var configBytes []byte
 	configBytes, err := os.ReadFile(configPath)
 	if err != nil {
 		return Config{}, err
-	}
-
-	if filepath.Ext(configPath) == ".jsonc" {
-		bts, err := hujson.Standardize(configBytes)
-		if err != nil {
-			return Config{}, err
-		}
-
-		configBytes = bts
 	}
 
 	if err := schemas.ValidateConfig(configBytes); err != nil {

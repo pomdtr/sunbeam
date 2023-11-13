@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
-	"strconv"
+	"path/filepath"
 	"strings"
 
 	"github.com/pomdtr/sunbeam/internal/config"
@@ -12,7 +15,6 @@ import (
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"mvdan.cc/sh/shell"
 )
 
 var (
@@ -22,7 +24,6 @@ var (
 
 const (
 	CommandGroupCore      = "core"
-	CommandGroupDev       = "dev"
 	CommandGroupExtension = "extension"
 )
 
@@ -43,54 +44,155 @@ func NewRootCmd() (*cobra.Command, error) {
 
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
-		Use:          "sunbeam",
-		Short:        "Command Line Launcher",
-		Version:      fmt.Sprintf("%s (%s)", Version, Date),
-		SilenceUsage: true,
-		Args:         cobra.NoArgs,
+		Use:                "sunbeam",
+		Short:              "Command Line Launcher",
+		SilenceUsage:       true,
+		DisableFlagParsing: true,
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) == 0 {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			entrypoint, err := filepath.Abs(args[0])
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			extension, err := ExtractManifest(entrypoint)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			var completions []string
+			for _, command := range extension.Commands {
+				completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
+			}
+
+			return completions, cobra.ShellCompDirectiveNoFileComp
+		},
+		Args: cobra.ArbitraryArgs,
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, error) {
-				cfg, err := config.Load()
-				if err != nil {
-					return nil, nil, err
-				}
+			if len(args) > 0 && (args[0] == "-h" || args[0] == "--help") {
+				return cmd.Help()
+			}
 
-				extensionMap := make(map[string]extensions.Extension)
-				for alias, origin := range cfg.Extensions {
-					extension, err := LoadExtension(alias, origin)
+			if len(args) == 0 {
+				rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, map[string]types.Preferences, error) {
+					cfg, err := config.Load()
 					if err != nil {
-						continue
+						return nil, nil, nil, err
 					}
 
-					extensionMap[alias] = extension
+					preferences := make(map[string]types.Preferences)
+					extensionMap := make(map[string]extensions.Extension)
+					for alias, ref := range cfg.Extensions {
+						preferences[alias] = ref.Preferences
+
+						extension, err := LoadExtension(alias, ref.Origin)
+						if err != nil {
+							continue
+						}
+						extensionMap[alias] = extension
+					}
+
+					return extensionMap, RootItems(cfg, extensionMap), preferences, nil
+				})
+				return tui.Draw(rootList)
+			}
+
+			var scriptPath string
+			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
+				origin, err := url.Parse(args[0])
+				if err != nil {
+					return err
+				}
+				pattern := fmt.Sprintf("entrypoint-*%s", filepath.Ext(origin.Path))
+
+				tempfile, err := os.CreateTemp("", pattern)
+				if err != nil {
+					return err
+				}
+				defer os.Remove(tempfile.Name())
+
+				resp, err := http.Get(args[0])
+				if err != nil {
+					return err
+				}
+				defer resp.Body.Close()
+
+				if resp.StatusCode != http.StatusOK {
+					return fmt.Errorf("error downloading extension: %s", resp.Status)
 				}
 
-				return extensionMap, RootItems(cfg, extensionMap), nil
-			})
-			return tui.Draw(rootList)
+				if _, err := io.Copy(tempfile, resp.Body); err != nil {
+					return err
+				}
+
+				if err := tempfile.Close(); err != nil {
+					return err
+				}
+
+			} else if args[0] == "-" {
+				tempfile, err := os.CreateTemp("", "entrypoint-*%s")
+				if err != nil {
+					return err
+				}
+				defer os.Remove(tempfile.Name())
+
+				if _, err := io.Copy(tempfile, os.Stdin); err != nil {
+					return err
+				}
+
+				if err := tempfile.Close(); err != nil {
+					return err
+				}
+
+				scriptPath = tempfile.Name()
+			} else {
+				s, err := filepath.Abs(args[0])
+				if err != nil {
+					return err
+				}
+
+				if _, err := os.Stat(s); err != nil {
+					return fmt.Errorf("error loading extension: %w", err)
+				}
+
+				scriptPath = s
+			}
+
+			extension, err := ExtractManifest(scriptPath)
+			if err != nil {
+				return fmt.Errorf("error loading extension: %w", err)
+			}
+
+			rootCmd, err := NewCmdCustom(filepath.Base(scriptPath), extension, nil)
+			if err != nil {
+				return fmt.Errorf("error loading extension: %w", err)
+			}
+
+			rootCmd.Use = "extension"
+			rootCmd.SetArgs(args[1:])
+			return rootCmd.Execute()
 		},
 	}
 
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    CommandGroupCore,
 		Title: "Core Commands:",
-	}, &cobra.Group{
-		ID:    CommandGroupDev,
-		Title: "Development Commands:",
 	})
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdFetch())
-	rootCmd.AddCommand(NewCmdRun())
 	rootCmd.AddCommand(NewCmdEdit())
+	rootCmd.AddCommand(NewCmdShell())
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
 	rootCmd.AddCommand(NewCmdUpgrade(cfg))
 	rootCmd.AddCommand(NewCmdOpen())
-	rootCmd.AddCommand(NewCmdConfigure(cfg))
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -128,6 +230,15 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 	rootCmd.AddCommand(manCmd)
 
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print the version number of sunbeam",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Sunbeam %s (%s)\n", Version, Date)
+		},
+	}
+	rootCmd.AddCommand(versionCmd)
+
 	if IsSunbeamRunning() {
 		return rootCmd, nil
 	}
@@ -137,14 +248,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extension Commands:",
 	})
 
-	for alias, origin := range cfg.Extensions {
-		extension, err := LoadExtension(alias, origin)
+	for alias, ref := range cfg.Extensions {
+		extension, err := LoadExtension(alias, ref.Origin)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error loading extension %s: %s\n", alias, err)
 			continue
 		}
 
-		command, err := NewCmdCustom(alias, extension)
+		command, err := NewCmdCustom(alias, extension, ref.Preferences)
 		if err != nil {
 			return nil, err
 		}
@@ -192,14 +303,53 @@ func buildDoc(command *cobra.Command) (string, error) {
 
 func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) []types.ListItem {
 	var items []types.ListItem
-	for _, rootItem := range cfg.Oneliners {
-		item, err := RootItem(rootItem, extensionMap)
-		item.Id = fmt.Sprintf("root - %s", item.Title)
-		if err != nil {
-			continue
+	for _, oneliner := range cfg.Oneliners {
+		item := types.ListItem{
+			Id:          fmt.Sprintf("root - %s", oneliner.Title),
+			Title:       oneliner.Title,
+			Accessories: []string{"Oneliner"},
+			Actions: []types.Action{
+				{
+					Title:   oneliner.Title,
+					Type:    types.ActionTypeExec,
+					Command: oneliner.Command,
+					Exit:    oneliner.Exit,
+				},
+				{
+					Title: "Copy Command",
+					Key:   "c",
+					Type:  types.ActionTypeCopy,
+					Text:  oneliner.Command,
+				},
+			},
 		}
 
 		items = append(items, item)
+	}
+
+	for alias, ref := range cfg.Extensions {
+		extension, ok := extensionMap[alias]
+		if !ok {
+			continue
+		}
+
+		for _, rootItem := range ref.Root {
+			items = append(items, types.ListItem{
+				Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
+				Title:       rootItem.Title,
+				Accessories: []string{extension.Title},
+				Actions: []types.Action{
+					{
+						Title:     "Run",
+						Type:      types.ActionTypeRun,
+						Extension: alias,
+						Command:   rootItem.Command,
+						Params:    rootItem.Params,
+					},
+				},
+			})
+
+		}
 	}
 
 	for alias, extension := range extensionMap {
@@ -207,123 +357,6 @@ func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) 
 	}
 
 	return items
-}
-
-func RootItem(item config.Oneliner, extensionMap map[string]extensions.Extension) (types.ListItem, error) {
-	// extract args from the command
-	args, err := shell.Fields(item.Command, os.Getenv)
-	if err != nil {
-		return types.ListItem{
-			Id:          fmt.Sprintf("root - %s", item.Title),
-			Title:       item.Title,
-			Accessories: []string{"Oneliner"},
-			Actions: []types.Action{
-				{
-					Title: item.Title,
-					Type:  types.ActionTypeExec,
-					Args:  []string{"sh", "-c", item.Command},
-					Exit:  true,
-				},
-				{
-					Title: "Copy Command",
-					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  item.Command,
-				},
-			},
-		}, nil
-	}
-
-	if len(args) == 0 {
-		return types.ListItem{}, fmt.Errorf("invalid command: %s", item.Command)
-	}
-
-	if args[0] != "sunbeam" {
-		return types.ListItem{
-			Id:          fmt.Sprintf("root - %s", item.Title),
-			Title:       item.Title,
-			Accessories: []string{"Oneliner"},
-			Actions: []types.Action{
-				{
-					Title: item.Title,
-					Type:  types.ActionTypeExec,
-					Args:  []string{"sh", "-c", item.Command},
-					Exit:  true,
-				},
-				{
-					Title: "Copy Command",
-					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  item.Command,
-				},
-			},
-		}, nil
-	}
-
-	switch args[1] {
-	case "open", "edit":
-		return types.ListItem{
-			Id:          fmt.Sprintf("root - %s", item.Title),
-			Title:       item.Title,
-			Accessories: []string{"Oneliner"},
-			Actions: []types.Action{
-				{
-					Title: "Run",
-					Type:  types.ActionTypeExec,
-					Args:  args,
-					Exit:  true,
-				},
-				{
-					Title: "Copy Command",
-					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  item.Command,
-				},
-			},
-		}, nil
-	default:
-		if len(args) < 3 {
-			return types.ListItem{}, fmt.Errorf("invalid command: %s", item.Command)
-		}
-
-		alias := args[1]
-		extension, ok := extensionMap[alias]
-		if !ok {
-			return types.ListItem{}, fmt.Errorf("extension %s not found", alias)
-		}
-
-		command, ok := extension.Command(args[2])
-		if !ok {
-			return types.ListItem{}, fmt.Errorf("command %s not found", args[2])
-		}
-
-		params, err := ExtractParams(args[3:], command)
-		if err != nil {
-			return types.ListItem{}, err
-		}
-
-		return types.ListItem{
-			Id:          fmt.Sprintf("%s - %s", alias, item.Title),
-			Title:       item.Title,
-			Accessories: []string{extension.Title},
-			Actions: []types.Action{
-				{
-					Title:     item.Title,
-					Type:      types.ActionTypeRun,
-					Extension: args[1],
-					Command:   command.Name,
-					Params:    params,
-					Exit:      true,
-				},
-				{
-					Title: "Copy Command",
-					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  item.Command,
-				},
-			},
-		}, nil
-	}
 }
 
 func ExtensionRootItems(alias string, extension extensions.Extension) []types.ListItem {
@@ -364,66 +397,4 @@ func ExtensionRootItems(alias string, extension extensions.Extension) []types.Li
 	}
 
 	return items
-}
-
-func ExtractParams(args []string, command types.CommandSpec) (map[string]any, error) {
-	params := make(map[string]any)
-	for len(args) > 0 {
-		if !strings.HasPrefix(args[0], "--") {
-			return nil, fmt.Errorf("invalid argument: %s", args[0])
-		}
-
-		parts := strings.SplitN(args[0][2:], "=", 2)
-		if len(parts) == 1 {
-			input, ok := CommandParam(command, parts[0])
-			if !ok {
-				return nil, fmt.Errorf("unknown parameter: %s", parts[0])
-			}
-
-			switch input.Type {
-			case types.InputCheckbox:
-				params[parts[0]] = true
-				args = args[1:]
-			case types.InputTextField, types.InputPassword:
-				if len(args) < 2 {
-					return nil, fmt.Errorf("missing value for parameter: %s", parts[0])
-				}
-
-				params[parts[0]] = args[1]
-				args = args[2:]
-			}
-
-			continue
-		}
-
-		spec, ok := CommandParam(command, parts[0])
-		if !ok {
-			return nil, fmt.Errorf("unknown parameter: %s", parts[0])
-		}
-
-		switch spec.Type {
-		case types.InputTextField, types.InputPassword:
-			params[parts[0]] = parts[1]
-		case types.InputCheckbox:
-			value, err := strconv.ParseBool(parts[1])
-			if err != nil {
-				return nil, err
-			}
-			params[parts[0]] = value
-		}
-
-		args = args[1:]
-	}
-
-	return params, nil
-}
-
-func CommandParam(command types.CommandSpec, name string) (types.Input, bool) {
-	for _, param := range command.Inputs {
-		if param.Name == name {
-			return param, true
-		}
-	}
-
-	return types.Input{}, false
 }

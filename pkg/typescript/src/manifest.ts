@@ -3,7 +3,6 @@ export type Manifest = {
   platforms?: Platform[];
   description?: string;
   requirements?: Requirement[];
-  preferences?: Input[];
   root?: CommandRef[];
   commands: CommandSpec[];
 };
@@ -44,10 +43,17 @@ type InputProps = {
   required: boolean;
 }
 
-type Textfield = InputProps & {
+type TextField = InputProps & {
   type: "text";
   title: string;
   defaut?: string;
+  placeholder?: string;
+}
+
+type NumberField = InputProps & {
+  type: "number";
+  title: string;
+  default?: number;
   placeholder?: string;
 }
 
@@ -72,4 +78,4 @@ type Checkbox = InputProps & {
   defaut?: boolean;
 }
 
-export type Input = Textfield | TextArea | Password | Checkbox;
+export type Input = TextField | TextArea | Password | Checkbox | NumberField;

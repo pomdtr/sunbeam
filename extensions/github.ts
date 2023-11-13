@@ -18,9 +18,6 @@ if (Deno.args.length == 0) {
                 command: "search-repos"
             }
         ],
-        preferences: [
-            { name: "token", title: "GitHub API token", type: "text", required: true }
-        ],
         commands: [
             {
                 title: "Search Repositories",
@@ -74,6 +71,11 @@ if (Deno.args.length == 0) {
 }
 
 const payload: sunbeam.Payload = JSON.parse(Deno.args[0]);
+if (payload.preferences.token == null) {
+    console.error("Missing required preference: token");
+    Deno.exit(1);
+}
+
 try {
     await run(payload);
 } catch (err) {

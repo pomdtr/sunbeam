@@ -9,28 +9,36 @@ import (
 	"strings"
 
 	"github.com/itchyny/gojq"
-	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
 func NewCmdQuery() *cobra.Command {
 	var flags struct {
-		NullInput  bool
-		YamlInput  bool
-		YamlOutput bool
-		RawInput   bool
-		RawOutput  bool
-		Slurp      bool
-		Arg        []string
-		ArgJSON    []string
+		NullInput     bool
+		YamlInput     bool
+		YamlOutput    bool
+		RawInput      bool
+		RawOutput     bool
+		InPlace       bool
+		Slurp         bool
+		CompactOutput bool
+		Arg           []string
+		ArgJSON       []string
 	}
 
 	queryCmd := &cobra.Command{
 		Use:     "query [query] [file]",
 		Short:   "Transform or generate JSON using a jq query",
 		Args:    cobra.MatchAll(cobra.MaximumNArgs(2)),
-		GroupID: CommandGroupDev,
+		GroupID: CommandGroupCore,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if flags.InPlace && len(args) < 2 {
+				return fmt.Errorf("a file argument is required with the --in-place flags")
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			vars := make([]string, 0)
@@ -114,6 +122,9 @@ func NewCmdQuery() *cobra.Command {
 					inputs = append(inputs, v)
 				}
 			}
+			if err := inputFile.Close(); err != nil {
+				return err
+			}
 
 			outputs := make([]gojq.Iter, 0)
 			if flags.Slurp {
@@ -136,16 +147,26 @@ func NewCmdQuery() *cobra.Command {
 				}
 			}
 
+			outputFile := os.Stdout
+			if flags.InPlace {
+				f, err := os.OpenFile(args[1], os.O_WRONLY|os.O_TRUNC, 0644)
+				if err != nil {
+					return err
+				}
+
+				outputFile = f
+			}
+
 			var encoder interface {
 				Encode(any) error
 			}
 
 			if flags.YamlOutput {
-				encoder = yaml.NewEncoder(os.Stdout)
+				encoder = yaml.NewEncoder(outputFile)
 			} else {
-				jsonEncoder := json.NewEncoder(os.Stdout)
-				if isatty.IsTerminal(os.Stdout.Fd()) {
-					jsonEncoder.SetIndent("", "  ")
+				jsonEncoder := json.NewEncoder(outputFile)
+				if !flags.CompactOutput {
+					jsonEncoder.SetIndent("", "    ")
 				}
 
 				encoder = jsonEncoder
@@ -186,9 +207,11 @@ func NewCmdQuery() *cobra.Command {
 	queryCmd.Flags().BoolVarP(&flags.RawOutput, "raw-output", "r", false, "output raw strings, not JSON texts")
 	queryCmd.Flags().BoolVarP(&flags.Slurp, "slurp", "s", false, "read all inputs into an array")
 	queryCmd.Flags().BoolVar(&flags.YamlInput, "yaml-input", false, "read input as YAML format")
+	queryCmd.Flags().BoolVarP(&flags.InPlace, "in-place", "i", false, "read and write to the same file")
 	queryCmd.Flags().BoolVar(&flags.YamlOutput, "yaml-output", false, "output as YAML")
 	queryCmd.Flags().StringArrayVar(&flags.Arg, "arg", []string{}, "add string variable in the form of name=value")
 	queryCmd.Flags().StringArrayVar(&flags.ArgJSON, "argjson", []string{}, "add JSON variable in the form of name=value")
+	queryCmd.Flags().BoolVarP(&flags.CompactOutput, "compact-output", "c", false, "output without pretty-printing")
 
 	return queryCmd
 }

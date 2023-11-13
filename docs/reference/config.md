@@ -26,9 +26,20 @@ If no config is found, sunbeam will create one.
     "extensions": {
         "github": {
             "origin": "~/Developer/github.com/pomdtr/sunbeam/extensions/github.sh",
+            // preferences for the extension, use it to pass config or secrets
             "preferences": {
                 "token": "xxxx"
-            }
+            },
+            // additional root items to show
+            "root": [
+                {
+                    "title": "List Sunbeam Issues",
+                    "command": "list-issues",
+                    "params": {
+                        "repo": "pomdtr/sunbeam",
+                    }
+                }
+            ]
         }
     }
 }

@@ -50,12 +50,6 @@
                 "$ref": "#/definitions/commandref"
             }
         },
-        "preferences": {
-            "type": "array",
-            "items": {
-                "$ref": "./input.schema.json"
-            }
-        },
         "commands": {
             "type": "array",
             "items": {
