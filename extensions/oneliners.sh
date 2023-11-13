@@ -35,7 +35,8 @@ if [ $# -eq 0 ]; then
                 mode: "silent",
                 params: [
                     { name: "title", title: "Title", type: "text", required: true },
-                    { name: "command", title: "Command", type: "textarea", required: true }
+                    { name: "command", title: "Command", type: "textarea", required: true },
+                    { name: "exit", title: "Exit", type: "checkbox", label: "Exit after running command", required: false }
                 ]
             }
         ]
@@ -78,7 +79,8 @@ elif [ "$COMMAND" = "delete" ]; then
 elif [ "$COMMAND" = "create" ]; then
     TITLE=$(echo "$1" | sunbeam query -r ".params.title")
     CMD=$(echo "$1" | sunbeam query -r ".params.command")
+    EXIT=$(echo "$1" | sunbeam query -r ".params.exit")
 
     # shellcheck disable=SC2016
-    sunbeam query --in-place --arg command="$CMD" --arg title="$TITLE" '.oneliners += [{ title: $title, command: $command }]' "$CONFIGCONFIG_PATH_PATH"
+    sunbeam query --in-place --arg command="$CMD" --argjson exit="$EXIT" --arg title="$TITLE" '.oneliners += [{ title: $title, command: $command, exit: $exit }]' "$CONFIGCONFIG_PATH_PATH"
 fi
