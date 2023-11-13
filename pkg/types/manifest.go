@@ -12,9 +12,8 @@ type Manifest struct {
 type Platfom string
 
 const (
-	PlatformWindows Platfom = "windows"
-	PlatformLinux   Platfom = "linux"
-	PlatformMac     Platfom = "macos"
+	PlatformLinux Platfom = "linux"
+	PlatformMac   Platfom = "macos"
 )
 
 type Requirement struct {

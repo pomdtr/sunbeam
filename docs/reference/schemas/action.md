@@ -39,7 +39,6 @@ Open a url or a file with the default app or a specific app.
     // the app to use to open the target (optional)
     // if not specified, the default app will be used
     "app": {
-        "windows": "chrome",
         "macos": "google chrome",
         "linux": "google-chrome"
     },

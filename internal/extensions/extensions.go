@@ -8,10 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 
 	"github.com/acarl005/stripansi"
-	"github.com/cli/cli/pkg/findsh"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -159,18 +157,7 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 		return nil, err
 	}
 
-	var args []string
-	if runtime.GOOS == "windows" {
-		sh, err := findsh.Find()
-		if err != nil {
-			return nil, err
-		}
-		args = []string{sh, "-s", "-c", `command "$@"`, "--", e.Entrypoint, string(inputBytes)}
-	} else {
-		args = []string{e.Entrypoint, string(inputBytes)}
-	}
-
-	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	cmd := exec.CommandContext(ctx, e.Entrypoint, string(inputBytes))
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")

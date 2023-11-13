@@ -14,7 +14,6 @@ export type OpenAction = {
   target: string;
   app?: {
     macos?: string;
-    windows?: string;
     linux?: string;
   };
   exit?: boolean;

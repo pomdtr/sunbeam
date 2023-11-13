@@ -1,13 +1,5 @@
 # Guidelines
 
-## Extension requirements
-
-Your extension must print a valid manifest to stdout when invoked without arguments. See the [manifest](../reference/schemas/manifest.md) section for more information.
-
-Your manifest describes a set of commands that can be invoked by the user. When a command is invoked, your extension will be called with a [payload](../reference/schemas/manifest.md) describing the command and its parameters.
-
-If the mode of the command (as defined in the manifest) is either `list` or `detail`, your extension must print a valid [list](../reference/schemas/list.md) or [detail](../reference/schemas/detail.md) to stdout.
-
 ## Choosing a language
 
 Sunbeam extensions are just scripts, so you can use any language you want (as long as it can read and write JSON).

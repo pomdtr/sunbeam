@@ -16,8 +16,6 @@ func OpenWith(target string, application *types.Application) error {
 
 	var applicationName string
 	switch runtime.GOOS {
-	case "windows":
-		applicationName = application.Windows
 	case "darwin":
 		applicationName = application.Macos
 	case "linux":

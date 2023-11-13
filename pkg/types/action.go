@@ -40,7 +40,6 @@ const (
 )
 
 type Application struct {
-	Windows string `json:"windows,omitempty"`
 	Macos   string `json:"macos,omitempty"`
 	Linux   string `json:"linux,omitempty"`
 }

@@ -7,7 +7,7 @@ export type Manifest = {
   commands: CommandSpec[];
 };
 
-type Platform = "linux" | "macos" | "windows";
+type Platform = "linux" | "macos"
 
 type Requirement = {
   name: string;

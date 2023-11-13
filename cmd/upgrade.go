@@ -10,11 +10,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/acarl005/stripansi"
-	"github.com/cli/cli/pkg/findsh"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
@@ -173,17 +171,7 @@ func ExtractManifest(origin string) (extensions.Extension, error) {
 		return extensions.Extension{}, err
 	}
 
-	var args []string
-	if runtime.GOOS == "windows" {
-		sh, err := findsh.Find()
-		if err != nil {
-			return extensions.Extension{}, err
-		}
-		args = []string{sh, "-s", "-c", `command "$@"`, "--", entrypoint}
-	} else {
-		args = []string{entrypoint}
-	}
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.Command(entrypoint)
 	cmd.Dir = filepath.Dir(entrypoint)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")

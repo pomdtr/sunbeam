@@ -21,7 +21,7 @@ features:
     details: Wrap your tools in slick, keyboard-driven TUIs with a few lines of code, using the language of your choice.
   - title: Cross-platform
     icon: 🌍
-    details: Sunbeam is distributed as a single binary, available for windows, macos and linux.
+    details: Sunbeam is distributed as a single binary, available for macos and linux.
     link: /user-guide/installation
     linkText: Install
   - title: Keep it simple, stupid!

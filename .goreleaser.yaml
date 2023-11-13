@@ -15,14 +15,10 @@ builds:
     env:
       - CGO_ENABLED=0
     goos:
-      - windows
       - linux
       - darwin
 archives:
-  - format_overrides:
-      - goos: windows
-        format: zip
-    name_template: "{{ .Binary }}-{{ .Os }}_{{ .Arch }}"
+  - name_template: "{{ .Binary }}-{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
       - LICENSE-MIT
@@ -67,12 +63,3 @@ brews:
       bash_completion.install "completions/sunbeam.bash"
       zsh_completion.install "completions/sunbeam.zsh"
       fish_completion.install "completions/sunbeam.fish"
-
-scoops:
-  - repository:
-      owner: pomdtr
-      name: scoop-bucket
-    folder: bucket
-    homepage: https://pomdtr.github.io/sunbeam
-    description: Generate powerful UIs from simple scripts written in any language.
-    license: MIT

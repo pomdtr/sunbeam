@@ -258,9 +258,6 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "windows": {
-                    "type": "string"
-                },
                 "macos": {
                     "type": "string"
                 },
