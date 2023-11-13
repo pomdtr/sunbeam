@@ -55,6 +55,7 @@ func NewTextField(param types.Input, secure bool) *TextField {
 
 	return &TextField{
 		name:        param.Name,
+		required:    param.Required,
 		title:       param.Title,
 		Model:       ti,
 		placeholder: placeholder,

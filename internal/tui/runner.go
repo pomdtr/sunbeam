@@ -129,7 +129,11 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			missing := FindMissingInputs(command.Inputs, msg.Params)
-			if len(missing) > 0 {
+			for _, param := range missing {
+				if !param.Required {
+					continue
+				}
+
 				c.form = NewForm(func(values map[string]any) tea.Msg {
 					params := make(map[string]any)
 					for k, v := range msg.Params {
@@ -148,7 +152,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						Exit:    msg.Exit,
 						Reload:  msg.Reload,
 					}
-				}, missing...)
+				})
 
 				c.form.SetSize(c.width, c.height)
 				return c, tea.Sequence(c.form.Init(), c.form.Focus())

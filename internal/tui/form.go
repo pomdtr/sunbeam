@@ -26,13 +26,9 @@ type Form struct {
 }
 
 func FindMissingInputs(inputs []types.Input, values map[string]any) []types.Input {
-	var missing []types.Input
+	missing := make([]types.Input, 0)
 	for _, param := range inputs {
 		if _, ok := values[param.Name]; !ok {
-			if !param.Required {
-				continue
-			}
-
 			missing = append(missing, param)
 		}
 	}

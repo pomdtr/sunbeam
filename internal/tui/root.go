@@ -140,7 +140,12 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, PushPageCmd(NewErrorPage(err))
 			}
 
-			if missing := FindMissingInputs(command.Inputs, msg.Params); len(missing) > 0 {
+			missing := FindMissingInputs(command.Inputs, msg.Params)
+			for _, param := range missing {
+				if !param.Required {
+					continue
+				}
+
 				c.form = NewForm(func(values map[string]any) tea.Msg {
 					params := make(map[string]any)
 					for k, v := range msg.Params {
@@ -160,7 +165,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						Exit:      msg.Exit,
 						Reload:    msg.Reload,
 					}
-				}, missing...)
+				}, command.Inputs...)
 
 				c.form.SetSize(c.width, c.height)
 				return c, tea.Sequence(c.form.Init(), c.form.Focus())
