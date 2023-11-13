@@ -22,9 +22,9 @@ type Requirement struct {
 }
 
 type RootItem struct {
-	Title   string         `json:"title"`
-	Command string         `json:"command"`
-	Params  map[string]any `json:"params"`
+	Title   string           `json:"title"`
+	Command string           `json:"command"`
+	Params  map[string]Param `json:"params"`
 }
 
 type CommandSpec struct {

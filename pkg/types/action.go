@@ -1,10 +1,9 @@
 package types
 
-type CommandRef struct {
-	Extension string         `json:"extension,omitempty"`
-	Command   string         `json:"command,omitempty"`
-	Params    map[string]any `json:"params,omitempty"`
-}
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Action struct {
 	Title string     `json:"title,omitempty"`
@@ -20,12 +19,49 @@ type Action struct {
 
 	Reload bool `json:"reload,omitempty"`
 
-	Extension string `json:"extension,omitempty"`
-	Command   string `json:"command,omitempty"`
-	Params    Params `json:"params,omitempty"`
+	Extension string           `json:"extension,omitempty"`
+	Command   string           `json:"command,omitempty"`
+	Params    map[string]Param `json:"params,omitempty"`
 }
 
-type Params map[string]any
+type Param struct {
+	Value    any  `json:"value,omitempty"`
+	Default  any  `json:"default,omitempty"`
+	Required bool `json:"required,omitempty"`
+}
+
+func (p *Param) UnmarshalJSON(bts []byte) error {
+	var s string
+	if err := json.Unmarshal(bts, &s); err == nil {
+		p.Value = s
+		return nil
+	}
+
+	var b bool
+	if err := json.Unmarshal(bts, &b); err == nil {
+		p.Value = b
+		return nil
+	}
+
+	var n int
+	if err := json.Unmarshal(bts, &n); err == nil {
+		p.Value = n
+		return nil
+	}
+
+	var param struct {
+		Default  any  `json:"default,omitempty"`
+		Required bool `json:"required,omitempty"`
+	}
+
+	if err := json.Unmarshal(bts, &param); err == nil {
+		p.Default = param.Default
+		p.Required = param.Required
+		return nil
+	}
+
+	return fmt.Errorf("invalid param: %s", string(bts))
+}
 
 type ActionType string
 
@@ -40,8 +76,8 @@ const (
 )
 
 type Application struct {
-	Macos   string `json:"macos,omitempty"`
-	Linux   string `json:"linux,omitempty"`
+	Macos string `json:"macos,omitempty"`
+	Linux string `json:"linux,omitempty"`
 }
 
 type Payload struct {

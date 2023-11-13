@@ -25,12 +25,28 @@ type Form struct {
 	inputs []Input
 }
 
-func FindMissingInputs(inputs []types.Input, values map[string]any) []types.Input {
+func FindMissingInputs(inputs []types.Input, params map[string]types.Param) []types.Input {
 	missing := make([]types.Input, 0)
-	for _, param := range inputs {
-		if _, ok := values[param.Name]; !ok {
-			missing = append(missing, param)
+	for _, input := range inputs {
+		param, ok := params[input.Name]
+		if !ok {
+			missing = append(missing, input)
+			continue
 		}
+
+		if param.Value != nil {
+			continue
+		}
+
+		if param.Default != nil {
+			input.Default = param.Default
+		}
+
+		if param.Required {
+			input.Required = true
+		}
+
+		missing = append(missing, input)
 	}
 
 	return missing
@@ -209,14 +225,7 @@ func (c *Form) renderInputs() {
 			inputView = normalBorder.Render(inputView)
 		}
 
-		var titleView string
-		if input.Required() {
-			asterisk := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render("*")
-			titleView = fmt.Sprintf("%s%s ", input.Title(), asterisk)
-		} else {
-			titleView = fmt.Sprintf("%s ", input.Title())
-		}
-
+		titleView := fmt.Sprintf("%s ", input.Title())
 		itemViews[i] = lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Bold(true).Render(titleView), inputView)
 		if lipgloss.Width(itemViews[i]) > maxWidth {
 			maxWidth = lipgloss.Width(itemViews[i])

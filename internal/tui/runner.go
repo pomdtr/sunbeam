@@ -135,13 +135,15 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				c.form = NewForm(func(values map[string]any) tea.Msg {
-					params := make(map[string]any)
+					params := make(map[string]types.Param)
 					for k, v := range msg.Params {
 						params[k] = v
 					}
 
 					for k, v := range values {
-						params[k] = v
+						params[k] = types.Param{
+							Value: v,
+						}
 					}
 
 					return types.Action{
@@ -152,7 +154,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						Exit:    msg.Exit,
 						Reload:  msg.Reload,
 					}
-				})
+				}, missing...)
 
 				c.form.SetSize(c.width, c.height)
 				return c, tea.Sequence(c.form.Init(), c.form.Focus())
@@ -161,8 +163,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			input := types.Payload{
 				Command:     msg.Command,
-				Params:      msg.Params,
 				Preferences: c.input.Preferences,
+				Params:      make(map[string]any),
+			}
+
+			for k, v := range msg.Params {
+				input.Params[k] = v.Value
 			}
 
 			switch command.Mode {

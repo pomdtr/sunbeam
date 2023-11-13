@@ -145,13 +145,6 @@ func runExtension(extension extensions.Extension, input types.Payload, rawOutput
 		return fmt.Errorf("command %s not found", input.Command)
 	}
 
-	missing := tui.FindMissingInputs(command.Inputs, input.Params)
-	for _, param := range missing {
-		if param.Required {
-			return fmt.Errorf("missing required param: %s", param.Name)
-		}
-	}
-
 	if rawOutput {
 		cmd, err := extension.Cmd(input)
 		if err != nil {

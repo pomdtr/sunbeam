@@ -17,7 +17,6 @@ import (
 type Input interface {
 	Name() string
 	Title() string
-	Required() bool
 	Value() any
 
 	Focus() tea.Cmd
@@ -31,9 +30,8 @@ type Input interface {
 }
 
 type TextField struct {
-	title    string
-	name     string
-	required bool
+	title string
+	name  string
 	textinput.Model
 	placeholder string
 }
@@ -55,7 +53,6 @@ func NewTextField(param types.Input, secure bool) *TextField {
 
 	return &TextField{
 		name:        param.Name,
-		required:    param.Required,
 		title:       param.Title,
 		Model:       ti,
 		placeholder: placeholder,
@@ -68,10 +65,6 @@ func (ti *TextField) Name() string {
 
 func (ti *TextField) Title() string {
 	return ti.title
-}
-
-func (ti *TextField) Required() bool {
-	return ti.required
 }
 
 func (ti *TextField) Height() int {
@@ -124,17 +117,12 @@ func (ti TextField) View() string {
 
 type TextArea struct {
 	textarea.Model
-	title    string
-	required bool
-	name     string
+	title string
+	name  string
 }
 
 func (ta *TextArea) Title() string {
 	return ta.title
-}
-
-func (ta *TextArea) Required() bool {
-	return ta.required
 }
 
 func (ta *TextArea) Name() string {
@@ -153,10 +141,9 @@ func NewTextArea(input types.Input) Input {
 	ta.SetHeight(5)
 
 	return &TextArea{
-		title:    input.Title,
-		required: input.Required,
-		name:     input.Name,
-		Model:    ta,
+		title: input.Title,
+		name:  input.Name,
+		Model: ta,
 	}
 }
 
@@ -203,11 +190,10 @@ func (ta *TextArea) Update(msg tea.Msg) (Input, tea.Cmd) {
 }
 
 type Checkbox struct {
-	name     string
-	title    string
-	label    string
-	width    int
-	required bool
+	name  string
+	title string
+	label string
+	width int
 
 	focused bool
 	checked bool
@@ -215,10 +201,9 @@ type Checkbox struct {
 
 func NewCheckbox(param types.Input) *Checkbox {
 	checkbox := Checkbox{
-		name:     param.Name,
-		title:    param.Title,
-		label:    param.Label,
-		required: param.Required,
+		name:  param.Name,
+		title: param.Title,
+		label: param.Label,
 	}
 
 	if defaultValue, ok := param.Default.(bool); ok {
@@ -234,10 +219,6 @@ func (cb *Checkbox) Name() string {
 
 func (cb *Checkbox) Title() string {
 	return cb.title
-}
-
-func (cb *Checkbox) Required() bool {
-	return cb.required
 }
 
 func (cb *Checkbox) Height() int {

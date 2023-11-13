@@ -22,6 +22,18 @@ if [ $# -eq 0 ]; then
                 ]
             },
             {
+                name: "edit",
+                hidden: true,
+                title: "Edit Oneliner",
+                mode: "silent",
+                params: [
+                    { name: "index", title: "Index", type: "number", required: true },
+                    { title: "Title", name: "title", type: "text", required: true },
+                    { title: "Command", name: "command", type: "textarea", required: true },
+                    { title: "Exit", name: "exit", type: "checkbox", label: "Exit after running command", required: true }
+                ]
+            },
+            {
                 name: "delete",
                 title: "Delete Oneliner",
                 mode: "silent",
@@ -62,6 +74,12 @@ if [ "$COMMAND" = "list" ]; then
             actions: [
                 { title: "Run Oneliner", type: "run", command: "run", params: { index: .key } },
                 { title: "Copy Command", key: "c", type: "copy", text: .value.command, exit: true },
+                { title: "Edit Oneliner", key: "e", type: "run", "command": "edit", params: {
+                    index: .key,
+                    title: { default: .value.title },
+                    command: { default: .value.command },
+                    exit: { default: (.value.exit // false) }
+                }, reload: true},
                 { title: "Delete Oneliner", key: "d", type: "run", command: "delete", params: { index: .key }, reload: true },
                 { title: "Create Oneliner", key: "n", type: "run", command: "create", reload: true }
             ]
@@ -76,11 +94,21 @@ elif [ "$COMMAND" = "delete" ]; then
     sunbeam query --in-place --argjson idx="$INDEX" 'del(
         .oneliners[$idx]
     )' "$CONFIG_PATH"
-elif [ "$COMMAND" = "create" ]; then
-    TITLE=$(echo "$1" | sunbeam query -r ".params.title")
-    CMD=$(echo "$1" | sunbeam query -r ".params.command")
-    EXIT=$(echo "$1" | sunbeam query -r ".params.exit")
+elif [ "$COMMAND" = "edit" ]; then
+    PARAMS=$(echo "$1" | sunbeam query -r ".params")
 
     # shellcheck disable=SC2016
-    sunbeam query --in-place --arg command="$CMD" --argjson exit="$EXIT" --arg title="$TITLE" '.oneliners += [{ title: $title, command: $command, exit: $exit }]' "$CONFIGCONFIG_PATH_PATH"
+    sunbeam query --in-place --argjson params="$PARAMS" '.oneliners[$params.index] = {
+        title: $params.title,
+        command: $params.command,
+        exit: $params.exit
+    }' "$CONFIG_PATH"
+
+elif [ "$COMMAND" = "create" ]; then
+    PARAMS=$(echo "$1" | sunbeam query -r ".params")
+
+    # shellcheck disable=SC2016
+    sunbeam query --in-place --argjson params="$PARAMS" '.oneliners += [
+        { title: $params.title, command: $params.command, exit: $params.exit }
+    ]' "$CONFIG_PATH"
 fi

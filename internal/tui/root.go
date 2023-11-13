@@ -147,13 +147,15 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				c.form = NewForm(func(values map[string]any) tea.Msg {
-					params := make(map[string]any)
+					params := make(map[string]types.Param)
 					for k, v := range msg.Params {
 						params[k] = v
 					}
 
 					for k, v := range values {
-						params[k] = v
+						params[k] = types.Param{
+							Value: v,
+						}
 					}
 
 					return types.Action{
@@ -165,7 +167,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						Exit:      msg.Exit,
 						Reload:    msg.Reload,
 					}
-				}, command.Inputs...)
+				}, missing...)
 
 				c.form.SetSize(c.width, c.height)
 				return c, tea.Sequence(c.form.Init(), c.form.Focus())
@@ -184,8 +186,12 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			input := types.Payload{
 				Command:     command.Name,
+				Params:      make(map[string]any),
 				Preferences: c.preferences[msg.Extension],
-				Params:      msg.Params,
+			}
+
+			for k, v := range msg.Params {
+				input.Params[k] = v.Value
 			}
 
 			switch command.Mode {

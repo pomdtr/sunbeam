@@ -28,16 +28,18 @@ export type EditAction = {
 export type RunAction = {
   type: "run";
   command: string;
-  params?: Record<string, string | number | boolean>;
+  params?: Record<string, Param>;
   reload?: boolean;
   exit?: boolean;
 } & ActionProps;
+
+type Param = string | number | boolean | { default?: string | number | boolean, required?: boolean };
 
 
 export type ReloadAction = {
   type: "reload";
   command: string;
-  params?: Record<string, string | number | boolean>;
+  params?: Record<string, Param>;
 } & ActionProps;
 
 

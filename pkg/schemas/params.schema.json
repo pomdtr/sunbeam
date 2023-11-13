@@ -5,6 +5,27 @@
         "^[a-zA-Z-]+[a-zA-Z0-9-]*$": {
             "oneOf": [
                 {
+                    "type": "object",
+                    "properties": {
+                        "default": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ]
+                        },
+                        "required": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                {
                     "type": "string"
                 },
                 {
