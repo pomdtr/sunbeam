@@ -309,7 +309,7 @@ func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) 
 			Accessories: []string{"Oneliner"},
 			Actions: []types.Action{
 				{
-					Title:   oneliner.Title,
+					Title:   "Run",
 					Type:    types.ActionTypeExec,
 					Command: oneliner.Command,
 					Exit:    oneliner.Exit,
@@ -344,6 +344,13 @@ func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) 
 						Extension: alias,
 						Command:   rootItem.Command,
 						Params:    rootItem.Params,
+					},
+					{
+						Title:  "Copy Origin",
+						Key:    "c",
+						Type:   types.ActionTypeCopy,
+						Target: extension.Origin,
+						Exit:   true,
 					},
 				},
 			})
@@ -391,6 +398,7 @@ func ExtensionRootItems(alias string, extension extensions.Extension) []types.Li
 			Key:    "c",
 			Type:   types.ActionTypeCopy,
 			Target: extension.Origin,
+			Exit:   true,
 		})
 
 		items = append(items, listItem)
