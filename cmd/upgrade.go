@@ -174,7 +174,7 @@ func ExtractManifest(origin string) (extensions.Extension, error) {
 
 	var args []string
 	if runtime.GOOS == "windows" {
-		args = []string{"sunbeam", "shell", entrypoint}
+		args = []string{"sunbeam", "shell", "-c", entrypoint}
 	} else {
 		args = []string{entrypoint}
 	}
