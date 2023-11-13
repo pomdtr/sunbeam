@@ -12,7 +12,6 @@
                 }
             ]
         },
-        "files": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py",
         "google": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh"
     },
     "oneliners": [
