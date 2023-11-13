@@ -11,6 +11,7 @@ import (
 	"runtime"
 
 	"github.com/acarl005/stripansi"
+	"github.com/cli/cli/pkg/findsh"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -160,7 +161,11 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 
 	var args []string
 	if runtime.GOOS == "windows" {
-		args = []string{"sunbeam", "shell", "-c", fmt.Sprintf("%s $1", e.Entrypoint), "--", string(inputBytes)}
+		sh, err := findsh.Find()
+		if err != nil {
+			return nil, err
+		}
+		args = []string{sh, "-s", "-c", `command "$@"`, "--", e.Entrypoint, string(inputBytes)}
 	} else {
 		args = []string{e.Entrypoint, string(inputBytes)}
 	}

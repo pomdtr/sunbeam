@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/cli/cli/pkg/findsh"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
@@ -174,7 +175,11 @@ func ExtractManifest(origin string) (extensions.Extension, error) {
 
 	var args []string
 	if runtime.GOOS == "windows" {
-		args = []string{"sunbeam", "shell", "-c", entrypoint}
+		sh, err := findsh.Find()
+		if err != nil {
+			return extensions.Extension{}, err
+		}
+		args = []string{sh, "-s", "-c", `command "$@"`, "--", entrypoint}
 	} else {
 		args = []string{entrypoint}
 	}

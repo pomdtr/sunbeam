@@ -1,4 +1,4 @@
-#!/usr/bin/env -S sunbeam shell
+#!/bin/sh
 
 # This script installs sunbeam.
 #

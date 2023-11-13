@@ -1,4 +1,4 @@
-#!/usr/bin/env -S sunbeam shell
+#!/bin/sh
 # shellcheck disable=SC2016
 
 # This script is an example of how to use tldr with sunbeam

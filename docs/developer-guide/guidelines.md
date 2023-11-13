@@ -16,18 +16,17 @@ Sunbeam is not aware of the language you are using, so you will have to make sur
 
 Even though you can use any language, here are some recommendations:
 
-### Sunbeam Shell
+### POSIX Shell
 
 Sunbam provides multiple helpers to make it easier to share sunbeam extensions, without requiring the user to install additional dependencies (other than sunbeam itself).
 
-- `sunbeam shell`: POSIX shell (replaces /bin/sh,  which is not available on windows by default)
 - `sunbeam query`: generate and transform json using the jq syntax.
 - `sunbeam fetch`: fetch a remote script using a subset of curl options.
 - `sunbeam open`: open an url or a file using the default application.
 - `sunbeam copy/paste`: copy/paste text from/to the clipboard
 
 ```sh
-#!/usr/bin/env -S sunbeam shell
+#!/bin/sh
 
 set -eu
 

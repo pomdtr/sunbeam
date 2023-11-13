@@ -14,7 +14,7 @@ If you are not familiar with jq, I recommend reading this tutorial: <https://ear
 Note that the script must be executable, and must have a shebang line at the top indicating the interpreter to use.
 
 ```sh
-#!/usr/bin/env -S sunbeam shell
+#!/bin/sh
 
 set -eu
 
@@ -85,7 +85,7 @@ Here the command name is `search-docsets`, and the command mode is `list`, so th
 We will use the `sunbeam fetch` command to fetch the list of docsets from the devdocs api. The `fetch` command allows you to perform http requests (with an api similar to curl).
 
 ```sh
-#!/usr/bin/env -S sunbeam shell
+#!/bin/sh
 
 set -eu
 
@@ -147,7 +147,7 @@ sunbeam ./sunbeam-devdocs
 This extension is still pretty basic. Sunbeam really shines when you start chaining commands together. Let's add a new command to search the documentation of a specific docset.
 
 ```sh
-#!/usr/bin/env -S sunbeam shell
+#!/bin/sh
 
 set -eu
 
@@ -243,7 +243,7 @@ sunbeam ./sunbeam-devdocs search-entries --docset=go
 If we want to be able to go from the docsets list to the entries list, we can add `run` action to the docsets list:
 
 ```sh
-#!/usr/bin/env -S sunbeam shell
+#!/bin/sh
 
 set -eu
 

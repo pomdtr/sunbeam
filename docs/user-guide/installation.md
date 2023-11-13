@@ -1,5 +1,9 @@
 # Installation
 
+## Requirements
+
+Sunbeam requires a POSIX shell (`sh`) to run. On windows, you can install one through [git bash](https://git-scm.com/downloads).
+
 ## Installation
 
 You can use a package manager

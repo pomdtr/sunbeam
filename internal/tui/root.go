@@ -251,7 +251,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			})
 		case types.ActionTypeExec:
-			cmd := exec.Command("sunbeam", "shell", "-c", msg.Command)
+			cmd := exec.Command("sh", "-c", msg.Command)
 			return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				if err != nil {
 					return err

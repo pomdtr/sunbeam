@@ -1,4 +1,4 @@
-#!/usr/bin/env -S sunbeam shell
+#!/bin/sh
 
 if [ $# -eq 0 ]; then
     sunbeam query -n '{
