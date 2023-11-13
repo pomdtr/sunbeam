@@ -2,12 +2,15 @@
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "npm:sunbeam-types@0.23.28"
+import * as sunbeam from "npm:sunbeam-types@0.23.29"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "RSS",
         description: "Manage your RSS feeds",
+        root: [
+            { command: "list" }
+        ],
         requirements: [
             {
                 name: "deno",
@@ -15,6 +18,11 @@ if (Deno.args.length == 0) {
             }
         ],
         commands: [
+            {
+                name: "list",
+                title: "List feeds",
+                mode: "list",
+            },
             {
                 name: "show",
                 title: "Show a feed",
@@ -36,7 +44,29 @@ if (Deno.args.length == 0) {
 }
 
 const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
-if (payload.command == "show") {
+if (payload.command == "list") {
+    const feeds = payload.preferences.feeds as Record<string, string> || {};
+
+    const list: sunbeam.List = {
+        emptyText: "No feeds",
+        items: Object.entries(feeds).map(([title, url]) => ({
+            title,
+            subtitle: url,
+            actions: [
+                {
+                    title: "Show",
+                    type: "run",
+                    command: "show",
+                    params: {
+                        url
+                    },
+                }
+            ]
+        })),
+    }
+
+    console.log(JSON.stringify(list));
+} else if (payload.command == "show") {
     const params = payload.params as { url: string };
     const feed = await new Parser().parseURL(params.url);
     const page: sunbeam.List = {

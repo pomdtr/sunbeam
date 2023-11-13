@@ -3,10 +3,6 @@
 if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Oneliners",
-        root: [
-            { command: "list" },
-            { command: "create" }
-        ],
         commands: [
             {
                 name: "list",
@@ -17,6 +13,7 @@ if [ $# -eq 0 ]; then
                 name: "run",
                 title: "Run Oneliner",
                 mode: "tty",
+                hidden: true,
                 params: [
                     { name: "index", title: "Index", type: "number", required: true }
                 ]
@@ -36,6 +33,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "delete",
                 title: "Delete Oneliner",
+                hidden: true,
                 mode: "silent",
                 params: [
                     { name: "index", title: "Index", type: "number", required: true }
@@ -72,7 +70,7 @@ if [ "$COMMAND" = "list" ]; then
             title: .value.title,
             subtitle: .value.command,
             actions: [
-                { title: "Run Oneliner", type: "run", command: "run", params: { index: .key } },
+                { title: "Run Oneliner", type: "run", command: "run", params: { index: .key }, exit: (.value.exit // false) },
                 { title: "Copy Command", key: "c", type: "copy", text: .value.command, exit: true },
                 { title: "Edit Oneliner", key: "e", type: "run", "command": "edit", params: {
                     index: .key,
