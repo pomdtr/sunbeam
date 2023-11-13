@@ -20,7 +20,7 @@ if (Deno.args.length == 0) {
         commands: [
             {
                 name: "list",
-                title: "List feeds",
+                title: "Search Feeds",
                 mode: "list",
             },
             {

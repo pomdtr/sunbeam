@@ -382,6 +382,7 @@ func ExtensionRootItems(alias string, extension extensions.Extension) []types.Li
 				Key:    "e",
 				Type:   types.ActionTypeEdit,
 				Target: extension.Entrypoint,
+				Reload: true,
 			})
 		}
 
