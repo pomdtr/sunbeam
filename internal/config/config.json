@@ -19,7 +19,7 @@
         {
             "title": "Open Sunbeam Docs",
             "command": "sunbeam open https://pomdtr.github.io/sunbeam/introduction",
-            "exit": "true"
+            "exit": true
         }
     ]
 }
