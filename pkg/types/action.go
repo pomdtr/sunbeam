@@ -65,6 +65,20 @@ func (p *Param) UnmarshalJSON(bts []byte) error {
 	return fmt.Errorf("invalid param: %s", string(bts))
 }
 
+func (p Param) MarshalJSON() ([]byte, error) {
+	if p.Value != nil {
+		return json.Marshal(p.Value)
+	}
+
+	return json.Marshal(struct {
+		Default  any  `json:"default,omitempty"`
+		Required bool `json:"required,omitempty"`
+	}{
+		Default:  p.Default,
+		Required: p.Required,
+	})
+}
+
 type ActionType string
 
 const (
