@@ -78,7 +78,7 @@ if payload["command"] == "say-hello":
     print(json.dumps(detail))
 ```
 
-Prefer to not use any external dependencies, as the user will have to install them manually.
+Prefer to not use any external dependencies, as the user will have to install them manually. If you really need to use a dependency, you will need to distribute your extension through pip, and instruct the user how to install it.
 
 See the [file-browser extension](./examples/file-browser.md) for an example.
 
