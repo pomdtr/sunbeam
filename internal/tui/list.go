@@ -69,11 +69,15 @@ func (c *List) Blur() tea.Cmd {
 	return nil
 }
 
-func (c *List) SetQuery(query string) {
+func (c *List) SetQuery(query string) tea.Cmd {
 	c.input.SetValue(query)
 	if c.OnQueryChange == nil {
 		c.FilterItems(query)
+		c.filter.ResetCursor()
+		return nil
 	}
+
+	return c.OnQueryChange(query)
 }
 
 func (c *List) FilterItems(query string) {
@@ -111,7 +115,9 @@ func (c *List) SetItems(items ...types.ListItem) {
 	}
 
 	c.filter.SetItems(filterItems...)
-	c.FilterItems(c.Query())
+	if c.OnQueryChange == nil {
+		c.FilterItems(c.Query())
+	}
 }
 
 func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
@@ -138,11 +144,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			if c.input.Value() != "" {
-				c.input.SetValue("")
-				c.FilterItems("")
-				return c, func() tea.Msg {
-					return QueryChangeMsg("")
-				}
+				return c, c.SetQuery("")
 			}
 
 			return c, PopPageCmd
@@ -191,7 +193,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}))
 		} else {
-			c.FilterItems(input.Value())
+			c.SetQuery(input.Value())
 		}
 	}
 	c.input = input

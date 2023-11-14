@@ -40,6 +40,11 @@ func NewFilter(items ...FilterItem) Filter {
 	}
 }
 
+func (f *Filter) ResetCursor() {
+	f.minIndex = 0
+	f.cursor = 0
+}
+
 func (f *Filter) SetSize(width, height int) {
 	f.Width = width
 	f.Height = height
@@ -55,6 +60,14 @@ func (f Filter) Selection() FilterItem {
 func (f *Filter) SetItems(items ...FilterItem) {
 	f.items = items
 	f.filtered = items
+
+	if f.cursor < 0 {
+		f.cursor = 0
+	}
+
+	if f.cursor >= len(f.filtered) {
+		f.cursor = len(f.filtered) - 1
+	}
 }
 
 type Match struct {
@@ -99,10 +112,6 @@ func (f *Filter) FilterItems(query string) {
 	}
 
 	f.filtered = filtered
-
-	// Reset the cursor
-	f.cursor = 0
-	f.minIndex = 0
 }
 
 func (f *Filter) Select(id string) {

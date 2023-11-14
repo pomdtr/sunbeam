@@ -346,7 +346,8 @@ func (c *Runner) Reload() tea.Cmd {
 				page.Format = detail.Format
 			}
 
-			return page
+			c.embed = page
+			return nil
 		case types.CommandModeList:
 			if err := schemas.ValidateList(output); err != nil {
 				return err
@@ -357,24 +358,25 @@ func (c *Runner) Reload() tea.Cmd {
 				return err
 			}
 
-			page := NewList(list.Items...)
-			if list.EmptyText != "" {
-				page.SetEmptyText(list.EmptyText)
-			}
-			if list.Actions != nil {
-				page.SetActions(list.Actions...)
+			var page *List
+			if embed, ok := c.embed.(*List); ok {
+				page = embed
+				page.SetItems(list.Items...)
+				page.SetIsLoading(false)
+				if list.Dynamic {
+					page.filter.ResetCursor()
+				}
+			} else {
+				page = NewList(list.Items...)
 			}
 
+			page.SetEmptyText(list.EmptyText)
+			page.SetActions(list.Actions...)
 			if list.Dynamic {
 				page.OnQueryChange = func(query string) tea.Cmd {
 					c.input.Query = query
 					return c.Reload()
 				}
-			}
-
-			page.SetSize(c.width, c.height)
-			if embed, ok := c.embed.(*List); ok {
-				page.SetQuery(embed.Query())
 			}
 
 			return page
