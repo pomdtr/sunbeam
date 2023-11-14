@@ -303,6 +303,9 @@ func buildDoc(command *cobra.Command) (string, error) {
 func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) []types.ListItem {
 	var items []types.ListItem
 	for _, oneliner := range cfg.Oneliners {
+		if strings.HasPrefix(oneliner.Cwd, "~") {
+			oneliner.Cwd = strings.Replace(oneliner.Cwd, "~", os.Getenv("HOME"), 1)
+		}
 		item := types.ListItem{
 			Id:          fmt.Sprintf("root - %s", oneliner.Title),
 			Title:       oneliner.Title,
@@ -313,6 +316,7 @@ func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) 
 					Type:    types.ActionTypeExec,
 					Command: oneliner.Command,
 					Exit:    oneliner.Exit,
+					Dir:     oneliner.Cwd,
 				},
 				{
 					Title: "Copy Command",

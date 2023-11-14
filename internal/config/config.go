@@ -62,6 +62,7 @@ func (cfg Config) Aliases() []string {
 type Oneliner struct {
 	Title   string `json:"title"`
 	Command string `json:"command"`
+	Cwd     string `json:"cwd"`
 	Exit    bool   `json:"exit"`
 }
 

@@ -25,6 +25,10 @@
                         "type": "string",
                         "description": "The command to run"
                     },
+                    "cwd": {
+                        "type": "string",
+                        "description": "The working directory to run the command in"
+                    },
                     "exit": {
                         "type": "boolean",
                         "description": "If true, sunbeam will close after running the command"

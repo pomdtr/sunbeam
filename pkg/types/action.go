@@ -22,6 +22,8 @@ type Action struct {
 	Extension string           `json:"extension,omitempty"`
 	Command   string           `json:"command,omitempty"`
 	Params    map[string]Param `json:"params,omitempty"`
+
+	Dir string `json:"dir,omitempty"`
 }
 
 type Param struct {

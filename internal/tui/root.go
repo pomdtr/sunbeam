@@ -258,6 +258,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			})
 		case types.ActionTypeExec:
 			cmd := exec.Command("sh", "-c", msg.Command)
+			cmd.Dir = msg.Dir
 			return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
