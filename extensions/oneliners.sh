@@ -27,6 +27,7 @@ if [ $# -eq 0 ]; then
                     { name: "index", title: "Index", type: "number", required: true },
                     { title: "Title", name: "title", type: "text", required: true },
                     { title: "Command", name: "command", type: "textarea", required: true },
+                    { title: "Directory", name: "cwd", placeholder: "~", type: "text", required: true },
                     { title: "Exit", name: "exit", type: "checkbox", label: "Exit after running command", required: true }
                 ]
             },
@@ -44,8 +45,9 @@ if [ $# -eq 0 ]; then
                 title: "Create Oneliner",
                 mode: "silent",
                 params: [
-                    { name: "title", title: "Title", type: "text", required: true },
-                    { name: "command", title: "Command", type: "textarea", required: true },
+                    { name: "title", title: "Title", type: "text", placeholder: "Edit Bash Config", required: true },
+                    { name: "command", title: "Command", placeholder: "vim ~/.bashrc", type: "textarea", required: true },
+                    {  name: "cwd", title: "Directory", type: "text", placeholder: "~", required: false },
                     { name: "exit", title: "Exit", type: "checkbox", label: "Exit after running command", required: false }
                 ]
             }
@@ -103,6 +105,7 @@ elif [ "$COMMAND" = "edit" ]; then
     sunbeam query --in-place --argjson params="$PARAMS" '.oneliners[$params.index] = {
         title: $params.title,
         command: $params.command,
+        cwd: $params.cwd,
         exit: $params.exit
     }' "$CONFIG_PATH"
 
@@ -111,6 +114,6 @@ elif [ "$COMMAND" = "create" ]; then
 
     # shellcheck disable=SC2016
     sunbeam query --in-place --argjson params="$PARAMS" '.oneliners += [
-        { title: $params.title, command: $params.command, exit: $params.exit }
+        $params
     ]' "$CONFIG_PATH"
 fi

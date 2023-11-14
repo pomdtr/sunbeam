@@ -8,7 +8,7 @@ You can use a package manager
 brew install pomdtr/tap/sunbeam
 
 # install script
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/pomdtr/sunbeam/releases/latest/download/install.sh | sh
+curl -sSf https://install-sunbeam.deno.dev | sh
 
 # from source
 go install github.com/pomdtr/sunbeam@latest

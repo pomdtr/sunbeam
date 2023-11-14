@@ -48,7 +48,6 @@ release:
   extra_files:
     - glob: pkg/schemas/manifest.schema.json
     - glob: pkg/schemas/config.schema.json
-    - glob: install.sh
 
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
