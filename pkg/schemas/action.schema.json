@@ -34,7 +34,6 @@
                     "type",
                     "text"
                 ],
-                "additionalProperties": false,
                 "properties": {
                     "title": {
                         "type": "string"
@@ -71,7 +70,6 @@
                     "type",
                     "target"
                 ],
-                "additionalProperties": false,
                 "properties": {
                     "title": {
                         "type": "string"
@@ -121,7 +119,6 @@
                     "type",
                     "target"
                 ],
-                "additionalProperties": false,
                 "properties": {
                     "title": {
                         "type": "string"
@@ -161,7 +158,6 @@
                     "type",
                     "command"
                 ],
-                "additionalProperties": false,
                 "properties": {
                     "title": {
                         "type": "string"
@@ -204,7 +200,6 @@
                     "title",
                     "type"
                 ],
-                "additionalProperties": false,
                 "properties": {
                     "title": {
                         "type": "string"
@@ -238,7 +233,6 @@
                     "title",
                     "type"
                 ],
-                "additionalProperties": false,
                 "properties": {
                     "title": {
                         "type": "string"
@@ -256,7 +250,6 @@
     "definitions": {
         "application": {
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "macos": {
                     "type": "string"

@@ -1,7 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
-    "additionalProperties": false,
     "properties": {
         "$schema": {
             "type": "string"
@@ -15,7 +14,6 @@
                     "title",
                     "command"
                 ],
-                "additionalProperties": false,
                 "properties": {
                     "title": {
                         "type": "string",
@@ -49,7 +47,6 @@
                             "required": [
                                 "origin"
                             ],
-                            "additionalProperties": false,
                             "properties": {
                                 "origin": {
                                     "type": "string"
@@ -61,7 +58,6 @@
                                         "required": [
                                             "command"
                                         ],
-                                        "additionalProperties": false,
                                         "properties": {
                                             "title": {
                                                 "type": "string"

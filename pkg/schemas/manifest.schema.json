@@ -5,7 +5,6 @@
         "title",
         "commands"
     ],
-    "additionalProperties": false,
     "properties": {
         "$schema": {
             "type": "string"
@@ -85,7 +84,6 @@
                 "name",
                 "mode"
             ],
-            "additionalProperties": false,
             "properties": {
                 "name": {
                     "type": "string"
