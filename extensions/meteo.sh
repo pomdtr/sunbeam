@@ -12,7 +12,7 @@ if [ $# -eq 0 ]; then
         commands: [
             {
                 name: "show",
-                title: "Show Meteo",
+                title: "View Meteo",
                 mode: "detail"
             }
         ]

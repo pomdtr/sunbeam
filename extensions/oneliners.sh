@@ -66,11 +66,14 @@ fi
 COMMAND="$(echo "$1" | sunbeam query -r ".command")"
 if [ "$COMMAND" = "list" ]; then
     sunbeam query '.oneliners | to_entries | {
+        actions: [
+            { title: "Create Oneliner", key: "n", type: "run", command: "create", reload: true }
+        ],
         items: map({
             title: .value.title,
             subtitle: .value.command,
             actions: [
-                { title: "Edit Oneliner", type: "run", "command": "edit", params: {
+                { title: "Edit Oneliner", key: "e", type: "run", "command": "edit", params: {
                     index: .key,
                     title: { default: .value.title },
                     command: { default: .value.command },
