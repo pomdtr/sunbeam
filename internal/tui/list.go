@@ -46,6 +46,16 @@ func NewList(items ...types.ListItem) *List {
 	return list
 }
 
+func (l *List) ResetSelection() {
+	l.filter.ResetSelection()
+
+	if selection := l.filter.Selection(); selection != nil {
+		l.statusBar.SetActions(selection.(ListItem).Actions...)
+	} else {
+		l.statusBar.SetActions(l.Actions...)
+	}
+}
+
 func (l *List) SetActions(actions ...types.Action) {
 	l.Actions = actions
 	if l.filter.Selection() == nil {
@@ -73,7 +83,7 @@ func (c *List) SetQuery(query string) tea.Cmd {
 	c.input.SetValue(query)
 	if c.OnQueryChange == nil {
 		c.FilterItems(query)
-		c.filter.ResetCursor()
+		c.filter.ResetSelection()
 		return nil
 	}
 

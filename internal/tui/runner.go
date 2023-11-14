@@ -363,7 +363,7 @@ func (c *Runner) Reload() tea.Cmd {
 				page.SetItems(list.Items...)
 				page.SetIsLoading(false)
 				if list.Dynamic {
-					page.filter.ResetCursor()
+					page.ResetSelection()
 				}
 			} else {
 				page = NewList(list.Items...)

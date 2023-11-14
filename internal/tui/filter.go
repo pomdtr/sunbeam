@@ -40,7 +40,7 @@ func NewFilter(items ...FilterItem) Filter {
 	}
 }
 
-func (f *Filter) ResetCursor() {
+func (f *Filter) ResetSelection() {
 	f.minIndex = 0
 	f.cursor = 0
 }
