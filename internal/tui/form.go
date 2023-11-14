@@ -90,10 +90,7 @@ func (c *Form) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c Form) Init() tea.Cmd {
-	if len(c.inputs) == 0 {
-		return nil
-	}
-	return c.inputs[0].Focus()
+	return c.Focus()
 }
 
 func (c Form) Focus() tea.Cmd {

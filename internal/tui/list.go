@@ -58,7 +58,7 @@ func (l *List) SetEmptyText(text string) {
 }
 
 func (c *List) Init() tea.Cmd {
-	return tea.Batch()
+	return c.input.Focus()
 }
 
 func (c *List) Focus() tea.Cmd {

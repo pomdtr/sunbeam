@@ -39,10 +39,11 @@ func NewRootList(title string, generator func() (extensions.ExtensionMap, []type
 			path:    filepath.Join(utils.CacheHome(), "history.json"),
 		}
 	}
+	list := NewList()
 
 	return &RootList{
 		title:     title,
-		list:      NewList(),
+		list:      list,
 		history:   history,
 		generator: generator,
 	}
@@ -120,8 +121,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			})
 		case "ctrl+r":
-			c.list.SetIsLoading(true)
-			return c, c.Reload
+			return c, tea.Batch(c.list.SetIsLoading(true), c.Reload)
 		}
 	case types.Action:
 		switch msg.Type {
@@ -170,7 +170,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}, missing...)
 
 				c.form.SetSize(c.width, c.height)
-				return c, tea.Sequence(c.form.Init(), c.form.Focus())
+				return c, c.form.Init()
 			}
 			c.form = nil
 

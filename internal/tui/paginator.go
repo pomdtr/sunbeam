@@ -58,7 +58,7 @@ func (m *Paginator) Init() tea.Cmd {
 		return nil
 	}
 
-	return tea.Sequence(m.pages[0].Init(), m.pages[0].Focus())
+	return m.pages[0].Init()
 }
 
 func (m *Paginator) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -133,7 +133,7 @@ func (m *Paginator) Push(page Page) tea.Cmd {
 	}
 	page.SetSize(m.width, m.height)
 	m.pages = append(m.pages, page)
-	return tea.Sequence(cmd, page.Init(), page.Focus())
+	return tea.Sequence(cmd, page.Init())
 }
 
 func (m *Paginator) Pop() tea.Cmd {

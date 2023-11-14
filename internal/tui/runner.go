@@ -346,8 +346,7 @@ func (c *Runner) Reload() tea.Cmd {
 				page.Format = detail.Format
 			}
 
-			c.embed = page
-			return nil
+			return page
 		case types.CommandModeList:
 			if err := schemas.ValidateList(output); err != nil {
 				return err
