@@ -29,8 +29,8 @@ export type CommandSpec = {
   params?: Input[];
 };
 
-type PayloadParams = Record<string, string | boolean>;
-export type Payload<T extends PayloadParams = PayloadParams, V extends PayloadParams = PayloadParams> = {
+type PayloadParams = Record<string, string | boolean | number>;
+export type Payload<T extends PayloadParams = PayloadParams, V extends Record<string, any> = Record<string, any>> = {
   command: string;
   params: T;
   preferences: V;
