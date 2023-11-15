@@ -139,6 +139,7 @@ async function run(payload: sunbeam.Payload) {
                             key: "d",
                             type: "run",
                             command: "delete",
+                            reload: true,
                             params: {
                                 id: gist.id
                             }

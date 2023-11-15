@@ -121,6 +121,16 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, tea.Batch(c.list.SetIsLoading(true), c.Reload)
 		}
 	case types.Action:
+		selection, ok := c.list.Selection()
+		if !ok {
+			return c, nil
+		}
+
+		c.history.entries[selection.Id] = time.Now().Unix()
+		if err := c.history.Save(); err != nil {
+			return c, c.SetError(err)
+		}
+
 		switch msg.Type {
 		case types.ActionTypeRun:
 			extension, ok := c.extensions[msg.Extension]
@@ -170,16 +180,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.form.Init()
 			}
 			c.form = nil
-
-			selection, ok := c.list.Selection()
-			if !ok {
-				return c, nil
-			}
-
-			c.history.entries[selection.Id] = time.Now().Unix()
-			if err := c.history.Save(); err != nil {
-				return c, c.SetError(err)
-			}
 
 			input := types.Payload{
 				Command: command.Name,
