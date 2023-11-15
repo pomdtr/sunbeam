@@ -204,7 +204,11 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return PushPageMsg{NewErrorPage(err)}
 					}
 
-					return ExitMsg{}
+					if msg.Exit {
+						return ExitMsg{}
+					}
+
+					return nil
 				}
 			case types.CommandModeTTY:
 				cmd, err := extension.Cmd(input)

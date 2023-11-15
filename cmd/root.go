@@ -348,6 +348,7 @@ func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) 
 						Extension: alias,
 						Command:   rootItem.Command,
 						Params:    rootItem.Params,
+						Exit:      true,
 					},
 					{
 						Title:  "Copy Origin",
@@ -383,6 +384,7 @@ func ExtensionRootItems(alias string, extension extensions.Extension) []types.Li
 					Extension: alias,
 					Command:   rootItem.Command,
 					Params:    rootItem.Params,
+					Exit:      true,
 				},
 			},
 		}
