@@ -110,8 +110,6 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 			return c, PopPageCmd
-		case "ctrl+r":
-			return c, c.Reload()
 		}
 
 	case Page:

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
@@ -41,14 +42,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 					input.Preferences = preferences
 				}
 
-				var rawOutput bool
-				if cmd.Flags().Changed("raw") {
-					rawOutput, _ = cmd.Flags().GetBool("raw")
-				} else {
-					rawOutput = !isatty.IsTerminal(os.Stdout.Fd())
-				}
-
-				return runExtension(extension, input, rawOutput)
+				return runExtension(extension, input)
 			}
 
 			return cmd.Usage()
@@ -61,8 +55,9 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 
 	for _, command := range extension.Commands {
 		command := command
+		parts := strings.Split(command.Name, ".")
 		cmd := &cobra.Command{
-			Use:    command.Name,
+			Use:    parts[len(parts)-1],
 			Short:  command.Title,
 			Hidden: command.Hidden,
 			RunE: func(cmd *cobra.Command, args []string) error {
@@ -110,7 +105,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 					input.Query = string(bytes.Trim(stdin, "\n"))
 				}
 
-				return runExtension(extension, input, !isatty.IsTerminal(os.Stdout.Fd()))
+				return runExtension(extension, input)
 			},
 		}
 
@@ -135,7 +130,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 	return rootCmd, nil
 }
 
-func runExtension(extension extensions.Extension, input types.Payload, rawOutput bool) error {
+func runExtension(extension extensions.Extension, input types.Payload) error {
 	if err := extension.CheckRequirements(); err != nil {
 		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
 	}
@@ -145,7 +140,7 @@ func runExtension(extension extensions.Extension, input types.Payload, rawOutput
 		return fmt.Errorf("command %s not found", input.Command)
 	}
 
-	if rawOutput {
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
 		cmd, err := extension.Cmd(input)
 		if err != nil {
 			return err
