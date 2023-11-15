@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os/exec"
-	"path/filepath"
 
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
@@ -25,12 +23,8 @@ func NewCmdUpgrade(cfg config.Config) *cobra.Command {
 			}
 
 			for alias, extensionConfig := range cfg.Extensions {
-				if extensionConfig.Hooks.Upgrade != "" {
-					cmd := exec.Command("sh", "-c", extensionConfig.Hooks.Upgrade)
-					cmd.Dir = filepath.Dir(extensionConfig.Origin)
-					if err := cmd.Run(); err != nil {
-						return fmt.Errorf("failed to run update hook: %s", err)
-					}
+				if len(args) > 0 && alias != args[0] {
+					continue
 				}
 
 				if _, err := extensions.UpgradeExtension(extensionConfig); err != nil {

@@ -84,6 +84,7 @@ func (e *Config) UnmarshalJSON(b []byte) error {
 		e.Origin = alias.Origin
 		e.Preferences = alias.Preferences
 		e.Items = alias.Items
+		e.Hooks = alias.Hooks
 		return nil
 	}
 
@@ -294,9 +295,11 @@ func InstallExtension(config Config) (Extension, error) {
 
 	if config.Hooks.Install != "" {
 		cmd := exec.Command("sh", "-c", config.Hooks.Install)
-		cmd.Dir = filepath.Dir(entrypoint)
 		if err := cmd.Run(); err != nil {
-			return Extension{}, fmt.Errorf("failed to run install hook: %s", err)
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				return Extension{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
+			}
+			return Extension{}, err
 		}
 	} else if IsRemoteExtension(config.Origin) {
 		resp, err := http.Get(config.Origin)
@@ -361,7 +364,6 @@ func UpgradeExtension(config Config) (Extension, error) {
 
 	if config.Hooks.Upgrade != "" {
 		cmd := exec.Command("sh", "-c", config.Hooks.Upgrade)
-		cmd.Dir = filepath.Dir(entrypoint)
 		if err := cmd.Run(); err != nil {
 			return Extension{}, fmt.Errorf("failed to run install hook: %s", err)
 		}
