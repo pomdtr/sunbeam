@@ -10,9 +10,9 @@ type Manifest struct {
 }
 
 type RootItem struct {
-	Title   string           `json:"title"`
+	Title   string           `json:"title,omitempty"`
 	Command string           `json:"command"`
-	Params  map[string]Param `json:"params"`
+	Params  map[string]Param `json:"params,omitempty"`
 }
 
 type Platfom string
