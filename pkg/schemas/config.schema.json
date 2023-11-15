@@ -6,31 +6,35 @@
             "type": "string"
         },
         "oneliners": {
-            "type": "array",
+            "type": "object",
             "description": "A list of commands that will be shown in the root list",
-            "items": {
-                "type": "object",
-                "required": [
-                    "title",
-                    "command"
-                ],
-                "properties": {
-                    "title": {
-                        "type": "string",
-                        "description": "An friendly title for the command"
-                    },
-                    "command": {
-                        "type": "string",
-                        "description": "The command to run"
-                    },
-                    "cwd": {
-                        "type": "string",
-                        "description": "The working directory to run the command in"
-                    },
-                    "exit": {
-                        "type": "boolean",
-                        "description": "If true, sunbeam will close after running the command"
-                    }
+            "patternProperties": {
+                ".+": {
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "required": [
+                                "command"
+                            ],
+                            "properties": {
+                                "command": {
+                                    "type": "string",
+                                    "description": "The command to run"
+                                },
+                                "cwd": {
+                                    "type": "string",
+                                    "description": "The working directory to run the command in"
+                                },
+                                "exit": {
+                                    "type": "boolean",
+                                    "description": "If true, sunbeam will close after running the command"
+                                }
+                            }
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
                 }
             }
         },
@@ -51,11 +55,12 @@
                                 "origin": {
                                     "type": "string"
                                 },
-                                "root": {
+                                "items": {
                                     "type": "array",
                                     "items": {
                                         "type": "object",
                                         "required": [
+                                            "title",
                                             "command"
                                         ],
                                         "properties": {
@@ -66,7 +71,7 @@
                                                 "type": "string"
                                             },
                                             "params": {
-                                                "type": "object"
+                                                "$ref": "./params.schema.json"
                                             }
                                         }
                                     }

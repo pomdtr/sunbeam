@@ -96,10 +96,35 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 	return p, nil
 }
 
+func ActionTitle(action types.Action) string {
+	if action.Title != "" {
+		return action.Title
+	}
+
+	switch action.Type {
+	case types.ActionTypeRun:
+		return "Run"
+	case types.ActionTypeCopy:
+		return "Copy"
+	case types.ActionTypeOpen:
+		return "Open"
+	case types.ActionTypeEdit:
+		return "Edit"
+	case types.ActionTypeReload:
+		return "Reload"
+	case types.ActionTypeExec:
+		return "Exec"
+	case types.ActionTypeExit:
+		return "Exit"
+	default:
+		return string(action.Type)
+	}
+}
+
 func (c StatusBar) View() string {
 	var accessory string
 	if len(c.actions) == 1 {
-		accessory = renderAction(c.actions[0].Title, "enter", c.expanded)
+		accessory = renderAction(ActionTitle(c.actions[0]), "enter", c.expanded)
 	} else if len(c.actions) > 1 {
 		if c.expanded {
 			accessories := make([]string, len(c.actions))
@@ -110,7 +135,7 @@ func (c StatusBar) View() string {
 				} else if action.Key != "" {
 					subtitle = fmt.Sprintf("alt+%s", action.Key)
 				}
-				accessories[i] = renderAction(action.Title, subtitle, i == c.cursor)
+				accessories[i] = renderAction(ActionTitle(action), subtitle, i == c.cursor)
 			}
 
 			availableWidth := c.Width
@@ -138,7 +163,7 @@ func (c StatusBar) View() string {
 			}
 
 		} else {
-			accessory = fmt.Sprintf("%s · Actions %s", renderAction(c.actions[0].Title, "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
+			accessory = fmt.Sprintf("%s · Actions %s", renderAction(ActionTitle(c.actions[0]), "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
 		}
 	}
 

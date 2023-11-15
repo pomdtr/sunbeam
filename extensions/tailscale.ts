@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "npm:sunbeam-types@0.23.28";
+import type * as sunbeam from "npm:sunbeam-types@0.25.1";
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
@@ -14,6 +14,9 @@ if (Deno.args.length == 0) {
                 name: "tailscale",
                 link: "https://tailscale.com"
             }
+        ],
+        items: [
+            { command: "list-devices", }
         ],
         commands: [
             {

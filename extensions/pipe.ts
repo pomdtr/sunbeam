@@ -1,5 +1,5 @@
 #!/usr/bin/env deno run -A
-import * as sunbeam from "npm:sunbeam-types@0.23.19"
+import * as sunbeam from "npm:sunbeam-types@0.25.1"
 import * as clipboard from "https://deno.land/x/copy_paste@v1.1.3/mod.ts";
 
 
@@ -11,6 +11,14 @@ if (Deno.args.length == 0) {
             {
                 name: "deno",
                 link: "https://deno.com"
+            }
+        ],
+        items: [
+            {
+                command: "urldecode",
+            },
+            {
+                command: "urlencode",
             }
         ],
         commands: [

@@ -6,7 +6,7 @@
   "yaml.validate": false,
   "deno.enablePaths": [
     "./extensions",
-    "./cmd/templates",
-    "./scripts"
+    "./scripts",
+    "pkg/typescript"
   ]
 }

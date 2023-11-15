@@ -7,47 +7,19 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
-	"github.com/pomdtr/sunbeam/pkg/types"
+	"github.com/tailscale/hujson"
 )
 
-//go:embed config.json
+//go:embed sunbeam.json
 var configBytes []byte
 
 type Config struct {
-	Schema     string                     `json:"$schema,omitempty"`
-	Oneliners  []Oneliner                 `json:"oneliners,omitempty"`
-	Extensions map[string]ExtensionConfig `json:"extensions,omitempty"`
-}
-
-type ExtensionConfig struct {
-	Origin      string            `json:"origin,omitempty"`
-	Preferences types.Preferences `json:"preferences,omitempty"`
-	Root        []types.RootItem  `json:"root,omitempty"`
-}
-
-func (e *ExtensionConfig) UnmarshalJSON(b []byte) error {
-	var s string
-	if err := json.Unmarshal(b, &s); err == nil {
-		e.Origin = s
-		return nil
-	}
-
-	var extensionRef struct {
-		Origin      string         `json:"origin,omitempty"`
-		Preferences map[string]any `json:"preferences,omitempty"`
-		Root        []types.RootItem
-	}
-
-	if err := json.Unmarshal(b, &extensionRef); err == nil {
-		e.Origin = extensionRef.Origin
-		e.Preferences = extensionRef.Preferences
-		e.Root = extensionRef.Root
-		return nil
-	}
-
-	return fmt.Errorf("invalid extension ref: %s", string(b))
+	Schema     string                       `json:"$schema,omitempty"`
+	Oneliners  map[string]Oneliner          `json:"oneliners,omitempty"`
+	Extensions map[string]extensions.Config `json:"extensions,omitempty"`
 }
 
 func (cfg Config) Aliases() []string {
@@ -60,10 +32,28 @@ func (cfg Config) Aliases() []string {
 }
 
 type Oneliner struct {
-	Title   string `json:"title"`
 	Command string `json:"command"`
 	Cwd     string `json:"cwd"`
 	Exit    bool   `json:"exit"`
+}
+
+func (o *Oneliner) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		o.Command = s
+		return nil
+	}
+
+	type Alias Oneliner
+	var alias Alias
+	if err := json.Unmarshal(b, &alias); err == nil {
+		o.Command = alias.Command
+		o.Cwd = alias.Cwd
+		o.Exit = alias.Exit
+		return nil
+	}
+
+	return fmt.Errorf("invalid oneliner: %s", string(b))
 }
 
 func Path() string {
@@ -71,8 +61,11 @@ func Path() string {
 		return env
 	}
 
-	return filepath.Join(utils.ConfigHome(), "config.json")
+	if _, err := os.Stat(filepath.Join(utils.ConfigHome(), "config.jsonc")); err == nil {
+		return filepath.Join(utils.ConfigHome(), "sunbeam.jsonc")
+	}
 
+	return filepath.Join(utils.ConfigHome(), "sunbeam.json")
 }
 
 func Load() (Config, error) {
@@ -100,12 +93,17 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
-	if err := schemas.ValidateConfig(configBytes); err != nil {
+	jsonBytes, err := hujson.Standardize(configBytes)
+	if err != nil {
+		return Config{}, err
+	}
+
+	if err := schemas.ValidateConfig(jsonBytes); err != nil {
 		return Config{}, fmt.Errorf("invalid config: %w", err)
 	}
 
 	var config Config
-	if err := json.Unmarshal(configBytes, &config); err != nil {
+	if err := json.Unmarshal(jsonBytes, &config); err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 

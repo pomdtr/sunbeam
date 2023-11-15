@@ -11,18 +11,9 @@ If no config is found, sunbeam will create one.
 ```json
 {
     // additional items to show in the root list
-    "oneliners": [
-        {
-            // title of the item shown in the list
-            "title": "Search Overreact Feed",
-            // command to run when the item is chosen
-            "command":\ "sunbeam rss show --url https://overreacted.io/rss.xml"
-        },
-        {
-            "title": "View System Resources",
-            "command": "htop"
-        }
-    ],
+    "oneliners": {
+            "View System Resources": "htop"
+    },
     "extensions": {
         "github": {
             "origin": "~/Developer/github.com/pomdtr/sunbeam/extensions/github.sh",
@@ -31,7 +22,7 @@ If no config is found, sunbeam will create one.
                 "token": "xxxx"
             },
             // additional root items to show
-            "root": [
+            "items": [
                 {
                     "title": "List Sunbeam Issues",
                     "command": "list-issues",

@@ -4,11 +4,8 @@ if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Bitwarden Vault",
         description: "Search your Bitwarden passwords",
-        root: [
+        items: [
             { command: "list-passwords" }
-        ],
-        requirements: [
-            { name: "bw", link: "https://bitwarden.com/help/article/cli/" }
         ],
         commands: [
             {
@@ -16,7 +13,11 @@ if [ $# -eq 0 ]; then
                 title: "List Passwords",
                 mode: "list"
             }
+        ],
+        requirements: [
+            { name: "bw", link: "https://bitwarden.com/help/article/cli/" }
         ]
+
     }'
     exit 0
 fi

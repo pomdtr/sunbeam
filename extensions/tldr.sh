@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
 {
     title: "Browse TLDR Pages",
     description: "Browse TLDR Pages",
-    root: [{command: "list"}],
+    items: [{ command: "list"}],
     requirements: [
         { name: "tldr", link: "https://dbrgn.github.io/tealdeer/installing.html" }
     ],

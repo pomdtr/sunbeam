@@ -9,8 +9,8 @@ It contains the title, description and the list of commands provided by the exte
   "title": "DevDocs",
   // the description of the extension, will be shown in usage string
   "description": "Search DevDocs.io",
-  // additional items to show in the root list (optional)
-  "root": [
+  // items to show in the root list (optional)
+  "items": [
     {
       "title": "Search Deno Docs",
       "command": "list-entries",

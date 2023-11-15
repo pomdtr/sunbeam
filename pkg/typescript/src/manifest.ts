@@ -1,10 +1,17 @@
+import { Param } from "./action.ts";
 export type Manifest = {
   title: string;
   platforms?: Platform[];
   description?: string;
   requirements?: Requirement[];
-  root?: CommandRef[];
+  items?: RootItem[];
   commands: CommandSpec[];
+};
+
+type RootItem = {
+  command: string;
+  title?: string;
+  params?: Record<string, Param>;
 };
 
 type Platform = "linux" | "macos"
@@ -12,12 +19,6 @@ type Platform = "linux" | "macos"
 type Requirement = {
   name: string;
   link?: string;
-};
-
-type CommandRef = {
-  command: string;
-  title?: string;
-  params?: Record<string, string | number | boolean>;
 };
 
 export type CommandSpec = {

@@ -2,14 +2,21 @@ package extensions
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
@@ -24,8 +31,63 @@ func (e ExtensionMap) List() []Extension {
 }
 
 type Extension struct {
-	types.Manifest `json:"manifest"`
-	Metadata
+	Manifest   types.Manifest
+	Entrypoint string `json:"entrypoint"`
+	Config     Config `json:"config"`
+}
+
+type Config struct {
+	Origin      string            `json:"origin,omitempty"`
+	Preferences types.Preferences `json:"preferences,omitempty"`
+	Items       []types.RootItem  `json:"items,omitempty"`
+	Hooks       Hooks             `json:"hooks,omitempty"`
+}
+
+func (c Config) ExtensionDir() string {
+	return filepath.Join(utils.CacheHome(), "extensions", SHA1(c.Origin))
+}
+
+func (c Config) Entrypoint() (string, error) {
+	if IsRemoteExtension(c.Origin) {
+		return filepath.Join(c.ExtensionDir(), "entrypoint"), nil
+	}
+
+	entrypoint := c.Origin
+	if strings.HasPrefix(entrypoint, "~") {
+		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
+	}
+
+	entrypoint, err := filepath.Abs(entrypoint)
+	if err != nil {
+		return "", err
+	}
+
+	return entrypoint, nil
+}
+
+type Hooks struct {
+	Install string `json:"install,omitempty"`
+	Upgrade string `json:"upgrade,omitempty"`
+}
+
+func (e *Config) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		e.Origin = s
+		return nil
+	}
+
+	type Alias Config
+
+	var alias Alias
+	if err := json.Unmarshal(b, &alias); err == nil {
+		e.Origin = alias.Origin
+		e.Preferences = alias.Preferences
+		e.Items = alias.Items
+		return nil
+	}
+
+	return fmt.Errorf("invalid extension ref: %s", string(b))
 }
 
 type Preferences map[string]any
@@ -44,7 +106,7 @@ const (
 )
 
 func (e Extension) Command(name string) (types.CommandSpec, bool) {
-	for _, command := range e.Commands {
+	for _, command := range e.Manifest.Commands {
 		if command.Name == name {
 			return command, true
 		}
@@ -52,32 +114,23 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	return types.CommandSpec{}, false
 }
 
-func (e Extension) RootItems() []types.RootItem {
+func (e Extension) Root() []types.RootItem {
 	rootItems := make([]types.RootItem, 0)
-	if e.Root != nil {
-		for _, rootItem := range e.Root {
-			command, ok := e.Command(rootItem.Command)
-			if !ok {
-				continue
-			}
+	var items []types.RootItem
+	items = append(items, e.Manifest.Items...)
+	items = append(items, e.Config.Items...)
 
-			if rootItem.Title == "" {
-				rootItem.Title = command.Title
-			}
-
-			rootItems = append(rootItems, rootItem)
+	for _, rootItem := range items {
+		command, ok := e.Command(rootItem.Command)
+		if !ok {
+			continue
 		}
-	} else {
-		for _, command := range e.Commands {
-			if command.Hidden {
-				continue
-			}
 
-			rootItems = append(rootItems, types.RootItem{
-				Title:   command.Title,
-				Command: command.Name,
-			})
+		if rootItem.Title == "" {
+			rootItem.Title = command.Title
 		}
+
+		rootItems = append(rootItems, rootItem)
 	}
 
 	return rootItems
@@ -89,7 +142,7 @@ func (e Extension) Run(input types.Payload) error {
 }
 
 func (ext Extension) CheckRequirements() error {
-	for _, requirement := range ext.Require {
+	for _, requirement := range ext.Manifest.Requirements {
 		if _, err := exec.LookPath(requirement.Name); err != nil {
 			return fmt.Errorf("missing requirement %s", requirement.Name)
 		}
@@ -123,10 +176,7 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 		input.Params = make(map[string]any)
 	}
 
-	if input.Preferences == nil {
-		input.Preferences = make(map[string]any)
-	}
-
+	input.Preferences = e.Config.Preferences
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -162,4 +212,234 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil
+}
+
+func SHA1(input string) string {
+	h := sha1.New()
+	h.Write([]byte(input))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func IsRemoteExtension(origin string) bool {
+	return strings.HasPrefix(origin, "http://") || strings.HasPrefix(origin, "https://")
+}
+
+func LoadExtension(config Config) (Extension, error) {
+	entrypoint, err := config.Entrypoint()
+	if err != nil {
+		return Extension{}, err
+	}
+
+	entrypointInfo, err := os.Stat(entrypoint)
+	if err != nil {
+		return InstallExtension(config)
+	}
+
+	manifestPath := filepath.Join(config.ExtensionDir(), "manifest.json")
+	manifestInfo, err := os.Stat(manifestPath)
+	if err != nil {
+		return InstallExtension(config)
+	}
+
+	if entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
+		manifest, err := ExtractManifest(entrypoint)
+		if err != nil {
+			return Extension{}, err
+		}
+
+		f, err := os.Create(manifestPath)
+		if err != nil {
+			return Extension{}, err
+		}
+		defer f.Close()
+
+		if err := json.NewEncoder(f).Encode(manifest); err != nil {
+			return Extension{}, err
+		}
+
+		return Extension{
+			Manifest:   manifest,
+			Entrypoint: entrypoint,
+			Config:     config,
+		}, nil
+	}
+
+	var manifest types.Manifest
+	f, err := os.Open(manifestPath)
+	if err != nil {
+		return Extension{}, err
+	}
+
+	if err := json.NewDecoder(f).Decode(&manifest); err != nil {
+		return Extension{}, err
+	}
+
+	return Extension{
+		Manifest:   manifest,
+		Entrypoint: entrypoint,
+		Config:     config,
+	}, nil
+}
+
+func InstallExtension(config Config) (Extension, error) {
+	extensionDir := config.ExtensionDir()
+	if err := os.MkdirAll(extensionDir, 0755); err != nil {
+		return Extension{}, err
+	}
+
+	entrypoint, err := config.Entrypoint()
+	if err != nil {
+		return Extension{}, err
+	}
+
+	if config.Hooks.Install != "" {
+		cmd := exec.Command("sh", "-c", config.Hooks.Install)
+		cmd.Dir = filepath.Dir(entrypoint)
+		if err := cmd.Run(); err != nil {
+			return Extension{}, fmt.Errorf("failed to run install hook: %s", err)
+		}
+	} else if IsRemoteExtension(config.Origin) {
+		resp, err := http.Get(config.Origin)
+		if err != nil {
+			return Extension{}, err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return Extension{}, fmt.Errorf("error downloading extension: %s", resp.Status)
+		}
+
+		f, err := os.Create(entrypoint)
+		if err != nil {
+			return Extension{}, err
+		}
+
+		if _, err := io.Copy(f, resp.Body); err != nil {
+			return Extension{}, err
+		}
+
+		if err := f.Close(); err != nil {
+			return Extension{}, err
+		}
+
+		if err := os.Chmod(entrypoint, 0755); err != nil {
+			return Extension{}, err
+		}
+	}
+
+	manifestPath := filepath.Join(config.ExtensionDir(), "manifest.json")
+	manifest, err := ExtractManifest(entrypoint)
+	if err != nil {
+		return Extension{}, err
+	}
+
+	f, err := os.Create(manifestPath)
+	if err != nil {
+		return Extension{}, err
+	}
+	defer f.Close()
+
+	if err := json.NewEncoder(f).Encode(manifest); err != nil {
+		return Extension{}, err
+	}
+
+	if err := f.Close(); err != nil {
+		return Extension{}, err
+	}
+
+	return Extension{
+		Manifest:   manifest,
+		Entrypoint: entrypoint,
+		Config:     config,
+	}, nil
+}
+
+func UpgradeExtension(config Config) (Extension, error) {
+	entrypoint, err := config.Entrypoint()
+	if err != nil {
+		return Extension{}, err
+	}
+
+	if config.Hooks.Upgrade != "" {
+		cmd := exec.Command("sh", "-c", config.Hooks.Upgrade)
+		cmd.Dir = filepath.Dir(entrypoint)
+		if err := cmd.Run(); err != nil {
+			return Extension{}, fmt.Errorf("failed to run install hook: %s", err)
+		}
+	} else if IsRemoteExtension(config.Origin) {
+		resp, err := http.Get(config.Origin)
+		if err != nil {
+			return Extension{}, err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return Extension{}, fmt.Errorf("error downloading extension: %s", resp.Status)
+		}
+
+		f, err := os.OpenFile(entrypoint, os.O_TRUNC|os.O_WRONLY, 0755)
+		if err != nil {
+			return Extension{}, err
+		}
+
+		if _, err := io.Copy(f, resp.Body); err != nil {
+			return Extension{}, err
+		}
+	}
+
+	manifest, err := ExtractManifest(entrypoint)
+	if err != nil {
+		return Extension{}, err
+	}
+
+	manifestPath := filepath.Join(config.ExtensionDir(), "manifest.json")
+	f, err := os.OpenFile(manifestPath, os.O_TRUNC|os.O_WRONLY, 0755)
+	if err != nil {
+		return Extension{}, err
+	}
+	defer f.Close()
+
+	if err := json.NewEncoder(f).Encode(manifest); err != nil {
+		return Extension{}, err
+	}
+
+	if err := f.Close(); err != nil {
+		return Extension{}, err
+	}
+
+	return Extension{
+		Manifest:   manifest,
+		Entrypoint: entrypoint,
+		Config:     config,
+	}, nil
+
+}
+
+func ExtractManifest(entrypoint string) (types.Manifest, error) {
+	if err := os.Chmod(entrypoint, 0755); err != nil {
+		return types.Manifest{}, err
+	}
+
+	cmd := exec.Command(entrypoint)
+	cmd.Dir = filepath.Dir(entrypoint)
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "SUNBEAM=1")
+
+	manifestBytes, err := cmd.Output()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return types.Manifest{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
+		}
+
+		return types.Manifest{}, err
+	}
+
+	if err := schemas.ValidateManifest(manifestBytes); err != nil {
+		return types.Manifest{}, err
+	}
+
+	var manifest types.Manifest
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return types.Manifest{}, err
+	}
+
+	return manifest, nil
 }

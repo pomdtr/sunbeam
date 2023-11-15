@@ -7,7 +7,7 @@ if [ $# -eq 0 ]; then
         title: "Mac Apps",
         platforms: ["macos"],
         description: "Open your favorite apps",
-        root: [
+        items: [
             { command: "list" }
         ],
         commands: [

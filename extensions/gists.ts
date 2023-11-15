@@ -1,11 +1,15 @@
 #!/usr/bin/env -S deno run -A
 
-import type * as sunbeam from "npm:sunbeam-types@0.23.31"
+import type * as sunbeam from "npm:sunbeam-types@0.25.1"
 import * as path from "https://deno.land/std/path/mod.ts";
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Gists",
+        items: [
+            { command: "search" },
+            { command: "create" }
+        ],
         commands: [
             {
                 name: "search",

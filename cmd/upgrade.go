@@ -1,23 +1,12 @@
 package cmd
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
-	"github.com/acarl005/stripansi"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
-	"github.com/pomdtr/sunbeam/internal/utils"
-	"github.com/pomdtr/sunbeam/pkg/schemas"
-	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
@@ -35,17 +24,16 @@ func NewCmdUpgrade(cfg config.Config) *cobra.Command {
 				}
 			}
 
-			for alias, ref := range cfg.Extensions {
-				if len(args) > 0 && alias != args[0] {
-					continue
+			for alias, extensionConfig := range cfg.Extensions {
+				if extensionConfig.Hooks.Upgrade != "" {
+					cmd := exec.Command("sh", "-c", extensionConfig.Hooks.Upgrade)
+					cmd.Dir = filepath.Dir(extensionConfig.Origin)
+					if err := cmd.Run(); err != nil {
+						return fmt.Errorf("failed to run update hook: %s", err)
+					}
 				}
 
-				extension, err := ExtractManifest(ref.Origin)
-				if err != nil {
-					return err
-				}
-
-				if _, err := cacheExtension(alias, extension); err != nil {
+				if _, err := extensions.UpgradeExtension(extensionConfig); err != nil {
 					return err
 				}
 
@@ -57,151 +45,4 @@ func NewCmdUpgrade(cfg config.Config) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func LoadExtension(alias string, origin string) (extensions.Extension, error) {
-	cacheDir := filepath.Join(utils.CacheHome(), "extensions")
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return extensions.Extension{}, err
-	}
-
-	cachePath := filepath.Join(cacheDir, alias+".json")
-	if _, err := os.Stat(cachePath); err == nil {
-		// check if cache is valid
-		var extension extensions.Extension
-		extensionBytes, err := os.ReadFile(cachePath)
-		if err != nil {
-			return extensions.Extension{}, err
-		}
-
-		if err := json.Unmarshal(extensionBytes, &extension); err != nil {
-			return extensions.Extension{}, err
-		}
-
-		entrypointInfo, err := os.Stat(extension.Metadata.Entrypoint)
-		if err != nil {
-			return extensions.Extension{}, err
-		}
-
-		cacheInfo, err := os.Stat(cachePath)
-		if err != nil {
-			return extensions.Extension{}, err
-		}
-
-		if extension.Metadata.Origin == origin && entrypointInfo.ModTime().Before(cacheInfo.ModTime()) {
-			return extension, nil
-		}
-	}
-
-	extension, err := ExtractManifest(origin)
-	if err != nil {
-		return extensions.Extension{}, err
-	}
-
-	return cacheExtension(alias, extension)
-}
-
-func cacheExtension(alias string, extension extensions.Extension) (extensions.Extension, error) {
-	extensionBytes, err := json.MarshalIndent(extension, "", "  ")
-	if err != nil {
-		return extensions.Extension{}, err
-	}
-
-	cacheDir := filepath.Join(utils.CacheHome(), "extensions")
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return extensions.Extension{}, err
-	}
-
-	cachePath := filepath.Join(cacheDir, alias+".json")
-
-	if err := os.WriteFile(cachePath, extensionBytes, 0644); err != nil {
-		return extensions.Extension{}, err
-	}
-
-	return extension, nil
-}
-
-func ExtractManifest(origin string) (extensions.Extension, error) {
-	var entrypoint string
-	var extensionType extensions.ExtensionType
-	if strings.HasPrefix(origin, "http://") || strings.HasPrefix(origin, "https://") {
-		extensionType = extensions.ExtensionTypeHttp
-		resp, err := http.Get(origin)
-		if err != nil {
-			return extensions.Extension{}, err
-		}
-
-		h := sha1.New()
-		h.Write([]byte(origin))
-		sha1_hash := hex.EncodeToString(h.Sum(nil))
-
-		cacheDir := filepath.Join(utils.CacheHome(), "scripts")
-		if err := os.MkdirAll(cacheDir, 0755); err != nil {
-			return extensions.Extension{}, err
-		}
-
-		entrypoint = filepath.Join(utils.CacheHome(), "scripts", sha1_hash+filepath.Ext(origin))
-		f, err := os.Create(entrypoint)
-		if err != nil {
-			return extensions.Extension{}, err
-		}
-		defer f.Close()
-
-		if _, err := io.Copy(f, resp.Body); err != nil {
-			return extensions.Extension{}, err
-		}
-
-		if err := f.Close(); err != nil {
-			return extensions.Extension{}, err
-		}
-	} else {
-		extensionType = extensions.ExtensionTypeLocal
-		entrypoint = origin
-		if strings.HasPrefix(entrypoint, "~") {
-			homedir, err := os.UserHomeDir()
-			if err != nil {
-				return extensions.Extension{}, err
-			}
-
-			entrypoint = filepath.Join(homedir, entrypoint[1:])
-		}
-	}
-
-	if err := os.Chmod(entrypoint, 0755); err != nil {
-		return extensions.Extension{}, err
-	}
-
-	cmd := exec.Command(entrypoint)
-	cmd.Dir = filepath.Dir(entrypoint)
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "SUNBEAM=1")
-
-	manifestBytes, err := cmd.Output()
-	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			return extensions.Extension{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
-		}
-
-		return extensions.Extension{}, err
-	}
-
-	if err := schemas.ValidateManifest(manifestBytes); err != nil {
-		return extensions.Extension{}, err
-	}
-
-	var manifest types.Manifest
-	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
-		return extensions.Extension{}, err
-	}
-
-	extension := extensions.Extension{
-		Manifest: manifest,
-		Metadata: extensions.Metadata{
-			Type:       extensionType,
-			Origin:     origin,
-			Entrypoint: entrypoint,
-		},
-	}
-
-	return extension, nil
 }

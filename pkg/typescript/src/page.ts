@@ -1,4 +1,4 @@
-import type { Action } from "./action";
+import type { Action } from "./action.ts";
 
 export type List = {
   items?: ListItem[];

@@ -76,7 +76,7 @@ func (c *Runner) Focus() tea.Cmd {
 	if c.embed == nil {
 		return nil
 	}
-	termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Title))
+	termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Manifest.Title))
 	return c.embed.Focus()
 }
 

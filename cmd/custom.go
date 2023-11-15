@@ -15,12 +15,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension, preferences map[string]any) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
 
 	rootCmd := &cobra.Command{
 		Use:     alias,
-		Short:   extension.Title,
-		Long:    extension.Description,
+		Short:   extension.Manifest.Title,
+		Long:    extension.Manifest.Description,
 		Args:    cobra.NoArgs,
 		GroupID: CommandGroupExtension,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -39,13 +39,21 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 					return err
 				}
 				if input.Preferences == nil {
-					input.Preferences = preferences
+					input.Preferences = extension.Config.Preferences
 				}
 
 				return runExtension(extension, input)
 			}
 
-			return cmd.Usage()
+			rootList := tui.NewRootList(extension.Manifest.Title, func() (extensions.ExtensionMap, []types.ListItem, error) {
+				extensionMap := map[string]extensions.Extension{
+					alias: extension,
+				}
+
+				return extensionMap, RootItems(nil, extensionMap), nil
+			})
+
+			return tui.Draw(rootList)
 		},
 	}
 
@@ -53,7 +61,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
-	for _, command := range extension.Commands {
+	for _, command := range extension.Manifest.Commands {
 		command := command
 		parts := strings.Split(command.Name, ".")
 		cmd := &cobra.Command{
@@ -91,9 +99,8 @@ func NewCmdCustom(alias string, extension extensions.Extension, preferences map[
 				}
 
 				input := types.Payload{
-					Command:     command.Name,
-					Preferences: preferences,
-					Params:      params,
+					Command: command.Name,
+					Params:  params,
 				}
 
 				if !isatty.IsTerminal(os.Stdin.Fd()) {

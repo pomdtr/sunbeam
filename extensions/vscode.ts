@@ -2,7 +2,7 @@
 
 import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
 import * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
-import type * as sunbeam from "npm:sunbeam-types@0.23.24";
+import type * as sunbeam from "npm:sunbeam-types@0.25.1";
 import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 
 if (Deno.args.length == 0) {
@@ -15,6 +15,7 @@ if (Deno.args.length == 0) {
                 link: "https://deno.com",
             },
         ],
+        items: [{ command: "list-projects" }],
         commands: [
             {
                 name: "list-projects",

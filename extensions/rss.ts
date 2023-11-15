@@ -2,13 +2,13 @@
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "npm:sunbeam-types@0.23.29"
+import * as sunbeam from "npm:sunbeam-types@0.25.1"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "RSS",
         description: "Manage your RSS feeds",
-        root: [
+        items: [
             { command: "list" }
         ],
         requirements: [

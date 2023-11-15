@@ -1,7 +1,8 @@
 #!/usr/bin/env deno run -A
 
-import type * as sunbeam from "npm:sunbeam-types@0.23.29";
+import * as sunbeam from "npm:sunbeam-types@0.25.1"
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
+
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
@@ -13,7 +14,7 @@ if (Deno.args.length == 0) {
                 link: "https://deno.com"
             }
         ],
-        root: [
+        items: [
             {
                 command: "search-repos"
             }

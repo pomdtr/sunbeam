@@ -25,13 +25,11 @@ type RootList struct {
 	list          *List
 	form          *Form
 
-	extensions  extensions.ExtensionMap
-	preferences map[string]types.Preferences
-
-	generator func() (extensions.ExtensionMap, []types.ListItem, map[string]types.Preferences, error)
+	extensions extensions.ExtensionMap
+	generator  func() (extensions.ExtensionMap, []types.ListItem, error)
 }
 
-func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, map[string]types.Preferences, error)) *RootList {
+func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, error)) *RootList {
 	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
 	if err != nil {
 		history = History{
@@ -54,15 +52,14 @@ func (c *RootList) Init() tea.Cmd {
 }
 
 func (c *RootList) Reload() tea.Msg {
-	extensionMap, rootItems, preferences, err := c.generator()
+	extensionMap, rootItems, err := c.generator()
 	if err != nil {
 		return err
 	}
 
 	c.extensions = extensionMap
-	c.preferences = preferences
 	c.history.Sort(rootItems)
-	c.list.SetEmptyText("No item found, use ctrl+e to edit your config.")
+	c.list.SetEmptyText("No items")
 	c.list.SetIsLoading(false)
 	c.list.SetItems(rootItems...)
 	return nil
@@ -185,9 +182,8 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			input := types.Payload{
-				Command:     command.Name,
-				Params:      make(map[string]any),
-				Preferences: c.preferences[msg.Extension],
+				Command: command.Name,
+				Params:  make(map[string]any),
 			}
 
 			for k, v := range msg.Params {

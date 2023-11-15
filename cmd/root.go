@@ -58,7 +58,7 @@ func NewRootCmd() (*cobra.Command, error) {
 				return nil, cobra.ShellCompDirectiveDefault
 			}
 
-			extension, err := ExtractManifest(entrypoint)
+			extension, err := extensions.ExtractManifest(entrypoint)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveDefault
 			}
@@ -80,25 +80,22 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			if len(args) == 0 {
-				rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, map[string]types.Preferences, error) {
+				rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, error) {
 					cfg, err := config.Load()
 					if err != nil {
-						return nil, nil, nil, err
+						return nil, nil, err
 					}
 
-					preferences := make(map[string]types.Preferences)
 					extensionMap := make(map[string]extensions.Extension)
-					for alias, ref := range cfg.Extensions {
-						preferences[alias] = ref.Preferences
-
-						extension, err := LoadExtension(alias, ref.Origin)
+					for alias, extensionConfig := range cfg.Extensions {
+						extension, err := extensions.LoadExtension(extensionConfig)
 						if err != nil {
 							continue
 						}
 						extensionMap[alias] = extension
 					}
 
-					return extensionMap, RootItems(cfg, extensionMap), preferences, nil
+					return extensionMap, RootItems(cfg.Oneliners, extensionMap), nil
 				})
 				return tui.Draw(rootList)
 			}
@@ -164,12 +161,19 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				scriptPath = s
 			}
 
-			extension, err := ExtractManifest(scriptPath)
+			manifest, err := extensions.ExtractManifest(scriptPath)
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}
 
-			rootCmd, err := NewCmdCustom(filepath.Base(scriptPath), extension, nil)
+			extension := extensions.Extension{
+				Manifest: manifest,
+				Config: extensions.Config{
+					Origin: scriptPath,
+				},
+			}
+
+			rootCmd, err := NewCmdCustom(filepath.Base(scriptPath), extension)
 			if err != nil {
 				return fmt.Errorf("error loading extension: %w", err)
 			}
@@ -247,18 +251,17 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extension Commands:",
 	})
 
-	for alias, ref := range cfg.Extensions {
-		extension, err := LoadExtension(alias, ref.Origin)
+	for alias, extensionConfig := range cfg.Extensions {
+		extension, err := extensions.LoadExtension(extensionConfig)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error loading extension %s: %s\n", alias, err)
 			continue
 		}
 
-		command, err := NewCmdCustom(alias, extension, ref.Preferences)
+		command, err := NewCmdCustom(alias, extension)
 		if err != nil {
 			return nil, err
 		}
-
 		rootCmd.AddCommand(command)
 	}
 
@@ -300,15 +303,15 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) []types.ListItem {
+func RootItems(oneliners map[string]config.Oneliner, extensionMap map[string]extensions.Extension) []types.ListItem {
 	var items []types.ListItem
-	for _, oneliner := range cfg.Oneliners {
+	for title, oneliner := range oneliners {
 		if strings.HasPrefix(oneliner.Cwd, "~") {
 			oneliner.Cwd = strings.Replace(oneliner.Cwd, "~", os.Getenv("HOME"), 1)
 		}
 		item := types.ListItem{
-			Id:          fmt.Sprintf("root - %s", oneliner.Title),
-			Title:       oneliner.Title,
+			Id:          fmt.Sprintf("root - %s", title),
+			Title:       title,
 			Accessories: []string{"Oneliner"},
 			Actions: []types.Action{
 				{
@@ -330,39 +333,6 @@ func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) 
 		items = append(items, item)
 	}
 
-	for alias, ref := range cfg.Extensions {
-		extension, ok := extensionMap[alias]
-		if !ok {
-			continue
-		}
-
-		for _, rootItem := range ref.Root {
-			items = append(items, types.ListItem{
-				Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
-				Title:       rootItem.Title,
-				Accessories: []string{extension.Title},
-				Actions: []types.Action{
-					{
-						Title:     "Run",
-						Type:      types.ActionTypeRun,
-						Extension: alias,
-						Command:   rootItem.Command,
-						Params:    rootItem.Params,
-						Exit:      true,
-					},
-					{
-						Title:  "Copy Origin",
-						Key:    "c",
-						Type:   types.ActionTypeCopy,
-						Target: extension.Origin,
-						Exit:   true,
-					},
-				},
-			})
-
-		}
-	}
-
 	for alias, extension := range extensionMap {
 		items = append(items, ExtensionRootItems(alias, extension)...)
 	}
@@ -372,11 +342,11 @@ func RootItems(cfg config.Config, extensionMap map[string]extensions.Extension) 
 
 func ExtensionRootItems(alias string, extension extensions.Extension) []types.ListItem {
 	var items []types.ListItem
-	for _, rootItem := range extension.RootItems() {
+	for _, rootItem := range extension.Root() {
 		listItem := types.ListItem{
 			Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
 			Title:       rootItem.Title,
-			Accessories: []string{extension.Title},
+			Accessories: []string{extension.Manifest.Title},
 			Actions: []types.Action{
 				{
 					Title:     "Run",
@@ -389,21 +359,11 @@ func ExtensionRootItems(alias string, extension extensions.Extension) []types.Li
 			},
 		}
 
-		if extension.Type == extensions.ExtensionTypeLocal {
-			listItem.Actions = append(listItem.Actions, types.Action{
-				Title:  "Edit",
-				Key:    "e",
-				Type:   types.ActionTypeEdit,
-				Target: extension.Entrypoint,
-				Reload: true,
-			})
-		}
-
 		listItem.Actions = append(listItem.Actions, types.Action{
 			Title:  "Copy Origin",
 			Key:    "c",
 			Type:   types.ActionTypeCopy,
-			Target: extension.Origin,
+			Target: extension.Config.Origin,
 			Exit:   true,
 		})
 

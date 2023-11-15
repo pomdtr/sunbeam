@@ -6,7 +6,7 @@ if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Meteo",
         description: "Show Meteo",
-        root: [
+        items: [
             { command: "show" }
         ],
         commands: [

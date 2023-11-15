@@ -1,0 +1,1 @@
+{"title":"DevDocs","description":"Search DevDocs.io","items":[{"title":"","command":"list-docsets","params":null}],"commands":[{"name":"list-docsets","title":"List Docsets","mode":"list"},{"name":"list-entries","title":"List Entries from Docset","params":[{"type":"text","name":"slug","title":"Slug","required":true}],"mode":"list"}]}

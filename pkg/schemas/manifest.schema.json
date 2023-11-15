@@ -42,10 +42,24 @@
         "description": {
             "type": "string"
         },
-        "root": {
+        "items": {
             "type": "array",
             "items": {
-                "$ref": "#/definitions/commandref"
+                "type": "object",
+                "required": [
+                    "command"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "command": {
+                        "type": "string"
+                    },
+                    "params": {
+                        "$ref": "./params.schema.json"
+                    }
+                }
             }
         },
         "commands": {
@@ -56,27 +70,6 @@
         }
     },
     "definitions": {
-        "commandref": {
-            "type": "object",
-            "properties": {
-                "title": {
-                    "type": "string"
-                },
-                "command": {
-                    "type": "string"
-                },
-                "params": {
-                    "patternProperties": {
-                        ".+": {
-                            "type": [
-                                "string",
-                                "boolean"
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "command": {
             "type": "object",
             "required": [

@@ -2,7 +2,7 @@
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "npm:sunbeam-types@0.23.28"
+import * as sunbeam from "npm:sunbeam-types@0.25.1"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
@@ -14,7 +14,7 @@ if (Deno.args.length == 0) {
                 link: "https://deno.com"
             }
         ],
-        root: [
+        items: [
             {
                 title: "Front Page",
                 command: "browse",

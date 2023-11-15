@@ -1,12 +1,18 @@
 package types
 
 type Manifest struct {
-	Title       string        `json:"title"`
-	Platforms   []Platfom     `json:"platforms,omitempty"`
-	Description string        `json:"description,omitempty"`
-	Require     []Requirement `json:"requirements,omitempty"`
-	Root        []RootItem    `json:"root,omitempty"`
-	Commands    []CommandSpec `json:"commands"`
+	Title        string        `json:"title"`
+	Platforms    []Platfom     `json:"platforms,omitempty"`
+	Description  string        `json:"description,omitempty"`
+	Requirements []Requirement `json:"requirements,omitempty"`
+	Items        []RootItem    `json:"items,omitempty"`
+	Commands     []CommandSpec `json:"commands"`
+}
+
+type RootItem struct {
+	Title   string           `json:"title"`
+	Command string           `json:"command"`
+	Params  map[string]Param `json:"params"`
 }
 
 type Platfom string
@@ -19,12 +25,6 @@ const (
 type Requirement struct {
 	Name string `json:"name"`
 	Link string `json:"link,omitempty"`
-}
-
-type RootItem struct {
-	Title   string           `json:"title"`
-	Command string           `json:"command"`
-	Params  map[string]Param `json:"params"`
 }
 
 type CommandSpec struct {
