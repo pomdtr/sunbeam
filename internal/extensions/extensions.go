@@ -323,10 +323,10 @@ func InstallExtension(config Config) (Extension, error) {
 		if err := f.Close(); err != nil {
 			return Extension{}, err
 		}
+	}
 
-		if err := os.Chmod(entrypoint, 0755); err != nil {
-			return Extension{}, err
-		}
+	if err := os.Chmod(entrypoint, 0755); err != nil {
+		return Extension{}, err
 	}
 
 	manifestPath := filepath.Join(config.ExtensionDir(), "manifest.json")
