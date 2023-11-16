@@ -14,7 +14,7 @@ import * as sunbeam from "npm:sunbeam-types@0.23.15"
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Hacker News",
-        root: [
+        items: [
             {
                 title: "Front Page",
                 command: "browse",
@@ -90,17 +90,4 @@ if (payload.command == "browse") {
     console.error("Unknown command");
     Deno.exit(1);
 }
-```
-
-You can add a new item to the root menu by adding a new oneliner to your sunbeam config:
-
-```json
-{
-    "oneliners": [
-        {
-            "title": "Ask HN",
-            "command": "sunbeam hackernews browse --topic ask"
-        }
-    ]
-
 ```
