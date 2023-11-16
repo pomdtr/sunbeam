@@ -4,9 +4,5 @@
     "public": true,
   },
   "yaml.validate": false,
-  "deno.enablePaths": [
-    "./extensions",
-    "./scripts",
-    "pkg/typescript"
-  ]
+  "deno.enable": true,
 }

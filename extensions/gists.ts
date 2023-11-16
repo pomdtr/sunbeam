@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 
 import type * as sunbeam from "npm:sunbeam-types@0.25.1"
-import * as path from "https://deno.land/std/path/mod.ts";
+import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
@@ -47,6 +47,10 @@ if (Deno.args.length == 0) {
                 name: "edit",
                 title: "Edit Gist File",
                 mode: "tty",
+                params: [
+                    { name: "id", title: "Gist ID", required: true, type: "text" },
+                    { name: "filename", title: "Filename", required: true, type: "text" },
+                ]
             },
             {
                 name: "delete",
@@ -178,7 +182,7 @@ async function run(payload: sunbeam.Payload) {
 
             const gist = await resp.json() as any;
             return {
-                items: Object.entries(gist.files).map(([filename, file]) => ({
+                items: Object.entries(gist.files).map(([filename]) => ({
                     title: filename,
                     actions: [
                         {
@@ -223,6 +227,16 @@ async function run(payload: sunbeam.Payload) {
                 text: lang == "md" ? file.content : `# ${filename}\n\n\`\`\`${lang || ""}\n${file.content}\n\`\`\``,
                 actions: [
                     {
+                        title: "Edit File",
+                        type: "run",
+                        command: "edit",
+                        params: {
+                            id,
+                            filename
+                        },
+                        reload: true
+                    },
+                    {
                         "title": "Copy Content",
                         "key": "c",
                         "type": "copy",
@@ -245,6 +259,43 @@ async function run(payload: sunbeam.Payload) {
                 ]
             } as sunbeam.Detail;
         }
+        case "edit": {
+            const id = payload.params.id as string;
+            const filename = payload.params.filename as string;
+
+            const get = await fetchGithub(`/gists/${id}`);
+            if (get.status != 200) {
+                throw new Error("Failed to fetch gist");
+            }
+
+            const gist = await get.json() as any;
+            const file = gist.files[filename];
+            if (!file) {
+                throw new Error("File not found");
+            }
+
+            const content = await editor(filename, file.content);
+
+            const patch = await fetchGithub(`/gists/${id}`, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    files: {
+                        [filename]: {
+                            content
+                        }
+                    }
+                })
+            });
+
+            if (patch.status != 200) {
+                throw new Error("Failed to update gist");
+            }
+
+            return
+
+
+
+        }
         case "delete": {
             const id = payload.params.id as string;
             const resp = await fetchGithub(`/gists/${id}`, {
@@ -259,16 +310,23 @@ async function run(payload: sunbeam.Payload) {
 }
 
 
-async function editor(filename: string) {
-    const extension = path.extname(filename);
+async function editor(filename: string, content?: string) {
+    const extension = path.extname(filename).slice(1);
     const command = new Deno.Command("sunbeam", {
         args: ["edit", "--extension", extension],
-        stdin: "null",
-        stderr: "inherit",
+        stdin: "piped",
         stdout: "piped",
     })
 
-    const { success, stdout } = await command.output();
+    const process = await command.spawn();
+
+    const writer = process.stdin.getWriter()
+    writer.write(new TextEncoder().encode(content || ""));
+    writer.releaseLock();
+
+    await process.stdin.close();
+
+    const { success, stdout } = await process.output();
     if (!success) {
         throw new Error("Editor failed");
     }

@@ -3,6 +3,7 @@
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
 import * as sunbeam from "npm:sunbeam-types@0.25.1"
+import { NodeHtmlMarkdown } from "npm:node-html-markdown"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
@@ -36,6 +37,20 @@ if (Deno.args.length == 0) {
                     },
                 ],
             },
+            {
+                name: "read",
+                title: "Read a feed article",
+                mode: "detail",
+                hidden: true,
+                params: [
+                    {
+                        name: "html",
+                        title: "HTML",
+                        required: true,
+                        type: "textarea",
+                    }
+                ]
+            }
         ]
     };
 
@@ -90,6 +105,14 @@ if (payload.command == "list") {
                 : [],
             actions: [
                 {
+                    title: "Read",
+                    type: "run",
+                    command: "read",
+                    params: {
+                        html: item.content || item.contentSnippet || ""
+                    },
+                },
+                {
                     title: "Open in browser",
                     type: "open",
                     target: item.link || "",
@@ -104,7 +127,27 @@ if (payload.command == "list") {
                 },
             ],
         })),
-    };
+    }
 
     console.log(JSON.stringify(page));
+} else if (payload.command == "read") {
+    const html = payload.params.html as string;
+
+    const markdown = NodeHtmlMarkdown.translate(html)
+
+    const detail = {
+        text: markdown,
+        format: "markdown",
+        actions: [
+            {
+                title: "Copy",
+                type: "copy",
+                key: "c",
+                text: markdown,
+                exit: true
+            }
+        ]
+    } as sunbeam.Detail;
+
+    console.log(JSON.stringify(detail));
 }
