@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -102,13 +101,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 			var scriptPath string
 			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
-				origin, err := url.Parse(args[0])
-				if err != nil {
-					return err
-				}
-				pattern := fmt.Sprintf("entrypoint-*%s", filepath.Ext(origin.Path))
-
-				tempfile, err := os.CreateTemp("", pattern)
+				tempfile, err := os.CreateTemp("", "entrypoint-*")
 				if err != nil {
 					return err
 				}
@@ -132,6 +125,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return err
 				}
 
+				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
+					return err
+				}
+
+				scriptPath = tempfile.Name()
 			} else if args[0] == "-" {
 				tempfile, err := os.CreateTemp("", "entrypoint-*%s")
 				if err != nil {
@@ -147,6 +145,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return err
 				}
 
+				if err := tempfile.Chmod(0755); err != nil {
+					return err
+				}
+
 				scriptPath = tempfile.Name()
 			} else {
 				s, err := filepath.Abs(args[0])
@@ -158,6 +160,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return fmt.Errorf("error loading extension: %w", err)
 				}
 
+				if err := os.Chmod(s, 0755); err != nil {
+					return err
+				}
+
 				scriptPath = s
 			}
 
@@ -167,7 +173,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			extension := extensions.Extension{
-				Manifest: manifest,
+				Manifest:   manifest,
+				Entrypoint: scriptPath,
 				Config: extensions.Config{
 					Origin: scriptPath,
 				},
