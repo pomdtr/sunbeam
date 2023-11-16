@@ -112,6 +112,10 @@ func (f *Filter) FilterItems(query string) {
 	}
 
 	f.filtered = filtered
+
+	if f.cursor >= len(f.filtered) {
+		f.cursor = len(f.filtered) - 1
+	}
 }
 
 func (f *Filter) Select(id string) {
