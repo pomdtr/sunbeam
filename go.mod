@@ -11,6 +11,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/itchyny/gojq v0.12.13
 	github.com/junegunn/fzf v0.0.0-20231112130808-7320b7df6203
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1

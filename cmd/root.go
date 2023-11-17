@@ -204,7 +204,18 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			entrypoint = tempfile.Name()
+		} else if extensions.IsRemote(args[0]) {
+			tempfile, err := os.CreateTemp("", "entrypoint-*%s")
+			if err != nil {
+				return err
+			}
+			defer os.Remove(tempfile.Name())
 
+			if err := extensions.DownloadEntrypoint(args[0], tempfile.Name()); err != nil {
+				return err
+			}
+
+			entrypoint = tempfile.Name()
 		} else {
 			e, err := filepath.Abs(args[0])
 			if err != nil {
@@ -283,7 +294,7 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func LoadRootItems(oneliners map[string]string, extensionMap map[string]extensions.Extension) []types.ListItem {
+func LoadRootItems(oneliners map[string]config.Oneliner, extensionMap map[string]extensions.Extension) []types.ListItem {
 	var items []types.ListItem
 	for title, oneliner := range oneliners {
 		item := types.ListItem{
@@ -294,14 +305,15 @@ func LoadRootItems(oneliners map[string]string, extensionMap map[string]extensio
 				{
 					Title:   "Run",
 					Type:    types.ActionTypeExec,
-					Command: oneliner,
-					Exit:    true,
+					Command: oneliner.Command,
+					Dir:     oneliner.Dir,
+					Exit:    oneliner.Exit,
 				},
 				{
 					Title: "Copy Command",
 					Key:   "c",
 					Type:  types.ActionTypeCopy,
-					Text:  oneliner,
+					Text:  oneliner.Command,
 					Exit:  true,
 				},
 			},

@@ -5,7 +5,7 @@ outline: 2
 
 # Extension Catalog
 
-## [Mac Apps](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/macapps.sh)
+## [Mac Apps](https://github.com/pomdtr/sunbeam/tree/main/extensions/macapps.sh)
 
 Open your favorite apps
 
@@ -13,7 +13,21 @@ Open your favorite apps
 
 - `list`: List All Apps
 
-## [File Browser](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "macapps": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/macapps.sh"
+    }
+  }
+}
+```
+
+## [File Browser](https://github.com/pomdtr/sunbeam/tree/main/extensions/files.py)
 
 Browse files and folders
 
@@ -21,7 +35,21 @@ Browse files and folders
 
 - `ls`: List files
 
-## [Pipe Commands](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/pipe.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "files": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py"
+    }
+  }
+}
+```
+
+## [Pipe Commands](https://github.com/pomdtr/sunbeam/tree/main/extensions/pipe.ts)
 
 Pipe your clipboard through various commands
 
@@ -30,7 +58,21 @@ Pipe your clipboard through various commands
 - `urldecode`: URL Decode Clipboard
 - `urlencode`: URL Encode Clipboard
 
-## [Gists](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/gists.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "pipe": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/pipe.ts"
+    }
+  }
+}
+```
+
+## [Gists](https://github.com/pomdtr/sunbeam/tree/main/extensions/gists.ts)
 
 Manage your gists
 
@@ -43,7 +85,21 @@ Manage your gists
 - `edit`: Edit Gist File
 - `delete`: Delete Gist
 
-## [GitHub](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/github.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "gists": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/gists.ts"
+    }
+  }
+}
+```
+
+## [GitHub](https://github.com/pomdtr/sunbeam/tree/main/extensions/github.ts)
 
 Search GitHub repositories
 
@@ -54,7 +110,21 @@ Search GitHub repositories
 - `list-prs`: List Pull Requests
 - `view-readme`: View Readme
 
-## [Tailscale](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tailscale.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "github": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/github.ts"
+    }
+  }
+}
+```
+
+## [Tailscale](https://github.com/pomdtr/sunbeam/tree/main/extensions/tailscale.ts)
 
 Manage your tailscale devices
 
@@ -63,7 +133,21 @@ Manage your tailscale devices
 - `list-devices`: Search My Devices
 - `ssh-to-device`: SSH to Device
 
-## [Bitwarden Vault](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/bitwarden.sh)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "tailscale": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tailscale.ts"
+    }
+  }
+}
+```
+
+## [Bitwarden Vault](https://github.com/pomdtr/sunbeam/tree/main/extensions/bitwarden.sh)
 
 Search your Bitwarden passwords
 
@@ -71,7 +155,21 @@ Search your Bitwarden passwords
 
 - `list-passwords`: List Passwords
 
-## [VS Code](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/vscode.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "bitwarden": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/bitwarden.sh"
+    }
+  }
+}
+```
+
+## [VS Code](https://github.com/pomdtr/sunbeam/tree/main/extensions/vscode.ts)
 
 Manage your VS Code projects
 
@@ -79,7 +177,21 @@ Manage your VS Code projects
 
 - `list-projects`: List Projects
 
-## [Browse TLDR Pages](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tldr.sh)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "vscode": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/vscode.ts"
+    }
+  }
+}
+```
+
+## [Browse TLDR Pages](https://github.com/pomdtr/sunbeam/tree/main/extensions/tldr.sh)
 
 Browse TLDR Pages
 
@@ -89,7 +201,21 @@ Browse TLDR Pages
 - `view`: View page
 - `update`: Update cache
 
-## [Deno Deploy](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/deno-deploy.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "tldr": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tldr.sh"
+    }
+  }
+}
+```
+
+## [Deno Deploy](https://github.com/pomdtr/sunbeam/tree/main/extensions/deno-deploy.ts)
 
 Manage your Deno Deploy projects
 
@@ -99,7 +225,21 @@ Manage your Deno Deploy projects
 - `deployments`: List Deployments
 - `playground`: View Playground
 
-## [RSS](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/rss.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "deno-deploy": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/deno-deploy.ts"
+    }
+  }
+}
+```
+
+## [RSS](https://github.com/pomdtr/sunbeam/tree/main/extensions/rss.ts)
 
 Manage your RSS feeds
 
@@ -107,7 +247,21 @@ Manage your RSS feeds
 
 - `show`: Show a feed
 
-## [Hacker News](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/hackernews.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "rss": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/rss.ts"
+    }
+  }
+}
+```
+
+## [Hacker News](https://github.com/pomdtr/sunbeam/tree/main/extensions/hackernews.ts)
 
 Browse Hacker News
 
@@ -115,7 +269,21 @@ Browse Hacker News
 
 - `browse`: Show a feed
 
-## [DevDocs](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "hackernews": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/hackernews.ts"
+    }
+  }
+}
+```
+
+## [DevDocs](https://github.com/pomdtr/sunbeam/tree/main/extensions/devdocs.sh)
 
 Search DevDocs.io
 
@@ -124,7 +292,21 @@ Search DevDocs.io
 - `list-docsets`: List Docsets
 - `list-entries`: List Entries from Docset
 
-## [Raindrop](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/raindrop.ts)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "devdocs": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh"
+    }
+  }
+}
+```
+
+## [Raindrop](https://github.com/pomdtr/sunbeam/tree/main/extensions/raindrop.ts)
 
 Manage your raindrop bookmarks
 
@@ -132,10 +314,38 @@ Manage your raindrop bookmarks
 
 - `search-bookmarks`: Search Bookmarks
 
-## [Google Search](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh)
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "raindrop": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/raindrop.ts"
+    }
+  }
+}
+```
+
+## [Google Search](https://github.com/pomdtr/sunbeam/tree/main/extensions/google.sh)
 
 Search Google
 
 ### Commands
 
 - `search`: Search Google
+
+### Install
+
+Add the following snippet to your sunbeam config file:
+
+```json
+{
+  "extensions": {
+    "google": {
+      "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh"
+    }
+  }
+}
+```

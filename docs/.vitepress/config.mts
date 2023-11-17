@@ -77,11 +77,6 @@ export default defineConfig({
                 link: "/developer-guide/examples/google-search"
               }
             ]
-          },
-
-          {
-            text: "Publishing",
-            link: "/developer-guide/publishing"
           }
         ]
       },

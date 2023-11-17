@@ -10,7 +10,28 @@
             "description": "A list of commands that will be shown in the root list",
             "patternProperties": {
                 ".+": {
-                    "type": "string"
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "required": [
+                                "command"
+                            ],
+                            "properties": {
+                                "command": {
+                                    "type": "string"
+                                },
+                                "exit": {
+                                    "type": "boolean"
+                                },
+                                "dir": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
                 }
             }
         },

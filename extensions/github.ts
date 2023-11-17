@@ -256,6 +256,12 @@ async function run(payload: sunbeam.Payload) {
             format: "markdown",
             actions: [
                 {
+                    title: "Open in Browser",
+                    type: "open",
+                    target: data.html_url,
+                    exit: true
+                },
+                {
                     title: "List Issues",
                     key: "i",
                     type: "run",

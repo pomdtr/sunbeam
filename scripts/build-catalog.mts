@@ -31,7 +31,7 @@ for (const entry of entries) {
     }
     rows.push(
         "",
-        `## [${manifest.title}](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name})`,
+        `## [${manifest.title}](https://github.com/pomdtr/sunbeam/tree/main/extensions/${entry.name})`,
         "",
         `${manifest.description}`,
     )
@@ -47,6 +47,23 @@ for (const entry of entries) {
             `- \`${command.name}\`: ${command.title}`
         )
     }
+
+    rows.push(
+        "",
+        "### Install",
+        "",
+        "Add the following snippet to your sunbeam config file:",
+        "",
+        "```json",
+        JSON.stringify({
+            "extensions": {
+                [entry.name.split(".")[0]]: {
+                    "origin": `https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name}`,
+                }
+            }
+        }, null, 2),
+        "```"
+    )
 }
 
 console.log(rows.join("\n"))

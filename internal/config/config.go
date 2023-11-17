@@ -9,13 +9,41 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 )
 
 type Config struct {
-	Oneliners  map[string]string            `json:"oneliners,omitempty"`
+	Oneliners  map[string]Oneliner          `json:"oneliners,omitempty"`
 	Extensions map[string]extensions.Config `json:"extensions,omitempty"`
+}
+
+type Oneliner struct {
+	Command string `json:"exec"`
+	Dir     string `json:"dir,omitempty"`
+	Exit    bool   `json:"exit,omitempty"`
+}
+
+func (o *Oneliner) UnmarshalJSON(b []byte) error {
+	var exec string
+	if err := json.Unmarshal(b, &exec); err == nil {
+		o.Command = exec
+		o.Exit = true
+		return nil
+	}
+
+	var tmp map[string]any
+	if err := json.Unmarshal(b, &tmp); err != nil {
+		return fmt.Errorf("failed to unmarshal oneliner: %w", err)
+	}
+
+	if err := mapstructure.Decode(tmp, o); err != nil {
+		return fmt.Errorf("failed to decode oneliner: %w", err)
+	}
+
+	return nil
 }
 
 func (cfg Config) Aliases() []string {
@@ -27,20 +55,8 @@ func (cfg Config) Aliases() []string {
 	return aliases
 }
 
-func Dir() string {
-	if env, ok := os.LookupEnv("SUNBEAM_CONFIG_DIR"); ok {
-		return env
-	}
-
-	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
-		return filepath.Join(env, "sunbeam")
-	}
-
-	return filepath.Join(os.Getenv("HOME"), ".config", "sunbeam")
-}
-
 func Path() string {
-	configDir := Dir()
+	configDir := utils.ConfigDir()
 	if _, err := os.Stat(filepath.Join(configDir, "sunbeamrc")); err == nil {
 		return filepath.Join(configDir, "sunbeamrc")
 	}
@@ -70,7 +86,7 @@ func LoadBytes(configDir string) ([]byte, error) {
 }
 
 func Load() (Config, error) {
-	configDir := Dir()
+	configDir := utils.ConfigDir()
 	if err := os.MkdirAll(configDir, 0700); err != nil {
 		return Config{}, fmt.Errorf("failed to create config dir: %w", err)
 	}

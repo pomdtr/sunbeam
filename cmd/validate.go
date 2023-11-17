@@ -7,6 +7,7 @@ import (
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/spf13/cobra"
 )
@@ -131,7 +132,7 @@ func NewCmdValidateConfig() *cobra.Command {
 				}
 				inputBytes = b
 			} else {
-				b, err := config.LoadBytes(config.Dir())
+				b, err := config.LoadBytes(utils.ConfigDir())
 				if err != nil {
 					return err
 				}

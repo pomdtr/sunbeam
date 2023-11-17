@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/pomdtr/sunbeam/pkg/types"
 )
@@ -126,6 +128,10 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 	}
 
 	input.Preferences = e.Config.Preferences
+	if input.Preferences == nil {
+		input.Preferences = e.Manifest.Preferences
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -169,30 +175,109 @@ func SHA1(input string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func LoadExtension(config Config) (Extension, error) {
+func IsRemote(origin string) bool {
+	return strings.HasPrefix(origin, "http://") || strings.HasPrefix(origin, "https://")
+}
+
+func DownloadEntrypoint(origin string, target string) error {
+	resp, err := http.Get(origin)
+	if err != nil {
+		return fmt.Errorf("failed to download extension: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("failed to download extension: %s", resp.Status)
+	}
+
+	f, err := os.Create(target)
+	if err != nil {
+		return fmt.Errorf("failed to create entrypoint: %w", err)
+	}
+
+	if _, err := f.ReadFrom(resp.Body); err != nil {
+		return fmt.Errorf("failed to write entrypoint: %w", err)
+	}
+
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("failed to close entrypoint: %w", err)
+	}
+
+	if err := os.Chmod(target, 0755); err != nil {
+		return fmt.Errorf("failed to chmod entrypoint: %w", err)
+	}
+
+	return nil
+}
+
+func LoadRemoteExtension(config Config) (Extension, error) {
+	extensionDir := filepath.Join(ExtensionsDir(), SHA1(config.Origin))
+
+	entrypoint := filepath.Join(extensionDir, "entrypoint")
+	entrypointInfo, err := os.Stat(entrypoint)
+	if err != nil {
+		if err := os.MkdirAll(extensionDir, 0755); err != nil {
+			return Extension{}, fmt.Errorf("failed to create directory: %w", err)
+		}
+		if err := DownloadEntrypoint(config.Origin, entrypoint); err != nil {
+			return Extension{}, err
+		}
+	}
+
+	manifestPath := filepath.Join(extensionDir, "manifest.json")
+	manifestInfo, err := os.Stat(manifestPath)
+	if err != nil || entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
+		manifest, err := cacheManifest(entrypoint, manifestPath)
+		if err != nil {
+			return Extension{}, err
+		}
+
+		return Extension{
+			Manifest:   manifest,
+			Entrypoint: entrypoint,
+			Config:     config,
+		}, nil
+	}
+
+	manifestBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return Extension{}, fmt.Errorf("failed to read manifest: %w", err)
+	}
+
+	var manifest types.Manifest
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return Extension{}, fmt.Errorf("failed to decode manifest: %w", err)
+	}
+
+	return Extension{
+		Manifest:   manifest,
+		Entrypoint: entrypoint,
+		Config:     config,
+	}, nil
+}
+
+func LoadLocalExtension(config Config) (Extension, error) {
 	entrypoint := config.Origin
 	if strings.HasPrefix(entrypoint, "~") {
 		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
+	} else if !filepath.IsAbs(entrypoint) {
+		entrypoint = filepath.Join(utils.ConfigDir(), entrypoint)
 	}
 
 	entrypoint, err := filepath.Abs(entrypoint)
 	if err != nil {
-		return Extension{}, err
+		return Extension{}, fmt.Errorf("failed to get absolute path: %w", err)
 	}
 
 	entrypointInfo, err := os.Stat(entrypoint)
-	if err != nil {
-		if config.Install == "" {
-			return Extension{}, fmt.Errorf("entrypoint %s not found", entrypoint)
-		}
-
+	if err != nil && config.Install != "" {
 		if err := exec.Command("sh", "-c", config.Install).Run(); err != nil {
 			return Extension{}, fmt.Errorf("failed to install extension: %w", err)
 		}
 
 		info, err := os.Stat(entrypoint)
 		if err != nil {
-			return Extension{}, fmt.Errorf("entrypoint %s not found", entrypoint)
+			return Extension{}, fmt.Errorf("failed to stat entrypoint: %w", err)
 		}
 		entrypointInfo = info
 	}
@@ -213,13 +298,13 @@ func LoadExtension(config Config) (Extension, error) {
 		}, nil
 	}
 
-	var manifest types.Manifest
-	f, err := os.Open(manifestPath)
+	manifestBytes, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return Extension{}, fmt.Errorf("failed to open manifest: %w", err)
+		return Extension{}, fmt.Errorf("failed to read manifest: %w", err)
 	}
 
-	if err := json.NewDecoder(f).Decode(&manifest); err != nil {
+	var manifest types.Manifest
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
 		return Extension{}, fmt.Errorf("failed to decode manifest: %w", err)
 	}
 
@@ -228,6 +313,14 @@ func LoadExtension(config Config) (Extension, error) {
 		Entrypoint: entrypoint,
 		Config:     config,
 	}, nil
+}
+
+func LoadExtension(config Config) (Extension, error) {
+	if IsRemote(config.Origin) {
+		return LoadRemoteExtension(config)
+	}
+
+	return LoadLocalExtension(config)
 }
 
 func cacheManifest(entrypoint string, manifestPath string) (types.Manifest, error) {
@@ -254,23 +347,40 @@ func cacheManifest(entrypoint string, manifestPath string) (types.Manifest, erro
 }
 
 func Upgrade(extensionConfig Config) error {
+	manifestPath := filepath.Join(ExtensionsDir(), SHA1(extensionConfig.Origin), "manifest.json")
+	if IsRemote(extensionConfig.Origin) {
+		entrypoint := filepath.Join(ExtensionsDir(), SHA1(extensionConfig.Origin), "entrypoint")
+		if err := DownloadEntrypoint(extensionConfig.Origin, entrypoint); err != nil {
+			return err
+		}
+
+		if _, err := cacheManifest(entrypoint, manifestPath); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 	if extensionConfig.Upgrade != "" {
 		if err := exec.Command("sh", "-c", extensionConfig.Upgrade).Run(); err != nil {
-			return err
+			return fmt.Errorf("failed to upgrade extension: %w", err)
 		}
 	} else if extensionConfig.Install != "" {
 		if err := exec.Command("sh", "-c", extensionConfig.Install).Run(); err != nil {
-			return err
+			return fmt.Errorf("failed to install extension: %w", err)
 		}
 	}
 
-	sha := SHA1(extensionConfig.Origin)
-	manifestPath := filepath.Join(ExtensionsDir(), sha, "manifest.json")
-
-	if _, err := cacheManifest(extensionConfig.Origin, manifestPath); err != nil {
-		return err
+	entrypoint := extensionConfig.Origin
+	if strings.HasPrefix(entrypoint, "~") {
+		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
+	} else if !filepath.IsAbs(entrypoint) {
+		entrypoint = filepath.Join(utils.ConfigDir(), entrypoint)
 	}
 
+	if _, err := cacheManifest(entrypoint, manifestPath); err != nil {
+		return err
+	}
 	return nil
 }
 

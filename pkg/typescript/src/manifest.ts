@@ -4,6 +4,7 @@ export type Manifest = {
   title: string;
   description: string;
   items: RootItem[];
+  preferences?: Record<string, string | number | boolean | object>;
   commands: CommandSpec[];
 };
 
