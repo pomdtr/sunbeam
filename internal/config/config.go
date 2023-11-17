@@ -3,22 +3,18 @@ package config
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/pomdtr/sunbeam/internal/extensions"
-	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
-	"github.com/tailscale/hujson"
 )
 
-//go:embed sunbeam.json
-var configBytes []byte
-
 type Config struct {
-	Schema     string                       `json:"$schema,omitempty"`
-	Oneliners  map[string]Oneliner          `json:"oneliners,omitempty"`
+	Oneliners  map[string]string            `json:"oneliners,omitempty"`
 	Extensions map[string]extensions.Config `json:"extensions,omitempty"`
 }
 
@@ -31,79 +27,71 @@ func (cfg Config) Aliases() []string {
 	return aliases
 }
 
-type Oneliner struct {
-	Command string `json:"command"`
-	Cwd     string `json:"cwd"`
-	Exit    bool   `json:"exit"`
-}
-
-func (o *Oneliner) UnmarshalJSON(b []byte) error {
-	var s string
-	if err := json.Unmarshal(b, &s); err == nil {
-		o.Command = s
-		return nil
-	}
-
-	type Alias Oneliner
-	var alias Alias
-	if err := json.Unmarshal(b, &alias); err == nil {
-		o.Command = alias.Command
-		o.Cwd = alias.Cwd
-		o.Exit = alias.Exit
-		return nil
-	}
-
-	return fmt.Errorf("invalid oneliner: %s", string(b))
-}
-
-func Path() string {
-	if env, ok := os.LookupEnv("SUNBEAM_CONFIG"); ok {
+func Dir() string {
+	if env, ok := os.LookupEnv("SUNBEAM_CONFIG_DIR"); ok {
 		return env
 	}
 
-	if _, err := os.Stat(filepath.Join(utils.ConfigHome(), "config.jsonc")); err == nil {
-		return filepath.Join(utils.ConfigHome(), "sunbeam.jsonc")
+	if env, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
+		return filepath.Join(env, "sunbeam")
 	}
 
-	return filepath.Join(utils.ConfigHome(), "sunbeam.json")
+	return filepath.Join(os.Getenv("HOME"), ".config", "sunbeam")
+}
+
+func Path() string {
+	configDir := Dir()
+	if _, err := os.Stat(filepath.Join(configDir, "sunbeamrc")); err == nil {
+		return filepath.Join(configDir, "sunbeamrc")
+	}
+
+	return filepath.Join(configDir, "sunbeam.json")
+}
+
+//go:embed sunbeam.json
+var defaultConfigBytes []byte
+
+func LoadBytes(configDir string) ([]byte, error) {
+	if info, err := os.Stat(filepath.Join(configDir, "sunbeamrc")); err == nil {
+		configPath := filepath.Join(configDir, info.Name())
+		if err := os.Chmod(configPath, 0700); err != nil {
+			return nil, fmt.Errorf("failed to chmod config: %w", err)
+		}
+
+		return exec.Command(configPath).Output()
+	}
+
+	if info, err := os.Stat(filepath.Join(configDir, "sunbeam.json")); err == nil {
+		configPath := filepath.Join(configDir, info.Name())
+		return os.ReadFile(configPath)
+	}
+
+	return nil, fmt.Errorf("failed to load config: %w", os.ErrNotExist)
 }
 
 func Load() (Config, error) {
-	configPath := Path()
-	if _, err := os.Stat(configPath); err != nil {
-
-		if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
-			return Config{}, err
-		}
-
-		f, err := os.Create(configPath)
-		if err != nil {
-			return Config{}, err
-		}
-		defer f.Close()
-
-		if _, err := f.Write(configBytes); err != nil {
-			return Config{}, err
-		}
+	configDir := Dir()
+	if err := os.MkdirAll(configDir, 0700); err != nil {
+		return Config{}, fmt.Errorf("failed to create config dir: %w", err)
 	}
 
-	var configBytes []byte
-	configBytes, err := os.ReadFile(configPath)
-	if err != nil {
-		return Config{}, err
+	configBytes, err := LoadBytes(configDir)
+	if err != nil && errors.Is(err, os.ErrNotExist) {
+		if err := os.WriteFile(filepath.Join(configDir, "sunbeam.json"), defaultConfigBytes, 0600); err != nil {
+			return Config{}, fmt.Errorf("failed to write default config: %w", err)
+		}
+
+		configBytes = defaultConfigBytes
+	} else if err != nil {
+		return Config{}, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	jsonBytes, err := hujson.Standardize(configBytes)
-	if err != nil {
-		return Config{}, err
-	}
-
-	if err := schemas.ValidateConfig(jsonBytes); err != nil {
+	if err := schemas.ValidateConfig(configBytes); err != nil {
 		return Config{}, fmt.Errorf("invalid config: %w", err)
 	}
 
 	var config Config
-	if err := json.Unmarshal(jsonBytes, &config); err != nil {
+	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 

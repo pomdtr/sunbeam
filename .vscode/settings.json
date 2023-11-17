@@ -4,5 +4,8 @@
     "public": true,
   },
   "yaml.validate": false,
+  "deno.disablePaths": [
+    "./docs"
+  ],
   "deno.enable": true,
 }

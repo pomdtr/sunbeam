@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,11 +35,6 @@ type NonInteractiveOutput struct {
 }
 
 func NewRootCmd() (*cobra.Command, error) {
-	cfg, err := config.Load()
-	if err != nil {
-		return nil, err
-	}
-
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:                "sunbeam",
@@ -73,122 +67,6 @@ func NewRootCmd() (*cobra.Command, error) {
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 && (args[0] == "-h" || args[0] == "--help") {
-				return cmd.Help()
-			}
-
-			if len(args) == 0 {
-				rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, error) {
-					cfg, err := config.Load()
-					if err != nil {
-						return nil, nil, err
-					}
-
-					extensionMap := make(map[string]extensions.Extension)
-					for alias, extensionConfig := range cfg.Extensions {
-						extension, err := extensions.LoadExtension(extensionConfig)
-						if err != nil {
-							continue
-						}
-						extensionMap[alias] = extension
-					}
-
-					return extensionMap, RootItems(cfg.Oneliners, extensionMap), nil
-				})
-				return tui.Draw(rootList)
-			}
-
-			var scriptPath string
-			if strings.HasPrefix(args[0], "http://") || strings.HasPrefix(args[0], "https://") {
-				tempfile, err := os.CreateTemp("", "entrypoint-*")
-				if err != nil {
-					return err
-				}
-				defer os.Remove(tempfile.Name())
-
-				resp, err := http.Get(args[0])
-				if err != nil {
-					return err
-				}
-				defer resp.Body.Close()
-
-				if resp.StatusCode != http.StatusOK {
-					return fmt.Errorf("error downloading extension: %s", resp.Status)
-				}
-
-				if _, err := io.Copy(tempfile, resp.Body); err != nil {
-					return err
-				}
-
-				if err := tempfile.Close(); err != nil {
-					return err
-				}
-
-				if err := os.Chmod(tempfile.Name(), 0755); err != nil {
-					return err
-				}
-
-				scriptPath = tempfile.Name()
-			} else if args[0] == "-" {
-				tempfile, err := os.CreateTemp("", "entrypoint-*%s")
-				if err != nil {
-					return err
-				}
-				defer os.Remove(tempfile.Name())
-
-				if _, err := io.Copy(tempfile, os.Stdin); err != nil {
-					return err
-				}
-
-				if err := tempfile.Close(); err != nil {
-					return err
-				}
-
-				if err := tempfile.Chmod(0755); err != nil {
-					return err
-				}
-
-				scriptPath = tempfile.Name()
-			} else {
-				s, err := filepath.Abs(args[0])
-				if err != nil {
-					return err
-				}
-
-				if _, err := os.Stat(s); err != nil {
-					return fmt.Errorf("error loading extension: %w", err)
-				}
-
-				if err := os.Chmod(s, 0755); err != nil {
-					return err
-				}
-
-				scriptPath = s
-			}
-
-			manifest, err := extensions.ExtractManifest(scriptPath)
-			if err != nil {
-				return fmt.Errorf("error loading extension: %w", err)
-			}
-
-			extension := extensions.Extension{
-				Manifest:   manifest,
-				Entrypoint: scriptPath,
-				Config: extensions.Config{
-					Origin: scriptPath,
-				},
-			}
-
-			rootCmd, err := NewCmdCustom(filepath.Base(scriptPath), extension)
-			if err != nil {
-				return fmt.Errorf("error loading extension: %w", err)
-			}
-
-			rootCmd.Use = "extension"
-			rootCmd.SetArgs(args[1:])
-			return rootCmd.Execute()
-		},
 	}
 
 	rootCmd.AddGroup(&cobra.Group{
@@ -201,7 +79,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
-	rootCmd.AddCommand(NewCmdUpgrade(cfg))
 	rootCmd.AddCommand(NewCmdOpen())
 
 	docCmd := &cobra.Command{
@@ -258,18 +135,114 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extension Commands:",
 	})
 
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	rootCmd.AddCommand(NewCmdUpgrade(cfg))
+	extensionMap := make(map[string]extensions.Extension)
 	for alias, extensionConfig := range cfg.Extensions {
 		extension, err := extensions.LoadExtension(extensionConfig)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error loading extension %s: %s\n", alias, err)
 			continue
 		}
+		extensionMap[alias] = extension
 
 		command, err := NewCmdCustom(alias, extension)
 		if err != nil {
 			return nil, err
 		}
 		rootCmd.AddCommand(command)
+	}
+
+	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if len(args) > 0 && (args[0] == "-h" || args[0] == "--help") {
+			return cmd.Help()
+		}
+
+		if len(args) == 0 {
+			if len(LoadRootItems(cfg.Oneliners, extensionMap)) == 0 {
+				return cmd.Usage()
+			}
+
+			rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, error) {
+				cfg, err := config.Load()
+				if err != nil {
+					return nil, nil, err
+				}
+
+				extensionMap := make(map[string]extensions.Extension)
+				for alias, extensionConfig := range cfg.Extensions {
+					extension, err := extensions.LoadExtension(extensionConfig)
+					if err != nil {
+						continue
+					}
+					extensionMap[alias] = extension
+				}
+
+				return extensionMap, LoadRootItems(cfg.Oneliners, extensionMap), nil
+			})
+			return tui.Draw(rootList)
+		}
+
+		var entrypoint string
+		if args[0] == "-" {
+			tempfile, err := os.CreateTemp("", "entrypoint-*%s")
+			if err != nil {
+				return err
+			}
+			defer os.Remove(tempfile.Name())
+
+			if _, err := io.Copy(tempfile, os.Stdin); err != nil {
+				return err
+			}
+
+			if err := tempfile.Close(); err != nil {
+				return err
+			}
+
+			entrypoint = tempfile.Name()
+
+		} else {
+			e, err := filepath.Abs(args[0])
+			if err != nil {
+				return err
+			}
+
+			if _, err := os.Stat(e); err != nil {
+				return fmt.Errorf("error loading extension: %w", err)
+			}
+
+			entrypoint = e
+		}
+
+		if err := os.Chmod(entrypoint, 0755); err != nil {
+			return err
+		}
+
+		manifest, err := extensions.ExtractManifest(entrypoint)
+		if err != nil {
+			return fmt.Errorf("error loading extension: %w", err)
+		}
+
+		extension := extensions.Extension{
+			Manifest:   manifest,
+			Entrypoint: entrypoint,
+			Config: extensions.Config{
+				Origin: entrypoint,
+			},
+		}
+
+		rootCmd, err := NewCmdCustom(filepath.Base(entrypoint), extension)
+		if err != nil {
+			return fmt.Errorf("error loading extension: %w", err)
+		}
+
+		rootCmd.Use = "extension"
+		rootCmd.SetArgs(args[1:])
+		return rootCmd.Execute()
 	}
 
 	return rootCmd, nil
@@ -310,12 +283,9 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func RootItems(oneliners map[string]config.Oneliner, extensionMap map[string]extensions.Extension) []types.ListItem {
+func LoadRootItems(oneliners map[string]string, extensionMap map[string]extensions.Extension) []types.ListItem {
 	var items []types.ListItem
 	for title, oneliner := range oneliners {
-		if strings.HasPrefix(oneliner.Cwd, "~") {
-			oneliner.Cwd = strings.Replace(oneliner.Cwd, "~", os.Getenv("HOME"), 1)
-		}
 		item := types.ListItem{
 			Id:          fmt.Sprintf("root - %s", title),
 			Title:       title,
@@ -324,15 +294,15 @@ func RootItems(oneliners map[string]config.Oneliner, extensionMap map[string]ext
 				{
 					Title:   "Run",
 					Type:    types.ActionTypeExec,
-					Command: oneliner.Command,
-					Exit:    oneliner.Exit,
-					Dir:     oneliner.Cwd,
+					Command: oneliner,
+					Exit:    true,
 				},
 				{
 					Title: "Copy Command",
 					Key:   "c",
 					Type:  types.ActionTypeCopy,
-					Text:  oneliner.Command,
+					Text:  oneliner,
+					Exit:  true,
 				},
 			},
 		}

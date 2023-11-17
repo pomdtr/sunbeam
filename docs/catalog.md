@@ -9,10 +9,6 @@ outline: 2
 
 Open your favorite apps
 
-### Platform
-
-- `macos`
-
 ### Commands
 
 - `list`: List All Apps
@@ -20,10 +16,6 @@ Open your favorite apps
 ## [File Browser](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py)
 
 Browse files and folders
-
-### Requirements
-
-- [`python3`](https://www.python.org/)
 
 ### Commands
 
@@ -33,22 +25,27 @@ Browse files and folders
 
 Pipe your clipboard through various commands
 
-### Requirements
-
-- [`deno`](https://deno.com)
-
 ### Commands
 
 - `urldecode`: URL Decode Clipboard
 - `urlencode`: URL Encode Clipboard
 
+## [Gists](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/gists.ts)
+
+Manage your gists
+
+### Commands
+
+- `search`: Search Gists
+- `create`: Create Gist
+- `browse`: Browse Gist Files
+- `view`: View Gist File
+- `edit`: Edit Gist File
+- `delete`: Delete Gist
+
 ## [GitHub](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/github.ts)
 
 Search GitHub repositories
-
-### Requirements
-
-- [`deno`](https://deno.com)
 
 ### Commands
 
@@ -61,11 +58,6 @@ Search GitHub repositories
 
 Manage your tailscale devices
 
-### Requirements
-
-- [`deno`](https://deno.com)
-- [`tailscale`](https://tailscale.com)
-
 ### Commands
 
 - `list-devices`: Search My Devices
@@ -75,10 +67,6 @@ Manage your tailscale devices
 
 Search your Bitwarden passwords
 
-### Requirements
-
-- [`bw`](https://bitwarden.com/help/article/cli/)
-
 ### Commands
 
 - `list-passwords`: List Passwords
@@ -87,57 +75,33 @@ Search your Bitwarden passwords
 
 Manage your VS Code projects
 
-### Requirements
-
-- [`deno`](https://deno.com)
-
 ### Commands
 
 - `list-projects`: List Projects
-
-## [Meteo](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/meteo.sh)
-
-Show Meteo
-
-### Commands
-
-- `show`: Show Meteo
-
-## [System](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/system.sh)
-
-Control your system
-
-### Platform
-
-- `macos`
-
-### Commands
-
-- `toggle-dark-mode`: Toggle Dark Mode
-- `lock-screen`: Lock Screen
-- `empty-trash`: Empty Trash
-- `open-trash`: Open Trash
 
 ## [Browse TLDR Pages](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/tldr.sh)
 
 Browse TLDR Pages
 
-### Requirements
-
-- [`tldr`](https://dbrgn.github.io/tealdeer/installing.html)
-
 ### Commands
 
 - `list`: Search Pages
 - `view`: View page
+- `update`: Update cache
+
+## [Deno Deploy](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/deno-deploy.ts)
+
+Manage your Deno Deploy projects
+
+### Commands
+
+- `projects`: List Projects
+- `deployments`: List Deployments
+- `playground`: View Playground
 
 ## [RSS](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/rss.ts)
 
 Manage your RSS feeds
-
-### Requirements
-
-- [`deno`](https://deno.com)
 
 ### Commands
 
@@ -146,10 +110,6 @@ Manage your RSS feeds
 ## [Hacker News](https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/hackernews.ts)
 
 Browse Hacker News
-
-### Requirements
-
-- [`deno`](https://deno.com)
 
 ### Commands
 
@@ -168,10 +128,6 @@ Search DevDocs.io
 
 Manage your raindrop bookmarks
 
-### Requirements
-
-- [`deno`](https://deno.com)
-
 ### Commands
 
 - `search-bookmarks`: Search Bookmarks
@@ -182,4 +138,4 @@ Search Google
 
 ### Commands
 
-- `search`: Google Search
+- `search`: Search Google

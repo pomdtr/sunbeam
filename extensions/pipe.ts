@@ -7,12 +7,6 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Pipe Commands",
         description: "Pipe your clipboard through various commands",
-        requirements: [
-            {
-                name: "deno",
-                link: "https://deno.com"
-            }
-        ],
         items: [
             {
                 command: "urldecode",

@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"time"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -20,7 +19,6 @@ import (
 type RootList struct {
 	width, height int
 	title         string
-	history       History
 	err           *Detail
 	list          *List
 	form          *Form
@@ -30,19 +28,11 @@ type RootList struct {
 }
 
 func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, error)) *RootList {
-	history, err := LoadHistory(filepath.Join(utils.CacheHome(), "history.json"))
-	if err != nil {
-		history = History{
-			entries: make(map[string]int64),
-			path:    filepath.Join(utils.CacheHome(), "history.json"),
-		}
-	}
 	list := NewList()
 
 	return &RootList{
 		title:     title,
 		list:      list,
-		history:   history,
 		generator: generator,
 	}
 }
@@ -58,7 +48,6 @@ func (c *RootList) Reload() tea.Msg {
 	}
 
 	c.extensions = extensionMap
-	c.history.Sort(rootItems)
 	c.list.SetEmptyText("No items")
 	c.list.SetIsLoading(false)
 	c.list.SetItems(rootItems...)
@@ -121,16 +110,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, tea.Batch(c.list.SetIsLoading(true), c.Reload)
 		}
 	case types.Action:
-		selection, ok := c.list.Selection()
-		if !ok {
-			return c, nil
-		}
-
-		c.history.entries[selection.Id] = time.Now().Unix()
-		if err := c.history.Save(); err != nil {
-			return c, c.SetError(err)
-		}
-
 		switch msg.Type {
 		case types.ActionTypeRun:
 			extension, ok := c.extensions[msg.Extension]
@@ -141,10 +120,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			command, ok := extension.Command(msg.Command)
 			if !ok {
 				return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
-			}
-
-			if err := extension.CheckRequirements(); err != nil {
-				return c, PushPageCmd(NewErrorPage(err))
 			}
 
 			missing := FindMissingInputs(command.Inputs, msg.Params)

@@ -18,6 +18,7 @@ func NewCmdFetch() *cobra.Command {
 		data    string
 		user    string
 		agent   string
+		output  string
 	}{}
 	cmd := &cobra.Command{
 		Use:     "fetch <url> [body]",
@@ -98,7 +99,18 @@ func NewCmdFetch() *cobra.Command {
 			}
 			defer resp.Body.Close()
 
-			if _, err := io.Copy(os.Stdout, resp.Body); err != nil {
+			var output io.Writer
+			if flags.output != "" {
+				file, err := os.Create(flags.output)
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+			} else {
+				output = os.Stdout
+			}
+
+			if _, err := io.Copy(output, resp.Body); err != nil {
 				return err
 			}
 
@@ -115,6 +127,7 @@ func NewCmdFetch() *cobra.Command {
 	cmd.Flags().StringVarP(&flags.data, "data", "d", "", "HTTP body to send. Use @- to read from stdin, or @<file> to read from a file.")
 	cmd.Flags().StringVarP(&flags.user, "user", "u", "", "HTTP basic auth to use")
 	cmd.Flags().StringVarP(&flags.agent, "user-agent", "A", "", "HTTP user agent to use")
+	cmd.Flags().StringVarP(&flags.output, "output", "o", "", "Output file to write to")
 
 	return cmd
 }

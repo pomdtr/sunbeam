@@ -11,27 +11,28 @@ import (
 func NewCmdUpgrade(cfg config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:       "upgrade",
-		Short:     "Upgrade extensions",
+		Short:     "Upgrade sunbeam",
 		GroupID:   CommandGroupCore,
-		Args:      cobra.MatchAll(cobra.OnlyValidArgs, cobra.MaximumNArgs(1)),
 		ValidArgs: cfg.Aliases(),
+		Args:      cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				if _, ok := cfg.Extensions[args[0]]; !ok {
-					return fmt.Errorf("unknown extension: %s", args[0])
-				}
-			}
-
-			for alias, extensionConfig := range cfg.Extensions {
-				if len(args) > 0 && alias != args[0] {
+			for _, alias := range cfg.Aliases() {
+				if len(args) == 1 && alias != args[0] {
 					continue
 				}
 
-				if _, err := extensions.UpgradeExtension(extensionConfig); err != nil {
+				extensionConfig, ok := cfg.Extensions[alias]
+				if !ok {
+					return fmt.Errorf("extension %s not found", alias)
+				}
+
+				cmd.Printf("Upgrading %s\n", alias)
+				if err := extensions.Upgrade(extensionConfig); err != nil {
+					cmd.PrintErrf("Failed to upgrade %s: %s\n", alias, err)
 					return err
 				}
 
-				cmd.Printf("✅ Upgraded %s\n", alias)
+				fmt.Printf("Upgraded %s\n", alias)
 			}
 
 			return nil

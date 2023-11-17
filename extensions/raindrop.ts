@@ -5,12 +5,6 @@ if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
         title: "Raindrop",
         description: "Manage your raindrop bookmarks",
-        requirements: [
-            {
-                name: "deno",
-                link: "https://deno.com"
-            }
-        ],
         items: [
             { command: "search-bookmarks" }
         ],

@@ -6,6 +6,7 @@ import * as dates from "npm:date-fns"
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Deno Deploy",
+        description: "Manage your Deno Deploy projects",
         items: [
             { command: "projects" }
         ],

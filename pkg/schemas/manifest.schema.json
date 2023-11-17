@@ -3,41 +3,12 @@
     "type": "object",
     "required": [
         "title",
+        "description",
         "commands"
     ],
     "properties": {
-        "$schema": {
-            "type": "string"
-        },
         "title": {
             "type": "string"
-        },
-        "platforms": {
-            "type": "array",
-            "items": {
-                "enum": [
-                    "linux",
-                    "macos"
-                ]
-            }
-        },
-        "requirements": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "name",
-                    "link"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "link": {
-                        "type": "string"
-                    }
-                }
-            }
         },
         "description": {
             "type": "string"

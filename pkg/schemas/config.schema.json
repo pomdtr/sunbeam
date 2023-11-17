@@ -10,31 +10,7 @@
             "description": "A list of commands that will be shown in the root list",
             "patternProperties": {
                 ".+": {
-                    "oneOf": [
-                        {
-                            "type": "object",
-                            "required": [
-                                "command"
-                            ],
-                            "properties": {
-                                "command": {
-                                    "type": "string",
-                                    "description": "The command to run"
-                                },
-                                "cwd": {
-                                    "type": "string",
-                                    "description": "The working directory to run the command in"
-                                },
-                                "exit": {
-                                    "type": "boolean",
-                                    "description": "If true, sunbeam will close after running the command"
-                                }
-                            }
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ]
+                    "type": "string"
                 }
             }
         },
@@ -42,46 +18,45 @@
             "type": "object",
             "patternProperties": {
                 ".+": {
-                    "oneOf": [
-                        {
+                    "type": "object",
+                    "required": [
+                        "origin"
+                    ],
+                    "properties": {
+                        "origin": {
                             "type": "string"
                         },
-                        {
-                            "type": "object",
-                            "required": [
-                                "origin"
-                            ],
-                            "properties": {
-                                "origin": {
-                                    "type": "string"
-                                },
-                                "items": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "required": [
-                                            "title",
-                                            "command"
-                                        ],
-                                        "properties": {
-                                            "title": {
-                                                "type": "string"
-                                            },
-                                            "command": {
-                                                "type": "string"
-                                            },
-                                            "params": {
-                                                "$ref": "./params.schema.json"
-                                            }
-                                        }
+                        "preferences": {
+                            "type": "object"
+                        },
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "title",
+                                    "command"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "command": {
+                                        "type": "string"
+                                    },
+                                    "params": {
+                                        "$ref": "./params.schema.json"
                                     }
-                                },
-                                "preferences": {
-                                    "type": "object"
                                 }
                             }
+                        },
+                        "install": {
+                            "type": "string"
+                        },
+                        "upgrade": {
+                            "type": "string"
                         }
-                    ]
+                    }
                 }
             }
         }

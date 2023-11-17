@@ -299,9 +299,8 @@ Now that we have a working extension, we can install it by editing the `extensio
 Now we can run the extension from anywhere using the `sunbeam devdocs` command.
 
 ```console
-sunbeam dd --help
+sunbeam devdocs --help
 ```
 
-The search-docsets command will also appears in the root list (only commands without required parameters are shown in the root list).
 
 > ℹ️ The source code of this extension is available here: <https://github.com/pomdtr/sunbeam-devdocs/blob/main/sunbeam-extension>.

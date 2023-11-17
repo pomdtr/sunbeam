@@ -25,10 +25,10 @@ archives:
       - completions/*
 checksum:
   name_template: "checksums.txt"
+
 release:
   prerelease: auto
   extra_files:
-    - glob: pkg/schemas/manifest.schema.json
     - glob: pkg/schemas/config.schema.json
 
 snapshot:

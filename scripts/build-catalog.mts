@@ -36,34 +36,6 @@ for (const entry of entries) {
         `${manifest.description}`,
     )
 
-    if (manifest.platforms) {
-        rows.push(
-            "",
-            `### Platform`,
-            "",
-        )
-
-        for (const platform of manifest.platforms) {
-            rows.push(
-                `- \`${platform}\``
-            )
-        }
-    }
-
-    if (manifest.requirements?.length) {
-        rows.push(
-            "",
-            "### Requirements",
-            ""
-        )
-
-        for (const requirement of manifest.requirements) {
-            rows.push(
-                requirement.link ? `- [\`${requirement.name}\`](${requirement.link})` : `- \`${requirement.name}\``
-            )
-        }
-    }
-
     rows.push(
         "",
         "### Commands",

@@ -8,7 +8,7 @@ await build({
     shims: {},
     package: {
         // package.json properties
-        name: "sunbeam-types",
+        name: "sunbeam-sdk",
         version: Deno.readTextFileSync("./version.txt").trimEnd(),
         description: "Sunbeam Types",
         license: "MIT",

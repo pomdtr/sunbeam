@@ -14,8 +14,8 @@ var embedFS embed.FS
 var schemas map[string]*jsonschema.Schema
 
 var schemaUrls = []string{
-	"input.schema.json",
 	"params.schema.json",
+	"input.schema.json",
 	"action.schema.json",
 	"list.schema.json",
 	"detail.schema.json",

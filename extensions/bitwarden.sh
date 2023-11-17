@@ -13,11 +13,7 @@ if [ $# -eq 0 ]; then
                 title: "List Passwords",
                 mode: "list"
             }
-        ],
-        requirements: [
-            { name: "bw", link: "https://bitwarden.com/help/article/cli/" }
         ]
-
     }'
     exit 0
 fi

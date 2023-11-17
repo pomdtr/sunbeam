@@ -8,12 +8,6 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Hacker News",
         description: "Browse Hacker News",
-        requirements: [
-            {
-                name: "deno",
-                link: "https://deno.com"
-            }
-        ],
         items: [
             {
                 title: "Front Page",

@@ -5,16 +5,6 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Tailscale",
         description: "Manage your tailscale devices",
-        requirements: [
-            {
-                name: "deno",
-                link: "https://deno.com"
-            },
-            {
-                name: "tailscale",
-                link: "https://tailscale.com"
-            }
-        ],
         items: [
             { command: "list-devices", }
         ],

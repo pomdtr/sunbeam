@@ -2,8 +2,8 @@
 
 The config will be searched in the following locations:
 
-- `SUNBEAM_CONFIG` environment variable if set
-- `XDG_CONFIG_HOME/sunbeam/config.json` if `XDG_CONFIG_HOME` is set
+- `$SUNBEAM_CONFIG_DIR/sunbeamrc` if `$SUNBEAM_CONFIG_DIR` if set
+- `$XDG_CONFIG_HOME/sunbeam/sunbeamrc` if `XDG_CONFIG_HOME` is set
 - `$HOME/.config/sunbeam/config.json`
 
 If no config is found, sunbeam will create one.

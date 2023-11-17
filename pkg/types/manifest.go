@@ -1,12 +1,10 @@
 package types
 
 type Manifest struct {
-	Title        string        `json:"title"`
-	Platforms    []Platfom     `json:"platforms,omitempty"`
-	Description  string        `json:"description,omitempty"`
-	Requirements []Requirement `json:"requirements,omitempty"`
-	Items        []RootItem    `json:"items,omitempty"`
-	Commands     []CommandSpec `json:"commands"`
+	Title       string        `json:"title"`
+	Description string        `json:"description,omitempty"`
+	Items       []RootItem    `json:"items,omitempty"`
+	Commands    []CommandSpec `json:"commands"`
 }
 
 type RootItem struct {

@@ -9,12 +9,6 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "VS Code",
         description: "Manage your VS Code projects",
-        requirements: [
-            {
-                name: "deno",
-                link: "https://deno.com",
-            },
-        ],
         items: [{ command: "list-projects" }],
         commands: [
             {

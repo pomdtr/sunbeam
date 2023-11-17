@@ -9,21 +9,8 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "RSS",
         description: "Manage your RSS feeds",
-        items: [
-            { command: "list" }
-        ],
-        requirements: [
-            {
-                name: "deno",
-                link: "https://deno.com"
-            }
-        ],
+        items: [],
         commands: [
-            {
-                name: "list",
-                title: "Search Feeds",
-                mode: "list",
-            },
             {
                 name: "show",
                 title: "Show a feed",
@@ -36,20 +23,6 @@ if (Deno.args.length == 0) {
                         type: "text",
                     },
                 ],
-            },
-            {
-                name: "read",
-                title: "Read a feed article",
-                mode: "detail",
-                hidden: true,
-                params: [
-                    {
-                        name: "html",
-                        title: "HTML",
-                        required: true,
-                        type: "textarea",
-                    }
-                ]
             }
         ]
     };
@@ -59,36 +32,7 @@ if (Deno.args.length == 0) {
 }
 
 const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
-if (payload.command == "list") {
-    const feeds = payload.preferences.feeds as Record<string, string> || {};
-
-    const list: sunbeam.List = {
-        emptyText: "No feeds",
-        items: Object.entries(feeds).map(([title, url]) => ({
-            title,
-            subtitle: url,
-            actions: [
-                {
-                    title: "Show",
-                    type: "run",
-                    command: "show",
-                    params: {
-                        url
-                    },
-                },
-                {
-                    title: "Copy URL",
-                    type: "copy",
-                    key: "c",
-                    text: url,
-                    exit: true
-                }
-            ]
-        })),
-    }
-
-    console.log(JSON.stringify(list));
-} else if (payload.command == "show") {
+if (payload.command == "show") {
     const params = payload.params as { url: string };
     const feed = await new Parser().parseURL(params.url);
     const page: sunbeam.List = {
@@ -130,24 +74,4 @@ if (payload.command == "list") {
     }
 
     console.log(JSON.stringify(page));
-} else if (payload.command == "read") {
-    const html = payload.params.html as string;
-
-    const markdown = NodeHtmlMarkdown.translate(html)
-
-    const detail = {
-        text: markdown,
-        format: "markdown",
-        actions: [
-            {
-                title: "Copy",
-                type: "copy",
-                key: "c",
-                text: markdown,
-                exit: true
-            }
-        ]
-    } as sunbeam.Detail;
-
-    console.log(JSON.stringify(detail));
 }

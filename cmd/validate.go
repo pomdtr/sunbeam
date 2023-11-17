@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 	"github.com/spf13/cobra"
 )
@@ -20,6 +21,7 @@ func NewValidateCmd() *cobra.Command {
 	cmd.AddCommand(NewCmdValidateList())
 	cmd.AddCommand(NewCmdValidateDetail())
 	cmd.AddCommand(NewCmdValidateManifest())
+	cmd.AddCommand(NewCmdValidateConfig())
 
 	return cmd
 }
@@ -43,10 +45,10 @@ func NewCmdValidateList() *cobra.Command {
 			}
 
 			if err := schemas.ValidateList(input); err != nil {
-				return err
+				return fmt.Errorf("list is invalid: %s", err)
 			}
 
-			fmt.Println("✅ Input is valid!")
+			fmt.Println("✅ List is valid!")
 			return nil
 		},
 	}
@@ -71,10 +73,10 @@ func NewCmdValidateDetail() *cobra.Command {
 			}
 
 			if err := schemas.ValidateDetail(input); err != nil {
-				return err
+				return fmt.Errorf("detail is invalid: %s", err)
 			}
 
-			fmt.Println("✅ Input is valid!")
+			fmt.Println("✅ List is valid!")
 			return nil
 		},
 	}
@@ -100,10 +102,47 @@ func NewCmdValidateManifest() *cobra.Command {
 			}
 
 			if err := schemas.ValidateManifest(input); err != nil {
-				return err
+				return fmt.Errorf("manifest is invalid: %s", err)
 			}
 
-			fmt.Println("✅ Input is valid!")
+			fmt.Println("✅ Manifest is valid!")
+			return nil
+		},
+	}
+}
+
+func NewCmdValidateConfig() *cobra.Command {
+	return &cobra.Command{
+		Use:   "config",
+		Short: "Validate a config",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var inputBytes []byte
+			if len(args) > 0 {
+				b, err := os.ReadFile(args[0])
+				if err != nil {
+					return err
+				}
+				inputBytes = b
+			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
+				b, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+				inputBytes = b
+			} else {
+				b, err := config.LoadBytes(config.Dir())
+				if err != nil {
+					return err
+				}
+				inputBytes = b
+			}
+
+			if err := schemas.ValidateConfig(inputBytes); err != nil {
+				return fmt.Errorf("config is invalid: %s", err)
+			}
+
+			fmt.Println("✅ Config is valid!")
 			return nil
 		},
 	}

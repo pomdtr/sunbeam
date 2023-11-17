@@ -50,7 +50,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					alias: extension,
 				}
 
-				return extensionMap, RootItems(nil, extensionMap), nil
+				return extensionMap, LoadRootItems(nil, extensionMap), nil
 			})
 
 			return tui.Draw(rootList)
@@ -138,10 +138,6 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 }
 
 func runExtension(extension extensions.Extension, input types.Payload) error {
-	if err := extension.CheckRequirements(); err != nil {
-		return tui.Draw(tui.NewErrorPage(fmt.Errorf("missing requirements: %w", err)))
-	}
-
 	command, ok := extension.Command(input.Command)
 	if !ok {
 		return fmt.Errorf("command %s not found", input.Command)

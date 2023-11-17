@@ -26,7 +26,7 @@ if [ "$COMMAND" = "search" ]; then
     if [ "$QUERY" = "null" ]; then
         sunbeam query -n '{
             dynamic: true,
-            emptyText: "Type something to search",
+            emptyText: "Type anything to search",
         }'
         exit 0
     fi

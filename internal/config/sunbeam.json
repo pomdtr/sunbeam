@@ -12,7 +12,9 @@
                 }
             ]
         },
-        "google": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh"
+        "google": {
+            "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh"
+        }
     },
     "oneliners": {
         "Open Sunbeam Docs": "sunbeam open https://pomdtr.github.io/sunbeam/introduction"

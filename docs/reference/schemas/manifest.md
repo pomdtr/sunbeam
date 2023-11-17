@@ -19,11 +19,6 @@ It contains the title, description and the list of commands provided by the exte
       }
     }
   ],
-  // the list of commands required by the extension (optional)
-  "requirements": {
-    "name": "jq",
-    "link": "https://stedolan.github.io/jq/"
-  },
   // see input schema
   "preferences": [
     {
