@@ -49,14 +49,6 @@ if (payload.command == "show") {
                 : [],
             actions: [
                 {
-                    title: "Read",
-                    type: "run",
-                    command: "read",
-                    params: {
-                        html: item.content || item.contentSnippet || ""
-                    },
-                },
-                {
                     title: "Open in browser",
                     type: "open",
                     target: item.link || "",
