@@ -6,7 +6,8 @@ export type Manifest = {
   items: RootItem[];
   commands: CommandSpec[];
 };
-type RootItem = {
+
+export type RootItem = {
   command: string;
   title?: string;
   params?: Record<string, Param>;

@@ -1,36 +1,26 @@
-import { spawn } from 'node:child_process'
-import { Buffer } from 'node:buffer'
-
-export async function editor(options = {
-    extension: 'txt',
-    content: '',
-}) {
-    let extension = options.extension || "txt";
+export async function editor(extension: string, content?: string) {
     if (extension.startsWith(".")) {
         extension = extension.slice(1);
     }
 
-    const command = spawn("sunbeam", ["edit", "--extension", extension], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const command = new Deno.Command("sunbeam", {
+        args: ["edit", "--extension", extension],
+        stdin: "piped",
+        stdout: "piped",
+    })
 
-    const writer = command.stdin;
-    writer.write(Buffer.from(options.content || ""));
-    writer.end();
+    const process = await command.spawn();
 
-    const stdoutPromise = new Promise((resolve) => {
-        let output = '';
-        command.stdout.on('data', (data) => {
-            output += data.toString();
-        });
+    const writer = process.stdin.getWriter()
+    writer.write(new TextEncoder().encode(content || ""));
+    writer.releaseLock();
 
-        command.stdout.on('end', () => {
-            resolve(output);
-        });
-    });
+    await process.stdin.close();
 
-    const output = await stdoutPromise;
+    const { success, stdout } = await process.output();
+    if (!success) {
+        throw new Error("Editor failed");
+    }
 
-
-    return output;
+    return new TextDecoder().decode(stdout);
 }
