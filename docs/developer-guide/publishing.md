@@ -2,6 +2,22 @@
 
 ## Single File Extensions
 
+Single file extensions can be hosted anywhere, as long as they are accessible through a url.
+
+You install them by adding the following snippet to your sunbeam config file:
+
+```json
+{
+    "extensions": {
+        "<name>": {
+            "origin": "<url>"
+        }
+    }
+}
+```
+
+Here are some examples of where you can host your extension. The list is not exhaustive.
+
 ### Github Repositories
 
 Sunbeam extensions can be published as file in a github repository.
