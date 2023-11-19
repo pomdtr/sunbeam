@@ -4,19 +4,30 @@ before:
     - go mod tidy
     - rm -rf completions
     - mkdir completions
-    - sh -c 'go run . completion "bash" >./completions/{{ .ProjectName }}.bash'
-    - sh -c 'go run . completion "zsh" >./completions/{{ .ProjectName }}.zsh'
-    - sh -c 'go run . completion "fish" >./completions/{{ .ProjectName }}.fish'
+    - sh -c 'go run ./cmd/sunbeam/main.go completion "bash" >./completions/{{ .ProjectName }}.bash'
+    - sh -c 'go run ./cmd/sunbeam/main.go completion "zsh" >./completions/{{ .ProjectName }}.zsh'
+    - sh -c 'go run ./cmd/sunbeam/main.go completion "fish" >./completions/{{ .ProjectName }}.fish'
 changelog:
   skip: true
 builds:
-  - ldflags:
-      - -s -w -X github.com/pomdtr/sunbeam/cmd.Version={{.Version}} -X github.com/pomdtr/sunbeam/cmd.Date={{time "2006-01-02"}}
+  - main: ./cmd/sunbeam/main.go
+    binary: sunbeam
+    ldflags:
+      - s -w
+      - -X github.com/pomdtr/sunbeam/internal/cli.Version={{.Version}}
     env:
       - CGO_ENABLED=0
+      - GO111MODULE=on
     goos:
       - linux
       - darwin
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 7
 archives:
   - name_template: "{{ .Binary }}-{{ .Os }}_{{ .Arch }}"
     files:

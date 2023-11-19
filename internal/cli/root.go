@@ -19,7 +19,6 @@ import (
 
 var (
 	Version = "dev"
-	Date    = "unknown"
 )
 
 const (
@@ -133,7 +132,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Use:   "version",
 		Short: "Print the version number of sunbeam",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Sunbeam %s (%s)\n", Version, Date)
+			cmd.Println(Version)
 		},
 	}
 	rootCmd.AddCommand(versionCmd)
