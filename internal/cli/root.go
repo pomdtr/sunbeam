@@ -30,11 +30,6 @@ func IsSunbeamRunning() bool {
 	return len(os.Getenv("SUNBEAM")) > 0
 }
 
-type NonInteractiveOutput struct {
-	Extensions []extensions.Extension `json:"extensions"`
-	Items      []types.ListItem       `json:"items"`
-}
-
 //go:embed embed/sunbeam.json
 var configBytes []byte
 
