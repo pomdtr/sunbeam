@@ -257,6 +257,11 @@ func NewCmdExtensionRemove(cfg config.Config) *cobra.Command {
 				return fmt.Errorf("failed to save config: %w", err)
 			}
 
+			if len(args) == 1 {
+				cmd.Printf("✅ Removed %s\n", args[0])
+				return nil
+			}
+
 			cmd.Printf("✅ Removed %d extensions\n", len(args))
 			return nil
 		},

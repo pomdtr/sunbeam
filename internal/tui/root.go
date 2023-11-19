@@ -144,6 +144,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 					return msg
 				}, missingPreferences...)
+
+				c.form.SetSize(c.width, c.height)
+				return c, c.form.Init()
 			}
 
 			command, ok := extension.Command(msg.Command)

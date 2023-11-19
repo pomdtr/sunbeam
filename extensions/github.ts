@@ -16,7 +16,7 @@ if (Deno.args.length == 0) {
         preferences: [
             {
                 name: "token",
-                title: "GitHub Personal Access Token",
+                title: "Personal Access Token",
                 type: "text",
                 required: true
             }
