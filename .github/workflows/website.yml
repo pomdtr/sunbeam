@@ -31,9 +31,11 @@ jobs:
       id-token: write # This is required to allow the GitHub Action to authenticate with Deno Deploy.
       contents: read
     steps:
+      - name: Pwd
+        run: pwd
       - name: Deploy to Deno Deploy
         uses: denoland/deployctl@v1
         with:
           project: sunbeam # the name of the project on Deno Deploy
-          root: website
+          root: ./website
           entrypoint: ./main.ts # the entrypoint to deploy
