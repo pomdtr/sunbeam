@@ -12,8 +12,10 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	"github.com/pomdtr/sunbeam/internal/github"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -31,6 +33,7 @@ func NewCmdExtension(cfg config.Config) *cobra.Command {
 	cmd.AddCommand(NewCmdExtensionList(cfg))
 	cmd.AddCommand(NewCmdExtensionRemove(cfg))
 	cmd.AddCommand(NewCmdExtensionConfigure(cfg))
+	cmd.AddCommand(NewCmdExtensionPublish())
 
 	return cmd
 }
@@ -272,6 +275,74 @@ func NewCmdExtensionRemove(cfg config.Config) *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func NewCmdExtensionPublish() *cobra.Command {
+	var flags struct {
+		description string
+		public      bool
+		web         bool
+	}
+
+	cmd := &cobra.Command{
+		Use:   "publish <script>",
+		Short: "Publish a script as a github gist",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			filename := filepath.Base(args[0])
+			content, err := os.ReadFile(args[0])
+			if err != nil {
+				return fmt.Errorf("failed to read script: %w", err)
+			}
+
+			gist, err := github.CreateGist(filename, content, flags.description, flags.public)
+			if err != nil {
+				return fmt.Errorf("failed to publish script: %w", err)
+			}
+
+			if flags.web {
+				return utils.Open(fmt.Sprintf("https://gist.github.com/%s", gist.HtmlURL))
+			}
+
+			rawUrl := fmt.Sprintf("https://gist.githubusercontent.com/%s/%s/raw/%s", gist.Owner.Login, gist.ID, url.PathEscape(filename))
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				cmd.Print(rawUrl)
+				return nil
+			}
+
+			installCmd := fmt.Sprintf("sunbeam extension install %s", rawUrl)
+			var t tableprinter.TablePrinter
+			if isatty.IsTerminal(os.Stdout.Fd()) {
+				w, _, err := term.GetSize(int(os.Stdout.Fd()))
+				if err != nil {
+					return err
+				}
+				t = tableprinter.New(os.Stdout, true, w)
+			} else {
+				t = tableprinter.New(os.Stdout, false, 0)
+			}
+
+			t.AddField("Gist URL")
+			t.AddField(gist.HtmlURL)
+			t.EndRow()
+
+			t.AddField("Raw URL")
+			t.AddField(rawUrl)
+			t.EndRow()
+
+			t.AddField("Install Command")
+			t.AddField(installCmd)
+			t.EndRow()
+
+			return t.Render()
+		},
+	}
+
+	cmd.Flags().StringVarP(&flags.description, "description", "d", "", "description of the gist")
+	cmd.Flags().BoolVarP(&flags.public, "public", "p", false, "make the gist public")
+	cmd.Flags().BoolVarP(&flags.web, "web", "w", false, "open the gist in a browser")
+
+	return cmd
 }
 
 func NewCmdExtensionConfigure(cfg config.Config) *cobra.Command {
