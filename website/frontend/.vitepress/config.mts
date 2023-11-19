@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: 'Sunbeam',
-  outDir: '../static',
+  outDir: '../backend/static',
   head: [
     ['link', { rel: 'icon', href: '/favicon.png' }],
     ['meta', { property: 'og:type', content: 'website' }],
