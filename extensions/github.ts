@@ -1,6 +1,6 @@
 #!/usr/bin/env deno run -A
 
-import * as sunbeam from "npm:sunbeam-types@0.25.1"
+import * as sunbeam from "npm:sunbeam-sdk@0.2.1"
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 
 
@@ -11,6 +11,14 @@ if (Deno.args.length == 0) {
         items: [
             {
                 command: "search-repos"
+            }
+        ],
+        preferences: [
+            {
+                name: "token",
+                title: "GitHub Personal Access Token",
+                type: "text",
+                required: true
             }
         ],
         commands: [

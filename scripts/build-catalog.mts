@@ -36,6 +36,20 @@ for (const entry of entries) {
         `${manifest.description}`,
     )
 
+    if (manifest.preferences?.length) {
+        rows.push(
+            "",
+            "### Preferences",
+            ""
+        )
+
+        for (const preference of manifest.preferences) {
+            rows.push(
+                `- \`${preference.name}\`: ${preference.title}`
+            )
+        }
+    }
+
     rows.push(
         "",
         "### Commands",
@@ -43,6 +57,7 @@ for (const entry of entries) {
     )
 
     for (const command of manifest.commands) {
+        if (command.hidden) continue
         rows.push(
             `- \`${command.name}\`: ${command.title}`
         )
@@ -52,16 +67,8 @@ for (const entry of entries) {
         "",
         "### Install",
         "",
-        "Add the following snippet to your sunbeam config file:",
-        "",
-        "```json",
-        JSON.stringify({
-            "extensions": {
-                [entry.name.split(".")[0]]: {
-                    "origin": `https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name}`,
-                }
-            }
-        }, null, 2),
+        "```",
+        `sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name}`,
         "```"
     )
 }

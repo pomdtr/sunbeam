@@ -1,49 +1,37 @@
 package config
 
 import (
-	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/schemas"
 )
 
+var Path string
+
+func init() {
+	if env, ok := os.LookupEnv("SUNBEAM_CONFIG_FILE"); ok {
+		Path = env
+	} else {
+		Path = filepath.Join(utils.ConfigDir(), "sunbeam.json")
+	}
+}
+
 type Config struct {
-	Oneliners  map[string]Oneliner          `json:"oneliners,omitempty"`
+	Oneliners  []Oneliner                   `json:"oneliners,omitempty"`
 	Extensions map[string]extensions.Config `json:"extensions,omitempty"`
+	path       string                       `json:"-"`
 }
 
 type Oneliner struct {
-	Command string `json:"exec"`
+	Title   string `json:"title,omitempty"`
+	Command string `json:"command"`
 	Dir     string `json:"dir,omitempty"`
 	Exit    bool   `json:"exit,omitempty"`
-}
-
-func (o *Oneliner) UnmarshalJSON(b []byte) error {
-	var exec string
-	if err := json.Unmarshal(b, &exec); err == nil {
-		o.Command = exec
-		o.Exit = true
-		return nil
-	}
-
-	var tmp map[string]any
-	if err := json.Unmarshal(b, &tmp); err != nil {
-		return fmt.Errorf("failed to unmarshal oneliner: %w", err)
-	}
-
-	if err := mapstructure.Decode(tmp, o); err != nil {
-		return fmt.Errorf("failed to decode oneliner: %w", err)
-	}
-
-	return nil
 }
 
 func (cfg Config) Aliases() []string {
@@ -55,50 +43,9 @@ func (cfg Config) Aliases() []string {
 	return aliases
 }
 
-func Path() string {
-	configDir := utils.ConfigDir()
-	if _, err := os.Stat(filepath.Join(configDir, "sunbeamrc")); err == nil {
-		return filepath.Join(configDir, "sunbeamrc")
-	}
-
-	return filepath.Join(configDir, "sunbeam.json")
-}
-
-//go:embed sunbeam.json
-var defaultConfigBytes []byte
-
-func LoadBytes(configDir string) ([]byte, error) {
-	if info, err := os.Stat(filepath.Join(configDir, "sunbeamrc")); err == nil {
-		configPath := filepath.Join(configDir, info.Name())
-		if err := os.Chmod(configPath, 0700); err != nil {
-			return nil, fmt.Errorf("failed to chmod config: %w", err)
-		}
-
-		return exec.Command(configPath).Output()
-	}
-
-	if info, err := os.Stat(filepath.Join(configDir, "sunbeam.json")); err == nil {
-		configPath := filepath.Join(configDir, info.Name())
-		return os.ReadFile(configPath)
-	}
-
-	return nil, fmt.Errorf("failed to load config: %w", os.ErrNotExist)
-}
-
-func Load() (Config, error) {
-	configDir := utils.ConfigDir()
-	if err := os.MkdirAll(configDir, 0700); err != nil {
-		return Config{}, fmt.Errorf("failed to create config dir: %w", err)
-	}
-
-	configBytes, err := LoadBytes(configDir)
-	if err != nil && errors.Is(err, os.ErrNotExist) {
-		if err := os.WriteFile(filepath.Join(configDir, "sunbeam.json"), defaultConfigBytes, 0600); err != nil {
-			return Config{}, fmt.Errorf("failed to write default config: %w", err)
-		}
-
-		configBytes = defaultConfigBytes
-	} else if err != nil {
+func Load(configPath string) (Config, error) {
+	configBytes, err := os.ReadFile(configPath)
+	if err != nil {
 		return Config{}, fmt.Errorf("failed to load config: %w", err)
 	}
 
@@ -110,6 +57,20 @@ func Load() (Config, error) {
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+	config.path = configPath
 
 	return config, nil
+}
+
+func (c Config) Save() error {
+	bts, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	if err := os.WriteFile(c.path, bts, 0600); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+
+	return nil
 }

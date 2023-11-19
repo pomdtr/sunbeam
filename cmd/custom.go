@@ -9,14 +9,14 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/types"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
-
+func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig extensions.Config) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
 		Use:     alias,
 		Short:   extension.Manifest.Title,
@@ -39,18 +39,23 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 					return err
 				}
 				if input.Preferences == nil {
-					input.Preferences = extension.Config.Preferences
+					input.Preferences = extensionConfig.Preferences
 				}
 
 				return runExtension(extension, input)
 			}
 
-			rootList := tui.NewRootList(extension.Manifest.Title, func() (extensions.ExtensionMap, []types.ListItem, error) {
-				extensionMap := map[string]extensions.Extension{
-					alias: extension,
+			rootList := tui.NewRootList(extension.Manifest.Title, func() (config.Config, []types.ListItem, error) {
+				cfg, err := config.Load(config.Path)
+				if err != nil {
+					return config.Config{}, nil, err
 				}
 
-				return extensionMap, LoadRootItems(nil, extensionMap), nil
+				listItems := extractListItems(config.Config{
+					Extensions: cfg.Extensions,
+				}, map[string]extensions.Extension{alias: extension})
+
+				return cfg, listItems, nil
 			})
 
 			return tui.Draw(rootList)
@@ -71,7 +76,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				params := make(map[string]any)
 
-				for _, param := range command.Inputs {
+				for _, param := range command.Params {
 					if !cmd.Flags().Changed(param.Name) {
 						continue
 					}
@@ -99,8 +104,9 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				}
 
 				input := types.Payload{
-					Command: command.Name,
-					Params:  params,
+					Command:     command.Name,
+					Preferences: extensionConfig.Preferences,
+					Params:      params,
 				}
 
 				if !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -116,7 +122,7 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 			},
 		}
 
-		for _, input := range command.Inputs {
+		for _, input := range command.Params {
 			switch input.Type {
 			case types.InputText, types.InputTextArea, types.InputPassword:
 				cmd.Flags().String(input.Name, "", input.Title)

@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import type * as sunbeam from "npm:sunbeam-types@0.25.1"
+import type * as sunbeam from "npm:sunbeam-sdk@0.2.1"
 import * as dates from "npm:date-fns"
 
 if (Deno.args.length == 0) {
@@ -9,6 +9,14 @@ if (Deno.args.length == 0) {
         description: "Manage your Deno Deploy projects",
         items: [
             { command: "projects" }
+        ],
+        preferences: [
+            {
+                name: "token",
+                title: "Access Token",
+                type: "text",
+                required: true
+            }
         ],
         commands: [
             {

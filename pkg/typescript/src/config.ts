@@ -1,10 +1,12 @@
 import type { RootItem } from "./manifest.ts"
 export type Config = {
-    oneliners: Record<string, string | Oneliner>;
-    extensions: Record<string, ExtensionConfig>;
+    $schema?: string;
+    oneliners?: Oneliner[];
+    extensions?: Record<string, ExtensionConfig>;
 }
 
 export type Oneliner = {
+    title: string;
     command: string;
     exit?: boolean;
     dir?: string;
@@ -12,8 +14,7 @@ export type Oneliner = {
 
 export type ExtensionConfig = {
     origin: string;
+    preferences?: Record<string, string | number | boolean>;
     items?: RootItem[];
-    install?: string;
-    update?: string;
 }
 

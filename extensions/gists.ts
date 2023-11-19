@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import type * as sunbeam from "npm:sunbeam-types@0.25.1"
+import type * as sunbeam from "npm:sunbeam-sdk@0.2.1"
 import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 
 if (Deno.args.length == 0) {
@@ -10,6 +10,14 @@ if (Deno.args.length == 0) {
         items: [
             { command: "search" },
             { command: "create" }
+        ],
+        preferences: [
+            {
+                name: "token",
+                title: "GitHub Personal Access Token",
+                type: "text",
+                required: true
+            }
         ],
         commands: [
             {

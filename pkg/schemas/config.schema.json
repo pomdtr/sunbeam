@@ -6,32 +6,27 @@
             "type": "string"
         },
         "oneliners": {
-            "type": "object",
+            "type": "array",
             "description": "A list of commands that will be shown in the root list",
-            "patternProperties": {
-                ".+": {
-                    "oneOf": [
-                        {
-                            "type": "object",
-                            "required": [
-                                "command"
-                            ],
-                            "properties": {
-                                "command": {
-                                    "type": "string"
-                                },
-                                "exit": {
-                                    "type": "boolean"
-                                },
-                                "dir": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        {
-                            "type": "string"
-                        }
-                    ]
+            "items": {
+                "type": "object",
+                "required": [
+                    "title",
+                    "command"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "command": {
+                        "type": "string"
+                    },
+                    "exit": {
+                        "type": "boolean"
+                    },
+                    "dir": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -70,12 +65,6 @@
                                     }
                                 }
                             }
-                        },
-                        "install": {
-                            "type": "string"
-                        },
-                        "upgrade": {
-                            "type": "string"
                         }
                     }
                 }

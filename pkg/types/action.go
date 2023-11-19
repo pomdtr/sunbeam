@@ -98,10 +98,8 @@ type Application struct {
 
 type Payload struct {
 	Command     string         `json:"command"`
-	Preferences Preferences    `json:"preferences"`
+	Preferences map[string]any `json:"preferences"`
 	Params      map[string]any `json:"params"`
 	Cwd         string         `json:"cwd"`
 	Query       string         `json:"query,omitempty"`
 }
-
-type Preferences map[string]any

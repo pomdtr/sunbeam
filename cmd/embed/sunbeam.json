@@ -16,7 +16,10 @@
             "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh"
         }
     },
-    "oneliners": {
-        "Open Sunbeam Docs": "sunbeam open https://pomdtr.github.io/sunbeam/introduction"
-    }
+    "oneliners": [
+        {
+            "title": "Open Sunbeam Docs",
+            "command": "sunbeam open https://pomdtr.github.io/sunbeam/introduction"
+        }
+    ]
 }

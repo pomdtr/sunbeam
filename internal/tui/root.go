@@ -11,6 +11,7 @@ import (
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/types"
@@ -23,11 +24,11 @@ type RootList struct {
 	list          *List
 	form          *Form
 
-	extensions extensions.ExtensionMap
-	generator  func() (extensions.ExtensionMap, []types.ListItem, error)
+	config    config.Config
+	generator func() (config.Config, []types.ListItem, error)
 }
 
-func NewRootList(title string, generator func() (extensions.ExtensionMap, []types.ListItem, error)) *RootList {
+func NewRootList(title string, generator func() (config.Config, []types.ListItem, error)) *RootList {
 	list := NewList()
 
 	return &RootList{
@@ -42,12 +43,12 @@ func (c *RootList) Init() tea.Cmd {
 }
 
 func (c *RootList) Reload() tea.Msg {
-	extensionMap, rootItems, err := c.generator()
+	cfg, rootItems, err := c.generator()
 	if err != nil {
 		return err
 	}
 
-	c.extensions = extensionMap
+	c.config = cfg
 	c.list.SetEmptyText("No items")
 	c.list.SetIsLoading(false)
 	c.list.SetItems(rootItems...)
@@ -112,9 +113,37 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case types.Action:
 		switch msg.Type {
 		case types.ActionTypeRun:
-			extension, ok := c.extensions[msg.Extension]
-			if !ok {
-				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
+			extensionConfig := c.config.Extensions[msg.Extension]
+			extension, err := extensions.LoadExtension(extensionConfig.Origin)
+			if err != nil {
+				return c, c.SetError(fmt.Errorf("failed to load extension: %w", err))
+			}
+
+			preferences := make(map[string]types.Param)
+			for name, preference := range extensionConfig.Preferences {
+				preferences[name] = types.Param{
+					Value: preference,
+				}
+			}
+
+			missingPreferences := FindMissingInputs(extension.Manifest.Preferences, preferences)
+			for _, preference := range missingPreferences {
+				if !preference.Required {
+					continue
+				}
+
+				c.form = NewForm(func(values map[string]any) tea.Msg {
+					for k, v := range values {
+						extensionConfig.Preferences[k] = v
+					}
+
+					c.config.Extensions[msg.Extension] = extensionConfig
+					if err := c.config.Save(); err != nil {
+						return err
+					}
+
+					return msg
+				}, missingPreferences...)
 			}
 
 			command, ok := extension.Command(msg.Command)
@@ -122,8 +151,8 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
 			}
 
-			missing := FindMissingInputs(command.Inputs, msg.Params)
-			for _, param := range missing {
+			missingParams := FindMissingInputs(command.Params, msg.Params)
+			for _, param := range missingParams {
 				if !param.Required {
 					continue
 				}
@@ -149,7 +178,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						Exit:      msg.Exit,
 						Reload:    msg.Reload,
 					}
-				}, missing...)
+				}, missingParams...)
 
 				c.form.SetSize(c.width, c.height)
 				return c, c.form.Init()
@@ -157,8 +186,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.form = nil
 
 			input := types.Payload{
-				Command: command.Name,
-				Params:  make(map[string]any),
+				Command:     command.Name,
+				Params:      make(map[string]any),
+				Preferences: extensionConfig.Preferences,
 			}
 
 			for k, v := range msg.Params {

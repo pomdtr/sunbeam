@@ -6,10 +6,7 @@
       "type": "go",
       "request": "launch",
       "console": "integratedTerminal",
-      "program": "${workspaceFolder}",
-      "args": [
-        "upgrade"
-      ]
+      "program": "${workspaceFolder}"
     },
   ],
 }

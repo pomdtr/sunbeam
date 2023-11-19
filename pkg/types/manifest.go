@@ -1,17 +1,25 @@
 package types
 
 type Manifest struct {
-	Title       string         `json:"title"`
-	Description string         `json:"description,omitempty"`
-	Preferences map[string]any `json:"preferences,omitempty"`
-	Items       []RootItem     `json:"items,omitempty"`
-	Commands    []CommandSpec  `json:"commands"`
+	Title       string        `json:"title"`
+	Description string        `json:"description,omitempty"`
+	Preferences []Input       `json:"preferences,omitempty"`
+	Items       []RootItem    `json:"items,omitempty"`
+	Commands    []CommandSpec `json:"commands"`
 }
 
 type RootItem struct {
 	Title   string           `json:"title,omitempty"`
 	Command string           `json:"command"`
 	Params  map[string]Param `json:"params,omitempty"`
+}
+
+type CommandSpec struct {
+	Name   string      `json:"name"`
+	Title  string      `json:"title"`
+	Hidden bool        `json:"hidden,omitempty"`
+	Params []Input     `json:"params,omitempty"`
+	Mode   CommandMode `json:"mode,omitempty"`
 }
 
 type Platfom string
@@ -24,14 +32,6 @@ const (
 type Requirement struct {
 	Name string `json:"name"`
 	Link string `json:"link,omitempty"`
-}
-
-type CommandSpec struct {
-	Name   string      `json:"name"`
-	Title  string      `json:"title"`
-	Hidden bool        `json:"hidden,omitempty"`
-	Inputs []Input     `json:"params,omitempty"`
-	Mode   CommandMode `json:"mode,omitempty"`
 }
 
 type CommandMode string

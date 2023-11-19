@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,15 +33,12 @@ func (e ExtensionMap) List() []Extension {
 type Extension struct {
 	Manifest   types.Manifest
 	Entrypoint string `json:"entrypoint"`
-	Config     Config `json:"config"`
 }
 
 type Config struct {
-	Origin      string            `json:"origin,omitempty"`
-	Preferences types.Preferences `json:"preferences,omitempty"`
-	Install     string            `json:"install,omitempty"`
-	Upgrade     string            `json:"upgrade,omitempty"`
-	Items       []types.RootItem  `json:"items,omitempty"`
+	Origin      string           `json:"origin,omitempty"`
+	Preferences map[string]any   `json:"preferences,omitempty"`
+	Items       []types.RootItem `json:"items,omitempty"`
 }
 
 func ExtensionsDir() string {
@@ -79,7 +77,6 @@ func (e Extension) Root() []types.RootItem {
 	rootItems := make([]types.RootItem, 0)
 	var items []types.RootItem
 	items = append(items, e.Manifest.Items...)
-	items = append(items, e.Config.Items...)
 
 	for _, rootItem := range items {
 		command, ok := e.Command(rootItem.Command)
@@ -123,13 +120,41 @@ func (e Extension) Cmd(input types.Payload) (*exec.Cmd, error) {
 }
 
 func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.Cmd, error) {
+	if input.Preferences == nil {
+		input.Preferences = make(map[string]any)
+	}
+
+	for _, spec := range e.Manifest.Preferences {
+		if _, ok := input.Preferences[spec.Name]; ok {
+			continue
+		}
+
+		if spec.Required {
+			return nil, fmt.Errorf("missing required preference %s", spec.Name)
+		}
+
+		input.Preferences[spec.Name] = spec.Default
+	}
+
+	command, ok := e.Command(input.Command)
+	if !ok {
+		return nil, fmt.Errorf("command %s not found", input.Command)
+	}
+
 	if input.Params == nil {
 		input.Params = make(map[string]any)
 	}
 
-	input.Preferences = e.Config.Preferences
-	if input.Preferences == nil {
-		input.Preferences = e.Manifest.Preferences
+	for _, spec := range command.Params {
+		if _, ok := input.Params[spec.Name]; ok {
+			continue
+		}
+
+		if spec.Required {
+			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
+		}
+
+		input.Params[spec.Name] = spec.Default
 	}
 
 	cwd, err := os.Getwd()
@@ -137,25 +162,6 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 		return nil, err
 	}
 	input.Cwd = cwd
-
-	command, ok := e.Command(input.Command)
-	if !ok {
-		return nil, fmt.Errorf("command %s not found", input.Command)
-	}
-
-	for _, spec := range command.Inputs {
-		if !spec.Required {
-			if spec.Default != nil {
-				input.Params[spec.Name] = spec.Default
-			}
-
-			continue
-		}
-		_, ok := input.Params[spec.Name]
-		if !ok {
-			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
-		}
-	}
 
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
@@ -210,16 +216,20 @@ func DownloadEntrypoint(origin string, target string) error {
 	return nil
 }
 
-func LoadRemoteExtension(config Config) (Extension, error) {
-	extensionDir := filepath.Join(ExtensionsDir(), SHA1(config.Origin))
+func LoadRemoteExtension(origin string) (Extension, error) {
+	originUrl, err := url.Parse(origin)
+	if err != nil {
+		return Extension{}, fmt.Errorf("failed to parse origin: %w", err)
+	}
 
-	entrypoint := filepath.Join(extensionDir, "entrypoint")
+	extensionDir := filepath.Join(ExtensionsDir(), SHA1(origin))
+	entrypoint := filepath.Join(extensionDir, filepath.Base(originUrl.Path))
 	entrypointInfo, err := os.Stat(entrypoint)
 	if err != nil {
 		if err := os.MkdirAll(extensionDir, 0755); err != nil {
 			return Extension{}, fmt.Errorf("failed to create directory: %w", err)
 		}
-		if err := DownloadEntrypoint(config.Origin, entrypoint); err != nil {
+		if err := DownloadEntrypoint(origin, entrypoint); err != nil {
 			return Extension{}, err
 		}
 	}
@@ -235,7 +245,6 @@ func LoadRemoteExtension(config Config) (Extension, error) {
 		return Extension{
 			Manifest:   manifest,
 			Entrypoint: entrypoint,
-			Config:     config,
 		}, nil
 	}
 
@@ -252,12 +261,11 @@ func LoadRemoteExtension(config Config) (Extension, error) {
 	return Extension{
 		Manifest:   manifest,
 		Entrypoint: entrypoint,
-		Config:     config,
 	}, nil
 }
 
-func LoadLocalExtension(config Config) (Extension, error) {
-	entrypoint := config.Origin
+func LoadLocalExtension(origin string) (Extension, error) {
+	entrypoint := origin
 	if strings.HasPrefix(entrypoint, "~") {
 		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
 	} else if !filepath.IsAbs(entrypoint) {
@@ -270,19 +278,11 @@ func LoadLocalExtension(config Config) (Extension, error) {
 	}
 
 	entrypointInfo, err := os.Stat(entrypoint)
-	if err != nil && config.Install != "" {
-		if err := exec.Command("sh", "-c", config.Install).Run(); err != nil {
-			return Extension{}, fmt.Errorf("failed to install extension: %w", err)
-		}
-
-		info, err := os.Stat(entrypoint)
-		if err != nil {
-			return Extension{}, fmt.Errorf("failed to stat entrypoint: %w", err)
-		}
-		entrypointInfo = info
+	if err != nil {
+		return Extension{}, err
 	}
 
-	sha := SHA1(config.Origin)
+	sha := SHA1(origin)
 	manifestPath := filepath.Join(ExtensionsDir(), sha, "manifest.json")
 	manifestInfo, err := os.Stat(manifestPath)
 	if err != nil || entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
@@ -294,7 +294,6 @@ func LoadLocalExtension(config Config) (Extension, error) {
 		return Extension{
 			Manifest:   manifest,
 			Entrypoint: entrypoint,
-			Config:     config,
 		}, nil
 	}
 
@@ -311,16 +310,15 @@ func LoadLocalExtension(config Config) (Extension, error) {
 	return Extension{
 		Manifest:   manifest,
 		Entrypoint: entrypoint,
-		Config:     config,
 	}, nil
 }
 
-func LoadExtension(config Config) (Extension, error) {
-	if IsRemote(config.Origin) {
-		return LoadRemoteExtension(config)
+func LoadExtension(origin string) (Extension, error) {
+	if IsRemote(origin) {
+		return LoadRemoteExtension(origin)
 	}
 
-	return LoadLocalExtension(config)
+	return LoadLocalExtension(origin)
 }
 
 func cacheManifest(entrypoint string, manifestPath string) (types.Manifest, error) {
@@ -359,16 +357,6 @@ func Upgrade(extensionConfig Config) error {
 		}
 
 		return nil
-	}
-
-	if extensionConfig.Upgrade != "" {
-		if err := exec.Command("sh", "-c", extensionConfig.Upgrade).Run(); err != nil {
-			return fmt.Errorf("failed to upgrade extension: %w", err)
-		}
-	} else if extensionConfig.Install != "" {
-		if err := exec.Command("sh", "-c", extensionConfig.Install).Run(); err != nil {
-			return fmt.Errorf("failed to install extension: %w", err)
-		}
 	}
 
 	entrypoint := extensionConfig.Origin

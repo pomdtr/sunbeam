@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -33,6 +34,9 @@ type NonInteractiveOutput struct {
 	Extensions []extensions.Extension `json:"extensions"`
 	Items      []types.ListItem       `json:"items"`
 }
+
+//go:embed embed/sunbeam.json
+var configBytes []byte
 
 func NewRootCmd() (*cobra.Command, error) {
 	// rootCmd represents the base command when called without any subcommands
@@ -135,22 +139,32 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extension Commands:",
 	})
 
-	cfg, err := config.Load()
+	if _, err := os.Stat(config.Path); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(config.Path), 0755); err != nil {
+			return nil, err
+		}
+
+		if err := os.WriteFile(config.Path, []byte(configBytes), 0644); err != nil {
+			return nil, err
+		}
+	}
+
+	cfg, err := config.Load(config.Path)
 	if err != nil {
 		return nil, err
 	}
+	rootCmd.AddCommand(NewCmdExtension(cfg))
 
-	rootCmd.AddCommand(NewCmdUpgrade(cfg))
 	extensionMap := make(map[string]extensions.Extension)
 	for alias, extensionConfig := range cfg.Extensions {
-		extension, err := extensions.LoadExtension(extensionConfig)
+		extension, err := extensions.LoadExtension(extensionConfig.Origin)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error loading extension %s: %s\n", alias, err)
 			continue
 		}
 		extensionMap[alias] = extension
 
-		command, err := NewCmdCustom(alias, extension)
+		command, err := NewCmdCustom(alias, extension, extensionConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -163,26 +177,26 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		}
 
 		if len(args) == 0 {
-			if len(LoadRootItems(cfg.Oneliners, extensionMap)) == 0 {
+			if len(extractListItems(cfg, extensionMap)) == 0 {
 				return cmd.Usage()
 			}
 
-			rootList := tui.NewRootList("Sunbeam", func() (extensions.ExtensionMap, []types.ListItem, error) {
-				cfg, err := config.Load()
+			rootList := tui.NewRootList("Sunbeam", func() (config.Config, []types.ListItem, error) {
+				cfg, err := config.Load(config.Path)
 				if err != nil {
-					return nil, nil, err
+					return config.Config{}, nil, err
 				}
 
 				extensionMap := make(map[string]extensions.Extension)
 				for alias, extensionConfig := range cfg.Extensions {
-					extension, err := extensions.LoadExtension(extensionConfig)
+					extension, err := extensions.LoadExtension(extensionConfig.Origin)
 					if err != nil {
 						continue
 					}
 					extensionMap[alias] = extension
 				}
 
-				return extensionMap, LoadRootItems(cfg.Oneliners, extensionMap), nil
+				return cfg, extractListItems(cfg, extensionMap), nil
 			})
 			return tui.Draw(rootList)
 		}
@@ -238,15 +252,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			return fmt.Errorf("error loading extension: %w", err)
 		}
 
-		extension := extensions.Extension{
+		rootCmd, err := NewCmdCustom(filepath.Base(entrypoint), extensions.Extension{
 			Manifest:   manifest,
 			Entrypoint: entrypoint,
-			Config: extensions.Config{
-				Origin: entrypoint,
-			},
-		}
-
-		rootCmd, err := NewCmdCustom(filepath.Base(entrypoint), extension)
+		}, extensions.Config{
+			Origin: entrypoint,
+		})
 		if err != nil {
 			return fmt.Errorf("error loading extension: %w", err)
 		}
@@ -294,12 +305,12 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func LoadRootItems(oneliners map[string]config.Oneliner, extensionMap map[string]extensions.Extension) []types.ListItem {
+func extractListItems(cfg config.Config, extensionMap map[string]extensions.Extension) []types.ListItem {
 	var items []types.ListItem
-	for title, oneliner := range oneliners {
+	for _, oneliner := range cfg.Oneliners {
 		item := types.ListItem{
-			Id:          fmt.Sprintf("root - %s", title),
-			Title:       title,
+			Id:          fmt.Sprintf("oneliner - %s", oneliner.Command),
+			Title:       oneliner.Title,
 			Accessories: []string{"Oneliner"},
 			Actions: []types.Action{
 				{
@@ -322,41 +333,33 @@ func LoadRootItems(oneliners map[string]config.Oneliner, extensionMap map[string
 		items = append(items, item)
 	}
 
-	for alias, extension := range extensionMap {
-		items = append(items, ExtensionRootItems(alias, extension)...)
-	}
-
-	return items
-}
-
-func ExtensionRootItems(alias string, extension extensions.Extension) []types.ListItem {
-	var items []types.ListItem
-	for _, rootItem := range extension.Root() {
-		listItem := types.ListItem{
-			Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
-			Title:       rootItem.Title,
-			Accessories: []string{extension.Manifest.Title},
-			Actions: []types.Action{
-				{
-					Title:     "Run",
-					Type:      types.ActionTypeRun,
-					Extension: alias,
-					Command:   rootItem.Command,
-					Params:    rootItem.Params,
-					Exit:      true,
-				},
-			},
+	for alias, extensionConfig := range cfg.Extensions {
+		extension, ok := extensionMap[alias]
+		if !ok {
+			continue
 		}
 
-		listItem.Actions = append(listItem.Actions, types.Action{
-			Title:  "Copy Origin",
-			Key:    "c",
-			Type:   types.ActionTypeCopy,
-			Target: extension.Config.Origin,
-			Exit:   true,
-		})
+		var rootItems []types.RootItem
+		rootItems = append(rootItems, extension.Root()...)
+		rootItems = append(rootItems, extensionConfig.Items...)
 
-		items = append(items, listItem)
+		for _, rootItem := range rootItems {
+			items = append(items, types.ListItem{
+				Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
+				Title:       rootItem.Title,
+				Accessories: []string{extension.Manifest.Title},
+				Actions: []types.Action{
+					{
+						Title:     "Run",
+						Type:      types.ActionTypeRun,
+						Extension: alias,
+						Command:   rootItem.Command,
+						Params:    rootItem.Params,
+						Exit:      true,
+					},
+				},
+			})
+		}
 	}
 
 	return items

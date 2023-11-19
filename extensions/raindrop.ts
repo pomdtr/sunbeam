@@ -1,10 +1,18 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "npm:sunbeam-types@0.25.1"
+import * as sunbeam from "npm:sunbeam-sdk@0.2.1"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
         title: "Raindrop",
         description: "Manage your raindrop bookmarks",
+        preferences: [
+            {
+                name: "token",
+                title: "Raindrop API Token",
+                type: "text",
+                required: true,
+            }
+        ],
         items: [
             { command: "search-bookmarks" }
         ],
