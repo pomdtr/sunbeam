@@ -345,9 +345,15 @@ func cacheManifest(entrypoint string, manifestPath string) (types.Manifest, erro
 }
 
 func Upgrade(extensionConfig Config) error {
-	manifestPath := filepath.Join(ExtensionsDir(), SHA1(extensionConfig.Origin), "manifest.json")
+	extensionDir := filepath.Join(ExtensionsDir(), SHA1(extensionConfig.Origin))
+	manifestPath := filepath.Join(extensionDir, "manifest.json")
 	if IsRemote(extensionConfig.Origin) {
-		entrypoint := filepath.Join(ExtensionsDir(), SHA1(extensionConfig.Origin), "entrypoint")
+		originUrl, err := url.Parse(extensionConfig.Origin)
+		if err != nil {
+			return fmt.Errorf("failed to parse origin: %w", err)
+		}
+
+		entrypoint := filepath.Join(ExtensionsDir(), SHA1(extensionConfig.Origin), filepath.Base(originUrl.Path))
 		if err := DownloadEntrypoint(extensionConfig.Origin, entrypoint); err != nil {
 			return err
 		}
