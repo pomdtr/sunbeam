@@ -3,6 +3,9 @@ on:
   workflow_dispatch:
 jobs:
   build-and-deploy:
+    permissions:
+      id-token: write # This is required to allow the GitHub Action to authenticate with Deno Deploy.
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
