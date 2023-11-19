@@ -20,7 +20,6 @@ func (i ListItem) ID() string {
 
 func (i ListItem) FilterValue() string {
 	keywords := []string{i.Title, i.Subtitle}
-	keywords = append(keywords, i.Accessories...)
 	return strings.Join(keywords, " ")
 }
 

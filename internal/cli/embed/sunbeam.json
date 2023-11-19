@@ -14,6 +14,9 @@
         },
         "google": {
             "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh"
+        },
+        "oneliners": {
+            "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/oneliners.py"
         }
     },
     "oneliners": [
