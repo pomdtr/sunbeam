@@ -11,7 +11,7 @@ if (!githubToken) {
 
 const app = new Hono()
 
-app.get('/install', async (c) => {
+app.get('/install.sh', async (c) => {
     let tag = c.req.query("tag");
     if (!tag) {
         const resp = await fetch("https://api.github.com/repos/pomdtr/sunbeam/releases", {

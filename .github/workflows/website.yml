@@ -18,10 +18,14 @@ jobs:
         with:
           node-version: 18
           cache-dependency-path: website/frontend/package-lock.json
+      - name: Install Node dependencies
+        working-directory: website/frontend
+        run: npm install
       - name: Build website
         working-directory: website/frontend
         run: npm run build
   deploy:
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       id-token: write # This is required to allow the GitHub Action to authenticate with Deno Deploy.
