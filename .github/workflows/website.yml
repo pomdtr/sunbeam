@@ -2,7 +2,7 @@ name: Build and Deploy Website
 on:
   workflow_dispatch:
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,18 +24,9 @@ jobs:
       - name: Build website
         working-directory: website/frontend
         run: npm run build
-  deploy:
-    needs: [build]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write # This is required to allow the GitHub Action to authenticate with Deno Deploy.
-      contents: read
-    steps:
-      - name: Pwd
-        run: pwd
       - name: Deploy to Deno Deploy
         uses: denoland/deployctl@v1
         with:
           project: sunbeam # the name of the project on Deno Deploy
-          root: ./website
-          entrypoint: ./main.ts # the entrypoint to deploy
+          root: website
+          entrypoint: main.ts # the entrypoint to deploy
