@@ -144,6 +144,21 @@ Browse Hacker News
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/hackernews.ts
 ```
 
+## [Oneliners](https://github.com/pomdtr/sunbeam/tree/main/extensions/oneliners.py)
+
+Manage your oneliners
+
+### Commands
+
+- `add`: Create Oneliner
+- `manage`: Manage Oneliners
+
+### Install
+
+```
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/oneliners.py
+```
+
 ## [Pipe Commands](https://github.com/pomdtr/sunbeam/tree/main/extensions/pipe.ts)
 
 Pipe your clipboard through various commands

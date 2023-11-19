@@ -86,37 +86,6 @@ async function run(payload: sunbeam.Payload) {
                         }]
                     }
 
-                    if (project.type == "git") {
-                        const repo = project.git.repository
-                        item.actions?.push({
-                            title: "List Deployments",
-                            type: "run",
-                            command: "deployments",
-                            params: {
-                                project: project.name,
-                            }
-                        }, {
-                            title: "Open Repository",
-                            type: "open",
-                            target: `https://github.com/${repo.owner}/${repo.name}`,
-                            exit: true,
-                        })
-                    } else if (project.type == "playground") {
-                        item.actions?.push({
-                            title: "View Playground",
-                            type: "run",
-                            command: "playground",
-                            params: {
-                                project: project.name,
-                            }
-                        }, {
-                            title: "Open Playground",
-                            type: "open",
-                            target: `https://dash.deno.com/playground/${project.id}`,
-                            exit: true,
-                        })
-                    }
-
                     if (project.hasProductionDeployment) {
                         const domains = project.productionDeployment.deployment.domainMappings
                         const domain = domains.length ? domains[domains.length - 1].domain : "No domain"
