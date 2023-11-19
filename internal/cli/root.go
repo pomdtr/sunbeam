@@ -11,6 +11,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/spf13/cobra"
@@ -179,11 +180,12 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		}
 
 		if len(args) == 0 {
-			if len(extractListItems(cfg, extensionMap)) == 0 {
-				return cmd.Usage()
+			history, err := history.Load(history.Path)
+			if err != nil {
+				return err
 			}
 
-			rootList := tui.NewRootList("Sunbeam", func() (config.Config, []types.ListItem, error) {
+			rootList := tui.NewRootList("Sunbeam", history, func() (config.Config, []types.ListItem, error) {
 				cfg, err := config.Load(config.Path)
 				if err != nil {
 					return config.Config{}, nil, err

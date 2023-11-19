@@ -41,14 +41,6 @@ type Config struct {
 	Items       []types.RootItem `json:"items,omitempty"`
 }
 
-func ExtensionsDir() string {
-	if env, ok := os.LookupEnv("XDG_CACHE_HOME"); ok {
-		return filepath.Join(env, "sunbeam", "extensions")
-	}
-
-	return filepath.Join(os.Getenv("HOME"), ".cache", "sunbeam", "extensions")
-}
-
 type Preferences map[string]any
 
 type Metadata struct {
@@ -222,7 +214,7 @@ func LoadRemoteExtension(origin string) (Extension, error) {
 		return Extension{}, fmt.Errorf("failed to parse origin: %w", err)
 	}
 
-	extensionDir := filepath.Join(ExtensionsDir(), SHA1(origin))
+	extensionDir := filepath.Join(utils.CacheDir(), "extensions", SHA1(origin))
 	entrypoint := filepath.Join(extensionDir, filepath.Base(originUrl.Path))
 	entrypointInfo, err := os.Stat(entrypoint)
 	if err != nil {
@@ -283,7 +275,7 @@ func LoadLocalExtension(origin string) (Extension, error) {
 	}
 
 	sha := SHA1(origin)
-	manifestPath := filepath.Join(ExtensionsDir(), sha, "manifest.json")
+	manifestPath := filepath.Join(utils.CacheDir(), "extensions", sha, "manifest.json")
 	manifestInfo, err := os.Stat(manifestPath)
 	if err != nil || entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
 		manifest, err := cacheManifest(entrypoint, manifestPath)
@@ -345,7 +337,7 @@ func cacheManifest(entrypoint string, manifestPath string) (types.Manifest, erro
 }
 
 func Upgrade(extensionConfig Config) error {
-	extensionDir := filepath.Join(ExtensionsDir(), SHA1(extensionConfig.Origin))
+	extensionDir := filepath.Join(utils.CacheDir(), "extensions", SHA1(extensionConfig.Origin))
 	manifestPath := filepath.Join(extensionDir, "manifest.json")
 	if IsRemote(extensionConfig.Origin) {
 		originUrl, err := url.Parse(extensionConfig.Origin)
@@ -353,7 +345,7 @@ func Upgrade(extensionConfig Config) error {
 			return fmt.Errorf("failed to parse origin: %w", err)
 		}
 
-		entrypoint := filepath.Join(ExtensionsDir(), SHA1(extensionConfig.Origin), filepath.Base(originUrl.Path))
+		entrypoint := filepath.Join(utils.CacheDir(), "extensions", SHA1(extensionConfig.Origin), filepath.Base(originUrl.Path))
 		if err := DownloadEntrypoint(extensionConfig.Origin, entrypoint); err != nil {
 			return err
 		}

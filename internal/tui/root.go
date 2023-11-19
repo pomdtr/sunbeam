@@ -13,6 +13,7 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
 )
@@ -25,14 +26,16 @@ type RootList struct {
 	form          *Form
 
 	config    config.Config
+	history   history.History
 	generator func() (config.Config, []types.ListItem, error)
 }
 
-func NewRootList(title string, generator func() (config.Config, []types.ListItem, error)) *RootList {
+func NewRootList(title string, history history.History, generator func() (config.Config, []types.ListItem, error)) *RootList {
 	list := NewList()
 
 	return &RootList{
 		title:     title,
+		history:   history,
 		list:      list,
 		generator: generator,
 	}
@@ -51,6 +54,7 @@ func (c *RootList) Reload() tea.Msg {
 	c.config = cfg
 	c.list.SetEmptyText("No items")
 	c.list.SetIsLoading(false)
+	c.history.Sort(rootItems)
 	c.list.SetItems(rootItems...)
 	return nil
 }
@@ -111,6 +115,15 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, tea.Batch(c.list.SetIsLoading(true), c.Reload)
 		}
 	case types.Action:
+		selection, ok := c.list.Selection()
+		if !ok {
+			return c, nil
+		}
+		c.history.Update(selection.Id)
+		if err := c.history.Save(); err != nil {
+			return c, c.SetError(err)
+		}
+
 		switch msg.Type {
 		case types.ActionTypeRun:
 			extensionConfig := c.config.Extensions[msg.Extension]
