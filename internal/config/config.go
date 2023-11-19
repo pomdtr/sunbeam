@@ -14,7 +14,7 @@ import (
 var Path string
 
 func init() {
-	if env, ok := os.LookupEnv("SUNBEAM_CONFIG_FILE"); ok {
+	if env, ok := os.LookupEnv("SUNBEAM_CONFIG"); ok {
 		Path = env
 	} else {
 		Path = filepath.Join(utils.ConfigDir(), "sunbeam.json")

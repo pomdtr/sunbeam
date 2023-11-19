@@ -2,7 +2,7 @@
 
 The config will be searched in the following locations in order:
 
-- `$SUNBEAM_CONFIG_FILE`
+- `$SUNBEAM_CONFIG`
 - `$XDG_CONFIG_HOME/sunbeam/sunbeam.json` if `XDG_CONFIG_HOME` is set
 - `$HOME/.config/sunbeam/config.json`
 
