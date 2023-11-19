@@ -22,7 +22,17 @@
     "oneliners": [
         {
             "title": "Open Sunbeam Docs",
-            "command": "sunbeam open https://pomdtr.github.io/sunbeam/introduction"
+            "command": "sunbeam open https://sunbeam.deno.dev/docs",
+            "exit": true
+        },
+        {
+            "title": "Open Sunbeam Repo",
+            "command": "sunbeam open https://github.com/pomdtr/sunbeam",
+            "exit": true
+        },
+        {
+            "title": "Clipboard Editor",
+            "command": "sunbeam paste | sunbeam edit | sunbeam copy"
         }
     ]
 }
