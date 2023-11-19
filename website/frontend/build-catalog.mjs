@@ -1,7 +1,6 @@
-#!/usr/bin/env deno run -A
-
-import * as path from "https://deno.land/std@0.205.0/path/mod.ts";
-import * as sunbeam from "../pkg/typescript/src/manifest.ts";
+import fs from "fs/promises"
+import path from "path"
+import { spawnSync } from "child_process"
 
 const dirname = new URL(".", import.meta.url).pathname;
 const rows = []
@@ -15,19 +14,24 @@ rows.push(
     "# Extension Catalog"
 )
 
-const extensionDir = path.join(dirname, "..", "extensions");
-const entries = Deno.readDirSync(extensionDir);
+const extensionDir = path.join(dirname, "..", "..", "extensions");
+const entries = await fs.readdir(extensionDir, { withFileTypes: true });
 for (const entry of entries) {
     const entrypoint = path.join(extensionDir, entry.name);
-    const command = new Deno.Command(entrypoint)
-    const { stdout } = await command.output()
+    const { stdout, status } = spawnSync(entrypoint, {
+        encoding: "utf-8",
+    })
+    if (status !== 0) {
+        console.error(`Failed to run entrypoint for ${entry.name}`)
+        process.exit(1)
+    }
 
-    let manifest: sunbeam.Manifest
+    let manifest
     try {
-        manifest = JSON.parse(new TextDecoder().decode(stdout));
+        manifest = JSON.parse(stdout);
     } catch (_) {
         console.error(`Failed to parse manifest for ${entry.name}`)
-        Deno.exit(1)
+        process.exit(1)
     }
     rows.push(
         "",
@@ -73,4 +77,4 @@ for (const entry of entries) {
     )
 }
 
-console.log(rows.join("\n"))
+await fs.writeFile(path.join(dirname, "catalog.md"), rows.join("\n"))

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
@@ -95,7 +96,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 				return err
 			}
 
-			fmt.Printf("# CLI\n\n%s\n", doc)
+			fmt.Print(heredoc.Docf(`---
+			outline: 2
+			---
+
+			# Cli
+
+			%s
+			`, doc))
 			return nil
 		},
 	}
@@ -347,7 +355,8 @@ func extractListItems(cfg config.Config, extensionMap map[string]extensions.Exte
 			items = append(items, types.ListItem{
 				Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
 				Title:       rootItem.Title,
-				Accessories: []string{extension.Manifest.Title},
+				Subtitle:    extension.Manifest.Title,
+				Accessories: []string{"Command"},
 				Actions: []types.Action{
 					{
 						Title:     "Run",

@@ -1,4 +1,4 @@
-#!/usr/bin/env deno run -A
+#!/usr/bin/env -S deno run -A
 import * as sunbeam from "npm:sunbeam-types@0.25.1"
 import * as clipboard from "https://deno.land/x/copy_paste@v1.1.3/mod.ts";
 

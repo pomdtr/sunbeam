@@ -1,9 +1,8 @@
-#!/usr/bin/env deno run -A
+#!/usr/bin/env -S deno run -A
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
 import * as sunbeam from "npm:sunbeam-types@0.25.1"
-import { NodeHtmlMarkdown } from "npm:node-html-markdown"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {

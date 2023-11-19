@@ -8,7 +8,7 @@ Here is a non-exhaustive list of integrations. If you have an integration you wo
 
 ### Alacritty
 
-![](../assets/alacritty.jpeg)
+![](../../assets/alacritty.jpeg)
 
 [Alacritty](https://github.com/alacritty/alacritty) is a cross-platform terminal emulator.
 
@@ -72,7 +72,7 @@ Binding this command to a key is not supported yet, as zellij [does not support 
 
 ### Visual Studio Code
 
-![](../assets/vscode.png)
+![](../../assets/vscode.png)
 
 Run the `Tasks: Open User Tasks` item from the command palette, then paste the following text:
 

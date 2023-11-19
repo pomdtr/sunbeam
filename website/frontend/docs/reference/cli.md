@@ -1,4 +1,8 @@
-# CLI
+---
+outline: 2
+---
+
+# Cli
 
 ## sunbeam
 
@@ -222,6 +226,121 @@ sunbeam edit [file] [flags]
   -h, --help               help for edit
 ```
 
+## sunbeam extension
+
+Manage sunbeam extensions
+
+### Options
+
+```
+  -h, --help   help for extension
+```
+
+## sunbeam extension configure
+
+Configure extension preferences
+
+```
+sunbeam extension configure <alias> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for configure
+```
+
+## sunbeam extension help
+
+Help about any command
+
+### Synopsis
+
+Help provides help for any command in the application.
+Simply type extension help [path to command] for full details.
+
+```
+sunbeam extension help [command] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for help
+```
+
+## sunbeam extension install
+
+Install sunbeam extensions
+
+```
+sunbeam extension install <origin> [flags]
+```
+
+### Options
+
+```
+      --alias string   alias for extension
+  -h, --help           help for install
+```
+
+## sunbeam extension list
+
+List sunbeam extensions
+
+```
+sunbeam extension list [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for list
+```
+
+## sunbeam extension remove
+
+Remove sunbeam extensions
+
+```
+sunbeam extension remove <alias> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for remove
+```
+
+## sunbeam extension rename
+
+Rename sunbeam extensions
+
+```
+sunbeam extension rename <alias> <new-alias> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for rename
+```
+
+## sunbeam extension upgrade
+
+Upgrade sunbeam extensions
+
+```
+sunbeam extension upgrade [flags]
+```
+
+### Options
+
+```
+      --all    upgrade all extensions
+  -h, --help   help for upgrade
+```
+
 ## sunbeam fetch
 
 Simple http client inspired by curl
@@ -237,6 +356,7 @@ sunbeam fetch <url> [body] [flags]
   -H, --header stringArray   HTTP headers to add to the request
   -h, --help                 help for fetch
   -X, --method string        HTTP method to use
+  -o, --output string        Output file to write to
   -u, --user string          HTTP basic auth to use
   -A, --user-agent string    HTTP user agent to use
 ```
@@ -312,20 +432,6 @@ sunbeam query [query] [file] [flags]
       --yaml-output           output as YAML
 ```
 
-## sunbeam upgrade
-
-
-
-```
-sunbeam upgrade [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for upgrade
-```
-
 ## sunbeam validate
 
 Validate a Sunbeam schema
@@ -334,6 +440,20 @@ Validate a Sunbeam schema
 
 ```
   -h, --help   help for validate
+```
+
+## sunbeam validate config
+
+Validate a config
+
+```
+sunbeam validate config [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for config
 ```
 
 ## sunbeam validate detail
@@ -395,6 +515,20 @@ sunbeam validate manifest [flags]
 
 ```
   -h, --help   help for manifest
+```
+
+## sunbeam version
+
+Print the version number of sunbeam
+
+```
+sunbeam version [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for version
 ```
 
 

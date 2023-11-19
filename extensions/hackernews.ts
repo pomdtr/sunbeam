@@ -1,4 +1,4 @@
-#!/usr/bin/env deno run -A
+#!/usr/bin/env -S deno run -A
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";

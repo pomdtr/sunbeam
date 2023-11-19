@@ -5,7 +5,7 @@
   },
   "yaml.validate": false,
   "deno.disablePaths": [
-    "./docs"
+    "./website/frontend"
   ],
   "deno.enable": true,
 }

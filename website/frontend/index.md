@@ -9,8 +9,8 @@ hero:
   tagline: Elevate Your Command Line Experience
   actions:
     - theme: brand
-      text: Get Started
-      link: /introduction
+      text: View Docs
+      link: /docs
     - theme: alt
       text: Browse Extensions
       link: /catalog

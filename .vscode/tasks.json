@@ -14,13 +14,12 @@
       "problemMatcher": []
     },
     {
-      "label": "preview docs",
-      "type": "process",
-      "command": "oranda",
-      "args": [
-        "dev"
-      ],
-      "problemMatcher": []
+      "label": "build docs",
+      "type": "shell",
+      "command": "npm run build",
+      "options": {
+        "cwd": "${workspaceFolder}/website/frontend"
+      },
     },
     {
       "label": "build typescript package",

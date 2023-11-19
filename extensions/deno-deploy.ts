@@ -78,7 +78,12 @@ async function run(payload: sunbeam.Payload) {
                     const item: sunbeam.ListItem = {
                         title: project.name,
                         accessories: [project.type],
-                        actions: []
+                        actions: [{
+                            title: "Open Dashboard",
+                            type: "open",
+                            target: `https://dash.deno.com/projects/${project.id}`,
+                            exit: true,
+                        }]
                     }
 
                     if (project.type == "git") {
@@ -100,7 +105,7 @@ async function run(payload: sunbeam.Payload) {
                         item.actions?.push({
                             title: "View Playground",
                             type: "run",
-                            command: "view-playground",
+                            command: "playground",
                             params: {
                                 project: project.name,
                             }
@@ -125,11 +130,6 @@ async function run(payload: sunbeam.Payload) {
                     }
 
                     item.actions?.push({
-                        title: "Open Dashboard",
-                        type: "open",
-                        target: `https://dash.deno.com/projects/${project.id}`,
-                        exit: true,
-                    }, {
                         title: "Copy Dashboard URL",
                         type: "copy",
                         key: "c",
@@ -169,6 +169,7 @@ async function run(payload: sunbeam.Payload) {
                     },
                     {
                         title: "Open in Browser",
+                        key: "o",
                         type: "open",
                         target: `https://dash.deno.com/playground/${project.id}`,
                         exit: true

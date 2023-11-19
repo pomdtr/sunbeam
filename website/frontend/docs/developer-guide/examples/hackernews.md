@@ -5,7 +5,7 @@ This script leverages the `root` property to contribute two items to the root me
 The first item will list the articles from the front page, and the second item will list the articles from the "Show HN" section.
 
 ```ts
-#!/usr/bin/env deno run -A
+#!/usr/bin/env -S deno run -A
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";

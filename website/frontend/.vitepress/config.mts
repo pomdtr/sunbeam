@@ -3,9 +3,9 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: 'Sunbeam',
-  base: '/sunbeam/',
+  outDir: '../static',
   head: [
-    ['link', { rel: 'icon', href: '/sunbeam/favicon.png' }],
+    ['link', { rel: 'icon', href: '/favicon.png' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:image', content: 'https://pomdtr.github.io/sunbeam/screenshot.png' }],
     ['meta', { property: 'og:description', content: 'Wrap your tools in keyboard-friendly TUIs' }]
@@ -18,7 +18,7 @@ export default defineConfig({
       { text: 'Home', link: '/' },
       {
         text: 'Docs',
-        link: '/introduction'
+        link: '/docs/'
       },
       {
         text: 'Extension Catalog',
@@ -31,22 +31,22 @@ export default defineConfig({
     sidebar: [
       {
         text: 'Introduction',
-        link: '/introduction',
+        link: '/docs/index',
       },
       {
         text: 'User Guide',
         items: [
           {
             text: "Installation",
-            link: "/user-guide/installation",
+            link: "/docs/user-guide/installation",
           },
           {
             text: "Quick Start",
-            link: "/user-guide/quickstart",
+            link: "/docs/user-guide/quickstart",
           },
           {
             text: "Integrations",
-            link: "/user-guide/integrations",
+            link: "/docs/user-guide/integrations",
           }
         ]
       },
@@ -55,32 +55,32 @@ export default defineConfig({
         items: [
           {
             text: "Guidelines",
-            link: "/developer-guide/guidelines"
+            link: "/docs/developer-guide/guidelines"
           },
           {
             text: "Examples",
             items: [
               {
                 text: "DevDocs (Shell)",
-                link: "/developer-guide/examples/devdocs"
+                link: "/docs/developer-guide/examples/devdocs"
               },
               {
                 text: "Hackernews (Typescript)",
-                link: "/developer-guide/examples/hackernews"
+                link: "/docs/developer-guide/examples/hackernews"
               },
               {
                 text: "File Browser (Python)",
-                link: "/developer-guide/examples/file-browser"
+                link: "/docs/developer-guide/examples/file-browser"
               },
               {
                 text: "Google Search (Shell)",
-                link: "/developer-guide/examples/google-search"
+                link: "/docs/developer-guide/examples/google-search"
               }
             ]
           },
           {
             text: "Publishing",
-            link: "/developer-guide/publishing"
+            link: "/docs/developer-guide/publishing"
           }
         ]
       },
@@ -89,7 +89,7 @@ export default defineConfig({
         items: [
           {
             text: "Configuration",
-            link: "/reference/config"
+            link: "/docs/reference/config"
           },
           {
             text: "Schemas",
@@ -97,44 +97,39 @@ export default defineConfig({
             items: [
               {
                 text: "Manifest",
-                link: "/reference/schemas/manifest"
+                link: "/docs/reference/schemas/manifest"
               },
               {
                 text: "Payload",
-                link: "/reference/schemas/payload"
+                link: "/docs/reference/schemas/payload"
               },
               {
                 text: "List",
-                link: "/reference/schemas/list"
+                link: "/docs/reference/schemas/list"
               },
               {
                 text: "Detail",
-                link: "/reference/schemas/detail"
+                link: "/docs/reference/schemas/detail"
               },
               {
                 text: "Action",
-                link: "/reference/schemas/action"
+                link: "/docs/reference/schemas/action"
               }
             ]
           },
           {
             text: "CLI",
-            link: "/reference/cli"
+            link: "/docs/reference/cli"
           }
         ]
       },
       {
         text: 'Alternatives',
-        link: '/alternatives'
+        link: '/docs/alternatives'
       }
-
     ],
-
     socialLinks: [
       { icon: 'github', link: 'https://github.com/pomdtr/sunbeam' },
     ]
   },
-  sitemap: {
-    hostname: "https://pomdtr.github.io/sunbeam"
-  }
 })
