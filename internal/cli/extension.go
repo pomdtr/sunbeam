@@ -279,9 +279,8 @@ func NewCmdExtensionRemove(cfg config.Config) *cobra.Command {
 
 func NewCmdExtensionPublish() *cobra.Command {
 	var flags struct {
-		description string
-		public      bool
-		web         bool
+		Public bool
+		Open   bool
 	}
 
 	cmd := &cobra.Command{
@@ -289,38 +288,54 @@ func NewCmdExtensionPublish() *cobra.Command {
 		Short: "Publish a script as a github gist",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if _, err := extensions.ExtractManifest(args[0]); err != nil {
+				return fmt.Errorf("extension is invalid: %w", err)
+			}
+
 			filename := filepath.Base(args[0])
 			content, err := os.ReadFile(args[0])
 			if err != nil {
 				return fmt.Errorf("failed to read script: %w", err)
 			}
 
-			gist, err := github.CreateGist(filename, content, flags.description, flags.public)
+			var token string
+			if env, ok := os.LookupEnv("SUNBEAM_GITHUB_TOKEN"); ok {
+				token = env
+			} else if env, ok := os.LookupEnv("GITHUB_TOKEN"); ok {
+				token = env
+			} else {
+				return fmt.Errorf("github token not found, please set SUNBEAM_GITHUB_TOKEN or GITHUB_TOKEN")
+			}
+
+			gistClient := github.NewGistClient(token)
+
+			gist, err := gistClient.CreateGist(filename, content, flags.Public)
 			if err != nil {
 				return fmt.Errorf("failed to publish script: %w", err)
 			}
 
-			if flags.web {
-				return utils.Open(fmt.Sprintf("https://gist.github.com/%s", gist.HtmlURL))
+			rawUrl := fmt.Sprintf("https://gist.githubusercontent.com/%s/%s/raw/%s", gist.Owner.Login, gist.ID, url.PathEscape(filename))
+			installCmd := fmt.Sprintf("sunbeam extension install %s", rawUrl)
+
+			if err := gistClient.PatchGistDescription(gist.ID, installCmd); err != nil {
+				return fmt.Errorf("failed to patch gist description: %w", err)
 			}
 
-			rawUrl := fmt.Sprintf("https://gist.githubusercontent.com/%s/%s/raw/%s", gist.Owner.Login, gist.ID, url.PathEscape(filename))
+			if flags.Open {
+				return utils.Open(gist.HtmlURL)
+			}
+
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				cmd.Print(rawUrl)
+				fmt.Print(rawUrl)
 				return nil
 			}
 
-			installCmd := fmt.Sprintf("sunbeam extension install %s", rawUrl)
 			var t tableprinter.TablePrinter
-			if isatty.IsTerminal(os.Stdout.Fd()) {
-				w, _, err := term.GetSize(int(os.Stdout.Fd()))
-				if err != nil {
-					return err
-				}
-				t = tableprinter.New(os.Stdout, true, w)
-			} else {
-				t = tableprinter.New(os.Stdout, false, 0)
+			w, _, err := term.GetSize(int(os.Stdout.Fd()))
+			if err != nil {
+				return err
 			}
+			t = tableprinter.New(os.Stdout, true, w)
 
 			t.AddField("Gist URL")
 			t.AddField(gist.HtmlURL)
@@ -338,9 +353,8 @@ func NewCmdExtensionPublish() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&flags.description, "description", "d", "", "description of the gist")
-	cmd.Flags().BoolVarP(&flags.public, "public", "p", false, "make the gist public")
-	cmd.Flags().BoolVarP(&flags.web, "web", "w", false, "open the gist in a browser")
+	cmd.Flags().BoolVarP(&flags.Public, "public", "p", false, "make gist public")
+	cmd.Flags().BoolVarP(&flags.Open, "open", "o", false, "open gist in browser")
 
 	return cmd
 }

@@ -8,7 +8,7 @@ if (Deno.args.length == 0) {
         title: "Gists",
         description: "Manage your gists",
         items: [
-            { command: "search" },
+            { command: "manage" },
             { command: "create" }
         ],
         preferences: [
@@ -21,7 +21,7 @@ if (Deno.args.length == 0) {
         ],
         commands: [
             {
-                name: "search",
+                name: "manage",
                 title: "Search Gists",
                 mode: "list",
             },
@@ -97,7 +97,7 @@ try {
 
 async function run(payload: sunbeam.Payload) {
     switch (payload.command) {
-        case "search": {
+        case "manage": {
             const resp = await fetchGithub("/gists");
             if (resp.status != 200) {
                 throw new Error("Failed to fetch gists");

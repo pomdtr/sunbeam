@@ -371,6 +371,11 @@ func Upgrade(extensionConfig Config) error {
 }
 
 func ExtractManifest(entrypoint string) (types.Manifest, error) {
+	entrypoint, err := filepath.Abs(entrypoint)
+	if err != nil {
+		return types.Manifest{}, err
+	}
+
 	if err := os.Chmod(entrypoint, 0755); err != nil {
 		return types.Manifest{}, err
 	}

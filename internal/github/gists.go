@@ -5,19 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 )
 
-func LoadToken() (string, error) {
-	if token, ok := os.LookupEnv("SUNBEAM_GITHUB_TOKEN"); ok {
-		return token, nil
-	}
+type GistClient struct {
+	token string
+}
 
-	if token, ok := os.LookupEnv("GITHUB_TOKEN"); ok {
-		return token, nil
+func NewGistClient(token string) GistClient {
+	return GistClient{
+		token: token,
 	}
-
-	return "", fmt.Errorf("github token not found in environment")
 }
 
 type CreateGistRequestBody struct {
@@ -38,16 +35,15 @@ type Gist struct {
 	} `json:"owner"`
 }
 
-func CreateGist(filename string, content []byte, description string, public bool) (Gist, error) {
+func (g GistClient) CreateGist(filename string, content []byte, public bool) (Gist, error) {
 	files := make(map[string]CreateGistRequestBodyFile)
 	files[filename] = CreateGistRequestBodyFile{
 		Content: string(content),
 	}
 
 	body, err := json.Marshal(CreateGistRequestBody{
-		Description: description,
-		Public:      public,
-		Files:       files,
+		Public: public,
+		Files:  files,
 	})
 	if err != nil {
 		return Gist{}, err
@@ -58,11 +54,7 @@ func CreateGist(filename string, content []byte, description string, public bool
 		return Gist{}, err
 	}
 
-	token, err := LoadToken()
-	if err != nil {
-		return Gist{}, err
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", g.token))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -80,4 +72,32 @@ func CreateGist(filename string, content []byte, description string, public bool
 	}
 
 	return gist, nil
+}
+
+func (g GistClient) PatchGistDescription(gistID string, description string) error {
+	body, err := json.Marshal(map[string]string{
+		"description": description,
+	})
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("https://api.github.com/gists/%s", gistID), bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", g.token))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("failed to patch gist: %s", resp.Status)
+	}
+
+	return nil
 }
