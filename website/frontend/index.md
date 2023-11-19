@@ -22,7 +22,7 @@ features:
   - title: Cross-platform
     icon: 🌍
     details: Sunbeam is distributed as a single binary, available for macos and linux.
-    link: /user-guide/installation
+    link: /docs/user-guide/installation
     linkText: Install
   - title: Keep it simple, stupid!
     icon: 🧩
@@ -30,7 +30,7 @@ features:
   - title: UNIX philosophy
     icon: 🐧
     details: Sunbeam relies on shebangs to run scripts. It integrates well with the rest of the UNIX ecosystem.
-    link: /developer-guide/guidelines
+    link: /docs/developer-guide/guidelines
     linkText: Learn more
 ---
 
