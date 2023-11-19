@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/types"
@@ -33,32 +32,19 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 				inputBytes = b
 			}
 
-			if len(inputBytes) > 0 {
-				var input types.Payload
-				if err := json.Unmarshal(inputBytes, &input); err != nil {
-					return err
-				}
-				if input.Preferences == nil {
-					input.Preferences = extensionConfig.Preferences
-				}
-
-				return runExtension(extension, input)
+			if len(inputBytes) == 0 {
+				return cmd.Usage()
 			}
 
-			rootList := tui.NewRootList(extension.Manifest.Title, func() (config.Config, []types.ListItem, error) {
-				cfg, err := config.Load(config.Path)
-				if err != nil {
-					return config.Config{}, nil, err
-				}
+			var input types.Payload
+			if err := json.Unmarshal(inputBytes, &input); err != nil {
+				return err
+			}
+			if input.Preferences == nil {
+				input.Preferences = extensionConfig.Preferences
+			}
 
-				listItems := extractListItems(config.Config{
-					Extensions: cfg.Extensions,
-				}, map[string]extensions.Extension{alias: extension})
-
-				return cfg, listItems, nil
-			})
-
-			return tui.Draw(rootList)
+			return runExtension(extension, input)
 		},
 	}
 

@@ -35,6 +35,13 @@ if len(sys.argv) == 1:
                         "type": "text",
                         "required": True
                     },
+                    {
+                        "name": "exit",
+                        "title": "Exit",
+                        "type": "checkbox",
+                        "label": "Exit after running command",
+                        "required": False,
+                    }
                 ]
             },
             {
@@ -75,6 +82,13 @@ if len(sys.argv) == 1:
                         "type": "text",
                         "required": True
                     },
+                    {
+                        "name": "exit",
+                        "title": "Exit",
+                        "type": "checkbox",
+                        "label": "Exit after running command",
+                        "required": True
+                    }
                 ]
             },
             {
@@ -114,25 +128,15 @@ with open(config_path) as f:
 
 payload = json.loads(sys.argv[1])
 if payload['command'] == 'add':
-    title = payload['params']['title']
-    command = payload['params']['command']
     config.setdefault('oneliners', [])
-    config['oneliners'].append({
-        'title': title,
-        'command': command
-    })
+    config['oneliners'].append(payload['params'])
 
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=2)
 if payload['command'] == 'edit':
-    idx = payload['params']['index']
-    title = payload['params']['title']
-    command = payload['params']['command']
-    config['oneliners'][idx] = {
-        'title': title,
-        'command': command
-    }
+    idx = payload['params'].pop('index')
 
+    config['oneliners'][idx] = payload['params']
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=2)
 elif payload['command'] == 'run':
@@ -159,6 +163,9 @@ elif payload['command'] == 'manage':
                         },
                         "command": {
                             "default": oneliner['command']
+                        },
+                        "exit": {
+                            "default": oneliner.get('exit', False)
                         }
                     }
                 },
