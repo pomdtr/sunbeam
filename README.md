@@ -14,9 +14,9 @@ You can think of it as a mix between an application launcher like [raycast](http
 
 ## Features
 
-## Runs on all platforms
+## Cross-platform
 
-Sunbeam is distributed as a single binary, available for all major platforms. Sunbeam also comes with a lot of utilities to make it easy to create cross-platform scripts.
+Sunbeam is distributed as a single binary, available for macos and linux. Sunbeam also comes with a lot of utilities to make it easy to create cross-platform scripts.
 
 ![sunbeam running in hyper](./website/frontend/assets/hyper.jpeg)
 
@@ -27,11 +27,7 @@ The only requirement is that your language of choice can read and write JSON.
 
 Creating a new extension is as easy as writing a script.
 
-You can share your scripts with others by just hosting them on a public url.
-
-## Integrates with your favorite apps
-
-It is trivial to integrate sunbeam with existings apps since it's just a command-line tool.
+You can share your scripts with others by just hosting them on a public url (e.g. github gist).
 
 More information in the [integrations](https://pomdtr.github.io/sunbeam/book/user-guide/integrations.html) section.
 
