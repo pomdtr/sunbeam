@@ -69,8 +69,10 @@ func NewCmdExtensionInstall(cfg config.Config) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "install <origin>",
-		Short: "Install sunbeam extensions",
+		Use:     "install <origin>",
+		Short:   "Install sunbeam extensions",
+		Aliases: []string{"add"},
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			origin, err := normalizeOrigin(args[0])
 			if err != nil {
@@ -117,8 +119,9 @@ func NewCmdExtensionInstall(cfg config.Config) *cobra.Command {
 
 func NewCmdExtensionRename(cfg config.Config) *cobra.Command {
 	return &cobra.Command{
-		Use:   "rename <alias> <new-alias>",
-		Short: "Rename sunbeam extensions",
+		Use:     "rename <alias> <new-alias>",
+		Short:   "Rename sunbeam extensions",
+		Aliases: []string{"mv"},
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) == 0 {
 				return cfg.Aliases(), cobra.ShellCompDirectiveNoFileComp
@@ -202,8 +205,10 @@ func NewCmdExtensionUpgrade(cfg config.Config) *cobra.Command {
 
 func NewCmdExtensionList(cfg config.Config) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List sunbeam extensions",
+		Use:     "list",
+		Short:   "List sunbeam extensions",
+		Aliases: []string{"ls"},
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var t tableprinter.TablePrinter
 			if isatty.IsTerminal(os.Stdout.Fd()) {
@@ -231,9 +236,10 @@ func NewCmdExtensionList(cfg config.Config) *cobra.Command {
 
 func NewCmdExtensionRemove(cfg config.Config) *cobra.Command {
 	return &cobra.Command{
-		Use:   "remove <alias>",
-		Short: "Remove sunbeam extensions",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "remove <alias>",
+		Short:   "Remove sunbeam extensions",
+		Aliases: []string{"rm", "uninstall"},
+		Args:    cobra.MinimumNArgs(1),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			completions := cfg.Aliases()
 
