@@ -15,9 +15,9 @@ import (
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/pomdtr/sunbeam/internal/schemas"
+	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
-	"github.com/pomdtr/sunbeam/pkg/schemas"
-	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type ExtensionMap map[string]Extension

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/pkg/types"
+	"github.com/pomdtr/sunbeam/internal/types"
 )
 
 // Probably not necessary, need to be refactored

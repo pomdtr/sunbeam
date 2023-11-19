@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"github.com/pomdtr/sunbeam/pkg/types"
+	"github.com/pomdtr/sunbeam/internal/types"
 )
 
 func NewErrorPage(err error, additionalActions ...types.Action) *Detail {

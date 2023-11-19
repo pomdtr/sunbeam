@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
-	"github.com/pomdtr/sunbeam/pkg/schemas"
+	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/spf13/cobra"
 )
 

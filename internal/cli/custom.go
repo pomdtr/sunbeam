@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/pkg/types"
+	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/spf13/cobra"
 )
 

@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/termenv"
-	"github.com/pomdtr/sunbeam/pkg/types"
+	"github.com/pomdtr/sunbeam/internal/types"
 )
 
 type Detail struct {

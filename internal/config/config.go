@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/pomdtr/sunbeam/internal/utils"
-	"github.com/pomdtr/sunbeam/pkg/schemas"
 )
 
 var Path string

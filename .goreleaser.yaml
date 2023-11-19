@@ -29,7 +29,7 @@ checksum:
 release:
   prerelease: auto
   extra_files:
-    - glob: pkg/schemas/config.schema.json
+    - glob: internal/schemas/config.schema.json
 
 snapshot:
   name_template: "{{ incpatch .Version }}-next"

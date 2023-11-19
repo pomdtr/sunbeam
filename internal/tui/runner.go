@@ -12,9 +12,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	"github.com/pomdtr/sunbeam/internal/schemas"
+	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
-	"github.com/pomdtr/sunbeam/pkg/schemas"
-	"github.com/pomdtr/sunbeam/pkg/types"
 )
 
 type Runner struct {

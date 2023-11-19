@@ -11,7 +11,7 @@ brew install pomdtr/tap/sunbeam
 curl -sSf https://install-sunbeam.deno.dev | sh
 
 # from source
-go install github.com/pomdtr/sunbeam@latest
+go install github.com/pomdtr/sunbeam/cmd/sunbeam@latest
 ```
 
 or use binaries / packages from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).

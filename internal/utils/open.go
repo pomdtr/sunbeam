@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/pomdtr/sunbeam/pkg/types"
+	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/skratchdot/open-golang/open"
 )
 

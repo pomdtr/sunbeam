@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"github.com/pomdtr/sunbeam/internal/utils"
