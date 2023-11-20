@@ -69,12 +69,22 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			if len(p.actions) == 0 {
 				return p, nil
 			}
+
 			action := p.actions[p.cursor]
 			p.expanded = false
 			p.cursor = 0
-
 			return p, func() tea.Msg {
 				return action
+			}
+		case "alt+enter":
+			if p.cursor != 0 || len(p.actions) < 2 {
+				break
+			}
+
+			p.expanded = false
+			p.cursor = 0
+			return p, func() tea.Msg {
+				return p.actions[1]
 			}
 		case "ctrl+d":
 			if p.expanded {
@@ -132,6 +142,8 @@ func (c StatusBar) View() string {
 				var subtitle string
 				if i == 0 {
 					subtitle = "enter"
+				} else if i == 1 {
+					subtitle = "alt+enter"
 				} else if action.Key != "" {
 					subtitle = fmt.Sprintf("alt+%s", action.Key)
 				}
