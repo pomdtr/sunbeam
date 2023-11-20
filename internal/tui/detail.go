@@ -134,7 +134,8 @@ func (c *Detail) RefreshContent() error {
 			return err
 		}
 	} else {
-		content = wrap.String(wordwrap.String(utils.StripAnsi(c.text), c.width), c.width)
+		content = wrap.String(wordwrap.String(utils.StripAnsi(c.text), c.width-4), c.width-4)
+		content = lipgloss.NewStyle().Padding(0, 2).Render(content)
 	}
 
 	c.viewport.SetContent(content)

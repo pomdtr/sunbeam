@@ -1,6 +1,7 @@
 package cli
 
 import (
+	_ "embed"
 	"fmt"
 	"net/url"
 	"os"
@@ -34,6 +35,7 @@ func NewCmdExtension(cfg config.Config) *cobra.Command {
 	cmd.AddCommand(NewCmdExtensionRemove(cfg))
 	cmd.AddCommand(NewCmdExtensionConfigure(cfg))
 	cmd.AddCommand(NewCmdExtensionPublish())
+	cmd.AddCommand(NewCmdExtensionCreate())
 
 	return cmd
 }
@@ -64,6 +66,89 @@ func normalizeOrigin(origin string) (string, error) {
 	}
 
 	return strings.Replace(abs, os.Getenv("HOME"), "~", 1), nil
+}
+
+//go:embed embed/extension.py
+var pythonExtBytes []byte
+
+//go:embed embed/extension.ts
+var denoExtBytes []byte
+
+//go:embed embed/extension.sh
+var shExtBytes []byte
+
+func NewCmdExtensionCreate() *cobra.Command {
+	var flags struct {
+		language string
+	}
+
+	cmd := &cobra.Command{
+		Use:     "create <name>",
+		Short:   "Create a new sunbeam extension",
+		Aliases: []string{"new"},
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var language string
+			if flags.language != "" {
+				language = flags.language
+			} else {
+				cmd.Println("No language specified, guessing...")
+				switch filepath.Ext(args[0]) {
+				case ".py":
+					cmd.Println("Detected python extension")
+					language = "python"
+				case ".ts":
+					cmd.Println("Detected deno extension")
+					language = "deno"
+				case ".sh":
+					cmd.Println("Detected shell extension")
+					language = "sh"
+				default:
+					cmd.Println("No language detected, defaulting to shell")
+					language = "sh"
+				}
+			}
+
+			cmd.Printf("Creating extension %s\n", args[0])
+			f, err := os.Create(args[0])
+			if err != nil {
+				return fmt.Errorf("failed to create extension: %w", err)
+			}
+			defer f.Close()
+
+			switch language {
+			case "python":
+				if _, err := f.Write(pythonExtBytes); err != nil {
+					return fmt.Errorf("failed to write extension: %w", err)
+				}
+
+			case "deno":
+				if _, err := f.Write(denoExtBytes); err != nil {
+					return fmt.Errorf("failed to write extension: %w", err)
+				}
+
+			case "sh":
+				if _, err := f.Write(shExtBytes); err != nil {
+					return fmt.Errorf("failed to write extension: %w", err)
+				}
+			}
+
+			if err := os.Chmod(args[0], 0755); err != nil {
+				return fmt.Errorf("failed to chmod extension: %w", err)
+			}
+
+			cmd.Printf("✅ Created %s extension %s\n", language, args[0])
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&flags.language, "language", "l", "", "language of extension")
+	cmd.RegisterFlagCompletionFunc("language", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"sh", "python", "deno"}, cobra.ShellCompDirectiveNoFileComp
+	})
+
+	return cmd
 }
 
 func NewCmdExtensionInstall(cfg config.Config) *cobra.Command {
