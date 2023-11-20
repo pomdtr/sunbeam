@@ -1,6 +1,5 @@
 {
   "devDependencies": {
-    "sunbeam-sdk": "^0.2.2",
     "vitepress": "^1.0.0-rc.24",
     "vue": "^3.3.7"
   },

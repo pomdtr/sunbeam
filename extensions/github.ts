@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import * as sunbeam from "npm:sunbeam-sdk@0.2.1"
+import * as sunbeam from "https://deno.land/x/sunbeam@v1.0.0-rc.87/mod.ts"
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 
 

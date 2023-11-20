@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "npm:sunbeam-sdk@0.2.1"
+import type * as sunbeam from "https://deno.land/x/sunbeam@v1.0.0-rc.87/mod.ts"
 
 if (Deno.args.length === 0) {
     const manifest: sunbeam.Manifest = {
