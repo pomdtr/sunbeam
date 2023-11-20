@@ -16,15 +16,7 @@ type ListItem struct {
 }
 
 type Detail struct {
-	Actions []Action `json:"actions,omitempty"`
-	Format  Format   `json:"format,omitempty"`
-	Text    string   `json:"text,omitempty"`
+	Actions  []Action `json:"actions,omitempty"`
+	Markdown string   `json:"markdown,omitempty"`
+	Text     string   `json:"text,omitempty"`
 }
-
-type Format string
-
-const (
-	MarkdownFormat Format = "markdown"
-	ANSIFormat     Format = "ansi"
-	TemplateFormat Format = "template"
-)

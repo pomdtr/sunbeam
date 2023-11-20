@@ -232,8 +232,7 @@ async function run(payload: sunbeam.Payload) {
             const lang = file.language?.toLowerCase();
 
             return {
-                format: "markdown",
-                text: lang == "md" ? file.content : `# ${filename}\n\n\`\`\`${lang || ""}\n${file.content}\n\`\`\``,
+                markdown: lang == "md" ? file.content : `\`\`\`${lang || ""}\n${file.content}\n\`\`\``,
                 actions: [
                     {
                         title: "Edit File",

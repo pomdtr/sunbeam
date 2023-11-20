@@ -260,8 +260,7 @@ async function run(payload: sunbeam.Payload) {
         const markdown = new TextDecoder().decode(base64.decode(data.content));
 
         const detail: sunbeam.Detail = {
-            text: markdown,
-            format: "markdown",
+            markdown,
             actions: [
                 {
                     title: "Open in Browser",

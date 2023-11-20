@@ -13,3 +13,11 @@ func FindEditor() string {
 
 	return "vi"
 }
+
+func FindPager() string {
+	if pager, ok := os.LookupEnv("PAGER"); ok {
+		return pager
+	}
+
+	return "less"
+}

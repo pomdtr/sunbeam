@@ -34,8 +34,8 @@ elif [ "$COMMAND" = "update" ]; then
     tldr --update
 elif [ "$COMMAND" = "view" ]; then
     PAGE=$(echo "$1" | sunbeam query -r '.params.page')
-    tldr --color=always "$PAGE" | sunbeam query --arg page="$PAGE" -sR '{
-            format: "ansi", text: ., actions: [
+    tldr --raw "$PAGE" | sunbeam query --arg page="$PAGE" -sR '{
+            markdown: ., actions: [
                 {title: "Copy Page", type: "copy", text: ., exit: true}
             ]
         }'

@@ -10,6 +10,9 @@ if len(sys.argv) == 1:
         {
             "title": "File Browser",
             "description": "Browse files and folders",
+            "preferences": [
+                {"name": "show-hidden", "type": "checkbox", "label": "Show Hidden Files", "required": False}
+            ],
             "items": [
                 {
                     "title": "Browse Home Directory",
@@ -48,21 +51,21 @@ if len(sys.argv) == 1:
 
 
 payload = json.loads(sys.argv[1])
+show_hidden = payload["preferences"].get("show-hidden", False)
 if payload["command"] == "ls":
     params = payload.get("params", {})
     directory = params.get("dir", payload["cwd"])
-    if directory.startswith("~"):
-        directory = directory.replace("~", str(pathlib.Path.home()))
-    root = pathlib.Path(directory)
-    show_hidden = params.get("show-hidden", False)
-
+    if directory.startswith("~/"):
+        root = pathlib.Path.joinpath(pathlib.Path.home(), directory[2:])
+    else:
+        root = pathlib.Path(directory)
     items = []
     for file in root.iterdir():
         if not show_hidden and file.name.startswith("."):
             continue
         item = {
             "title": file.name,
-            "accessories": [str(file.absolute())],
+            "subtitle": str(file.absolute()).replace(str(pathlib.Path.home()), "~"),
             "actions": [],
         }
         if file.is_dir():

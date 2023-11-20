@@ -1,17 +1,15 @@
 package tui
 
 import (
-	"bytes"
-	"text/template"
-
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
-	"github.com/muesli/termenv"
+	"github.com/muesli/reflow/wrap"
 	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/internal/utils"
 )
 
 type Detail struct {
@@ -25,8 +23,8 @@ type Detail struct {
 	text          string
 	width, height int
 
-	Style  lipgloss.Style
-	Format types.Format
+	Style    lipgloss.Style
+	Markdown bool
 }
 
 func NewDetail(text string, actions ...types.Action) *Detail {
@@ -50,7 +48,6 @@ func NewDetail(text string, actions ...types.Action) *Detail {
 		spinner:   spinner.New(),
 		viewport:  viewport,
 		statusBar: statusBar,
-		Format:    types.ANSIFormat,
 		text:      text,
 	}
 
@@ -123,8 +120,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 func (c *Detail) RefreshContent() error {
 	var content string
-	switch c.Format {
-	case types.MarkdownFormat:
+	if c.Markdown {
 		render, err := glamour.NewTermRenderer(
 			glamour.WithAutoStyle(),
 			glamour.WithWordWrap(c.width),
@@ -137,22 +133,8 @@ func (c *Detail) RefreshContent() error {
 		if err != nil {
 			return err
 		}
-	case types.ANSIFormat:
-		content = wordwrap.String(c.text, c.width)
-	case types.TemplateFormat:
-		funcs := termenv.TemplateFuncs(termenv.DefaultOutput().Profile)
-		tpl := template.New("detail").Funcs(funcs)
-		tpl, err := tpl.Parse(c.text)
-		if err != nil {
-			return err
-		}
-
-		var buf bytes.Buffer
-		if err := tpl.Execute(&buf, nil); err != nil {
-			return err
-		}
-
-		content = buf.String()
+	} else {
+		content = wrap.String(wordwrap.String(utils.StripAnsi(c.text), c.width), c.width)
 	}
 
 	c.viewport.SetContent(content)

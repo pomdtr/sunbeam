@@ -126,8 +126,7 @@ async function run(payload: sunbeam.Payload) {
             const snippet = project.playground.snippet;
             const lang = project.playground.mediaType
             return {
-                format: "markdown",
-                text: `\`\`\`${lang}\n${snippet}\n\`\`\``,
+                markdown: `\`\`\`${lang}\n${snippet}\n\`\`\``,
                 actions: [
                     {
                         title: "Copy Snippet",

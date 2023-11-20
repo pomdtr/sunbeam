@@ -116,12 +116,12 @@ if len(sys.argv) == 1:
     print(json.dumps(manifest))
     sys.exit(0)
 
-if os.environ.get("SUNBEAM_CONFIG"):
-    config_path = os.environ.get("SUNBEAM_CONFIG")
-elif os.environ.get("XDG_CONFIG_HOME"):
-    config_path = os.path.join(os.environ.get("XDG_CONFIG_HOME"), "sunbeam", "sunbeam.json")
+if sunbeam_config := os.environ.get("SUNBEAM_CONFIG"):
+    config_path = sunbeam_config
+elif config_home := os.environ.get("XDG_CONFIG_HOME"):
+    config_path = os.path.join(config_home, "sunbeam", "sunbeam.json")
 else:
-    config_path = os.path.join(os.environ.get("HOME"), ".config", "sunbeam", "sunbeam.json")
+    config_path = os.path.join(os.path.expanduser("~"), ".config", "sunbeam", "sunbeam.json")
 
 with open(config_path) as f:
     config = json.load(f)
