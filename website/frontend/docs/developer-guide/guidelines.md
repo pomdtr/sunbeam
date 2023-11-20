@@ -88,13 +88,13 @@ See the [file-browser extension](./examples/file-browser.md) for an example.
 
 Deno allows you to use any npm package by just importing it from a url. This makes it easy to use any library without requiring the user to install it first. The only requirement is that the user already has deno installed.
 
-To make it easier to write extensions in deno, sunbeam provides a [npm package](https://www.npmjs.com/package/sunbeam-types) that provides types for validating the manifest and payloads.
+To make it easier to write extensions in deno, sunbeam provides a [deno package](https://deno.land/x/sunbeam) that provides types for validating the manifest and payloads.
 
 ```ts
 #!/usr/bin/env -S deno run -A
 
 // import the types
-import type * as sunbeam from "npm:sunbeam-types@0.23.18"
+import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
 
 // import any npm package
 // @deno-types="npm:@types/lodash"

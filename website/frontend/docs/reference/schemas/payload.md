@@ -10,7 +10,7 @@ The payload is passed as the first argument to the script when a command is run.
     "params": {
         "name": "Steve"
     },
-    .// if the manifest defines preferences, they are passed here
+    // if the manifest defines preferences, they are passed here
     "preferences": {
         "show-hidden-files": true
     },

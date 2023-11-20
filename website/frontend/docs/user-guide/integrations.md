@@ -6,6 +6,57 @@ Here is a non-exhaustive list of integrations. If you have an integration you wo
 
 ## Terminals
 
+## Hyper (MacOS Only)
+
+![](../../assets/hyper.jpeg)
+
+[Hyper](https://hyper.is/) is an extensible terminal emulator, built on web technologies.
+It is not the lighter terminal emulator (far from it), but it is easy to extend and customize.
+
+The [hyper-sunbeam](https://npm.js/hyper-sunbeam) plugin allows you to transform hyper into a sunbeam launcher.
+
+To install it, just create an `.hyper.js` file in your home directory:
+
+```js
+"use strict";
+
+// See https://hyper.is#cfg for all currently supported options.
+module.exports = {
+    config: {
+        fontSize: 13,
+        padding: '10px',
+        shell: '/bin/zsh',
+        shellArgs: ['--login', '-c', 'sunbeam'],
+        // these envs are used by sunbeam actions, make sure to customize them if needed
+        env: {
+            "EDITOR": "vim",
+            "PAGER": "less",
+        },
+        windowSize: [750, 440],
+        modifierKeys: {
+            altIsMeta: true // needed for hotkeys to work
+        },
+        sunbeam: {
+            hotkey: 'Shift+Super+K', // setup your hotkey here
+        }
+    },
+    // a list of plugins to fetch and install from npm
+    plugins: [
+        "hyper-sunbeam", // tranform hyper into a floating panel
+        "hyper-monokai-pro" // suggested theme, but you can use any theme you want
+    ]
+    // optional, disable default hotkeys
+    keymaps: {
+        "tab:new": "",
+        "window:new": "",
+    },
+};
+```
+
+Feel free to customize the config to your liking.
+
+The npm package is currently broken on linux, feel free to open a PR if you want to fix it.
+
 ### Alacritty
 
 ![](../../assets/alacritty.jpeg)

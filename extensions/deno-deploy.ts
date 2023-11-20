@@ -8,7 +8,8 @@ if (Deno.args.length == 0) {
         title: "Deno Deploy",
         description: "Manage your Deno Deploy projects",
         items: [
-            { command: "projects" }
+            { command: "projects" },
+            { command: "dashboard" }
         ],
         preferences: [
             {
@@ -23,6 +24,11 @@ if (Deno.args.length == 0) {
                 name: "projects",
                 title: "List Projects",
                 mode: "list",
+            },
+            {
+                name: "dashboard",
+                title: "Open Dashboard",
+                mode: "silent"
             },
             {
                 name: "deployments",
@@ -66,6 +72,12 @@ try {
 
 async function run(payload: sunbeam.Payload) {
     switch (payload.command) {
+        case "dashboard": {
+            await new Deno.Command("sunbeam", {
+                args: ["open", "https://dash.deno.com"],
+            }).output()
+            return
+        }
         case "projects": {
             const resp = await fetchDeployAPI("/projects");
             if (resp.status != 200) {

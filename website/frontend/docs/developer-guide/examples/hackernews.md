@@ -9,7 +9,7 @@ The first item will list the articles from the front page, and the second item w
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "npm:sunbeam-types@0.23.15"
+import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {

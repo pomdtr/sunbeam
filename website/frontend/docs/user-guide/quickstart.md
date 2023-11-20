@@ -4,48 +4,34 @@
 
 A fresh install of sunbeam is quite boring. In order to make it useful, you need to add some extensions.
 
-Sunbeam extensions are just scripts. In order to install an extension, you only need to add it's path or url to the config file.
+Sunbeam extensions are just scripts. In order to install an extension, you only need to pass it's path or url to the `sunbeam extension install` command.
 
-```json
-{
-    "extensions": {
-        "tldr": "~/sunbeam/tldr.sh",
-        "devdocs": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/catalog/extensions/devdocs.sh",
-    }
-}
+```sh
+# Install the devdocs extension from sunbeam repository
+sunbeam extension install https://github.com/pomdtr/sunbeam/tree/main/extensions/devdocs.sh
 ```
 
-> ⚠️ Extensions are not verified, nor sandboxed. They can do anything you can do on your computer. Make sure you trust the source before installing an extension.
-
-## Configuring Extensions
-
-Some extensions require additional configuration. You can configure an extension by adding a `preferences` dict to the config file.
-
-```json
-{
-    "extensions": {
-        "github": {
-            "origin": "~/sunbeam/github.sh",
-            "preferences": {
-                "token": "xxxx"
-            }
-        }
-    },
-}
-```
+> ⚠️ Extensions are not verified, nor sandboxed. They can do anything you can do on your computer. Make sure you trust the source / read the code before installing an extension.
 
 ## Upgrading Extensions
 
-Use the `sunbeam upgrade` command to upgrade all your extensions. `sunbeam upgrade <extension>` will upgrade a specific extension.
+Use the `sunbeam extension upgrade --all` command to upgrade all your extensions. `sunbeam extension upgrade <extension>` will upgrade a specific extension.
+
+## Other Extension Commands
+
+- `sunbeam extension list` -> list all installed extensions
+- `sunbeam extension remove <extension>` -> uninstall an extension
+- `sunbeam extension publish <path>` -> publish an extension as a gist (requires the `SUBEAM_GITHUB_TOKEN` environment variable to be set)
+- `sunbeam extension configure <extension>` -> configure an extension preferences (if it has any)
 
 ## Running Commands
 
 If you run `sunbeam` without any arguments, it will open the default view, which is a list of all the available commands.
 
-You can also run a command directly using `sunbeam <extension> [command]`.\
+Run a command directly using `sunbeam <extension> [command]`.\
 For example, `sunbeam devdocs list-docsets` will show a list of all the available docsets.
 
-You can also pass parameters to the command using `sunbeam <extension> [command] --param1 value1 --param2 value2`. \
+Pass parameters to the command using `sunbeam <extension> [command] --param1 value1 --param2 value2`. \
 For example, `sunbeam devdocs list-entries --docset go` will list all the entries in the go docset.
 
 

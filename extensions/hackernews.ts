@@ -2,7 +2,7 @@
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "npm:sunbeam-types@0.25.1"
+import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {

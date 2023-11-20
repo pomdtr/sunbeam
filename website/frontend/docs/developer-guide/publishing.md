@@ -40,25 +40,15 @@ https://github.com/<owner>/<repo>/releases/latest/download/<script>
 
 ## Extension With Dependencies
 
-If your extension has dependencies, you should publish it through the native package manager of your language (e.g. pip for python, npm for nodejs, etc.).
+If your extension has dependencies, you should publish it through the native package manager of your language (e.g. pip for python, npm for nodejs, etc.), and instruct your users to run the appropriate sunbeam command to install it.
 
-### Example - Python Apps
+### Example for Python
 
-Make sure your extension is a valid python package, and publish it to PyPI.
+If your extension is written in python, you can publish it to [PyPI](https://pypi.org/). Make sure that the extension provides an `entry_points` in its `setup.py` file.
 
-Then, instruct your users to add the following snippet to their sunbeam config file:
+Instruct your users to run `pip install --user <package>` to install it (or even better, use [pipx](https://pypa.github.io/pipx/)).
 
-```json
-{
-    "extensions": {
-        "<package>": {
-            "origin": "~/.local/bin/<package>",
-            "install": "pip install --user <package>",
-            "upgrade": "pip install --user --upgrade <package>" // optional, will default to running install again
-        }
-    }
-}
-```
+Now, they should be able to install your extension using `sunbeam extension install ~/.local/bin/<package>`.
 
 > Note: If you don't want to publish your extension to PyPI, you can also install it from a git repository.
 > `pip install git+https://github.com/<owner>/<package>.git`
