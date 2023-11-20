@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import type * as sunbeam from "https://deno.land/x/sunbeam@v1.0.0-rc.87/mod.ts"
+import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
 import * as dates from "npm:date-fns"
 
 if (Deno.args.length == 0) {
