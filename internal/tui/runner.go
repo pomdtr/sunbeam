@@ -122,27 +122,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					Type: types.ActionTypeReload,
 				}
 			}
-		case "ctrl+e":
-			editCmd := exec.Command("sunbeam", "edit", c.extension.Entrypoint)
-
-			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				manifest, err := extensions.ExtractManifest(c.extension.Entrypoint)
-				if err != nil {
-					return err
-				}
-
-				c.extension.Manifest = manifest
-				return types.Action{
-					Type: types.ActionTypeReload,
-				}
-			})
-
 		}
-
 	case Page:
 		c.embed = msg
 		c.embed.SetSize(c.width, c.height)
@@ -370,11 +350,13 @@ func (c *Runner) Reload() tea.Cmd {
 				return err
 			}
 
-			page := NewDetail(detail.Text, detail.Actions...)
-			if detail.Format != "" {
-				page.Format = detail.Format
+			if detail.Markdown != "" {
+				page := NewDetail(detail.Markdown, detail.Actions...)
+				page.Markdown = true
+				return page
 			}
 
+			page := NewDetail(detail.Text, detail.Actions...)
 			return page
 		case types.CommandModeList:
 			if err := schemas.ValidateList(output); err != nil {

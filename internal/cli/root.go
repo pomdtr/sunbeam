@@ -14,6 +14,7 @@ import (
 	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -348,7 +349,7 @@ func extractListItems(cfg config.Config, extensionMap map[string]extensions.Exte
 		rootItems = append(rootItems, extensionConfig.Items...)
 
 		for _, rootItem := range rootItems {
-			items = append(items, types.ListItem{
+			item := types.ListItem{
 				Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
 				Title:       rootItem.Title,
 				Subtitle:    extension.Manifest.Title,
@@ -363,7 +364,35 @@ func extractListItems(cfg config.Config, extensionMap map[string]extensions.Exte
 						Exit:      true,
 					},
 				},
-			})
+			}
+
+			if !extensions.IsRemote(extensionConfig.Origin) {
+				item.Actions = append(item.Actions, types.Action{
+					Title:  "Edit Extension",
+					Key:    "e",
+					Type:   types.ActionTypeEdit,
+					Target: extension.Entrypoint,
+					Reload: true,
+				})
+			} else {
+				item.Actions = append(item.Actions, types.Action{
+					Title:   "View Source",
+					Key:     "c",
+					Type:    types.ActionTypeExec,
+					Command: fmt.Sprintf("sunbeam fetch %s | %s", extensionConfig.Origin, utils.FindPager()),
+				})
+			}
+
+			if len(extensionConfig.Preferences) > 0 {
+				item.Actions = append(item.Actions, types.Action{
+					Title:     "Configure Extension",
+					Key:       "s",
+					Type:      types.ActionTypeConfig,
+					Extension: alias,
+				})
+			}
+
+			items = append(items, item)
 		}
 	}
 

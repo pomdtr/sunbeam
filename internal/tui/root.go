@@ -277,6 +277,36 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				return nil
 			})
+		case types.ActionTypeConfig:
+			extensionConfig, ok := c.config.Extensions[msg.Extension]
+			if !ok {
+				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
+			}
+
+			extension, err := extensions.LoadExtension(extensionConfig.Origin)
+			if err != nil {
+				return c, c.SetError(fmt.Errorf("failed to load extension %s", msg.Extension))
+			}
+
+			inputs := make([]types.Input, 0)
+			for _, input := range extension.Manifest.Preferences {
+				input.Default = extensionConfig.Preferences[input.Name]
+				input.Required = true
+				inputs = append(inputs, input)
+			}
+
+			c.form = NewForm(func(values map[string]any) tea.Msg {
+				c.form = nil
+				extensionConfig.Preferences = values
+				c.config.Extensions[msg.Extension] = extensionConfig
+				if err := c.config.Save(); err != nil {
+					return err
+				}
+
+				return nil
+			}, inputs...)
+			c.form.SetSize(c.width, c.height)
+			return c, c.form.Init()
 		case types.ActionTypeExec:
 			cmd := exec.Command("sh", "-c", msg.Command)
 			cmd.Dir = msg.Dir

@@ -89,6 +89,7 @@ const (
 	ActionTypeEdit   ActionType = "edit"
 	ActionTypeExec   ActionType = "exec"
 	ActionTypeExit   ActionType = "exit"
+	ActionTypeConfig ActionType = "config"
 )
 
 type Application struct {
