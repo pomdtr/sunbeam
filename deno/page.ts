@@ -8,8 +8,8 @@ export type List = {
 };
 
 export type Detail = {
-  text: string;
-  markdown?: boolean;
+  text?: string;
+  markdown?: string;
   actions?: Action[];
 };
 
