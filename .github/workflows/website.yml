@@ -11,7 +11,7 @@ jobs:
     permissions:
       id-token: write # This is required to allow the GitHub Action to authenticate with Deno Deploy.
       contents: read
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           cache-dependency-path: website/frontend/package-lock.json
       - name: Install Node dependencies
         working-directory: website/frontend
-        run: npm install
+        run: npm ci
       - name: Build website
         working-directory: website/frontend
         run: npm run build
