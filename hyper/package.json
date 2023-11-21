@@ -1,0 +1,24 @@
+{
+  "name": "hyper-sunbeam",
+  "version": "0.0.8",
+  "description": "Use Hyper as a Sunbeam Frontend",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pomdtr/hyper-sunbeam.git"
+  },
+  "scripts": {
+    "format": "prettier '**/*.{css,md,js,json}' --write"
+  },
+  "keywords": [
+    "hyper",
+    "hyperterm",
+    "hyper-plugin",
+    "sunbeam"
+  ],
+  "author": "Achille Lacoin",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^1.18.2"
+  }
+}
