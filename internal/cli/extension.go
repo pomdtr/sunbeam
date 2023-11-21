@@ -186,7 +186,7 @@ func NewCmdExtensionInstall(cfg config.Config) *cobra.Command {
 				return fmt.Errorf("extension %s already exists", alias)
 			}
 
-			cfg.Extensions[alias] = extensions.Config{
+			cfg.Extensions[alias] = config.ExtensionConfig{
 				Origin: origin,
 			}
 

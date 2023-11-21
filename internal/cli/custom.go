@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig extensions.Config) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
 		Use:     alias,
 		Short:   extension.Manifest.Title,

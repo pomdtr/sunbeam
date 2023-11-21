@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
@@ -33,12 +34,6 @@ func (e ExtensionMap) List() []Extension {
 type Extension struct {
 	Manifest   types.Manifest
 	Entrypoint string `json:"entrypoint"`
-}
-
-type Config struct {
-	Origin      string           `json:"origin,omitempty"`
-	Preferences map[string]any   `json:"preferences,omitempty"`
-	Items       []types.RootItem `json:"items,omitempty"`
 }
 
 type Preferences map[string]any
@@ -163,10 +158,19 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 	return cmd, nil
 }
 
-func SHA1(input string) string {
+func Hash(origin string) (string, error) {
+	if !IsRemote(origin) {
+		abs, err := filepath.Abs(origin)
+		if err != nil {
+			return "", err
+		}
+
+		origin = abs
+	}
+
 	h := sha1.New()
-	h.Write([]byte(input))
-	return hex.EncodeToString(h.Sum(nil))
+	h.Write([]byte(origin))
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func IsRemote(origin string) bool {
@@ -231,14 +235,18 @@ func LoadEntrypoint(origin string, extensionDir string) (string, error) {
 	if strings.HasPrefix(entrypoint, "~") {
 		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
 	} else if !filepath.IsAbs(entrypoint) {
-		entrypoint = filepath.Join(utils.ConfigDir(), entrypoint)
+		entrypoint = filepath.Join(filepath.Dir(config.Path), entrypoint)
 	}
 
 	return filepath.Abs(entrypoint)
 }
 
 func LoadExtension(origin string) (Extension, error) {
-	extensionDir := filepath.Join(utils.CacheDir(), "extensions", SHA1(origin))
+	hash, err := Hash(origin)
+	if err != nil {
+		return Extension{}, err
+	}
+	extensionDir := filepath.Join(utils.CacheDir(), "extensions", hash)
 	entrypoint, err := LoadEntrypoint(origin, extensionDir)
 	if err != nil {
 		return Extension{}, err
@@ -302,8 +310,13 @@ func cacheManifest(entrypoint string, manifestPath string) (types.Manifest, erro
 	return manifest, nil
 }
 
-func Upgrade(extensionConfig Config) error {
-	extensionDir := filepath.Join(utils.CacheDir(), "extensions", SHA1(extensionConfig.Origin))
+func Upgrade(extensionConfig config.ExtensionConfig) error {
+	hash, err := Hash(extensionConfig.Origin)
+	if err != nil {
+		return err
+	}
+
+	extensionDir := filepath.Join(utils.CacheDir(), "extensions", hash)
 	manifestPath := filepath.Join(extensionDir, "manifest.json")
 	if IsRemote(extensionConfig.Origin) {
 		originUrl, err := url.Parse(extensionConfig.Origin)
@@ -311,7 +324,7 @@ func Upgrade(extensionConfig Config) error {
 			return fmt.Errorf("failed to parse origin: %w", err)
 		}
 
-		entrypoint := filepath.Join(utils.CacheDir(), "extensions", SHA1(extensionConfig.Origin), filepath.Base(originUrl.Path))
+		entrypoint := filepath.Join(extensionDir, filepath.Base(originUrl.Path))
 		if err := DownloadEntrypoint(extensionConfig.Origin, entrypoint); err != nil {
 			return err
 		}
@@ -327,7 +340,7 @@ func Upgrade(extensionConfig Config) error {
 	if strings.HasPrefix(entrypoint, "~") {
 		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
 	} else if !filepath.IsAbs(entrypoint) {
-		entrypoint = filepath.Join(utils.ConfigDir(), entrypoint)
+		entrypoint = filepath.Join(filepath.Dir(config.Path), entrypoint)
 	}
 
 	if _, err := cacheManifest(entrypoint, manifestPath); err != nil {

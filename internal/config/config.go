@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/schemas"
+	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
 )
 
@@ -16,15 +16,35 @@ var Path string
 func init() {
 	if env, ok := os.LookupEnv("SUNBEAM_CONFIG"); ok {
 		Path = env
-	} else {
-		Path = filepath.Join(utils.ConfigDir(), "sunbeam.json")
+		return
 	}
+
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	for currentDir != "/" {
+		if _, err := os.Stat(filepath.Join(currentDir, "sunbeam.json")); err == nil {
+			Path = filepath.Join(currentDir, "sunbeam.json")
+			return
+		}
+		currentDir = filepath.Dir(currentDir)
+	}
+
+	Path = filepath.Join(utils.ConfigDir(), "sunbeam.json")
 }
 
 type Config struct {
-	Oneliners  []Oneliner                   `json:"oneliners,omitempty"`
-	Extensions map[string]extensions.Config `json:"extensions,omitempty"`
-	path       string                       `json:"-"`
+	Oneliners  []Oneliner                 `json:"oneliners,omitempty"`
+	Extensions map[string]ExtensionConfig `json:"extensions,omitempty"`
+	path       string                     `json:"-"`
+}
+
+type ExtensionConfig struct {
+	Origin      string           `json:"origin,omitempty"`
+	Preferences map[string]any   `json:"preferences,omitempty"`
+	Items       []types.RootItem `json:"items,omitempty"`
 }
 
 type Oneliner struct {

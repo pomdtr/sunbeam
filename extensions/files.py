@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import json
 import pathlib
@@ -13,7 +14,7 @@ if len(sys.argv) == 1:
             "preferences": [
                 {"name": "show-hidden", "type": "checkbox", "label": "Show Hidden Files", "required": False}
             ],
-            "items": ["ls"],
+            "root": ["ls"],
             "commands": [
                 {
                     "name": "ls",
@@ -38,6 +39,8 @@ if payload["command"] == "ls":
     directory = params.get("dir", payload["cwd"])
     if directory.startswith("~/"):
         root = pathlib.Path.joinpath(pathlib.Path.home(), directory[2:])
+    elif not os.path.isabs(directory):
+        root = pathlib.Path(payload["cwd"]).joinpath(directory)
     else:
         root = pathlib.Path(directory)
     items = []

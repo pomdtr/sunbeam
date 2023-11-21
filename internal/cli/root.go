@@ -120,6 +120,10 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	})
 
 	if _, err := os.Stat(config.Path); os.IsNotExist(err) {
+		if _, ok := os.LookupEnv("SUNBEAM_CONFIG"); ok {
+			return nil, fmt.Errorf("config file not found: %s", config.Path)
+		}
+
 		if err := os.MkdirAll(filepath.Dir(config.Path), 0755); err != nil {
 			return nil, err
 		}
@@ -251,7 +255,7 @@ func onelinerListItems(oneliners []config.Oneliner) []types.ListItem {
 	return items
 }
 
-func extensionListItems(alias string, extension extensions.Extension, extensionConfig extensions.Config) []types.ListItem {
+func extensionListItems(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig) []types.ListItem {
 	var items []types.ListItem
 
 	var rootItems []types.RootItem
