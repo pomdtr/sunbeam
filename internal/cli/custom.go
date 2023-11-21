@@ -65,11 +65,10 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 				input.Preferences = extensionConfig.Preferences
 			}
 
-			return runExtension(extension, input)
+			return runExtension(extension, input, false)
 		},
 	}
 
-	rootCmd.Flags().Bool("raw", false, "raw output")
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
@@ -125,7 +124,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 					input.Query = string(bytes.Trim(stdin, "\n"))
 				}
 
-				return runExtension(extension, input)
+				return runExtension(extension, input, isatty.IsTerminal(os.Stdin.Fd()))
 			},
 		}
 
@@ -150,13 +149,13 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 	return rootCmd, nil
 }
 
-func runExtension(extension extensions.Extension, input types.Payload) error {
+func runExtension(extension extensions.Extension, input types.Payload, interactive bool) error {
 	command, ok := extension.Command(input.Command)
 	if !ok {
 		return fmt.Errorf("command %s not found", input.Command)
 	}
 
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
+	if !interactive {
 		cmd, err := extension.Cmd(input)
 		if err != nil {
 			return err
