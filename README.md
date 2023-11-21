@@ -6,7 +6,7 @@ Define UIs composed of a succession of views from simple scripts written in any 
 
 <p align="center" style="text-align: center">
   <a href="https://github.com/pomdtr/sunbeam/tree/main/extensions/github.ts">
-    <img src="./website/assets/demo.gif">
+    <img src="https://vhs.charm.sh/vhs-1331psn9qEJqr4QhiCMSMd.gif">
   </a>
 </p>
 
