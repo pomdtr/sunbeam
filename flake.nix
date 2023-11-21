@@ -2,10 +2,10 @@
   description = "Wrap your CLIs in keyboard-friendly TUIs";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-23.05";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
   };
 
-  outputs = { nixpkgs, ... }:
+  outputs = { self, nixpkgs, ... }:
     let
       # you can also put any architecture you want to support here
       # i.e. aarch64-darwin for never M1/2 macbooks
@@ -21,7 +21,7 @@
           default = pkgs.buildGoModule {
             name = pname;
             src = self;
-            vendorSha256 = "sha256-3gMP9VjC8+u41gvzT45LflqZ4uk5+tObBtlJO5SCjwQ=";
+            vendorHash = "sha256-HbAgvGp375KxNwyy5cBv19IoTyHwCz7S+4Nk0osmx8A=";
           };
         };
     };
