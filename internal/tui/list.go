@@ -45,6 +45,7 @@ func NewList(items ...types.ListItem) *List {
 
 	input := textinput.New()
 	input.Prompt = ""
+	input.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 	input.Placeholder = "Search Items..."
 
 	list := &List{

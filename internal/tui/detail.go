@@ -49,6 +49,7 @@ func NewDetail(text string, actions ...types.Action) *Detail {
 	filter.DrawLines = true
 
 	input := textinput.New()
+	input.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 	input.Prompt = ""
 	input.Placeholder = "Search Actions..."
 
