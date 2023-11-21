@@ -39,7 +39,7 @@ if len(sys.argv) == 1:
                     "title": "List files",
                     "mode": "list",
                     "params": [
-                        {"name": "dir", "title": "Directory", "type": "text", "required": False}
+                        {"name": "dir", "title": "Directory", "type": "text", "default": ".", "required": False}
                     ],
                 }
             ],

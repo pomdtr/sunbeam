@@ -3,7 +3,6 @@
     "type": "object",
     "required": [
         "title",
-        "description",
         "commands"
     ],
     "properties": {

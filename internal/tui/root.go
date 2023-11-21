@@ -98,10 +98,10 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.list.Focus()
 			}
 		case "ctrl+e":
-			if c.form != nil {
+			if c.form != nil || c.config.Path == "" {
 				break
 			}
-			editCmd := exec.Command("sunbeam", "edit", "--config")
+			editCmd := exec.Command("sunbeam", "edit", c.config.Path)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
@@ -151,6 +151,10 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 
 					c.config.Extensions[msg.Extension] = extensionConfig
+					if config.Path == "" {
+						return msg
+					}
+
 					if err := c.config.Save(); err != nil {
 						return err
 					}
