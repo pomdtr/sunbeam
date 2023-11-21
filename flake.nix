@@ -3,26 +3,27 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
+    utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, ... }:
-    let
-      # you can also put any architecture you want to support here
-      # i.e. aarch64-darwin for never M1/2 macbooks
-      system = "aarch64-darwin";
-      pname = "sunbeam";
-    in
-    {
-      packages.${system} =
-        let
-          pkgs = nixpkgs.legacyPackages.${system}; # this gives us access to nixpkgs as we are used to
-        in
-        {
+  outputs = { self, nixpkgs, utils }: utils.lib.eachSystem [
+    "x86_64-linux"
+    "aarch64-linux"
+    "x86_64-darwin"
+    "aarch64-darwin"
+  ]
+    (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+      {
+        packages = {
           default = pkgs.buildGoModule {
-            name = pname;
+            name = "sunbeam";
             src = self;
             vendorHash = "sha256-HbAgvGp375KxNwyy5cBv19IoTyHwCz7S+4Nk0osmx8A=";
           };
         };
-    };
+      }
+    );
 }
