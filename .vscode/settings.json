@@ -7,7 +7,7 @@
   "deno.enablePaths": [
     "./extensions",
     "sdk",
-    "./website/server"
+    "./www/install"
   ],
   "deno.unstable": true
 }

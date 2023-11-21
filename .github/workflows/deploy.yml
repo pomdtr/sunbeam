@@ -7,7 +7,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy-install-script:
+    permissions:
+      id-token: write # This is required to allow the GitHub Action to authenticate with Deno Deploy.
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy to Deno Deploy
+        uses: denoland/deployctl@v1
+        with:
+          project: install-sunbeam # the name of the project on Deno Deploy
+          root: www/install
+          entrypoint: main.ts # the entrypoint to deploy
+  build-and-deploy-frontend:
     permissions:
       id-token: write # This is required to allow the GitHub Action to authenticate with Deno Deploy.
       contents: read
@@ -30,11 +44,11 @@ jobs:
         working-directory: website
         run: npm ci
       - name: Build website
-        working-directory: website
+        working-directory: www/frontend
         run: npm run build
       - name: Deploy to Deno Deploy
         uses: denoland/deployctl@v1
         with:
           project: sunbeam # the name of the project on Deno Deploy
-          root: website/server
-          entrypoint: main.ts # the entrypoint to deploy
+          root: www/frontend/.vitepress/dist
+          entrypoint: https://deno.land/std@0.207.0/http/file_server.ts

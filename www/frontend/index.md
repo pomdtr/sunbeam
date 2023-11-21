@@ -13,7 +13,7 @@ hero:
       link: /docs/
     - theme: alt
       text: Browse Extensions
-      link: /catalog
+      link: /catalog/
 
 features:
   - title: Augment your tools

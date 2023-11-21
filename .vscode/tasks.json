@@ -12,28 +12,6 @@
         "--clean"
       ],
       "problemMatcher": []
-    },
-    {
-      "label": "build docs",
-      "type": "shell",
-      "command": "npm run build",
-      "options": {
-        "cwd": "${workspaceFolder}/website/frontend"
-      },
-    },
-    {
-      "label": "build typescript package",
-      "type": "process",
-      "command": "deno",
-      "options": {
-        "cwd": "${workspaceFolder}/pkg/typescript"
-      },
-      "args": [
-        "run",
-        "-A",
-        "./build.ts"
-      ],
-      "problemMatcher": []
     }
   ],
 }

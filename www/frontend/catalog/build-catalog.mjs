@@ -14,7 +14,7 @@ rows.push(
     "# Extension Catalog"
 )
 
-const extensionDir = path.join(dirname, "..", "extensions");
+const extensionDir = path.join(dirname, "..", "..", "..", "extensions");
 const entries = await fs.readdir(extensionDir, { withFileTypes: true });
 for (const entry of entries) {
     const entrypoint = path.join(extensionDir, entry.name);

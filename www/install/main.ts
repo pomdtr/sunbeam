@@ -1,3 +1,5 @@
+#!/usr/bin/env deno run --allow-net --allow-read --allow-env
+
 export const installScript = (tag: string) => `#!/bin/sh
 # This script installs sunbeam.
 #
@@ -50,3 +52,37 @@ fi
 
 printf "\\n↯ Done! You can now run sunbeam.\\n"
 `;
+
+Deno.serve(async (req) => {
+    const githubToken = Deno.env.get("GITHUB_TOKEN")
+    if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required")
+    }
+
+    const { search } = new URL(req.url)
+    const params = new URLSearchParams(search)
+    let tag = params.get("tag");
+    if (!tag) {
+        const resp = await fetch("https://api.github.com/repos/pomdtr/sunbeam/releases", {
+            headers: {
+                "User-Agent": "install-sunbeam.deno.dev",
+                "Accept": "application/vnd.github.v3+json",
+                "Authorization": `Bearer ${githubToken}`
+            }
+        })
+        const releases = await resp.json()
+        if (releases.length == 0) {
+            return new Response("No releases found", { status: 404 })
+        }
+
+        tag = releases[0].tag_name as string
+    }
+
+    return new Response(installScript(tag), {
+        headers: {
+            "Content-Disposition": `attachment; filename="install-sunbeam-${tag}.sh"`,
+            "Content-Type": "application/x-shellscript"
+        }
+    })
+})
+
