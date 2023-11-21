@@ -35,8 +35,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 			}
 
 			if len(inputBytes) == 0 {
-				items := extensionListItems(alias, extension, extensionConfig)
-				if len(items) == 0 {
+				if len(extension.Manifest.Root) == 0 && len(extensionConfig.Items) == 0 {
 					return cmd.Usage()
 				}
 
@@ -46,10 +45,12 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 				}
 
 				rootList := tui.NewRootList(extension.Manifest.Title, history, func() (config.Config, []types.ListItem, error) {
-					cfg := config.Config{
-						Extensions: map[string]extensions.Config{alias: extensionConfig},
+					cfg, err := config.Load(config.Path)
+					if err != nil {
+						return config.Config{}, nil, err
 					}
 
+					items := extensionListItems(alias, extension, extensionConfig)
 					return cfg, items, nil
 				})
 

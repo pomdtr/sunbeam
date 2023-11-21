@@ -9,28 +9,14 @@
         "title": {
             "type": "string"
         },
-        "description": {
-            "type": "string"
-        },
-        "items": {
+        "root": {
             "type": "array",
             "items": {
-                "type": "object",
-                "required": [
-                    "command"
-                ],
-                "properties": {
-                    "title": {
-                        "type": "string"
-                    },
-                    "command": {
-                        "type": "string"
-                    },
-                    "params": {
-                        "$ref": "./params.schema.json"
-                    }
-                }
+                "type": "string"
             }
+        },
+        "description": {
+            "type": "string"
         },
         "preferences": {
             "type": "array",

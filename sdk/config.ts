@@ -1,4 +1,5 @@
-import type { RootItem } from "./manifest.ts"
+import { Param } from "./action.ts";
+
 export type Config = {
     $schema?: string;
     oneliners?: Oneliner[];
@@ -18,3 +19,8 @@ export type ExtensionConfig = {
     items?: RootItem[];
 }
 
+export type RootItem = {
+    title: string;
+    command: string;
+    params?: Record<string, Param>;
+};

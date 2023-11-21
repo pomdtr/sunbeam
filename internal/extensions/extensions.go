@@ -65,25 +65,21 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	return types.CommandSpec{}, false
 }
 
-func (e Extension) Root() []types.RootItem {
-	rootItems := make([]types.RootItem, 0)
+func (e Extension) RootItems() []types.RootItem {
 	var items []types.RootItem
-	items = append(items, e.Manifest.Items...)
-
-	for _, rootItem := range items {
-		command, ok := e.Command(rootItem.Command)
+	for _, name := range e.Manifest.Root {
+		command, ok := e.Command(name)
 		if !ok {
 			continue
 		}
 
-		if rootItem.Title == "" {
-			rootItem.Title = command.Title
-		}
-
-		rootItems = append(rootItems, rootItem)
+		items = append(items, types.RootItem{
+			Title:   command.Title,
+			Command: command.Name,
+		})
 	}
 
-	return rootItems
+	return items
 }
 
 func (e Extension) Run(input types.Payload) error {

@@ -1,10 +1,17 @@
-export async function editor(extension: string, content?: string) {
-    if (extension.startsWith(".")) {
+export async function editor({
+    extension,
+    content,
+}: {
+    extension?: string;
+    content?: string;
+}) {
+    if (extension?.startsWith(".")) {
         extension = extension.slice(1);
     }
 
+    const args = extension ? ["edit", "--extension", extension] : ["edit"];
     const command = new Deno.Command("sunbeam", {
-        args: ["edit", "--extension", extension],
+        args,
         stdin: "piped",
         stdout: "piped",
     })

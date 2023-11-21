@@ -24,7 +24,7 @@ func init() {
 type Config struct {
 	Oneliners  []Oneliner                   `json:"oneliners,omitempty"`
 	Extensions map[string]extensions.Config `json:"extensions,omitempty"`
-	Path       string                       `json:"-"`
+	path       string                       `json:"-"`
 }
 
 type Oneliner struct {
@@ -57,7 +57,7 @@ func Load(configPath string) (Config, error) {
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
-	config.Path = configPath
+	config.path = configPath
 
 	return config, nil
 }
@@ -68,7 +68,7 @@ func (c Config) Save() error {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	if err := os.WriteFile(c.Path, bts, 0600); err != nil {
+	if err := os.WriteFile(c.path, bts, 0600); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 

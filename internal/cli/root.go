@@ -57,7 +57,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
 	rootCmd.AddCommand(NewCmdOpen())
-	rootCmd.AddCommand(NewCmdRun())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -256,7 +255,7 @@ func extensionListItems(alias string, extension extensions.Extension, extensionC
 	var items []types.ListItem
 
 	var rootItems []types.RootItem
-	rootItems = append(rootItems, extension.Root()...)
+	rootItems = append(rootItems, extension.RootItems()...)
 	rootItems = append(rootItems, extensionConfig.Items...)
 
 	for _, rootItem := range rootItems {

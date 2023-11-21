@@ -4,7 +4,7 @@ type Manifest struct {
 	Title       string        `json:"title"`
 	Description string        `json:"description,omitempty"`
 	Preferences []Input       `json:"preferences,omitempty"`
-	Items       []RootItem    `json:"items,omitempty"`
+	Root        []string      `json:"root"`
 	Commands    []CommandSpec `json:"commands"`
 }
 

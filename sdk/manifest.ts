@@ -1,19 +1,10 @@
-import { Param } from "./action.ts";
-
 export type Manifest = {
   title: string;
   description?: string;
-  items?: RootItem[];
+  root?: string[];
   preferences?: Input[];
   commands: CommandSpec[];
 };
-
-export type RootItem = {
-  command: string;
-  title?: string;
-  params?: Record<string, Param>;
-};
-
 
 export type CommandSpec = {
   name: string;
