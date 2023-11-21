@@ -10,7 +10,7 @@ hero:
   actions:
     - theme: brand
       text: View Docs
-      link: /docs
+      link: /docs/
     - theme: alt
       text: Browse Extensions
       link: /catalog
