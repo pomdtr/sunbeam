@@ -82,8 +82,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			}
 
 			return p, nil
-
-			return p, nil
 		case "shift+tab", "left":
 			if !p.expanded {
 				break
