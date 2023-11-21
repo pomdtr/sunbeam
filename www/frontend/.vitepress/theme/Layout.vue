@@ -8,7 +8,7 @@ const { Layout } = DefaultTheme
   <Layout>
     <template #home-hero-image>
         <div class="demo-wrapper">
-        <img src="/assets/demo.gif" class="demo" />
+        <img src="https://vhs.charm.sh/vhs-1331psn9qEJqr4QhiCMSMd.gif" class="demo" />
         </div>
     </template>
   </Layout>
