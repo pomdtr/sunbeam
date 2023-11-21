@@ -10,6 +10,7 @@ export default defineConfig({
     ['meta', { property: 'og:image', content: 'https://pomdtr.github.io/sunbeam/screenshot.png' }],
     ['meta', { property: 'og:description', content: 'Wrap your tools in keyboard-friendly TUIs' }]
   ],
+  appearance: 'force-dark',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     outline: [2, 3],

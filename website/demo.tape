@@ -55,7 +55,6 @@
 Require sunbeam
 
 Output ./assets/demo.gif
-Output ./assets/demo.webm
 
 Set Framerate 30
 Set Shell "bash"

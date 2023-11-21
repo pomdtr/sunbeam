@@ -7,17 +7,15 @@ const { Layout } = DefaultTheme
 <template>
   <Layout>
     <template #home-hero-image>
-        <div class="video-wrapper">
-        <video class="demo" autoplay muted loop>
-            <source src="/assets/demo.webm" type="video/webm">
-        </video>
+        <div class="demo-wrapper">
+        <img src="/assets/demo.gif" class="demo" />
         </div>
     </template>
   </Layout>
 </template>
 
 <style>
-    .video-wrapper {
+    .demo-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
