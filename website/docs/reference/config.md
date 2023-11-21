@@ -1,4 +1,6 @@
-# Config
+---
+title: Config
+---
 
 The config will be searched in the following locations in order:
 

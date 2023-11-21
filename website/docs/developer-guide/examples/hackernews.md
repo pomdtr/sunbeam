@@ -1,5 +1,6 @@
-# Hacker News
-
+---
+title: Hacker News
+---
 This script leverages the `root` property to contribute two items to the root menu.
 
 The first item will list the articles from the front page, and the second item will list the articles from the "Show HN" section.

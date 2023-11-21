@@ -4,8 +4,9 @@
     "public": true,
   },
   "yaml.validate": false,
-  "deno.disablePaths": [
-    "./website/frontend"
+  "deno.enablePaths": [
+    "./extensions",
+    "./website/server"
   ],
   "deno.enable": true,
 }

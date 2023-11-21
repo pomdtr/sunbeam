@@ -36,5 +36,5 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: sunbeam # the name of the project on Deno Deploy
-          root: website/backend
+          root: website/server
           entrypoint: main.ts # the entrypoint to deploy

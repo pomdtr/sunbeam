@@ -1,1 +1,2 @@
-static
+node_modules/
+.vitepress/cache/

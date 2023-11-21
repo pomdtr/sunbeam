@@ -7,11 +7,6 @@ import (
 	"github.com/pomdtr/sunbeam/internal/cli"
 )
 
-var (
-	Version = "dev"
-	Date    = "unknown"
-)
-
 func main() {
 	rootCmd, err := cli.NewRootCmd()
 	if err != nil {

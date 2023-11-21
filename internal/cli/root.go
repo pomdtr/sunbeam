@@ -3,7 +3,6 @@ package cli
 import (
 	_ "embed"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,33 +37,10 @@ var configBytes []byte
 func NewRootCmd() (*cobra.Command, error) {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
-		Use:                "sunbeam",
-		Short:              "Command Line Launcher",
-		SilenceUsage:       true,
-		DisableFlagParsing: true,
-		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			if len(args) == 0 {
-				return nil, cobra.ShellCompDirectiveDefault
-			}
-
-			entrypoint, err := filepath.Abs(args[0])
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveDefault
-			}
-
-			extension, err := extensions.ExtractManifest(entrypoint)
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveDefault
-			}
-
-			var completions []string
-			for _, command := range extension.Commands {
-				completions = append(completions, fmt.Sprintf("%s\t%s", command.Name, command.Title))
-			}
-
-			return completions, cobra.ShellCompDirectiveNoFileComp
-		},
-		Args: cobra.ArbitraryArgs,
+		Use:          "sunbeam",
+		Short:        "Command Line Launcher",
+		SilenceUsage: true,
+		Args:         cobra.NoArgs,
 		Long: `Sunbeam is a command line launcher for your terminal, inspired by fzf and raycast.
 
 See https://pomdtr.github.io/sunbeam for more information.`,
@@ -81,6 +57,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
 	rootCmd.AddCommand(NewCmdOpen())
+	rootCmd.AddCommand(NewCmdRun())
 
 	docCmd := &cobra.Command{
 		Use:    "docs",
@@ -176,100 +153,34 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 && (args[0] == "-h" || args[0] == "--help") {
-			return cmd.Help()
-		}
-
-		if len(args) == 0 {
-			history, err := history.Load(history.Path)
-			if err != nil {
-				return err
-			}
-
-			rootList := tui.NewRootList("Sunbeam", history, func() (config.Config, []types.ListItem, error) {
-				cfg, err := config.Load(config.Path)
-				if err != nil {
-					return config.Config{}, nil, err
-				}
-
-				extensionMap := make(map[string]extensions.Extension)
-				for alias, extensionConfig := range cfg.Extensions {
-					extension, err := extensions.LoadExtension(extensionConfig.Origin)
-					if err != nil {
-						continue
-					}
-					extensionMap[alias] = extension
-				}
-
-				return cfg, extractListItems(cfg, extensionMap), nil
-			})
-			return tui.Draw(rootList)
-		}
-
-		var entrypoint string
-		if args[0] == "-" {
-			tempfile, err := os.CreateTemp("", "entrypoint-*%s")
-			if err != nil {
-				return err
-			}
-			defer os.Remove(tempfile.Name())
-
-			if _, err := io.Copy(tempfile, os.Stdin); err != nil {
-				return err
-			}
-
-			if err := tempfile.Close(); err != nil {
-				return err
-			}
-
-			entrypoint = tempfile.Name()
-		} else if extensions.IsRemote(args[0]) {
-			tempfile, err := os.CreateTemp("", "entrypoint-*%s")
-			if err != nil {
-				return err
-			}
-			defer os.Remove(tempfile.Name())
-
-			if err := extensions.DownloadEntrypoint(args[0], tempfile.Name()); err != nil {
-				return err
-			}
-
-			entrypoint = tempfile.Name()
-		} else {
-			e, err := filepath.Abs(args[0])
-			if err != nil {
-				return err
-			}
-
-			if _, err := os.Stat(e); err != nil {
-				return fmt.Errorf("error loading extension: %w", err)
-			}
-
-			entrypoint = e
-		}
-
-		if err := os.Chmod(entrypoint, 0755); err != nil {
+		history, err := history.Load(history.Path)
+		if err != nil {
 			return err
 		}
 
-		manifest, err := extensions.ExtractManifest(entrypoint)
-		if err != nil {
-			return fmt.Errorf("error loading extension: %w", err)
-		}
+		rootList := tui.NewRootList("Sunbeam", history, func() (config.Config, []types.ListItem, error) {
+			cfg, err := config.Load(config.Path)
+			if err != nil {
+				return config.Config{}, nil, err
+			}
 
-		rootCmd, err := NewCmdCustom(filepath.Base(entrypoint), extensions.Extension{
-			Manifest:   manifest,
-			Entrypoint: entrypoint,
-		}, extensions.Config{
-			Origin: entrypoint,
+			var items []types.ListItem
+			items = append(items, onelinerListItems(cfg.Oneliners)...)
+
+			extensionMap := make(map[string]extensions.Extension)
+			for alias, extensionConfig := range cfg.Extensions {
+				extension, err := extensions.LoadExtension(extensionConfig.Origin)
+				if err != nil {
+					continue
+				}
+				extensionMap[alias] = extension
+				items = append(items, extensionListItems(alias, extension, extensionConfig)...)
+			}
+
+			return cfg, items, nil
 		})
-		if err != nil {
-			return fmt.Errorf("error loading extension: %w", err)
-		}
+		return tui.Draw(rootList)
 
-		rootCmd.Use = "extension"
-		rootCmd.SetArgs(args[1:])
-		return rootCmd.Execute()
 	}
 
 	return rootCmd, nil
@@ -310,9 +221,9 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func extractListItems(cfg config.Config, extensionMap map[string]extensions.Extension) []types.ListItem {
+func onelinerListItems(oneliners []config.Oneliner) []types.ListItem {
 	var items []types.ListItem
-	for _, oneliner := range cfg.Oneliners {
+	for _, oneliner := range oneliners {
 		item := types.ListItem{
 			Id:          fmt.Sprintf("oneliner - %s", oneliner.Command),
 			Title:       oneliner.Title,
@@ -338,62 +249,61 @@ func extractListItems(cfg config.Config, extensionMap map[string]extensions.Exte
 		items = append(items, item)
 	}
 
-	for alias, extensionConfig := range cfg.Extensions {
-		extension, ok := extensionMap[alias]
-		if !ok {
-			continue
-		}
+	return items
+}
 
-		var rootItems []types.RootItem
-		rootItems = append(rootItems, extension.Root()...)
-		rootItems = append(rootItems, extensionConfig.Items...)
+func extensionListItems(alias string, extension extensions.Extension, extensionConfig extensions.Config) []types.ListItem {
+	var items []types.ListItem
 
-		for _, rootItem := range rootItems {
-			item := types.ListItem{
-				Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
-				Title:       rootItem.Title,
-				Subtitle:    extension.Manifest.Title,
-				Accessories: []string{"Command"},
-				Actions: []types.Action{
-					{
-						Title:     "Run",
-						Type:      types.ActionTypeRun,
-						Extension: alias,
-						Command:   rootItem.Command,
-						Params:    rootItem.Params,
-						Exit:      true,
-					},
-				},
-			}
+	var rootItems []types.RootItem
+	rootItems = append(rootItems, extension.Root()...)
+	rootItems = append(rootItems, extensionConfig.Items...)
 
-			if !extensions.IsRemote(extensionConfig.Origin) {
-				item.Actions = append(item.Actions, types.Action{
-					Title:  "Edit Extension",
-					Key:    "e",
-					Type:   types.ActionTypeEdit,
-					Target: extension.Entrypoint,
-					Reload: true,
-				})
-			} else {
-				item.Actions = append(item.Actions, types.Action{
-					Title:   "View Source",
-					Key:     "c",
-					Type:    types.ActionTypeExec,
-					Command: fmt.Sprintf("sunbeam fetch %s | %s", extensionConfig.Origin, utils.FindPager()),
-				})
-			}
-
-			if len(extensionConfig.Preferences) > 0 {
-				item.Actions = append(item.Actions, types.Action{
-					Title:     "Configure Extension",
-					Key:       "s",
-					Type:      types.ActionTypeConfig,
+	for _, rootItem := range rootItems {
+		item := types.ListItem{
+			Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
+			Title:       rootItem.Title,
+			Subtitle:    extension.Manifest.Title,
+			Accessories: []string{"Command"},
+			Actions: []types.Action{
+				{
+					Title:     "Run",
+					Type:      types.ActionTypeRun,
 					Extension: alias,
-				})
-			}
-
-			items = append(items, item)
+					Command:   rootItem.Command,
+					Params:    rootItem.Params,
+					Exit:      true,
+				},
+			},
 		}
+
+		if !extensions.IsRemote(extensionConfig.Origin) {
+			item.Actions = append(item.Actions, types.Action{
+				Title:  "Edit Extension",
+				Key:    "e",
+				Type:   types.ActionTypeEdit,
+				Target: extension.Entrypoint,
+				Reload: true,
+			})
+		} else {
+			item.Actions = append(item.Actions, types.Action{
+				Title:   "View Source",
+				Key:     "c",
+				Type:    types.ActionTypeExec,
+				Command: fmt.Sprintf("sunbeam fetch %s | %s", extensionConfig.Origin, utils.FindPager()),
+			})
+		}
+
+		if len(extensionConfig.Preferences) > 0 {
+			item.Actions = append(item.Actions, types.Action{
+				Title:     "Configure Extension",
+				Key:       "s",
+				Type:      types.ActionTypeConfig,
+				Extension: alias,
+			})
+		}
+
+		items = append(items, item)
 	}
 
 	return items

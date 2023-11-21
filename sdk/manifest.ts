@@ -2,8 +2,8 @@ import { Param } from "./action.ts";
 
 export type Manifest = {
   title: string;
-  description: string;
-  items: RootItem[];
+  description?: string;
+  items?: RootItem[];
   preferences?: Input[];
   commands: CommandSpec[];
 };

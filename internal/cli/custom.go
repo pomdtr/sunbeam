@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
+	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/spf13/cobra"
@@ -33,7 +35,25 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 			}
 
 			if len(inputBytes) == 0 {
-				return cmd.Usage()
+				items := extensionListItems(alias, extension, extensionConfig)
+				if len(items) == 0 {
+					return cmd.Usage()
+				}
+
+				history, err := history.Load(history.Path)
+				if err != nil {
+					return err
+				}
+
+				rootList := tui.NewRootList(extension.Manifest.Title, history, func() (config.Config, []types.ListItem, error) {
+					cfg := config.Config{
+						Extensions: map[string]extensions.Config{alias: extensionConfig},
+					}
+
+					return cfg, items, nil
+				})
+
+				return tui.Draw(rootList)
 			}
 
 			var input types.Payload
