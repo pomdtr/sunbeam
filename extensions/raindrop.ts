@@ -13,8 +13,8 @@ if (Deno.args.length === 0) {
                 required: true,
             }
         ],
-        items: [
-            { command: "search-bookmarks" }
+        root: [
+            "search-bookmarks"
         ],
         commands: [
             {

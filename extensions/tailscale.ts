@@ -1,13 +1,11 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "npm:sunbeam-types@0.25.1";
+import type * as sunbeam from "https://raw.githubusercontent.com/pomdtr/sunbeam/main/sdk/mod.ts"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Tailscale",
         description: "Manage your tailscale devices",
-        items: [
-            { command: "list-devices", }
-        ],
+        root: ["list-devices"],
         commands: [
             {
                 name: "list-devices",

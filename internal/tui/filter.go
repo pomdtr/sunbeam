@@ -70,11 +70,6 @@ func (f *Filter) SetItems(items ...FilterItem) {
 	}
 }
 
-type Match struct {
-	item  *FilterItem
-	score int
-}
-
 func (f *Filter) FilterItems(query string) {
 	f.Query = query
 	values := make([]string, len(f.items))
@@ -83,35 +78,23 @@ func (f *Filter) FilterItems(query string) {
 	}
 	// If the search field is empty, let's not display the matches
 	// (none), but rather display all possible choices.
-	var filtered []FilterItem
 	if query == "" {
-		filtered = f.items
+		f.filtered = f.items
 	} else {
-		matches := make([]Match, 0)
+		scores := make([]int, 0)
+		f.filtered = make([]FilterItem, 0)
 		for i := 0; i < len(f.items); i++ {
 			score := fzf.Score(f.items[i].FilterValue(), query)
 			if score > 0 {
-				matches = append(matches, Match{&f.items[i], score})
+				scores = append(scores, score)
+				f.filtered = append(f.filtered, f.items[i])
 			}
 		}
 
-		sort.SliceStable(matches, func(i, j int) bool {
-			return matches[i].score > matches[j].score
-		})
-
-		filtered = make([]FilterItem, len(matches))
-		for i, match := range matches {
-			filtered[i] = *match.item
-		}
-	}
-
-	if f.Less != nil {
-		sort.SliceStable(filtered, func(i, j int) bool {
-			return f.Less(filtered[i], filtered[j])
+		sort.SliceStable(f.filtered, func(i, j int) bool {
+			return scores[i] > scores[j]
 		})
 	}
-
-	f.filtered = filtered
 
 	if f.cursor >= len(f.filtered) {
 		f.cursor = len(f.filtered) - 1

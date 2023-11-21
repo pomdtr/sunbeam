@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
 {
     title: "Browse TLDR Pages",
     description: "Browse TLDR Pages",
-    items: [{ command: "list"}],
+    root: ["list"],
     # each command can be called through the cli
     commands: [
         { name: "list", mode: "list", title: "Search Pages" },

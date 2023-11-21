@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
@@ -19,6 +22,7 @@ type Detail struct {
 	spinner   spinner.Model
 	viewport  viewport.Model
 	statusBar StatusBar
+	input     textinput.Model
 
 	text          string
 	width, height int
@@ -44,8 +48,13 @@ func NewDetail(text string, actions ...types.Action) *Detail {
 	filter := NewFilter(items...)
 	filter.DrawLines = true
 
+	input := textinput.New()
+	input.Prompt = ""
+	input.Placeholder = "Search Actions..."
+
 	d := Detail{
 		spinner:   spinner.New(),
+		input:     input,
 		viewport:  viewport,
 		statusBar: statusBar,
 		text:      text,
@@ -82,6 +91,13 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "tab":
+			if c.statusBar.expanded {
+				break
+			}
+
+			c.statusBar.expanded = true
+			return c, c.input.Focus()
 		case "q":
 			if c.actionsFocused {
 				break
@@ -94,6 +110,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if c.statusBar.expanded {
 				c.statusBar.expanded = false
 				c.statusBar.cursor = 0
+				c.input.Blur()
 				return c, nil
 			}
 			return c, func() tea.Msg {
@@ -109,8 +126,14 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
-	c.viewport, cmd = c.viewport.Update(msg)
-	cmds = append(cmds, cmd)
+	if c.input.Focused() {
+		c.input, cmd = c.input.Update(msg)
+		c.statusBar.FilterActions(c.input.Value())
+		cmds = append(cmds, cmd)
+	} else {
+		c.viewport, cmd = c.viewport.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	c.statusBar, cmd = c.statusBar.Update(msg)
 	cmds = append(cmds, cmd)
@@ -155,7 +178,13 @@ func (c *Detail) SetSize(width, height int) {
 func (c *Detail) View() string {
 	var headerRow string
 	if c.isLoading {
-		headerRow = " " + c.spinner.View()
+		headerRow = fmt.Sprintf(" %s", c.spinner.View())
+	} else {
+		headerRow = "  "
+	}
+
+	if c.input.Focused() {
+		headerRow = fmt.Sprintf("%s %s", headerRow, c.input.View())
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, headerRow, separator(c.width), c.viewport.View(), c.statusBar.View())

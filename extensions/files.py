@@ -13,26 +13,7 @@ if len(sys.argv) == 1:
             "preferences": [
                 {"name": "show-hidden", "type": "checkbox", "label": "Show Hidden Files", "required": False}
             ],
-            "items": [
-                {
-                    "title": "Browse Home Directory",
-                    "command": "ls",
-                    "params": {
-                        "dir": home,
-                    },
-                },
-                {
-                    "title": "Browse Current Directory",
-                    "command": "ls"
-                },
-                {
-                    "title": "Browse Root Directory",
-                    "command": "ls",
-                    "params": {
-                        "dir": "/",
-                    },
-                }
-            ],
+            "items": ["ls"],
             "commands": [
                 {
                     "name": "ls",

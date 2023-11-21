@@ -1,15 +1,14 @@
 #!/usr/bin/env -S deno run -A
 
-import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
+import type * as sunbeam from "https://raw.githubusercontent.com/pomdtr/sunbeam/main/deno/mod.ts"
 import * as dates from "npm:date-fns"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Deno Deploy",
         description: "Manage your Deno Deploy projects",
-        items: [
-            { command: "projects" },
-            { command: "dashboard" }
+        root: [
+            "projects", "dashboard"
         ],
         preferences: [
             {

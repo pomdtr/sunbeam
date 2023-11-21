@@ -8,11 +8,7 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "GitHub",
         description: "Search GitHub repositories",
-        items: [
-            {
-                command: "search-repos"
-            }
-        ],
+        root: ["search-repos"],
         preferences: [
             {
                 name: "token",

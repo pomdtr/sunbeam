@@ -6,7 +6,7 @@
       "type": "go",
       "request": "launch",
       "console": "integratedTerminal",
-      "program": "${workspaceFolder}/cmd/sunbeam/main.go",
+      "program": "${workspaceFolder}",
     },
   ],
 }

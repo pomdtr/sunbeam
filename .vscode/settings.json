@@ -6,7 +6,8 @@
   "yaml.validate": false,
   "deno.enablePaths": [
     "./extensions",
+    "sdk",
     "./website/server"
   ],
-  "deno.enable": true,
+  "deno.unstable": true
 }

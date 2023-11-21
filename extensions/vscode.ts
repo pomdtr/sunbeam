@@ -9,7 +9,7 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "VS Code",
         description: "Manage your VS Code projects",
-        items: [{ command: "list-projects" }],
+        root: ["list-projects"],
         commands: [
             {
                 name: "list-projects",

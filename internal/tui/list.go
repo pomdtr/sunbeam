@@ -14,16 +14,26 @@ import (
 type List struct {
 	width, height int
 
-	input     textinput.Model
+	query string
+	input textinput.Model
+
 	spinner   spinner.Model
 	filter    Filter
 	statusBar StatusBar
 
+	focus         ListFocus
 	isLoading     bool
 	Actions       []types.Action
 	OnQueryChange func(string) tea.Cmd
 	OnSelect      func(string) tea.Cmd
 }
+
+type ListFocus string
+
+var (
+	ListFocusItems   ListFocus = "items"
+	ListFocusActions ListFocus = "actions"
+)
 
 type QueryChangeMsg string
 
@@ -32,14 +42,17 @@ func NewList(items ...types.ListItem) *List {
 	filter.DrawLines = true
 
 	statusBar := NewStatusBar()
+
 	input := textinput.New()
 	input.Prompt = ""
+	input.Placeholder = "Search Items..."
 
 	list := &List{
 		spinner:   spinner.New(),
 		input:     input,
 		filter:    filter,
 		statusBar: statusBar,
+		focus:     ListFocusItems,
 	}
 
 	list.SetItems(items...)
@@ -68,6 +81,11 @@ func (l *List) SetEmptyText(text string) {
 }
 
 func (c *List) Init() tea.Cmd {
+	if c.focus == ListFocusActions {
+		c.focus = ListFocusItems
+		c.input.Placeholder = "Search Items..."
+		c.input.SetValue(c.query)
+	}
 	return c.input.Focus()
 }
 
@@ -81,13 +99,27 @@ func (c *List) Blur() tea.Cmd {
 
 func (c *List) SetQuery(query string) tea.Cmd {
 	c.input.SetValue(query)
-	if c.OnQueryChange == nil {
+
+	if c.focus == ListFocusItems {
+		c.query = query
+		if c.OnQueryChange != nil {
+			return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
+				c.filter.EmptyText = "Loading..."
+				if query == c.input.Value() {
+					return QueryChangeMsg(query)
+				}
+
+				return nil
+			})
+		}
+
 		c.FilterItems(query)
 		c.filter.ResetSelection()
-		return nil
+	} else {
+		c.statusBar.FilterActions(query)
 	}
 
-	return c.OnQueryChange(query)
+	return nil
 }
 
 func (c *List) FilterItems(query string) {
@@ -139,7 +171,7 @@ func (c *List) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c List) Query() string {
-	return c.input.Value()
+	return c.query
 }
 
 func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
@@ -147,17 +179,30 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if c.statusBar.expanded {
-				c.statusBar.expanded = false
-				c.statusBar.cursor = 0
-				return c, nil
-			}
-
 			if c.input.Value() != "" {
 				return c, c.SetQuery("")
 			}
 
+			if c.statusBar.expanded {
+				c.statusBar.expanded = false
+				c.statusBar.cursor = 0
+				c.focus = ListFocusItems
+				c.input.Placeholder = "Search Items..."
+				c.input.SetValue(c.query)
+				return c, nil
+			}
+
 			return c, PopPageCmd
+		case "tab":
+			if c.statusBar.expanded {
+				break
+			}
+
+			c.input.SetValue("")
+			c.input.Placeholder = "Search Actions..."
+			c.statusBar.expanded = true
+			c.focus = ListFocusActions
+			return c, nil
 		case "right", "left":
 			if c.statusBar.expanded {
 				statusBar, cmd := c.statusBar.Update(msg)
@@ -192,20 +237,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	input, cmd := c.input.Update(msg)
 	if input.Value() != c.input.Value() {
-		if c.OnQueryChange != nil {
-			query := input.Value()
-			cmds = append(cmds, tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
-				c.filter.EmptyText = "Loading..."
-				if query == c.input.Value() {
-					return QueryChangeMsg(query)
-				}
-
-				return nil
-			}))
-		} else {
-			c.SetQuery(input.Value())
-		}
+		cmds = append(cmds, c.SetQuery(input.Value()))
 	}
+
 	c.input = input
 	cmds = append(cmds, cmd)
 

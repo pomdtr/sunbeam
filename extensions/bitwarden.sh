@@ -12,9 +12,7 @@ if [ $# -eq 0 ]; then
                 required: true
             }
         ],
-        items: [
-            { command: "list-passwords" }
-        ],
+        root: [ "list-passwords" ],
         commands: [
             {
                 name: "list-passwords",
