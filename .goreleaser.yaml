@@ -4,13 +4,13 @@ before:
     - go mod tidy
     - rm -rf completions
     - mkdir completions
-    - sh -c 'go run ./cmd/sunbeam/main.go completion "bash" >./completions/{{ .ProjectName }}.bash'
-    - sh -c 'go run ./cmd/sunbeam/main.go completion "zsh" >./completions/{{ .ProjectName }}.zsh'
-    - sh -c 'go run ./cmd/sunbeam/main.go completion "fish" >./completions/{{ .ProjectName }}.fish'
+    - sh -c 'go run . completion "bash" >./completions/{{ .ProjectName }}.bash'
+    - sh -c 'go run . completion "zsh" >./completions/{{ .ProjectName }}.zsh'
+    - sh -c 'go run . completion "fish" >./completions/{{ .ProjectName }}.fish'
 changelog:
   skip: true
 builds:
-  - main: ./cmd/sunbeam/main.go
+  - main: .
     binary: sunbeam
     ldflags:
       - s -w
