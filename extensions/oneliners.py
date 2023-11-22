@@ -14,7 +14,7 @@ if len(sys.argv) == 1:
         ],
         "commands": [
             {
-                "name": "add",
+                "name": "create",
                 "title": "Create Oneliner",
                 "mode": "silent",
                 "params": [

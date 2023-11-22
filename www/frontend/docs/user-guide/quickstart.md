@@ -1,6 +1,17 @@
 # Using Sunbeam
 
-## Installing Extensions
+If you run `sunbeam` without any arguments, it will open the default view, which is a list of all the available commands.
+
+Run a command directly using `sunbeam <extension> [command]`.\
+For example, `sunbeam devdocs list-docsets` will show a list of all the available docsets.
+
+Pass parameters to the command using `sunbeam <extension> [command] --param1 value1 --param2 value2`. \
+
+For example, `sunbeam devdocs list-entries --docset go` will list all the entries in the go docset.
+
+## Extensions
+
+### Installing Extensions
 
 A fresh install of sunbeam is quite boring. In order to make it useful, you need to add some extensions.
 
@@ -13,29 +24,43 @@ sunbeam extension install https://github.com/pomdtr/sunbeam/tree/main/extensions
 
 > ⚠️ Extensions are not verified, nor sandboxed. They can do anything you can do on your computer. Make sure you trust the source / read the code before installing an extension.
 
-## Upgrading Extensions
+### Upgrading Extensions
 
 Use the `sunbeam extension upgrade --all` command to upgrade all your extensions. `sunbeam extension upgrade <extension>` will upgrade a specific extension.
 
-## Other Extension Commands
+### Other Extension Commands
 
 - `sunbeam extension list` -> list all installed extensions
 - `sunbeam extension remove <extension>` -> uninstall an extension
 - `sunbeam extension publish <path>` -> publish an extension as a gist (requires the `SUBEAM_GITHUB_TOKEN` environment variable to be set)
 - `sunbeam extension configure <extension>` -> configure an extension preferences (if it has any)
 
-## Running Commands
+## Oneliners
 
-If you run `sunbeam` without any arguments, it will open the default view, which is a list of all the available commands.
+When you just want to run a shell command from the root view, creating an extension is overkill.
+Instead, you can just add a oneliner to your config file.
 
-Run a command directly using `sunbeam <extension> [command]`.\
-For example, `sunbeam devdocs list-docsets` will show a list of all the available docsets.
+```json
+{
+  "oneliners": [
+    {
+      "title": "Edit .bashrc",
+      "command": "sunbeam edit ~/.bashrc"
+    }
+  ]
+}
+```
 
-Pass parameters to the command using `sunbeam <extension> [command] --param1 value1 --param2 value2`. \
-For example, `sunbeam devdocs list-entries --docset go` will list all the entries in the go docset.
+The `sunbeam edit` command is a built-in command that allows you to edit a file using the default editor.
 
+Sunbeam provides multiple cross-platform helpers that you can use to share oneliners between different platforms.
 
-## Using the Sunbeam UI
+- `sunbeam open`: open a file or url using the default application
+- `sunbeam copy`: copy text to the clipboard
+- `sunbeam paste`: paste text from the clipboard
+- `sunbeam edit`: edit a file using the default editor
+
+## Shorcuts
 
 Sunbeam is designed to be used with your keyboard. Depending on the current view, multiple keyboard shortcuts are available:
 
