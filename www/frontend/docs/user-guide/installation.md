@@ -13,6 +13,9 @@ curl -sSf https://install.sunbeam.sh | sh
 # as a nix flake
 nix shell github:pomdtr/sunbeam --command sunbeam
 
+# arch linux (btw)
+yay -S package_name
+
 # from source
 go install github.com/pomdtr/sunbeam@main
 ```
