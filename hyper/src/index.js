@@ -9,7 +9,6 @@ const os = require("os");
 
 let unload = () => { }
 
-let initialized = false;
 function onApp(app) {
   const { hotkey } = Object.assign(
     { hotkey: "Ctrl+;" },
@@ -25,9 +24,6 @@ function onApp(app) {
       });
     }
   }
-
-  if (initialized) return;
-  initialized = true;
 
   // Hide the dock icon
   app.dock.hide();
@@ -87,6 +83,7 @@ function onApp(app) {
 
   unload = () => {
     app.dock.show();
+    tray.destroy();
     app.removeListener("browser-window-blur", onBlur);
     globalShortcut.unregister(hotkey);
   };
