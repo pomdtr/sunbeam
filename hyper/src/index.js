@@ -9,14 +9,30 @@ const os = require("os");
 
 let unload = () => { }
 
+let initialized = false;
 function onApp(app) {
   const { hotkey } = Object.assign(
     { hotkey: "Ctrl+;" },
     app.config.getConfig().sunbeam
   );
 
+  globalShortcut.unregisterAll();
+  if (hotkey) {
+    if (!globalShortcut.register(hotkey, () => toggleWindows(app))) {
+      dialog.showMessageBox({
+        message: `Could not register hotkey (${hotkey})`,
+        buttons: ["Ok"]
+      });
+    }
+  }
+
+  if (initialized) return;
+  initialized = true;
+
+  // Hide the dock icon
   app.dock.hide();
 
+  // Create tray icon
   const tray = new Tray(path.join(__dirname, "../assets/trayiconTemplate.png"));
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -60,32 +76,17 @@ function onApp(app) {
       },
     },
   ]);
-
   tray.setToolTip('Sunbeam');
   tray.setContextMenu(contextMenu);
 
-  const onActivate = () => {
-    showWindows(app);
-  }
-  app.on("activate", onActivate);
-
+  // Hide windows when the app looses focus
   const onBlur = () => {
     hideWindows(app);
   }
   app.on("browser-window-blur", onBlur);
 
-  if (!hotkey) return;
-  globalShortcut.unregister(hotkey);
-  if (!globalShortcut.register(hotkey, () => toggleWindows(app))) {
-    dialog.showMessageBox({
-      message: `Could not register hotkey (${hotkey})`,
-      buttons: ["Ok"]
-    });
-  }
-
   unload = () => {
     app.dock.show();
-    app.removeListener("activate", onActivate);
     app.removeListener("browser-window-blur", onBlur);
     globalShortcut.unregister(hotkey);
   };
@@ -120,6 +121,13 @@ function decorateBrowserOptions(defaults) {
     resizable: false
   });
 };
+
+function decorateKeyMaps(keymaps) {
+  Object.assign({}, keymaps, {
+    "tab:new": "",
+    "window:new": "",
+  });
+}
 
 function decorateConfig(config) {
   const macosCSS = `
@@ -208,6 +216,7 @@ module.exports = {
   onWindow,
   onUnload,
   decorateBrowserOptions,
+  decorateKeyMaps,
   getTabsProps,
   decorateConfig,
 };
