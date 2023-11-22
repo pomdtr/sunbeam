@@ -83,7 +83,7 @@ func (l *List) ResetSelection() {
 	}
 }
 
-func (c *List) setViewportContent(detail types.ListItemDetail) error {
+func (c *List) setViewportContent(detail types.ListItemDetail) {
 	var content string
 
 	if detail.Markdown != "" {
@@ -91,15 +91,17 @@ func (c *List) setViewportContent(detail types.ListItemDetail) error {
 		style.Document.Margin = nil
 		render, err := glamour.NewTermRenderer(
 			glamour.WithStyles(style),
-			glamour.WithWordWrap(c.width*2/3),
+			glamour.WithWordWrap((c.width-3)*2/3),
 		)
 		if err != nil {
-			return err
+			c.viewport.SetContent(err.Error())
+			return
 		}
 
 		content, err = render.Render(detail.Markdown)
 		if err != nil {
-			return err
+			c.viewport.SetContent(err.Error())
+			return
 		}
 	} else {
 		content = wrap.String(wordwrap.String(utils.StripAnsi(detail.Text), c.width-4), c.width-4)
@@ -107,7 +109,6 @@ func (c *List) setViewportContent(detail types.ListItemDetail) error {
 	}
 
 	c.viewport.SetContent(content)
-	return nil
 }
 
 func (l *List) SetActions(actions ...types.Action) {
@@ -194,8 +195,9 @@ func (c *List) SetSize(width, height int) {
 	c.statusBar.Width = width
 
 	if c.showDetail {
-		c.filter.SetSize(width/3, availableHeight)
-		c.viewport.Width = (width / 3) * 2
+		third := (width - 1) / 3
+		c.filter.SetSize(third, availableHeight)
+		c.viewport.Width = third * 2
 		c.viewport.Height = availableHeight
 	} else {
 		c.filter.SetSize(width, availableHeight)
