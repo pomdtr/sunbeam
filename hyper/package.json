@@ -1,6 +1,6 @@
 {
   "name": "hyper-sunbeam",
-  "version": "0.0.9",
+  "version": "0.0.12",
   "os": [
     "darwin"
   ],
@@ -8,7 +8,7 @@
   "main": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pomdtr/hyper-sunbeam.git"
+    "url": "git+https://github.com/pomdtr/hyper-sunbeam.git"
   },
   "scripts": {
     "format": "prettier '**/*.{css,md,js,json}' --write"

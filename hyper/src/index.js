@@ -82,7 +82,6 @@ function onApp(app) {
   app.on("browser-window-blur", onBlur);
 
   unload = () => {
-    app.dock.show();
     tray.destroy();
     app.removeListener("browser-window-blur", onBlur);
     globalShortcut.unregister(hotkey);
