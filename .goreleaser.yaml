@@ -64,7 +64,7 @@ aurs:
       - "Achille Lacoin <achille.lacoin@gmail.com>"
     license: MIT
     private_key: "{{ .Env.AUR_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/sunbeam.git"
+    git_url: "ssh://aur@aur.archlinux.org/sunbeam-bin.git"
     package: |-
       # bin
       install -Dm755 "./sunbeam" "${pkgdir}/usr/bin/sunbeam"
