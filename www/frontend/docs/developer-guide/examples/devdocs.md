@@ -23,6 +23,7 @@ if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Devdocs",
         description: "Search the devdocs.io documentation",
+        root: ["search-docsets"],
         commands: [
             {
                 name: "search-docsets",
@@ -43,7 +44,7 @@ Here we define a single command named `search-docsets`, with a mode set to `list
 We can run our script to see the generated manifest:
 
 ```console
-$ ./sunbeam-devdocs
+$ ./devdocs.sh
 {
   "commands": [
     {
@@ -52,35 +53,32 @@ $ ./sunbeam-devdocs
       "title": "Search docsets"
     }
   ],
+  "root": [ "search-docsets" ],
   "description": "Search the devdocs.io documentation",
   "title": "Devdocs"
 }
 ```
 
-Or use sunbeam to see the generated command:
+And use the `sunbeam validate` command to validate the manifest:
 
 ```console
-$ sunbeam ./sunbeam-devdocs --help
-Search the devdocs.io documentation
-
-Usage:
-  extension [flags]
-  extension [command]
-
-Available Commands:
-  search-docsets Search docsets
-
-Flags:
-  -h, --help   help for extension
-
-Use "extension [command] --help" for more information about a command.
+$ ./devdocs.sh | sunbeam validate manifest
+✅ Manifest is valid!
 ```
+
+Now that we have a valid manifest, we can install the extension.
+
+```console
+sunbeam extension install ./devdocs.sh
+```
+
+We can now run `sunbeam devdocs --help` to see the generated help, and `sunbeam devdocs` to list the root commands (defined in the `root` field of the manifest).
 
 ## Handling commands
 
-When the user run a command, the script is called with the command name as first argument.
+When the user run a command, the script is called with the command name as first argument. Let's implement the `search-docsets` command.
 
-Here the command name is `search-docsets`, and the command mode is `list`, so the script must return a view when called with this argument.
+The `search-docsets` command has a `list` mode, so the script must return a [valid list](../../reference/schemas/list.md) when called with this argument.
 
 We will use the `sunbeam fetch` command to fetch the list of docsets from the devdocs api. The `fetch` command allows you to perform http requests (with an api similar to curl).
 
@@ -133,13 +131,7 @@ Here we pipe the json catalog to the `query` command to transform it into a list
 Let's run our script to see the generated view:
 
 ```console
-sunbeam ./sunbeam-devdocs search-docsets
-```
-
-Note that since we only have one command, we can omit the command name:
-
-```console
-sunbeam ./sunbeam-devdocs
+sunbeam devdocs search-docsets
 ```
 
 ## Chaining Commands
@@ -212,12 +204,10 @@ fi
 
 Here we add a new command named `search-entries`, with a `list` mode. We also add a `docset` parameter, which is required.
 
-When the user run this command, the script is called with a first argument containing the [command payload](../../reference/schemas/payload.md) serialized as JSON.
-
-If we run `sunbeam ./sunbeam-devdoc --help` again, we can see the new command help:
+If we run `sunbeam devdocs --help` again, we can see the new command help:
 
 ```console
-$ sunbeam ./sunbeam-devdocs --help
+$ sunbeam devdocs --help
 Search the devdocs.io documentation
 
 Usage:
@@ -237,7 +227,7 @@ Use "extension [command] --help" for more information about a command.
 Let's run the command to see the generated view:
 
 ```console
-sunbeam ./sunbeam-devdocs search-entries --docset=go
+sunbeam devdocs search-entries --docset=go
 ```
 
 If we want to be able to go from the docsets list to the entries list, we can add `run` action to the docsets list:
@@ -283,24 +273,40 @@ fi
 
 Now we can start by listing the docsets, select the one we are interested in, and then search the entries of this docset.
 
-## Installing your extension
+## Adding new root items
 
-Now that we have a working extension, we can install it by editing the `extensions` dict in the config file.
+When we installed the extension using `sunbeam extension install ./devdocs.sh`, an entry was added to the `extensions` array in `~/.config/sunbeam/config.json`.
 
 ```json
-// ~/.config/sunbeam/config.json
 {
-    "extensions": {
-      "devdocs": "~/sunbeam/devdocs.sh"
+  "extensions": {
+    "devdocs": {
+      "origin": "<path-to-extension>/devdocs.sh"
     }
+  }
 }
 ```
 
-Now we can run the extension from anywhere using the `sunbeam devdocs` command.
+As a user of the extension, we can add shortcuts to specific docsets:
 
-```console
-sunbeam devdocs --help
+```json
+{
+  "extensions": {
+    "devdocs": {
+      "origin": "<path-to-extension>/devdocs.sh",
+      "items": [
+        {
+          "title": "Search Go documentation",
+          "command": "search-entries",
+          "params": {
+            "docset": "go"
+          }
+        }
+      ]
+    }
+  }
 ```
 
+Each time you add a new extension to sunbeam, you gain access to new commands, and you can add new shortcuts to your config file.
 
 > ℹ️ The source code of this extension is available here: <https://github.com/pomdtr/sunbeam-devdocs/blob/main/sunbeam-extension>.

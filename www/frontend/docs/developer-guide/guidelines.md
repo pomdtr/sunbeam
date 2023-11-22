@@ -25,6 +25,7 @@ set -eu
 if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Hello World!",
+        "root": ["say-hello"],
         commands: [{
             name: "say-hello",
             title: "Say Hello",
@@ -59,6 +60,7 @@ import json
 if len(sys.argv) == 1:
     manifest = {
         "title": "Hello World!",
+        "root": ["say-hello"],
         "commands": [{
             "name": "say-hello",
             "title": "Say Hello",
@@ -106,6 +108,7 @@ if (Deno.args.length == 0) {
         title: "Hello World!",
         commands: [{
             name: "say-hello",
+            root: ["say-hello"],
             title: "Say Hello",
             mode: "detail",
         }]

@@ -15,29 +15,15 @@ import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "Hacker News",
-        items: [
-            {
-                title: "Front Page",
-                command: "browse",
-                params: {
-                    topic: "frontpage"
-                }
-            },
-            {
-                title: "Show HN",
-                command: "browse",
-                params: {
-                    topic: "show"
-                }
-            }
-        ],
+        description: "Browse Hacker News",
+        root: ["browse"],
         commands: [
             {
                 name: "browse",
                 title: "Show a feed",
                 mode: "list",
                 params: [
-                    { name: "topic", description: "Topic", required: true, type: "string" }
+                    { name: "topic", description: "Topic", required: false, default: "frontpage", type: "string" }
                 ],
             },
         ]
@@ -90,5 +76,24 @@ if (payload.command == "browse") {
 } else {
     console.error("Unknown command");
     Deno.exit(1);
+}
+```
+
+You can add new sections by adding new items in your config.
+
+```json
+{
+    "extensions": {
+        "hackernews": {
+            "origin": "...",
+            "items": [ {
+                "title": "Show HN",
+                "command": "browse",
+                "params": {
+                    "topic": "show"
+                }
+            }]
+        }
+    }
 }
 ```

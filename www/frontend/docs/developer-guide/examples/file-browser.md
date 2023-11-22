@@ -16,6 +16,7 @@ if len(sys.argv) == 1:
         {
             "title": "File Browser",
             "description": "Browse files and folders",
+            "root": ["ls"],
             "commands": [
                 {
                     "name": "ls",

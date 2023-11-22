@@ -55,7 +55,7 @@ module.exports = {
 
 Feel free to customize the config to your liking.
 
-The npm package is currently broken on linux, feel free to open a PR if you want to fix it.
+Sadly I was not able to install hyper on my linux machine, and users have reported that the plugin is not working on linux.
 
 ### Alacritty
 

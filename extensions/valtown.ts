@@ -71,7 +71,7 @@ async function run(payload: sunbeam.Payload) {
         const query = payload.query;
         if (query) {
             const { data: vals } = await client.fetchJSON(`/v1/search/vals?query=${encodeURIComponent(query)}&limit=50`);
-            console.log(JSON.stringify({ dynamic: true, items: vals.map(valToListItem) }));
+            console.log(JSON.stringify({ dynamic: true, showDetail: true, items: vals.map(valToListItem) }));
         } else {
             console.log(JSON.stringify({ dynamic: true, emptyText: "No query" }));
         }
@@ -146,13 +146,10 @@ class ValTownClient {
 function valToListItem(val: any): sunbeam.ListItem {
     return {
         title: val.name,
-        subtitle: `v${val.version}`,
+        subtitle: val.author.username,
         detail: {
             markdown: "```tsx\n" + val.code + "\n```"
         },
-        accessories: [
-            val.privacy,
-        ],
         actions: [
             {
                 "title": "Open in Browser",
