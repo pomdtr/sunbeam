@@ -10,6 +10,9 @@ brew install pomdtr/tap/sunbeam
 # install script
 curl -sSf https://install.sunbeam.sh | sh
 
+# as a nix flake
+nix shell github:pomdtr/sunbeam --command sunbeam
+
 # from source
 go install github.com/pomdtr/sunbeam@main
 ```
