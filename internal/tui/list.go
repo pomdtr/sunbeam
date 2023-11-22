@@ -2,13 +2,19 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
+	"github.com/muesli/reflow/wrap"
 	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/internal/utils"
 )
 
 type List struct {
@@ -19,10 +25,13 @@ type List struct {
 
 	spinner   spinner.Model
 	filter    Filter
+	viewport  viewport.Model
 	statusBar StatusBar
 
+	showDetail bool
+	isLoading  bool
+
 	focus         ListFocus
-	isLoading     bool
 	Actions       []types.Action
 	OnQueryChange func(string) tea.Cmd
 	OnSelect      func(string) tea.Cmd
@@ -48,10 +57,14 @@ func NewList(items ...types.ListItem) *List {
 	input.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 	input.Placeholder = "Search Items..."
 
+	viewport := viewport.Model{}
+	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
+
 	list := &List{
 		spinner:   spinner.New(),
 		input:     input,
 		filter:    filter,
+		viewport:  viewport,
 		statusBar: statusBar,
 		focus:     ListFocusItems,
 	}
@@ -68,6 +81,33 @@ func (l *List) ResetSelection() {
 	} else {
 		l.statusBar.SetActions(l.Actions...)
 	}
+}
+
+func (c *List) setViewportContent(detail types.ListItemDetail) error {
+	var content string
+
+	if detail.Markdown != "" {
+		style := AnsiStyle()
+		style.Document.Margin = nil
+		render, err := glamour.NewTermRenderer(
+			glamour.WithStyles(style),
+			glamour.WithWordWrap(c.width*2/3),
+		)
+		if err != nil {
+			return err
+		}
+
+		content, err = render.Render(detail.Markdown)
+		if err != nil {
+			return err
+		}
+	} else {
+		content = wrap.String(wordwrap.String(utils.StripAnsi(detail.Text), c.width-4), c.width-4)
+		content = lipgloss.NewStyle().Padding(0, 2).Render(content)
+	}
+
+	c.viewport.SetContent(content)
+	return nil
 }
 
 func (l *List) SetActions(actions ...types.Action) {
@@ -129,7 +169,21 @@ func (c *List) FilterItems(query string) {
 	if selection == nil {
 		c.statusBar.SetActions(c.Actions...)
 	} else {
-		c.statusBar.SetActions(selection.(ListItem).Actions...)
+		listItem := selection.(ListItem)
+		c.statusBar.SetActions(listItem.Actions...)
+
+		if c.showDetail {
+			c.setViewportContent(listItem.Detail)
+		}
+	}
+}
+
+func (c *List) SetShowDetail(showDetail bool) {
+	c.showDetail = showDetail
+	c.SetSize(c.width, c.height)
+
+	if selection := c.filter.Selection(); selection != nil {
+		c.setViewportContent(selection.(ListItem).Detail)
 	}
 }
 
@@ -138,7 +192,14 @@ func (c *List) SetSize(width, height int) {
 	availableHeight := max(0, height-4)
 
 	c.statusBar.Width = width
-	c.filter.SetSize(width, availableHeight)
+
+	if c.showDetail {
+		c.filter.SetSize(width/3, availableHeight)
+		c.viewport.Width = (width / 3) * 2
+		c.viewport.Height = availableHeight
+	} else {
+		c.filter.SetSize(width, availableHeight)
+	}
 }
 
 func (c List) Selection() (types.ListItem, bool) {
@@ -158,6 +219,7 @@ func (c *List) SetItems(items ...types.ListItem) {
 	}
 
 	c.filter.SetItems(filterItems...)
+
 	if c.OnQueryChange == nil {
 		c.FilterItems(c.Query())
 	}
@@ -249,7 +311,14 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	newSelection := filter.Selection()
 	if newSelection == nil {
 		c.statusBar.SetActions(c.Actions...)
+		c.setViewportContent(types.ListItemDetail{})
 	} else if oldSelection == nil || oldSelection.ID() != newSelection.ID() {
+		listItem := newSelection.(ListItem)
+
+		if c.showDetail {
+			c.setViewportContent(listItem.Detail)
+		}
+
 		c.statusBar.SetActions(newSelection.(ListItem).Actions...)
 	}
 	c.filter = filter
@@ -270,5 +339,19 @@ func (c List) View() string {
 	} else {
 		headerRow = fmt.Sprintf("   %s", c.input.View())
 	}
-	return lipgloss.JoinVertical(lipgloss.Left, headerRow, separator(c.width), c.filter.View(), c.statusBar.View())
+
+	var mainView string
+	if c.showDetail {
+		var bars []string
+		for i := 0; i < c.height-4; i++ {
+			bars = append(bars, "│")
+		}
+		vertical := strings.Join(bars, "\n")
+
+		mainView = lipgloss.JoinHorizontal(lipgloss.Top, c.filter.View(), vertical, c.viewport.View())
+	} else {
+		mainView = c.filter.View()
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, headerRow, separator(c.width), mainView, c.statusBar.View())
 }

@@ -382,6 +382,8 @@ func (c *Runner) Reload() tea.Cmd {
 
 			page.SetEmptyText(list.EmptyText)
 			page.SetActions(list.Actions...)
+			page.SetShowDetail(list.ShowDetail)
+
 			if list.Dynamic {
 				page.OnQueryChange = func(query string) tea.Cmd {
 					c.input.Query = query

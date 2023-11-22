@@ -62,6 +62,7 @@ async function run(payload: sunbeam.Payload) {
         const items = vals.map(valToListItem)
 
         const list: sunbeam.List = {
+            showDetail: true,
             items
         }
 
@@ -146,6 +147,9 @@ function valToListItem(val: any): sunbeam.ListItem {
     return {
         title: val.name,
         subtitle: `v${val.version}`,
+        detail: {
+            markdown: "```tsx\n" + val.code + "\n```"
+        },
         accessories: [
             val.privacy,
         ],
@@ -169,14 +173,6 @@ function valToListItem(val: any): sunbeam.ListItem {
                 title: "Copy Web Endpoint",
                 type: "copy",
                 text: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`
-            },
-            {
-                "title": "View Readme",
-                "type": "run",
-                "command": "readme",
-                "params": {
-                    "id": val.id
-                }
             },
             {
                 "title": "View Source",

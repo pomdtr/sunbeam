@@ -1,18 +1,25 @@
 package types
 
 type List struct {
-	Items     []ListItem `json:"items,omitempty"`
-	Dynamic   bool       `json:"dynamic,omitempty"`
-	EmptyText string     `json:"emptyText,omitempty"`
-	Actions   []Action   `json:"actions,omitempty"`
+	Items      []ListItem `json:"items,omitempty"`
+	Dynamic    bool       `json:"dynamic,omitempty"`
+	EmptyText  string     `json:"emptyText,omitempty"`
+	ShowDetail bool       `json:"showDetail,omitempty"`
+	Actions    []Action   `json:"actions,omitempty"`
 }
 
 type ListItem struct {
-	Id          string   `json:"id,omitempty"`
-	Title       string   `json:"title"`
-	Subtitle    string   `json:"subtitle,omitempty"`
-	Accessories []string `json:"accessories,omitempty"`
-	Actions     []Action `json:"actions,omitempty"`
+	Id          string         `json:"id,omitempty"`
+	Title       string         `json:"title"`
+	Subtitle    string         `json:"subtitle,omitempty"`
+	Detail      ListItemDetail `json:"detail,omitempty"`
+	Accessories []string       `json:"accessories,omitempty"`
+	Actions     []Action       `json:"actions,omitempty"`
+}
+
+type ListItemDetail struct {
+	Markdown string `json:"markdown,omitempty"`
+	Text     string `json:"text,omitempty"`
 }
 
 type Detail struct {

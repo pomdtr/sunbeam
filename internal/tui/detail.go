@@ -8,9 +8,11 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/ansi"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
+	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
 )
@@ -29,6 +31,19 @@ type Detail struct {
 
 	Style    lipgloss.Style
 	Markdown bool
+}
+
+func AnsiStyle() ansi.StyleConfig {
+	var style ansi.StyleConfig
+	if termenv.HasDarkBackground() {
+		style = glamour.DarkStyleConfig
+	} else {
+		style = glamour.LightStyleConfig
+	}
+
+	style.Document.BlockPrefix = ""
+
+	return style
 }
 
 func NewDetail(text string, actions ...types.Action) *Detail {
@@ -146,7 +161,7 @@ func (c *Detail) RefreshContent() error {
 	var content string
 	if c.Markdown {
 		render, err := glamour.NewTermRenderer(
-			glamour.WithAutoStyle(),
+			glamour.WithStyles(AnsiStyle()),
 			glamour.WithWordWrap(c.width),
 		)
 		if err != nil {

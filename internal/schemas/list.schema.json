@@ -5,6 +5,9 @@
         "emptyText": {
             "type": "string"
         },
+        "showDetail": {
+            "type": "boolean"
+        },
         "actions": {
             "type": "array",
             "items": {
@@ -35,6 +38,32 @@
                 },
                 "subtitle": {
                     "type": "string"
+                },
+                "detail": {
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "required": [
+                                "text"
+                            ],
+                            "properties": {
+                                "text": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        {
+                            "type": "object",
+                            "required": [
+                                "markdown"
+                            ],
+                            "properties": {
+                                "markdown": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    ]
                 },
                 "accessories": {
                     "type": "array",
