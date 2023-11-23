@@ -110,6 +110,23 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 			return c, PopPageCmd
+		case "ctrl+e":
+			editCmd := exec.Command("sunbeam", "edit", c.extension.Entrypoint)
+			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
+				if err != nil {
+					return err
+				}
+
+				extension, err := extensions.LoadExtension(c.extension.Entrypoint)
+				if err != nil {
+					return err
+				}
+				c.extension = extension
+
+				return types.Action{
+					Type: types.ActionTypeReload,
+				}
+			})
 		case "ctrl+r":
 			return c, func() tea.Msg {
 				manifest, err := extensions.ExtractManifest(c.extension.Entrypoint)
