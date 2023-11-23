@@ -119,9 +119,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 
-			return c, func() tea.Msg {
-				return ExitMsg{}
-			}
+			return c, PopPageCmd
 		case "esc":
 			if c.statusBar.expanded {
 				c.statusBar.expanded = false
