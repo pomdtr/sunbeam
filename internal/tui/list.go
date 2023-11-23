@@ -87,6 +87,9 @@ func (c *List) updateViewport(detail types.ListItemDetail) {
 	var content string
 
 	if detail.Markdown != "" {
+		if len(detail.Markdown) > 5_000 {
+			detail.Markdown = detail.Markdown[:min(5_000, len(detail.Markdown))] + "\n\n**Content truncated**"
+		}
 		style := AnsiStyle()
 		style.Document.Margin = nil
 		render, err := glamour.NewTermRenderer(
@@ -104,6 +107,9 @@ func (c *List) updateViewport(detail types.ListItemDetail) {
 			return
 		}
 	} else {
+		if len(detail.Text) > 5_000 {
+			detail.Text = detail.Text[:min(5_000, len(detail.Text))] + "\n\n**Content truncated**"
+		}
 		content = wrap.String(wordwrap.String(utils.StripAnsi(detail.Text), c.viewport.Width-2), c.viewport.Width-2)
 		content = lipgloss.NewStyle().Padding(0, 2).Render(content)
 	}

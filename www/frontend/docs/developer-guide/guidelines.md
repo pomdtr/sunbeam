@@ -49,6 +49,8 @@ If your shell script is getting too complex, consider rewriting it in python.
 
 Python3 comes preinstalled in macOS and on most linux distributions, so it is a good choice if you want to write an extension that can be used without requiring the user to install additional dependencies.
 
+But bear in mind that some linux distributions don't have python3 installed by default, so make sure to warn the user that they might need to install it first.
+
 Make sure to use the `#!/usr/bin/env python3` shebang, as it will make your script more portable.
 
 ```python
@@ -132,3 +134,45 @@ if (payload.command == "say-hello") {
 ```
 
 A more complex typescript extension can be found [here](./examples/hackernews.md).
+
+### Any other language (Using Nix)
+
+Nix is able to create portable scripts through the use of the `#!/usr/bin/env nix-shell` shebang. You can use it to create scripts with any number of dependencies, only requiring the user to have nix installed.
+
+See the [nix.dev](https://nix.dev/tutorials/first-steps/reproducible-scripts) for more information.
+
+```sh
+#!/usr/bin/env nix-shell
+#! nix-shell -i bash
+#! nix-shell -p bash jq
+#! nix-shell -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/2a601aafdc5605a5133a2ca506a34a3a73377247.tar.gz
+
+set -eu
+
+if [ $# -eq 0 ]; then
+    jq -n '{
+        title: "Hello World!",
+        "root": ["say-hello"],
+        commands: [{
+            name: "say-hello",
+            title: "Say Hello",
+            mode: "detail"
+        }]
+    }'
+    exit 0
+fi
+
+COMMAND=$(echo "$1" | jq -r '.command')
+if [ "$COMMAND" = "say-hello" ]; then
+    jq -n '{ text: "Hello, World!" }'
+fi
+```
+
+This script will work anywhere, as it is:
+
+- isolated from the user environment
+- deterministic (the dependencies are pinned)
+
+> Warning: There is a delay when running nix scripts for the first time, as nix needs to download and build the dependencies. Even after the first run, your script will take a few seconds to start.
+
+I would love to build an home-manager package for sunbeam, but my nix knowledge is still very limited. If you are interested in helping, please reach out to me on [twitter](https://twitter.com/pomdtrr).
