@@ -133,6 +133,11 @@ func (c *List) Init() tea.Cmd {
 }
 
 func (c *List) Focus() tea.Cmd {
+	c.statusBar.Reset()
+	c.focus = ListFocusItems
+	c.input.Placeholder = "Search Items..."
+	c.input.SetValue(c.query)
+
 	return c.input.Focus()
 }
 
@@ -249,17 +254,17 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if c.input.Value() != "" {
-				return c, c.SetQuery("")
+			if c.statusBar.expanded {
+				c.focus = ListFocusItems
+				c.input.SetValue(c.query)
+				c.input.Placeholder = "Search Items..."
+
+				c.statusBar.Reset()
+				return c, nil
 			}
 
-			if c.statusBar.expanded {
-				c.statusBar.expanded = false
-				c.statusBar.cursor = 0
-				c.focus = ListFocusItems
-				c.input.Placeholder = "Search Items..."
-				c.input.SetValue(c.query)
-				return c, nil
+			if c.input.Value() != "" {
+				return c, c.SetQuery("")
 			}
 
 			return c, PopPageCmd

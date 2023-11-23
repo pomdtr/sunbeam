@@ -44,25 +44,25 @@ func RenderItem(title string, subtitle string, accessories []string, width int, 
 
 	subtitle = strings.Split(subtitle, "\n")[0]
 	subtitle = " " + subtitle
-	accessory := " " + strings.Join(accessories, " · ")
+	accessory := "  " + strings.Join(accessories, " · ")
 
 	var blanks string
-	// If the width is too small, we need to truncate the subtitle, accessory, or title (in that order)
-	if width >= lipgloss.Width(title+subtitle+accessory) {
-		extraWidth := width - lipgloss.Width(title+subtitle+accessory)
-		blanks = strings.Repeat(" ", extraWidth)
-	} else {
-		for width != lipgloss.Width(title+subtitle+accessory) {
-			extraWidth := lipgloss.Width(title+subtitle+accessory) - width
-			if lipgloss.Width(subtitle) > 0 {
-				subtitle = subtitle[:max(0, len(subtitle)-extraWidth)]
-			} else if lipgloss.Width(title) > 0 {
-				title = title[:max(0, len(title)-extraWidth)]
-			} else {
-				accessory = accessory[:max(0, len(accessory)-extraWidth)]
-			}
+
+	// If the width is too small, we need to truncate the subtitle, title and accessory
+	for lipgloss.Width(title+subtitle+accessory) > width {
+		if words := strings.Split(subtitle, " "); len(words) > 0 {
+			subtitle = strings.Join(words[:len(words)-1], " ")
+		} else if words := strings.Split(title, " "); len(words) > 1 {
+			title = strings.Join(words[:len(words)-1], " ")
+		} else if len(accessory) > 0 {
+			accessory = accessory[:len(accessory)-1]
+		} else {
+			title = title[:len(title)-1]
 		}
 	}
+
+	extraWidth := width - lipgloss.Width(title+subtitle+accessory)
+	blanks = strings.Repeat(" ", extraWidth)
 
 	title = titleStyle.Render(title)
 	subtitle = subtitleStyle.Render(subtitle)

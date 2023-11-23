@@ -85,6 +85,9 @@ func (d *Detail) Init() tea.Cmd {
 }
 
 func (d *Detail) Focus() tea.Cmd {
+	d.input.SetValue("")
+	d.input.Blur()
+	d.statusBar.Reset()
 	return nil
 }
 
@@ -122,8 +125,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, PopPageCmd
 		case "esc":
 			if c.statusBar.expanded {
-				c.statusBar.expanded = false
-				c.statusBar.cursor = 0
+				c.statusBar.Reset()
 				c.input.Blur()
 				return c, nil
 			}

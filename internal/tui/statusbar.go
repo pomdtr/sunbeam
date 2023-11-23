@@ -98,8 +98,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			}
 
 			action := p.filtered[p.cursor]
-			p.expanded = false
-			p.cursor = 0
 			return p, func() tea.Msg {
 				return action
 			}
@@ -108,8 +106,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 				break
 			}
 
-			p.expanded = false
-			p.cursor = 0
 			return p, func() tea.Msg {
 				return p.actions[1]
 			}
@@ -131,6 +127,12 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 	}
 
 	return p, nil
+}
+
+func (c *StatusBar) Reset() {
+	c.expanded = false
+	c.cursor = 0
+	c.filtered = c.actions
 }
 
 func ActionTitle(action types.Action) string {

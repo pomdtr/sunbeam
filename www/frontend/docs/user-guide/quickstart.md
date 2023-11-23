@@ -72,8 +72,10 @@ Sunbeam is designed to be used with your keyboard. Depending on the current view
     - `ctrl+e` -> edit sunbeam config
     - `alt+enter` -> run query as a shell command
 - list view:
-    - `up` / `ctrl+k` -> move selection up
-    - `down` / `ctrl+j` -> move selection down
+    - `up` / `ctrl+n` -> move selection up
+    - `down` / `ctrl+p` -> move selection down
+    - `ctrl+j` -> scroll preview down
+    - `ctrl+k` -> scroll preview up
     - `enter` -> execute the selected command
     - `tab` -> show the available actions for the selected item
 - detail view:
