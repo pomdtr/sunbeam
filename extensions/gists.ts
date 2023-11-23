@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 
 import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
-import * as path from "https://raw.githubusercontent.com/pomdtr/sunbeam/main/sdk/mod.ts";
+import * as path from "https://deno.land/std/path/mod.ts";
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
