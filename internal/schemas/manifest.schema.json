@@ -52,7 +52,8 @@
                 "mode": {
                     "type": "string",
                     "enum": [
-                        "list",
+                        "search",
+                        "filter",
                         "detail",
                         "tty",
                         "silent"

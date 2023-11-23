@@ -10,7 +10,7 @@ if (Deno.args.length == 0) {
             {
                 name: "list-devices",
                 title: "Search My Devices",
-                mode: "list",
+                mode: "filter",
             },
             {
                 name: "ssh-to-device",

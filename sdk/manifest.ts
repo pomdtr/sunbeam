@@ -9,7 +9,7 @@ export type Manifest = {
 export type CommandSpec = {
   name: string;
   title: string;
-  mode: "list" | "detail" | "tty" | "silent";
+  mode: "search" | "filter" | "detail" | "tty" | "silent";
   hidden?: boolean;
   description?: string;
   params?: Input[];

@@ -20,7 +20,7 @@ if (Deno.args.length === 0) {
             {
                 title: "Search Bookmarks",
                 name: "search-bookmarks",
-                mode: "list",
+                mode: "filter",
             },
         ],
     };

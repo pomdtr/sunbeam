@@ -21,7 +21,7 @@ if (Deno.args.length == 0) {
             {
                 name: "browse",
                 title: "Show a feed",
-                mode: "list",
+                mode: "filter",
                 params: [
                     { name: "topic", description: "Topic", required: false, default: "frontpage", type: "string" }
                 ],

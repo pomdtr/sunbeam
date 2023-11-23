@@ -22,7 +22,7 @@ if (Deno.args.length == 0) {
             {
                 name: "manage",
                 title: "Search Gists",
-                mode: "list",
+                mode: "filter",
             },
             {
                 name: "create",
@@ -37,7 +37,7 @@ if (Deno.args.length == 0) {
             {
                 name: "browse",
                 title: "Browse Gist Files",
-                mode: "list",
+                mode: "filter",
                 params: [
                     { name: "id", title: "Gist ID", required: true, type: "text" }
                 ]

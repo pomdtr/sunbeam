@@ -14,7 +14,7 @@ if (Deno.args.length == 0) {
             {
                 name: "list-projects",
                 title: "List Projects",
-                mode: "list",
+                mode: "filter",
             },
         ],
     };

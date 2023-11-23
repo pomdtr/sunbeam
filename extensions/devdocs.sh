@@ -12,12 +12,12 @@ if [ $# -eq 0 ]; then
       {
         name: "list-docsets",
         title: "List Docsets",
-        mode: "list"
+        mode: "filter"
       },
       {
         name: "list-entries",
         title: "List Entries from Docset",
-        mode: "list",
+        mode: "filter",
         params: [
           { name: "slug", title: "Slug", type: "text", required: true }
         ]

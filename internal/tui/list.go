@@ -83,7 +83,7 @@ func (l *List) ResetSelection() {
 	}
 }
 
-func (c *List) setViewportContent(detail types.ListItemDetail) {
+func (c *List) updateViewport(detail types.ListItemDetail) {
 	var content string
 
 	if detail.Markdown != "" {
@@ -91,7 +91,7 @@ func (c *List) setViewportContent(detail types.ListItemDetail) {
 		style.Document.Margin = nil
 		render, err := glamour.NewTermRenderer(
 			glamour.WithStyles(style),
-			glamour.WithWordWrap((c.width-3)*2/3),
+			glamour.WithWordWrap(c.viewport.Width-2),
 		)
 		if err != nil {
 			c.viewport.SetContent(err.Error())
@@ -104,10 +104,11 @@ func (c *List) setViewportContent(detail types.ListItemDetail) {
 			return
 		}
 	} else {
-		content = wrap.String(wordwrap.String(utils.StripAnsi(detail.Text), c.width-4), c.width-4)
+		content = wrap.String(wordwrap.String(utils.StripAnsi(detail.Text), c.viewport.Width-2), c.viewport.Width-2)
 		content = lipgloss.NewStyle().Padding(0, 2).Render(content)
 	}
 
+	c.viewport.GotoTop()
 	c.viewport.SetContent(content)
 }
 
@@ -174,7 +175,7 @@ func (c *List) FilterItems(query string) {
 		c.statusBar.SetActions(listItem.Actions...)
 
 		if c.showDetail {
-			c.setViewportContent(listItem.Detail)
+			c.updateViewport(listItem.Detail)
 		}
 	}
 }
@@ -184,7 +185,7 @@ func (c *List) SetShowDetail(showDetail bool) {
 	c.SetSize(c.width, c.height)
 
 	if selection := c.filter.Selection(); selection != nil {
-		c.setViewportContent(selection.(ListItem).Detail)
+		c.updateViewport(selection.(ListItem).Detail)
 	}
 }
 
@@ -195,9 +196,13 @@ func (c *List) SetSize(width, height int) {
 	c.statusBar.Width = width
 
 	if c.showDetail {
-		third := (width - 1) / 3
+		third := width / 3
 		c.filter.SetSize(third, availableHeight)
 		c.viewport.Width = third * 2
+		if width%3 == 0 {
+			c.viewport.Width -= 1
+		}
+
 		c.viewport.Height = availableHeight
 	} else {
 		c.filter.SetSize(width, availableHeight)
@@ -258,6 +263,20 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return c, PopPageCmd
+		case "ctrl+j":
+			if !c.showDetail {
+				break
+			}
+
+			c.viewport.LineDown(1)
+			return c, nil
+		case "ctrl+k":
+			if !c.showDetail {
+				break
+			}
+
+			c.viewport.LineUp(1)
+			return c, nil
 		case "tab":
 			if c.statusBar.expanded {
 				break
@@ -313,12 +332,12 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	newSelection := filter.Selection()
 	if newSelection == nil {
 		c.statusBar.SetActions(c.Actions...)
-		c.setViewportContent(types.ListItemDetail{})
+		c.updateViewport(types.ListItemDetail{})
 	} else if oldSelection == nil || oldSelection.ID() != newSelection.ID() {
 		listItem := newSelection.(ListItem)
 
 		if c.showDetail {
-			c.setViewportContent(listItem.Detail)
+			c.updateViewport(listItem.Detail)
 		}
 
 		c.statusBar.SetActions(newSelection.(ListItem).Actions...)

@@ -28,7 +28,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "list"
+                mode: "filter"
             }
         ]
     }'
@@ -39,7 +39,7 @@ echo "Not implemented" >&2
 exit 1
 ```
 
-Here we define a single command named `search-docsets`, with a mode set to `list`.
+Here we define a single command named `search-docsets`, with a mode set to `filter`.
 
 We can run our script to see the generated manifest:
 
@@ -48,7 +48,7 @@ $ ./devdocs.sh
 {
   "commands": [
     {
-      "mode": "list",
+      "mode": "filter",
       "name": "search-docsets",
       "title": "Search docsets"
     }
@@ -78,7 +78,7 @@ We can now run `sunbeam devdocs --help` to see the generated help, and `sunbeam 
 
 When the user run a command, the script is called with the command name as first argument. Let's implement the `search-docsets` command.
 
-The `search-docsets` command has a `list` mode, so the script must return a [valid list](../../reference/schemas/list.md) when called with this argument.
+The `search-docsets` command has a `filter` mode, so the script must return a [valid list](../../reference/schemas/list.md) when called with this argument.
 
 We will use the `sunbeam fetch` command to fetch the list of docsets from the devdocs api. The `fetch` command allows you to perform http requests (with an api similar to curl).
 
@@ -96,7 +96,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "list"
+                mode: "filter"
             }
         ]
     }'
@@ -151,12 +151,12 @@ if [ $# -eq 0 ]; then
             {
                 name: "search-docsets",
                 title: "Search docsets",
-                mode: "list"
+                mode: "filter"
             },
             {
                 name: "search-entries",
                 title: "Search entries",
-                mode: "list",
+                mode: "filter",
                 params: [
                     {
                         name: "docset",
@@ -202,7 +202,7 @@ elif [ "$COMMAND" = "search-entries" ]; then
 fi
 ```
 
-Here we add a new command named `search-entries`, with a `list` mode. We also add a `docset` parameter, which is required.
+Here we add a new command named `search-entries`, with a `filter` mode. We also add a `docset` parameter, which is required.
 
 If we run `sunbeam devdocs --help` again, we can see the new command help:
 

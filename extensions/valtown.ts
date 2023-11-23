@@ -18,7 +18,7 @@ if (Deno.args.length == 0) {
             {
                 title: "List Vals",
                 name: "list",
-                mode: "list",
+                mode: "filter",
                 params: [
                     { name: "user", title: "User", required: false, type: "text" }
                 ]
@@ -26,19 +26,11 @@ if (Deno.args.length == 0) {
             {
                 title: "Search Vals",
                 name: "search",
-                mode: "list",
+                mode: "search",
             },
             {
                 title: "View Readme",
                 name: "readme",
-                mode: "detail",
-                params: [
-                    { name: "id", title: "Val ID", required: true, type: "text" }
-                ]
-            },
-            {
-                title: "View Source",
-                name: "source",
                 mode: "detail",
                 params: [
                     { name: "id", title: "Val ID", required: true, type: "text" }
@@ -71,9 +63,9 @@ async function run(payload: sunbeam.Payload) {
         const query = payload.query;
         if (query) {
             const { data: vals } = await client.fetchJSON(`/v1/search/vals?query=${encodeURIComponent(query)}&limit=50`);
-            console.log(JSON.stringify({ dynamic: true, showDetail: true, items: vals.map(valToListItem) }));
+            console.log(JSON.stringify({ showDetail: true, items: vals.map(valToListItem), emptyText: "No results" }));
         } else {
-            console.log(JSON.stringify({ dynamic: true, emptyText: "No query" }));
+            console.log(JSON.stringify({ emptyText: "No query" }));
         }
     } else if (payload.command == "readme") {
         const { readme } = await client.fetchJSON(`/v1/vals/${payload.params.id}`);
@@ -84,17 +76,7 @@ async function run(payload: sunbeam.Payload) {
             ] : []
         }
         console.log(JSON.stringify(detail));
-    } else if (payload.command == "source") {
-        const { code } = await client.fetchJSON(`/v1/vals/${payload.params.id}`);
-        const detail: sunbeam.Detail = {
-            markdown: "```tsx\n" + code + "\n```",
-            actions: [
-                { type: "copy", title: "Copy Source", text: code, exit: true }
-            ]
-        }
-        console.log(JSON.stringify(detail));
     }
-
 }
 
 class ValTownClient {
@@ -172,9 +154,9 @@ function valToListItem(val: any): sunbeam.ListItem {
                 text: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`
             },
             {
-                "title": "View Source",
+                "title": "View Readme",
                 "type": "run",
-                "command": "source",
+                "command": "readme",
                 "key": "s",
                 "params": {
                     "id": val.id

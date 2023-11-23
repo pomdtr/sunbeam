@@ -169,7 +169,7 @@ func runExtension(extension extensions.Extension, input types.Payload, interacti
 	}
 
 	switch command.Mode {
-	case types.CommandModeList, types.CommandModeDetail:
+	case types.CommandModeSearch, types.CommandModeFilter, types.CommandModeDetail:
 		runner := tui.NewRunner(extension, input)
 		return tui.Draw(runner)
 	case types.CommandModeSilent:

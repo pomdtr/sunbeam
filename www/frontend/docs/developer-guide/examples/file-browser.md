@@ -21,7 +21,7 @@ if len(sys.argv) == 1:
                 {
                     "name": "ls",
                     "title": "List files",
-                    "mode": "list",
+                    "mode": "filter",
                     "params": [
                         {"name": "dir", "description": "Directory", "type": "string"},
                         {"name": "show-hidden", "description": "Show Hidden Files", "type": "boolean"},

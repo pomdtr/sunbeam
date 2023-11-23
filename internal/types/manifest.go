@@ -37,7 +37,8 @@ type Requirement struct {
 type CommandMode string
 
 const (
-	CommandModeList   CommandMode = "list"
+	CommandModeSearch CommandMode = "search"
+	CommandModeFilter CommandMode = "filter"
 	CommandModeDetail CommandMode = "detail"
 	CommandModeTTY    CommandMode = "tty"
 	CommandModeSilent CommandMode = "silent"

@@ -2,7 +2,6 @@ package types
 
 type List struct {
 	Items      []ListItem `json:"items,omitempty"`
-	Dynamic    bool       `json:"dynamic,omitempty"`
 	EmptyText  string     `json:"emptyText,omitempty"`
 	ShowDetail bool       `json:"showDetail,omitempty"`
 	Actions    []Action   `json:"actions,omitempty"`

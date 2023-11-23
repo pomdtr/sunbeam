@@ -17,7 +17,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "list-passwords",
                 title: "List Passwords",
-                mode: "list"
+                mode: "filter"
             }
         ]
     }'

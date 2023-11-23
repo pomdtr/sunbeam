@@ -33,7 +33,7 @@ func NewRunner(extension extensions.Extension, input types.Payload) *Runner {
 	command, ok := extension.Command(input.Command)
 	if ok {
 		switch command.Mode {
-		case types.CommandModeList:
+		case types.CommandModeSearch, types.CommandModeFilter:
 			list := NewList()
 			if input.Query != "" {
 				list.SetQuery(input.Query)
@@ -181,7 +181,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			switch command.Mode {
-			case types.CommandModeList, types.CommandModeDetail:
+			case types.CommandModeSearch, types.CommandModeFilter, types.CommandModeDetail:
 				runner := NewRunner(c.extension, input)
 
 				return c, PushPageCmd(runner)
@@ -358,7 +358,7 @@ func (c *Runner) Reload() tea.Cmd {
 
 			page := NewDetail(detail.Text, detail.Actions...)
 			return page
-		case types.CommandModeList:
+		case types.CommandModeSearch, types.CommandModeFilter:
 			if err := schemas.ValidateList(output); err != nil {
 				return err
 			}
@@ -373,7 +373,7 @@ func (c *Runner) Reload() tea.Cmd {
 				page = embed
 				page.SetItems(list.Items...)
 				page.SetIsLoading(false)
-				if list.Dynamic {
+				if c.command.Mode == types.CommandModeSearch {
 					page.ResetSelection()
 				}
 			} else {
@@ -384,7 +384,7 @@ func (c *Runner) Reload() tea.Cmd {
 			page.SetActions(list.Actions...)
 			page.SetShowDetail(list.ShowDetail)
 
-			if list.Dynamic {
+			if c.command.Mode == types.CommandModeSearch {
 				page.OnQueryChange = func(query string) tea.Cmd {
 					c.input.Query = query
 					return c.Reload()

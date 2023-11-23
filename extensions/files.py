@@ -19,7 +19,7 @@ if len(sys.argv) == 1:
                 {
                     "name": "ls",
                     "title": "List files",
-                    "mode": "list",
+                    "mode": "filter",
                     "params": [
                         {"name": "dir", "title": "Directory", "type": "text", "default": ".", "required": False}
                     ],

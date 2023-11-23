@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
         commands: [
             {
                 name: "search",
-                mode: "list",
+                mode: "search",
                 title: "Search Google",
             }
         ]
@@ -23,7 +23,6 @@ if [ "$COMMAND" = "search" ]; then
     QUERY=$(echo "$1" | sunbeam query -r '.query')
     if [ "$QUERY" = "null" ]; then
         sunbeam query -n '{
-            dynamic: true,
             emptyText: "Type anything to search",
         }'
         exit 0

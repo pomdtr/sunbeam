@@ -3,8 +3,8 @@ import type { Action } from "./action.ts";
 export type List = {
   items?: ListItem[];
   actions?: Action[];
+  showDetail?: boolean;
   emptyText?: string;
-  dynamic?: boolean;
 };
 
 export type Detail = {

@@ -13,7 +13,7 @@ if (Deno.args.length == 0) {
             {
                 name: "show",
                 title: "Show a feed",
-                mode: "list",
+                mode: "filter",
                 params: [
                     {
                         name: "url",

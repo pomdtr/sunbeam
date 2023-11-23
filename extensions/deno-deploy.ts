@@ -22,7 +22,7 @@ if (Deno.args.length == 0) {
             {
                 name: "projects",
                 title: "List Projects",
-                mode: "list",
+                mode: "filter",
             },
             {
                 name: "dashboard",
@@ -32,7 +32,7 @@ if (Deno.args.length == 0) {
             {
                 name: "deployments",
                 title: "List Deployments",
-                mode: "list",
+                mode: "filter",
                 params: [
                     { name: "project", title: "Project", required: true, type: "text" }
                 ]

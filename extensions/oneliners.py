@@ -89,7 +89,7 @@ if len(sys.argv) == 1:
             {
                 "name": "manage",
                 "title": "Manage Oneliners",
-                "mode": "list"
+                "mode": "filter"
             },
             {
                 "name": "run",

@@ -15,7 +15,7 @@ if [ $# -eq 0 ]; then
         commands: [
             {
                 name: "search",
-                mode: "list",
+                mode: "search",
                 title: "Search",
             }
         ]

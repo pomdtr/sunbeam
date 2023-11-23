@@ -220,7 +220,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			switch command.Mode {
-			case types.CommandModeList, types.CommandModeDetail:
+			case types.CommandModeSearch, types.CommandModeFilter, types.CommandModeDetail:
 				runner := NewRunner(extension, input)
 				return c, PushPageCmd(runner)
 			case types.CommandModeSilent:

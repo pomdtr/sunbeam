@@ -21,12 +21,12 @@ if (Deno.args.length == 0) {
             {
                 title: "Search Repositories",
                 name: "search-repos",
-                mode: "list"
+                mode: "search"
             },
             {
                 title: "List Issues",
                 name: "list-issues",
-                mode: "list",
+                mode: "filter",
                 params: [
                     {
                         name: "repo",
@@ -39,7 +39,7 @@ if (Deno.args.length == 0) {
             {
                 title: "List Pull Requests",
                 name: "list-prs",
-                mode: "list",
+                mode: "filter",
                 params: [
                     {
                         name: "repo",
@@ -88,7 +88,6 @@ async function run(payload: sunbeam.Payload) {
         const query = payload.query
         if (!query) {
             const list: sunbeam.List = {
-                dynamic: true,
                 emptyText: "Enter a query to search for repositories",
                 items: []
             }
@@ -108,7 +107,6 @@ async function run(payload: sunbeam.Payload) {
 
         const data = await resp.json();
         const list: sunbeam.List = {
-            dynamic: true,
             items: data.items.map((item: any) => ({
                 title: item.full_name,
                 accessories: [
