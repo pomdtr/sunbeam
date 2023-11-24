@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -19,11 +20,19 @@ func separator(n int) string {
 type StatusBar struct {
 	Width int
 
+	notification string
+
 	cursor   int
 	actions  []types.Action
 	filtered []types.Action
 	expanded bool
 }
+
+type ShowNotificationMsg struct {
+	Title string
+}
+
+type HideNotificationMsg struct{}
 
 func NewStatusBar(actions ...types.Action) StatusBar {
 	return StatusBar{
@@ -121,6 +130,15 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 				}
 			}
 		}
+	case ShowNotificationMsg:
+		p.Reset()
+		p.notification = msg.Title
+		return p, tea.Tick(1*time.Second, func(t time.Time) tea.Msg {
+			return HideNotificationMsg{}
+		})
+	case HideNotificationMsg:
+		p.notification = ""
+		return p, nil
 	}
 
 	return p, nil
@@ -208,8 +226,9 @@ func (c StatusBar) View() string {
 	if c.expanded {
 		statusbar = fmt.Sprintf("   %s ", accessory)
 	} else {
-		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-2, 0))
-		statusbar = fmt.Sprintf(" %s%s ", blanks, accessory)
+
+		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-lipgloss.Width(c.notification)-4, 0))
+		statusbar = fmt.Sprintf("   %s%s%s ", lipgloss.NewStyle().Faint(true).Render(c.notification), blanks, accessory)
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, separator(c.Width), statusbar)

@@ -279,7 +279,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return ExitMsg{}
 				}
 
-				return nil
+				return ShowNotificationMsg{"Copied!"}
 			}
 		case types.ActionTypeEdit:
 			editCmd := exec.Command("sunbeam", "edit", msg.Path)

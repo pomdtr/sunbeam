@@ -277,7 +277,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return ExitMsg{}
 				}
 
-				return nil
+				return ShowNotificationMsg{"Copied!"}
 			}
 		case types.ActionTypeOpen:
 			command := msg

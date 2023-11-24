@@ -244,7 +244,6 @@ func onelinerListItems(oneliners []config.Oneliner) []types.ListItem {
 					Key:   "c",
 					Type:  types.ActionTypeCopy,
 					Text:  oneliner.Command,
-					Exit:  true,
 				},
 			},
 		}
