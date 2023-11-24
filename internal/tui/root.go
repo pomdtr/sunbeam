@@ -106,7 +106,11 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			shellCmd := exec.Command(utils.FindShell(), "-li")
 			return c, tea.ExecProcess(shellCmd, func(err error) tea.Msg {
 				termenv.DefaultOutput().SetWindowTitle(c.title)
-				return err
+				if err != nil {
+					return err
+				}
+
+				return c.list.Focus()
 			})
 		case "ctrl+e":
 			if c.form != nil {
@@ -119,6 +123,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				termenv.DefaultOutput().SetWindowTitle(c.title)
+				c.list.Focus()
 				return types.Action{
 					Type: types.ActionTypeReload,
 				}
@@ -266,7 +271,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 
 					termenv.DefaultOutput().SetWindowTitle(c.title)
-					return nil
+					return c.list.Focus()
 				})
 			}
 		case types.ActionTypeCopy:

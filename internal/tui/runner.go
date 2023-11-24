@@ -237,6 +237,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 
 					if msg.Reload {
+						c.embed.Focus()
 						return types.Action{
 							Type: types.ActionTypeReload,
 						}
@@ -247,7 +248,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					}
 
 					termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Manifest.Title))
-					return nil
+					return c.embed.Focus()
 				})
 			}
 		case types.ActionTypeEdit:
@@ -258,6 +259,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				if msg.Reload {
+					c.embed.Focus()
 					return c.Reload()
 				}
 
@@ -265,7 +267,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return ExitMsg{}
 				}
 
-				return nil
+				return c.embed.Focus()
 			})
 		case types.ActionTypeCopy:
 			return c, func() tea.Msg {
@@ -299,7 +301,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return ExitMsg{}
 				}
 
-				return nil
+				return c.embed.Focus()
 			}
 		case types.ActionTypeReload:
 			if c.input.Params == nil {
