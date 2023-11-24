@@ -1,0 +1,86 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "deno@latest": {
+      "last_modified": "2023-11-19T17:46:56Z",
+      "resolved": "github:NixOS/nixpkgs/0bf3f5cf6a98b5d077cdcdb00a6d4b3d92bc78b5#deno",
+      "source": "devbox-search",
+      "version": "1.38.2",
+      "systems": {
+        "aarch64-darwin": {
+          "store_path": "/nix/store/r36dmy8bdgs7s5y3g5za1sswqiirnq5y-deno-1.38.2"
+        },
+        "aarch64-linux": {
+          "store_path": "/nix/store/8lai74ickaxp09jvsj8hwl2m86r1vzz2-deno-1.38.2"
+        },
+        "x86_64-darwin": {
+          "store_path": "/nix/store/nrrr5q85vmxqpl0ja7fq88y3zi6i0r77-deno-1.38.2"
+        },
+        "x86_64-linux": {
+          "store_path": "/nix/store/bh73byv9p75msk9qz73jkfvzgcdrlfz6-deno-1.38.2"
+        }
+      }
+    },
+    "go@1.21": {
+      "last_modified": "2023-11-19T17:46:56Z",
+      "resolved": "github:NixOS/nixpkgs/0bf3f5cf6a98b5d077cdcdb00a6d4b3d92bc78b5#go",
+      "source": "devbox-search",
+      "version": "1.21.4",
+      "systems": {
+        "aarch64-darwin": {
+          "store_path": "/nix/store/02cpvad60np366kmsqc3gnixbsw9jvg1-go-1.21.4"
+        },
+        "aarch64-linux": {
+          "store_path": "/nix/store/7y75b2ac80chlh6knld3943y46n3v9kf-go-1.21.4"
+        },
+        "x86_64-darwin": {
+          "store_path": "/nix/store/0djljz0g4s6f55xcnw7fpzcy7af7rxid-go-1.21.4"
+        },
+        "x86_64-linux": {
+          "store_path": "/nix/store/y7abhs9glxfcg7lgcdc8i4ml5wg5ly92-go-1.21.4"
+        }
+      }
+    },
+    "python3@latest": {
+      "last_modified": "2023-11-19T17:46:56Z",
+      "plugin_version": "0.0.1",
+      "resolved": "github:NixOS/nixpkgs/0bf3f5cf6a98b5d077cdcdb00a6d4b3d92bc78b5#python3",
+      "source": "devbox-search",
+      "version": "3.11.6",
+      "systems": {
+        "aarch64-darwin": {
+          "store_path": "/nix/store/ai4hd8f1xhr0rfjdr17bxx1rwi42sx97-python3-3.11.6"
+        },
+        "aarch64-linux": {
+          "store_path": "/nix/store/7ahkv87jj59z90yal5dcrgagz58cqmz6-python3-3.11.6"
+        },
+        "x86_64-darwin": {
+          "store_path": "/nix/store/dc4xnyqi2kh25f1c74dfczxw95anbhhr-python3-3.11.6"
+        },
+        "x86_64-linux": {
+          "store_path": "/nix/store/qp5zys77biz7imbk6yy85q5pdv7qk84j-python3-3.11.6"
+        }
+      }
+    },
+    "tealdeer@latest": {
+      "last_modified": "2023-11-19T17:46:56Z",
+      "resolved": "github:NixOS/nixpkgs/0bf3f5cf6a98b5d077cdcdb00a6d4b3d92bc78b5#tealdeer",
+      "source": "devbox-search",
+      "version": "1.6.1",
+      "systems": {
+        "aarch64-darwin": {
+          "store_path": "/nix/store/fwvh4xhw3rx4m7cawx7zwikjy0zbiixs-tealdeer-1.6.1"
+        },
+        "aarch64-linux": {
+          "store_path": "/nix/store/d3dfd4mdvk4sa989jg75sak3wlnb6zvn-tealdeer-1.6.1"
+        },
+        "x86_64-darwin": {
+          "store_path": "/nix/store/7kv2mlwdjdg3xsxwkfzxm9mc5qisg3xk-tealdeer-1.6.1"
+        },
+        "x86_64-linux": {
+          "store_path": "/nix/store/8a9541kr1aag399y8if5xnri08ynfw1a-tealdeer-1.6.1"
+        }
+      }
+    }
+  }
+}
