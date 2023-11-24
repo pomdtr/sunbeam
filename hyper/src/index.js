@@ -10,21 +10,6 @@ const os = require("os");
 let unload = () => { }
 
 function onApp(app) {
-  const { hotkey } = Object.assign(
-    { hotkey: "Ctrl+;" },
-    app.config.getConfig().sunbeam
-  );
-
-  globalShortcut.unregisterAll();
-  if (hotkey) {
-    if (!globalShortcut.register(hotkey, () => toggleWindows(app))) {
-      dialog.showMessageBox({
-        message: `Could not register hotkey (${hotkey})`,
-        buttons: ["Ok"]
-      });
-    }
-  }
-
   // Hide the dock icon
   app.dock.hide();
 
@@ -36,7 +21,6 @@ function onApp(app) {
       click: () => {
         showWindows(app);
       },
-      accelerator: hotkey,
     },
     { type: "separator" },
     {
@@ -83,8 +67,8 @@ function onApp(app) {
 
   unload = () => {
     tray.destroy();
+    globalShortcut.unregisterAll();
     app.removeListener("browser-window-blur", onBlur);
-    globalShortcut.unregister(hotkey);
   };
 };
 
@@ -118,15 +102,21 @@ function decorateBrowserOptions(defaults) {
   });
 };
 
-function decorateKeyMaps(keymaps) {
-  Object.assign({}, keymaps, {
-    "tab:new": "",
-    "window:new": "",
-  });
-}
 
 function decorateConfig(config) {
-  const macosCSS = `
+  globalShortcut.unregisterAll();
+
+  if (config.sunbeam && config.sunbeam.hotkey) {
+    const hotkey = config.sunbeam.hotkey;
+    if (!globalShortcut.register(hotkey, () => toggleWindows(app))) {
+      dialog.showMessageBox({
+        message: `Could not register hotkey (${hotkey})`,
+        buttons: ["Ok"]
+      });
+    }
+  }
+
+  const css = `
     .header_header {
       top: 0;
       right: 0;
@@ -149,59 +139,30 @@ function decorateConfig(config) {
       padding-left: 1px;
     }
   `
-  const defaultCSS = `
-    .header_windowHeader {
-      display: none;
-    }
-    .tabs_nav {
-      top: 0;
-    }
-    .tabs_list {
-      padding-left: 0;
-    }
-    .tabs_list:before {
-      display: none;
-    }
-    .tab_first {
-      border-left-width: 0;
-    }
-    .terms_terms {
-      margin-top: 0;
-    }
-    .terms_termsShifted {
-      margin-top: 34px;
-    }
-    .tab_tab:after {
-      display: none;
-    }
-  `
-
   return Object.assign({}, config, {
     css: `
       ${config.css || ''}
-      ${process.platform === 'darwin' ? macosCSS : defaultCSS}
+      ${css}
     `
   });
 }
 
 // Removes the redundant space on mac if there is only one tab
 function getTabsProps(parentProps, props) {
-  if (process.platform === 'darwin') {
-    var classTermsList = document.getElementsByClassName('terms_terms')
-    if (classTermsList.length > 0) {
-      var classTerms = classTermsList[0]
-      var header = document.getElementsByClassName('header_header')[0]
-      if (props.tabs.length <= 1) {
-        // @ts-ignore
-        classTerms.style.marginTop = 0
-        // @ts-ignore
-        header.style.visibility = 'hidden'
-      } else {
-        // @ts-ignore
-        classTerms.style.marginTop = ''
-        // @ts-ignore
-        header.style.visibility = ''
-      }
+  var classTermsList = document.getElementsByClassName('terms_terms')
+  if (classTermsList.length > 0) {
+    var classTerms = classTermsList[0]
+    var header = document.getElementsByClassName('header_header')[0]
+    if (props.tabs.length <= 1) {
+      // @ts-ignore
+      classTerms.style.marginTop = 0
+      // @ts-ignore
+      header.style.visibility = 'hidden'
+    } else {
+      // @ts-ignore
+      classTerms.style.marginTop = ''
+      // @ts-ignore
+      header.style.visibility = ''
     }
   }
   return Object.assign({}, parentProps, props)
@@ -212,7 +173,6 @@ module.exports = {
   onWindow,
   onUnload,
   decorateBrowserOptions,
-  decorateKeyMaps,
   getTabsProps,
   decorateConfig,
 };
