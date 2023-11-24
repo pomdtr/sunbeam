@@ -106,7 +106,7 @@ func (c *List) updateViewport(detail types.ListItemDetail) {
 			c.viewport.SetContent(err.Error())
 			return
 		}
-	} else {
+	} else if detail.Text != "" {
 		if len(detail.Text) > 5_000 {
 			detail.Text = detail.Text[:min(5_000, len(detail.Text))] + "\n\n**Content truncated**"
 		}
@@ -130,11 +130,6 @@ func (l *List) SetEmptyText(text string) {
 }
 
 func (c *List) Init() tea.Cmd {
-	if c.focus == ListFocusActions {
-		c.focus = ListFocusItems
-		c.input.Placeholder = "Search Items..."
-		c.input.SetValue(c.query)
-	}
 	return c.input.Focus()
 }
 
@@ -193,11 +188,11 @@ func (c *List) FilterItems(query string) {
 
 func (c *List) SetShowDetail(showDetail bool) {
 	c.showDetail = showDetail
+	if showDetail && c.filter.Selection() != nil {
+		c.updateViewport(c.filter.Selection().(ListItem).Detail)
+	}
 	c.SetSize(c.width, c.height)
 
-	if selection := c.filter.Selection(); selection != nil {
-		c.updateViewport(selection.(ListItem).Detail)
-	}
 }
 
 func (c *List) SetSize(width, height int) {
@@ -343,7 +338,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	newSelection := filter.Selection()
 	if newSelection == nil {
 		c.statusBar.SetActions(c.Actions...)
-		c.updateViewport(types.ListItemDetail{})
+		if c.showDetail {
+			c.updateViewport(types.ListItemDetail{})
+		}
 	} else if oldSelection == nil || oldSelection.ID() != newSelection.ID() {
 		listItem := newSelection.(ListItem)
 
@@ -379,8 +376,9 @@ func (c List) View() string {
 			bars = append(bars, "│")
 		}
 		vertical := strings.Join(bars, "\n")
+		filterView := c.filter.View()
 
-		mainView = lipgloss.JoinHorizontal(lipgloss.Top, c.filter.View(), vertical, c.viewport.View())
+		mainView = lipgloss.JoinHorizontal(lipgloss.Top, filterView, vertical, c.viewport.View())
 	} else {
 		mainView = c.filter.View()
 	}

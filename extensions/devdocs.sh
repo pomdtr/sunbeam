@@ -52,7 +52,7 @@ elif [ "$COMMAND" = "list-entries" ]; then
       title: .name,
       subtitle: .type,
       actions: [
-        {title: "Open in Browser", type: "open", target: "https://devdocs.io/\($slug)/\(.path)", exit: true},
+        {title: "Open in Browser", type: "open", url: "https://devdocs.io/\($slug)/\(.path)", exit: true},
         {title: "Copy URL", key: "c", type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}
       ]
     }) | {  items: . }'

@@ -130,7 +130,7 @@ async function run(payload: sunbeam.Payload) {
                         {
                             type: "open",
                             title: "Open in Browser",
-                            target: gist.html_url,
+                            url: gist.html_url,
                             exit: true
                         },
                         {
@@ -260,7 +260,7 @@ async function run(payload: sunbeam.Payload) {
                     {
                         title: "Open in Browser",
                         type: "open",
-                        target: gist.html_url,
+                        url: gist.html_url,
                         exit: true
                     },
                 ]

@@ -12,7 +12,7 @@
         {
             "title": "Open Sunbeam Website",
             "type": "open",
-            "target": "https://pomdtr.github.io/sunbeam"
+            "url": "https://pomdtr.github.io/sunbeam"
         }
     ]
 }

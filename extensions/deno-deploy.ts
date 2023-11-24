@@ -92,7 +92,7 @@ async function run(payload: sunbeam.Payload) {
                         actions: [{
                             title: "Open Dashboard",
                             type: "open",
-                            target: `https://dash.deno.com/projects/${project.id}`,
+                            url: `https://dash.deno.com/projects/${project.id}`,
                             exit: true,
                         }]
                     }
@@ -104,7 +104,7 @@ async function run(payload: sunbeam.Payload) {
                         item.actions?.push({
                             title: "Open Production URL",
                             type: "open",
-                            target: `https://${domain}`,
+                            url: `https://${domain}`,
                             exit: true,
                         })
                     }
@@ -150,7 +150,7 @@ async function run(payload: sunbeam.Payload) {
                         title: "Open in Browser",
                         key: "o",
                         type: "open",
-                        target: `https://dash.deno.com/playground/${project.id}`,
+                        url: `https://dash.deno.com/playground/${project.id}`,
                         exit: true
                     }
                 ],
@@ -179,7 +179,7 @@ async function run(payload: sunbeam.Payload) {
                         item.actions?.push({
                             title: "Open URL",
                             type: "open",
-                            target: `https://${deployment.domainMappings[0].domain}`,
+                            url: `https://${deployment.domainMappings[0].domain}`,
                             exit: true,
                         })
                     }
@@ -189,7 +189,7 @@ async function run(payload: sunbeam.Payload) {
                         item.actions?.push({
                             title: "Open Commit",
                             type: "open",
-                            target: relatedCommit.url,
+                            url: relatedCommit.url,
                             exit: true,
                         })
                     }

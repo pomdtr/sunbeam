@@ -50,7 +50,7 @@ if (payload.command == "show") {
                 {
                     title: "Open in browser",
                     type: "open",
-                    target: item.link || "",
+                    url: item.link || "",
                     exit: true
                 },
                 {

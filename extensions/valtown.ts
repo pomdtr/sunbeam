@@ -134,14 +134,14 @@ function valToListItem(val: any): sunbeam.ListItem {
         },
         actions: [
             {
-                "title": "Open in Browser",
-                "type": "open",
-                "target": `https://val.town/v/${val.author.username.slice(1)}/${val.name}`
+            title: "Open in Browser",
+            type: "open",
+                url: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`
             },
             {
                 title: "Open Web Endpoint",
                 type: "open",
-                target: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`
+                url: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`
             },
             {
                 title: "Copy URL",

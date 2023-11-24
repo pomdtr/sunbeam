@@ -58,7 +58,7 @@ if (payload.command == "search-bookmarks") {
                 {
                     title: "Open URL",
                     type: "open",
-                    target: bookmark.link,
+                    url: bookmark.link,
                     exit: true,
                 },
                 {

@@ -14,6 +14,14 @@ func FindEditor() string {
 	return "vi"
 }
 
+func FindShell() string {
+	if shell, ok := os.LookupEnv("SHELL"); ok {
+		return shell
+	}
+
+	return "/bin/sh"
+}
+
 func FindPager() string {
 	if pager, ok := os.LookupEnv("PAGER"); ok {
 		return pager

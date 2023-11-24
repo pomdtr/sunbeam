@@ -46,17 +46,14 @@ func (c *StatusBar) FilterActions(query string) {
 	}
 
 	c.filtered = make([]types.Action, 0)
-	scores := make([]int, 0)
 	for i := 0; i < len(c.actions); i++ {
-		score := fzf.Score(c.actions[i].Title, query)
-		if score > 0 {
+		if fzf.Score(c.actions[i].Title, query) > 0 {
 			c.filtered = append(c.filtered, c.actions[i])
-			scores = append(scores, score)
 		}
 	}
 
 	sort.SliceStable(c.filtered, func(i, j int) bool {
-		return scores[i] > scores[j]
+		return fzf.Score(c.filtered[i].Title, query) > fzf.Score(c.filtered[j].Title, query)
 	})
 
 	c.cursor = 0

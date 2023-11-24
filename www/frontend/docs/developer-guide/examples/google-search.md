@@ -1,6 +1,6 @@
 # Google Search
 
-This scripts allows you to search Google from Sunbeam. The list of suggestions is refreshed every time the user types a character, thanks to the `dynamic` property.
+This scripts allows you to search Google from Sunbeam.
 
 ```bash
 #!/bin/sh
@@ -23,6 +23,7 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
+# since the command is a search, the script is called with the query as argument every time the user types a character
 COMMAND=$(echo "$1" | sunbeam query -r '.command')
 if [ "$COMMAND" = "search" ]; then
     # Get the query from the user
@@ -30,9 +31,7 @@ if [ "$COMMAND" = "search" ]; then
 
     # If the query is empty, show an help message
     if [ "$QUERY" = "null" ]; then
-        # the dynamic property tells Sunbeam to rerun the command every time the user types a character
         sunbeam query -n '{
-            dynamic: true,
             emptyText: "Type something to search",
         }'
         exit 0
@@ -41,11 +40,10 @@ if [ "$COMMAND" = "search" ]; then
     # urlencode the query
     QUERY=$(echo "$QUERY" | sunbeam query -rR '@uri')
     sunbeam fetch "https://suggestqueries.google.com/complete/search?client=firefox&q=$QUERY" | sunbeam query '.[1] | {
-        dynamic: true,
         items: map({
             title: .,
             actions: [
-                { title: "Search", type: "open", target: "https://www.google.com/search?q=\(.)", exit: true }
+                { title: "Search", type: "open", url: "https://www.google.com/search?q=\(.)", exit: true }
             ]
         })
     }'

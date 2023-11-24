@@ -65,8 +65,7 @@
             },
             "then": {
                 "required": [
-                    "type",
-                    "target"
+                    "type"
                 ],
                 "properties": {
                     "title": {
@@ -81,7 +80,10 @@
                     "exit": {
                         "type": "boolean"
                     },
-                    "target": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "path": {
                         "type": "string"
                     },
                     "app": {

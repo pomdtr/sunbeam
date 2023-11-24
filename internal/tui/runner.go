@@ -69,6 +69,7 @@ func (c *Runner) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c *Runner) Init() tea.Cmd {
+	termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Manifest.Title))
 	return tea.Batch(c.Reload(), c.embed.Init())
 }
 
@@ -143,7 +144,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case Page:
 		c.embed = msg
 		c.embed.SetSize(c.width, c.height)
-		return c, tea.Sequence(c.embed.Init(), c.embed.Focus())
+		return c, c.embed.Init()
 	case types.Action:
 		switch msg.Type {
 		case types.ActionTypeRun:
@@ -245,11 +246,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return ExitMsg{}
 					}
 
+					termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Manifest.Title))
 					return nil
 				})
 			}
 		case types.ActionTypeEdit:
-			editCmd := exec.Command("sunbeam", "edit", msg.Target)
+			editCmd := exec.Command("sunbeam", "edit", msg.Path)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
@@ -280,7 +282,16 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case types.ActionTypeOpen:
 			command := msg
 			return c, func() tea.Msg {
-				if err := utils.OpenWith(command.Target, command.App); err != nil {
+				var target string
+				if command.Url != "" {
+					target = command.Url
+				} else if command.Path != "" {
+					target = command.Path
+				} else {
+					return fmt.Errorf("invalid action")
+				}
+
+				if err := utils.OpenWith(target, command.App); err != nil {
 					return err
 				}
 
@@ -390,17 +401,25 @@ func (c *Runner) Reload() tea.Cmd {
 				page = embed
 				page.SetItems(list.Items...)
 				page.SetIsLoading(false)
+				page.SetEmptyText(list.EmptyText)
+				page.SetActions(list.Actions...)
+				page.SetShowDetail(list.ShowDetail)
+
 				if c.command.Mode == types.CommandModeSearch {
+					page.OnQueryChange = func(query string) tea.Cmd {
+						c.input.Query = query
+						return c.Reload()
+					}
 					page.ResetSelection()
 				}
-			} else {
-				page = NewList(list.Items...)
+
+				return nil
 			}
 
+			page = NewList(list.Items...)
 			page.SetEmptyText(list.EmptyText)
 			page.SetActions(list.Actions...)
 			page.SetShowDetail(list.ShowDetail)
-
 			if c.command.Mode == types.CommandModeSearch {
 				page.OnQueryChange = func(query string) tea.Cmd {
 					c.input.Query = query

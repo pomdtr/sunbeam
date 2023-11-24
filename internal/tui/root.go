@@ -42,6 +42,7 @@ func NewRootList(title string, history history.History, generator func() (config
 }
 
 func (c *RootList) Init() tea.Cmd {
+	termenv.DefaultOutput().SetWindowTitle(c.title)
 	return tea.Batch(c.list.Init(), c.list.SetIsLoading(true), c.Reload)
 }
 
@@ -97,6 +98,16 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.form = nil
 				return c, c.list.Focus()
 			}
+		case "ctrl+s":
+			if c.form != nil {
+				break
+			}
+
+			shellCmd := exec.Command(utils.FindShell(), "-li")
+			return c, tea.ExecProcess(shellCmd, func(err error) tea.Msg {
+				termenv.DefaultOutput().SetWindowTitle(c.title)
+				return err
+			})
 		case "ctrl+e":
 			if c.form != nil {
 				break
@@ -107,6 +118,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return err
 				}
 
+				termenv.DefaultOutput().SetWindowTitle(c.title)
 				return types.Action{
 					Type: types.ActionTypeReload,
 				}
@@ -253,6 +265,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return ExitMsg{}
 					}
 
+					termenv.DefaultOutput().SetWindowTitle(c.title)
 					return nil
 				})
 			}
@@ -269,7 +282,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}
 		case types.ActionTypeEdit:
-			editCmd := exec.Command("sunbeam", "edit", msg.Target)
+			editCmd := exec.Command("sunbeam", "edit", msg.Path)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
@@ -327,11 +340,21 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return ExitMsg{}
 				}
 
+				termenv.DefaultOutput().SetWindowTitle(c.title)
 				return nil
 			})
 		case types.ActionTypeOpen:
 			return c, func() tea.Msg {
-				if err := utils.OpenWith(msg.Target, msg.App); err != nil {
+				var target string
+				if msg.Url != "" {
+					target = msg.Url
+				} else if msg.Path != "" {
+					target = msg.Path
+				} else {
+					return fmt.Errorf("invalid target")
+				}
+
+				if err := utils.OpenWith(target, msg.App); err != nil {
 					return err
 				}
 

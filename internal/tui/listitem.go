@@ -20,7 +20,7 @@ func (i ListItem) ID() string {
 
 func (i ListItem) FilterValue() string {
 	keywords := []string{i.Title, i.Subtitle}
-	return strings.Join(keywords, " ")
+	return strings.Trim(strings.Join(keywords, " "), " ")
 }
 
 func RenderItem(title string, subtitle string, accessories []string, width int, selected bool) string {
@@ -50,10 +50,8 @@ func RenderItem(title string, subtitle string, accessories []string, width int, 
 
 	// If the width is too small, we need to truncate the subtitle, title and accessory
 	for lipgloss.Width(title+subtitle+accessory) > width {
-		if words := strings.Split(subtitle, " "); len(words) > 0 {
+		if words := strings.Split(subtitle, " "); len(words) > 1 {
 			subtitle = strings.Join(words[:len(words)-1], " ")
-		} else if words := strings.Split(title, " "); len(words) > 1 {
-			title = strings.Join(words[:len(words)-1], " ")
 		} else if len(accessory) > 0 {
 			accessory = accessory[:len(accessory)-1]
 		} else {

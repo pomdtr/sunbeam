@@ -70,7 +70,7 @@ if payload["command"] == "ls":
                     "title": "Open",
                     "key": "o",
                     "type": "open",
-                    "target": str(file.absolute()),
+                    "path": str(file.absolute()),
                     "exit": True,
                 },
                 {

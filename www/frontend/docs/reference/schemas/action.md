@@ -35,7 +35,7 @@ Open a url or a file with the default app or a specific app.
     "type": "open",
     // the target to open (required)
     // target can be a url or a path to a file
-    "target": "https://pomdtr.github.io/sunbeam",
+    "url": "https://pomdtr.github.io/sunbeam",
     // the app to use to open the target (optional)
     // if not specified, the default app will be used
     "app": {

@@ -81,18 +81,17 @@ func (f *Filter) FilterItems(query string) {
 	if query == "" {
 		f.filtered = f.items
 	} else {
-		scores := make([]int, 0)
 		f.filtered = make([]FilterItem, 0)
 		for i := 0; i < len(f.items); i++ {
-			score := fzf.Score(f.items[i].FilterValue(), query)
+			filterValue := f.items[i].FilterValue()
+			score := fzf.Score(filterValue, query)
 			if score > 0 {
-				scores = append(scores, score)
 				f.filtered = append(f.filtered, f.items[i])
 			}
 		}
 
 		sort.SliceStable(f.filtered, func(i, j int) bool {
-			return scores[i] > scores[j]
+			return fzf.Score(f.filtered[i].FilterValue(), query) > fzf.Score(f.filtered[j].FilterValue(), query)
 		})
 	}
 

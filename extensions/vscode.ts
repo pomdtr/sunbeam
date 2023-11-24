@@ -60,7 +60,7 @@ if (payload.command == "list-projects") {
                 {
                     title: "Open in VS Code",
                     type: "open",
-                    target: entry.folderUri,
+                    url: entry.folderUri,
                     app: {
                         macos: "Visual Studio Code",
                     },
@@ -70,7 +70,7 @@ if (payload.command == "list-projects") {
                     title: "Open Folder",
                     key: "o",
                     type: "open",
-                    target: entry.folderUri,
+                    url: entry.folderUri,
                     exit: true
                 },
                 {

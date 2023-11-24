@@ -12,8 +12,9 @@ type Action struct {
 
 	Text string `json:"text,omitempty"`
 
-	App    *Application `json:"app,omitempty"`
-	Target string       `json:"target,omitempty"`
+	App  *Application `json:"app,omitempty"`
+	Url  string       `json:"url,omitempty"`
+	Path string       `json:"path,omitempty"`
 
 	Exit bool `json:"exit,omitempty"`
 

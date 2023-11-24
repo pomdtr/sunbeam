@@ -24,14 +24,11 @@
                 {
                     "title": "Open in Browser",
                     "type": "open",
-                    "target": "https://github.com/pomdtr/sunbeam"
+                    "url": "https://github.com/pomdtr/sunbeam"
                 }
             ]
         }
     ],
-    // whether the list is dynamic or not (optional)
-    // if true, the list will be refreshed every time the user types a character
-    "dynamic": false,
     // the text to display when the list is empty (optional)
     "emptyText": "No items found",
     // the list of actions shown when no item is selected (optional)

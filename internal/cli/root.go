@@ -285,7 +285,7 @@ func extensionListItems(alias string, extension extensions.Extension, extensionC
 				Title:  "Edit Extension",
 				Key:    "e",
 				Type:   types.ActionTypeEdit,
-				Target: extension.Entrypoint,
+				Path:   extension.Entrypoint,
 				Reload: true,
 			})
 		} else {

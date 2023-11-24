@@ -11,13 +11,13 @@ export type CopyAction = {
 
 export type OpenAction = {
   type: "open";
-  target: string;
   app?: {
     macos?: string;
     linux?: string;
   };
   exit?: boolean;
-} & ActionProps;
+} & ({ url: string; } | { path: string; })
+  & ActionProps;
 
 export type EditAction = {
   type: "edit";

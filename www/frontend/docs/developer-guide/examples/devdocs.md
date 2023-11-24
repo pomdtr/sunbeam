@@ -117,7 +117,7 @@ if [ "$COMMAND" = "search-docsets" ]; then
         {
             type: "open",
             title: "Open in Browser",
-            target: "https://devdocs.io/\(.slug)",
+            url: "https://devdocs.io/\(.slug)",
             exit: true
         }
       ]
@@ -186,7 +186,7 @@ elif [ "$COMMAND" = "search-entries" ]; then
                 {
                     title: "Open in Browser",
                     type: "open",
-                    target: "https://devdocs.io/\($docset)/\(.path)",
+                    url: "https://devdocs.io/\($docset)/\(.path)",
                     exit: true
                 },
                 {
@@ -260,7 +260,7 @@ if [ "$1" = "search-docsets" ]; then
             {
                 type: "open",
                 title: "Open in Browser",
-                target: "https://devdocs.io/\(.slug)",
+                url: "https://devdocs.io/\(.slug)",
                 exit: true
             }
           ]

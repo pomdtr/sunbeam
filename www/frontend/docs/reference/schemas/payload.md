@@ -16,7 +16,7 @@ The payload is passed as the first argument to the script when a command is run.
     },
     // the current working directory of the user
     "cwd": "/home/steve",
-    // the user query, only accessible in dynamic lists
+    // only set if the command is a search
     "query": "Hello, Steve!"
 }
 ```

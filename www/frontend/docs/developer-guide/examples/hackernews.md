@@ -52,13 +52,13 @@ if (payload.command == "browse") {
                 {
                     title: "Open in browser",
                     type: "open",
-                    target: item.link || "",
+                    url: item.link || "",
                     exit: true
                 },
                 {
                     title: "Open Comments in Browser",
                     type: "open",
-                    target: item.guid || "",
+                    url: item.guid || "",
                     exit: true
                 },
                 {

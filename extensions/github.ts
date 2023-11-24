@@ -125,7 +125,7 @@ async function run(payload: sunbeam.Payload) {
                         title: "Open In Browser",
                         key: "o",
                         type: "open",
-                        target: item.html_url,
+                        url: item.html_url,
                         exit: true
                     },
                     {
@@ -185,7 +185,7 @@ async function run(payload: sunbeam.Payload) {
                     {
                         title: "Open In Browser",
                         type: "open",
-                        target: item.html_url,
+                        url: item.html_url,
                         exit: true
                     },
                     {
@@ -223,7 +223,7 @@ async function run(payload: sunbeam.Payload) {
                     {
                         title: "Open In Browser",
                         type: "open",
-                        target: item.html_url,
+                        url: item.html_url,
                         exit: true
                     },
                     {
@@ -259,7 +259,7 @@ async function run(payload: sunbeam.Payload) {
                 {
                     title: "Open in Browser",
                     type: "open",
-                    target: data.html_url,
+                    url: data.html_url,
                     exit: true
                 },
                 {
