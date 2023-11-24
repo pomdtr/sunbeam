@@ -1,5 +1,6 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "https://raw.githubusercontent.com/pomdtr/sunbeam/main/sdk/mod.ts"
+import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
+import { editor } from "https://deno.land/x/sunbeam/editor.ts"
 
 if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
@@ -27,6 +28,14 @@ if (Deno.args.length == 0) {
                 title: "Search Vals",
                 name: "search",
                 mode: "search",
+            },
+            {
+                title: "Edit Val",
+                name: "edit",
+                mode: "tty",
+                params: [
+                    { name: "id", title: "Val ID", required: true, type: "text" }
+                ]
             },
             {
                 title: "View Readme",
@@ -67,6 +76,21 @@ async function run(payload: sunbeam.Payload) {
         } else {
             console.log(JSON.stringify({ emptyText: "No query" }));
         }
+    } else if (payload.command == "edit") {
+        const { id } = payload.params;
+        const { code } = await client.fetchJSON(`/v1/vals/${id}`);
+        const edited = await editor({ extension: "tsx", content: code });
+        const resp = await client.fetch(`/v1/vals/${id}/versions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ code: edited })
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Failed to update val (${resp.status}: ${resp.statusText}`);
+        }
     } else if (payload.command == "readme") {
         const { readme } = await client.fetchJSON(`/v1/vals/${payload.params.id}`);
         const detail: sunbeam.Detail = {
@@ -82,7 +106,7 @@ async function run(payload: sunbeam.Payload) {
 class ValTownClient {
     constructor(private token: string) { }
 
-    fetch(url: string, init?: RequestInit) {
+    _fetch(url: string, init?: RequestInit) {
         return fetch(url, {
             ...init,
             headers: {
@@ -92,8 +116,12 @@ class ValTownClient {
         })
     }
 
+    fetch(endpoint: string, init?: RequestInit) {
+        return this._fetch(`https://api.val.town${endpoint}`, init);
+    }
+
     async fetchJSON(endpoint: string, init?: RequestInit) {
-        const resp = await this.fetch(`https://api.val.town${endpoint}`, init);
+        const resp = await this._fetch(`https://api.val.town${endpoint}`, init);
         if (!resp.ok) {
             throw new Error("Failed to fetch");
         }
@@ -108,7 +136,7 @@ class ValTownClient {
         let link: string = url.toString();
         const items: any = []
         while (true) {
-            const resp = await this.fetch(link, init);
+            const resp = await this._fetch(link, init);
             if (!resp.ok) {
                 throw new Error(`Failed to fetch: ${resp.statusText}`);
             }
@@ -134,9 +162,19 @@ function valToListItem(val: any): sunbeam.ListItem {
         },
         actions: [
             {
-            title: "Open in Browser",
-            type: "open",
+                title: "Open in Browser",
+                type: "open",
                 url: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`
+            },
+            {
+                title: "Edit Val",
+                type: "run",
+                reload: true,
+                command: "edit",
+                key: "e",
+                params: {
+                    id: val.id
+                }
             },
             {
                 title: "Open Web Endpoint",
@@ -152,6 +190,11 @@ function valToListItem(val: any): sunbeam.ListItem {
                 title: "Copy Web Endpoint",
                 type: "copy",
                 text: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`
+            },
+            {
+                title: "Copy ID",
+                type: "copy",
+                text: val.id
             },
             {
                 "title": "View Readme",
