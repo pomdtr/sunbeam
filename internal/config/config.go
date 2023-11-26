@@ -83,13 +83,17 @@ func Load(configPath string) (Config, error) {
 }
 
 func (c Config) Save() error {
-	bts, err := json.MarshalIndent(c, "", "  ")
+	f, err := os.Create(c.path)
 	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
+		return fmt.Errorf("failed to open config: %w", err)
 	}
+	defer f.Close()
 
-	if err := os.WriteFile(c.path, bts, 0600); err != nil {
-		return fmt.Errorf("failed to write config: %w", err)
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(c); err != nil {
+		return fmt.Errorf("failed to encode config: %w", err)
 	}
 
 	return nil

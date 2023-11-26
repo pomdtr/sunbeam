@@ -149,14 +149,20 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(fmt.Errorf("failed to load extension: %w", err))
 			}
 
-			preferences := make(map[string]types.Param)
-			for name, preference := range extensionConfig.Preferences {
-				preferences[name] = types.Param{
-					Value: preference,
-				}
+			preferences := extensionConfig.Preferences
+			if preferences == nil {
+				preferences = make(map[string]any)
 			}
 
-			missingPreferences := FindMissingInputs(extension.Manifest.Preferences, preferences)
+			envs, err := ExtractPreferencesFromEnv(msg.Extension, extension)
+			if err != nil {
+				return c, c.SetError(err)
+			}
+			for name, value := range envs {
+				preferences[name] = value
+			}
+
+			missingPreferences := FindMissingPreferences(extension.Manifest.Preferences, preferences)
 			for _, preference := range missingPreferences {
 				if !preference.Required {
 					continue
@@ -229,7 +235,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			input := types.Payload{
 				Command:     command.Name,
 				Params:      make(map[string]any),
-				Preferences: extensionConfig.Preferences,
+				Preferences: preferences,
 			}
 
 			for k, v := range msg.Params {

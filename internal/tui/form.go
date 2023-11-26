@@ -2,12 +2,15 @@ package tui
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/types"
 )
 
@@ -23,6 +26,53 @@ type Form struct {
 	focusIndex   int
 
 	inputs []Input
+}
+
+func ExtractPreferencesFromEnv(alias string, extension extensions.Extension) (map[string]types.Param, error) {
+	var preferences = make(map[string]types.Param)
+	for _, input := range extension.Manifest.Preferences {
+		env := fmt.Sprintf("%s_%s", strings.ToUpper(alias), strings.ToUpper(input.Name))
+		env = strings.ReplaceAll(env, "-", "_")
+		if value, ok := os.LookupEnv(env); ok {
+			switch input.Type {
+			case types.InputText, types.InputTextArea, types.InputPassword:
+				preferences[input.Name] = types.Param{
+					Value: value,
+				}
+			case types.InputCheckbox:
+				value, err := strconv.ParseBool(value)
+				if err != nil {
+					continue
+				}
+				preferences[input.Name] = types.Param{
+					Value: value,
+				}
+			case types.InputNumber:
+				value, err := strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+
+				preferences[input.Name] = types.Param{
+					Value: value,
+				}
+			}
+			continue
+		}
+	}
+
+	return preferences, nil
+}
+
+func FindMissingPreferences(preferenceInputs []types.Input, values map[string]any) []types.Input {
+	preferenceParams := make(map[string]types.Param)
+	for name, value := range values {
+		preferenceParams[name] = types.Param{
+			Value: value,
+		}
+	}
+
+	return FindMissingInputs(preferenceInputs, preferenceParams)
 }
 
 func FindMissingInputs(inputs []types.Input, params map[string]types.Param) []types.Input {

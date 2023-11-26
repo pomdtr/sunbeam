@@ -1,0 +1,22 @@
+{
+  "extensions": {
+    "valtown": {
+      "origin": "./extensions/valtown.ts"
+    },
+    "devdocs": {
+      "origin": "./extensions/devdocs.sh"
+    },
+    "tldr": {
+      "origin": "./extensions/tldr.sh"
+    },
+    "github": {
+      "origin": "./extensions/github.ts"
+    },
+    "gist": {
+      "origin": "./extensions/gists.ts"
+    },
+    "npm": {
+      "origin": "./extensions/npm.ts"
+    }
+  }
+}

@@ -109,9 +109,23 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 					}
 				}
 
+				preferences := extensionConfig.Preferences
+				if preferences == nil {
+					preferences = make(map[string]any)
+				}
+
+				envs, err := tui.ExtractPreferencesFromEnv(alias, extension)
+				if err != nil {
+					return err
+				}
+
+				for name, value := range envs {
+					preferences[name] = value
+				}
+
 				input := types.Payload{
 					Command:     command.Name,
-					Preferences: extensionConfig.Preferences,
+					Preferences: preferences,
 					Params:      params,
 				}
 
