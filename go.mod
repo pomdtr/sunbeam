@@ -12,7 +12,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/cli/go-gh/v2 v2.4.0
 	github.com/itchyny/gojq v0.12.13
-	github.com/junegunn/fzf v0.0.0-20231112130808-7320b7df6203
+	github.com/junegunn/fzf v0.0.0-20231126000142-6b99399c41d9
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
@@ -29,7 +29,6 @@ require (
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
-	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
