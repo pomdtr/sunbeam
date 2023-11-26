@@ -80,6 +80,9 @@ async function run(payload: sunbeam.Payload) {
         const { id } = payload.params;
         const { code } = await client.fetchJSON(`/v1/vals/${id}`);
         const edited = await editor({ extension: "tsx", content: code });
+        if (edited == code) {
+            return;
+        }
         const resp = await client.fetch(`/v1/vals/${id}/versions`, {
             method: "POST",
             headers: {

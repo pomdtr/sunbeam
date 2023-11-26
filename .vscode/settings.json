@@ -1,12 +1,15 @@
 {
   "search.exclude": {
     "book": true,
+    "www/frontend/.vitepress": true,
+    ".devbox": true,
     "public": true,
   },
   "yaml.validate": false,
   "deno.enablePaths": [
     "./extensions",
     "sdk",
+    "scripts",
     "./www/install"
   ],
   "deno.unstable": true

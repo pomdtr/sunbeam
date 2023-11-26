@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run -A
 
 import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
+import { editor } from "https://deno.land/x/sunbeam/editor.ts"
 import * as path from "https://deno.land/std/path/mod.ts";
 
 if (Deno.args.length == 0) {
@@ -281,7 +282,11 @@ async function run(payload: sunbeam.Payload) {
                 throw new Error("File not found");
             }
 
-            const content = await editor(filename, file.content);
+            const extension = path.extname(filename);
+            const content = await editor({ extension, content: file.content });
+            if (content == file.content) {
+                return;
+            }
 
             const patch = await fetchGithub(`/gists/${id}`, {
                 method: "PATCH",
@@ -314,31 +319,6 @@ async function run(payload: sunbeam.Payload) {
         }
 
     }
-}
-
-
-async function editor(filename: string, content?: string) {
-    const extension = path.extname(filename).slice(1);
-    const command = new Deno.Command("sunbeam", {
-        args: ["edit", "--extension", extension],
-        stdin: "piped",
-        stdout: "piped",
-    })
-
-    const process = await command.spawn();
-
-    const writer = process.stdin.getWriter()
-    writer.write(new TextEncoder().encode(content || ""));
-    writer.releaseLock();
-
-    await process.stdin.close();
-
-    const { success, stdout } = await process.output();
-    if (!success) {
-        throw new Error("Editor failed");
-    }
-
-    return new TextDecoder().decode(stdout);
 }
 
 function fetchGithub(endpoint: string, init?: RequestInit) {
