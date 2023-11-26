@@ -42,6 +42,7 @@ type Config struct {
 }
 
 type ExtensionConfig struct {
+	Root        []string         `json:"root,omitempty"`
 	Origin      string           `json:"origin,omitempty"`
 	Preferences map[string]any   `json:"preferences,omitempty"`
 	Items       []types.RootItem `json:"items,omitempty"`
