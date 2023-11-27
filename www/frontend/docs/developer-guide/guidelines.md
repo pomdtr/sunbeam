@@ -11,9 +11,7 @@ Even though you can use any language, here are some recommendations:
 ### POSIX Shell
 
 Sunbam provides multiple helpers to make it easier to share sunbeam extensions, without requiring the user to install additional dependencies (other than sunbeam itself).
-
 - `sunbeam query`: generate and transform json using the jq syntax.
-- `sunbeam fetch`: fetch a remote script using a subset of curl options.
 - `sunbeam open`: open an url or a file using the default application.
 - `sunbeam copy/paste`: copy/paste text from/to the clipboard
 
@@ -35,7 +33,7 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-COMMAND=$(echo "$1" | jq -r '.command')
+COMMAND=$(echo "$1" | sunbeam query -r '.command')
 if [ "$COMMAND" = "say-hello" ]; then
     sunbeam query -n '{ text: "Hello, World!" }'
 fi
@@ -134,45 +132,3 @@ if (payload.command == "say-hello") {
 ```
 
 A more complex typescript extension can be found [here](./examples/hackernews.md).
-
-### Any other language (Using Nix)
-
-Nix is able to create portable scripts through the use of the `#!/usr/bin/env nix-shell` shebang. You can use it to create scripts with any number of dependencies, only requiring the user to have nix installed.
-
-See the [nix.dev](https://nix.dev/tutorials/first-steps/reproducible-scripts) for more information.
-
-```sh
-#!/usr/bin/env nix-shell
-#! nix-shell -i bash
-#! nix-shell -p bash jq
-#! nix-shell -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/2a601aafdc5605a5133a2ca506a34a3a73377247.tar.gz
-
-set -eu
-
-if [ $# -eq 0 ]; then
-    jq -n '{
-        title: "Hello World!",
-        "root": ["say-hello"],
-        commands: [{
-            name: "say-hello",
-            title: "Say Hello",
-            mode: "detail"
-        }]
-    }'
-    exit 0
-fi
-
-COMMAND=$(echo "$1" | jq -r '.command')
-if [ "$COMMAND" = "say-hello" ]; then
-    jq -n '{ text: "Hello, World!" }'
-fi
-```
-
-This script will work anywhere, as it is:
-
-- isolated from the user environment
-- deterministic (the dependencies are pinned)
-
-> Warning: There is a delay when running nix scripts for the first time, as nix needs to download and build the dependencies. Even after the first run, your script will take a few seconds to start.
-
-I would love to build an home-manager package for sunbeam, but my nix knowledge is still very limited. If you are interested in helping, please reach out to me on [twitter](https://twitter.com/pomdtrr).

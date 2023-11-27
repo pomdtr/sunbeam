@@ -30,7 +30,7 @@ fi
 COMMAND=$(echo "$1" | sunbeam query -r '.command')
 if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
-  sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query 'map({
+  curl https://devdocs.io/docs/docs.json | sunbeam query 'map({
       title: .name,
       subtitle: (.release // "latest"),
       accessories: [ .slug ],
@@ -48,7 +48,7 @@ if [ "$COMMAND" = "list-docsets" ]; then
 elif [ "$COMMAND" = "list-entries" ]; then
   SLUG=$(echo "$1" | sunbeam query -r '.params.slug')
   # shellcheck disable=SC2016
-  sunbeam fetch "https://devdocs.io/docs/$SLUG/index.json" | sunbeam query --arg slug="$SLUG" '.entries | map({
+  curl "https://devdocs.io/docs/$SLUG/index.json" | sunbeam query --arg slug="$SLUG" '.entries | map({
       title: .name,
       subtitle: .type,
       actions: [

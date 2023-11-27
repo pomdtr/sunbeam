@@ -52,7 +52,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	})
 	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewValidateCmd())
-	rootCmd.AddCommand(NewCmdFetch())
 	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdCopy())
 	rootCmd.AddCommand(NewCmdPaste())
@@ -305,7 +304,7 @@ func extensionListItems(alias string, extension extensions.Extension, extensionC
 				Title:   "View Source",
 				Key:     "c",
 				Type:    types.ActionTypeExec,
-				Command: fmt.Sprintf("sunbeam fetch %s | %s", extensionConfig.Origin, utils.FindPager()),
+				Command: fmt.Sprintf("curl %s | %s", extensionConfig.Origin, utils.FindPager()),
 			})
 		}
 

@@ -250,6 +250,21 @@ sunbeam extension configure <alias> [flags]
   -h, --help   help for configure
 ```
 
+## sunbeam extension create
+
+Create a new sunbeam extension
+
+```
+sunbeam extension create <name> [flags]
+```
+
+### Options
+
+```
+  -h, --help              help for create
+  -l, --language string   language of extension
+```
+
 ## sunbeam extension help
 
 Help about any command
@@ -298,6 +313,22 @@ sunbeam extension list [flags]
   -h, --help   help for list
 ```
 
+## sunbeam extension publish
+
+Publish a script as a github gist
+
+```
+sunbeam extension publish <script> [flags]
+```
+
+### Options
+
+```
+  -h, --help     help for publish
+  -o, --open     open gist in browser
+  -p, --public   make gist public
+```
+
 ## sunbeam extension remove
 
 Remove sunbeam extensions
@@ -339,26 +370,6 @@ sunbeam extension upgrade [flags]
 ```
       --all    upgrade all extensions
   -h, --help   help for upgrade
-```
-
-## sunbeam fetch
-
-Simple http client inspired by curl
-
-```
-sunbeam fetch <url> [body] [flags]
-```
-
-### Options
-
-```
-  -d, --data string          HTTP body to send. Use @- to read from stdin, or @<file> to read from a file.
-  -H, --header stringArray   HTTP headers to add to the request
-  -h, --help                 help for fetch
-  -X, --method string        HTTP method to use
-  -o, --output string        Output file to write to
-  -u, --user string          HTTP basic auth to use
-  -A, --user-agent string    HTTP user agent to use
 ```
 
 ## sunbeam help

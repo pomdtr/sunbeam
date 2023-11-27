@@ -4,12 +4,11 @@
 
 When the script is called without arguments, it must return a json manifest describing the extension and its commands.
 
-We will use the `sunbeam query` command to generate this manifest.
-The `query` command allows you to manipulate json using the jq syntax.
+We will use the `sunbeam query` to generate this manifest. sunbeam query is a command-line JSON processor. It is available on most linux distributions, and can be installed on macOS using homebrew.
 
-> ℹ️ Sunbeam provides multiple helpers to make it easier to share sunbeam extensions, without requiring the user to install additional dependencies. An user running a sunbeam extension does not necessarily have jq installed on their system, but he probably has sunbeam installed 😛.
+> ℹ️ Sunbeam provides multiple helpers to make it easier to share sunbeam extensions, without requiring the user to install additional dependencies. An user running a sunbeam extension does not necessarily have sunbeam query installed on their system, but he probably has sunbeam installed 😛.
 
-If you are not familiar with jq, I recommend reading this tutorial: <https://earthly.dev/blog/jq-select/>
+If you are not familiar with sunbeam query, I recommend reading this tutorial: <https://earthly.dev/blog/sunbeam query-select/>
 
 Note that the script must be executable, and must have a shebang line at the top indicating the interpreter to use.
 
@@ -80,8 +79,6 @@ When the user run a command, the script is called with the command name as first
 
 The `search-docsets` command has a `filter` mode, so the script must return a [valid list](../../reference/schemas/list.md) when called with this argument.
 
-We will use the `sunbeam fetch` command to fetch the list of docsets from the devdocs api. The `fetch` command allows you to perform http requests (with an api similar to curl).
-
 ```sh
 #!/bin/sh
 
@@ -104,11 +101,11 @@ if [ $# -eq 0 ]; then
 fi
 
 # extract the command name from the payload passed as first argument to the script
-COMMAND=$(echo "$1" | jq -r '.command')
+COMMAND=$(echo "$1" | sunbeam query -r '.command')
 
 # When the command name is "search-docsets", the list of docsets is returned
 if [ "$COMMAND" = "search-docsets" ]; then
-  sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query '{
+  curl https://devdocs.io/docs/docs.json | sunbeam query '{
     items: map({
       title: .name,
       subtitle: (.release // "latest"),
@@ -170,14 +167,14 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-COMMAND=$(echo "$1" | jq -r '.command')
+COMMAND=$(echo "$1" | sunbeam query -r '.command')
 if [ "$COMMAND" = "search-docsets" ]; then
     # ...
 elif [ "$COMMAND" = "search-entries" ]; then
     # we extract the slug param from the payload
     DOCSET=$(echo "$1" | sunbeam query -r '.params.docset')
 
-    sunbeam fetch "https://devdocs.io/docs/$DOCSET/index.json" | sunbeam query --arg docset="$DOCSET" '.entries | {
+    curl "https://devdocs.io/docs/$DOCSET/index.json" | sunbeam query --arg docset="$DOCSET" '.entries | {
 
         items: map({
             title: .name,
@@ -243,7 +240,7 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ "$1" = "search-docsets" ]; then
-    sunbeam fetch https://devdocs.io/docs/docs.json | sunbeam query '{
+    curl https://devdocs.io/docs/docs.json | sunbeam query '{
         items: map({
           title: .name,
           subtitle: (.release // "latest"),

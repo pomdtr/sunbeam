@@ -38,8 +38,7 @@ if [ "$COMMAND" = "search" ]; then
     fi
 
     # urlencode the query
-    QUERY=$(echo "$QUERY" | sunbeam query -rR '@uri')
-    sunbeam fetch "https://suggestqueries.google.com/complete/search?client=firefox&q=$QUERY" | sunbeam query '.[1] | {
+    curl -G "https://suggestqueries.google.com/complete/search" -d "q=$QUERY" | sunbeam query '.[1] | {
         items: map({
             title: .,
             actions: [
