@@ -1,20 +1,5 @@
 {
     "extensions": {
-        "devdocs": {
-            "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh",
-            "items": [
-                {
-                    "title": "Search Bash Docs",
-                    "command": "list-entries",
-                    "params": {
-                        "slug": "bash"
-                    }
-                }
-            ]
-        },
-        "google": {
-            "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/google.sh"
-        },
         "oneliners": {
             "origin": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/oneliners.py"
         }
