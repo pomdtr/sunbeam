@@ -10,8 +10,14 @@ const os = require("os");
 let unload = () => { }
 
 function onApp(app) {
+  app.removeAllListeners('window-all-closed')
   // Hide the dock icon
-  app.dock.hide();
+  if (process.platform == "darwin") {
+    app.dock.hide();
+  }
+
+  app.on('window-all-closed', (event) => {
+  })
 
   // Create tray icon
   const tray = new Tray(path.join(__dirname, "../assets/trayiconTemplate.png"));
@@ -74,7 +80,8 @@ function onApp(app) {
 
 function onWindow(win) {
   win.on("close", () => {
-    app.hide()
+    if (process.platform == "darwin") {
+    }
   });
 }
 
@@ -121,6 +128,7 @@ function decorateConfig(config) {
       top: 0;
       right: 0;
       left: 0;
+      visibility: hidden;
     }
     .tabs_borderShim {
       display: none;
@@ -138,6 +146,10 @@ function decorateConfig(config) {
       border-left-width: 0;
       padding-left: 1px;
     }
+
+    .terms_terms {
+      margin-top: 0;
+    }
   `
   return Object.assign({}, config, {
     css: `
@@ -147,32 +159,11 @@ function decorateConfig(config) {
   });
 }
 
-// Removes the redundant space on mac if there is only one tab
-function getTabsProps(parentProps, props) {
-  var classTermsList = document.getElementsByClassName('terms_terms')
-  if (classTermsList.length > 0) {
-    var classTerms = classTermsList[0]
-    var header = document.getElementsByClassName('header_header')[0]
-    if (props.tabs.length <= 1) {
-      // @ts-ignore
-      classTerms.style.marginTop = 0
-      // @ts-ignore
-      header.style.visibility = 'hidden'
-    } else {
-      // @ts-ignore
-      classTerms.style.marginTop = ''
-      // @ts-ignore
-      header.style.visibility = ''
-    }
-  }
-  return Object.assign({}, parentProps, props)
-}
 
 module.exports = {
   onApp,
   onWindow,
   onUnload,
   decorateBrowserOptions,
-  getTabsProps,
   decorateConfig,
 };

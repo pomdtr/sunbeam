@@ -21,7 +21,7 @@ function hideWindows(app) {
     }
   });
 
-  if (typeof app.hide === "function") {
+  if (process.platform == "darwin") {
     app.hide();
   }
 }
