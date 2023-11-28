@@ -36,6 +36,9 @@
     "tldr": {
       "origin": "./extensions/tldr.sh"
     },
+    "tabs": {
+      "origin": "./extensions/tabs.ts"
+    },
     "deno-deploy": {
       "origin": "./extensions/deno-deploy.ts"
     },
