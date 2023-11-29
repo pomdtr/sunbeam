@@ -284,9 +284,17 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case types.ActionTypeOpen:
 			return c, func() tea.Msg {
 				if msg.Url != "" {
-					return utils.Open(msg.Url)
+					if err := utils.Open(msg.Url); err != nil {
+						return err
+					}
+
+					return ExitMsg{}
 				} else if msg.Path != "" {
-					return utils.Open(fmt.Sprintf("file://%s", msg.Path))
+					if err := utils.Open(fmt.Sprintf("file://%s", msg.Path)); err != nil {
+						return err
+					}
+
+					return ExitMsg{}
 				} else {
 					return fmt.Errorf("invalid target")
 				}
