@@ -159,11 +159,19 @@ function decorateConfig(config) {
   });
 }
 
+// Adding Keymaps
+function decorateKeymaps(keymaps) {
+  return Object.assign({}, keymaps, {
+    "tab:new": "",
+    "window:new": "",
+  });
+}
 
 module.exports = {
   onApp,
   onWindow,
   onUnload,
   decorateBrowserOptions,
+  decorateKeymaps,
   decorateConfig,
 };
