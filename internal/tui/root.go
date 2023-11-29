@@ -31,19 +31,16 @@ type RootList struct {
 }
 
 func NewRootList(title string, history history.History, generator func() (config.Config, []types.ListItem, error)) *RootList {
-	list := NewList()
-
 	return &RootList{
 		title:     title,
 		history:   history,
-		list:      list,
 		generator: generator,
 	}
 }
 
 func (c *RootList) Init() tea.Cmd {
 	termenv.DefaultOutput().SetWindowTitle(c.title)
-	return tea.Batch(c.list.Init(), c.list.SetIsLoading(true), c.Reload)
+	return c.Reload
 }
 
 func (c *RootList) Reload() tea.Msg {
@@ -53,11 +50,18 @@ func (c *RootList) Reload() tea.Msg {
 	}
 
 	c.config = cfg
-	c.list.SetEmptyText("No items")
-	c.list.SetIsLoading(false)
 	c.history.Sort(rootItems)
-	c.list.SetItems(rootItems...)
-	return nil
+	if c.list != nil {
+		c.list.SetIsLoading(false)
+		c.list.SetItems(rootItems...)
+		return nil
+	} else {
+		c.list = NewList(rootItems...)
+		c.list.SetEmptyText("No items")
+		c.list.SetSize(c.width, c.height)
+
+		return c.list.Init()
+	}
 }
 
 func (c *RootList) Focus() tea.Cmd {
@@ -78,7 +82,9 @@ func (c *RootList) SetSize(width, height int) {
 		c.form.SetSize(width, height)
 	}
 
-	c.list.SetSize(width, height)
+	if c.list != nil {
+		c.list.SetSize(width, height)
+	}
 }
 
 func (c *RootList) SetError(err error) tea.Cmd {
@@ -398,10 +404,13 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, cmd
 	}
 
-	page, cmd := c.list.Update(msg)
-	c.list = page.(*List)
+	if c.list != nil {
+		page, cmd := c.list.Update(msg)
+		c.list = page.(*List)
+		return c, cmd
+	}
 
-	return c, cmd
+	return c, nil
 }
 
 func (c *RootList) View() string {
@@ -411,7 +420,11 @@ func (c *RootList) View() string {
 	if c.form != nil {
 		return c.form.View()
 	}
-	return c.list.View()
+	if c.list != nil {
+		return c.list.View()
+	}
+
+	return ""
 }
 
 type History struct {
