@@ -10,17 +10,30 @@ const os = require("os");
 let unload = () => { }
 
 function onApp(app) {
+  if (!app.requestSingleInstanceLock()) {
+    app.quit()
+    return
+  }
+
+  app.on('second-instance', () => {
+    // Someone tried to run a second instance, we should focus our window.
+    showWindows(app)
+  })
+
+  // Prevent the app from quitting when all windows are closed
   app.removeAllListeners('window-all-closed')
+  app.on('window-all-closed', (event) => {
+    // empty callback to prevent the default behavior
+  })
+
   // Hide the dock icon
   if (process.platform == "darwin") {
     app.dock.hide();
   }
 
-  app.on('window-all-closed', (event) => {
-  })
-
   // Create tray icon
-  const tray = new Tray(path.join(__dirname, "../assets/trayiconTemplate.png"));
+  const iconPath = process.platform == "darwin" ? "../assets/trayiconTemplate.png" : "../assets/trayicon.png";
+  const tray = new Tray(path.join(__dirname, iconPath));
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Show Sunbeam',
@@ -72,7 +85,7 @@ function onApp(app) {
   app.on("browser-window-blur", onBlur);
 
   unload = () => {
-    tray.destroy();
+    if (tray) tray.destroy();
     globalShortcut.unregisterAll();
     app.removeListener("browser-window-blur", onBlur);
   };
@@ -115,12 +128,7 @@ function decorateConfig(config) {
 
   if (config.sunbeam && config.sunbeam.hotkey) {
     const hotkey = config.sunbeam.hotkey;
-    if (!globalShortcut.register(hotkey, () => toggleWindows(app))) {
-      dialog.showMessageBox({
-        message: `Could not register hotkey (${hotkey})`,
-        buttons: ["Ok"]
-      });
-    }
+    globalShortcut.register(hotkey, () => toggleWindows(app));
   }
 
   const css = `
