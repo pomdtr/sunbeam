@@ -77,27 +77,11 @@
                     "type": {
                         "const": "open"
                     },
-                    "exit": {
-                        "type": "boolean"
-                    },
                     "url": {
                         "type": "string"
                     },
                     "path": {
                         "type": "string"
-                    },
-                    "app": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/definitions/application"
-                            },
-                            {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/application"
-                                }
-                            }
-                        ]
                     }
                 }
             }
@@ -242,18 +226,5 @@
                 }
             }
         }
-    ],
-    "definitions": {
-        "application": {
-            "type": "object",
-            "properties": {
-                "macos": {
-                    "type": "string"
-                },
-                "linux": {
-                    "type": "string"
-                }
-            }
-        }
-    }
+    ]
 }

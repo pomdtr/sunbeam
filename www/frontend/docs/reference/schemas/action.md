@@ -36,15 +36,6 @@ Open a url or a file with the default app or a specific app.
     // the target to open (required)
     // target can be a url or a path to a file
     "url": "https://pomdtr.github.io/sunbeam",
-    // the app to use to open the target (optional)
-    // if not specified, the default app will be used
-    "app": {
-        "macos": "google chrome",
-        "linux": "google-chrome"
-    },
-    // whether to exit sunbeam after opening the target (optional)
-    // if not specified, sunbeam will not exit
-    "exit": true
 }
 ```
 

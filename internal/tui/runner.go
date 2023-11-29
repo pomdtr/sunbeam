@@ -282,26 +282,14 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return ShowNotificationMsg{"Copied!"}
 			}
 		case types.ActionTypeOpen:
-			command := msg
 			return c, func() tea.Msg {
-				var target string
-				if command.Url != "" {
-					target = command.Url
-				} else if command.Path != "" {
-					target = command.Path
+				if msg.Url != "" {
+					return utils.Open(msg.Url)
+				} else if msg.Path != "" {
+					return utils.Open(fmt.Sprintf("file://%s", msg.Path))
 				} else {
-					return fmt.Errorf("invalid action")
+					return fmt.Errorf("invalid target")
 				}
-
-				if err := utils.OpenWith(target, command.App); err != nil {
-					return err
-				}
-
-				if msg.Exit {
-					return ExitMsg{}
-				}
-
-				return c.embed.Focus()
 			}
 		case types.ActionTypeReload:
 			if c.input.Params == nil {

@@ -11,11 +11,6 @@ export type CopyAction = {
 
 export type OpenAction = {
   type: "open";
-  app?: {
-    macos?: string;
-    linux?: string;
-  };
-  exit?: boolean;
 } & ({ url: string; } | { path: string; })
   & ActionProps;
 

@@ -12,9 +12,8 @@ type Action struct {
 
 	Text string `json:"text,omitempty"`
 
-	App  *Application `json:"app,omitempty"`
-	Url  string       `json:"url,omitempty"`
-	Path string       `json:"path,omitempty"`
+	Url  string `json:"url,omitempty"`
+	Path string `json:"path,omitempty"`
 
 	Exit bool `json:"exit,omitempty"`
 
@@ -92,11 +91,6 @@ const (
 	ActionTypeExit   ActionType = "exit"
 	ActionTypeConfig ActionType = "config"
 )
-
-type Application struct {
-	Macos string `json:"macos,omitempty"`
-	Linux string `json:"linux,omitempty"`
-}
 
 type Payload struct {
 	Command     string         `json:"command"`

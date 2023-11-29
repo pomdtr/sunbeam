@@ -356,24 +356,13 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			})
 		case types.ActionTypeOpen:
 			return c, func() tea.Msg {
-				var target string
 				if msg.Url != "" {
-					target = msg.Url
+					return utils.Open(msg.Url)
 				} else if msg.Path != "" {
-					target = msg.Path
+					return utils.Open(fmt.Sprintf("file://%s", msg.Path))
 				} else {
 					return fmt.Errorf("invalid target")
 				}
-
-				if err := utils.OpenWith(target, msg.App); err != nil {
-					return err
-				}
-
-				if msg.Exit {
-					return ExitMsg{}
-				}
-
-				return nil
 			}
 		case types.ActionTypeReload:
 			return c, tea.Sequence(c.list.SetIsLoading(true), c.Reload)
