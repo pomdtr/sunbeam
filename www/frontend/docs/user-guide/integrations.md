@@ -6,7 +6,7 @@ Here is a non-exhaustive list of integrations. If you have an integration you wo
 
 ## Terminals
 
-## Hyper (MacOS Only)
+### Hyper
 
 ![](../../assets/hyper.jpeg)
 
@@ -25,8 +25,7 @@ module.exports = {
     config: {
         fontSize: 13,
         padding: '10px',
-        shell: '/bin/zsh',
-        shellArgs: ['--login', '-c', 'sunbeam'],
+        shellArgs: ['-lic', 'sunbeam'],
         // these envs are used by sunbeam actions, make sure to customize them if needed
         env: {
             "EDITOR": "vim",
