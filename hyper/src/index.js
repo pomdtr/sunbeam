@@ -1,7 +1,7 @@
 // @ts-check
 
 // @ts-ignore
-const { globalShortcut, dialog, app, Tray, Menu, shell } = require("electron");
+const { globalShortcut, app, Tray, Menu, shell } = require("electron");
 const { toggleWindows, hideWindows, showWindows } = require("./window");
 const { getCenterOnCurrentScreen } = require("./screen");
 const path = require("path");
@@ -172,6 +172,7 @@ function decorateKeymaps(keymaps) {
   return Object.assign({}, keymaps, {
     "tab:new": "",
     "window:new": "",
+    "editor:clearBuffer": "",
   });
 }
 
