@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -348,6 +349,24 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		case types.ActionTypeExec:
 			cmd := exec.Command("sh", "-c", msg.Command)
 			cmd.Dir = msg.Dir
+			if strings.HasPrefix(cmd.Dir, "~") {
+				homeDir, err := os.UserHomeDir()
+				if err != nil {
+					return c, c.SetError(err)
+				}
+
+				cmd.Dir = filepath.Join(homeDir, strings.TrimPrefix(cmd.Dir, "~"))
+			}
+
+			if !filepath.IsAbs(cmd.Dir) {
+				wd, err := os.Getwd()
+				if err != nil {
+					return c, c.SetError(err)
+				}
+
+				cmd.Dir = filepath.Join(wd, cmd.Dir)
+			}
+
 			return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				if err != nil {
 					return err

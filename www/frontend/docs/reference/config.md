@@ -31,7 +31,7 @@ This fallback mechanism allows you to have a project specific configs, and a glo
             // command to run
             "command": "sunbeam edit config.fish",
             // working directory to run the command in
-            "cwd": "~/.config/fish"
+            "dir": "~/.config/fish"
         }
     ],
     "extensions": {
