@@ -288,6 +288,11 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 
+			selection, ok := c.Selection()
+			if !ok || len(selection.Actions) == 0 {
+				break
+			}
+
 			c.input.SetValue("")
 			c.input.Placeholder = "Search Actions..."
 			c.statusBar.expanded = true

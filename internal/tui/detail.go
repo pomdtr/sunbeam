@@ -115,6 +115,10 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 
+			if len(c.statusBar.actions) == 0 {
+				break
+			}
+
 			c.statusBar.expanded = true
 			return c, c.input.Focus()
 		case "q":
