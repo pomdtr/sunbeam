@@ -17,7 +17,7 @@ function onApp(app) {
 
   app.on('second-instance', () => {
     // Someone tried to run a second instance, we should focus our window.
-    showWindows(app)
+    toggleWindows(app)
   })
 
   // Prevent the app from quitting when all windows are closed
