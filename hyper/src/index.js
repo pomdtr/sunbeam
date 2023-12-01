@@ -94,6 +94,7 @@ function onApp(app) {
 function onWindow(win) {
   win.on("close", () => {
     if (process.platform == "darwin") {
+      app.hide();
     }
   });
 }
@@ -126,8 +127,8 @@ function decorateBrowserOptions(defaults) {
 function decorateConfig(config) {
   globalShortcut.unregisterAll();
 
-  if (config.sunbeam && config.sunbeam.hotkey) {
-    const hotkey = config.sunbeam.hotkey;
+  if (config.hyperSunbeam && config.hyperSunbeam.hotkey) {
+    const hotkey = config.hyperSunbeam.hotkey;
     globalShortcut.register(hotkey, () => toggleWindows(app));
   }
 
