@@ -2,12 +2,11 @@ import { Param } from "./action.ts";
 
 export type Config = {
     $schema?: string;
-    oneliners?: Oneliner[];
+    oneliners?: Record<string, Oneliner>;
     extensions?: Record<string, ExtensionConfig>;
 }
 
 export type Oneliner = {
-    title: string;
     command: string;
     exit?: boolean;
     dir?: string;

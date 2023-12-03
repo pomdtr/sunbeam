@@ -6,18 +6,14 @@
             "type": "string"
         },
         "oneliners": {
-            "type": "array",
+            "type": "object",
             "description": "A list of commands that will be shown in the root list",
-            "items": {
+            "additionalProperties": {
                 "type": "object",
                 "required": [
-                    "title",
                     "command"
                 ],
                 "properties": {
-                    "title": {
-                        "type": "string"
-                    },
                     "command": {
                         "type": "string"
                     },

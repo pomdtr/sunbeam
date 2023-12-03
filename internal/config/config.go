@@ -36,7 +36,7 @@ func init() {
 }
 
 type Config struct {
-	Oneliners  []Oneliner                 `json:"oneliners,omitempty"`
+	Oneliners  map[string]Oneliner        `json:"oneliners,omitempty"`
 	Extensions map[string]ExtensionConfig `json:"extensions,omitempty"`
 	path       string                     `json:"-"`
 }
@@ -49,7 +49,6 @@ type ExtensionConfig struct {
 }
 
 type Oneliner struct {
-	Title   string `json:"title,omitempty"`
 	Command string `json:"command"`
 	Dir     string `json:"dir,omitempty"`
 	Exit    bool   `json:"exit,omitempty"`

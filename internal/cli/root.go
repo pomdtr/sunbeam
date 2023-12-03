@@ -223,12 +223,12 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func onelinerListItems(oneliners []config.Oneliner) []types.ListItem {
+func onelinerListItems(oneliners map[string]config.Oneliner) []types.ListItem {
 	var items []types.ListItem
-	for _, oneliner := range oneliners {
+	for title, oneliner := range oneliners {
 		item := types.ListItem{
-			Id:          fmt.Sprintf("oneliner - %s", oneliner.Command),
-			Title:       oneliner.Title,
+			Id:          fmt.Sprintf("oneliner - %s", title),
+			Title:       title,
 			Accessories: []string{"Oneliner"},
 			Actions: []types.Action{
 				{
