@@ -20,12 +20,12 @@ if (Deno.args.length == 0) {
         commands: [
             {
                 title: "Search Repositories",
-                name: "search-repos",
+                name: "repo.search",
                 mode: "search"
             },
             {
                 title: "List Issues",
-                name: "list-issues",
+                name: "issues.list",
                 mode: "filter",
                 params: [
                     {
@@ -38,7 +38,7 @@ if (Deno.args.length == 0) {
             },
             {
                 title: "List Pull Requests",
-                name: "list-prs",
+                name: "prs.list",
                 mode: "filter",
                 params: [
                     {
@@ -51,7 +51,7 @@ if (Deno.args.length == 0) {
             },
             {
                 title: "View Readme",
-                name: "view-readme",
+                name: "repo.readme",
                 mode: "detail",
                 params: [
                     {

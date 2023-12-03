@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -72,95 +73,124 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
-	for _, command := range extension.Manifest.Commands {
-		command := command
+	commands := extension.Manifest.Commands
+	sort.Slice(extension.Manifest.Commands, func(i, j int) bool {
+		return commands[i].Name < commands[j].Name
+	})
+
+	for _, command := range commands {
 		parts := strings.Split(command.Name, ".")
-		cmd := &cobra.Command{
-			Use:    parts[len(parts)-1],
-			Short:  command.Title,
-			Hidden: command.Hidden,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				params := make(map[string]any)
 
-				for _, param := range command.Params {
-					if !cmd.Flags().Changed(param.Name) {
-						continue
-					}
+		parentCmd := rootCmd
+		for _, part := range parts[:len(parts)-1] {
+			for _, subcommand := range parentCmd.Commands() {
+				if subcommand.Name() == part {
+					parentCmd = subcommand
+					break
+				}
+			}
 
-					switch param.Type {
-					case types.InputText, types.InputTextArea, types.InputPassword:
-						value, err := cmd.Flags().GetString(param.Name)
-						if err != nil {
-							return err
-						}
-						params[param.Name] = value
-					case types.InputCheckbox:
-						value, err := cmd.Flags().GetBool(param.Name)
-						if err != nil {
-							return err
-						}
-						params[param.Name] = value
-					case types.InputNumber:
-						value, err := cmd.Flags().GetInt(param.Name)
-						if err != nil {
-							return err
-						}
-						params[param.Name] = value
-					}
+			subcommand := &cobra.Command{
+				Use: part,
+			}
+			parentCmd.AddCommand(subcommand)
+			parentCmd = subcommand
+		}
+
+		cmd := NewSubCmdCustom(alias, extension, extensionConfig, command)
+
+		parentCmd.AddCommand(cmd)
+	}
+
+	return rootCmd, nil
+}
+
+func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig, command types.CommandSpec) *cobra.Command {
+	parts := strings.Split(command.Name, ".")
+	use := parts[len(parts)-1]
+	cmd := &cobra.Command{
+		Use:    use,
+		Short:  command.Title,
+		Hidden: command.Hidden,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			params := make(map[string]any)
+
+			for _, param := range command.Params {
+				if !cmd.Flags().Changed(param.Name) {
+					continue
 				}
 
-				preferences := extensionConfig.Preferences
-				if preferences == nil {
-					preferences = make(map[string]any)
+				switch param.Type {
+				case types.InputText, types.InputTextArea, types.InputPassword:
+					value, err := cmd.Flags().GetString(param.Name)
+					if err != nil {
+						return err
+					}
+					params[param.Name] = value
+				case types.InputCheckbox:
+					value, err := cmd.Flags().GetBool(param.Name)
+					if err != nil {
+						return err
+					}
+					params[param.Name] = value
+				case types.InputNumber:
+					value, err := cmd.Flags().GetInt(param.Name)
+					if err != nil {
+						return err
+					}
+					params[param.Name] = value
 				}
+			}
 
-				envs, err := tui.ExtractPreferencesFromEnv(alias, extension)
+			preferences := extensionConfig.Preferences
+			if preferences == nil {
+				preferences = make(map[string]any)
+			}
+
+			envs, err := tui.ExtractPreferencesFromEnv(alias, extension)
+			if err != nil {
+				return err
+			}
+
+			for name, value := range envs {
+				preferences[name] = value
+			}
+
+			input := types.Payload{
+				Command:     command.Name,
+				Preferences: preferences,
+				Params:      params,
+			}
+
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				stdin, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					return err
 				}
 
-				for name, value := range envs {
-					preferences[name] = value
-				}
-
-				input := types.Payload{
-					Command:     command.Name,
-					Preferences: preferences,
-					Params:      params,
-				}
-
-				if !isatty.IsTerminal(os.Stdin.Fd()) {
-					stdin, err := io.ReadAll(os.Stdin)
-					if err != nil {
-						return err
-					}
-
-					input.Query = string(bytes.Trim(stdin, "\n"))
-				}
-
-				return runExtension(extension, input, isatty.IsTerminal(os.Stdin.Fd()))
-			},
-		}
-
-		for _, input := range command.Params {
-			switch input.Type {
-			case types.InputText, types.InputTextArea, types.InputPassword:
-				cmd.Flags().String(input.Name, "", input.Title)
-			case types.InputCheckbox:
-				cmd.Flags().Bool(input.Name, false, input.Title)
-			case types.InputNumber:
-				cmd.Flags().Int(input.Name, 0, input.Title)
+				input.Query = string(bytes.Trim(stdin, "\n"))
 			}
 
-			if input.Required {
-				_ = cmd.MarkFlagRequired(input.Name)
-			}
-		}
-
-		rootCmd.AddCommand(cmd)
+			return runExtension(extension, input, isatty.IsTerminal(os.Stdin.Fd()))
+		},
 	}
 
-	return rootCmd, nil
+	for _, input := range command.Params {
+		switch input.Type {
+		case types.InputText, types.InputTextArea, types.InputPassword:
+			cmd.Flags().String(input.Name, "", input.Title)
+		case types.InputCheckbox:
+			cmd.Flags().Bool(input.Name, false, input.Title)
+		case types.InputNumber:
+			cmd.Flags().Int(input.Name, 0, input.Title)
+		}
+
+		if input.Required {
+			_ = cmd.MarkFlagRequired(input.Name)
+		}
+	}
+
+	return cmd
 }
 
 func runExtension(extension extensions.Extension, input types.Payload, interactive bool) error {
