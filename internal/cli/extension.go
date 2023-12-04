@@ -13,10 +13,8 @@ import (
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
-	"github.com/pomdtr/sunbeam/internal/github"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/internal/types"
-	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -34,7 +32,6 @@ func NewCmdExtension(cfg config.Config) *cobra.Command {
 	cmd.AddCommand(NewCmdExtensionList(cfg))
 	cmd.AddCommand(NewCmdExtensionRemove(cfg))
 	cmd.AddCommand(NewCmdExtensionConfigure(cfg))
-	cmd.AddCommand(NewCmdExtensionPublish())
 	cmd.AddCommand(NewCmdExtensionCreate())
 
 	return cmd
@@ -360,88 +357,6 @@ func NewCmdExtensionRemove(cfg config.Config) *cobra.Command {
 			return nil
 		},
 	}
-}
-
-func NewCmdExtensionPublish() *cobra.Command {
-	var flags struct {
-		Public bool
-		Open   bool
-	}
-
-	cmd := &cobra.Command{
-		Use:   "publish <script>",
-		Short: "Publish a script as a github gist",
-		Args:  cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if _, err := extensions.ExtractManifest(args[0]); err != nil {
-				return fmt.Errorf("extension is invalid: %w", err)
-			}
-
-			filename := filepath.Base(args[0])
-			content, err := os.ReadFile(args[0])
-			if err != nil {
-				return fmt.Errorf("failed to read script: %w", err)
-			}
-
-			var token string
-			if env, ok := os.LookupEnv("SUNBEAM_GITHUB_TOKEN"); ok {
-				token = env
-			} else if env, ok := os.LookupEnv("GITHUB_TOKEN"); ok {
-				token = env
-			} else {
-				return fmt.Errorf("github token not found, please set SUNBEAM_GITHUB_TOKEN or GITHUB_TOKEN")
-			}
-
-			gistClient := github.NewGistClient(token)
-
-			gist, err := gistClient.CreateGist(filename, content, flags.Public)
-			if err != nil {
-				return fmt.Errorf("failed to publish script: %w", err)
-			}
-
-			rawUrl := fmt.Sprintf("https://gist.githubusercontent.com/%s/%s/raw/%s", gist.Owner.Login, gist.ID, url.PathEscape(filename))
-			installCmd := fmt.Sprintf("sunbeam extension install %s", rawUrl)
-
-			if err := gistClient.PatchGistDescription(gist.ID, installCmd); err != nil {
-				return fmt.Errorf("failed to patch gist description: %w", err)
-			}
-
-			if flags.Open {
-				return utils.Open(gist.HtmlURL)
-			}
-
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				fmt.Print(rawUrl)
-				return nil
-			}
-
-			var t tableprinter.TablePrinter
-			w, _, err := term.GetSize(int(os.Stdout.Fd()))
-			if err != nil {
-				return err
-			}
-			t = tableprinter.New(os.Stdout, true, w)
-
-			t.AddField("Gist URL")
-			t.AddField(gist.HtmlURL)
-			t.EndRow()
-
-			t.AddField("Raw URL")
-			t.AddField(rawUrl)
-			t.EndRow()
-
-			t.AddField("Install Command")
-			t.AddField(installCmd)
-			t.EndRow()
-
-			return t.Render()
-		},
-	}
-
-	cmd.Flags().BoolVarP(&flags.Public, "public", "p", false, "make gist public")
-	cmd.Flags().BoolVarP(&flags.Open, "open", "o", false, "open gist in browser")
-
-	return cmd
 }
 
 func NewCmdExtensionConfigure(cfg config.Config) *cobra.Command {
