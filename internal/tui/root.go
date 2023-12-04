@@ -41,13 +41,13 @@ func NewRootList(title string, history history.History, generator func() (config
 
 func (c *RootList) Init() tea.Cmd {
 	termenv.DefaultOutput().SetWindowTitle(c.title)
-	return c.Reload
+	return c.Reload()
 }
 
-func (c *RootList) Reload() tea.Msg {
+func (c *RootList) Reload() tea.Cmd {
 	cfg, rootItems, err := c.generator()
 	if err != nil {
-		return err
+		return c.SetError(err)
 	}
 
 	c.config = cfg
@@ -136,7 +136,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			})
 		case "ctrl+r":
-			return c, tea.Batch(c.list.SetIsLoading(true), c.Reload)
+			return c, tea.Batch(c.list.SetIsLoading(true), c.Reload())
 		}
 	case types.Action:
 		selection, ok := c.list.Selection()
@@ -398,7 +398,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 		case types.ActionTypeReload:
-			return c, tea.Sequence(c.list.SetIsLoading(true), c.Reload)
+			return c, tea.Sequence(c.list.SetIsLoading(true), c.Reload())
 		case types.ActionTypeExit:
 			return c, ExitCmd
 		default:
