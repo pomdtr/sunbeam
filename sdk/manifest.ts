@@ -32,7 +32,7 @@ type InputProps = {
 type TextField = InputProps & {
   type: "text";
   title: string;
-  defaut?: string;
+  default?: string;
   placeholder?: string;
 }
 

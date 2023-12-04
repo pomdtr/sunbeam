@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import * as sunbeam from "https://raw.githubusercontent.com/pomdtr/sunbeam/main/deno/mod.ts"
+import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 
 
@@ -8,7 +8,7 @@ if (Deno.args.length == 0) {
     const manifest: sunbeam.Manifest = {
         title: "GitHub",
         description: "Search GitHub repositories",
-        root: ["search-repos"],
+        root: ["search"],
         preferences: [
             {
                 name: "token",
@@ -20,12 +20,12 @@ if (Deno.args.length == 0) {
         commands: [
             {
                 title: "Search Repositories",
-                name: "repo.search",
+                name: "search",
                 mode: "search"
             },
             {
                 title: "List Issues",
-                name: "issues.list",
+                name: "issue.list",
                 mode: "filter",
                 params: [
                     {
@@ -38,7 +38,7 @@ if (Deno.args.length == 0) {
             },
             {
                 title: "List Pull Requests",
-                name: "prs.list",
+                name: "pr.list",
                 mode: "filter",
                 params: [
                     {
@@ -51,7 +51,7 @@ if (Deno.args.length == 0) {
             },
             {
                 title: "View Readme",
-                name: "repo.readme",
+                name: "readme",
                 mode: "detail",
                 params: [
                     {
@@ -84,7 +84,7 @@ try {
 
 async function run(payload: sunbeam.Payload) {
     const token = payload.preferences.token as string;
-    if (payload.command == "search-repos") {
+    if (payload.command == "search") {
         const query = payload.query
         if (!query) {
             const list: sunbeam.List = {
@@ -116,7 +116,7 @@ async function run(payload: sunbeam.Payload) {
                     {
                         title: "View README",
                         type: "run",
-                        command: "view-readme",
+                        command: "readme",
                         params: {
                             repo: item.full_name
                         }
@@ -132,7 +132,7 @@ async function run(payload: sunbeam.Payload) {
                         title: "List Issues",
                         key: "i",
                         type: "run",
-                        command: "list-issues",
+                        command: "issue.list",
                         params: {
                             repo: item.full_name
                         }
@@ -141,7 +141,7 @@ async function run(payload: sunbeam.Payload) {
                         title: "List Pull Requests",
                         key: "p",
                         type: "run",
-                        command: "list-prs",
+                        command: "pr.list",
                         params: {
                             repo: item.full_name
                         }
@@ -158,7 +158,7 @@ async function run(payload: sunbeam.Payload) {
         }
 
         console.log(JSON.stringify(list, null, 2));
-    } else if (payload.command == "list-issues") {
+    } else if (payload.command == "issue.list") {
         const repo = payload.params.repo;
         if (!repo) {
             throw new Error("Missing required parameter: repo");
@@ -200,7 +200,7 @@ async function run(payload: sunbeam.Payload) {
         }
 
         console.log(JSON.stringify(list, null, 2));
-    } else if (payload.command == "list-prs") {
+    } else if (payload.command == "pr.list") {
         const repo = payload.params.repo as string;
         const resp = await fetch(`https://api.github.com/repos/${repo}/pulls`, {
             headers: {
@@ -238,7 +238,7 @@ async function run(payload: sunbeam.Payload) {
         }
 
         console.log(JSON.stringify(list, null, 2));
-    } else if (payload.command == "view-readme") {
+    } else if (payload.command == "readme") {
         const repo = payload.params.repo as string;
         const resp = await fetch(`https://api.github.com/repos/${repo}/readme`, {
             headers: {
@@ -266,7 +266,7 @@ async function run(payload: sunbeam.Payload) {
                     title: "List Issues",
                     key: "i",
                     type: "run",
-                    command: "list-issues",
+                    command: "issue.list",
                     params: {
                         repo: repo
                     }
@@ -275,7 +275,7 @@ async function run(payload: sunbeam.Payload) {
                     title: "List Pull Requests",
                     key: "p",
                     type: "run",
-                    command: "list-prs",
+                    command: "pr.list",
                     params: {
                         repo: repo
                     }
