@@ -10,7 +10,7 @@ Even though you can use any language, here are some recommendations:
 
 ### POSIX Shell
 
-Sunbam provides multiple helpers to make it easier to share sunbeam extensions, without requiring the user to install additional dependencies (other than sunbeam itself).
+Sunbeam provides multiple helpers to make it easier to share sunbeam extensions, without requiring the user to install additional dependencies (other than sunbeam itself).
 - `sunbeam query`: generate and transform json using the jq syntax.
 - `sunbeam open`: open an url or a file using the default application.
 - `sunbeam copy/paste`: copy/paste text from/to the clipboard
