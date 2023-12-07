@@ -1,3 +1,11 @@
+---
+next:
+  text: 'Installation'
+  link: 'docs/user-guide/installation.md'
+---
+
+
+
 # Introduction
 
 Sunbeam is a general purpose CLI launcher. It allows you to wrap your tools in slick UIs with a few lines of code, using the language of your choice.
