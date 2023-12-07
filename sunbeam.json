@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/internal/schemas/config.schema.json",
   "extensions": {
     "files": {
       "origin": "./extensions/files.py"

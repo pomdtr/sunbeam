@@ -54,7 +54,9 @@ module.exports = {
 
 Feel free to customize the config to your liking.
 
-Sadly I was not able to install hyper on my linux machine, and users have reported that the plugin is not working on linux.
+> ⚠️
+> If you're desktop environment is using wayland, global hotkeys will not work. Instead, setup an hotkey in your desktop settings to launch hyper. Launching hyper while it is already running will toggle it instead of opening a new window.
+
 
 ### Alacritty
 
