@@ -1,14 +1,14 @@
-# hyperterm-sunbeam
+# hyper-sunbeam
 
 Sunbeam integration for hyperterm.
 
 ## Installation
 
-Use the Hyper CLI, bundled with your Hyper app, to install hyperterm-sunbeam
+Use the Hyper CLI, bundled with your Hyper app, to install hyper-sunbeam
 by entering the following into Hyper:
 
 ```bash
-hyper i hyperterm-sunbeam
+hyper i hyper-sunbeam
 ```
 
 ## Options
@@ -22,11 +22,11 @@ hyper i hyperterm-sunbeam
 ```js
 module.exports = {
   config: {
-    sunbeam: {
+    hyperSunbeam: {
       hotkey: "Alt+Super+O"
     }
   },
-  plugins: ["hyperterm-sunbeam"]
+  plugins: ["hyper-sunbeam"]
 };
 ```
 
