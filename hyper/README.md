@@ -1,6 +1,6 @@
 # hyper-sunbeam
 
-Sunbeam integration for hyperterm.
+Use Hyper as a launching with [Sunbeam](https://sunbeam.sh).
 
 ## Installation
 
