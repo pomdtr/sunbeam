@@ -24,8 +24,7 @@
             "required": [
                 "name",
                 "type",
-                "title",
-                "required"
+                "title"
             ],
             "properties": {
                 "name": {
@@ -37,7 +36,7 @@
                 "title": {
                     "type": "string"
                 },
-                "required": {
+                "optional": {
                     "type": "boolean"
                 },
                 "placeholder": {
@@ -53,8 +52,7 @@
             "required": [
                 "name",
                 "type",
-                "title",
-                "required"
+                "title"
             ],
             "properties": {
                 "name": {
@@ -66,7 +64,7 @@
                 "title": {
                     "type": "string"
                 },
-                "required": {
+                "optional": {
                     "type": "boolean"
                 },
                 "placeholder": {
@@ -82,8 +80,7 @@
             "required": [
                 "name",
                 "type",
-                "title",
-                "required"
+                "title"
             ],
             "properties": {
                 "name": {
@@ -95,7 +92,7 @@
                 "title": {
                     "type": "string"
                 },
-                "required": {
+                "optional": {
                     "type": "boolean"
                 },
                 "placeholder": {
@@ -111,7 +108,6 @@
             "required": [
                 "name",
                 "type",
-                "required",
                 "label"
             ],
             "properties": {
@@ -124,7 +120,7 @@
                 "title": {
                     "type": "string"
                 },
-                "required": {
+                "optional": {
                     "type": "boolean"
                 },
                 "label": {
@@ -140,8 +136,7 @@
             "required": [
                 "name",
                 "type",
-                "title",
-                "required"
+                "title"
             ],
             "properties": {
                 "name": {
@@ -153,7 +148,7 @@
                 "title": {
                     "type": "string"
                 },
-                "required": {
+                "optional": {
                     "type": "boolean"
                 },
                 "placeholder": {

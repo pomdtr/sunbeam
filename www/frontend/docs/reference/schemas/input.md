@@ -8,7 +8,7 @@
     "name": "message",
     "title": "Message",
     "default": "Hello World",
-    "required": true,
+    "optional": true,
     "placeholder": "Enter your message",
 }
 ```
@@ -20,7 +20,7 @@
     "type": "password",
     "name": "password",
     "title": "Password",
-    "required": true,
+    "optional": true,
     "placeholder": "Enter your password",
 }
 ```

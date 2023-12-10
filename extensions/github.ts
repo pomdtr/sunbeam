@@ -14,7 +14,6 @@ if (Deno.args.length == 0) {
                 name: "token",
                 title: "Personal Access Token",
                 type: "text",
-                required: true
             }
         ],
         commands: [
@@ -32,7 +31,6 @@ if (Deno.args.length == 0) {
                         name: "repo",
                         title: "The repository to list issues for",
                         type: "text",
-                        required: true
                     }
                 ]
             },
@@ -45,7 +43,6 @@ if (Deno.args.length == 0) {
                         name: "repo",
                         title: "The repository to list pull requests for",
                         type: "text",
-                        required: true
                     }
                 ]
             },
@@ -58,7 +55,6 @@ if (Deno.args.length == 0) {
                         name: "repo",
                         title: "The repository to view the readme for",
                         type: "text",
-                        required: true
                     }
                 ]
             }
@@ -70,11 +66,6 @@ if (Deno.args.length == 0) {
 }
 
 const payload: sunbeam.Payload = JSON.parse(Deno.args[0]);
-if (payload.preferences.token == null) {
-    console.error("Missing required preference: token");
-    Deno.exit(1);
-}
-
 try {
     await run(payload);
 } catch (err) {
@@ -160,10 +151,6 @@ async function run(payload: sunbeam.Payload) {
         console.log(JSON.stringify(list, null, 2));
     } else if (payload.command == "issue.list") {
         const repo = payload.params.repo;
-        if (!repo) {
-            throw new Error("Missing required parameter: repo");
-        }
-
         const resp = await fetch(`https://api.github.com/repos/${repo}/issues`, {
             headers: {
                 "Authorization": `token ${token}`

@@ -157,8 +157,7 @@ if [ $# -eq 0 ]; then
                 params: [
                     {
                         name: "docset",
-                        type: "string",
-                        required: true
+                        type: "string"
                     }
                 ]
             }

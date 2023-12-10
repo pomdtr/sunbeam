@@ -28,8 +28,7 @@ if len(sys.argv) == 1:
                     {
                         "name": "name",
                         "title": "Name",
-                        "type": "text",
-                        "required": True
+                        "type": "text"
                     }
                 ]
             }

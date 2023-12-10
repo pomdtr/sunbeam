@@ -384,7 +384,7 @@ func NewCmdExtensionConfigure(cfg config.Config) *cobra.Command {
 			var inputs []types.Input
 			for _, input := range extension.Manifest.Preferences {
 				input.Default = extensionConfig.Preferences[input.Name]
-				input.Required = true
+				input.Optional = false
 				inputs = append(inputs, input)
 			}
 

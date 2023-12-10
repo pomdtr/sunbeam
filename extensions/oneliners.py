@@ -22,20 +22,18 @@ if len(sys.argv) == 1:
                         "name": "title",
                         "title": "Title",
                         "type": "text",
-                        "required": True
                     },
                     {
                         "name": "command",
                         "title": "Command",
                         "type": "text",
-                        "required": True
                     },
                     {
                         "name": "exit",
                         "title": "Exit",
                         "type": "checkbox",
                         "label": "Exit after running command",
-                        "required": False,
+                        "optional": True
                     }
                 ]
             },
@@ -49,7 +47,6 @@ if len(sys.argv) == 1:
                         "name": "index",
                         "title": "Index",
                         "type": "number",
-                        "required": True
                     },
                 ]
             },
@@ -63,26 +60,22 @@ if len(sys.argv) == 1:
                         "name": "index",
                         "title": "Index",
                         "type": "number",
-                        "required": True
                     },
                     {
                         "name": "title",
                         "title": "Title",
                         "type": "text",
-                        "required": True
                     },
                     {
                         "name": "command",
                         "title": "Command",
                         "type": "text",
-                        "required": True
                     },
                     {
                         "name": "exit",
                         "title": "Exit",
                         "type": "checkbox",
                         "label": "Exit after running command",
-                        "required": True
                     }
                 ]
             },
@@ -102,7 +95,6 @@ if len(sys.argv) == 1:
                         "name": "index",
                         "title": "Index",
                         "type": "number",
-                        "required": True
                     },
                 ]
             }

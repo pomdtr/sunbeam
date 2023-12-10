@@ -83,7 +83,7 @@ func (e Extension) RootItems() []types.RootItem {
 		}
 
 		for _, param := range command.Params {
-			if param.Required {
+			if !param.Optional {
 				continue
 			}
 		}
@@ -131,7 +131,7 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 			continue
 		}
 
-		if spec.Required {
+		if !spec.Optional {
 			return nil, fmt.Errorf("missing required preference %s", spec.Name)
 		}
 
@@ -152,7 +152,7 @@ func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.C
 			continue
 		}
 
-		if spec.Required {
+		if !spec.Optional {
 			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
 		}
 

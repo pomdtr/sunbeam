@@ -19,7 +19,6 @@ if (Deno.args.length == 0) {
                 params: [
                     {
                         name: "ip",
-                        required: true,
                         title: "Device IP",
                         type: "text",
                     }

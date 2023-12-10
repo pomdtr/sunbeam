@@ -79,27 +79,8 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 	})
 
 	for _, command := range commands {
-		parts := strings.Split(command.Name, ".")
-
-		parentCmd := rootCmd
-		for _, part := range parts[:len(parts)-1] {
-			for _, subcommand := range parentCmd.Commands() {
-				if subcommand.Name() == part {
-					parentCmd = subcommand
-					break
-				}
-			}
-
-			subcommand := &cobra.Command{
-				Use: part,
-			}
-			parentCmd.AddCommand(subcommand)
-			parentCmd = subcommand
-		}
-
 		cmd := NewSubCmdCustom(alias, extension, extensionConfig, command)
-
-		parentCmd.AddCommand(cmd)
+		rootCmd.AddCommand(cmd)
 	}
 
 	return rootCmd, nil
@@ -185,7 +166,7 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 			cmd.Flags().Int(input.Name, 0, input.Title)
 		}
 
-		if input.Required {
+		if !input.Optional {
 			_ = cmd.MarkFlagRequired(input.Name)
 		}
 	}

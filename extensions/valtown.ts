@@ -11,7 +11,6 @@ if (Deno.args.length == 0) {
                 name: "token",
                 title: "Access Token",
                 type: "text",
-                required: true
             }
         ],
         root: ["list", "search"],
@@ -21,7 +20,7 @@ if (Deno.args.length == 0) {
                 name: "list",
                 mode: "filter",
                 params: [
-                    { name: "user", title: "User", required: false, type: "text" }
+                    { name: "user", title: "User", optional: true, type: "text" }
                 ]
             },
             {
@@ -34,7 +33,7 @@ if (Deno.args.length == 0) {
                 name: "edit",
                 mode: "tty",
                 params: [
-                    { name: "id", title: "Val ID", required: true, type: "text" }
+                    { name: "id", title: "Val ID", type: "text" }
                 ]
             },
             {
@@ -42,7 +41,7 @@ if (Deno.args.length == 0) {
                 name: "readme",
                 mode: "detail",
                 params: [
-                    { name: "id", title: "Val ID", required: true, type: "text" }
+                    { name: "id", title: "Val ID", type: "text" }
                 ]
             }
         ]

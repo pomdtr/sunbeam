@@ -28,7 +28,7 @@ export type RunAction = {
   exit?: boolean;
 } & ActionProps;
 
-export type Param = string | number | boolean | { default?: string | number | boolean, required?: boolean };
+export type Param = string | number | boolean | { default?: string | number | boolean, optional?: boolean };
 
 
 export type ReloadAction = {

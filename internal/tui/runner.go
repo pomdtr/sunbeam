@@ -157,7 +157,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			missing := FindMissingInputs(command.Params, msg.Params)
 			for _, param := range missing {
-				if !param.Required {
+				if param.Optional {
 					continue
 				}
 

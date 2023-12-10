@@ -25,8 +25,7 @@ if [ "$#" -eq 0 ]; then
                     {
                         name: "name",
                         title: "Name",
-                        type: "text",
-                        required: true
+                        type: "text"
                     }
                 ]
             }

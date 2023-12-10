@@ -47,7 +47,6 @@ It contains the title, description and the list of commands provided by the exte
         {
           "name": "slug",
           "type": "text",
-          "required": false,
           "title": "Docset Slug",
         }
       ]

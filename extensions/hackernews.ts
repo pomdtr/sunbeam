@@ -14,7 +14,7 @@ if (Deno.args.length == 0) {
                 title: "Show a feed",
                 mode: "filter",
                 params: [
-                    { name: "topic", title: "Topic", required: true, type: "text" }
+                    { name: "topic", title: "Topic", type: "text" }
                 ],
             },
         ]

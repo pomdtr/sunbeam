@@ -18,7 +18,6 @@ if (Deno.args.length == 0) {
                     {
                         name: "url",
                         title: "URL",
-                        required: true,
                         type: "text",
                     },
                 ],

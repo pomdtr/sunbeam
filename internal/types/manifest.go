@@ -48,7 +48,7 @@ type Input struct {
 	Type        InputType `json:"type"`
 	Name        string    `json:"name"`
 	Title       string    `json:"title"`
-	Required    bool      `json:"required,omitempty"`
+	Optional    bool      `json:"optional,omitempty"`
 	Default     any       `json:"default,omitempty"`
 	Placeholder string    `json:"placeholder,omitempty"`
 	Label       string    `json:"label,omitempty"`

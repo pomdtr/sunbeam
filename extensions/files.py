@@ -12,7 +12,7 @@ if len(sys.argv) == 1:
             "title": "File Browser",
             "description": "Browse files and folders",
             "preferences": [
-                {"name": "show-hidden", "type": "checkbox", "label": "Show Hidden Files", "required": False}
+                {"name": "show-hidden", "type": "checkbox", "label": "Show Hidden Files", "optional": True }
             ],
             "root": ["ls"],
             "commands": [
@@ -21,7 +21,7 @@ if len(sys.argv) == 1:
                     "title": "List files",
                     "mode": "filter",
                     "params": [
-                        {"name": "dir", "title": "Directory", "type": "text", "default": ".", "required": False}
+                        {"name": "dir", "title": "Directory", "type": "text", "optional": True, "default": ".", }
                     ],
                 }
             ],

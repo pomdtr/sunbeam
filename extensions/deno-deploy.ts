@@ -15,7 +15,6 @@ if (Deno.args.length == 0) {
                 name: "token",
                 title: "Access Token",
                 type: "text",
-                required: true
             }
         ],
         commands: [
@@ -34,7 +33,7 @@ if (Deno.args.length == 0) {
                 title: "List Deployments",
                 mode: "filter",
                 params: [
-                    { name: "project", title: "Project", required: true, type: "text" }
+                    { name: "project", title: "Project", type: "text" }
                 ]
             },
             {
@@ -42,7 +41,7 @@ if (Deno.args.length == 0) {
                 title: "View Playground",
                 mode: "detail",
                 params: [
-                    { name: "project", title: "Project", required: true, type: "text" }
+                    { name: "project", title: "Project", type: "text" }
                 ]
             }
         ]

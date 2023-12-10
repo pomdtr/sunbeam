@@ -10,7 +10,6 @@ if (Deno.args.length === 0) {
                 name: "token",
                 title: "Raindrop API Token",
                 type: "text",
-                required: true,
             }
         ],
         root: [

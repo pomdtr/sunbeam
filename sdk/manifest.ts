@@ -26,7 +26,7 @@ export type Payload<T extends PayloadParams = PayloadParams, V extends Record<st
 
 type InputProps = {
   name: string;
-  required: boolean;
+  optional?: boolean;
 }
 
 type TextField = InputProps & {

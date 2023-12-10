@@ -171,7 +171,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			missingPreferences := FindMissingPreferences(extension.Manifest.Preferences, preferences)
 			for _, preference := range missingPreferences {
-				if !preference.Required {
+				if preference.Optional {
 					continue
 				}
 
@@ -207,7 +207,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 			missingParams := FindMissingInputs(command.Params, msg.Params)
 			for _, param := range missingParams {
-				if !param.Required {
+				if param.Optional {
 					continue
 				}
 
@@ -330,7 +330,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			inputs := make([]types.Input, 0)
 			for _, input := range extension.Manifest.Preferences {
 				input.Default = extensionConfig.Preferences[input.Name]
-				input.Required = true
+				input.Optional = false
 				inputs = append(inputs, input)
 			}
 

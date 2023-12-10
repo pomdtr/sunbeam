@@ -15,8 +15,7 @@ if (Deno.args.length == 0) {
             {
                 name: "token",
                 title: "GitHub Personal Access Token",
-                type: "text",
-                required: true
+                type: "text"
             }
         ],
         commands: [
@@ -30,9 +29,9 @@ if (Deno.args.length == 0) {
                 title: "Create Gist",
                 mode: "tty",
                 params: [
-                    { name: "filename", title: "Filename", required: true, placeholder: "gist.md", type: "text" },
-                    { name: "description", title: "Description", required: false, placeholder: "Gist Description", type: "text" },
-                    { name: "public", title: "Public", required: false, type: "checkbox", label: "Whether the gist is public or not." },
+                    { name: "filename", title: "Filename", placeholder: "gist.md", type: "text" },
+                    { name: "description", title: "Description", optional: true, placeholder: "Gist Description", type: "text" },
+                    { name: "public", title: "Public", type: "checkbox", label: "Whether the gist is public or not." },
                 ]
             },
             {
@@ -40,7 +39,7 @@ if (Deno.args.length == 0) {
                 title: "Browse Gist Files",
                 mode: "filter",
                 params: [
-                    { name: "id", title: "Gist ID", required: true, type: "text" }
+                    { name: "id", title: "Gist ID", type: "text" }
                 ]
             },
             {
@@ -48,8 +47,8 @@ if (Deno.args.length == 0) {
                 title: "View Gist File",
                 mode: "detail",
                 params: [
-                    { name: "id", title: "Gist ID", required: true, type: "text" },
-                    { name: "filename", title: "Filename", required: true, type: "text" }
+                    { name: "id", title: "Gist ID", type: "text" },
+                    { name: "filename", title: "Filename", type: "text" }
                 ]
             },
             {
@@ -57,8 +56,8 @@ if (Deno.args.length == 0) {
                 title: "Edit Gist File",
                 mode: "tty",
                 params: [
-                    { name: "id", title: "Gist ID", required: true, type: "text" },
-                    { name: "filename", title: "Filename", required: true, type: "text" },
+                    { name: "id", title: "Gist ID", type: "text" },
+                    { name: "filename", title: "Filename", type: "text" },
                 ]
             },
             {
@@ -66,7 +65,7 @@ if (Deno.args.length == 0) {
                 title: "Delete Gist",
                 mode: "silent",
                 params: [
-                    { name: "id", title: "Gist ID", required: true, type: "text" }
+                    { name: "id", title: "Gist ID", type: "text" }
                 ]
             }
         ]

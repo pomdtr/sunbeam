@@ -8,8 +8,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "session",
                 title: "Bitwarden Session",
-                type: "text",
-                required: true
+                type: "text"
             }
         ],
         root: [ "list-passwords" ],

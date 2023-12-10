@@ -28,7 +28,6 @@ if (Deno.args.length == 0) {
                         name: "name",
                         title: "Name",
                         type: "text",
-                        required: true
                     }
                 ]
             }

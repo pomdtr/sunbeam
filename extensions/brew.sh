@@ -18,8 +18,7 @@ if [ $# -eq 0 ]; then
                     {
                         name: "package",
                         title: "Package Name",
-                        type: "text",
-                        required: true
+                        type: "text"
                     }
                 ]
             }
