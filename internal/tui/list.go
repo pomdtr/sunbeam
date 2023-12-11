@@ -153,7 +153,8 @@ func (c *List) SetQuery(query string) tea.Cmd {
 		c.query = query
 		if c.OnQueryChange != nil {
 			return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
-				c.filter.EmptyText = "Loading..."
+				emptyText := ""
+				c.filter.EmptyText = emptyText
 				if query == c.input.Value() {
 					return QueryChangeMsg(query)
 				}

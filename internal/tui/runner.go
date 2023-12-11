@@ -35,6 +35,7 @@ func NewRunner(extension extensions.Extension, input types.Payload) *Runner {
 		switch command.Mode {
 		case types.CommandModeSearch, types.CommandModeFilter:
 			list := NewList()
+			list.SetEmptyText("Loading...")
 			if input.Query != "" {
 				list.SetQuery(input.Query)
 			}

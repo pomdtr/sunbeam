@@ -115,15 +115,17 @@ func (m Filter) View() string {
 	rows := make([]string, 0)
 
 	if len(m.filtered) == 0 {
+		var emptyText string
 		if m.EmptyText != "" {
-			return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.EmptyText)
+			emptyText = m.EmptyText
+		} else if len(m.items) > 0 && m.Query != "" {
+			emptyText = "No matches"
+		} else {
+			emptyText = "No Items"
 		}
 
-		if len(m.items) != 0 {
-			return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "No matches")
-		}
-
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, "")
+		emptyText = lipgloss.NewStyle().Faint(true).Render(emptyText)
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, emptyText)
 	}
 
 	index := m.minIndex

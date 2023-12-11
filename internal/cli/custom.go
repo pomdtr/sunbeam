@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"sort"
-	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
@@ -87,10 +86,8 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 }
 
 func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig, command types.CommandSpec) *cobra.Command {
-	parts := strings.Split(command.Name, ".")
-	use := parts[len(parts)-1]
 	cmd := &cobra.Command{
-		Use:    use,
+		Use:    command.Name,
 		Short:  command.Title,
 		Hidden: command.Hidden,
 		RunE: func(cmd *cobra.Command, args []string) error {
