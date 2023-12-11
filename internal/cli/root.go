@@ -308,7 +308,7 @@ func extensionListItems(alias string, extension extensions.Extension, extensionC
 			})
 		}
 
-		if len(extensionConfig.Preferences) > 0 {
+		if len(extension.Manifest.Preferences) > 0 {
 			item.Actions = append(item.Actions, types.Action{
 				Title:     "Configure Extension",
 				Key:       "s",
