@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -32,6 +33,7 @@ func NewCmdExtension(cfg config.Config) *cobra.Command {
 	cmd.AddCommand(NewCmdExtensionList(cfg))
 	cmd.AddCommand(NewCmdExtensionRemove(cfg))
 	cmd.AddCommand(NewCmdExtensionConfigure(cfg))
+	cmd.AddCommand(NewCmdExtensionEdit(cfg))
 	cmd.AddCommand(NewCmdExtensionCreate())
 
 	return cmd
@@ -144,6 +146,29 @@ func NewCmdExtensionCreate() *cobra.Command {
 	_ = cmd.RegisterFlagCompletionFunc("language", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"sh", "python", "deno"}, cobra.ShellCompDirectiveNoFileComp
 	})
+
+	return cmd
+}
+
+func NewCmdExtensionEdit(cfg config.Config) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:       "edit <alias>",
+		ValidArgs: cfg.Aliases(),
+		Args:      cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			origin := cfg.Extensions[args[0]].Origin
+			if strings.HasPrefix(origin, "http://") || strings.HasPrefix(origin, "https://") {
+				return fmt.Errorf("cannot edit remote extensions")
+			}
+
+			editCmd := exec.Command("sunbeam", "edit", cfg.Resolve(origin))
+			editCmd.Stdin = os.Stdin
+			editCmd.Stdout = os.Stdout
+			editCmd.Stderr = os.Stderr
+
+			return editCmd.Run()
+		},
+	}
 
 	return cmd
 }

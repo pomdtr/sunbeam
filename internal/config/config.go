@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/pomdtr/sunbeam/internal/types"
@@ -39,6 +40,18 @@ type Config struct {
 	Oneliners  map[string]Oneliner        `json:"oneliners,omitempty"`
 	Extensions map[string]ExtensionConfig `json:"extensions,omitempty"`
 	path       string                     `json:"-"`
+}
+
+func (cfg Config) Resolve(path string) string {
+	if strings.HasPrefix(path, "~/") {
+		return filepath.Join(os.Getenv("HOME"), path[2:])
+	}
+
+	if !filepath.IsAbs(path) {
+		return filepath.Join(filepath.Dir(cfg.path), path)
+	}
+
+	return path
 }
 
 type ExtensionConfig struct {
