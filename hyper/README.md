@@ -1,6 +1,8 @@
 # hyper-sunbeam
 
-Use Hyper as a launching with [Sunbeam](https://sunbeam.sh).
+Use Hyper as a [Sunbeam](https://sunbeam.sh) GUI.
+
+![sunbeam running in hyper](https://raw.githubusercontent.com/pomdtr/sunbeam/main/hyper/media/screenshot.jpeg)
 
 ## Installation
 
