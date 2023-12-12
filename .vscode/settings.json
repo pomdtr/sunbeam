@@ -12,5 +12,8 @@
     "scripts",
     "./www/install"
   ],
-  "deno.unstable": true
+  "deno.unstable": true,
+  "markdownlint.config": {
+    "no-inline-html": false
+  }
 }
