@@ -1,7 +1,7 @@
 export type Manifest = {
   title: string;
   description?: string;
-  root?: string[];
+  root?: readonly string[];
   preferences?: readonly Input[];
   commands: readonly Command[];
 };
