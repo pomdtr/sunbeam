@@ -8,7 +8,7 @@ Here is a non-exhaustive list of integrations. If you have an integration you wo
 
 ### Hyper
 
-![](../../assets/hyper.jpeg)
+![Sunbeam running in Hyper](../../assets/hyper.jpeg)
 
 [Hyper](https://hyper.is/) is an extensible terminal emulator, built on web technologies.
 It is not the lighter terminal emulator (far from it), but it is easy to extend and customize.
@@ -57,10 +57,9 @@ Feel free to customize the config to your liking.
 > ⚠️
 > If you're desktop environment is using wayland, global hotkeys will not work. Instead, setup an hotkey in your desktop settings to launch hyper. Launching hyper while it is already running will toggle it instead of opening a new window.
 
-
 ### Alacritty
 
-![](../../assets/alacritty.jpeg)
+![Sunbeam running in alacritty](../../assets/alacritty.jpeg)
 
 [Alacritty](https://github.com/alacritty/alacritty) is a cross-platform terminal emulator.
 
@@ -108,7 +107,7 @@ tmux display-popup -E sunbeam devdocs list-docsets # list devdocs docsets in a p
 
 To bind it to a key, add this line to your tmux config:
 
-```
+```sh
 bind-key -n C-Space display-popup -E sunbeam
 ```
 
@@ -124,7 +123,7 @@ Binding this command to a key is not supported yet, as zellij [does not support 
 
 ### Visual Studio Code
 
-![](../../assets/vscode.png)
+![Sunbeam running in VS Code](../../assets/vscode.png)
 
 Run the `Tasks: Open User Tasks` item from the command palette, then paste the following text:
 
@@ -162,7 +161,7 @@ Trigger the keybinding and you should see the sunbeam menu appear in the termina
 
 You can use the [popup.kak](https://github.com/enricozb/popup.kak) plugin to show sunbeam in a popup.
 
-```
+```sh
 evaluate-commands %sh{kak-popup init}
 
 define-command -override -params .. sunbeam %{ popup --title open -- sunbeam %arg{@} }
