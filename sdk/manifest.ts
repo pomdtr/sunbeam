@@ -2,66 +2,110 @@ export type Manifest = {
   title: string;
   description?: string;
   root?: string[];
-  preferences?: Input[];
-  commands: CommandSpec[];
+  preferences?: readonly Input[];
+  commands: readonly Command[];
 };
 
-export type CommandSpec = {
+export type Command = {
   name: string;
   title: string;
-  mode: "search" | "filter" | "detail" | "tty" | "silent";
   hidden?: boolean;
   description?: string;
-  params?: Input[];
+  mode: "filter" | "search" | "detail" | "tty" | "silent";
+  params?: readonly Input[];
 };
 
-type PayloadParams = Record<string, string | boolean | number>;
-export type Payload<T extends PayloadParams = PayloadParams, V extends Record<string, any> = Record<string, any>> = {
-  command: string;
-  params: T;
-  preferences: V;
-  query?: string;
-  cwd: string;
-};
-
-type InputProps = {
+export type Input = {
   name: string;
   optional?: boolean;
-}
+} & (
+  | {
+      type: "text";
+      title: string;
+      default?: string;
+      placeholder?: string;
+    }
+  | {
+      type: "number";
+      title: string;
+      default?: number;
+      placeholder?: string;
+    }
+  | {
+      type: "textarea";
+      title: string;
+      default?: string;
+      placeholder?: string;
+    }
+  | {
+      type: "password";
+      title: string;
+      default?: string;
+      placeholder?: string;
+    }
+  | {
+      type: "checkbox";
+      label: string;
+      title?: string;
+      default?: boolean;
+    }
+);
 
-type TextField = InputProps & {
-  type: "text";
-  title: string;
-  default?: string;
-  placeholder?: string;
-}
+type InputMap = {
+  text: string;
+  textarea: string;
+  password: string;
+  number: number;
+  checkbox: boolean;
+};
 
-type NumberField = InputProps & {
-  type: "number";
-  title: string;
-  default?: number;
-  placeholder?: string;
-}
+type CommandName<M extends Manifest> = M["commands"][number]["name"];
 
-type TextArea = InputProps & {
-  type: "textarea";
-  title: string;
-  defaut?: string;
-  placeholder?: string;
-}
+type CommandByName<M extends Manifest, N extends CommandName<M>> = Extract<
+  M["commands"][number],
+  { name: N }
+>;
 
-type Password = InputProps & {
-  type: "password";
-  title: string;
-  defaut?: string;
-  placeholder?: string;
-}
+type ParamName<M extends Manifest, N extends CommandName<M>> = NonNullable<
+  CommandByName<M, N>["params"]
+>[number]["name"];
 
-type Checkbox = InputProps & {
-  type: "checkbox";
-  label: string;
-  title?: string;
-  defaut?: boolean;
-}
+type PreferenceName<M extends Manifest> = NonNullable<
+  M["preferences"]
+>[number]["name"];
 
-export type Input = TextField | TextArea | Password | Checkbox | NumberField;
+type PreferenceByName<
+  M extends Manifest,
+  N extends PreferenceName<M>
+> = Extract<NonNullable<M["preferences"]>[number], { name: N }>;
+
+type ParamByName<
+  M extends Manifest,
+  N extends CommandName<M>,
+  K extends ParamName<M, N>
+> = Extract<NonNullable<CommandByName<M, N>["params"]>[number], { name: K }>;
+
+export type Payload<M extends Manifest> = {
+  [N in CommandName<M>]: {
+    command: N;
+    cwd: string;
+    preferences: {
+      [K in PreferenceName<M>]: PreferenceByName<M, K>["optional"] extends true
+        ? PreferenceByName<M, K>["default"] extends string | number | boolean
+          ? InputMap[PreferenceByName<M, K>["type"]]
+          : InputMap[PreferenceByName<M, K>["type"]] | undefined
+        : InputMap[PreferenceByName<M, K>["type"]];
+    };
+    params: CommandByName<M, N>["params"] extends undefined
+      ? Record<string, never>
+      : {
+          [K in ParamName<M, N>]: ParamByName<M, N, K>["optional"] extends true
+            ? ParamByName<M, N, K>["default"] extends string | number | boolean
+              ? InputMap[ParamByName<M, N, K>["type"]]
+              : InputMap[ParamByName<M, N, K>["type"]] | undefined
+            : InputMap[ParamByName<M, N, K>["type"]];
+        };
+  } & (CommandByName<M, N>["mode"] extends "search"
+    ? { query: string }
+    : Record<string, never>);
+}[CommandName<M>];
