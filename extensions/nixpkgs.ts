@@ -2,6 +2,18 @@
 
 import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 
+const manifest = {
+  title: "Nixpkgs Search",
+  root: ["search"],
+  commands: [
+    {
+      name: "search",
+      title: "Search Packages",
+      mode: "search",
+    },
+  ],
+} as const satisfies sunbeam.Manifest;
+
 async function search(query: string): Promise<sunbeam.ListItem[]> {
   if (query.length === 0) return [];
 
@@ -110,9 +122,9 @@ async function search(query: string): Promise<sunbeam.ListItem[]> {
       }),
       method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Sunbeam',
-        Authorization: "Basic YVdWU0FMWHBadjpYOGdQSG56TDUyd0ZFZWt1eHNmUTljU2g="
+        "Content-Type": "application/json",
+        "User-Agent": "Sunbeam",
+        Authorization: "Basic YVdWU0FMWHBadjpYOGdQSG56TDUyd0ZFZWt1eHNmUTljU2g=",
       },
     }
   );
@@ -126,14 +138,16 @@ async function search(query: string): Promise<sunbeam.ListItem[]> {
     accessories: [hit._source.package_pversion],
     actions: [
       {
-        "type": "open",
-        "title": "Open in NixOS Search",
-        "url": `https://search.nixos.org/packages?query=${encodeURIComponent(query)}&show=${encodeURIComponent(hit._source.package_attr_name)}`
+        type: "open",
+        title: "Open in NixOS Search",
+        url: `https://search.nixos.org/packages?query=${encodeURIComponent(
+          query
+        )}&show=${encodeURIComponent(hit._source.package_attr_name)}`,
       },
       {
-        "type": "open",
-        "title": "Open Homepage",
-        "url": hit._source.package_homepage[0],
+        type: "open",
+        title: "Open Homepage",
+        url: hit._source.package_homepage[0],
       },
       {
         type: "copy",
@@ -141,28 +155,17 @@ async function search(query: string): Promise<sunbeam.ListItem[]> {
         key: "c",
         exit: true,
         text: hit._source.package_attr_name,
-      }
-    ]
+      },
+    ],
   }));
 }
 
 if (Deno.args.length === 0) {
-  const manifest: sunbeam.Manifest = {
-    title: "Nixpkgs Search",
-    root: ["search"],
-    commands: [
-      {
-        name: "search",
-        title: "Search Packages",
-        mode: "search",
-      },
-    ],
-  };
   console.log(JSON.stringify(manifest));
   Deno.exit(0);
 }
 
-const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload;
+const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 if (payload.command !== "search") {
   console.error(`Unknown command: ${payload.command}`);
   Deno.exit(0);
