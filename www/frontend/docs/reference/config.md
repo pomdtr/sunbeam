@@ -30,6 +30,7 @@ This fallback mechanism allows you to have a project specific configs, and a glo
             "dir": "~/.config/fish"
         }
     },
+    // the list of extensions to load
     "extensions": {
         "github": {
             "origin": "~/Developer/github.com/pomdtr/sunbeam/extensions/github.sh",
@@ -38,7 +39,7 @@ This fallback mechanism allows you to have a project specific configs, and a glo
                 "token": "xxxx"
             },
             // additional root items to show
-            "items": [
+            "root": [
                 {
                     "title": "List Sunbeam Issues",
                     "command": "list-issues",
@@ -51,4 +52,3 @@ This fallback mechanism allows you to have a project specific configs, and a glo
     }
 }
 ```
-

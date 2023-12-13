@@ -11,7 +11,6 @@ const manifest = {
       type: "text",
     },
   ],
-  root: ["search-bookmarks"],
   commands: [
     {
       title: "Search Bookmarks",

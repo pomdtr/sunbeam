@@ -38,16 +38,10 @@
                         "origin": {
                             "type": "string"
                         },
-                        "root": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
                         "preferences": {
                             "type": "object"
                         },
-                        "items": {
+                        "root": {
                             "type": "array",
                             "items": {
                                 "type": "object",

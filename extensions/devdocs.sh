@@ -7,7 +7,6 @@ if [ $# -eq 0 ]; then
   jq -n '{
     title: "DevDocs",
     description: "Search DevDocs.io",
-    root: [ "list-docsets" ],
     commands: [
       {
         name: "list-docsets",

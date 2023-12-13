@@ -23,7 +23,6 @@ set -eu
 if [ $# -eq 0 ]; then
     jq -n '{
         title: "Hello World!",
-        "root": ["say-hello"],
         commands: [{
             name: "say-hello",
             title: "Say Hello",
@@ -60,7 +59,6 @@ import json
 if len(sys.argv) == 1:
     manifest = {
         "title": "Hello World!",
-        "root": ["say-hello"],
         "commands": [{
             "name": "say-hello",
             "title": "Say Hello",

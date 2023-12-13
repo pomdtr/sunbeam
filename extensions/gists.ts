@@ -7,7 +7,6 @@ import * as path from "https://deno.land/std/path/mod.ts";
 const manifest = {
   title: "Gists",
   description: "Manage your gists",
-  root: ["manage", "create"],
   preferences: [
     {
       name: "token",

@@ -62,30 +62,9 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 
 func (e Extension) RootItems() []types.RootItem {
 	var items []types.RootItem
-	if e.Manifest.Root != nil {
-		for _, name := range e.Manifest.Root {
-			command, ok := e.Command(name)
-			if !ok {
-				continue
-			}
-
-			items = append(items, types.RootItem{
-				Title:   command.Title,
-				Command: command.Name,
-			})
-		}
-		return items
-	}
-
 	for _, command := range e.Manifest.Commands {
 		if command.Hidden {
 			continue
-		}
-
-		for _, param := range command.Params {
-			if !param.Optional {
-				continue
-			}
 		}
 
 		items = append(items, types.RootItem{

@@ -5,7 +5,6 @@ import * as clipboard from "https://deno.land/x/copy_paste@v1.1.3/mod.ts";
 const manifest = {
   title: "Pipe Commands",
   description: "Pipe your clipboard through various commands",
-  root: ["urldecode", "urlencode"],
   commands: [
     {
       name: "urldecode",

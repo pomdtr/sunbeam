@@ -8,7 +8,6 @@ import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 const manifest = {
   title: "VS Code",
   description: "Manage your VS Code projects",
-  root: ["list-projects"],
   commands: [
     {
       name: "list-projects",

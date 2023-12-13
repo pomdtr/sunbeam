@@ -4,7 +4,6 @@ import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 
 const manifest = {
   title: "Nixpkgs Search",
-  root: ["search"],
   commands: [
     {
       name: "search",

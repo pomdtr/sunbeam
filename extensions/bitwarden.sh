@@ -11,7 +11,6 @@ if [ $# -eq 0 ]; then
                 type: "text"
             }
         ],
-        root: [ "list-passwords" ],
         commands: [
             {
                 name: "list-passwords",

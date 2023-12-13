@@ -35,7 +35,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 			}
 
 			if len(inputBytes) == 0 {
-				if len(extension.RootItems()) == 0 && len(extensionConfig.Root) == 0 && len(extensionConfig.Items) == 0 {
+				if len(extension.RootItems()) == 0 && len(extensionConfig.Root) == 0 {
 					return cmd.Usage()
 				}
 
@@ -87,9 +87,8 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 
 func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig, command types.CommandSpec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    command.Name,
-		Short:  command.Title,
-		Hidden: command.Hidden,
+		Use:   command.Name,
+		Short: command.Title,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			params := make(map[string]any)
 

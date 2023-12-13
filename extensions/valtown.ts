@@ -12,7 +12,6 @@ const manifest = {
       type: "text",
     },
   ],
-  root: ["list", "search"],
   commands: [
     {
       title: "List Vals",
@@ -28,12 +27,14 @@ const manifest = {
     {
       title: "Edit Val",
       name: "edit",
+      hidden: true,
       mode: "tty",
       params: [{ name: "id", title: "Val ID", type: "text" }],
     },
     {
       title: "View Readme",
       name: "readme",
+      hidden: true,
       mode: "detail",
       params: [{ name: "id", title: "Val ID", type: "text" }],
     },

@@ -256,21 +256,8 @@ func extensionListItems(alias string, extension extensions.Extension, extensionC
 	var items []types.ListItem
 
 	var rootItems []types.RootItem
-	if extensionConfig.Root != nil {
-		for _, name := range extensionConfig.Root {
-			command, ok := extension.Command(name)
-			if !ok {
-				continue
-			}
-			rootItems = append(rootItems, types.RootItem{
-				Title:   command.Title,
-				Command: command.Name,
-			})
-		}
-	} else {
-		rootItems = append(rootItems, extension.RootItems()...)
-	}
-	rootItems = append(rootItems, extensionConfig.Items...)
+	rootItems = append(rootItems, extension.RootItems()...)
+	rootItems = append(rootItems, extensionConfig.Root...)
 
 	for _, rootItem := range rootItems {
 		item := types.ListItem{

@@ -49,7 +49,6 @@ $ ./devdocs.sh
       "title": "Search docsets"
     }
   ],
-  "root": [ "search-docsets" ],
   "description": "Search the devdocs.io documentation",
   "title": "Devdocs"
 }
@@ -287,7 +286,7 @@ As a user of the extension, we can add shortcuts to specific docsets:
   "extensions": {
     "devdocs": {
       "origin": "<path-to-extension>/devdocs.sh",
-      "items": [
+      "root": [
         {
           "title": "Search Go documentation",
           "command": "search-entries",

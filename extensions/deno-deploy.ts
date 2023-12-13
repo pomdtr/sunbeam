@@ -6,7 +6,6 @@ import * as dates from "npm:date-fns";
 const manifest = {
   title: "Deno Deploy",
   description: "Manage your Deno Deploy projects",
-  root: ["projects", "dashboard"],
   preferences: [
     {
       name: "token",

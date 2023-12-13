@@ -9,9 +9,6 @@ if len(sys.argv) == 1:
     manifest = {
         "title": "Oneliners",
         "description": "Manage your oneliners",
-        "root": [
-            "add", "manage"
-        ],
         "commands": [
             {
                 "name": "create",

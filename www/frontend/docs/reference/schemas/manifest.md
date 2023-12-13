@@ -9,22 +9,12 @@ It contains the title, description and the list of commands provided by the exte
   "title": "DevDocs",
   // the description of the extension, will be shown in usage string
   "description": "Search DevDocs.io",
-  // items to show in the root list (optional)
-  "items": [
-    {
-      "title": "Search Deno Docs",
-      "command": "list-entries",
-      "params": {
-        "slug": "deno"
-      }
-    }
-  ],
   // see input schema
   "preferences": [
     {
       "name": "hidden",
       "label": "Show hidden entries",
-      "type": "boolean",
+      "type": "checkbox",
       "default": false
     }
   ],
@@ -41,6 +31,8 @@ It contains the title, description and the list of commands provided by the exte
       // use the tty mode if you want to use the terminal directly
       // or use the silent mode if you don't want to display anything
       "mode": "filter",
+      // whether the command should be hidden from the root list (optional)
+      "hidden": false,
       // the list of parameters for the command (optional)
       // see input schema
       "params": [

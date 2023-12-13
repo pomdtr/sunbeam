@@ -82,7 +82,7 @@ You can add new sections by adding new items in your config.
     "extensions": {
         "hackernews": {
             "origin": "...",
-            "items": [ {
+            "root": [ {
                 "title": "Show HN",
                 "command": "browse",
                 "params": {

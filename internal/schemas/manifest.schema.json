@@ -9,12 +9,6 @@
         "title": {
             "type": "string"
         },
-        "root": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        },
         "description": {
             "type": "string"
         },

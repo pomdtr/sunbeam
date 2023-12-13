@@ -6,7 +6,6 @@ import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 const manifest = {
   title: "GitHub",
   description: "Search GitHub repositories",
-  root: ["search"],
   preferences: [
     {
       name: "token",

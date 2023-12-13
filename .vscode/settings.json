@@ -18,7 +18,8 @@
     "no-inline-html": false
   },
   "markdownlint.ignore": [
-    "./www/frontend/docs/reference/cli.md"
+    "./www/frontend/docs/reference/cli.md",
+    "./www/frontend/catalog/index.md"
   ],
   "markdown.validate.referenceLinks.enabled": "ignore"
 }

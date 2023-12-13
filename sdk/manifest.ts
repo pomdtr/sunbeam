@@ -1,7 +1,6 @@
 export type Manifest = {
   title: string;
   description?: string;
-  root?: readonly string[];
   preferences?: readonly Input[];
   commands: readonly Command[];
 };
@@ -11,8 +10,8 @@ export type Command = {
   title: string;
   hidden?: boolean;
   description?: string;
-  mode: "filter" | "search" | "detail" | "tty" | "silent";
   params?: readonly Input[];
+  mode: "filter" | "search" | "detail" | "tty" | "silent";
 };
 
 export type Input = {

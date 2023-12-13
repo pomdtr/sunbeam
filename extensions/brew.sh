@@ -3,7 +3,6 @@
 if [ $# -eq 0 ]; then
     jq -n '{
         title: "Brew",
-        root: ["list"],
         commands: [
             {
                 name: "list",

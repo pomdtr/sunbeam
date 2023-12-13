@@ -5,7 +5,6 @@ import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 
 const manifest: sunbeam.Manifest = {
   title: "Home Manager",
-  root: ["search"],
   commands: [
     {
       name: "search",

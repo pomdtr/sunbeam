@@ -4,7 +4,6 @@ import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 const manifest = {
   title: "Tailscale",
   description: "Manage your tailscale devices",
-  root: ["list-devices"],
   commands: [
     {
       name: "list-devices",
