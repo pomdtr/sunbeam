@@ -3,6 +3,7 @@ package cli
 import (
 	_ "embed"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -52,20 +53,37 @@ func extractAlias(origin string) (string, error) {
 }
 
 func normalizeOrigin(origin string) (string, error) {
-	if strings.HasPrefix(origin, "http://") || strings.HasPrefix(origin, "https://") {
-		return origin, nil
+	if !strings.HasPrefix(origin, "http://") && !strings.HasPrefix(origin, "https://") {
+		if _, err := os.Stat(origin); err != nil {
+			return "", fmt.Errorf("failed to find origin: %w", err)
+		}
+
+		if strings.HasPrefix(origin, "~/") {
+			return origin, nil
+		}
+
+		abs, err := filepath.Abs(origin)
+		if err != nil {
+			return "", fmt.Errorf("failed to get absolute path: %w", err)
+		}
+
+		return abs, nil
 	}
 
-	if _, err := os.Stat(origin); err != nil {
-		return "", fmt.Errorf("failed to find origin: %w", err)
-	}
-
-	abs, err := filepath.Abs(origin)
+	url, err := url.Parse(origin)
 	if err != nil {
-		return "", fmt.Errorf("failed to get absolute path: %w", err)
+		return "", fmt.Errorf("failed to parse origin: %w", err)
 	}
 
-	return strings.Replace(abs, os.Getenv("HOME"), "~", 1), nil
+	if url.Hostname() == "github.com" {
+		query := url.Query()
+		query.Set("raw", "true")
+		url.RawQuery = query.Encode()
+		log.Printf("Normalized github origin %s", url.String())
+		return url.String(), nil
+	}
+
+	return origin, nil
 }
 
 //go:embed embed/extension.py
