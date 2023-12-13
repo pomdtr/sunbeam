@@ -86,7 +86,12 @@ func Load(configPath string) (Config, error) {
 		return Config{}, fmt.Errorf("invalid config: %w", err)
 	}
 
-	var config Config
+	// set default values for configs
+	config := Config{
+		Oneliners:  make(map[string]Oneliner),
+		Extensions: make(map[string]ExtensionConfig),
+	}
+
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}

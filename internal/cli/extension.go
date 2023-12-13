@@ -23,6 +23,7 @@ import (
 func NewCmdExtension(cfg config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "extension",
+		Aliases: []string{"ext"},
 		Short:   "Manage sunbeam extensions",
 		GroupID: CommandGroupCore,
 	}
