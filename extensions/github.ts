@@ -73,7 +73,7 @@ try {
 }
 
 async function run(payload: sunbeam.Payload<typeof manifest>) {
-  const token = payload.preferences.token as string;
+  const token = payload.preferences.token;
   if (payload.command == "search") {
     const query = payload.query;
     if (!query) {
@@ -198,7 +198,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
 
     console.log(JSON.stringify(list, null, 2));
   } else if (payload.command == "pr.list") {
-    const repo = payload.params.repo as string;
+    const repo = payload.params.repo;
     const resp = await fetch(`https://api.github.com/repos/${repo}/pulls`, {
       headers: {
         Authorization: `token ${token}`,
@@ -239,7 +239,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
 
     console.log(JSON.stringify(list, null, 2));
   } else if (payload.command == "readme") {
-    const repo = payload.params.repo as string;
+    const repo = payload.params.repo;
     const resp = await fetch(`https://api.github.com/repos/${repo}/readme`, {
       headers: {
         Authorization: `token ${token}`,

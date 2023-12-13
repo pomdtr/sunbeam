@@ -11,7 +11,6 @@ if [ $# -eq 0 ]; then
     sunbeam query -n '{
         title: "Google Search",
         description: "Search the web with Google",
-        root: ["search"],
         commands: [
             {
                 name: "search",

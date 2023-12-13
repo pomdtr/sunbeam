@@ -11,6 +11,7 @@ Even though you can use any language, here are some recommendations:
 ### POSIX Shell
 
 Sunbeam provides multiple helpers to make it easier to share sunbeam extensions, without requiring the user to install additional dependencies (other than sunbeam itself).
+
 - `sunbeam query`: generate and transform json using the jq syntax.
 - `sunbeam open`: open an url or a file using the default application.
 - `sunbeam copy/paste`: copy/paste text from/to the clipboard
@@ -95,40 +96,50 @@ To make it easier to write extensions in deno, sunbeam provides a [deno package]
 ```ts
 #!/usr/bin/env -S deno run -A
 
-// import the types
-import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts"
+import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 
-// import any npm package
-// @deno-types="npm:@types/lodash"
-import _ from "npm:lodash"
+const manifest = {
+  title: "My Extension",
+  description: "This is my extension",
+  commands: [
+    {
+      name: "hi",
+      title: "Say Hi",
+      mode: "detail",
+      params: [
+        {
+          name: "name",
+          title: "Name",
+          type: "text",
+        },
+      ],
+    },
+  ],
+} as const satisfies sunbeam.Manifest;
 
 if (Deno.args.length == 0) {
-    // if invoked without arguments, print the manifest
-    const manifest: sunbeam.Manifest = {
-        title: "Hello World!",
-        commands: [{
-            name: "say-hello",
-            root: ["say-hello"],
-            title: "Say Hello",
-            mode: "detail",
-        }]
-    }
-
-    console.log(JSON.stringify(manifest))
-    Deno.exit(0)
+  console.log(JSON.stringify(manifest));
+  Deno.exit(0);
 }
 
-// parse the payload
-const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload
-
-if (payload.command == "say-hello") {
-    const detail: sunbeam.Detail = {
-        text: _.upperCase("Hello, World!")
-    }
-
-    console.log(JSON.stringify(detail))
+const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
+if (payload.command == "hi") {
+  const name = payload.params.name;
+  const detail: sunbeam.Detail = {
+    text: `Hi ${name}!`,
+    actions: [
+      {
+        title: "Copy Name",
+        type: "copy",
+        text: name,
+      },
+    ],
+  };
+  console.log(JSON.stringify(detail));
+} else {
+  console.error(`Unknown command: ${payload.command}`);
+  Deno.exit(1);
 }
-
 ```
 
 A more complex typescript extension can be found [here](./examples/hackernews.md).

@@ -1,31 +1,41 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 import json
 import pathlib
 
-if len(sys.argv) == 1:
-    home = str(pathlib.Path.home().absolute())
-    json.dump(
+manifest = {
+    "title": "File Browser",
+    "description": "Browse files and folders",
+    "preferences": [
         {
-            "title": "File Browser",
-            "description": "Browse files and folders",
-            "preferences": [
-                {"name": "show-hidden", "type": "checkbox", "label": "Show Hidden Files", "optional": True }
-            ],
-            "root": ["ls"],
-            "commands": [
+            "name": "show-hidden",
+            "description": "Show Hidden Files",
+            "type": "boolean",
+            "default": False,
+        }
+    ],
+    "commands": [
+        {
+            "name": "ls",
+            "title": "List files",
+            "mode": "filter",
+            "params": [
                 {
-                    "name": "ls",
-                    "title": "List files",
-                    "mode": "filter",
-                    "params": [
-                        {"name": "dir", "title": "Directory", "type": "text", "optional": True, "default": ".", }
-                    ],
-                }
+                    "name": "dir",
+                    "description": "Directory",
+                    "type": "string",
+                    "optional": True,
+                },
             ],
-        },
+        }
+    ],
+}
+
+
+if len(sys.argv) == 1:
+    json.dump(
+        manifest,
         sys.stdout,
         indent=4,
     )
@@ -33,23 +43,22 @@ if len(sys.argv) == 1:
 
 
 payload = json.loads(sys.argv[1])
-show_hidden = payload["preferences"].get("show-hidden", False)
 if payload["command"] == "ls":
     params = payload.get("params", {})
+    preferences = payload.get("preferences", {})
     directory = params.get("dir", payload["cwd"])
-    if directory.startswith("~/"):
-        root = pathlib.Path.joinpath(pathlib.Path.home(), directory[2:])
-    elif not os.path.isabs(directory):
-        root = pathlib.Path(payload["cwd"]).joinpath(directory)
-    else:
-        root = pathlib.Path(directory)
+    if directory.startswith("~"):
+        directory = directory.replace("~", str(pathlib.Path.home()))
+    root = pathlib.Path(directory)
+    show_hidden = preferences.get("show-hidden", False)
+
     items = []
     for file in root.iterdir():
         if not show_hidden and file.name.startswith("."):
             continue
         item = {
             "title": file.name,
-            "subtitle": str(file.absolute()).replace(str(pathlib.Path.home()), "~"),
+            "accessories": [str(file.absolute())],
             "actions": [],
         }
         if file.is_dir():
@@ -71,15 +80,21 @@ if payload["command"] == "ls":
                     "type": "open",
                     "path": str(file.absolute()),
                     "exit": True,
-                }
+                },
+                {
+                    "title": "Show Hidden Files"
+                    if not show_hidden
+                    else "Hide Hidden Files",
+                    "key": "h",
+                    "type": "reload",
+                    "params": {
+                        "show-hidden": not show_hidden,
+                        "dir": str(root.absolute()),
+                    },
+                },
             ]
         )
 
         items.append(item)
 
-    json.dump(
-        {
-            "items": items,
-        },
-        sys.stdout,
-    )
+    print(json.dumps({"items": items}))

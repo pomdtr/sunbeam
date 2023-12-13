@@ -8,6 +8,7 @@
   "yaml.validate": false,
   "deno.enablePaths": [
     "./extensions",
+    "./internal/cli/embed",
     "sdk",
     "scripts",
     "./www/install"

@@ -23,7 +23,7 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload<typeof manifest>;
+const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 
 if (payload.command == "list-projects") {
   const homedir = Deno.env.get("HOME");

@@ -28,10 +28,9 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-const payload = JSON.parse(Deno.args[0]) as sunbeam.Payload<typeof manifest>;
+const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 if (payload.command == "show") {
-  const params = payload.params as { url: string };
-  const feed = await new Parser().parseURL(params.url);
+  const feed = await new Parser().parseURL(payload.params.url);
   const page: sunbeam.List = {
     items: feed.items.map((item) => ({
       title: item.title || "",

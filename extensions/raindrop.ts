@@ -27,7 +27,7 @@ if (Deno.args.length === 0) {
 }
 
 const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-const raindropToken = payload.preferences.token as string;
+const raindropToken = payload.preferences.token;
 if (!raindropToken) {
   console.error("No raindrop token found, please set it in your config");
   Deno.exit(1);
