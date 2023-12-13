@@ -19,7 +19,7 @@ Sunbeam extensions are just scripts. In order to install an extension, you only 
 
 ```sh
 # Install the devdocs extension from sunbeam repository
-sunbeam extension install https://github.com/pomdtr/sunbeam/tree/main/extensions/devdocs.sh
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh
 ```
 
 > ⚠️ Extensions are not verified, nor sandboxed. They can do anything you can do on your computer. Make sure you trust the source / read the code before installing an extension.

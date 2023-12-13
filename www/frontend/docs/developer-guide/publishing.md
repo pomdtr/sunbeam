@@ -34,7 +34,7 @@ You can publish an extension script as a release asset.
 
 To link to a release asset from the latest release, use the following url:
 
-```
+```txt
 https://github.com/<owner>/<repo>/releases/latest/download/<script>
 ```
 

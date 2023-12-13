@@ -268,7 +268,7 @@ Now we can start by listing the docsets, select the one we are interested in, an
 
 ## Adding new root items
 
-When we installed the extension using `sunbeam extension install ./devdocs.sh`, an entry was added to the `extensions` array in `~/.config/sunbeam/config.json`.
+When we installed the extension using `sunbeam extension install ./devdocs.sh`, an entry was added to the `extensions` map in `~/.config/sunbeam/sunbeam.json`.
 
 ```json
 {
