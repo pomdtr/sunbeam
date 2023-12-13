@@ -20,7 +20,7 @@
                     "exit": {
                         "type": "boolean"
                     },
-                    "dir": {
+                    "cwd": {
                         "type": "string"
                     }
                 }

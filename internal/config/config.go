@@ -62,7 +62,7 @@ type ExtensionConfig struct {
 
 type Oneliner struct {
 	Command string `json:"command"`
-	Dir     string `json:"dir,omitempty"`
+	Cwd     string `json:"cwd,omitempty"`
 	Exit    bool   `json:"exit,omitempty"`
 }
 

@@ -45,9 +45,9 @@ if len(sys.argv) == 1:
 
 payload = json.loads(sys.argv[1])
 if payload["command"] == "ls":
-    params = payload.get("params", {})
-    preferences = payload.get("preferences", {})
-    directory = params.get("dir", payload["cwd"])
+    params = payload["params"]
+    preferences = payload["preferences"]
+    directory = params["dir"] or payload["cwd"]
     if directory.startswith("~"):
         directory = directory.replace("~", str(pathlib.Path.home()))
     root = pathlib.Path(directory)

@@ -234,7 +234,7 @@ func onelinerListItems(oneliners map[string]config.Oneliner) []types.ListItem {
 					Title:   "Run",
 					Type:    types.ActionTypeExec,
 					Command: oneliner.Command,
-					Dir:     oneliner.Dir,
+					Dir:     oneliner.Cwd,
 					Exit:    oneliner.Exit,
 				},
 				{

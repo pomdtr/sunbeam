@@ -9,7 +9,7 @@ export type Config = {
 export type Oneliner = {
   command: string;
   exit?: boolean;
-  dir?: string;
+  cwd?: string;
 };
 
 export type ExtensionConfig = {
