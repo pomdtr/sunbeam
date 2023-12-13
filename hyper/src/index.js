@@ -117,6 +117,7 @@ function decorateBrowserOptions(defaults) {
     skipTaskbar: true,
     movable: false,
     fullscreenable: false,
+    hiddenInMissionControl: true,
     minimizable: false,
     maximizable: false,
     resizable: false
@@ -171,7 +172,6 @@ function decorateConfig(config) {
 // Adding Keymaps
 function decorateKeymaps(keymaps) {
   return Object.assign({}, keymaps, {
-    "tab:new": "",
     "window:new": "",
     "editor:clearBuffer": "",
   });
