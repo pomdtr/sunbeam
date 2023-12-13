@@ -50,7 +50,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		ID:    CommandGroupCore,
 		Title: "Core Commands:",
 	})
-	rootCmd.AddCommand(NewCmdQuery())
 	rootCmd.AddCommand(NewValidateCmd())
 	rootCmd.AddCommand(NewCmdEdit())
 	rootCmd.AddCommand(NewCmdCopy())

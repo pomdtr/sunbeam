@@ -16,5 +16,9 @@
   "deno.unstable": true,
   "markdownlint.config": {
     "no-inline-html": false
-  }
+  },
+  "markdownlint.ignore": [
+    "./www/frontend/docs/reference/cli.md"
+  ],
+  "markdown.validate.referenceLinks.enabled": "ignore"
 }

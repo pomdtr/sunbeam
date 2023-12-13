@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -eq 0 ]; then
-    sunbeam query -n '{
+    jq -n '{
         title: "Brew",
         root: ["list"],
         commands: [
@@ -28,9 +28,9 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-COMMAND=$(echo "$1" | sunbeam query -r '.command')
+COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "list" ]; then
-    brew list | sunbeam query -R '{
+    brew list | jq -R '{
         title: .,
         actions: [
             {
@@ -43,9 +43,9 @@ if [ "$COMMAND" = "list" ]; then
                 reload: true
             }
         ]
-    }' | sunbeam query -s '{ items: . }'
+    }' | jq -s '{ items: . }'
 elif [ "$COMMAND" = "uninstall" ]; then
-    PACKAGE=$(echo "$1" | sunbeam query -r '.params.package')
+    PACKAGE=$(echo "$1" | jq -r '.params.package')
     brew uninstall "$PACKAGE"
 else
     echo "Unknown command: $COMMAND"

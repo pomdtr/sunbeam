@@ -6,7 +6,7 @@ set -eu
 
 # if no arguments are passed, return the extension's manifest
 if [ $# -eq 0 ]; then
-    sunbeam query -n '
+    jq -n '
 {
     title: "Browse TLDR Pages",
     description: "Browse TLDR Pages",
@@ -21,20 +21,20 @@ if [ $# -eq 0 ]; then
 exit 0
 fi
 
-COMMAND=$(echo "$1" | sunbeam query -r '.command')
+COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "list" ]; then
-    tldr --list | sunbeam query -R '{
+    tldr --list | jq -R '{
         title: .,
         actions: [
             {title: "View Page", type: "run", command: "view", params: {page: .}},
             {title: "Update Cache", key: "r", type: "run", command: "update", reload: true }
         ]
-    }' | sunbeam query -s '{ items: . }'
+    }' | jq -s '{ items: . }'
 elif [ "$COMMAND" = "update" ]; then
     tldr --update
 elif [ "$COMMAND" = "view" ]; then
-    PAGE=$(echo "$1" | sunbeam query -r '.params.page')
-    tldr --raw "$PAGE" | sunbeam query --arg page="$PAGE" -sR '{
+    PAGE=$(echo "$1" | jq -r '.params.page')
+    tldr --raw "$PAGE" | jq --arg page "$PAGE" -sR '{
             markdown: ., actions: [
                 {title: "Copy Page", type: "copy", text: ., exit: true}
             ]

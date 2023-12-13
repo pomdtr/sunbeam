@@ -11,14 +11,12 @@ require (
 	github.com/charmbracelet/glamour v0.6.0
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/cli/go-gh/v2 v2.4.0
-	github.com/itchyny/gojq v0.12.14
 	github.com/junegunn/fzf v0.0.0-20231210070854-82954258c1c9
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/spf13/cobra v1.8.0
 	golang.org/x/term v0.15.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -30,7 +28,6 @@ require (
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
@@ -50,6 +47,7 @@ require (
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

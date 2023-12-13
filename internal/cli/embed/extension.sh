@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ "$#" -eq 0 ]; then
-    sunbeam query -n '{
+    jq -n '{
         title: "My Extension",
         description: "This is my extension",
         items: [
@@ -36,11 +36,11 @@ fi
 
 payload="$1"
 
-COMMAND=$(echo "$payload" | sunbeam query -r '.command')
+COMMAND=$(echo "$payload" | jq -r '.command')
 if [ "$COMMAND" = "hi" ]; then
-    name="$(echo "$payload" | sunbeam query -r '.params.name')"
+    name="$(echo "$payload" | jq -r '.params.name')"
     # shellcheck disable=SC2016
-    sunbeam query -n --arg name "$name" '{
+    jq -n --arg name "$name" '{
         text: "Hi \($name)!",
         actions: [
             {

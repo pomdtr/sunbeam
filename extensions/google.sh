@@ -3,7 +3,7 @@
 set -eu
 
 if [ $# -eq 0 ]; then
-    sunbeam query -n '{
+    jq -n '{
         title: "Google Search",
         description: "Search Google",
         root: [ "search" ],
@@ -18,18 +18,18 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-COMMAND=$(echo "$1" | sunbeam query -r '.command')
+COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "search" ]; then
-    QUERY=$(echo "$1" | sunbeam query -r '.query')
+    QUERY=$(echo "$1" | jq -r '.query')
     if [ "$QUERY" = "null" ]; then
-        sunbeam query -n '{
+        jq -n '{
             emptyText: "Type anything to search",
         }'
         exit 0
     fi
     # urlencode the query
-    QUERY=$(echo "$QUERY" | sunbeam query -rR '@uri')
-    curl "https://suggestqueries.google.com/complete/search?client=firefox&q=$QUERY" | sunbeam query '.[1] | {
+    QUERY=$(echo "$QUERY" | jq -rR '@uri')
+    curl "https://suggestqueries.google.com/complete/search?client=firefox&q=$QUERY" | jq '.[1] | {
         dynamic: true,
         items: map({
             title: .,

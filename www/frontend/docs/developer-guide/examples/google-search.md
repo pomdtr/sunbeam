@@ -8,7 +8,7 @@ This scripts allows you to search Google from Sunbeam.
 set -eu
 
 if [ $# -eq 0 ]; then
-    sunbeam query -n '{
+    jq -n '{
         title: "Google Search",
         description: "Search the web with Google",
         commands: [
@@ -23,21 +23,21 @@ if [ $# -eq 0 ]; then
 fi
 
 # since the command is a search, the script is called with the query as argument every time the user types a character
-COMMAND=$(echo "$1" | sunbeam query -r '.command')
+COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "search" ]; then
     # Get the query from the user
-    QUERY=$(echo "$1" | sunbeam query -r '.query')
+    QUERY=$(echo "$1" | jq -r '.query')
 
     # If the query is empty, show an help message
     if [ "$QUERY" = "null" ]; then
-        sunbeam query -n '{
+        jq -n '{
             emptyText: "Type something to search",
         }'
         exit 0
     fi
 
     # urlencode the query
-    curl -G "https://suggestqueries.google.com/complete/search" -d "q=$QUERY" | sunbeam query '.[1] | {
+    curl -G "https://suggestqueries.google.com/complete/search" -d "q=$QUERY" | jq '.[1] | {
         items: map({
             title: .,
             actions: [

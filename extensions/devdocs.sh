@@ -4,7 +4,7 @@ set -e
 
 # if no arguments are passed, return the extension's manifest
 if [ $# -eq 0 ]; then
-  sunbeam query -n '{
+  jq -n '{
     title: "DevDocs",
     description: "Search DevDocs.io",
     root: [ "list-docsets" ],
@@ -27,10 +27,10 @@ if [ $# -eq 0 ]; then
   exit 0
 fi
 
-COMMAND=$(echo "$1" | sunbeam query -r '.command')
+COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
-  curl https://devdocs.io/docs/docs.json | sunbeam query 'map({
+  curl https://devdocs.io/docs/docs.json | jq 'map({
       title: .name,
       subtitle: (.release // "latest"),
       accessories: [ .slug ],
@@ -46,9 +46,9 @@ if [ "$COMMAND" = "list-docsets" ]; then
       ]
     }) | {  items: . }'
 elif [ "$COMMAND" = "list-entries" ]; then
-  SLUG=$(echo "$1" | sunbeam query -r '.params.slug')
+  SLUG=$(echo "$1" | jq -r '.params.slug')
   # shellcheck disable=SC2016
-  curl "https://devdocs.io/docs/$SLUG/index.json" | sunbeam query --arg slug="$SLUG" '.entries | map({
+  curl "https://devdocs.io/docs/$SLUG/index.json" | jq --arg slug "$SLUG" '.entries | map({
       title: .name,
       subtitle: .type,
       actions: [

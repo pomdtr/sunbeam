@@ -16,7 +16,7 @@
           default = pkgs.buildGoModule {
             name = "sunbeam";
             src = self;
-            vendorSha256 = "sha256-sSvpRuVgLeVaZRwAGRy18g+hvCKNQWor3OqoU1M9Xsc=";
+            vendorSha256 = "sha256-V3dpE2V08PBp4nJuSuOH8VeTqqnC34kGT/ZdrxtV0W4=";
           };
         };
       }

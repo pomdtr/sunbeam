@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ $# -eq 0 ]; then
-    sunbeam query -n '{
+    jq -n '{
         title: "Bitwarden Vault",
         description: "Search your Bitwarden passwords",
         preferences: [
@@ -23,15 +23,15 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-BW_SESSION=$(echo "$1" | sunbeam query -r '.preferences.session')
+BW_SESSION=$(echo "$1" | jq -r '.preferences.session')
 if [ "$BW_SESSION" = "null" ]; then
     echo "Bitwarden session not found. Please set it in your config." >&2
     exit 1
 fi
 
-COMMAND=$(echo "$1" | sunbeam query -r '.command')
+COMMAND=$(echo "$1" | jq -r '.command')
 if [ "$COMMAND" = "list-passwords" ]; then
-    bw --nointeraction list items --session "$BW_SESSION" | sunbeam query 'map({
+    bw --nointeraction list items --session "$BW_SESSION" | jq 'map({
         title: .name,
         subtitle: (.login.username // ""),
         actions: [
