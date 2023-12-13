@@ -1,14 +1,12 @@
 {
-    "oneliners": [
-        {
-            "title": "Open Sunbeam Docs",
+    "oneliners": {
+        "Open Sunbeam Docs": {
             "command": "sunbeam open https://sunbeam.sh/docs",
             "exit": true
         },
-        {
-            "title": "Open Sunbeam Repo",
+        "Open Sunbeam Repo": {
             "command": "sunbeam open https://github.com/pomdtr/sunbeam",
             "exit": true
         }
-    ]
+    }
 }
