@@ -49,12 +49,14 @@ const manifest = {
     {
       name: "browse",
       title: "Browse Gist Files",
+      hidden: true,
       mode: "filter",
       params: [{ name: "id", title: "Gist ID", type: "text" }],
     },
     {
       name: "view",
       title: "View Gist File",
+      hidden: true,
       mode: "detail",
       params: [
         { name: "id", title: "Gist ID", type: "text" },
@@ -64,6 +66,7 @@ const manifest = {
     {
       name: "edit",
       title: "Edit Gist File",
+      hidden: true,
       mode: "tty",
       params: [
         { name: "id", title: "Gist ID", type: "text" },
@@ -72,6 +75,7 @@ const manifest = {
     },
     {
       name: "delete",
+      hidden: true,
       title: "Delete Gist",
       mode: "silent",
       params: [{ name: "id", title: "Gist ID", type: "text" }],

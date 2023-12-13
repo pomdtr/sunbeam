@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 
-import Parser from "npm:rss-parser";
-import { formatDistance } from "npm:date-fns";
+import Parser from "npm:rss-parser@3.9.0";
+import { formatDistance } from "npm:date-fns@2.30.0";
 import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 
 const manifest = {
@@ -32,7 +32,7 @@ const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 if (payload.command == "show") {
   const feed = await new Parser().parseURL(payload.params.url);
   const page: sunbeam.List = {
-    items: feed.items.map((item) => ({
+    items: feed.items?.map((item) => ({
       title: item.title || "",
       subtitle: item.categories?.join(", ") || "",
       accessories: item.isoDate

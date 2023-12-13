@@ -22,11 +22,12 @@ const manifest = {
     {
       title: "List Issues",
       name: "issue.list",
+      hidden: true,
       mode: "filter",
       params: [
         {
           name: "repo",
-          title: "The repository to list issues for",
+          title: "Repository Name",
           type: "text",
         },
       ],
@@ -34,11 +35,12 @@ const manifest = {
     {
       title: "List Pull Requests",
       name: "pr.list",
+      hidden: true,
       mode: "filter",
       params: [
         {
           name: "repo",
-          title: "The repository to list pull requests for",
+          title: "Repository Name",
           type: "text",
         },
       ],
@@ -46,11 +48,12 @@ const manifest = {
     {
       title: "View Readme",
       name: "readme",
+      hidden: true,
       mode: "detail",
       params: [
         {
           name: "repo",
-          title: "The repository to view the readme for",
+          title: "Repository Name",
           type: "text",
         },
       ],
