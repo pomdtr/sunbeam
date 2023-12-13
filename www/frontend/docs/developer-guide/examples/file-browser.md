@@ -17,8 +17,9 @@ manifest = {
     "preferences": [
         {
             "name": "show-hidden",
-            "description": "Show Hidden Files",
-            "type": "boolean",
+            "label": "Show Hidden Files",
+            "type": "checkbox",
+            "optional": True,
             "default": False,
         }
     ],
@@ -30,8 +31,8 @@ manifest = {
             "params": [
                 {
                     "name": "dir",
-                    "description": "Directory",
-                    "type": "string",
+                    "title": "Directory",
+                    "type": "text",
                     "optional": True,
                 },
             ],
@@ -105,17 +106,4 @@ if payload["command"] == "ls":
         items.append(item)
 
     print(json.dumps({"items": items}))
-```
-
-You can pin a specificic directory by adding an item to the `oneliner` array in the sunbeam config:
-
-```json
-{
-    "oneliners": [
-        {
-            "command": "sunbeam file-browser list --dir ~/Downloads",
-            "title": "Search Downloads",
-        }
-    ]
-}
 ```
