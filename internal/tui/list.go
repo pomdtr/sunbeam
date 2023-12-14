@@ -319,6 +319,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, nil
 		}
 
+		c.filter.EmptyText = "Loading..."
 		return c, c.OnQueryChange(string(msg))
 	}
 
