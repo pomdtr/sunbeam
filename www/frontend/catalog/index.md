@@ -71,10 +71,10 @@ Search GitHub repositories
 
 ### Commands
 
-- `search-repos`: Search Repositories
-- `list-issues`: List Issues
-- `list-prs`: List Pull Requests
-- `view-readme`: View Readme
+- `search`: Search Repositories
+- `issue.list`: List Issues
+- `pr.list`: List Pull Requests
+- `readme`: View Readme
 
 ### Install
 
@@ -256,21 +256,6 @@ Browse Hacker News
 
 ```
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/hackernews.ts
-```
-
-## [Oneliners](https://github.com/pomdtr/sunbeam/tree/main/extensions/oneliners.py)
-
-Manage your oneliners
-
-### Commands
-
-- `create`: Create Oneliner
-- `manage`: Manage Oneliners
-
-### Install
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/oneliners.py
 ```
 
 ## [DevDocs](https://github.com/pomdtr/sunbeam/tree/main/extensions/devdocs.sh)
