@@ -55,9 +55,14 @@ func (cfg Config) Resolve(path string) string {
 }
 
 type ExtensionConfig struct {
-	Origin      string           `json:"origin,omitempty"`
-	Preferences map[string]any   `json:"preferences,omitempty"`
-	Root        []types.RootItem `json:"root,omitempty"`
+	Origin      string              `json:"origin,omitempty"`
+	Preferences map[string]any      `json:"preferences,omitempty"`
+	Root        map[string]RootItem `json:"root,omitempty"`
+}
+
+type RootItem struct {
+	Command string                 `json:"command,omitempty"`
+	Params  map[string]types.Param `json:"params,omitempty"`
 }
 
 type Oneliner struct {

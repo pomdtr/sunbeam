@@ -39,15 +39,14 @@ This fallback mechanism allows you to have a project specific configs, and a glo
                 "token": "xxxx"
             },
             // additional root items to show
-            "root": [
-                {
-                    "title": "List Sunbeam Issues",
+            "root": {
+                "List Sunbeam Issues": {
                     "command": "list-issues",
                     "params": {
                         "repo": "pomdtr/sunbeam",
                     }
                 }
-            ]
+            }
         }
     }
 }

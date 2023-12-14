@@ -286,17 +286,17 @@ As a user of the extension, we can add shortcuts to specific docsets:
   "extensions": {
     "devdocs": {
       "origin": "<path-to-extension>/devdocs.sh",
-      "root": [
-        {
-          "title": "Search Go documentation",
+      "root": {
+        "Search Go documentation": {
           "command": "search-entries",
           "params": {
             "docset": "go"
           }
         }
-      ]
+      }
     }
   }
+}
 ```
 
 Each time you add a new extension to sunbeam, you gain access to new commands, and you can add new shortcuts to your config file.

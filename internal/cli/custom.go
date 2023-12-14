@@ -35,7 +35,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 			}
 
 			if len(inputBytes) == 0 {
-				if len(extension.RootItems()) == 0 && len(extensionConfig.Root) == 0 {
+				if len(extension.RootCommands()) == 0 && len(extensionConfig.Root) == 0 {
 					return cmd.Usage()
 				}
 

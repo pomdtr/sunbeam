@@ -60,19 +60,17 @@ func (e Extension) Command(name string) (types.CommandSpec, bool) {
 	return types.CommandSpec{}, false
 }
 
-func (e Extension) RootItems() []types.RootItem {
-	var items []types.RootItem
+func (e Extension) RootCommands() []types.CommandSpec {
+	rootCommands := make([]types.CommandSpec, 0)
 	for _, command := range e.Manifest.Commands {
 		if command.Hidden {
 			continue
 		}
 
-		items = append(items, types.RootItem{
-			Title:   command.Title,
-			Command: command.Name,
-		})
+		rootCommands = append(rootCommands, command)
 	}
-	return items
+
+	return rootCommands
 }
 
 func (e Extension) Run(input types.Payload) error {

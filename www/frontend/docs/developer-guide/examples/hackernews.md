@@ -79,17 +79,18 @@ You can add new sections by adding new items in your config.
 
 ```json
 {
-    "extensions": {
-        "hackernews": {
-            "origin": "...",
-            "root": [ {
-                "title": "Show HN",
-                "command": "browse",
-                "params": {
-                    "topic": "show"
-                }
-            }]
+  "extensions": {
+    "hackernews": {
+      "origin": "...",
+      "root": {
+        "Show HN": {
+          "command": "browse",
+          "params": {
+            "topic": "show"
+          }
         }
+      }
     }
+  }
 }
 ```

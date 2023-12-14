@@ -7,12 +7,6 @@ type Manifest struct {
 	Commands    []CommandSpec `json:"commands"`
 }
 
-type RootItem struct {
-	Title   string           `json:"title,omitempty"`
-	Command string           `json:"command"`
-	Params  map[string]Param `json:"params,omitempty"`
-}
-
 type CommandSpec struct {
 	Name   string      `json:"name"`
 	Title  string      `json:"title"`

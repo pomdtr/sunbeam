@@ -42,17 +42,13 @@
                             "type": "object"
                         },
                         "root": {
-                            "type": "array",
-                            "items": {
+                            "type": "object",
+                            "additionalProperties": {
                                 "type": "object",
                                 "required": [
-                                    "title",
                                     "command"
                                 ],
                                 "properties": {
-                                    "title": {
-                                        "type": "string"
-                                    },
                                     "command": {
                                         "type": "string"
                                     },

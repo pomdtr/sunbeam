@@ -15,11 +15,10 @@ export type Oneliner = {
 export type ExtensionConfig = {
   origin: string;
   preferences?: Record<string, string | number | boolean>;
-  root?: RootItem[];
+  root?: Record<string, RootItem[]>;
 };
 
 export type RootItem = {
-  title: string;
   command: string;
   params?: Record<string, Param>;
 };

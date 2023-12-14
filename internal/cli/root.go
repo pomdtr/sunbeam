@@ -255,14 +255,10 @@ func onelinerListItems(oneliners map[string]config.Oneliner) []types.ListItem {
 func extensionListItems(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig) []types.ListItem {
 	var items []types.ListItem
 
-	var rootItems []types.RootItem
-	rootItems = append(rootItems, extension.RootItems()...)
-	rootItems = append(rootItems, extensionConfig.Root...)
-
-	for _, rootItem := range rootItems {
-		item := types.ListItem{
-			Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
-			Title:       rootItem.Title,
+	for title, rootItem := range extensionConfig.Root {
+		items = append(items, types.ListItem{
+			Id:          fmt.Sprintf("%s - %s", alias, title),
+			Title:       title,
 			Subtitle:    extension.Manifest.Title,
 			Accessories: []string{"Command"},
 			Actions: []types.Action{
@@ -272,6 +268,23 @@ func extensionListItems(alias string, extension extensions.Extension, extensionC
 					Extension: alias,
 					Command:   rootItem.Command,
 					Params:    rootItem.Params,
+				},
+			},
+		})
+	}
+
+	for _, command := range extension.RootCommands() {
+		item := types.ListItem{
+			Id:          fmt.Sprintf("%s - %s", alias, command.Name),
+			Title:       command.Title,
+			Subtitle:    extension.Manifest.Title,
+			Accessories: []string{"Command"},
+			Actions: []types.Action{
+				{
+					Title:     "Run",
+					Type:      types.ActionTypeRun,
+					Extension: alias,
+					Command:   command.Name,
 					Exit:      true,
 				},
 			},
