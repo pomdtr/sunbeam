@@ -233,11 +233,7 @@ func (c Form) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return &c, tea.Batch(cmds...)
-		case "enter", "ctrl+s":
-			if msg.String() == "enter" && c.focusIndex != len(c.inputs) {
-				break
-			}
-
+		case "alt+enter":
 			return &c, func() tea.Msg {
 				values := make(map[string]any)
 				for _, input := range c.inputs {
@@ -319,6 +315,6 @@ func (c *Form) SetSize(width, height int) {
 
 func (c *Form) View() string {
 	separator := strings.Repeat("─", c.width)
-	submitRow := lipgloss.NewStyle().Align(lipgloss.Right).Padding(0, 1).Width(c.width).Render(fmt.Sprintf("%s · %s", renderAction("Submit", "ctrl+s", false), renderAction("Focus Next", "tab", false)))
+	submitRow := lipgloss.NewStyle().Align(lipgloss.Right).Padding(0, 1).Width(c.width).Render(fmt.Sprintf("%s · %s", renderAction("Submit", "alt+enter", false), renderAction("Focus Next", "tab", false)))
 	return lipgloss.JoinVertical(lipgloss.Left, c.viewport.View(), separator, submitRow)
 }
