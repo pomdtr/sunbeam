@@ -35,6 +35,14 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 			}
 
 			if len(inputBytes) == 0 {
+				if !isatty.IsTerminal(os.Stdout.Fd()) {
+					encoder := json.NewEncoder(os.Stdout)
+					encoder.SetIndent("", "  ")
+					encoder.SetEscapeHTML(false)
+
+					return encoder.Encode(extension.Manifest)
+				}
+
 				if len(extension.RootCommands()) == 0 && len(extensionConfig.Root) == 0 {
 					return cmd.Usage()
 				}
