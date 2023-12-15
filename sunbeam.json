@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/internal/schemas/config.schema.json",
+  "$schema": "./internal/schemas/config.schema.json",
   "extensions": {
     "files": {
       "origin": "./extensions/files.py"
@@ -45,9 +45,6 @@
     },
     "hackernews": {
       "origin": "./extensions/hackernews.ts"
-    },
-    "oneliners": {
-      "origin": "./extensions/oneliners.py"
     },
     "devdocs": {
       "origin": "./extensions/devdocs.sh"
