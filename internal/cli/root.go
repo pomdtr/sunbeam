@@ -2,12 +2,14 @@ package cli
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
+	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/history"
@@ -154,6 +156,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if !isatty.IsTerminal(os.Stdout.Fd()) {
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			encoder.SetEscapeHTML(false)
+
+			return encoder.Encode(cfg)
+		}
 		history, err := history.Load(history.Path)
 		if err != nil {
 			return err
@@ -222,12 +231,12 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func onelinerListItems(oneliners map[string]config.Oneliner) []types.ListItem {
+func onelinerListItems(oneliners []config.Oneliner) []types.ListItem {
 	var items []types.ListItem
-	for title, oneliner := range oneliners {
+	for _, oneliner := range oneliners {
 		item := types.ListItem{
-			Id:          fmt.Sprintf("oneliner - %s", title),
-			Title:       title,
+			Id:          fmt.Sprintf("oneliner - %s", oneliner.Title),
+			Title:       oneliner.Title,
 			Accessories: []string{"Oneliner"},
 			Actions: []types.Action{
 				{
@@ -255,10 +264,10 @@ func onelinerListItems(oneliners map[string]config.Oneliner) []types.ListItem {
 func extensionListItems(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig) []types.ListItem {
 	var items []types.ListItem
 
-	for title, rootItem := range extensionConfig.Root {
+	for _, rootItem := range extensionConfig.Root {
 		items = append(items, types.ListItem{
-			Id:          fmt.Sprintf("%s - %s", alias, title),
-			Title:       title,
+			Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
+			Title:       rootItem.Title,
 			Subtitle:    extension.Manifest.Title,
 			Accessories: []string{"Command"},
 			Actions: []types.Action{

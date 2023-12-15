@@ -286,14 +286,15 @@ As a user of the extension, we can add shortcuts to specific docsets:
   "extensions": {
     "devdocs": {
       "origin": "<path-to-extension>/devdocs.sh",
-      "root": {
-        "Search Go documentation": {
+      "root": [
+        {
+          "title": "Search Go documentation",
           "command": "search-entries",
           "params": {
             "docset": "go"
           }
         }
-      }
+      ]
     }
   }
 }

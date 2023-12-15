@@ -34,7 +34,7 @@ It contains the title, description and the list of commands provided by the exte
       // whether the command should be hidden from the root list (optional)
       "hidden": false,
       // the list of parameters for the command (optional)
-      // see input schema
+      // see the input schema for more details
       "params": [
         {
           "name": "slug",

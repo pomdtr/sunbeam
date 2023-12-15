@@ -1,5 +1,11 @@
 {
   "$schema": "./internal/schemas/config.schema.json",
+  "oneliners": [
+    {
+      "title": "Refresh Config",
+      "command": "./scripts/build-config.ts"
+    }
+  ],
   "extensions": {
     "files": {
       "origin": "./extensions/files.py"

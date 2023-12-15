@@ -16,20 +16,22 @@ This fallback mechanism allows you to have a project specific configs, and a glo
 ```json
 {
     // additional items to show in the root list
-    "oneliners": {
-        "Open Sunbeam Docs": {
+    "oneliners": [
+        {
+            "title": "Open Sunbeam Docs",
             // command to run
             "command": "sunbeam open https://pomdtr.github.io/sunbeam",
             // Whether to exit sunbeam after running the command
             "exit": true
         },
-        "Edit Fish Config":{
+        {
+            "title": "Edit fish config",
             // command to run
             "command": "sunbeam edit config.fish",
             // working directory to run the command in
             "cwd": "~/.config/fish"
         }
-    },
+    ],
     // the list of extensions to load
     "extensions": {
         "github": {
@@ -39,14 +41,15 @@ This fallback mechanism allows you to have a project specific configs, and a glo
                 "token": "xxxx"
             },
             // additional root items to show
-            "root": {
-                "List Sunbeam Issues": {
+            "root": [
+                {
+                    "title": "List Sunbeam Issues",
                     "command": "list-issues",
                     "params": {
                         "repo": "pomdtr/sunbeam",
                     }
                 }
-            }
+            ]
         }
     }
 }

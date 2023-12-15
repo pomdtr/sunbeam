@@ -1,39 +1,51 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: 'Sunbeam',
+  title: "Sunbeam",
   head: [
-    ['link', { rel: 'icon', href: '/favicon.png' }],
-    ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:image', content: 'https://pomdtr.github.io/sunbeam/screenshot.png' }],
-    ['meta', { property: 'og:description', content: 'Wrap your tools in keyboard-friendly TUIs' }]
+    ["link", { rel: "icon", href: "/favicon.png" }],
+    ["meta", { property: "og:type", content: "website" }],
+    [
+      "meta",
+      {
+        property: "og:image",
+        content: "https://pomdtr.github.io/sunbeam/screenshot.png",
+      },
+    ],
+    [
+      "meta",
+      {
+        property: "og:description",
+        content: "Wrap your tools in keyboard-friendly TUIs",
+      },
+    ],
   ],
-  appearance: 'force-dark',
+  appearance: "force-dark",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     outline: [2, 3],
     nav: [
-      { text: 'Home', link: '/' },
+      { text: "Home", link: "/" },
       {
-        text: 'Docs',
-        link: '/docs/'
+        text: "Docs",
+        link: "/docs/",
       },
       {
-        text: 'Extension Catalog',
-        link: '/catalog/'
-      }
+        text: "Extension Catalog",
+        link: "/catalog/",
+      },
     ],
     search: {
-      provider: 'local'
+      provider: "local",
     },
     sidebar: [
       {
-        text: 'Introduction',
-        link: '/docs/index',
+        text: "Introduction",
+        link: "/docs/",
       },
       {
-        text: 'User Guide',
+        text: "User Guide",
         items: [
           {
             text: "Installation",
@@ -46,49 +58,53 @@ export default defineConfig({
           {
             text: "Integrations",
             link: "/docs/user-guide/integrations",
-          }
-        ]
+          },
+        ],
       },
       {
-        text: 'Developer Guide',
+        text: "Developer Guide",
         items: [
           {
             text: "Guidelines",
-            link: "/docs/developer-guide/guidelines"
+            link: "/docs/developer-guide/guidelines",
           },
           {
             text: "Examples",
             items: [
               {
                 text: "DevDocs (Shell)",
-                link: "/docs/developer-guide/examples/devdocs"
+                link: "/docs/developer-guide/examples/devdocs",
               },
               {
                 text: "Hackernews (Typescript)",
-                link: "/docs/developer-guide/examples/hackernews"
+                link: "/docs/developer-guide/examples/hackernews",
               },
               {
                 text: "File Browser (Python)",
-                link: "/docs/developer-guide/examples/file-browser"
+                link: "/docs/developer-guide/examples/file-browser",
               },
               {
                 text: "Google Search (Shell)",
-                link: "/docs/developer-guide/examples/google-search"
-              }
-            ]
+                link: "/docs/developer-guide/examples/google-search",
+              },
+            ],
           },
           {
             text: "Publishing",
-            link: "/docs/developer-guide/publishing"
-          }
-        ]
+            link: "/docs/developer-guide/publishing",
+          },
+          {
+            text: "Tips",
+            link: "/docs/developer-guide/tips",
+          },
+        ],
       },
       {
-        text: 'Reference',
+        text: "Reference",
         items: [
           {
             text: "Configuration",
-            link: "/docs/reference/config"
+            link: "/docs/reference/config",
           },
           {
             text: "Schemas",
@@ -96,39 +112,43 @@ export default defineConfig({
             items: [
               {
                 text: "Manifest",
-                link: "/docs/reference/schemas/manifest"
+                link: "/docs/reference/schemas/manifest",
               },
               {
                 text: "Payload",
-                link: "/docs/reference/schemas/payload"
+                link: "/docs/reference/schemas/payload",
               },
               {
                 text: "List",
-                link: "/docs/reference/schemas/list"
+                link: "/docs/reference/schemas/list",
               },
               {
                 text: "Detail",
-                link: "/docs/reference/schemas/detail"
+                link: "/docs/reference/schemas/detail",
               },
               {
                 text: "Action",
-                link: "/docs/reference/schemas/action"
-              }
-            ]
+                link: "/docs/reference/schemas/action",
+              },
+              {
+                text: "Input",
+                link: "/docs/reference/schemas/input",
+              },
+            ],
           },
           {
             text: "CLI",
-            link: "/docs/reference/cli"
-          }
-        ]
+            link: "/docs/reference/cli",
+          },
+        ],
       },
       {
-        text: 'Alternatives',
-        link: '/docs/alternatives'
-      }
+        text: "Alternatives",
+        link: "/docs/alternatives",
+      },
     ],
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/pomdtr/sunbeam' },
-    ]
+      { icon: "github", link: "https://github.com/pomdtr/sunbeam" },
+    ],
   },
-})
+});

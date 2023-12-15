@@ -6,14 +6,18 @@
             "type": "string"
         },
         "oneliners": {
-            "type": "object",
+            "type": "array",
             "description": "A list of commands that will be shown in the root list",
-            "additionalProperties": {
+            "items": {
                 "type": "object",
                 "required": [
+                    "title",
                     "command"
                 ],
                 "properties": {
+                    "title": {
+                        "type": "string"
+                    },
                     "command": {
                         "type": "string"
                     },
@@ -42,13 +46,17 @@
                             "type": "object"
                         },
                         "root": {
-                            "type": "object",
-                            "additionalProperties": {
+                            "type": "array",
+                            "items": {
                                 "type": "object",
                                 "required": [
+                                    "title",
                                     "command"
                                 ],
                                 "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
                                     "command": {
                                         "type": "string"
                                     },

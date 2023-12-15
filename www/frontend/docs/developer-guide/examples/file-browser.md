@@ -1,8 +1,8 @@
-## File Browser
+# File Browser
 
-This scripts is a good examples on how to handle navigation in sunbeam. Each time the user navigates to a new directory, the script is rerun with the new directory as the `dir` parameter.
+## Writing the manifest
 
-If no directory is provided, the script will list the content of the current working directory, which is provided by sunbeam as the `cwd` field of the payload.
+If the script is called without arguments, it must return a json manifest describing the extension and its commands.
 
 ```python
 #!/usr/bin/env python3
@@ -42,6 +42,51 @@ manifest = {
 
 
 if len(sys.argv) == 1:
+    print(json.dumps(manifest))
+    sys.exit(0)
+```
+
+## Writing the command
+
+We want to be able to browse the filesystem, so the `ls` command is recursive. It will list the files in the current directory, and call itself again if the user wants to browse a directory.
+
+```python
+#!/usr/bin/env python3
+
+import sys
+import json
+import pathlib
+
+manifest = {
+    "title": "File Browser",
+    "description": "Browse files and folders",
+    "preferences": [
+        {
+            "name": "show-hidden",
+            "label": "Show Hidden Files",
+            "type": "checkbox",
+            "optional": True,
+            "default": False,
+        }
+    ],
+    "commands": [
+        {
+            "name": "ls",
+            "title": "List files",
+            "mode": "filter",
+            "params": [
+                {
+                    "name": "dir",
+                    "title": "Directory",
+                    "type": "text",
+                    "optional": True,
+                },
+            ],
+        }
+    ],
+}
+
+if len(sys.argv) == 1:
     json.dump(
         manifest,
         sys.stdout,
@@ -49,12 +94,13 @@ if len(sys.argv) == 1:
     )
     sys.exit(0)
 
-
 payload = json.loads(sys.argv[1])
+params = payload["params"]
+preferences = payload["preferences"]
+cwd = payload["cwd"]
+
 if payload["command"] == "ls":
-    params = payload.get("params", {})
-    preferences = payload.get("preferences", {})
-    directory = params.get("dir", payload["cwd"])
+    directory = params["dir"] or cwd
     if directory.startswith("~"):
         directory = directory.replace("~", str(pathlib.Path.home()))
     root = pathlib.Path(directory)
@@ -106,4 +152,7 @@ if payload["command"] == "ls":
         items.append(item)
 
     print(json.dumps({"items": items}))
+else:
+    print(f"Unknown command: {payload['command']}")
+    sys.exit(1)
 ```

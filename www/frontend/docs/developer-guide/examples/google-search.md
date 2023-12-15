@@ -2,6 +2,12 @@
 
 This scripts allows you to search Google from Sunbeam.
 
+Refer to the devdocs extension for a more complete example of writing an extension as a shell script.
+This example demonstrates how to write an extension that uses the search mode.
+
+Each time the user types a character, the script is called with the query as argument.
+The emptyText field is used to display a message when no items are shown in the list.
+
 ```bash
 #!/bin/sh
 

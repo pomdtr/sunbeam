@@ -37,7 +37,7 @@ func init() {
 }
 
 type Config struct {
-	Oneliners  map[string]Oneliner        `json:"oneliners,omitempty"`
+	Oneliners  []Oneliner                 `json:"oneliners,omitempty"`
 	Extensions map[string]ExtensionConfig `json:"extensions,omitempty"`
 	path       string                     `json:"-"`
 }
@@ -55,17 +55,19 @@ func (cfg Config) Resolve(path string) string {
 }
 
 type ExtensionConfig struct {
-	Origin      string              `json:"origin,omitempty"`
-	Preferences map[string]any      `json:"preferences,omitempty"`
-	Root        map[string]RootItem `json:"root,omitempty"`
+	Origin      string         `json:"origin,omitempty"`
+	Preferences map[string]any `json:"preferences,omitempty"`
+	Root        []RootItem     `json:"root,omitempty"`
 }
 
 type RootItem struct {
-	Command string                 `json:"command,omitempty"`
+	Title   string                 `json:"title"`
+	Command string                 `json:"command"`
 	Params  map[string]types.Param `json:"params,omitempty"`
 }
 
 type Oneliner struct {
+	Title   string `json:"title"`
 	Command string `json:"command"`
 	Cwd     string `json:"cwd,omitempty"`
 	Exit    bool   `json:"exit,omitempty"`
@@ -92,7 +94,6 @@ func Load(configPath string) (Config, error) {
 
 	// set default values for configs
 	config := Config{
-		Oneliners:  make(map[string]Oneliner),
 		Extensions: make(map[string]ExtensionConfig),
 	}
 

@@ -1,7 +1,5 @@
 # Installation
 
-## Installation
-
 You can use a package manager
 
 ```bash

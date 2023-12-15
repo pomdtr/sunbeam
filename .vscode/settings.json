@@ -1,7 +1,8 @@
 {
   "search.exclude": {
     "book": true,
-    "www/frontend/.vitepress": true,
+    "www/frontend/.vitepress/cache": true,
+    "www/frontend/.vitepress/dist": true,
     ".devbox": true,
     "public": true,
   },

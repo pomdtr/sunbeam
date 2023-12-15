@@ -1,12 +1,15 @@
 {
-    "oneliners": {
-        "Open Sunbeam Docs": {
+    "$schema": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/internal/schemas/config.schema.json",
+    "oneliners": [
+        {
+            "title": "Open Sunbeam Docs",
             "command": "sunbeam open https://sunbeam.sh/docs",
             "exit": true
         },
-        "Open Sunbeam Repo": {
+        {
+            "title": "Open Sunbeam Repository",
             "command": "sunbeam open https://github.com/pomdtr/sunbeam",
             "exit": true
         }
-    }
+    ]
 }

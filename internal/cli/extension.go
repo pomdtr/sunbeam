@@ -173,6 +173,7 @@ func NewCmdExtensionEdit(cfg config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:       "edit <alias>",
 		ValidArgs: cfg.Aliases(),
+		Short:     "Edit a sunbeam extension",
 		Args:      cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			origin := cfg.Extensions[args[0]].Origin
