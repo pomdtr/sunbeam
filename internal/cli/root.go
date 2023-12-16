@@ -294,7 +294,6 @@ func extensionListItems(alias string, extension extensions.Extension, extensionC
 					Type:      types.ActionTypeRun,
 					Extension: alias,
 					Command:   command.Name,
-					Exit:      true,
 				},
 			},
 		}
