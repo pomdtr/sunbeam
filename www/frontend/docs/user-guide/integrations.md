@@ -64,7 +64,8 @@ Feel free to customize the config to your liking.
 [Alacritty](https://github.com/alacritty/alacritty) is a cross-platform terminal emulator.
 
 Alacritty is not easily extensible, so you will have to handle the application launcher features yourself (hotkey, centering, blur, ect.).
-If you are a gnome user, you can use the [toggle-alacritty extension](https://extensions.gnome.org/extension/3942/toggle-alacritty/).
+
+If you are using gnome, you can configure new windows to be centered on the screen by running `gsettings set org.gnome.mutter center-new-windows true`. Then just assign a hotkey to launch alacritty.  
 
 It is a good choice if you are already using tiling window manager, as they usually allow you to setup an hotkey to launch a program, and to center it on the screen.
 

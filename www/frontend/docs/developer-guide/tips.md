@@ -39,6 +39,33 @@ sunbeam devdocs list-docsets | sunbeam validate list
 
 You can use those commands to validate an extension in a CI pipeline.
 
+## Workspace Structure
+
+You are free to store your local extensions anywhere you want. I personally store them directly in the sunbeam config directory.
+
+```txt
+~/.config/sunbeam/
+├── sunbeam.json
+└── extensions/
+    ├── devdocs.sh
+    └── github.ts
+```
+
+And then reference them in the config file using relative paths:
+
+```json
+{
+  "extensions": {
+    "devdocs": {
+      "origin": "./extensions/devdocs.sh"
+    },
+    "github": {
+      "origin": "./extensions/github.ts"
+    }
+  }
+}
+```
+
 ## Additional Tools
 
 Sunbeam pages are described using JSON, so it pairs really well with other JSON tools:
