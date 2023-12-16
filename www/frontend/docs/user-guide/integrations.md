@@ -28,27 +28,21 @@ module.exports = {
         shellArgs: ['-lic', 'sunbeam'],
         // these envs are used by sunbeam actions, make sure to customize them if needed
         env: {
-            "EDITOR": "vim",
-            "PAGER": "less",
+            "EDITOR": "vim"
         },
         windowSize: [750, 440],
         modifierKeys: {
             altIsMeta: true // needed for hotkeys to work
         },
-        sunbeam: {
+        hyperSunbeam: {
             hotkey: 'Shift+Super+K', // setup your hotkey here
         }
     },
     // a list of plugins to fetch and install from npm
     plugins: [
         "hyper-sunbeam", // tranform hyper into a floating panel
-        "hyper-monokai-pro" // suggested theme, but you can use any theme you want
+        "hyper-monokai-pro", // suggested theme, but you can use any theme you want
     ]
-    // optional, disable default hotkeys
-    keymaps: {
-        "tab:new": "",
-        "window:new": "",
-    },
 };
 ```
 
@@ -65,13 +59,13 @@ Feel free to customize the config to your liking.
 
 Alacritty is not easily extensible, so you will have to handle the application launcher features yourself (hotkey, centering, blur, ect.).
 
-If you are using gnome, you can configure new windows to be centered on the screen by running `gsettings set org.gnome.mutter center-new-windows true`. Then just assign a hotkey to launch alacritty.  
-
 It is a good choice if you are already using tiling window manager, as they usually allow you to setup an hotkey to launch a program, and to center it on the screen.
 
 Use this config as a starting point:
 
 ```yml
+env:
+  EDITOR: vim
 shell:
   program: /bin/bash # set this to your shell
   args: ["-lic", "sunbeam"]
@@ -92,8 +86,37 @@ font:
   size: 13.0
 ```
 
+On Gnome, you can configure new windows to be centered on the screen by running `gsettings set org.gnome.mutter center-new-windows true`. Then just assign a hotkey to launch alacritty.
+
 If you don't plan to use Alacritty as your primary terminal, you can just save it as `~/.config/alacritty/alacritty.yml`.
 Otherwise, use the `config-file` flag when launching alacritty: `alacritty --config-file ~/.config/alacritty/sunbeam.yml`.
+
+### Tweety
+
+![Sunbeam running in tweety](../../assets/tweety.jpeg)
+Tweety is an integrated terminal for your web browser.
+
+It can be embedded anywhere you can show a web page, making it a great GUI for sunbeam.
+
+Example configuration:
+
+```json
+{
+  "env": {
+    "EDITOR": "vim",
+  },
+  "defaultProfile": "sunbeam",
+  "profiles": {
+    "sunbeam": {
+      "command": "/bin/zsh",
+      "args": [
+        "-c",
+        "sunbeam"
+      ]
+    }
+  }
+}
+```
 
 ## Multiplexers
 

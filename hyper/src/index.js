@@ -58,7 +58,7 @@ function onApp(app) {
     {
       label: 'Browse Documentation',
       click: () => {
-        shell.openExternal('https://sunbeam.deno.dev/docs');
+        shell.openExternal('https://sunbeam.sh/docs');
       },
     },
     {
