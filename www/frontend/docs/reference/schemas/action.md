@@ -33,9 +33,28 @@ Open a url or a file with the default app or a specific app.
     "key": "o",
     // the title of the action (required)
     "type": "open",
-    // the target to open (required)
-    // target can be a url or a path to a file
+    // the url or path to open (required)
     "url": "https://pomdtr.github.io/sunbeam",
+    "path": "~/.config/sunbeam/sunbeam.json",
+}
+```
+
+## Edit
+
+Edit a file using the default editor.
+
+```json
+{
+    // the title of the action (required)
+    "title": "Edit",
+    // the key to trigger the action (optional)
+    "key": "e",
+    // the type of the action (required)
+    "type": "edit",
+    "path": "~/.config/sunbeam/sunbeam.json",
+    // whether to exit sunbeam after editing the file (optional)
+    // if not specified, sunbeam will not exit
+    "exit": true
 }
 ```
 

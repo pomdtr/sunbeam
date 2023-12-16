@@ -100,7 +100,7 @@
             "then": {
                 "required": [
                     "type",
-                    "target"
+                    "path"
                 ],
                 "properties": {
                     "title": {
@@ -112,7 +112,7 @@
                     "type": {
                         "const": "edit"
                     },
-                    "target": {
+                    "path": {
                         "type": "string"
                     },
                     "reload": {
