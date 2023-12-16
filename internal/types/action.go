@@ -27,9 +27,8 @@ type Action struct {
 }
 
 type Param struct {
-	Value    any  `json:"value,omitempty"`
-	Default  any  `json:"default,omitempty"`
-	Optional bool `json:"optional,omitempty"`
+	Value   any `json:"value,omitempty"`
+	Default any `json:"default,omitempty"`
 }
 
 func (p *Param) UnmarshalJSON(bts []byte) error {
@@ -58,7 +57,6 @@ func (p *Param) UnmarshalJSON(bts []byte) error {
 
 	if err := json.Unmarshal(bts, &param); err == nil {
 		p.Default = param.Default
-		p.Optional = param.Optional
 		return nil
 	}
 
@@ -74,8 +72,7 @@ func (p Param) MarshalJSON() ([]byte, error) {
 		Default  any  `json:"default,omitempty"`
 		Required bool `json:"required,omitempty"`
 	}{
-		Default:  p.Default,
-		Required: p.Optional,
+		Default: p.Default,
 	})
 }
 

@@ -92,10 +92,6 @@ func FindMissingInputs(inputs []types.Input, params map[string]types.Param) []ty
 			input.Default = param.Default
 		}
 
-		if param.Optional {
-			input.Optional = true
-		}
-
 		missing = append(missing, input)
 	}
 
