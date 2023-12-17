@@ -17,9 +17,8 @@ func NewCmdShell() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "shell",
-		Short:   "Open a shell",
+		Short:   "Run a file/command in a integrated shell",
 		GroupID: CommandGroupCore,
-		Hidden:  true,
 		Args:    cobra.ArbitraryArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 && flags.Command != "" {
