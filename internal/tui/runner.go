@@ -112,7 +112,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				break
 			}
 			return c, PopPageCmd
-		case "ctrl+e":
+		case "ctrl+s":
 			editCmd := exec.Command("sunbeam", "edit", c.extension.Entrypoint)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {

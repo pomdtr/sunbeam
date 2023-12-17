@@ -109,20 +109,6 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			if c.form != nil {
 				break
 			}
-
-			shellCmd := exec.Command(utils.FindShell(), "-li")
-			return c, tea.ExecProcess(shellCmd, func(err error) tea.Msg {
-				termenv.DefaultOutput().SetWindowTitle(c.title)
-				if err != nil {
-					return err
-				}
-
-				return c.list.Focus()
-			})
-		case "ctrl+e":
-			if c.form != nil {
-				break
-			}
 			editCmd := exec.Command("sunbeam", "edit", config.Path)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
