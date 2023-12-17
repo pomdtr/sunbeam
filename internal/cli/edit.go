@@ -1,15 +1,18 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
+	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/spf13/cobra"
+	"mvdan.cc/sh/v3/interp"
+	"mvdan.cc/sh/v3/syntax"
 )
 
 func NewCmdEdit() *cobra.Command {
@@ -35,19 +38,11 @@ func NewCmdEdit() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 1 {
-				editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), args[0]))
-				editCmd.Stdin = os.Stdin
-				editCmd.Stdout = os.Stdout
-				editCmd.Stderr = os.Stderr
-				return editCmd.Run()
+				return utils.RunCommand(fmt.Sprintf("%s %s", utils.FindEditor(), args[0]), "")
 			}
 
 			if flags.config {
-				editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", utils.FindEditor(), config.Path))
-				editCmd.Stdin = os.Stdin
-				editCmd.Stdout = os.Stdout
-				editCmd.Stderr = os.Stderr
-				return editCmd.Run()
+				return utils.RunCommand(fmt.Sprintf("%s %s", utils.FindEditor(), config.Path), "")
 			}
 
 			var pattern string
@@ -63,6 +58,7 @@ func NewCmdEdit() *cobra.Command {
 			}
 			defer os.Remove(tempfile.Name())
 
+			// If stdin is not a terminal, copy stdin to tempfile
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
 				f, err := os.OpenFile(tempfile.Name(), os.O_RDWR, 0644)
 				if err != nil {
@@ -81,11 +77,19 @@ func NewCmdEdit() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			editor := utils.FindEditor()
-			editCmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", editor, tempfile.Name()))
-			editCmd.Stdin = tty
-			editCmd.Stdout = os.Stderr
-			if err := editCmd.Run(); err != nil {
+			file, err := syntax.NewParser().Parse(strings.NewReader(fmt.Sprintf("%s %s", utils.FindEditor(), tempfile.Name())), "")
+			if err != nil {
+				fmt.Printf("Error parsing command: %v\n", err)
+			}
+
+			// Create a shell interpreter
+			sh, err := interp.New(interp.StdIO(tty, os.Stderr, nil))
+			if err != nil {
+				fmt.Printf("Error creating shell: %v\n", err)
+			}
+
+			// Create a shell interpreter
+			if err := sh.Run(context.Background(), file); err != nil {
 				return err
 			}
 
