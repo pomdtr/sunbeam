@@ -89,7 +89,10 @@ func FindMissingInputs(inputs []sunbeam.Input, params map[string]sunbeam.Param) 
 		}
 
 		if param.Default != nil {
-			input.SetDefault(param.Default)
+			if err := input.SetDefault(param.Default); err != nil {
+				missing = append(missing, input)
+				continue
+			}
 		}
 
 		missing = append(missing, input)

@@ -325,7 +325,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			inputs := make([]sunbeam.Input, 0)
 			for _, input := range extension.Manifest.Preferences {
 				if preference := extensionConfig.Preferences[input.Name]; preference != nil {
-					input.SetDefault(preference)
+					if err := input.SetDefault(preference); err != nil {
+						return c, c.SetError(err)
+					}
 				}
 				input.Optional = false
 				inputs = append(inputs, input)

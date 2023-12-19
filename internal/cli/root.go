@@ -316,7 +316,7 @@ func extensionListItems(alias string, extension extensions.Extension, extensionC
 				Title: "View Source",
 				Key:   "c",
 				Type:  sunbeam.ActionTypeExec,
-				Exec:  &sunbeam.ExecAction{Command: fmt.Sprintf("curl %s | %s", extensionConfig.Origin, utils.FindPager())},
+				Exec:  &sunbeam.ExecAction{Command: fmt.Sprintf("curl %s | %s", extensionConfig.Origin, utils.FindPager()), Interactive: true},
 			})
 		}
 
