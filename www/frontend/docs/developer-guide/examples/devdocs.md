@@ -108,10 +108,11 @@ if [ "$COMMAND" = "search-docsets" ]; then
       accessories: [ .slug ],
       actions: [
         {
-            type: "open",
             title: "Open in Browser",
-            url: "https://devdocs.io/\(.slug)",
-            exit: true
+            type: "open",
+            open: {
+              url: "https://devdocs.io/\(.slug)",
+            }
         }
       ]
     })
@@ -178,15 +179,17 @@ elif [ "$COMMAND" = "search-entries" ]; then
                 {
                     title: "Open in Browser",
                     type: "open",
-                    url: "https://devdocs.io/\($docset)/\(.path)",
-                    exit: true
+                    open: {
+                      url: "https://devdocs.io/\($docset)/\(.path)",
+                    }
                 },
                 {
                     type: "copy",
                     title: "Copy URL",
                     key: "c",
-                    text: "https://devdocs.io/\($docset)/\(.path)",
-                    exit: true
+                    copy: {
+                      text: "https://devdocs.io/\($docset)/\(.path)",
+                    }
                 }
             ]
         })

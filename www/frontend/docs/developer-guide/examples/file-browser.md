@@ -20,7 +20,9 @@ manifest = {
             "label": "Show Hidden Files",
             "type": "checkbox",
             "optional": True,
-            "default": False,
+            "checkbox": {
+                "default": False,
+            }
         }
     ],
     "commands": [
@@ -120,10 +122,12 @@ if payload["command"] == "ls":
                 {
                     "title": "Browse",
                     "type": "run",
-                    "command": "ls",
-                    "params": {
-                        "dir": str(file.absolute()),
-                    },
+                    "run": {
+                        "command": "ls",
+                        "params": {
+                            "dir": str(file.absolute()),
+                        },
+                    }
                 }
             )
         item["actions"].extend(
@@ -132,8 +136,9 @@ if payload["command"] == "ls":
                     "title": "Open",
                     "key": "o",
                     "type": "open",
-                    "path": str(file.absolute()),
-                    "exit": True,
+                    "open": {
+                        "path": str(file.absolute()),
+                    }
                 },
                 {
                     "title": "Show Hidden Files"
@@ -141,10 +146,12 @@ if payload["command"] == "ls":
                     else "Hide Hidden Files",
                     "key": "h",
                     "type": "reload",
-                    "params": {
-                        "show-hidden": not show_hidden,
-                        "dir": str(root.absolute()),
-                    },
+                    "reload": {
+                        "params": {
+                            "show-hidden": not show_hidden,
+                            "dir": str(root.absolute()),
+                        },
+                    }
                 },
             ]
         )

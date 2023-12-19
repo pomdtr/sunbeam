@@ -1,15 +1,28 @@
 # Input
 
+## Common Fields
+
+```json
+{
+    "label": "Label", // required
+    "name": "name", // required
+    "type": "text", // required
+    "optional": true // optional
+}
+```
+
 ## Text
 
 ```json
 {
     "type": "text", // required
     "name": "message", // required
-    "title": "title", // required
-    "default": "Hi",
+    "label": "title", // required
     "optional": true,
-    "placeholder": "Enter your title",
+    "text": {
+        "placeholder": "Enter your title",
+        "default": "Hi",
+    }
 }
 ```
 
@@ -19,9 +32,11 @@
 {
     "type": "password", // required
     "name": "password", // required
-    "title": "Password", // required
+    "label": "Password", // required
     "optional": true,
-    "placeholder": "Enter your password",
+    "password": {
+        "placeholder": "Enter your password",
+    }
 }
 ```
 
@@ -31,10 +46,12 @@
 {
     "type": "textarea", // required
     "name": "message", // required
-    "title": "Message", // required
-    "default": "Hello World",
+    "label": "Message", // required
     "optional": true,
-    "placeholder": "Enter your message",
+    "textarea": {
+        "placeholder": "Enter your message",
+        "default": "Hello World"
+    }
 }
 ```
 
@@ -44,10 +61,12 @@
 {
     "type": "number", // required
     "name": "age", // required
-    "title": "Age", // required
-    "default": 18,
+    "label": "Age", // required
     "optional": true,
-    "placeholder": "Enter your age",
+    "number": {
+        "placeholder": "Enter your age",
+        "default": 18,
+    }
 }
 ```
 
@@ -57,8 +76,9 @@
 {
     "type": "checkbox", // required
     "name": "hidden", // required
-    "title": "Hidden",
     "label": "Show hidden entries", // required
-    "default": false
+    "checkbox": {
+        "default": false
+    }
 }
 ```

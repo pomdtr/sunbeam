@@ -12,11 +12,13 @@ Copy text to the clipboard.
     "key": "c",
     // the type of the action (required)
     "type": "copy",
-    // the text to copy (required)
-    "text": "hello world",
-    // whether to exit sunbeam after copying the text (optional)
-    // if not specified, sunbeam will not exit
-    "exit": true
+    "copy": {
+        // the text to copy (required)
+        "text": "hello world",
+        // whether to exit sunbeam after copying the text (optional)
+        // if not specified, sunbeam will not exit
+        "exit": true
+    }
 }
 ```
 
@@ -34,8 +36,10 @@ Open a url or a file with the default app or a specific app.
     // the title of the action (required)
     "type": "open",
     // the url or path to open (required)
-    "url": "https://pomdtr.github.io/sunbeam",
-    "path": "~/.config/sunbeam/sunbeam.json",
+    "open": { // only one of url or path can be specified
+        "url": "https://pomdtr.github.io/sunbeam", // open a url
+        "path": "~/.config/sunbeam/sunbeam.json", // open a file
+    }
 }
 ```
 
@@ -51,10 +55,12 @@ Edit a file using the default editor.
     "key": "e",
     // the type of the action (required)
     "type": "edit",
-    "path": "~/.config/sunbeam/sunbeam.json",
-    // whether to exit sunbeam after editing the file (optional)
-    // if not specified, sunbeam will not exit
-    "exit": true
+    "edit": {
+        "path": "~/.config/sunbeam/sunbeam.json",
+        // whether to exit sunbeam after editing the file (optional)
+        // if not specified, sunbeam will not exit
+        "exit": true
+    }
 }
 ```
 
@@ -65,19 +71,22 @@ Run a custom command defined in the extension manifest.
 ```json
 {
     // the title of the action (required)
-    "tit // key must match the name of the param of the edit-readme commandle": "View Readme",
+    "title": "title", // key must match the name of the param of the edit-readme commandle": "View Readme",
     // the key to trigger the action (optional)
     "key": "v",
     // the type of the action (required)
     "type": "run",
-    // the command to run (must be defined in the extension manifest) (required)
-    "command": "edit-readme",
-    // the arguments to pass to the command (optional)
-    // you can either pass a string, number or boolean
-    "params": {
-        // key must match the name of the param of the edit-readme command
-        "full_name": "pomdtr/sunbeam"
-    },
+    "run" {
+        // the command to run (must be defined in the extension manifest) (required)
+        "command": "edit-readme",
+        // the arguments to pass to the command (optional)
+        // you can either pass a string, number or boolean
+        "params": {
+            // key must match the name of the param of the edit-readme command
+            "full_name": "pomdtr/sunbeam"
+        },
+        "reload": true // reload the current view after running the command (optional)
+    }
 }
 ```
 
@@ -94,8 +103,10 @@ Reload the current view.
     // the type of the action (required)
     "type": "reload",
     // override the current params (optional)
-    "params": {
-        "full_name": "pomdtr/sunbeam" // key must match the name of the param
+    "reload": {
+        "params": {
+            "full_name": "pomdtr/sunbeam" // key must match the name of the param
+        }
     }
 }
 ```

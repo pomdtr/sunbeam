@@ -15,7 +15,7 @@ const manifest = {
       name: "browse",
       title: "Show a feed",
       mode: "filter",
-      params: [{ name: "topic", title: "Topic", type: "text" }],
+      params: [{ name: "topic", label: "Topic", type: "text" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -78,7 +78,7 @@ const manifest = {
       name: "browse",
       title: "Show a feed",
       mode: "filter",
-      params: [{ name: "topic", title: "Topic", type: "text" }],
+      params: [{ name: "topic", label: "Topic", type: "text" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -88,7 +88,6 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-// here we pass the manifest type to the Payload type, so that the payload is correctly typed
 const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 if (payload.command == "browse") {
   const { topic } = payload.params;
@@ -110,21 +109,25 @@ if (payload.command == "browse") {
         {
           title: "Open in browser",
           type: "open",
-          url: item.link || "",
-          exit: true,
+          open: {
+            url: item.link || "",
+          },
         },
         {
           title: "Open Comments in Browser",
           type: "open",
-          url: item.guid || "",
-          exit: true,
+          open: {
+            url: item.guid || "",
+          },
         },
         {
           title: "Copy Link",
           type: "copy",
           key: "c",
-          text: item.link || "",
-          exit: true,
+          copy: {
+            text: item.link || "",
+            exit: true,
+          },
         },
       ],
     })),
