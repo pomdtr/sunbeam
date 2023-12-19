@@ -8,7 +8,7 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      title: "Access Token",
+      label: "Access Token",
       type: "text",
     },
   ],
@@ -17,7 +17,7 @@ const manifest = {
       title: "List Vals",
       name: "list",
       mode: "filter",
-      params: [{ name: "user", title: "User", optional: true, type: "text" }],
+      params: [{ name: "user", label: "User", optional: true, type: "text" }],
     },
     {
       title: "Search Vals",
@@ -29,14 +29,14 @@ const manifest = {
       name: "edit",
       hidden: true,
       mode: "tty",
-      params: [{ name: "id", title: "Val ID", type: "text" }],
+      params: [{ name: "id", label: "Val ID", type: "text" }],
     },
     {
       title: "View Readme",
       name: "readme",
       hidden: true,
       mode: "detail",
-      params: [{ name: "id", title: "Val ID", type: "text" }],
+      params: [{ name: "id", label: "Val ID", type: "text" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -173,45 +173,65 @@ function valToListItem(val: any): sunbeam.ListItem {
       {
         title: "Open in Browser",
         type: "open",
-        url: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
+        open: {
+          url: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
+        },
       },
       {
         title: "Edit Val",
-        type: "run",
-        reload: true,
-        command: "edit",
         key: "e",
-        params: {
-          id: val.id,
+        type: "run",
+        run: {
+          command: "edit",
+          params: {
+            id: val.id,
+          },
+          reload: true,
         },
       },
       {
         title: "Open Web Endpoint",
         type: "open",
-        url: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`,
+        open: {
+          url: `https://${val.author.username.slice(1)}-${
+            val.name
+          }.web.val.run`,
+        },
       },
       {
         title: "Copy URL",
         type: "copy",
-        text: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
+        copy: {
+          text: `https://val.town/v/${val.author.username.slice(1)}/${
+            val.name
+          }`,
+        },
       },
       {
         title: "Copy Web Endpoint",
         type: "copy",
-        text: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`,
+        copy: {
+          text: `https://${val.author.username.slice(1)}-${
+            val.name
+          }.web.val.run`,
+        },
       },
       {
         title: "Copy ID",
         type: "copy",
-        text: val.id,
+        copy: {
+          text: val.id,
+        },
       },
       {
         title: "View Readme",
-        type: "run",
-        command: "readme",
         key: "s",
-        params: {
-          id: val.id,
+        type: "run",
+        run: {
+          command: "readme",
+          params: {
+            id: val.id,
+          },
         },
       },
     ],

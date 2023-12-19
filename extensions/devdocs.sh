@@ -18,7 +18,7 @@ if [ $# -eq 0 ]; then
         title: "List Entries from Docset",
         mode: "filter",
         params: [
-          { name: "slug", title: "Slug", type: "text" }
+          { name: "slug", label: "Slug", type: "text" }
         ]
       }
     ]
@@ -37,9 +37,11 @@ if [ "$COMMAND" = "list-docsets" ]; then
         {
           title: "Browse entries",
           type: "run",
-          command: "list-entries",
-          params: {
-            slug: .slug
+          run: {
+            command: "list-entries",
+            params: {
+              slug: .slug
+            }
           }
         }
       ]
@@ -51,8 +53,8 @@ elif [ "$COMMAND" = "list-entries" ]; then
       title: .name,
       subtitle: .type,
       actions: [
-        {title: "Open in Browser", type: "open", url: "https://devdocs.io/\($slug)/\(.path)", exit: true},
-        {title: "Copy URL", key: "c", type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}
+        {title: "Open in Browser", type: "open", open: {url: "https://devdocs.io/\($slug)/\(.path)"}},
+        {title: "Copy URL", key: "c", type: "copy", copy: {text: "https://devdocs.io/\($slug)/\(.path)", exit: true}}
       ]
     }) | {  items: . }'
 fi

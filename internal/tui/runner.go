@@ -13,8 +13,8 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/schemas"
-	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 type Runner struct {
@@ -24,16 +24,16 @@ type Runner struct {
 	cancel        context.CancelFunc
 
 	extension extensions.Extension
-	command   types.CommandSpec
-	input     types.Payload
+	command   sunbeam.CommandSpec
+	input     sunbeam.Payload
 }
 
-func NewRunner(extension extensions.Extension, input types.Payload) *Runner {
+func NewRunner(extension extensions.Extension, input sunbeam.Payload) *Runner {
 	var embed Page
 	command, ok := extension.Command(input.Command)
 	if ok {
 		switch command.Mode {
-		case types.CommandModeSearch, types.CommandModeFilter:
+		case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter:
 			list := NewList()
 			list.SetEmptyText("Loading...")
 			if input.Query != "" {
@@ -41,7 +41,7 @@ func NewRunner(extension extensions.Extension, input types.Payload) *Runner {
 			}
 
 			embed = list
-		case types.CommandModeDetail:
+		case sunbeam.CommandModeDetail:
 			embed = NewDetail("")
 		default:
 			embed = NewErrorPage(fmt.Errorf("invalid view type"))
@@ -125,9 +125,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 				c.extension = extension
 
-				return types.Action{
-					Type: types.ActionTypeReload,
-				}
+				return ReloadMsg{}
 			})
 		case "ctrl+r":
 			return c, func() tea.Msg {
@@ -137,50 +135,51 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 				c.extension.Manifest = manifest
 
-				return types.Action{
-					Type: types.ActionTypeReload,
-				}
+				return ReloadMsg{}
 			}
 		}
+	case ReloadMsg:
+		return c, c.Reload()
 	case Page:
 		c.embed = msg
 		c.embed.SetSize(c.width, c.height)
 		return c, c.embed.Init()
-	case types.Action:
+	case sunbeam.Action:
 		switch msg.Type {
-		case types.ActionTypeRun:
-			command, ok := c.extension.Command(msg.Command)
+		case sunbeam.ActionTypeRun:
+			command, ok := c.extension.Command(msg.Run.Command)
 			if !ok {
-				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Command))
+				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Run.Command))
 				c.embed.SetSize(c.width, c.height)
 				return c, c.embed.Init()
 			}
 
-			missing := FindMissingInputs(command.Params, msg.Params)
+			missing := FindMissingInputs(command.Params, msg.Run.Params)
 			for _, param := range missing {
 				if param.Optional {
 					continue
 				}
 
 				c.form = NewForm(func(values map[string]any) tea.Msg {
-					params := make(map[string]types.Param)
-					for k, v := range msg.Params {
+					params := make(map[string]sunbeam.Param)
+					for k, v := range msg.Run.Params {
 						params[k] = v
 					}
 
 					for k, v := range values {
-						params[k] = types.Param{
+						params[k] = sunbeam.Param{
 							Value: v,
 						}
 					}
 
-					return types.Action{
-						Title:   msg.Title,
-						Type:    types.ActionTypeRun,
-						Command: msg.Command,
-						Params:  params,
-						Exit:    msg.Exit,
-						Reload:  msg.Reload,
+					props := msg.Run
+					props.Params = params
+
+					return sunbeam.Action{
+						Title:  msg.Title,
+						Type:   sunbeam.ActionTypeRun,
+						Run:    props,
+						Reload: msg.Reload,
 					}
 				}, missing...)
 
@@ -189,22 +188,22 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			c.form = nil
 
-			input := types.Payload{
-				Command:     msg.Command,
+			input := sunbeam.Payload{
+				Command:     msg.Run.Command,
 				Preferences: c.input.Preferences,
 				Params:      make(map[string]any),
 			}
 
-			for k, v := range msg.Params {
+			for k, v := range msg.Run.Params {
 				input.Params[k] = v.Value
 			}
 
 			switch command.Mode {
-			case types.CommandModeSearch, types.CommandModeFilter, types.CommandModeDetail:
+			case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
 				runner := NewRunner(c.extension, input)
 
 				return c, PushPageCmd(runner)
-			case types.CommandModeSilent:
+			case sunbeam.CommandModeSilent:
 				return c, func() tea.Msg {
 					_, err := c.extension.Output(input)
 
@@ -212,19 +211,17 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return PushPageMsg{NewErrorPage(err)}
 					}
 
-					if msg.Reload {
-						return types.Action{
-							Type: types.ActionTypeReload,
-						}
+					if msg.Run.Reload {
+						return ReloadMsg{}
 					}
 
-					if msg.Exit {
+					if msg.Run.Exit {
 						return ExitMsg{}
 					}
 
 					return nil
 				}
-			case types.CommandModeTTY:
+			case sunbeam.CommandModeTTY:
 				cmd, err := c.extension.Cmd(input)
 				if err != nil {
 					c.embed = NewErrorPage(err)
@@ -237,14 +234,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return PushPageMsg{NewErrorPage(err)}
 					}
 
-					if msg.Reload {
+					if msg.Run.Reload {
 						c.embed.Focus()
-						return types.Action{
-							Type: types.ActionTypeReload,
-						}
+						return ReloadMsg{}
 					}
 
-					if msg.Exit {
+					if msg.Run.Exit {
 						return ExitMsg{}
 					}
 
@@ -252,46 +247,46 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return c.embed.Focus()
 				})
 			}
-		case types.ActionTypeEdit:
-			editCmd := exec.Command("sunbeam", "edit", msg.Path)
+		case sunbeam.ActionTypeEdit:
+			editCmd := exec.Command("sunbeam", "edit", msg.Edit.Path)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
 				}
 
-				if msg.Reload {
+				if msg.Edit.Reload {
 					c.embed.Focus()
 					return c.Reload()
 				}
 
-				if msg.Exit {
+				if msg.Edit.Exit {
 					return ExitMsg{}
 				}
 
 				return c.embed.Focus()
 			})
-		case types.ActionTypeCopy:
+		case sunbeam.ActionTypeCopy:
 			return c, func() tea.Msg {
-				if err := clipboard.WriteAll(msg.Text); err != nil {
+				if err := clipboard.WriteAll(msg.Copy.Text); err != nil {
 					return err
 				}
 
-				if msg.Exit {
+				if msg.Copy.Exit {
 					return ExitMsg{}
 				}
 
 				return ShowNotificationMsg{"Copied!"}
 			}
-		case types.ActionTypeOpen:
+		case sunbeam.ActionTypeOpen:
 			return c, func() tea.Msg {
-				if msg.Url != "" {
-					if err := utils.Open(msg.Url); err != nil {
+				if msg.Open.Url != "" {
+					if err := utils.Open(msg.Open.Url); err != nil {
 						return err
 					}
 
 					return ExitMsg{}
-				} else if msg.Path != "" {
-					if err := utils.Open(fmt.Sprintf("file://%s", msg.Path)); err != nil {
+				} else if msg.Open.Path != "" {
+					if err := utils.Open(fmt.Sprintf("file://%s", msg.Open.Path)); err != nil {
 						return err
 					}
 
@@ -300,19 +295,20 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return fmt.Errorf("invalid target")
 				}
 			}
-		case types.ActionTypeReload:
+		case sunbeam.ActionTypeExit:
+			return c, ExitCmd
+		case sunbeam.ActionTypeReload:
 			if c.input.Params == nil {
 				c.input.Params = make(map[string]any)
 			}
 
-			for k, v := range msg.Params {
+			for k, v := range msg.Reload.Params {
 				c.input.Params[k] = v
 			}
 
 			return c, c.Reload()
-		case types.ActionTypeExit:
-			return c, ExitCmd
 		}
+
 	case error:
 		c.embed = NewErrorPage(msg)
 		c.embed.SetSize(c.width, c.height)
@@ -367,12 +363,12 @@ func (c *Runner) Reload() tea.Cmd {
 		}
 
 		switch c.command.Mode {
-		case types.CommandModeDetail:
+		case sunbeam.CommandModeDetail:
 			if err := schemas.ValidateDetail(output); err != nil {
 				return err
 			}
 
-			var detail types.Detail
+			var detail sunbeam.Detail
 			if err := json.Unmarshal(output, &detail); err != nil {
 				return err
 			}
@@ -385,12 +381,12 @@ func (c *Runner) Reload() tea.Cmd {
 
 			page := NewDetail(detail.Text, detail.Actions...)
 			return page
-		case types.CommandModeSearch, types.CommandModeFilter:
+		case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter:
 			if err := schemas.ValidateList(output); err != nil {
 				return err
 			}
 
-			var list types.List
+			var list sunbeam.List
 			if err := json.Unmarshal(output, &list); err != nil {
 				return err
 			}
@@ -404,7 +400,7 @@ func (c *Runner) Reload() tea.Cmd {
 				page.SetActions(list.Actions...)
 				page.SetShowDetail(list.ShowDetail)
 
-				if c.command.Mode == types.CommandModeSearch {
+				if c.command.Mode == sunbeam.CommandModeSearch {
 					page.OnQueryChange = func(query string) tea.Cmd {
 						c.input.Query = query
 						return c.Reload()
@@ -419,7 +415,7 @@ func (c *Runner) Reload() tea.Cmd {
 			page.SetEmptyText(list.EmptyText)
 			page.SetActions(list.Actions...)
 			page.SetShowDetail(list.ShowDetail)
-			if c.command.Mode == types.CommandModeSearch {
+			if c.command.Mode == sunbeam.CommandModeSearch {
 				page.OnQueryChange = func(query string) tea.Cmd {
 					c.input.Query = query
 					return c.Reload()

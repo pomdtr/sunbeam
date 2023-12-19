@@ -34,24 +34,30 @@ if (payload.command == "search") {
       {
         title: "Open in Browser",
         type: "open",
-        url: new URL(
-          el.querySelector("a.term")?.attributes["href"] || "",
-          baseUrl
-        ).toString(),
+        open: {
+          url: new URL(
+            el.querySelector("a.term")?.attributes["href"] || "",
+            baseUrl
+          ).toString(),
+        },
       },
       {
         title: "Copy Full Path",
         key: "c",
-        exit: true,
         type: "copy",
-        text: el.querySelector("code")?.text || "",
+        copy: {
+          text: el.querySelector("code")?.text || "",
+          exit: true,
+        },
       },
       {
         title: "Copy Name",
         key: "n",
-        exit: true,
         type: "copy",
-        text: el.querySelector("code")?.text.split(".").slice(-1)[0] || "",
+        copy: {
+          text: el.querySelector("code")?.text.split(".").slice(-1)[0] || "",
+          exit: true,
+        },
       },
     ],
   }));

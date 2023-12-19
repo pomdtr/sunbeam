@@ -39,13 +39,17 @@ for (const pkg of packages) {
       {
         type: "open",
         title: "Open Package",
-        url: pkg.package.links.npm,
+        open: {
+          url: pkg.package.links.npm,
+        },
       },
       {
         type: "copy",
         title: "Open Package Name",
-        text: pkg.package.name,
-        exit: true,
+        copy: {
+          text: pkg.package.name,
+          exit: true,
+        },
       },
     ],
   };

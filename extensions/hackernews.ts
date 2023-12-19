@@ -12,7 +12,7 @@ const manifest = {
       name: "browse",
       title: "Show a feed",
       mode: "filter",
-      params: [{ name: "topic", title: "Topic", type: "text" }],
+      params: [{ name: "topic", label: "Topic", type: "text" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -43,21 +43,25 @@ if (payload.command == "browse") {
         {
           title: "Open in browser",
           type: "open",
-          url: item.link || "",
-          exit: true,
+          open: {
+            url: item.link || "",
+          },
         },
         {
           title: "Open Comments in Browser",
           type: "open",
-          url: item.guid || "",
-          exit: true,
+          open: {
+            url: item.guid || "",
+          },
         },
         {
           title: "Copy Link",
           type: "copy",
           key: "c",
-          text: item.link || "",
-          exit: true,
+          copy: {
+            text: item.link || "",
+            exit: true,
+          },
         },
       ],
     })),

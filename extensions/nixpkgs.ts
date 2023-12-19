@@ -139,21 +139,27 @@ async function search(query: string): Promise<sunbeam.ListItem[]> {
       {
         type: "open",
         title: "Open in NixOS Search",
-        url: `https://search.nixos.org/packages?query=${encodeURIComponent(
-          query
-        )}&show=${encodeURIComponent(hit._source.package_attr_name)}`,
+        open: {
+          url: `https://search.nixos.org/packages?query=${encodeURIComponent(
+            query
+          )}&show=${encodeURIComponent(hit._source.package_attr_name)}`,
+        },
       },
       {
         type: "open",
         title: "Open Homepage",
-        url: hit._source.package_homepage[0],
+        open: {
+          url: hit._source.package_homepage[0],
+        },
       },
       {
         type: "copy",
         title: "Copy Package Name",
         key: "c",
-        exit: true,
-        text: hit._source.package_attr_name,
+        copy: {
+          text: hit._source.package_attr_name,
+          exit: true,
+        },
       },
     ],
   }));

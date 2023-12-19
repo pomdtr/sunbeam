@@ -7,7 +7,7 @@ if [ $# -eq 0 ]; then
         preferences: [
             {
                 name: "session",
-                title: "Bitwarden Session",
+                label: "Bitwarden Session",
                 type: "text"
             }
         ],
@@ -37,15 +37,19 @@ if [ "$COMMAND" = "list-passwords" ]; then
             {
                 title: "Copy Password",
                 type: "copy",
-                text: (.login.password // ""),
-                exit: true
+                copy: {
+                    text: (.login.password // ""),
+                    exit: true
+                }
             },
             {
                 title: "Copy Username",
                 key: "l",
                 type: "copy",
-                text: (.login.username // ""),
-                exit: true
+                copy: {
+                    text: (.login.username // ""),
+                    exit: true
+                }
             }
         ]
     }) | { items: .}'

@@ -1,4 +1,4 @@
-package types
+package sunbeam
 
 type List struct {
 	Items      []ListItem `json:"items,omitempty"`

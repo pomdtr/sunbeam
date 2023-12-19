@@ -10,7 +10,7 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      title: "GitHub Personal Access Token",
+      label: "GitHub Personal Access Token",
       type: "text",
     },
   ],
@@ -27,22 +27,28 @@ const manifest = {
       params: [
         {
           name: "filename",
-          title: "Filename",
-          placeholder: "gist.md",
+          label: "Filename",
           type: "text",
+          text: {
+            placeholder: "gist.md",
+          },
         },
         {
           name: "description",
-          title: "Description",
+          label: "Description",
           optional: true,
-          placeholder: "Gist Description",
           type: "text",
+          text: {
+            placeholder: "Gist Description",
+          },
         },
         {
           name: "public",
-          title: "Public",
+          label: "Public",
           type: "checkbox",
-          label: "Whether the gist is public or not.",
+          checkbox: {
+            label: "Whether the gist is public or not.",
+          },
         },
       ],
     },
@@ -51,7 +57,7 @@ const manifest = {
       title: "Browse Gist Files",
       hidden: true,
       mode: "filter",
-      params: [{ name: "id", title: "Gist ID", type: "text" }],
+      params: [{ name: "id", label: "Gist ID", type: "text" }],
     },
     {
       name: "view",
@@ -59,8 +65,8 @@ const manifest = {
       hidden: true,
       mode: "detail",
       params: [
-        { name: "id", title: "Gist ID", type: "text" },
-        { name: "filename", title: "Filename", type: "text" },
+        { name: "id", label: "Gist ID", type: "text" },
+        { name: "filename", label: "Filename", type: "text" },
       ],
     },
     {
@@ -69,8 +75,8 @@ const manifest = {
       hidden: true,
       mode: "tty",
       params: [
-        { name: "id", title: "Gist ID", type: "text" },
-        { name: "filename", title: "Filename", type: "text" },
+        { name: "id", label: "Gist ID", type: "text" },
+        { name: "filename", label: "Filename", type: "text" },
       ],
     },
     {
@@ -78,7 +84,7 @@ const manifest = {
       hidden: true,
       title: "Delete Gist",
       mode: "silent",
-      params: [{ name: "id", title: "Gist ID", type: "text" }],
+      params: [{ name: "id", label: "Gist ID", type: "text" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -124,47 +130,58 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
               ? {
                   type: "run",
                   title: "Browse Files",
-                  command: "browse",
-                  params: {
-                    id: gist.id,
+                  run: {
+                    command: "browse",
+                    params: {
+                      id: gist.id,
+                    },
                   },
                 }
               : {
                   type: "run",
                   title: "View File",
-                  command: "view",
-                  params: {
-                    id: gist.id,
-                    filename: Object.keys(gist.files)[0],
+                  run: {
+                    command: "view",
+                    params: {
+                      id: gist.id,
+                      filename: Object.keys(gist.files)[0],
+                    },
                   },
                 },
             {
               type: "open",
               title: "Open in Browser",
-              url: gist.html_url,
-              exit: true,
+              open: {
+                url: gist.html_url,
+              },
             },
             {
               type: "copy",
               title: "Copy URL",
               key: "c",
-              text: gist.html_url,
-              exit: true,
+              copy: {
+                text: gist.html_url,
+                exit: true,
+              },
             },
             {
               title: "Create Gist",
               key: "n",
               type: "run",
-              command: "create",
+              run: {
+                command: "create",
+              },
             },
             {
               title: "Delete Gist",
               key: "d",
               type: "run",
-              command: "delete",
-              reload: true,
-              params: {
-                id: gist.id,
+              run: {
+                command: "delete",
+                reload: true,
+                params: {
+                  id: gist.id,
+                },
               },
             },
           ],
@@ -210,19 +227,23 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             {
               title: "View",
               type: "run",
-              command: "view",
-              params: {
-                id,
-                filename,
+              run: {
+                command: "view",
+                params: {
+                  id,
+                  filename,
+                },
               },
             },
             {
               title: "Edit",
               type: "run",
-              command: "edit",
-              params: {
-                id,
-                filename,
+              run: {
+                command: "edit",
+                params: {
+                  id,
+                  filename,
+                },
               },
             },
           ],
@@ -252,32 +273,39 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
           {
             title: "Edit File",
             type: "run",
-            command: "edit",
-            params: {
-              id,
-              filename,
+            run: {
+              command: "edit",
+              params: {
+                id,
+                filename,
+              },
+              reload: true,
             },
-            reload: true,
           },
           {
             title: "Copy Content",
             key: "c",
             type: "copy",
-            text: file.content,
-            exit: true,
+            copy: {
+              text: file.content,
+              exit: true,
+            },
           },
           {
             title: "Copy Raw URL",
             key: "r",
             type: "copy",
-            text: file.raw_url,
-            exit: true,
+            copy: {
+              text: file.raw_url,
+              exit: true,
+            },
           },
           {
             title: "Open in Browser",
             type: "open",
-            url: gist.html_url,
-            exit: true,
+            open: {
+              url: gist.html_url,
+            },
           },
         ],
       } as sunbeam.Detail;

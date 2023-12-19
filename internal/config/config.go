@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/pomdtr/sunbeam/internal/schemas"
-	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 var Path string
@@ -61,16 +61,17 @@ type ExtensionConfig struct {
 }
 
 type RootItem struct {
-	Title   string                 `json:"title"`
-	Command string                 `json:"command"`
-	Params  map[string]types.Param `json:"params,omitempty"`
+	Title   string                   `json:"title"`
+	Command string                   `json:"command"`
+	Params  map[string]sunbeam.Param `json:"params,omitempty"`
 }
 
 type Oneliner struct {
-	Title   string `json:"title"`
-	Command string `json:"command"`
-	Cwd     string `json:"cwd,omitempty"`
-	Exit    bool   `json:"exit,omitempty"`
+	Title       string `json:"title"`
+	Command     string `json:"command"`
+	Interactive bool   `json:"interactive,omitempty"`
+	Cwd         string `json:"cwd,omitempty"`
+	Exit        bool   `json:"exit,omitempty"`
 }
 
 func (cfg Config) Aliases() []string {

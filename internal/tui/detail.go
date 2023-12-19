@@ -13,8 +13,8 @@ import (
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
 	"github.com/muesli/termenv"
-	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 type Detail struct {
@@ -46,7 +46,7 @@ func AnsiStyle() ansi.StyleConfig {
 	return style
 }
 
-func NewDetail(text string, actions ...types.Action) *Detail {
+func NewDetail(text string, actions ...sunbeam.Action) *Detail {
 	viewport := viewport.New(0, 0)
 	viewport.Style = lipgloss.NewStyle()
 
@@ -56,7 +56,7 @@ func NewDetail(text string, actions ...types.Action) *Detail {
 		items = append(items, ListItem{
 			Title:    action.Title,
 			Subtitle: action.Key,
-			Actions:  []types.Action{action},
+			Actions:  []sunbeam.Action{action},
 		})
 	}
 

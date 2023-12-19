@@ -17,7 +17,7 @@ const manifest = {
       params: [
         {
           name: "ip",
-          title: "Device IP",
+          label: "Device IP",
           type: "text",
         },
       ],
@@ -53,23 +53,29 @@ if (payload.command == "list-devices") {
       {
         title: "SSH to Device",
         type: "run",
-        command: "ssh-to-device",
-        params: {
-          ip: device.TailscaleIPs[0],
+        run: {
+          command: "ssh-to-device",
+          params: {
+            ip: device.TailscaleIPs[0],
+          },
         },
       },
       {
         title: "Copy SSH Command",
         type: "copy",
-        text: `ssh ${device.TailscaleIPs[0]}`,
-        exit: true,
+        copy: {
+          text: `ssh ${device.TailscaleIPs[0]}`,
+          exit: true,
+        },
       },
       {
         title: "Copy IP",
-        type: "copy",
-        text: device.TailscaleIPs[0],
         key: "i",
-        exit: true,
+        type: "copy",
+        copy: {
+          text: device.TailscaleIPs[0],
+          exit: true,
+        },
       },
     ],
   }));

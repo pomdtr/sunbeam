@@ -9,6 +9,7 @@ export type Config = {
 export type Oneliner = {
   title: string;
   command: string;
+  interactive?: boolean;
   exit?: boolean;
   cwd?: string;
 };

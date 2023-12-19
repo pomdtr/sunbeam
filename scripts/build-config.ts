@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import { Config, ExtensionConfig } from "../sdk/config.ts";
+import { Config, ExtensionConfig } from "../pkg/deno/config.ts";
 import * as path from "https://deno.land/std@0.209.0/path/mod.ts";
 
 const dirname = new URL(".", import.meta.url).pathname;

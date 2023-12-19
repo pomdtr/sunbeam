@@ -13,7 +13,7 @@ import (
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 	"github.com/spf13/cobra"
 )
 
@@ -52,7 +52,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 					return err
 				}
 
-				rootList := tui.NewRootList(extension.Manifest.Title, history, func() (config.Config, []types.ListItem, error) {
+				rootList := tui.NewRootList(extension.Manifest.Title, history, func() (config.Config, []sunbeam.ListItem, error) {
 					cfg, err := config.Load(config.Path)
 					if err != nil {
 						return config.Config{}, nil, err
@@ -65,7 +65,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 				return tui.Draw(rootList)
 			}
 
-			var input types.Payload
+			var input sunbeam.Payload
 			if err := json.Unmarshal(inputBytes, &input); err != nil {
 				return err
 			}
@@ -93,7 +93,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 	return rootCmd, nil
 }
 
-func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig, command types.CommandSpec) *cobra.Command {
+func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig, command sunbeam.CommandSpec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   command.Name,
 		Short: command.Title,
@@ -106,19 +106,19 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 				}
 
 				switch param.Type {
-				case types.InputText, types.InputTextArea, types.InputPassword:
+				case sunbeam.InputText, sunbeam.InputTextArea, sunbeam.InputPassword:
 					value, err := cmd.Flags().GetString(param.Name)
 					if err != nil {
 						return err
 					}
 					params[param.Name] = value
-				case types.InputCheckbox:
+				case sunbeam.InputCheckbox:
 					value, err := cmd.Flags().GetBool(param.Name)
 					if err != nil {
 						return err
 					}
 					params[param.Name] = value
-				case types.InputNumber:
+				case sunbeam.InputNumber:
 					value, err := cmd.Flags().GetInt(param.Name)
 					if err != nil {
 						return err
@@ -141,7 +141,7 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 				preferences[name] = value
 			}
 
-			input := types.Payload{
+			input := sunbeam.Payload{
 				Command:     command.Name,
 				Preferences: preferences,
 				Params:      params,
@@ -162,12 +162,12 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 
 	for _, input := range command.Params {
 		switch input.Type {
-		case types.InputText, types.InputTextArea, types.InputPassword:
-			cmd.Flags().String(input.Name, "", input.Title)
-		case types.InputCheckbox:
-			cmd.Flags().Bool(input.Name, false, input.Title)
-		case types.InputNumber:
-			cmd.Flags().Int(input.Name, 0, input.Title)
+		case sunbeam.InputText, sunbeam.InputTextArea, sunbeam.InputPassword:
+			cmd.Flags().String(input.Name, "", input.Label)
+		case sunbeam.InputCheckbox:
+			cmd.Flags().Bool(input.Name, false, input.Label)
+		case sunbeam.InputNumber:
+			cmd.Flags().Int(input.Name, 0, input.Label)
 		}
 
 		if !input.Optional {
@@ -178,7 +178,7 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 	return cmd
 }
 
-func runExtension(extension extensions.Extension, input types.Payload) error {
+func runExtension(extension extensions.Extension, input sunbeam.Payload) error {
 	command, ok := extension.Command(input.Command)
 	if !ok {
 		return fmt.Errorf("command %s not found", input.Command)
@@ -198,12 +198,12 @@ func runExtension(extension extensions.Extension, input types.Payload) error {
 	}
 
 	switch command.Mode {
-	case types.CommandModeSearch, types.CommandModeFilter, types.CommandModeDetail:
+	case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
 		runner := tui.NewRunner(extension, input)
 		return tui.Draw(runner)
-	case types.CommandModeSilent:
+	case sunbeam.CommandModeSilent:
 		return extension.Run(input)
-	case types.CommandModeTTY:
+	case sunbeam.CommandModeTTY:
 		cmd, err := extension.Cmd(input)
 		if err != nil {
 			return err

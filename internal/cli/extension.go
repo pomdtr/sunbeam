@@ -16,7 +16,7 @@ import (
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -426,9 +426,11 @@ func NewCmdExtensionConfigure(cfg config.Config) *cobra.Command {
 				return fmt.Errorf("extension %s has no preferences", args[0])
 			}
 
-			var inputs []types.Input
+			var inputs []sunbeam.Input
 			for _, input := range extension.Manifest.Preferences {
-				input.Default = extensionConfig.Preferences[input.Name]
+				if preference := extensionConfig.Preferences[input.Name]; preference != nil {
+					input.SetDefault(preference)
+				}
 				input.Optional = false
 				inputs = append(inputs, input)
 			}

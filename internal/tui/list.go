@@ -13,8 +13,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
-	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 type List struct {
@@ -32,7 +32,7 @@ type List struct {
 	isLoading  bool
 
 	focus         ListFocus
-	Actions       []types.Action
+	Actions       []sunbeam.Action
 	OnQueryChange func(string) tea.Cmd
 	OnSelect      func(string) tea.Cmd
 }
@@ -46,7 +46,7 @@ var (
 
 type QueryChangeMsg string
 
-func NewList(items ...types.ListItem) *List {
+func NewList(items ...sunbeam.ListItem) *List {
 	filter := NewFilter()
 	filter.DrawLines = true
 
@@ -83,7 +83,7 @@ func (l *List) ResetSelection() {
 	}
 }
 
-func (c *List) updateViewport(detail types.ListItemDetail) {
+func (c *List) updateViewport(detail sunbeam.ListItemDetail) {
 	var content string
 
 	if detail.Markdown != "" {
@@ -118,7 +118,7 @@ func (c *List) updateViewport(detail types.ListItemDetail) {
 	c.viewport.SetContent(content)
 }
 
-func (l *List) SetActions(actions ...types.Action) {
+func (l *List) SetActions(actions ...sunbeam.Action) {
 	l.Actions = actions
 	if l.filter.Selection() == nil {
 		l.statusBar.SetActions(actions...)
@@ -216,17 +216,17 @@ func (c *List) SetSize(width, height int) {
 	}
 }
 
-func (c List) Selection() (types.ListItem, bool) {
+func (c List) Selection() (sunbeam.ListItem, bool) {
 	selection := c.filter.Selection()
 	if selection == nil {
-		return types.ListItem{}, false
+		return sunbeam.ListItem{}, false
 	}
 
 	item := selection.(ListItem)
-	return types.ListItem(item), true
+	return sunbeam.ListItem(item), true
 }
 
-func (c *List) SetItems(items ...types.ListItem) {
+func (c *List) SetItems(items ...sunbeam.ListItem) {
 	filterItems := make([]FilterItem, len(items))
 	for i, item := range items {
 		filterItems[i] = ListItem(item)
@@ -346,7 +346,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	if newSelection == nil {
 		c.statusBar.SetActions(c.Actions...)
 		if c.showDetail {
-			c.updateViewport(types.ListItemDetail{})
+			c.updateViewport(sunbeam.ListItemDetail{})
 		}
 	} else if oldSelection == nil || oldSelection.ID() != newSelection.ID() {
 		listItem := newSelection.(ListItem)

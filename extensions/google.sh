@@ -33,7 +33,7 @@ if [ "$COMMAND" = "search" ]; then
         items: map({
             title: .,
             actions: [
-                { title: "Search", type: "open", url: "https://www.google.com/search?q=\(.)", exit: true }
+                { title: "Search", type: "open", open: {url: "https://www.google.com/search?q=\(.)"} }
             ]
         })
     }'

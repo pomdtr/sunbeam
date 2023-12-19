@@ -5,27 +5,33 @@ type ActionProps = {
 
 export type CopyAction = {
   type: "copy";
-  text: string;
-  exit?: boolean;
+  copy: {
+    text: string;
+    exit?: boolean;
+  };
 } & ActionProps;
 
 export type OpenAction = {
   type: "open";
-} & ({ url: string } | { path: string }) &
-  ActionProps;
+  open: { url: string } | { path: string };
+} & ActionProps;
 
 export type EditAction = {
   type: "edit";
-  path: string;
-  exit?: boolean;
+  edit: {
+    path: string;
+    exit?: boolean;
+  };
 } & ActionProps;
 
 export type RunAction = {
   type: "run";
-  command: string;
-  params?: Record<string, Param>;
-  reload?: boolean;
-  exit?: boolean;
+  run: {
+    command: string;
+    params?: Record<string, Param>;
+    reload?: boolean;
+    exit?: boolean;
+  };
 } & ActionProps;
 
 export type Param =
@@ -36,8 +42,9 @@ export type Param =
 
 export type ReloadAction = {
   type: "reload";
-  command: string;
-  params?: Record<string, Param>;
+  reload: {
+    params?: Record<string, Param>;
+  };
 } & ActionProps;
 
 export type ExitAction = {

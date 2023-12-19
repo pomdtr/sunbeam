@@ -17,8 +17,8 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/schemas"
-	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 type ExtensionMap map[string]Extension
@@ -32,7 +32,7 @@ func (e ExtensionMap) List() []Extension {
 }
 
 type Extension struct {
-	Manifest   types.Manifest
+	Manifest   sunbeam.Manifest
 	Entrypoint string `json:"entrypoint"`
 }
 
@@ -51,17 +51,17 @@ const (
 	ExtensionTypeHttp  ExtensionType = "http"
 )
 
-func (e Extension) Command(name string) (types.CommandSpec, bool) {
+func (e Extension) Command(name string) (sunbeam.CommandSpec, bool) {
 	for _, command := range e.Manifest.Commands {
 		if command.Name == name {
 			return command, true
 		}
 	}
-	return types.CommandSpec{}, false
+	return sunbeam.CommandSpec{}, false
 }
 
-func (e Extension) RootCommands() []types.CommandSpec {
-	rootCommands := make([]types.CommandSpec, 0)
+func (e Extension) RootCommands() []sunbeam.CommandSpec {
+	rootCommands := make([]sunbeam.CommandSpec, 0)
 	for _, command := range e.Manifest.Commands {
 		if command.Hidden {
 			continue
@@ -73,12 +73,12 @@ func (e Extension) RootCommands() []types.CommandSpec {
 	return rootCommands
 }
 
-func (e Extension) Run(input types.Payload) error {
+func (e Extension) Run(input sunbeam.Payload) error {
 	_, err := e.Output(input)
 	return err
 }
 
-func (ext Extension) Output(input types.Payload) ([]byte, error) {
+func (ext Extension) Output(input sunbeam.Payload) ([]byte, error) {
 	cmd, err := ext.Cmd(input)
 	if err != nil {
 		return nil, err
@@ -94,11 +94,11 @@ func (ext Extension) Output(input types.Payload) ([]byte, error) {
 	}
 }
 
-func (e Extension) Cmd(input types.Payload) (*exec.Cmd, error) {
+func (e Extension) Cmd(input sunbeam.Payload) (*exec.Cmd, error) {
 	return e.CmdContext(context.Background(), input)
 }
 
-func (e Extension) CmdContext(ctx context.Context, input types.Payload) (*exec.Cmd, error) {
+func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec.Cmd, error) {
 	if input.Preferences == nil {
 		input.Preferences = make(map[string]any)
 	}
@@ -272,7 +272,7 @@ func LoadExtension(origin string) (Extension, error) {
 		return Extension{}, fmt.Errorf("failed to read manifest: %w", err)
 	}
 
-	var manifest types.Manifest
+	var manifest sunbeam.Manifest
 	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
 		return Extension{}, fmt.Errorf("failed to decode manifest: %w", err)
 	}
@@ -283,24 +283,24 @@ func LoadExtension(origin string) (Extension, error) {
 	}, nil
 }
 
-func cacheManifest(entrypoint string, manifestPath string) (types.Manifest, error) {
+func cacheManifest(entrypoint string, manifestPath string) (sunbeam.Manifest, error) {
 	manifest, err := ExtractManifest(entrypoint)
 	if err != nil {
-		return types.Manifest{}, fmt.Errorf("failed to extract manifest: %w", err)
+		return sunbeam.Manifest{}, fmt.Errorf("failed to extract manifest: %w", err)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(manifestPath), 0755); err != nil {
-		return types.Manifest{}, fmt.Errorf("failed to create directory: %w", err)
+		return sunbeam.Manifest{}, fmt.Errorf("failed to create directory: %w", err)
 	}
 
 	f, err := os.Create(manifestPath)
 	if err != nil {
-		return types.Manifest{}, fmt.Errorf("failed to create manifest: %w", err)
+		return sunbeam.Manifest{}, fmt.Errorf("failed to create manifest: %w", err)
 	}
 	defer f.Close()
 
 	if err := json.NewEncoder(f).Encode(manifest); err != nil {
-		return types.Manifest{}, fmt.Errorf("failed to write manifest: %w", err)
+		return sunbeam.Manifest{}, fmt.Errorf("failed to write manifest: %w", err)
 	}
 
 	return manifest, nil
@@ -345,14 +345,14 @@ func Upgrade(extensionConfig config.ExtensionConfig) error {
 	return nil
 }
 
-func ExtractManifest(entrypoint string) (types.Manifest, error) {
+func ExtractManifest(entrypoint string) (sunbeam.Manifest, error) {
 	entrypoint, err := filepath.Abs(entrypoint)
 	if err != nil {
-		return types.Manifest{}, err
+		return sunbeam.Manifest{}, err
 	}
 
 	if err := os.Chmod(entrypoint, 0755); err != nil {
-		return types.Manifest{}, err
+		return sunbeam.Manifest{}, err
 	}
 
 	cmd := exec.Command(entrypoint)
@@ -363,19 +363,19 @@ func ExtractManifest(entrypoint string) (types.Manifest, error) {
 	manifestBytes, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			return types.Manifest{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
+			return sunbeam.Manifest{}, fmt.Errorf("command failed: %s", stripansi.Strip(string(exitErr.Stderr)))
 		}
 
-		return types.Manifest{}, err
+		return sunbeam.Manifest{}, err
 	}
 
 	if err := schemas.ValidateManifest(manifestBytes); err != nil {
-		return types.Manifest{}, err
+		return sunbeam.Manifest{}, err
 	}
 
-	var manifest types.Manifest
+	var manifest sunbeam.Manifest
 	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
-		return types.Manifest{}, err
+		return sunbeam.Manifest{}, err
 	}
 
 	return manifest, nil

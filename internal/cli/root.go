@@ -14,8 +14,8 @@ import (
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/tui"
-	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -169,13 +169,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			return err
 		}
 
-		rootList := tui.NewRootList("Sunbeam", history, func() (config.Config, []types.ListItem, error) {
+		rootList := tui.NewRootList("Sunbeam", history, func() (config.Config, []sunbeam.ListItem, error) {
 			cfg, err := config.Load(config.Path)
 			if err != nil {
 				return config.Config{}, nil, err
 			}
 
-			var items []types.ListItem
+			var items []sunbeam.ListItem
 			items = append(items, onelinerListItems(cfg.Oneliners)...)
 
 			extensionMap := make(map[string]extensions.Extension)
@@ -232,26 +232,31 @@ func buildDoc(command *cobra.Command) (string, error) {
 	return out.String(), nil
 }
 
-func onelinerListItems(oneliners []config.Oneliner) []types.ListItem {
-	var items []types.ListItem
+func onelinerListItems(oneliners []config.Oneliner) []sunbeam.ListItem {
+	var items []sunbeam.ListItem
 	for _, oneliner := range oneliners {
-		item := types.ListItem{
+		item := sunbeam.ListItem{
 			Id:          fmt.Sprintf("oneliner - %s", oneliner.Title),
 			Title:       oneliner.Title,
 			Accessories: []string{"Oneliner"},
-			Actions: []types.Action{
+			Actions: []sunbeam.Action{
 				{
-					Title:   "Run",
-					Type:    types.ActionTypeExec,
-					Command: oneliner.Command,
-					Dir:     oneliner.Cwd,
-					Exit:    oneliner.Exit,
+					Title: "Run",
+					Type:  sunbeam.ActionTypeExec,
+					Exec: &sunbeam.ExecAction{
+						Command:     oneliner.Command,
+						Interactive: oneliner.Interactive,
+						Dir:         oneliner.Cwd,
+						Exit:        oneliner.Exit,
+					},
 				},
 				{
 					Title: "Copy Command",
 					Key:   "c",
-					Type:  types.ActionTypeCopy,
-					Text:  oneliner.Command,
+					Type:  sunbeam.ActionTypeCopy,
+					Copy: &sunbeam.CopyAction{
+						Text: oneliner.Command,
+					},
 				},
 			},
 		}
@@ -262,66 +267,65 @@ func onelinerListItems(oneliners []config.Oneliner) []types.ListItem {
 	return items
 }
 
-func extensionListItems(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig) []types.ListItem {
-	var items []types.ListItem
+func extensionListItems(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig) []sunbeam.ListItem {
+	var items []sunbeam.ListItem
 
 	for _, rootItem := range extensionConfig.Root {
-		items = append(items, types.ListItem{
+		items = append(items, sunbeam.ListItem{
 			Id:          fmt.Sprintf("%s - %s", alias, rootItem.Title),
 			Title:       rootItem.Title,
 			Subtitle:    extension.Manifest.Title,
 			Accessories: []string{"Command"},
-			Actions: []types.Action{
+			Actions: []sunbeam.Action{
 				{
-					Title:     "Run",
-					Type:      types.ActionTypeRun,
-					Extension: alias,
-					Command:   rootItem.Command,
-					Params:    rootItem.Params,
+					Title: "Run",
+					Type:  sunbeam.ActionTypeRun,
+					Run:   &sunbeam.RunAction{Extension: alias, Command: rootItem.Command, Params: rootItem.Params},
 				},
 			},
 		})
 	}
 
 	for _, command := range extension.RootCommands() {
-		item := types.ListItem{
+		item := sunbeam.ListItem{
 			Id:          fmt.Sprintf("%s - %s", alias, command.Name),
 			Title:       command.Title,
 			Subtitle:    extension.Manifest.Title,
 			Accessories: []string{"Command"},
-			Actions: []types.Action{
+			Actions: []sunbeam.Action{
 				{
-					Title:     "Run",
-					Type:      types.ActionTypeRun,
-					Extension: alias,
-					Command:   command.Name,
+					Title: "Run",
+					Type:  sunbeam.ActionTypeRun,
+					Run:   &sunbeam.RunAction{Extension: alias, Command: command.Name},
 				},
 			},
 		}
 
 		if !extensions.IsRemote(extensionConfig.Origin) {
-			item.Actions = append(item.Actions, types.Action{
-				Title:  "Edit Extension",
-				Key:    "e",
-				Type:   types.ActionTypeEdit,
-				Path:   extension.Entrypoint,
-				Reload: true,
+			item.Actions = append(item.Actions, sunbeam.Action{
+				Title: "Edit Extension",
+				Key:   "e",
+				Type:  sunbeam.ActionTypeEdit,
+				Edit: &sunbeam.EditAction{
+					Path:   extension.Entrypoint,
+					Reload: true,
+				},
 			})
 		} else {
-			item.Actions = append(item.Actions, types.Action{
-				Title:   "View Source",
-				Key:     "c",
-				Type:    types.ActionTypeExec,
-				Command: fmt.Sprintf("curl %s | %s", extensionConfig.Origin, utils.FindPager()),
+			item.Actions = append(item.Actions, sunbeam.Action{
+				Title: "View Source",
+				Key:   "c",
+				Type:  sunbeam.ActionTypeExec,
+				Exec:  &sunbeam.ExecAction{Command: fmt.Sprintf("curl %s | %s", extensionConfig.Origin, utils.FindPager())},
 			})
 		}
 
 		if len(extension.Manifest.Preferences) > 0 {
-			item.Actions = append(item.Actions, types.Action{
-				Title:     "Configure Extension",
-				Key:       "s",
-				Type:      types.ActionTypeConfig,
-				Extension: alias,
+			item.Actions = append(item.Actions, sunbeam.Action{
+				Title:  "Configure Extension",
+				Key:    "s",
+				Type:   sunbeam.ActionTypeConfig,
+				Config: &sunbeam.ConfigAction{Extension: alias},
 			})
 		}
 

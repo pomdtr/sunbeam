@@ -1,163 +1,159 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
-    "oneOf": [
-        {
-            "$ref": "#/definitions/textfield"
-        },
-        {
-            "$ref": "#/definitions/textarea"
-        },
-        {
-            "$ref": "#/definitions/password"
-        },
-        {
-            "$ref": "#/definitions/checkbox"
-        },
-        {
-            "$ref": "#/definitions/number"
-        }
+    "required": [
+        "label",
+        "name",
+        "type"
     ],
-    "definitions": {
-        "textfield": {
-            "type": "object",
-            "required": [
-                "name",
-                "type",
-                "title"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "const": "text"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "optional": {
-                    "type": "boolean"
-                },
-                "placeholder": {
-                    "type": "string"
-                },
-                "default": {
-                    "type": "string"
+    "properties": {
+        "label": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "type": {
+            "enum": [
+                "text",
+                "textarea",
+                "password",
+                "checkbox",
+                "number"
+            ]
+        },
+        "optional": {
+            "type": "boolean"
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "text"
+                    }
+                }
+            },
+            "then": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "object",
+                        "properties": {
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "string"
+                            }
+                        }
+                    }
                 }
             }
         },
-        "password": {
-            "type": "object",
-            "required": [
-                "name",
-                "type",
-                "title"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "const": "password"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "optional": {
-                    "type": "boolean"
-                },
-                "placeholder": {
-                    "type": "string"
-                },
-                "default": {
-                    "type": "string"
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "password"
+                    }
+                }
+            },
+            "then": {
+                "type": "object",
+                "properties": {
+                    "password": {
+                        "type": "object",
+                        "properties": {
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "string"
+                            }
+                        }
+                    }
                 }
             }
         },
-        "textarea": {
-            "type": "object",
-            "required": [
-                "name",
-                "type",
-                "title"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "const": "textarea"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "optional": {
-                    "type": "boolean"
-                },
-                "placeholder": {
-                    "type": "string"
-                },
-                "default": {
-                    "type": "string"
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "textarea"
+                    }
+                }
+            },
+            "then": {
+                "type": "object",
+                "properties": {
+                    "textarea": {
+                        "type": "object",
+                        "properties": {
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "string"
+                            }
+                        }
+                    }
                 }
             }
         },
-        "checkbox": {
-            "type": "object",
-            "required": [
-                "name",
-                "type",
-                "label"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "const": "checkbox"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "optional": {
-                    "type": "boolean"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "default": {
-                    "type": "boolean"
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "checkbox"
+                    }
+                }
+            },
+            "then": {
+                "type": "object",
+                "properties": {
+                    "checkbox": {
+                        "type": "object",
+                        "properties": {
+                            "label": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
                 }
             }
         },
-        "number": {
-            "type": "object",
-            "required": [
-                "name",
-                "type",
-                "title"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "const": "number"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "optional": {
-                    "type": "boolean"
-                },
-                "placeholder": {
-                    "type": "string"
-                },
-                "default": {
-                    "type": "number"
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "number"
+                    }
+                }
+            },
+            "then": {
+                "type": "object",
+                "required": [
+                    "number"
+                ],
+                "properties": {
+                    "number": {
+                        "type": "object",
+                        "properties": {
+                            "placeholder": {
+                                "type": "string"
+                            },
+                            "default": {
+                                "type": "number"
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
+    ]
 }

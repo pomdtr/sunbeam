@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -15,8 +16,8 @@ import (
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/history"
-	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 type RootList struct {
@@ -28,10 +29,12 @@ type RootList struct {
 
 	config    config.Config
 	history   history.History
-	generator func() (config.Config, []types.ListItem, error)
+	generator func() (config.Config, []sunbeam.ListItem, error)
 }
 
-func NewRootList(title string, history history.History, generator func() (config.Config, []types.ListItem, error)) *RootList {
+type ReloadMsg struct{}
+
+func NewRootList(title string, history history.History, generator func() (config.Config, []sunbeam.ListItem, error)) *RootList {
 	return &RootList{
 		title:     title,
 		history:   history,
@@ -117,14 +120,15 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 				termenv.DefaultOutput().SetWindowTitle(c.title)
 				c.list.Focus()
-				return types.Action{
-					Type: types.ActionTypeReload,
-				}
+
+				return ReloadMsg{}
 			})
 		case "ctrl+r":
 			return c, tea.Batch(c.list.SetIsLoading(true), c.Reload())
 		}
-	case types.Action:
+	case ReloadMsg:
+		return c, tea.Batch(c.list.SetIsLoading(true), c.Reload())
+	case sunbeam.Action:
 		selection, ok := c.list.Selection()
 		if !ok {
 			return c, nil
@@ -135,8 +139,8 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 		}
 
 		switch msg.Type {
-		case types.ActionTypeRun:
-			extensionConfig := c.config.Extensions[msg.Extension]
+		case sunbeam.ActionTypeRun:
+			extensionConfig := c.config.Extensions[msg.Run.Extension]
 			extension, err := extensions.LoadExtension(extensionConfig.Origin)
 			if err != nil {
 				return c, c.SetError(fmt.Errorf("failed to load extension: %w", err))
@@ -147,7 +151,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				preferences = make(map[string]any)
 			}
 
-			envs, err := ExtractPreferencesFromEnv(msg.Extension, extension)
+			envs, err := ExtractPreferencesFromEnv(msg.Run.Extension, extension)
 			if err != nil {
 				return c, c.SetError(err)
 			}
@@ -170,7 +174,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						extensionConfig.Preferences[k] = v
 					}
 
-					c.config.Extensions[msg.Extension] = extensionConfig
+					c.config.Extensions[msg.Run.Extension] = extensionConfig
 					if config.Path == "" {
 						return msg
 					}
@@ -186,37 +190,35 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.form.Init()
 			}
 
-			command, ok := extension.Command(msg.Command)
+			command, ok := extension.Command(msg.Run.Command)
 			if !ok {
-				return c, c.SetError(fmt.Errorf("command %s not found", msg.Command))
+				return c, c.SetError(fmt.Errorf("command %s not found", msg.Run.Command))
 			}
 
-			missingParams := FindMissingInputs(command.Params, msg.Params)
+			missingParams := FindMissingInputs(command.Params, msg.Run.Params)
 			for _, param := range missingParams {
 				if param.Optional {
 					continue
 				}
 
 				c.form = NewForm(func(values map[string]any) tea.Msg {
-					params := make(map[string]types.Param)
-					for k, v := range msg.Params {
+					params := make(map[string]sunbeam.Param)
+					for k, v := range msg.Run.Params {
 						params[k] = v
 					}
 
 					for k, v := range values {
-						params[k] = types.Param{
+						params[k] = sunbeam.Param{
 							Value: v,
 						}
 					}
 
-					return types.Action{
-						Title:     msg.Title,
-						Type:      types.ActionTypeRun,
-						Extension: msg.Extension,
-						Command:   msg.Command,
-						Params:    params,
-						Exit:      msg.Exit,
-						Reload:    msg.Reload,
+					props := msg.Run
+					props.Params = params
+					return sunbeam.Action{
+						Title: msg.Title,
+						Type:  sunbeam.ActionTypeRun,
+						Run:   props,
 					}
 				}, missingParams...)
 
@@ -225,33 +227,40 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			c.form = nil
 
-			input := types.Payload{
+			input := sunbeam.Payload{
 				Command:     command.Name,
 				Params:      make(map[string]any),
 				Preferences: preferences,
 			}
 
-			for k, v := range msg.Params {
+			for k, v := range msg.Run.Params {
 				input.Params[k] = v.Value
 			}
 
 			switch command.Mode {
-			case types.CommandModeSearch, types.CommandModeFilter, types.CommandModeDetail:
+			case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
 				runner := NewRunner(extension, input)
 				return c, PushPageCmd(runner)
-			case types.CommandModeSilent:
+			case sunbeam.CommandModeSilent:
 				return c, func() tea.Msg {
-					if err := extension.Run(input); err != nil {
+					output, err := extension.Output(input)
+					if err != nil {
 						return PushPageMsg{NewErrorPage(err)}
 					}
 
-					if msg.Exit {
+					if msg.Run.Exit {
 						return ExitMsg{}
+					}
+
+					if len(output) > 0 {
+						output = bytes.Trim(output, "\n")
+						rows := strings.Split(string(output), "\n")
+						return ShowNotificationMsg{rows[len(rows)-1]}
 					}
 
 					return nil
 				}
-			case types.CommandModeTTY:
+			case sunbeam.CommandModeTTY:
 				cmd, err := extension.Cmd(input)
 
 				if err != nil {
@@ -265,7 +274,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return PushPageMsg{NewErrorPage(err)}
 					}
 
-					if msg.Exit {
+					if msg.Run.Exit {
 						return ExitMsg{}
 					}
 
@@ -273,49 +282,51 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return c.list.Focus()
 				})
 			}
-		case types.ActionTypeCopy:
+		case sunbeam.ActionTypeCopy:
 			return c, func() tea.Msg {
-				if err := clipboard.WriteAll(msg.Text); err != nil {
+				if err := clipboard.WriteAll(msg.Copy.Text); err != nil {
 					return err
 				}
 
-				if msg.Exit {
+				if msg.Copy.Exit {
 					return ExitMsg{}
 				}
 
 				return ShowNotificationMsg{"Copied!"}
 			}
-		case types.ActionTypeEdit:
-			editCmd := exec.Command("sunbeam", "edit", msg.Path)
+		case sunbeam.ActionTypeEdit:
+			editCmd := exec.Command("sunbeam", "edit", msg.Edit.Path)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
 				}
 
-				if msg.Reload {
+				if msg.Edit.Reload {
 					return c.Reload()
 				}
 
-				if msg.Exit {
+				if msg.Edit.Exit {
 					return ExitMsg{}
 				}
 
 				return nil
 			})
-		case types.ActionTypeConfig:
-			extensionConfig, ok := c.config.Extensions[msg.Extension]
+		case sunbeam.ActionTypeConfig:
+			extensionConfig, ok := c.config.Extensions[msg.Config.Extension]
 			if !ok {
-				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Extension))
+				return c, c.SetError(fmt.Errorf("extension %s not found", msg.Config.Extension))
 			}
 
 			extension, err := extensions.LoadExtension(extensionConfig.Origin)
 			if err != nil {
-				return c, c.SetError(fmt.Errorf("failed to load extension %s", msg.Extension))
+				return c, c.SetError(fmt.Errorf("failed to load extension %s", msg.Config.Extension))
 			}
 
-			inputs := make([]types.Input, 0)
+			inputs := make([]sunbeam.Input, 0)
 			for _, input := range extension.Manifest.Preferences {
-				input.Default = extensionConfig.Preferences[input.Name]
+				if preference := extensionConfig.Preferences[input.Name]; preference != nil {
+					input.SetDefault(preference)
+				}
 				input.Optional = false
 				inputs = append(inputs, input)
 			}
@@ -323,7 +334,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.form = NewForm(func(values map[string]any) tea.Msg {
 				c.form = nil
 				extensionConfig.Preferences = values
-				c.config.Extensions[msg.Extension] = extensionConfig
+				c.config.Extensions[msg.Config.Extension] = extensionConfig
 				if err := c.config.Save(); err != nil {
 					return err
 				}
@@ -332,9 +343,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}, inputs...)
 			c.form.SetSize(c.width, c.height)
 			return c, c.form.Init()
-		case types.ActionTypeExec:
-			cmd := exec.Command("sunbeam", "shell", "-c", msg.Command)
-			cmd.Dir = msg.Dir
+		case sunbeam.ActionTypeExec:
+			cmd := exec.Command("sunbeam", "shell", "-c", msg.Exec.Command)
+			cmd.Dir = msg.Exec.Dir
 			if strings.HasPrefix(cmd.Dir, "~") {
 				homeDir, err := os.UserHomeDir()
 				if err != nil {
@@ -353,28 +364,49 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				cmd.Dir = filepath.Join(wd, cmd.Dir)
 			}
 
+			if !msg.Exec.Interactive {
+				return c, func() tea.Msg {
+					output, err := cmd.Output()
+					if err != nil {
+						return err
+					}
+
+					if msg.Exec.Exit {
+						return ExitMsg{}
+					}
+
+					if len(output) > 0 {
+						output = bytes.Trim(output, "\n")
+						rows := strings.Split(string(output), "\n")
+						return ShowNotificationMsg{rows[len(rows)-1]}
+					}
+
+					return nil
+				}
+			}
+
 			return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
 				}
 
-				if msg.Exit {
+				if msg.Exec.Exit {
 					return ExitMsg{}
 				}
 
 				termenv.DefaultOutput().SetWindowTitle(c.title)
 				return nil
 			})
-		case types.ActionTypeOpen:
+		case sunbeam.ActionTypeOpen:
 			return c, func() tea.Msg {
-				if msg.Url != "" {
-					if err := utils.Open(msg.Url); err != nil {
+				if msg.Open.Url != "" {
+					if err := utils.Open(msg.Open.Url); err != nil {
 						return err
 					}
 
 					return ExitMsg{}
-				} else if msg.Path != "" {
-					if err := utils.Open(fmt.Sprintf("file://%s", msg.Path)); err != nil {
+				} else if msg.Open.Path != "" {
+					if err := utils.Open(fmt.Sprintf("file://%s", msg.Open.Path)); err != nil {
 						return err
 					}
 
@@ -383,10 +415,10 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return fmt.Errorf("invalid target")
 				}
 			}
-		case types.ActionTypeReload:
-			return c, tea.Sequence(c.list.SetIsLoading(true), c.Reload())
-		case types.ActionTypeExit:
+		case sunbeam.ActionTypeExit:
 			return c, ExitCmd
+		case sunbeam.ActionTypeReload:
+			return c, tea.Sequence(c.err.SetIsLoading(true), c.Reload())
 		default:
 			return c, nil
 		}
@@ -437,7 +469,7 @@ type History struct {
 	path    string
 }
 
-func (h History) Sort(items []types.ListItem) {
+func (h History) Sort(items []sunbeam.ListItem) {
 	sort.SliceStable(items, func(i, j int) bool {
 		keyI := items[i].Id
 		keyJ := items[j].Id

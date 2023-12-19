@@ -18,6 +18,9 @@
                     "title": {
                         "type": "string"
                     },
+                    "interactive": {
+                        "type": "boolean"
+                    },
                     "command": {
                         "type": "string"
                     },

@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/pomdtr/sunbeam/internal/types"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 var Path = filepath.Join(utils.CacheDir(), "history.json")
@@ -40,7 +40,7 @@ func Load(historyPath string) (History, error) {
 	}, nil
 }
 
-func (h History) Sort(items []types.ListItem) {
+func (h History) Sort(items []sunbeam.ListItem) {
 	sort.SliceStable(items, func(i, j int) bool {
 		keyI := items[i].Id
 		keyJ := items[j].Id

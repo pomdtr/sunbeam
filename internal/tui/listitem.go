@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 // Probably not necessary, need to be refactored
-type ListItem types.ListItem
+type ListItem sunbeam.ListItem
 
 func (i ListItem) ID() string {
 	if i.Id != "" {

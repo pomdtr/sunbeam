@@ -11,7 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/internal/extensions"
-	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 type Form struct {
@@ -28,32 +28,32 @@ type Form struct {
 	inputs []Input
 }
 
-func ExtractPreferencesFromEnv(alias string, extension extensions.Extension) (map[string]types.Param, error) {
-	var preferences = make(map[string]types.Param)
+func ExtractPreferencesFromEnv(alias string, extension extensions.Extension) (map[string]sunbeam.Param, error) {
+	var preferences = make(map[string]sunbeam.Param)
 	for _, input := range extension.Manifest.Preferences {
 		env := fmt.Sprintf("%s_%s", strings.ToUpper(alias), strings.ToUpper(input.Name))
 		env = strings.ReplaceAll(env, "-", "_")
 		if value, ok := os.LookupEnv(env); ok {
 			switch input.Type {
-			case types.InputText, types.InputTextArea, types.InputPassword:
-				preferences[input.Name] = types.Param{
+			case sunbeam.InputText, sunbeam.InputTextArea, sunbeam.InputPassword:
+				preferences[input.Name] = sunbeam.Param{
 					Value: value,
 				}
-			case types.InputCheckbox:
+			case sunbeam.InputCheckbox:
 				value, err := strconv.ParseBool(value)
 				if err != nil {
 					continue
 				}
-				preferences[input.Name] = types.Param{
+				preferences[input.Name] = sunbeam.Param{
 					Value: value,
 				}
-			case types.InputNumber:
+			case sunbeam.InputNumber:
 				value, err := strconv.ParseInt(value, 10, 64)
 				if err != nil {
 					return nil, err
 				}
 
-				preferences[input.Name] = types.Param{
+				preferences[input.Name] = sunbeam.Param{
 					Value: value,
 				}
 			}
@@ -64,10 +64,10 @@ func ExtractPreferencesFromEnv(alias string, extension extensions.Extension) (ma
 	return preferences, nil
 }
 
-func FindMissingPreferences(preferenceInputs []types.Input, values map[string]any) []types.Input {
-	preferenceParams := make(map[string]types.Param)
+func FindMissingPreferences(preferenceInputs []sunbeam.Input, values map[string]any) []sunbeam.Input {
+	preferenceParams := make(map[string]sunbeam.Param)
 	for name, value := range values {
-		preferenceParams[name] = types.Param{
+		preferenceParams[name] = sunbeam.Param{
 			Value: value,
 		}
 	}
@@ -75,8 +75,8 @@ func FindMissingPreferences(preferenceInputs []types.Input, values map[string]an
 	return FindMissingInputs(preferenceInputs, preferenceParams)
 }
 
-func FindMissingInputs(inputs []types.Input, params map[string]types.Param) []types.Input {
-	missing := make([]types.Input, 0)
+func FindMissingInputs(inputs []sunbeam.Input, params map[string]sunbeam.Param) []sunbeam.Input {
+	missing := make([]sunbeam.Input, 0)
 	for _, input := range inputs {
 		param, ok := params[input.Name]
 		if !ok {
@@ -89,7 +89,7 @@ func FindMissingInputs(inputs []types.Input, params map[string]types.Param) []ty
 		}
 
 		if param.Default != nil {
-			input.Default = param.Default
+			input.SetDefault(param.Default)
 		}
 
 		missing = append(missing, input)
@@ -98,21 +98,21 @@ func FindMissingInputs(inputs []types.Input, params map[string]types.Param) []ty
 	return missing
 }
 
-func NewForm(submitMsg func(map[string]any) tea.Msg, params ...types.Input) *Form {
+func NewForm(submitMsg func(map[string]any) tea.Msg, params ...sunbeam.Input) *Form {
 	viewport := viewport.New(0, 0)
 
 	var inputs []Input
 	for _, param := range params {
 		switch param.Type {
-		case types.InputText:
+		case sunbeam.InputText:
 			inputs = append(inputs, NewTextField(param, false))
-		case types.InputTextArea:
+		case sunbeam.InputTextArea:
 			inputs = append(inputs, NewTextArea(param))
-		case types.InputPassword:
+		case sunbeam.InputPassword:
 			inputs = append(inputs, NewTextField(param, true))
-		case types.InputCheckbox:
+		case sunbeam.InputCheckbox:
 			inputs = append(inputs, NewCheckbox(param))
-		case types.InputNumber:
+		case sunbeam.InputNumber:
 			inputs = append(inputs, NewNumberField(param))
 		}
 	}

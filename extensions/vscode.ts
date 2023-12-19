@@ -59,25 +59,26 @@ if (payload.command == "list-projects") {
         {
           title: "Open in VS Code",
           type: "open",
-          url: entry.folderUri,
-          app: {
-            macos: "Visual Studio Code",
+          open: {
+            url: entry.folderUri,
           },
-          exit: true,
         },
         {
           title: "Open Folder",
           key: "o",
           type: "open",
-          url: entry.folderUri,
-          exit: true,
+          open: {
+            url: entry.folderUri,
+          },
         },
         {
           title: "Copy Path",
           key: "c",
           type: "copy",
-          exit: true,
-          text: entry.folderUri.replace("file://", ""),
+          copy: {
+            exit: true,
+            text: entry.folderUri.replace("file://", ""),
+          },
         },
       ],
     };

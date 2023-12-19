@@ -10,12 +10,12 @@ const manifest = {
   commands: [
     {
       name: "show",
-      title: "Show a feed",
+      title: "Show a Feed",
       mode: "filter",
       params: [
         {
           name: "url",
-          title: "URL",
+          label: "URL",
           type: "text",
         },
       ],
@@ -46,15 +46,18 @@ if (payload.command == "show") {
         {
           title: "Open in browser",
           type: "open",
-          url: item.link || "",
-          exit: true,
+          open: {
+            url: item.link || "",
+          },
         },
         {
           title: "Copy Link",
           type: "copy",
           key: "c",
-          text: item.link || "",
-          exit: true,
+          copy: {
+            text: item.link || "",
+            exit: true,
+          },
         },
       ],
     })),

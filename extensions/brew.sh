@@ -16,7 +16,7 @@ if [ $# -eq 0 ]; then
                 params: [
                     {
                         name: "package",
-                        title: "Package Name",
+                        label: "Package Name",
                         type: "text"
                     }
                 ]
@@ -35,11 +35,13 @@ if [ "$COMMAND" = "list" ]; then
             {
                 title: "Uninstall",
                 type: "run",
-                command: "uninstall",
-                params: {
-                    package: .
-                },
-                reload: true
+                run: {
+                    command: "uninstall",
+                    params: {
+                        package: .
+                    },
+                    reload: true
+                }
             }
         ]
     }' | jq -s '{ items: . }'

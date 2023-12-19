@@ -16,37 +16,44 @@ export type Command = {
 
 export type Input = {
   name: string;
+  label: string;
   optional?: boolean;
 } & (
   | {
       type: "text";
-      title: string;
-      default?: string;
-      placeholder?: string;
+      text?: {
+        default?: string;
+        placeholder?: string;
+      };
     }
   | {
       type: "number";
-      title: string;
-      default?: number;
-      placeholder?: string;
+      number?: {
+        default?: number;
+        placeholder?: string;
+      };
     }
   | {
       type: "textarea";
-      title: string;
-      default?: string;
-      placeholder?: string;
+      textarea?: {
+        default?: string;
+        placeholder?: string;
+      };
     }
   | {
       type: "password";
-      title: string;
-      default?: string;
-      placeholder?: string;
+      password?: {
+        default?: string;
+        placeholder?: string;
+      };
     }
   | {
       type: "checkbox";
-      label: string;
+      checkbox?: {
+        label: string;
+        default?: boolean;
+      };
       title?: string;
-      default?: boolean;
     }
 );
 
@@ -90,18 +97,14 @@ export type Payload<M extends Manifest> = {
     cwd: string;
     preferences: {
       [K in PreferenceName<M>]: PreferenceByName<M, K>["optional"] extends true
-        ? PreferenceByName<M, K>["default"] extends string | number | boolean
-          ? InputMap[PreferenceByName<M, K>["type"]]
-          : InputMap[PreferenceByName<M, K>["type"]] | undefined
+        ? InputMap[PreferenceByName<M, K>["type"]] | undefined
         : InputMap[PreferenceByName<M, K>["type"]];
     };
     params: CommandByName<M, N>["params"] extends undefined
       ? Record<string, never>
       : {
           [K in ParamName<M, N>]: ParamByName<M, N, K>["optional"] extends true
-            ? ParamByName<M, N, K>["default"] extends string | number | boolean
-              ? InputMap[ParamByName<M, N, K>["type"]]
-              : InputMap[ParamByName<M, N, K>["type"]] | undefined
+            ? InputMap[ParamByName<M, N, K>["type"]] | undefined
             : InputMap[ParamByName<M, N, K>["type"]];
         };
   } & (CommandByName<M, N>["mode"] extends "search"

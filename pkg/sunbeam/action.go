@@ -1,4 +1,4 @@
-package types
+package sunbeam
 
 import (
 	"encoding/json"
@@ -10,20 +10,52 @@ type Action struct {
 	Key   string     `json:"key,omitempty"`
 	Type  ActionType `json:"type,omitempty"`
 
-	Text string `json:"text,omitempty"`
+	Open   *OpenAction   `json:"open,omitempty"`
+	Copy   *CopyAction   `json:"copy,omitempty"`
+	Run    *RunAction    `json:"run,omitempty"`
+	Exec   *ExecAction   `json:"exec,omitempty"`
+	Edit   *EditAction   `json:"edit,omitempty"`
+	Config *ConfigAction `json:"config,omitempty"`
+	Reload *ReloadAction `json:"reload,omitempty"`
+}
 
-	Url  string `json:"url,omitempty"`
-	Path string `json:"path,omitempty"`
+type ConfigAction struct {
+	Extension string `json:"extension,omitempty"`
+}
 
-	Exit bool `json:"exit,omitempty"`
+type EditAction struct {
+	Path   string `json:"path,omitempty"`
+	Exit   bool   `json:"exit,omitempty"`
+	Reload bool   `json:"reload,omitempty"`
+}
 
-	Reload bool `json:"reload,omitempty"`
+type ReloadAction struct {
+	Params map[string]Param `json:"params,omitempty"`
+}
 
+type RunAction struct {
 	Extension string           `json:"extension,omitempty"`
 	Command   string           `json:"command,omitempty"`
 	Params    map[string]Param `json:"params,omitempty"`
+	Reload    bool             `json:"reload,omitempty"`
+	Exit      bool             `json:"exit,omitempty"`
+}
 
-	Dir string `json:"dir,omitempty"`
+type CopyAction struct {
+	Text string `json:"text,omitempty"`
+	Exit bool   `json:"exit,omitempty"`
+}
+
+type ExecAction struct {
+	Interactive bool   `json:"interactive,omitempty"`
+	Command     string `json:"command,omitempty"`
+	Dir         string `json:"dir,omitempty"`
+	Exit        bool   `json:"exit,omitempty"`
+}
+
+type OpenAction struct {
+	Url  string `json:"url,omitempty"`
+	Path string `json:"path,omitempty"`
 }
 
 type Param struct {
@@ -82,10 +114,10 @@ const (
 	ActionTypeRun    ActionType = "run"
 	ActionTypeOpen   ActionType = "open"
 	ActionTypeCopy   ActionType = "copy"
-	ActionTypeReload ActionType = "reload"
 	ActionTypeEdit   ActionType = "edit"
 	ActionTypeExec   ActionType = "exec"
 	ActionTypeExit   ActionType = "exit"
+	ActionTypeReload ActionType = "reload"
 	ActionTypeConfig ActionType = "config"
 )
 

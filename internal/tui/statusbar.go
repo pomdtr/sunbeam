@@ -9,7 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/internal/fzf"
-	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 func separator(n int) string {
@@ -23,8 +23,8 @@ type StatusBar struct {
 	notification string
 
 	cursor   int
-	actions  []types.Action
-	filtered []types.Action
+	actions  []sunbeam.Action
+	filtered []sunbeam.Action
 	expanded bool
 }
 
@@ -34,14 +34,14 @@ type ShowNotificationMsg struct {
 
 type HideNotificationMsg struct{}
 
-func NewStatusBar(actions ...types.Action) StatusBar {
+func NewStatusBar(actions ...sunbeam.Action) StatusBar {
 	return StatusBar{
 		actions:  actions,
 		filtered: actions,
 	}
 }
 
-func (c *StatusBar) SetActions(actions ...types.Action) {
+func (c *StatusBar) SetActions(actions ...sunbeam.Action) {
 	c.expanded = false
 	c.cursor = 0
 	c.actions = actions
@@ -54,7 +54,7 @@ func (c *StatusBar) FilterActions(query string) {
 		return
 	}
 
-	c.filtered = make([]types.Action, 0)
+	c.filtered = make([]sunbeam.Action, 0)
 	for i := 0; i < len(c.actions); i++ {
 		if fzf.Score(c.actions[i].Title, query) > 0 {
 			c.filtered = append(c.filtered, c.actions[i])
@@ -132,6 +132,10 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 		}
 	case ShowNotificationMsg:
 		p.Reset()
+		if msg.Title == "" {
+			return p, nil
+		}
+
 		p.notification = msg.Title
 		return p, tea.Tick(1*time.Second, func(t time.Time) tea.Msg {
 			return HideNotificationMsg{}
@@ -150,25 +154,23 @@ func (c *StatusBar) Reset() {
 	c.filtered = c.actions
 }
 
-func ActionTitle(action types.Action) string {
+func ActionTitle(action sunbeam.Action) string {
 	if action.Title != "" {
 		return action.Title
 	}
 
 	switch action.Type {
-	case types.ActionTypeRun:
+	case sunbeam.ActionTypeRun:
 		return "Run"
-	case types.ActionTypeCopy:
+	case sunbeam.ActionTypeCopy:
 		return "Copy"
-	case types.ActionTypeOpen:
+	case sunbeam.ActionTypeOpen:
 		return "Open"
-	case types.ActionTypeEdit:
+	case sunbeam.ActionTypeEdit:
 		return "Edit"
-	case types.ActionTypeReload:
-		return "Reload"
-	case types.ActionTypeExec:
+	case sunbeam.ActionTypeExec:
 		return "Exec"
-	case types.ActionTypeExit:
+	case sunbeam.ActionTypeExit:
 		return "Exit"
 	default:
 		return string(action.Type)

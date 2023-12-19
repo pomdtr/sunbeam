@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pomdtr/sunbeam/internal/types"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 type Input interface {
@@ -36,7 +36,7 @@ type TextField struct {
 	placeholder string
 }
 
-func NewTextField(param types.Input, secure bool) *TextField {
+func NewTextField(param sunbeam.Input, secure bool) *TextField {
 	ti := textinput.New()
 	ti.Prompt = ""
 
@@ -44,16 +44,17 @@ func NewTextField(param types.Input, secure bool) *TextField {
 		ti.EchoMode = textinput.EchoPassword
 	}
 
-	if defaultValue, ok := param.Default.(string); ok {
-		ti.SetValue(defaultValue)
+	var placeholder string
+	if param.TextInput != nil {
+		ti.SetValue(param.TextInput.Default)
+		placeholder = param.TextInput.Placeholder
 	}
 
-	placeholder := param.Placeholder
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
 	return &TextField{
 		name:        param.Name,
-		title:       param.Title,
+		title:       param.Label,
 		Model:       ti,
 		placeholder: placeholder,
 	}
@@ -129,19 +130,18 @@ func (ta *TextArea) Name() string {
 	return ta.name
 }
 
-func NewTextArea(input types.Input) Input {
+func NewTextArea(input sunbeam.Input) Input {
 	ta := textarea.New()
 	ta.Prompt = ""
 
-	if input.Default != nil {
-		ta.SetValue(input.Default.(string))
+	if input.TextAreaInput != nil {
+		ta.SetValue(input.TextAreaInput.Default)
 	}
-
-	ta.Placeholder = input.Placeholder
+	ta.Placeholder = input.TextAreaInput.Placeholder
 	ta.SetHeight(5)
 
 	return &TextArea{
-		title: input.Title,
+		title: input.Label,
 		name:  input.Name,
 		Model: ta,
 	}
@@ -199,15 +199,15 @@ type Checkbox struct {
 	checked bool
 }
 
-func NewCheckbox(param types.Input) *Checkbox {
+func NewCheckbox(param sunbeam.Input) *Checkbox {
 	checkbox := Checkbox{
 		name:  param.Name,
-		title: param.Title,
-		label: param.Label,
+		title: param.Label,
 	}
 
-	if defaultValue, ok := param.Default.(bool); ok {
-		checkbox.checked = defaultValue
+	if param.Checkbox != nil {
+		checkbox.checked = param.Checkbox.Default
+		checkbox.label = param.Checkbox.Label
 	}
 
 	return &checkbox
@@ -279,10 +279,12 @@ type NumberField struct {
 	*TextField
 }
 
-func NewNumberField(param types.Input) Input {
-	if param.Default != nil {
-		defaultValue := strconv.Itoa(param.Default.(int))
-		param.Default = defaultValue
+func NewNumberField(param sunbeam.Input) Input {
+	if param.NumberInput != nil {
+		param.TextInput = &sunbeam.TextInput{
+			Default:     strconv.Itoa(param.NumberInput.Default),
+			Placeholder: param.NumberInput.Placeholder,
+		}
 	}
 
 	return NumberField{
