@@ -4,11 +4,14 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "sunbeam"
-authors = [{name = "Achille Lacoin", email = "achille.lacoin@gmail.com"}]
+authors = [{ name = "Achille Lacoin", email = "achille.lacoin@gmail.com" }]
 readme = "README.md"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
+
+[project.optional-dependencies]
+dev = ["black"]
 
 [project.urls]
 Home = "https://sunbeam.sh"
