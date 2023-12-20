@@ -1,4 +1,4 @@
-from typing import TypedDict, NotRequired, Literal
+from typing import TypedDict, NotRequired, Literal, Sequence
 
 
 class TextInput(TypedDict):
@@ -39,10 +39,11 @@ class Input(TypedDict):
 CommandMode = Literal["silent", "tty", "filter", "search", "detail"]
 
 
-class Command:
+class Command(TypedDict):
     name: str
     title: str
-    params: list[Input]
+    mode: CommandMode
+    params: NotRequired[list[Input]]
 
 
 class Manifest(TypedDict):
