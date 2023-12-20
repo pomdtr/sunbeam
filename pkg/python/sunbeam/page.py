@@ -37,6 +37,7 @@ class Action(TypedDict):
     key: NotRequired[str]
     type: ActionType
     copy: NotRequired[CopyAction]
+    reload: NotRequired[ReloadAction]
     open: NotRequired[OpenAction]
     run: NotRequired[RunAction]
     edit: NotRequired[EditAction]
