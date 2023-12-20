@@ -1,8 +1,8 @@
 {
   "search.exclude": {
     "book": true,
-    "www/frontend/.vitepress/cache": true,
-    "www/frontend/.vitepress/dist": true,
+    "www/website/.vitepress/cache": true,
+    "www/website/.vitepress/dist": true,
     ".devbox": true,
     "public": true,
   },
@@ -19,8 +19,8 @@
     "no-inline-html": false
   },
   "markdownlint.ignore": [
-    "www/frontend/docs/reference/cli.md",
-    "www/frontend/catalog/index.md"
+    "www/website/docs/reference/cli.md",
+    "www/website/catalog/index.md"
   ],
   "markdown.validate.referenceLinks.enabled": "ignore"
 }

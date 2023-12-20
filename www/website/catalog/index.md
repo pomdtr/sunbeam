@@ -23,28 +23,13 @@ Browse files and folders
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/files.py
 ```
 
-## [Pipe Commands](https://github.com/pomdtr/sunbeam/tree/main/extensions/pipe.ts)
-
-Pipe your clipboard through various commands
-
-### Commands
-
-- `urldecode`: URL Decode Clipboard
-- `urlencode`: URL Encode Clipboard
-
-### Install
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/pipe.ts
-```
-
 ## [Gists](https://github.com/pomdtr/sunbeam/tree/main/extensions/gists.ts)
 
 Manage your gists
 
 ### Preferences
 
-- `token`: GitHub Personal Access Token
+- `token`: undefined
 
 ### Commands
 
@@ -67,7 +52,7 @@ Search GitHub repositories
 
 ### Preferences
 
-- `token`: Personal Access Token
+- `token`: undefined
 
 ### Commands
 
@@ -132,7 +117,7 @@ Search your Bitwarden passwords
 
 ### Preferences
 
-- `session`: Bitwarden Session
+- `session`: undefined
 
 ### Commands
 
@@ -178,7 +163,7 @@ Search and view Val Town vals
 
 ### Preferences
 
-- `token`: Access Token
+- `token`: undefined
 
 ### Commands
 
@@ -215,7 +200,7 @@ Manage your Deno Deploy projects
 
 ### Preferences
 
-- `token`: Access Token
+- `token`: undefined
 
 ### Commands
 
@@ -236,7 +221,7 @@ Manage your RSS feeds
 
 ### Commands
 
-- `show`: Show a feed
+- `show`: Show a Feed
 
 ### Install
 
@@ -287,13 +272,28 @@ undefined
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/home-manager.ts
 ```
 
+## [Store](https://github.com/pomdtr/sunbeam/tree/main/extensions/store.ts)
+
+Download and install extensions
+
+### Commands
+
+- `search`: Search
+- `install`: Install
+
+### Install
+
+```
+sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/store.ts
+```
+
 ## [Raindrop](https://github.com/pomdtr/sunbeam/tree/main/extensions/raindrop.ts)
 
 Manage your raindrop bookmarks
 
 ### Preferences
 
-- `token`: Raindrop API Token
+- `token`: undefined
 
 ### Commands
 

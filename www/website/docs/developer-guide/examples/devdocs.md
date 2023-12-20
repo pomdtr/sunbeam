@@ -73,7 +73,7 @@ We can now run `sunbeam devdocs --help` to see the generated help, and `sunbeam 
 
 When the user run a command, the script is called with the command name as first argument. Let's implement the `search-docsets` command.
 
-The `search-docsets` command has a `filter` mode, so the script must return a [valid list](../../reference/schemas/list.md) when called with this argument.
+The `search-docsets` command has a `filter` mode, so the script must return a [valid list](./../../reference/schemas/list.md) when called with this argument.
 
 ```sh
 #!/bin/sh

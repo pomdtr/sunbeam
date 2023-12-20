@@ -57,7 +57,7 @@ Make sure to setup completions to get the full experience.
 
 ### Extension Preferences
 
-The first time you run an extension, it might ask you to configure some preferences. These preferences are stored in the sunbeam [config file](../reference/config.md).
+The first time you run an extension, it might ask you to configure some preferences. These preferences are stored in the sunbeam [config file](./../reference/config.md).
 
 If you don't want to store your preference in the config file, you can pass them as environment variable.
 For example, if the an extension aliased as `github` has a preference named `token`, you can pass it as `GITHUB_TOKEN` environment variable.

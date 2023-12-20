@@ -61,6 +61,6 @@ for (const entry of entries) {
 }
 
 Deno.writeTextFileSync(
-  path.join(dirname, "..", "www", "frontend", "catalog", "index.md"),
+  path.join(dirname, "..", "www", "website", "catalog", "index.md"),
   rows.join("\n")
 );

@@ -8,7 +8,7 @@ Here is a non-exhaustive list of integrations. If you have an integration you wo
 
 ### Hyper
 
-![Sunbeam running in Hyper](../../assets/hyper.jpeg)
+![Sunbeam running in Hyper](./../../assets/hyper.jpeg)
 
 [Hyper](https://hyper.is/) is an extensible terminal emulator, built on web technologies.
 It is not the lighter terminal emulator (far from it), but it is easy to extend and customize.
@@ -53,7 +53,7 @@ Feel free to customize the config to your liking.
 
 ### Alacritty
 
-![Sunbeam running in alacritty](../../assets/alacritty.jpeg)
+![Sunbeam running in alacritty](./../../assets/alacritty.jpeg)
 
 [Alacritty](https://github.com/alacritty/alacritty) is a cross-platform terminal emulator.
 
@@ -93,7 +93,7 @@ Otherwise, use the `config-file` flag when launching alacritty: `alacritty --con
 
 ### Tweety
 
-![Sunbeam running in tweety](../../assets/tweety.jpeg)
+![Sunbeam running in tweety](./../../assets/tweety.jpeg)
 Tweety is an integrated terminal for your web browser.
 
 It can be embedded anywhere you can show a web page, making it a great GUI for sunbeam.
@@ -147,7 +147,7 @@ Binding this command to a key is not supported yet, as zellij [does not support 
 
 ### Visual Studio Code
 
-![Sunbeam running in VS Code](../../assets/vscode.png)
+![Sunbeam running in VS Code](./../../assets/vscode.png)
 
 Run the `Tasks: Open User Tasks` item from the command palette, then paste the following text:
 
