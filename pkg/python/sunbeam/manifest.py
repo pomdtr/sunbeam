@@ -47,5 +47,6 @@ class Command:
 
 class Manifest(TypedDict):
     title: str
-    description: str
+    description: NotRequired[str]
     preferences: NotRequired[list[Input]]
+    commands: NotRequired[list[Command]]
