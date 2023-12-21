@@ -67,14 +67,29 @@ type Input struct {
 func (i Input) Default() any {
 	switch i.Type {
 	case InputText:
+		if i.TextInput == nil {
+			return nil
+		}
 		return i.TextInput.Default
 	case InputPassword:
+		if i.TextInput == nil {
+			return nil
+		}
 		return i.PasswordInput.Default
 	case InputTextArea:
+		if i.TextInput == nil {
+			return nil
+		}
 		return i.TextAreaInput.Default
 	case InputNumber:
+		if i.NumberInput == nil {
+			return nil
+		}
 		return i.NumberInput.Default
 	case InputCheckbox:
+		if i.Checkbox == nil {
+			return nil
+		}
 		return i.Checkbox.Default
 	default:
 		return nil

@@ -3,11 +3,11 @@ package cli
 import (
 	_ "embed"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -52,6 +52,8 @@ func extractAlias(origin string) (string, error) {
 	return strings.TrimSuffix(base, filepath.Ext(base)), nil
 }
 
+var repoRegexp = regexp.MustCompile(`^https://github.com/([^/]+)/([^/]+)`)
+
 func normalizeOrigin(origin string) (string, error) {
 	if !strings.HasPrefix(origin, "http://") && !strings.HasPrefix(origin, "https://") {
 		if _, err := os.Stat(origin); err != nil {
@@ -68,19 +70,6 @@ func normalizeOrigin(origin string) (string, error) {
 		}
 
 		return abs, nil
-	}
-
-	url, err := url.Parse(origin)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse origin: %w", err)
-	}
-
-	if url.Hostname() == "github.com" {
-		query := url.Query()
-		query.Set("raw", "true")
-		url.RawQuery = query.Encode()
-		log.Printf("Normalized github origin %s", url.String())
-		return url.String(), nil
 	}
 
 	return origin, nil
