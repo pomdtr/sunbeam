@@ -1,6 +1,27 @@
-# Sunbeam Deno SDK
+# Sunbeam SDK
 
 ## Type Validation for Sunbeam Scripts
+
+## Node
+
+```typescript
+import * as sunbeam from "sunbeam-sdk";
+
+if (process.args.length < 3) {
+    const manifest: sunbeam.Manifest = {...}
+    console.log(manifest);
+    Deno.exit(0);
+}
+
+const payload: sunbeam.Payload = JSON.parse(process.args[2]);
+
+if (payload.command = "show") {
+    const list: sunbeam.List = {...}
+    console.log(JSON.stringify(list));
+}
+```
+
+## Deno
 
 ```typescript
 import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
@@ -20,7 +41,7 @@ if (payload.command = "show") {
 
 ```
 
-## Helper Functions
+## Helper Functions (Only for Deno)
 
 ```typescript
 import { editor } from "https://deno.land/x/sunbeam/editor.ts";
