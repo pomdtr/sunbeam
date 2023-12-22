@@ -10,9 +10,12 @@
   "deno.enablePaths": [
     "./extensions",
     "./internal/cli/embed",
-    "sdk",
+    "./pkg/typescript",
     "scripts",
     "./www/install"
+  ],
+  "deno.disablePaths": [
+    "./pkg/typescript/npm"
   ],
   "deno.unstable": true,
   "markdownlint.config": {
