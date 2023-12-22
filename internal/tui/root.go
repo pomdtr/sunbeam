@@ -346,7 +346,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.form.SetSize(c.width, c.height)
 			return c, c.form.Init()
 		case sunbeam.ActionTypeExec:
-			cmd := exec.Command("sunbeam", "shell", "-c", msg.Exec.Command)
+			cmd := exec.Command("sh", "-c", msg.Exec.Command)
 			cmd.Dir = msg.Exec.Dir
 			if strings.HasPrefix(cmd.Dir, "~") {
 				homeDir, err := os.UserHomeDir()

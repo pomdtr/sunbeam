@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -51,8 +50,6 @@ func extractAlias(origin string) (string, error) {
 
 	return strings.TrimSuffix(base, filepath.Ext(base)), nil
 }
-
-var repoRegexp = regexp.MustCompile(`^https://github.com/([^/]+)/([^/]+)`)
 
 func normalizeOrigin(origin string) (string, error) {
 	if !strings.HasPrefix(origin, "http://") && !strings.HasPrefix(origin, "https://") {
