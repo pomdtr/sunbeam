@@ -106,13 +106,13 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 				}
 
 				switch param.Type {
-				case sunbeam.InputText, sunbeam.InputTextArea, sunbeam.InputPassword:
+				case sunbeam.InputString:
 					value, err := cmd.Flags().GetString(param.Name)
 					if err != nil {
 						return err
 					}
 					params[param.Name] = value
-				case sunbeam.InputCheckbox:
+				case sunbeam.InputBoolean:
 					value, err := cmd.Flags().GetBool(param.Name)
 					if err != nil {
 						return err
@@ -162,12 +162,12 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 
 	for _, input := range command.Params {
 		switch input.Type {
-		case sunbeam.InputText, sunbeam.InputTextArea, sunbeam.InputPassword:
-			cmd.Flags().String(input.Name, "", input.Label)
-		case sunbeam.InputCheckbox:
-			cmd.Flags().Bool(input.Name, false, input.Label)
+		case sunbeam.InputString:
+			cmd.Flags().String(input.Name, "", input.Description)
+		case sunbeam.InputBoolean:
+			cmd.Flags().Bool(input.Name, false, input.Description)
 		case sunbeam.InputNumber:
-			cmd.Flags().Int(input.Name, 0, input.Label)
+			cmd.Flags().Int(input.Name, 0, input.Description)
 		}
 
 		if !input.Optional {

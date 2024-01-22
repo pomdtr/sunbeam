@@ -8,8 +8,8 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      label: "Access Token",
-      type: "text",
+      description: "Access Token",
+      type: "string",
     },
   ],
   commands: [
@@ -17,7 +17,12 @@ const manifest = {
       title: "List Vals",
       name: "list",
       mode: "filter",
-      params: [{ name: "user", label: "User", optional: true, type: "text" }],
+      params: [{
+        name: "user",
+        description: "User",
+        optional: true,
+        type: "string",
+      }],
     },
     {
       title: "Search Vals",
@@ -29,14 +34,14 @@ const manifest = {
       name: "edit",
       hidden: true,
       mode: "tty",
-      params: [{ name: "id", label: "Val ID", type: "text" }],
+      params: [{ name: "id", description: "Val ID", type: "string" }],
     },
     {
       title: "View Readme",
       name: "readme",
       hidden: true,
       mode: "detail",
-      params: [{ name: "id", label: "Val ID", type: "text" }],
+      params: [{ name: "id", description: "Val ID", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -52,7 +57,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
   if (payload.command == "list") {
     const username = payload.params.user;
     const { id: userID } = await client.fetchJSON(
-      username ? `/v1/alias/${username}` : "/v1/me"
+      username ? `/v1/alias/${username}` : "/v1/me",
     );
 
     const vals = await client.paginate(`/v1/users/${userID}/vals`);
@@ -68,14 +73,14 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     const query = payload.query;
     if (query) {
       const { data: vals } = await client.fetchJSON(
-        `/v1/search/vals?query=${encodeURIComponent(query)}&limit=50`
+        `/v1/search/vals?query=${encodeURIComponent(query)}&limit=50`,
       );
       console.log(
         JSON.stringify({
           showDetail: true,
           items: vals.map(valToListItem),
           emptyText: "No results",
-        })
+        }),
       );
     } else {
       console.log(JSON.stringify({ emptyText: "No query" }));
@@ -97,7 +102,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
 
     if (!resp.ok) {
       throw new Error(
-        `Failed to update val (${resp.status}: ${resp.statusText}`
+        `Failed to update val (${resp.status}: ${resp.statusText}`,
       );
     }
   } else if (payload.command == "readme") {
@@ -173,65 +178,45 @@ function valToListItem(val: any): sunbeam.ListItem {
       {
         title: "Open in Browser",
         type: "open",
-        open: {
-          url: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
-        },
+        url: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
       },
       {
         title: "Edit Val",
         key: "e",
         type: "run",
-        run: {
-          command: "edit",
-          params: {
-            id: val.id,
-          },
-          reload: true,
+        command: "edit",
+        params: {
+          id: val.id,
         },
+        reload: true,
       },
       {
         title: "Open Web Endpoint",
         type: "open",
-        open: {
-          url: `https://${val.author.username.slice(1)}-${
-            val.name
-          }.web.val.run`,
-        },
+        url: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`,
       },
       {
         title: "Copy URL",
         type: "copy",
-        copy: {
-          text: `https://val.town/v/${val.author.username.slice(1)}/${
-            val.name
-          }`,
-        },
+        text: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
       },
       {
         title: "Copy Web Endpoint",
         type: "copy",
-        copy: {
-          text: `https://${val.author.username.slice(1)}-${
-            val.name
-          }.web.val.run`,
-        },
+        text: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`,
       },
       {
         title: "Copy ID",
         type: "copy",
-        copy: {
-          text: val.id,
-        },
+        text: val.id,
       },
       {
         title: "View Readme",
         key: "s",
         type: "run",
-        run: {
-          command: "readme",
-          params: {
-            id: val.id,
-          },
+        command: "readme",
+        params: {
+          id: val.id,
         },
       },
     ],

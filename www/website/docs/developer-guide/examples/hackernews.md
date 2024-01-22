@@ -109,25 +109,19 @@ if (payload.command == "browse") {
         {
           title: "Open in browser",
           type: "open",
-          open: {
-            url: item.link || "",
-          },
+          url: item.link || "",
         },
         {
           title: "Open Comments in Browser",
           type: "open",
-          open: {
-            url: item.guid || "",
-          },
+          url: item.guid || "",
         },
         {
           title: "Copy Link",
           type: "copy",
           key: "c",
-          copy: {
-            text: item.link || "",
-            exit: true,
-          },
+          text: item.link || "",
+          exit: true,
         },
       ],
     })),

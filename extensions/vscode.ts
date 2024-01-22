@@ -27,10 +27,10 @@ const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 if (payload.command == "list-projects") {
   const homedir = Deno.env.get("HOME");
   const db = new DB(
-    `${homedir}/Library/Application Support/Code/User/globalStorage/state.vscdb`
+    `${homedir}/Library/Application Support/Code/User/globalStorage/state.vscdb`,
   );
   const res = db.query(
-    "SELECT json_extract(value, '$.entries') as entries FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'"
+    "SELECT json_extract(value, '$.entries') as entries FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'",
   );
 
   // deno-lint-ignore no-explicit-any
@@ -59,26 +59,20 @@ if (payload.command == "list-projects") {
         {
           title: "Open in VS Code",
           type: "open",
-          open: {
-            url: entry.folderUri,
-          },
+          url: entry.folderUri,
         },
         {
           title: "Open Folder",
           key: "o",
           type: "open",
-          open: {
-            url: entry.folderUri,
-          },
+          url: entry.folderUri,
         },
         {
           title: "Copy Path",
           key: "c",
           type: "copy",
-          copy: {
-            exit: true,
-            text: entry.folderUri.replace("file://", ""),
-          },
+          exit: true,
+          text: entry.folderUri.replace("file://", ""),
         },
       ],
     };

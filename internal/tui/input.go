@@ -36,7 +36,7 @@ type TextField struct {
 	placeholder string
 }
 
-func NewTextField(param sunbeam.Input, secure bool) *TextField {
+func NewTextField(input sunbeam.Input, secure bool) *TextField {
 	ti := textinput.New()
 	ti.Prompt = ""
 
@@ -44,19 +44,19 @@ func NewTextField(param sunbeam.Input, secure bool) *TextField {
 		ti.EchoMode = textinput.EchoPassword
 	}
 
-	var placeholder string
-	if param.TextInput != nil {
-		ti.SetValue(param.TextInput.Default)
-		placeholder = param.TextInput.Placeholder
+	if input.Default != nil {
+		if defaultValue, ok := input.Default.(string); ok {
+			ti.SetValue(defaultValue)
+		}
 	}
 
 	ti.PlaceholderStyle = lipgloss.NewStyle().Faint(true)
 
 	return &TextField{
-		name:        param.Name,
-		title:       param.Label,
+		name:        input.Name,
+		title:       input.Name,
 		Model:       ti,
-		placeholder: placeholder,
+		placeholder: input.Description,
 	}
 }
 
@@ -134,14 +134,17 @@ func NewTextArea(input sunbeam.Input) Input {
 	ta := textarea.New()
 	ta.Prompt = ""
 
-	if input.TextAreaInput != nil {
-		ta.SetValue(input.TextAreaInput.Default)
+	if input.Default != nil {
+		if defaultValue, ok := input.Default.(string); ok {
+			ta.SetValue(defaultValue)
+		}
 	}
-	ta.Placeholder = input.TextAreaInput.Placeholder
+
+	ta.Placeholder = input.Description
 	ta.SetHeight(5)
 
 	return &TextArea{
-		title: input.Label,
+		title: input.Description,
 		name:  input.Name,
 		Model: ta,
 	}
@@ -202,13 +205,16 @@ type Checkbox struct {
 func NewCheckbox(param sunbeam.Input) *Checkbox {
 	checkbox := Checkbox{
 		name:  param.Name,
-		title: param.Label,
+		title: param.Description,
 	}
 
-	if param.Checkbox != nil {
-		checkbox.checked = param.Checkbox.Default
-		checkbox.label = param.Checkbox.Label
+	if param.Default != nil {
+		if defaultValue, ok := param.Default.(bool); ok {
+			checkbox.checked = defaultValue
+		}
 	}
+
+	checkbox.label = param.Description
 
 	return &checkbox
 }
@@ -280,10 +286,9 @@ type NumberField struct {
 }
 
 func NewNumberField(param sunbeam.Input) Input {
-	if param.NumberInput != nil {
-		param.TextInput = &sunbeam.TextInput{
-			Default:     strconv.Itoa(param.NumberInput.Default),
-			Placeholder: param.NumberInput.Placeholder,
+	if param.Default != nil {
+		if _, ok := param.Default.(int); ok {
+			param.Default = strconv.Itoa(param.Default.(int))
 		}
 	}
 

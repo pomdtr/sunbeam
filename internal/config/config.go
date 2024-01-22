@@ -9,7 +9,6 @@ import (
 
 	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/pomdtr/sunbeam/internal/utils"
-	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 var Path string
@@ -61,9 +60,9 @@ type ExtensionConfig struct {
 }
 
 type RootItem struct {
-	Title   string                   `json:"title"`
-	Command string                   `json:"command"`
-	Params  map[string]sunbeam.Param `json:"params,omitempty"`
+	Title   string         `json:"title"`
+	Command string         `json:"command"`
+	Params  map[string]any `json:"params,omitempty"`
 }
 
 type Oneliner struct {

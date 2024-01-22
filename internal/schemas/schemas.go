@@ -15,7 +15,6 @@ var schemas map[string]*jsonschema.Schema
 
 var schemaUrls = []string{
 	"params.schema.json",
-	"input.schema.json",
 	"action.schema.json",
 	"list.schema.json",
 	"detail.schema.json",

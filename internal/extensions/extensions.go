@@ -112,7 +112,7 @@ func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec
 			return nil, fmt.Errorf("missing required preference %s", spec.Name)
 		}
 
-		input.Preferences[spec.Name] = spec.Default()
+		input.Preferences[spec.Name] = spec.Default
 	}
 
 	command, ok := e.Command(input.Command)
@@ -133,7 +133,7 @@ func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec
 			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
 		}
 
-		input.Params[spec.Name] = spec.Default()
+		input.Params[spec.Name] = spec.Default
 	}
 
 	cwd, err := os.Getwd()

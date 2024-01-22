@@ -25,9 +25,11 @@ if (!payload.query) {
 }
 
 const resp = await fetch(
-  `https://registry.npmjs.com/-/v1/search?text=${encodeURIComponent(
-    payload.query
-  )}`
+  `https://registry.npmjs.com/-/v1/search?text=${
+    encodeURIComponent(
+      payload.query,
+    )
+  }`,
 );
 const { objects: packages } = await resp.json();
 const items: sunbeam.ListItem[] = [];
@@ -39,17 +41,13 @@ for (const pkg of packages) {
       {
         type: "open",
         title: "Open Package",
-        open: {
-          url: pkg.package.links.npm,
-        },
+        url: pkg.package.links.npm,
       },
       {
         type: "copy",
         title: "Open Package Name",
-        copy: {
-          text: pkg.package.name,
-          exit: true,
-        },
+        text: pkg.package.name,
+        exit: true,
       },
     ],
   };

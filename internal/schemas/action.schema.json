@@ -35,23 +35,16 @@
                 }
             },
             "then": {
+                "type": "object",
                 "required": [
-                    "copy"
+                    "text"
                 ],
                 "properties": {
-                    "copy": {
-                        "type": "object",
-                        "required": [
-                            "text"
-                        ],
-                        "properties": {
-                            "text": {
-                                "type": "string"
-                            },
-                            "exit": {
-                                "type": "boolean"
-                            }
-                        }
+                    "text": {
+                        "type": "string"
+                    },
+                    "exit": {
+                        "type": "boolean"
                     }
                 }
             }
@@ -68,20 +61,13 @@
                 }
             },
             "then": {
-                "required": [
-                    "open"
-                ],
+                "type": "object",
                 "properties": {
-                    "open": {
-                        "type": "object",
-                        "properties": {
-                            "url": {
-                                "type": "string"
-                            },
-                            "path": {
-                                "type": "string"
-                            }
-                        }
+                    "url": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string"
                     }
                 }
             }
@@ -98,26 +84,19 @@
                 }
             },
             "then": {
+                "type": "object",
                 "required": [
-                    "edit"
+                    "path"
                 ],
                 "properties": {
-                    "edit": {
-                        "type": "object",
-                        "required": [
-                            "path"
-                        ],
-                        "properties": {
-                            "path": {
-                                "type": "string"
-                            },
-                            "reload": {
-                                "type": "boolean"
-                            },
-                            "exit": {
-                                "type": "boolean"
-                            }
-                        }
+                    "path": {
+                        "type": "string"
+                    },
+                    "reload": {
+                        "type": "boolean"
+                    },
+                    "exit": {
+                        "type": "boolean"
                     }
                 }
             }
@@ -134,30 +113,22 @@
                 }
             },
             "then": {
-                "required": [
-                    "run"
-                ],
                 "type": "object",
+                "required": [
+                    "command"
+                ],
                 "properties": {
-                    "run": {
-                        "type": "object",
-                        "required": [
-                            "command"
-                        ],
-                        "properties": {
-                            "command": {
-                                "type": "string"
-                            },
-                            "params": {
-                                "$ref": "./params.schema.json"
-                            },
-                            "exit": {
-                                "type": "boolean"
-                            },
-                            "reload": {
-                                "type": "boolean"
-                            }
-                        }
+                    "command": {
+                        "type": "string"
+                    },
+                    "params": {
+                        "$ref": "./params.schema.json"
+                    },
+                    "exit": {
+                        "type": "boolean"
+                    },
+                    "reload": {
+                        "type": "boolean"
                     }
                 }
             }
@@ -175,17 +146,9 @@
             },
             "then": {
                 "type": "object",
-                "required": [
-                    "reload"
-                ],
                 "properties": {
-                    "reload": {
-                        "type": "object",
-                        "properties": {
-                            "params": {
-                                "$ref": "./params.schema.json"
-                            }
-                        }
+                    "params": {
+                        "$ref": "./params.schema.json"
                     }
                 }
             }

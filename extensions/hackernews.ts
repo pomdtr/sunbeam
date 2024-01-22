@@ -12,7 +12,7 @@ const manifest = {
       name: "browse",
       title: "Show a feed",
       mode: "filter",
-      params: [{ name: "topic", label: "Topic", type: "text" }],
+      params: [{ name: "topic", description: "Topic", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -26,42 +26,36 @@ const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 if (payload.command == "browse") {
   const { topic } = payload.params;
   const feed = await new Parser().parseURL(
-    `https://hnrss.org/${topic}?description=0&count=25`
+    `https://hnrss.org/${topic}?description=0&count=25`,
   );
   const page: sunbeam.List = {
-    items: feed.items.map((item) => ({
+    items: feed.items?.map((item) => ({
       title: item.title || "",
       subtitle: item.categories?.join(", ") || "",
       accessories: item.isoDate
         ? [
-            formatDistance(new Date(item.isoDate), new Date(), {
-              addSuffix: true,
-            }),
-          ]
+          formatDistance(new Date(item.isoDate), new Date(), {
+            addSuffix: true,
+          }),
+        ]
         : [],
       actions: [
         {
           title: "Open in browser",
           type: "open",
-          open: {
-            url: item.link || "",
-          },
+          url: item.link || "",
         },
         {
           title: "Open Comments in Browser",
           type: "open",
-          open: {
-            url: item.guid || "",
-          },
+          url: item.guid || "",
         },
         {
           title: "Copy Link",
           type: "copy",
           key: "c",
-          copy: {
-            text: item.link || "",
-            exit: true,
-          },
+          text: item.link || "",
+          exit: true,
         },
       ],
     })),

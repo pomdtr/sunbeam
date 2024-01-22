@@ -1,9 +1,5 @@
 package sunbeam
 
-import (
-	"fmt"
-)
-
 type Manifest struct {
 	Title       string        `json:"title"`
 	Description string        `json:"description,omitempty"`
@@ -44,122 +40,15 @@ const (
 type InputType string
 
 const (
-	InputText     InputType = "text"
-	InputTextArea InputType = "textarea"
-	InputPassword InputType = "password"
-	InputCheckbox InputType = "checkbox"
-	InputNumber   InputType = "number"
+	InputString  InputType = "string"
+	InputBoolean InputType = "boolean"
+	InputNumber  InputType = "number"
 )
 
 type Input struct {
-	Type     InputType `json:"type"`
-	Name     string    `json:"name"`
-	Label    string    `json:"label"`
-	Optional bool      `json:"optional,omitempty"`
-
-	TextInput     *TextInput     `json:"text,omitempty"`
-	PasswordInput *PasswordInput `json:"password,omitempty"`
-	TextAreaInput *TextAreaInput `json:"textarea,omitempty"`
-	NumberInput   *NumberInput   `json:"number,omitempty"`
-	Checkbox      *CheckboxInput `json:"checkbox,omitempty"`
-}
-
-func (i Input) Default() any {
-	switch i.Type {
-	case InputText:
-		if i.TextInput == nil {
-			return nil
-		}
-		return i.TextInput.Default
-	case InputPassword:
-		if i.TextInput == nil {
-			return nil
-		}
-		return i.PasswordInput.Default
-	case InputTextArea:
-		if i.TextInput == nil {
-			return nil
-		}
-		return i.TextAreaInput.Default
-	case InputNumber:
-		if i.NumberInput == nil {
-			return nil
-		}
-		return i.NumberInput.Default
-	case InputCheckbox:
-		if i.Checkbox == nil {
-			return nil
-		}
-		return i.Checkbox.Default
-	default:
-		return nil
-	}
-}
-
-func (i Input) SetDefault(v any) error {
-	switch i.Type {
-	case InputText:
-		defaultValue, ok := v.(string)
-		if !ok {
-			return fmt.Errorf("invalid default value: %v", v)
-		}
-		i.TextInput.Default = defaultValue
-		return nil
-	case InputPassword:
-		defaultValue, ok := v.(string)
-		if !ok {
-			return fmt.Errorf("invalid default value: %v", v)
-		}
-		i.PasswordInput.Default = defaultValue
-		return nil
-	case InputTextArea:
-		defaultValue, ok := v.(string)
-		if !ok {
-			return fmt.Errorf("invalid default value: %v", v)
-		}
-		i.TextAreaInput.Default = defaultValue
-		return nil
-	case InputNumber:
-		defaultValue, ok := v.(int)
-		if !ok {
-			return fmt.Errorf("invalid default value: %v", v)
-		}
-		i.NumberInput.Default = defaultValue
-		return nil
-	case InputCheckbox:
-		defaultValue, ok := v.(bool)
-		if !ok {
-			return fmt.Errorf("invalid default value: %v", v)
-		}
-		i.Checkbox.Default = defaultValue
-		return nil
-	default:
-		return fmt.Errorf("invalid input type: %s", i.Type)
-	}
-
-}
-
-type TextInput struct {
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     string `json:"default,omitempty"`
-}
-
-type PasswordInput struct {
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     string `json:"default,omitempty"`
-}
-
-type TextAreaInput struct {
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     string `json:"default,omitempty"`
-}
-
-type NumberInput struct {
-	Placeholder string `json:"placeholder,omitempty"`
-	Default     int    `json:"default,omitempty"`
-}
-
-type CheckboxInput struct {
-	Label   string `json:"label,omitempty"`
-	Default bool   `json:"default,omitempty"`
+	Type        InputType `json:"type"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Optional    bool      `json:"optional,omitempty"`
+	Default     any       `json:"default,omitempty"`
 }

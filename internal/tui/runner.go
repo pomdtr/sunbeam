@@ -161,15 +161,13 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 
 				c.form = NewForm(func(values map[string]any) tea.Msg {
-					params := make(map[string]sunbeam.Param)
+					params := make(map[string]any)
 					for k, v := range msg.Run.Params {
 						params[k] = v
 					}
 
 					for k, v := range values {
-						params[k] = sunbeam.Param{
-							Value: v,
-						}
+						params[k] = v
 					}
 
 					props := msg.Run
@@ -195,7 +193,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			for k, v := range msg.Run.Params {
-				input.Params[k] = v.Value
+				input.Params[k] = v
 			}
 
 			switch command.Mode {

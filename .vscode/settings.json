@@ -3,6 +3,7 @@
     "book": true,
     "www/website/.vitepress/cache": true,
     "www/website/.vitepress/dist": true,
+    "pkg/typescript/npm": true,
     ".devbox": true,
     "public": true,
   },

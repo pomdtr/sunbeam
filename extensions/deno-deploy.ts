@@ -9,8 +9,8 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      label: "Access Token",
-      type: "text",
+      description: "Access Token",
+      type: "string",
     },
   ],
   commands: [
@@ -29,14 +29,14 @@ const manifest = {
       title: "List Deployments",
       hidden: true,
       mode: "filter",
-      params: [{ name: "project", label: "Project", type: "text" }],
+      params: [{ name: "project", description: "Project", type: "string" }],
     },
     {
       name: "playground",
       title: "View Playground",
       hidden: true,
       mode: "detail",
-      params: [{ name: "project", label: "Project", type: "text" }],
+      params: [{ name: "project", description: "Project", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -87,9 +87,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
               {
                 title: "Open Dashboard",
                 type: "open",
-                open: {
-                  url: `https://dash.deno.com/projects/${project.id}`,
-                },
+                url: `https://dash.deno.com/projects/${project.id}`,
               },
             ],
           };
@@ -104,9 +102,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             item.actions?.push({
               title: "Open Production URL",
               type: "open",
-              open: {
-                url: `https://${domain}`,
-              },
+              url: `https://${domain}`,
             });
           }
 
@@ -114,10 +110,8 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             title: "Copy Dashboard URL",
             type: "copy",
             key: "c",
-            copy: {
-              text: `https://dash.deno.com/projects/${project.id}`,
-              exit: true,
-            },
+            text: `https://dash.deno.com/projects/${project.id}`,
+            exit: true,
           });
 
           return item;
@@ -144,18 +138,14 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             title: "Copy Snippet",
             key: "c",
             type: "copy",
-            copy: {
-              text: snippet,
-              exit: true,
-            },
+            text: snippet,
+            exit: true,
           },
           {
             title: "Open in Browser",
             key: "o",
             type: "open",
-            open: {
-              url: `https://dash.deno.com/playground/${project.id}`,
-            },
+            url: `https://dash.deno.com/playground/${project.id}`,
           },
         ],
       } as sunbeam.Detail;
@@ -186,9 +176,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
               item.actions?.push({
                 title: "Open URL",
                 type: "open",
-                open: {
-                  url: `https://${deployment.domainMappings[0].domain}`,
-                },
+                url: `https://${deployment.domainMappings[0].domain}`,
               });
             }
 
@@ -197,14 +185,12 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
               item.actions?.push({
                 title: "Open Commit",
                 type: "open",
-                open: {
-                  url: relatedCommit.url,
-                },
+                url: relatedCommit.url,
               });
             }
 
             return item;
-          }
+          },
         ),
       } as sunbeam.List;
     }

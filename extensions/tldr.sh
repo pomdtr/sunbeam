@@ -13,7 +13,7 @@ if [ $# -eq 0 ]; then
     # each command can be called through the cli
     commands: [
         { name: "list", mode: "filter", title: "Search Pages" },
-        { name: "view", mode: "detail", hidden: true, title: "View page", params: [{ name: "page", type: "text", label: "page to show" }] },
+        { name: "view", mode: "detail", hidden: true, title: "View page", params: [{ name: "page", type: "string", description: "page to show" }] },
         { name: "update", mode: "silent", title: "Update cache" }
     ]
 }'
@@ -25,8 +25,8 @@ if [ "$COMMAND" = "list" ]; then
     tldr --list | jq -R '{
         title: .,
         actions: [
-            {title: "View Page", type: "run", run: {command: "view", params: {page: .}}},
-            {title: "Update Cache", key: "r", type: "run", run: {command: "update", reload: true}}
+            {title: "View Page", type: "run", command: "view", params: {page: .}},
+            {title: "Update Cache", key: "r", type: "run", command: "update", reload: true}
         ]
     }' | jq -s '{ items: . }'
 elif [ "$COMMAND" = "update" ]; then

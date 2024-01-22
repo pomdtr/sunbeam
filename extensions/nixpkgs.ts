@@ -125,7 +125,7 @@ async function search(query: string): Promise<sunbeam.ListItem[]> {
         "User-Agent": "Sunbeam",
         Authorization: "Basic YVdWU0FMWHBadjpYOGdQSG56TDUyd0ZFZWt1eHNmUTljU2g=",
       },
-    }
+    },
   );
 
   if (!response.ok) throw new Error("Failed to search: " + response.statusText);
@@ -139,27 +139,23 @@ async function search(query: string): Promise<sunbeam.ListItem[]> {
       {
         type: "open",
         title: "Open in NixOS Search",
-        open: {
-          url: `https://search.nixos.org/packages?query=${encodeURIComponent(
-            query
-          )}&show=${encodeURIComponent(hit._source.package_attr_name)}`,
-        },
+        url: `https://search.nixos.org/packages?query=${
+          encodeURIComponent(
+            query,
+          )
+        }&show=${encodeURIComponent(hit._source.package_attr_name)}`,
       },
       {
         type: "open",
         title: "Open Homepage",
-        open: {
-          url: hit._source.package_homepage[0],
-        },
+        url: hit._source.package_homepage[0],
       },
       {
         type: "copy",
         title: "Copy Package Name",
         key: "c",
-        copy: {
-          text: hit._source.package_attr_name,
-          exit: true,
-        },
+        text: hit._source.package_attr_name,
+        exit: true,
       },
     ],
   }));

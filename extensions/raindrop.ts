@@ -7,8 +7,8 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      label: "Raindrop API Token",
-      type: "text",
+      description: "Raindrop API Token",
+      type: "string",
     },
   ],
   commands: [
@@ -55,18 +55,14 @@ if (payload.command == "search-bookmarks") {
         {
           title: "Open URL",
           type: "open",
-          open: {
-            url: bookmark.link,
-          },
+          url: bookmark.link,
         },
         {
           title: "Copy URL",
           key: "c",
           type: "copy",
-          copy: {
-            text: bookmark.link,
-            exit: true,
-          },
+          text: bookmark.link,
+          exit: true,
         },
       ],
     })),

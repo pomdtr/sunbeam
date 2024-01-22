@@ -16,53 +16,15 @@ export type Command = {
 
 export type Input = {
   name: string;
-  label: string;
+  description?: string;
+  type: "string" | "number" | "boolean";
   optional?: boolean;
-} & (
-  | {
-      type: "text";
-      text?: {
-        default?: string;
-        placeholder?: string;
-      };
-    }
-  | {
-      type: "number";
-      number?: {
-        default?: number;
-        placeholder?: string;
-      };
-    }
-  | {
-      type: "textarea";
-      textarea?: {
-        default?: string;
-        placeholder?: string;
-      };
-    }
-  | {
-      type: "password";
-      password?: {
-        default?: string;
-        placeholder?: string;
-      };
-    }
-  | {
-      type: "checkbox";
-      checkbox?: {
-        label: string;
-        default?: boolean;
-      };
-      title?: string;
-    }
-);
+};
 
 type InputMap = {
-  text: string;
-  textarea: string;
-  password: string;
+  string: string;
   number: number;
-  checkbox: boolean;
+  boolean: boolean;
 };
 
 type CommandName<M extends Manifest> = M["commands"][number]["name"];
@@ -82,32 +44,33 @@ type PreferenceName<M extends Manifest> = NonNullable<
 
 type PreferenceByName<
   M extends Manifest,
-  N extends PreferenceName<M>
+  N extends PreferenceName<M>,
 > = Extract<NonNullable<M["preferences"]>[number], { name: N }>;
 
 type ParamByName<
   M extends Manifest,
   N extends CommandName<M>,
-  K extends ParamName<M, N>
+  K extends ParamName<M, N>,
 > = Extract<NonNullable<CommandByName<M, N>["params"]>[number], { name: K }>;
 
 export type Payload<M extends Manifest> = {
-  [N in CommandName<M>]: {
-    command: N;
-    cwd: string;
-    preferences: {
-      [K in PreferenceName<M>]: PreferenceByName<M, K>["optional"] extends true
-        ? InputMap[PreferenceByName<M, K>["type"]] | undefined
-        : InputMap[PreferenceByName<M, K>["type"]];
-    };
-    params: CommandByName<M, N>["params"] extends undefined
-      ? Record<string, never>
-      : {
+  [N in CommandName<M>]:
+    & {
+      command: N;
+      cwd: string;
+      preferences: {
+        [K in PreferenceName<M>]: PreferenceByName<M, K>["optional"] extends
+          true ? InputMap[PreferenceByName<M, K>["type"]] | undefined
+          : InputMap[PreferenceByName<M, K>["type"]];
+      };
+      params: CommandByName<M, N>["params"] extends undefined
+        ? Record<string, never>
+        : {
           [K in ParamName<M, N>]: ParamByName<M, N, K>["optional"] extends true
             ? InputMap[ParamByName<M, N, K>["type"]] | undefined
             : InputMap[ParamByName<M, N, K>["type"]];
         };
-  } & (CommandByName<M, N>["mode"] extends "search"
-    ? { query: string }
-    : Record<string, never>);
+    }
+    & (CommandByName<M, N>["mode"] extends "search" ? { query: string }
+      : Record<string, never>);
 }[CommandName<M>];

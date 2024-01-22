@@ -15,7 +15,7 @@
         "preferences": {
             "type": "array",
             "items": {
-                "$ref": "./input.schema.json"
+                "$ref": "#/definitions/input"
             }
         },
         "commands": {
@@ -56,8 +56,40 @@
                 "params": {
                     "type": "array",
                     "items": {
-                        "$ref": "./input.schema.json"
+                        "$ref": "#/definitions/input"
                     }
+                }
+            }
+        },
+        "input": {
+            "type": "object",
+            "required": [
+                "name",
+                "description",
+                "type"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "type": {
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "boolean"
+                        },
+                        {
+                            "type": "number"
+                        }
+                    ]
+                },
+                "optional": {
+                    "type": "boolean"
                 }
             }
         }

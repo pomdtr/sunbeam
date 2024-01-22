@@ -38,8 +38,8 @@ It contains the title, description and the list of commands provided by the exte
       "params": [
         {
           "name": "slug",
-          "type": "text",
-          "title": "Docset Slug",
+          "type": "string", // can be "string", "number", "boolean"
+          "description": "Docset Slug",
         }
       ]
     }

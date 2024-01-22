@@ -9,8 +9,8 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      label: "Personal Access Token",
-      type: "text",
+      description: "Personal Access Token",
+      type: "string",
     },
   ],
   commands: [
@@ -27,8 +27,8 @@ const manifest = {
       params: [
         {
           name: "repo",
-          label: "Repository Name",
-          type: "text",
+          description: "Repository Name",
+          type: "string",
         },
       ],
     },
@@ -40,8 +40,8 @@ const manifest = {
       params: [
         {
           name: "repo",
-          label: "Repository Name",
-          type: "text",
+          description: "Repository Name",
+          type: "string",
         },
       ],
     },
@@ -53,8 +53,8 @@ const manifest = {
       params: [
         {
           name: "repo",
-          label: "Repository Name",
-          type: "text",
+          description: "Repository Name",
+          type: "string",
         },
       ],
     },
@@ -88,72 +88,73 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     }
 
     const resp = await fetch(
-      `https://api.github.com/search/repositories?q=${encodeURIComponent(
-        query
-      )}`,
+      `https://api.github.com/search/repositories?q=${
+        encodeURIComponent(
+          query,
+        )
+      }`,
       {
         headers: {
           Authorization: `token ${token}`,
         },
-      }
+      },
     );
 
     if (!resp.ok) {
       throw new Error(
-        `Failed to search repositories: ${resp.status} ${resp.statusText}`
+        `Failed to search repositories: ${resp.status} ${resp.statusText}`,
       );
     }
 
     const data = await resp.json();
     const list: sunbeam.List = {
       items: data.items.map(
-        (item: any) =>
-          ({
-            title: item.full_name,
-            accessories: [`${item.stargazers_count} *`],
-            actions: [
-              {
-                title: "View README",
-                type: "run",
-                command: "readme",
-                params: {
-                  repo: item.full_name,
-                },
+        (item: any) => ({
+          title: item.full_name,
+          accessories: [`${item.stargazers_count} *`],
+          actions: [
+            {
+              title: "View README",
+              type: "run",
+              command: "readme",
+              params: {
+                repo: item.full_name,
               },
-              {
-                title: "Open In Browser",
-                key: "o",
-                type: "open",
-                url: item.html_url,
-                exit: true,
+            },
+            {
+              title: "Open In Browser",
+              key: "o",
+              type: "open",
+              url: item.html_url,
+              exit: true,
+            },
+            {
+              title: "List Issues",
+              key: "i",
+              type: "run",
+              command: "issue.list",
+              params: {
+                repo: item.full_name,
               },
-              {
-                title: "List Issues",
-                key: "i",
-                type: "run",
-                command: "issue.list",
-                params: {
-                  repo: item.full_name,
-                },
+            },
+            {
+              title: "List Pull Requests",
+              key: "p",
+              type: "run",
+              command: "pr.list",
+              params: {
+                repo: item.full_name,
               },
-              {
-                title: "List Pull Requests",
-                key: "p",
-                type: "run",
-                command: "pr.list",
-                params: {
-                  repo: item.full_name,
-                },
-              },
-              {
-                title: "Copy URL",
-                key: "c",
-                type: "copy",
-                text: item.html_url,
-                exit: true,
-              },
-            ],
-          } as sunbeam.ListItem)
+            },
+            {
+              title: "Copy URL",
+              key: "c",
+              type: "copy",
+              text: item.html_url,
+              exit: true,
+            },
+          ],
+        } as sunbeam.ListItem),
       ),
     };
 
@@ -168,33 +169,32 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
 
     if (!resp.ok) {
       throw new Error(
-        `Failed to list issues: ${resp.status} ${resp.statusText}`
+        `Failed to list issues: ${resp.status} ${resp.statusText}`,
       );
     }
 
     const data = await resp.json();
     const list: sunbeam.List = {
       items: data.map(
-        (item: any) =>
-          ({
-            title: item.title,
-            accessories: [`#${item.number}`],
-            actions: [
-              {
-                title: "Open In Browser",
-                type: "open",
-                url: item.html_url,
-                exit: true,
-              },
-              {
-                title: "Copy URL",
-                key: "c",
-                type: "copy",
-                text: item.html_url,
-                exit: true,
-              },
-            ],
-          } as sunbeam.ListItem)
+        (item: any) => ({
+          title: item.title,
+          accessories: [`#${item.number}`],
+          actions: [
+            {
+              title: "Open In Browser",
+              type: "open",
+              url: item.html_url,
+              exit: true,
+            },
+            {
+              title: "Copy URL",
+              key: "c",
+              type: "copy",
+              text: item.html_url,
+              exit: true,
+            },
+          ],
+        } as sunbeam.ListItem),
       ),
     };
 
@@ -209,33 +209,32 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
 
     if (!resp.ok) {
       throw new Error(
-        `Failed to list pull requests: ${resp.status} ${resp.statusText}`
+        `Failed to list pull requests: ${resp.status} ${resp.statusText}`,
       );
     }
 
     const data = await resp.json();
     const list: sunbeam.List = {
       items: data.map(
-        (item: any) =>
-          ({
-            title: item.title,
-            accessories: [`#${item.number}`],
-            actions: [
-              {
-                title: "Open In Browser",
-                type: "open",
-                url: item.html_url,
-                exit: true,
-              },
-              {
-                title: "Copy URL",
-                key: "c",
-                type: "copy",
-                text: item.html_url,
-                exit: true,
-              },
-            ],
-          } as sunbeam.ListItem)
+        (item: any) => ({
+          title: item.title,
+          accessories: [`#${item.number}`],
+          actions: [
+            {
+              title: "Open In Browser",
+              type: "open",
+              url: item.html_url,
+              exit: true,
+            },
+            {
+              title: "Copy URL",
+              key: "c",
+              type: "copy",
+              text: item.html_url,
+              exit: true,
+            },
+          ],
+        } as sunbeam.ListItem),
       ),
     };
 
@@ -250,7 +249,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
 
     if (!resp.ok) {
       throw new Error(
-        `Failed to view readme: ${resp.status} ${resp.statusText}`
+        `Failed to view readme: ${resp.status} ${resp.statusText}`,
       );
     }
 

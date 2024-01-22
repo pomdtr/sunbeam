@@ -2,7 +2,6 @@ package sunbeam
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type Action struct {
@@ -10,13 +9,57 @@ type Action struct {
 	Key   string     `json:"key,omitempty"`
 	Type  ActionType `json:"type,omitempty"`
 
-	Open   *OpenAction   `json:"open,omitempty"`
-	Copy   *CopyAction   `json:"copy,omitempty"`
-	Run    *RunAction    `json:"run,omitempty"`
-	Exec   *ExecAction   `json:"exec,omitempty"`
-	Edit   *EditAction   `json:"edit,omitempty"`
-	Config *ConfigAction `json:"config,omitempty"`
-	Reload *ReloadAction `json:"reload,omitempty"`
+	Open   *OpenAction   `json:"-"`
+	Copy   *CopyAction   `json:"-"`
+	Run    *RunAction    `json:"-"`
+	Exec   *ExecAction   `json:"-"`
+	Edit   *EditAction   `json:"-"`
+	Config *ConfigAction `json:"-"`
+	Reload *ReloadAction `json:"-"`
+}
+
+func (a *Action) UnmarshalJSON(bts []byte) error {
+	var action struct {
+		Title string `json:"title,omitempty"`
+		Key   string `json:"key,omitempty"`
+		Type  string `json:"type,omitempty"`
+	}
+
+	if err := json.Unmarshal(bts, &action); err != nil {
+		return err
+	}
+
+	a.Title = action.Title
+	a.Key = action.Key
+	a.Type = ActionType(action.Type)
+
+	switch a.Type {
+	case ActionTypeRun:
+		a.Run = &RunAction{}
+		return json.Unmarshal(bts, a.Run)
+	case ActionTypeOpen:
+		a.Open = &OpenAction{}
+		return json.Unmarshal(bts, a.Open)
+	case ActionTypeCopy:
+		a.Copy = &CopyAction{}
+		return json.Unmarshal(bts, a.Copy)
+	case ActionTypeEdit:
+		a.Edit = &EditAction{}
+		return json.Unmarshal(bts, a.Edit)
+	case ActionTypeExec:
+		a.Exec = &ExecAction{}
+		return json.Unmarshal(bts, a.Exec)
+	case ActionTypeExit:
+		return nil
+	case ActionTypeReload:
+		a.Reload = &ReloadAction{}
+		return json.Unmarshal(bts, a.Reload)
+	case ActionTypeConfig:
+		a.Config = &ConfigAction{}
+		return json.Unmarshal(bts, a.Config)
+	}
+
+	return nil
 }
 
 type ConfigAction struct {
@@ -30,15 +73,15 @@ type EditAction struct {
 }
 
 type ReloadAction struct {
-	Params map[string]Param `json:"params,omitempty"`
+	Params map[string]any `json:"params,omitempty"`
 }
 
 type RunAction struct {
-	Extension string           `json:"extension,omitempty"`
-	Command   string           `json:"command,omitempty"`
-	Params    map[string]Param `json:"params,omitempty"`
-	Reload    bool             `json:"reload,omitempty"`
-	Exit      bool             `json:"exit,omitempty"`
+	Extension string         `json:"extension,omitempty"`
+	Command   string         `json:"command,omitempty"`
+	Params    map[string]any `json:"params,omitempty"`
+	Reload    bool           `json:"reload,omitempty"`
+	Exit      bool           `json:"exit,omitempty"`
 }
 
 type CopyAction struct {
@@ -56,56 +99,6 @@ type ExecAction struct {
 type OpenAction struct {
 	Url  string `json:"url,omitempty"`
 	Path string `json:"path,omitempty"`
-}
-
-type Param struct {
-	Value   any `json:"value,omitempty"`
-	Default any `json:"default,omitempty"`
-}
-
-func (p *Param) UnmarshalJSON(bts []byte) error {
-	var s string
-	if err := json.Unmarshal(bts, &s); err == nil {
-		p.Value = s
-		return nil
-	}
-
-	var b bool
-	if err := json.Unmarshal(bts, &b); err == nil {
-		p.Value = b
-		return nil
-	}
-
-	var n int
-	if err := json.Unmarshal(bts, &n); err == nil {
-		p.Value = n
-		return nil
-	}
-
-	var param struct {
-		Default  any  `json:"default,omitempty"`
-		Optional bool `json:"optional,omitempty"`
-	}
-
-	if err := json.Unmarshal(bts, &param); err == nil {
-		p.Default = param.Default
-		return nil
-	}
-
-	return fmt.Errorf("invalid param: %s", string(bts))
-}
-
-func (p Param) MarshalJSON() ([]byte, error) {
-	if p.Value != nil {
-		return json.Marshal(p.Value)
-	}
-
-	return json.Marshal(struct {
-		Default  any  `json:"default,omitempty"`
-		Required bool `json:"required,omitempty"`
-	}{
-		Default: p.Default,
-	})
 }
 
 type ActionType string

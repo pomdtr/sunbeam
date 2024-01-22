@@ -15,8 +15,8 @@ const manifest = {
       params: [
         {
           name: "url",
-          label: "URL",
-          type: "text",
+          description: "URL",
+          type: "string",
         },
       ],
     },
@@ -37,27 +37,23 @@ if (payload.command == "show") {
       subtitle: item.categories?.join(", ") || "",
       accessories: item.isoDate
         ? [
-            formatDistance(new Date(item.isoDate), new Date(), {
-              addSuffix: true,
-            }),
-          ]
+          formatDistance(new Date(item.isoDate), new Date(), {
+            addSuffix: true,
+          }),
+        ]
         : [],
       actions: [
         {
           title: "Open in browser",
           type: "open",
-          open: {
-            url: item.link || "",
-          },
+          url: item.link || "",
         },
         {
           title: "Copy Link",
           type: "copy",
           key: "c",
-          copy: {
-            text: item.link || "",
-            exit: true,
-          },
+          text: item.link || "",
+          exit: true,
         },
       ],
     })),

@@ -415,9 +415,7 @@ func NewCmdExtensionConfigure(cfg config.Config) *cobra.Command {
 			var inputs []sunbeam.Input
 			for _, input := range extension.Manifest.Preferences {
 				if preference := extensionConfig.Preferences[input.Name]; preference != nil {
-					if err := input.SetDefault(preference); err != nil {
-						return fmt.Errorf("failed to set default: %w", err)
-					}
+					input.Default = preference
 				}
 				input.Optional = false
 				inputs = append(inputs, input)

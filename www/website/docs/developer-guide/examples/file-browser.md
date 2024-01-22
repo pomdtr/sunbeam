@@ -66,9 +66,8 @@ manifest = {
         {
             "name": "show-hidden",
             "label": "Show Hidden Files",
-            "type": "checkbox",
+            "type": "boolean",
             "optional": True,
-            "default": False,
         }
     ],
     "commands": [
@@ -80,7 +79,7 @@ manifest = {
                 {
                     "name": "dir",
                     "title": "Directory",
-                    "type": "text",
+                    "type": "string",
                     "optional": True,
                 },
             ],
@@ -122,12 +121,10 @@ if payload["command"] == "ls":
                 {
                     "title": "Browse",
                     "type": "run",
-                    "run": {
-                        "command": "ls",
-                        "params": {
-                            "dir": str(file.absolute()),
-                        },
-                    }
+                    "command": "ls",
+                    "params": {
+                        "dir": str(file.absolute()),
+                    },
                 }
             )
         item["actions"].extend(
@@ -136,9 +133,7 @@ if payload["command"] == "ls":
                     "title": "Open",
                     "key": "o",
                     "type": "open",
-                    "open": {
-                        "path": str(file.absolute()),
-                    }
+                    "path": str(file.absolute()),
                 },
                 {
                     "title": "Show Hidden Files"
@@ -146,12 +141,10 @@ if payload["command"] == "ls":
                     else "Hide Hidden Files",
                     "key": "h",
                     "type": "reload",
-                    "reload": {
-                        "params": {
-                            "show-hidden": not show_hidden,
-                            "dir": str(root.absolute()),
-                        },
-                    }
+                    "params": {
+                        "show-hidden": not show_hidden,
+                        "dir": str(root.absolute()),
+                    },
                 },
             ]
         )
