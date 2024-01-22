@@ -65,27 +65,21 @@
             "type": "object",
             "required": [
                 "name",
-                "description",
+                "title",
                 "type"
             ],
             "properties": {
                 "name": {
                     "type": "string"
                 },
-                "description": {
+                "title": {
                     "type": "string"
                 },
                 "type": {
-                    "oneOf": [
-                        {
-                            "type": "string"
-                        },
-                        {
-                            "type": "boolean"
-                        },
-                        {
-                            "type": "number"
-                        }
+                    "enum": [
+                        "string",
+                        "boolean",
+                        "number"
                     ]
                 },
                 "optional": {

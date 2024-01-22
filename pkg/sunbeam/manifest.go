@@ -46,9 +46,9 @@ const (
 )
 
 type Input struct {
-	Type        InputType `json:"type"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Optional    bool      `json:"optional,omitempty"`
-	Default     any       `json:"default,omitempty"`
+	Type     InputType `json:"type"`
+	Name     string    `json:"name"`
+	Title    string    `json:"title"`
+	Optional bool      `json:"optional,omitempty"`
+	Default  any       `json:"default,omitempty"`
 }

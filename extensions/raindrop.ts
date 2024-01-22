@@ -7,7 +7,7 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      description: "Raindrop API Token",
+      title: "Raindrop API Token",
       type: "string",
     },
   ],

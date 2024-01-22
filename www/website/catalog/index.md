@@ -11,7 +11,7 @@ Browse files and folders
 
 ### Preferences
 
-- `show-hidden`: undefined
+- `show-hidden`: Show Hidden Files
 
 ### Commands
 
@@ -29,7 +29,7 @@ Manage your gists
 
 ### Preferences
 
-- `token`: undefined
+- `token`: GitHub Personal Access Token
 
 ### Commands
 
@@ -52,7 +52,7 @@ Search GitHub repositories
 
 ### Preferences
 
-- `token`: undefined
+- `token`: Personal Access Token
 
 ### Commands
 
@@ -84,7 +84,7 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 ## [Nixpkgs Search](https://github.com/pomdtr/sunbeam/tree/main/extensions/nixpkgs.ts)
 
-undefined
+Search Nixpkgs packages
 
 ### Commands
 
@@ -117,7 +117,7 @@ Search your Bitwarden passwords
 
 ### Preferences
 
-- `session`: undefined
+- `session`: Bitwarden Session
 
 ### Commands
 
@@ -131,7 +131,7 @@ sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/
 
 ## [NPM Search](https://github.com/pomdtr/sunbeam/tree/main/extensions/npm.ts)
 
-undefined
+Search NPM packages
 
 ### Commands
 
@@ -163,7 +163,7 @@ Search and view Val Town vals
 
 ### Preferences
 
-- `token`: undefined
+- `token`: Access Token
 
 ### Commands
 
@@ -200,7 +200,7 @@ Manage your Deno Deploy projects
 
 ### Preferences
 
-- `token`: undefined
+- `token`: Access Token
 
 ### Commands
 
@@ -258,42 +258,13 @@ Search DevDocs.io
 sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/devdocs.sh
 ```
 
-## [Home Manager](https://github.com/pomdtr/sunbeam/tree/main/extensions/home-manager.ts)
-
-undefined
-
-### Commands
-
-- `search`: Search Configuration Options
-
-### Install
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/home-manager.ts
-```
-
-## [Store](https://github.com/pomdtr/sunbeam/tree/main/extensions/store.ts)
-
-Download and install extensions
-
-### Commands
-
-- `search`: Search
-- `install`: Install
-
-### Install
-
-```
-sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/store.ts
-```
-
 ## [Raindrop](https://github.com/pomdtr/sunbeam/tree/main/extensions/raindrop.ts)
 
 Manage your raindrop bookmarks
 
 ### Preferences
 
-- `token`: undefined
+- `token`: Raindrop API Token
 
 ### Commands
 

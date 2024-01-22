@@ -163,11 +163,11 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 	for _, input := range command.Params {
 		switch input.Type {
 		case sunbeam.InputString:
-			cmd.Flags().String(input.Name, "", input.Description)
+			cmd.Flags().String(input.Name, "", input.Title)
 		case sunbeam.InputBoolean:
-			cmd.Flags().Bool(input.Name, false, input.Description)
+			cmd.Flags().Bool(input.Name, false, input.Title)
 		case sunbeam.InputNumber:
-			cmd.Flags().Int(input.Name, 0, input.Description)
+			cmd.Flags().Int(input.Name, 0, input.Title)
 		}
 
 		if !input.Optional {

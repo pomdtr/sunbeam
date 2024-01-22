@@ -17,7 +17,7 @@ const manifest = {
       params: [
         {
           name: "ip",
-          description: "Device IP",
+          title: "Device IP",
           type: "string",
         },
       ],

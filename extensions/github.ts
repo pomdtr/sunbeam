@@ -9,7 +9,7 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      description: "Personal Access Token",
+      title: "Personal Access Token",
       type: "string",
     },
   ],
@@ -27,7 +27,7 @@ const manifest = {
       params: [
         {
           name: "repo",
-          description: "Repository Name",
+          title: "Repository Name",
           type: "string",
         },
       ],
@@ -40,7 +40,7 @@ const manifest = {
       params: [
         {
           name: "repo",
-          description: "Repository Name",
+          title: "Repository Name",
           type: "string",
         },
       ],
@@ -53,7 +53,7 @@ const manifest = {
       params: [
         {
           name: "repo",
-          description: "Repository Name",
+          title: "Repository Name",
           type: "string",
         },
       ],

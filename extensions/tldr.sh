@@ -13,7 +13,7 @@ if [ $# -eq 0 ]; then
     # each command can be called through the cli
     commands: [
         { name: "list", mode: "filter", title: "Search Pages" },
-        { name: "view", mode: "detail", hidden: true, title: "View page", params: [{ name: "page", type: "string", description: "page to show" }] },
+        { name: "view", mode: "detail", hidden: true, title: "View page", params: [{ name: "page", type: "string", title: "Page to show" }] },
         { name: "update", mode: "silent", title: "Update cache" }
     ]
 }'

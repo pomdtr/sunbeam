@@ -56,7 +56,7 @@ func NewTextField(input sunbeam.Input, secure bool) *TextField {
 		name:        input.Name,
 		title:       input.Name,
 		Model:       ti,
-		placeholder: input.Description,
+		placeholder: input.Title,
 	}
 }
 
@@ -140,11 +140,11 @@ func NewTextArea(input sunbeam.Input) Input {
 		}
 	}
 
-	ta.Placeholder = input.Description
+	ta.Placeholder = input.Title
 	ta.SetHeight(5)
 
 	return &TextArea{
-		title: input.Description,
+		title: input.Title,
 		name:  input.Name,
 		Model: ta,
 	}
@@ -205,7 +205,7 @@ type Checkbox struct {
 func NewCheckbox(param sunbeam.Input) *Checkbox {
 	checkbox := Checkbox{
 		name:  param.Name,
-		title: param.Description,
+		title: param.Title,
 	}
 
 	if param.Default != nil {
@@ -214,7 +214,7 @@ func NewCheckbox(param sunbeam.Input) *Checkbox {
 		}
 	}
 
-	checkbox.label = param.Description
+	checkbox.label = param.Title
 
 	return &checkbox
 }

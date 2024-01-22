@@ -3,6 +3,7 @@ import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 
 const manifest: sunbeam.Manifest = {
   title: "NPM Search",
+  description: "Search NPM packages",
   commands: [
     {
       name: "search",

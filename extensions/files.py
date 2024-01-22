@@ -10,7 +10,7 @@ manifest = {
     "preferences": [
         {
             "name": "show-hidden",
-            "description": "Show Hidden Files",
+            "title": "Show Hidden Files",
             "type": "boolean",
             "optional": True,
         }
@@ -23,7 +23,7 @@ manifest = {
             "params": [
                 {
                     "name": "dir",
-                    "description": "Directory",
+                    "title": "Directory",
                     "type": "string",
                     "optional": True,
                 },

@@ -18,7 +18,7 @@ if [ $# -eq 0 ]; then
         title: "List Entries from Docset",
         mode: "filter",
         params: [
-          { name: "slug", description: "Slug", type: "string" }
+          { name: "slug", title: "Slug", type: "string" }
         ]
       }
     ]

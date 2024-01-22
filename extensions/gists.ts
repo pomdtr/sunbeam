@@ -10,7 +10,7 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      description: "GitHub Personal Access Token",
+      title: "GitHub Personal Access Token",
       type: "string",
     },
   ],
@@ -27,18 +27,18 @@ const manifest = {
       params: [
         {
           name: "filename",
-          description: "Gist Filename",
+          title: "Gist Filename",
           type: "string",
         },
         {
           name: "description",
-          description: "Gist Description",
+          title: "Gist Description",
           optional: true,
           type: "string",
         },
         {
           name: "public",
-          description: "Public",
+          title: "Public",
           type: "boolean",
         },
       ],
@@ -48,7 +48,7 @@ const manifest = {
       title: "Browse Gist Files",
       hidden: true,
       mode: "filter",
-      params: [{ name: "id", description: "Gist ID", type: "string" }],
+      params: [{ name: "id", title: "Gist ID", type: "string" }],
     },
     {
       name: "view",
@@ -56,8 +56,8 @@ const manifest = {
       hidden: true,
       mode: "detail",
       params: [
-        { name: "id", description: "Gist ID", type: "string" },
-        { name: "filename", description: "Filename", type: "string" },
+        { name: "id", title: "Gist ID", type: "string" },
+        { name: "filename", title: "Filename", type: "string" },
       ],
     },
     {
@@ -66,8 +66,8 @@ const manifest = {
       hidden: true,
       mode: "tty",
       params: [
-        { name: "id", description: "Gist ID", type: "string" },
-        { name: "filename", description: "Filename", type: "string" },
+        { name: "id", title: "Gist ID", type: "string" },
+        { name: "filename", title: "Filename", type: "string" },
       ],
     },
     {
@@ -75,7 +75,7 @@ const manifest = {
       hidden: true,
       title: "Delete Gist",
       mode: "silent",
-      params: [{ name: "id", description: "Gist ID", type: "string" }],
+      params: [{ name: "id", title: "Gist ID", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;

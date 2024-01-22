@@ -16,7 +16,7 @@ if [ $# -eq 0 ]; then
                 params: [
                     {
                         name: "package",
-                        description: "Package Name",
+                        title: "Package Name",
                         type: "string"
                     }
                 ]

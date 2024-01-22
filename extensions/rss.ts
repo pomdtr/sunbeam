@@ -15,7 +15,7 @@ const manifest = {
       params: [
         {
           name: "url",
-          description: "URL",
+          title: "URL",
           type: "string",
         },
       ],

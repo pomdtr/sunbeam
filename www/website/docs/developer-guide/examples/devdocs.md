@@ -153,7 +153,7 @@ if [ $# -eq 0 ]; then
                     {
                         name: "docset",
                         type: "string",
-                        description: "Docset Slug"
+                        title: "Docset Slug"
                     }
                 ]
             }

@@ -1,22 +1,21 @@
 export type Manifest = {
   title: string;
-  description?: string;
+  description: string;
   preferences?: readonly Input[];
   commands: readonly Command[];
 };
 
 export type Command = {
   name: string;
-  title: string;
   hidden?: boolean;
-  description?: string;
+  title: string;
   params?: readonly Input[];
   mode: "filter" | "search" | "detail" | "tty" | "silent";
 };
 
 export type Input = {
   name: string;
-  description?: string;
+  title: string;
   type: "string" | "number" | "boolean";
   optional?: boolean;
 };

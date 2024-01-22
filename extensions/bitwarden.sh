@@ -7,7 +7,7 @@ if [ $# -eq 0 ]; then
         preferences: [
             {
                 name: "session",
-                description: "Bitwarden Session",
+                title: "Bitwarden Session",
                 type: "string"
             }
         ],

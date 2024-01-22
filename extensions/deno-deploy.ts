@@ -9,7 +9,7 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      description: "Access Token",
+      title: "Access Token",
       type: "string",
     },
   ],
@@ -29,14 +29,14 @@ const manifest = {
       title: "List Deployments",
       hidden: true,
       mode: "filter",
-      params: [{ name: "project", description: "Project", type: "string" }],
+      params: [{ name: "project", title: "Project", type: "string" }],
     },
     {
       name: "playground",
       title: "View Playground",
       hidden: true,
       mode: "detail",
-      params: [{ name: "project", description: "Project", type: "string" }],
+      params: [{ name: "project", title: "Project", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;

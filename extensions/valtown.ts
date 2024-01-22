@@ -8,7 +8,7 @@ const manifest = {
   preferences: [
     {
       name: "token",
-      description: "Access Token",
+      title: "Access Token",
       type: "string",
     },
   ],
@@ -19,7 +19,7 @@ const manifest = {
       mode: "filter",
       params: [{
         name: "user",
-        description: "User",
+        title: "User",
         optional: true,
         type: "string",
       }],
@@ -34,14 +34,14 @@ const manifest = {
       name: "edit",
       hidden: true,
       mode: "tty",
-      params: [{ name: "id", description: "Val ID", type: "string" }],
+      params: [{ name: "id", title: "Val ID", type: "string" }],
     },
     {
       title: "View Readme",
       name: "readme",
       hidden: true,
       mode: "detail",
-      params: [{ name: "id", description: "Val ID", type: "string" }],
+      params: [{ name: "id", title: "Val ID", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;

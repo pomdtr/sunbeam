@@ -10,7 +10,7 @@ rows.push(
   "outline: 2",
   "---",
   "",
-  "# Extension Catalog"
+  "# Extension Catalog",
 );
 
 const extensionDir = path.join(dirname, "..", "extensions");
@@ -33,7 +33,7 @@ for (const entry of entries) {
     "",
     `## [${manifest.title}](https://github.com/pomdtr/sunbeam/tree/main/extensions/${entry.name})`,
     "",
-    `${manifest.description}`
+    `${manifest.description}`,
   );
 
   if (manifest.preferences?.length) {
@@ -56,11 +56,11 @@ for (const entry of entries) {
     "",
     "```",
     `sunbeam extension install https://raw.githubusercontent.com/pomdtr/sunbeam/main/extensions/${entry.name}`,
-    "```"
+    "```",
   );
 }
 
 Deno.writeTextFileSync(
   path.join(dirname, "..", "www", "website", "catalog", "index.md"),
-  rows.join("\n")
+  rows.join("\n"),
 );

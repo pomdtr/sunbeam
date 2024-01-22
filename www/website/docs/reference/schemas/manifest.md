@@ -39,7 +39,7 @@ It contains the title, description and the list of commands provided by the exte
         {
           "name": "slug",
           "type": "string", // can be "string", "number", "boolean"
-          "description": "Docset Slug",
+          "title": "Docset Slug",
         }
       ]
     }
