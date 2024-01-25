@@ -130,10 +130,6 @@ export default defineConfig({
                 text: "Action",
                 link: "/docs/reference/schemas/action",
               },
-              {
-                text: "Input",
-                link: "/docs/reference/schemas/input",
-              },
             ],
           },
           {
