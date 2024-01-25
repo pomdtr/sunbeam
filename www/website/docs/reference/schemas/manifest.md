@@ -13,9 +13,8 @@ It contains the title, description and the list of commands provided by the exte
   "preferences": [
     {
       "name": "hidden",
-      "label": "Show hidden entries",
-      "type": "checkbox",
-      "default": false
+      "title": "Show hidden entries",
+      "type": "boolean"
     }
   ],
   "commands": [

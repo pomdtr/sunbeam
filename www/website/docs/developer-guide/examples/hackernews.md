@@ -15,7 +15,7 @@ const manifest = {
       name: "browse",
       title: "Show a feed",
       mode: "filter",
-      params: [{ name: "topic", label: "Topic", type: "text" }],
+      params: [{ name: "topic", title: "Topic", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -78,7 +78,7 @@ const manifest = {
       name: "browse",
       title: "Show a feed",
       mode: "filter",
-      params: [{ name: "topic", label: "Topic", type: "text" }],
+      params: [{ name: "topic", title: "Topic", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;

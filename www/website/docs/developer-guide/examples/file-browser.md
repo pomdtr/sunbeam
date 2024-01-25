@@ -17,12 +17,9 @@ manifest = {
     "preferences": [
         {
             "name": "show-hidden",
-            "label": "Show Hidden Files",
-            "type": "checkbox",
-            "optional": True,
-            "checkbox": {
-                "default": False,
-            }
+            "title": "Show Hidden Files",
+            "type": "boolean",
+            "optional": True
         }
     ],
     "commands": [
@@ -65,7 +62,7 @@ manifest = {
     "preferences": [
         {
             "name": "show-hidden",
-            "label": "Show Hidden Files",
+            "title": "Show Hidden Files",
             "type": "boolean",
             "optional": True,
         }
