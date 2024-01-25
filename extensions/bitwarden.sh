@@ -6,12 +6,6 @@ if ! [ -x "$(command -v jq)" ]; then
     exit 1
 fi
 
-# check if bkt is installed
-if ! [ -x "$(command -v bkt)" ]; then
-    echo "bkt is not installed. Please install it." >&2
-    exit 1
-fi
-
 if [ $# -eq 0 ]; then
     jq -n '{
         title: "Bitwarden Vault",
@@ -32,6 +26,12 @@ if [ $# -eq 0 ]; then
         ]
     }'
     exit 0
+fi
+
+# check if bkt is installed
+if ! [ -x "$(command -v bkt)" ]; then
+    echo "bkt is not installed. Please install it." >&2
+    exit 1
 fi
 
 BW_SESSION=$(echo "$1" | jq -r '.preferences.session')
