@@ -121,6 +121,14 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			}
 
 			return p, PopPageCmd
+		default:
+			for i := 1; i < min(len(p.actions), 10); i++ {
+				if fmt.Sprintf("alt+%d", i) == msg.String() {
+					return p, func() tea.Msg {
+						return p.actions[i]
+					}
+				}
+			}
 		}
 	case ShowNotificationMsg:
 		p.Reset()
@@ -157,8 +165,8 @@ func (c StatusBar) View() string {
 			var subtitle string
 			if i == 0 {
 				subtitle = "enter"
-			} else if i == 1 {
-				subtitle = "alt+enter"
+			} else if i < 10 {
+				subtitle = fmt.Sprintf("alt+%d", i)
 			}
 
 			accessories[i] = renderAction(action.Title, subtitle, i == c.cursor)
@@ -195,9 +203,9 @@ func (c StatusBar) View() string {
 
 	var statusbar string
 	if c.expanded {
-		statusbar = fmt.Sprintf("   %s ", accessory)
+		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-2, 0))
+		statusbar = fmt.Sprintf(" %s%s ", blanks, accessory)
 	} else {
-
 		blanks := strings.Repeat(" ", max(c.Width-lipgloss.Width(accessory)-lipgloss.Width(c.notification)-4, 0))
 		statusbar = fmt.Sprintf("   %s%s%s ", lipgloss.NewStyle().Faint(true).Render(c.notification), blanks, accessory)
 	}
