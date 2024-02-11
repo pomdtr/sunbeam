@@ -2,156 +2,23 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "required": [
-        "type"
+        "command"
     ],
     "properties": {
-        "type": {
-            "enum": [
-                "copy",
-                "open",
-                "edit",
-                "run",
-                "reload",
-                "exit"
-            ]
-        },
         "title": {
             "type": "string"
         },
         "key": {
             "type": "string"
+        },
+        "command": {
+            "type": "string"
+        },
+        "reload": {
+            "type": "boolean"
+        },
+        "params": {
+            "type": "object"
         }
-    },
-    "allOf": [
-        {
-            "if": {
-                "required": [
-                    "type"
-                ],
-                "properties": {
-                    "type": {
-                        "const": "copy"
-                    }
-                }
-            },
-            "then": {
-                "type": "object",
-                "required": [
-                    "text"
-                ],
-                "properties": {
-                    "text": {
-                        "type": "string"
-                    },
-                    "exit": {
-                        "type": "boolean"
-                    }
-                }
-            }
-        },
-        {
-            "if": {
-                "required": [
-                    "type"
-                ],
-                "properties": {
-                    "type": {
-                        "const": "open"
-                    }
-                }
-            },
-            "then": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string"
-                    },
-                    "path": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        {
-            "if": {
-                "required": [
-                    "type"
-                ],
-                "properties": {
-                    "type": {
-                        "const": "edit"
-                    }
-                }
-            },
-            "then": {
-                "type": "object",
-                "required": [
-                    "path"
-                ],
-                "properties": {
-                    "path": {
-                        "type": "string"
-                    },
-                    "reload": {
-                        "type": "boolean"
-                    },
-                    "exit": {
-                        "type": "boolean"
-                    }
-                }
-            }
-        },
-        {
-            "if": {
-                "required": [
-                    "type"
-                ],
-                "properties": {
-                    "type": {
-                        "const": "run"
-                    }
-                }
-            },
-            "then": {
-                "type": "object",
-                "required": [
-                    "command"
-                ],
-                "properties": {
-                    "command": {
-                        "type": "string"
-                    },
-                    "params": {
-                        "$ref": "./params.schema.json"
-                    },
-                    "exit": {
-                        "type": "boolean"
-                    },
-                    "reload": {
-                        "type": "boolean"
-                    }
-                }
-            }
-        },
-        {
-            "if": {
-                "required": [
-                    "type"
-                ],
-                "properties": {
-                    "type": {
-                        "const": "reload"
-                    }
-                }
-            },
-            "then": {
-                "type": "object",
-                "properties": {
-                    "params": {
-                        "$ref": "./params.schema.json"
-                    }
-                }
-            }
-        }
-    ]
+    }
 }

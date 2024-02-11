@@ -40,15 +40,20 @@ for (const pkg of packages) {
     subtitle: pkg.package.description || "",
     actions: [
       {
-        type: "open",
         title: "Open Package",
-        url: pkg.package.links.npm,
+        extension: "std",
+        command: "open",
+        params: {
+          url: pkg.package.links.npm,
+        },
       },
       {
-        type: "copy",
         title: "Open Package Name",
-        text: pkg.package.name,
-        exit: true,
+        extension: "std",
+        command: "copy",
+        params: {
+          text: pkg.package.name,
+        },
       },
     ],
   };

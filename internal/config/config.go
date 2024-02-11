@@ -9,6 +9,8 @@ import (
 
 	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
+	"github.com/tailscale/hujson"
 )
 
 var Path string
@@ -36,9 +38,15 @@ func init() {
 }
 
 type Config struct {
-	Oneliners  []Oneliner                 `json:"oneliners,omitempty"`
+	Env        map[string]string          `json:"env,omitempty"`
 	Extensions map[string]ExtensionConfig `json:"extensions,omitempty"`
-	path       string                     `json:"-"`
+	Root       []sunbeam.Action           `json:"root,omitempty"`
+	Path       string                     `json:"-"`
+}
+
+type ExtensionConfig struct {
+	Origin string            `json:"origin"`
+	Env    map[string]string `json:"env,omitempty"`
 }
 
 func (cfg Config) Resolve(path string) string {
@@ -47,16 +55,10 @@ func (cfg Config) Resolve(path string) string {
 	}
 
 	if !filepath.IsAbs(path) {
-		return filepath.Join(filepath.Dir(cfg.path), path)
+		return filepath.Join(filepath.Dir(cfg.Path), path)
 	}
 
 	return path
-}
-
-type ExtensionConfig struct {
-	Origin      string         `json:"origin,omitempty"`
-	Preferences map[string]any `json:"preferences,omitempty"`
-	Root        []RootItem     `json:"root,omitempty"`
 }
 
 type RootItem struct {
@@ -88,25 +90,40 @@ func Load(configPath string) (Config, error) {
 		return Config{}, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	if err := schemas.ValidateConfig(configBytes); err != nil {
+	configJsonBytes, err := hujson.Standardize(configBytes)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to standardize config: %w", err)
+	}
+
+	if err := schemas.ValidateConfig(configJsonBytes); err != nil {
 		return Config{}, fmt.Errorf("invalid config: %w", err)
+	}
+
+	execPath, err := os.Executable()
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to get executable path: %w", err)
 	}
 
 	// set default values for configs
 	config := Config{
-		Extensions: make(map[string]ExtensionConfig),
+		Extensions: map[string]ExtensionConfig{
+			"std": {
+				Origin: execPath,
+			},
+		},
+		Env: make(map[string]string),
 	}
 
-	if err := json.Unmarshal(configBytes, &config); err != nil {
+	if err := json.Unmarshal(configJsonBytes, &config); err != nil {
 		return Config{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
-	config.path = configPath
+	config.Path = configPath
 
 	return config, nil
 }
 
 func (c Config) Save() error {
-	f, err := os.Create(c.path)
+	f, err := os.Create(c.Path)
 	if err != nil {
 		return fmt.Errorf("failed to open config: %w", err)
 	}

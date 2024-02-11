@@ -8,23 +8,20 @@ import (
 	"os/exec"
 
 	"github.com/acarl005/stripansi"
-	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/schemas"
-	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
 type Runner struct {
 	embed         Page
-	form          *Form
 	width, height int
 	cancel        context.CancelFunc
 
 	extension extensions.Extension
-	command   sunbeam.CommandSpec
+	command   sunbeam.Command
 	input     sunbeam.Payload
 }
 
@@ -91,10 +88,6 @@ func (c *Runner) SetSize(w int, h int) {
 	c.width = w
 	c.height = h
 
-	if c.form != nil {
-		c.form.SetSize(w, h)
-	}
-
 	c.embed.SetSize(w, h)
 }
 
@@ -103,30 +96,10 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if c.form != nil {
-				c.form = nil
-				return c, c.embed.Focus()
-			}
-
 			if c.embed != nil {
 				break
 			}
 			return c, PopPageCmd
-		case "ctrl+s":
-			editCmd := exec.Command("sunbeam", "edit", c.extension.Entrypoint)
-			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				extension, err := extensions.LoadExtension(c.extension.Entrypoint)
-				if err != nil {
-					return err
-				}
-				c.extension = extension
-
-				return ReloadMsg{}
-			})
 		case "ctrl+r":
 			return c, func() tea.Msg {
 				manifest, err := extensions.ExtractManifest(c.extension.Entrypoint)
@@ -145,166 +118,94 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		c.embed.SetSize(c.width, c.height)
 		return c, c.embed.Init()
 	case sunbeam.Action:
-		switch msg.Type {
-		case sunbeam.ActionTypeRun:
-			command, ok := c.extension.Command(msg.Run.Command)
+		var extension extensions.Extension
+		if msg.Extension != "" {
+			origin, ok := c.extension.Manifest.Imports[msg.Extension]
 			if !ok {
-				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Run.Command))
+				c.embed = NewErrorPage(fmt.Errorf("extension %s not declared as a dependency", msg.Extension))
+				return c, c.embed.Init()
+			}
+
+			ext, err := extensions.LoadExtension(origin)
+			if err != nil {
+				c.embed = NewErrorPage(fmt.Errorf("failed to load extension: %w", err))
+				return c, c.embed.Init()
+			}
+
+			extension = ext
+		} else {
+			extension = c.extension
+		}
+
+		command, ok := extension.Command(msg.Command)
+		if !ok {
+			c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Command))
+			c.embed.SetSize(c.width, c.height)
+			return c, c.embed.Init()
+		}
+
+		ok, missing := extensions.CheckParams(command, msg.Params)
+		if !ok {
+			c.embed = NewErrorPage(fmt.Errorf("missing required parameters: %v", missing))
+			c.embed.SetSize(c.width, c.height)
+			return c, c.embed.Init()
+		}
+
+		input := sunbeam.Payload{
+			Command: msg.Command,
+			Params:  make(map[string]any),
+		}
+
+		for k, v := range msg.Params {
+			input.Params[k] = v
+		}
+
+		switch command.Mode {
+		case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
+			runner := NewRunner(extension, input)
+
+			return c, PushPageCmd(runner)
+		case sunbeam.CommandModeSilent:
+			return c, func() tea.Msg {
+				output, err := extension.Output(input)
+				if err != nil {
+					return PushPageMsg{NewErrorPage(err)}
+				}
+
+				if len(output) > 0 {
+					var action sunbeam.Action
+					if err := json.Unmarshal(output, &action); err != nil {
+						return PushPageMsg{NewErrorPage(err)}
+					}
+
+					return action
+				}
+
+				if msg.Reload {
+					return ReloadMsg{}
+				}
+
+				return ExitMsg{}
+			}
+		case sunbeam.CommandModeTTY:
+			cmd, err := extension.Cmd(input)
+			if err != nil {
+				c.embed = NewErrorPage(err)
 				c.embed.SetSize(c.width, c.height)
 				return c, c.embed.Init()
 			}
 
-			missing := FindMissingInputs(command.Params, msg.Run.Params)
-			for _, param := range missing {
-				if param.Optional {
-					continue
-				}
-
-				c.form = NewForm(func(values map[string]any) tea.Msg {
-					params := make(map[string]any)
-					for k, v := range msg.Run.Params {
-						params[k] = v
-					}
-
-					for k, v := range values {
-						params[k] = v
-					}
-
-					props := msg.Run
-					props.Params = params
-
-					return sunbeam.Action{
-						Title:  msg.Title,
-						Type:   sunbeam.ActionTypeRun,
-						Run:    props,
-						Reload: msg.Reload,
-					}
-				}, missing...)
-
-				c.form.SetSize(c.width, c.height)
-				return c, tea.Sequence(c.form.Init(), c.form.Focus())
-			}
-			c.form = nil
-
-			input := sunbeam.Payload{
-				Command:     msg.Run.Command,
-				Preferences: c.input.Preferences,
-				Params:      make(map[string]any),
-			}
-
-			for k, v := range msg.Run.Params {
-				input.Params[k] = v
-			}
-
-			switch command.Mode {
-			case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
-				runner := NewRunner(c.extension, input)
-
-				return c, PushPageCmd(runner)
-			case sunbeam.CommandModeSilent:
-				return c, func() tea.Msg {
-					_, err := c.extension.Output(input)
-
-					if err != nil {
-						return PushPageMsg{NewErrorPage(err)}
-					}
-
-					if msg.Run.Reload {
-						return ReloadMsg{}
-					}
-
-					if msg.Run.Exit {
-						return ExitMsg{}
-					}
-
-					return nil
-				}
-			case sunbeam.CommandModeTTY:
-				cmd, err := c.extension.Cmd(input)
+			return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				if err != nil {
-					c.embed = NewErrorPage(err)
-					c.embed.SetSize(c.width, c.height)
-					return c, c.embed.Init()
+					return PushPageMsg{NewErrorPage(err)}
 				}
 
-				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
-					if err != nil {
-						return PushPageMsg{NewErrorPage(err)}
-					}
-
-					if msg.Run.Reload {
-						c.embed.Focus()
-						return ReloadMsg{}
-					}
-
-					if msg.Run.Exit {
-						return ExitMsg{}
-					}
-
-					termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Manifest.Title))
-					return c.embed.Focus()
-				})
-			}
-		case sunbeam.ActionTypeEdit:
-			editCmd := exec.Command("sunbeam", "edit", msg.Edit.Path)
-			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
-				if err != nil {
-					return err
+				if msg.Reload {
+					return ReloadMsg{}
 				}
 
-				if msg.Edit.Reload {
-					c.embed.Focus()
-					return c.Reload()
-				}
-
-				if msg.Edit.Exit {
-					return ExitMsg{}
-				}
-
-				return c.embed.Focus()
+				return ExitMsg{}
 			})
-		case sunbeam.ActionTypeCopy:
-			return c, func() tea.Msg {
-				if err := clipboard.WriteAll(msg.Copy.Text); err != nil {
-					return err
-				}
-
-				if msg.Copy.Exit {
-					return ExitMsg{}
-				}
-
-				return ShowNotificationMsg{"Copied!"}
-			}
-		case sunbeam.ActionTypeOpen:
-			return c, func() tea.Msg {
-				if msg.Open.Url != "" {
-					if err := utils.Open(msg.Open.Url); err != nil {
-						return err
-					}
-
-					return ExitMsg{}
-				} else if msg.Open.Path != "" {
-					if err := utils.Open(fmt.Sprintf("file://%s", msg.Open.Path)); err != nil {
-						return err
-					}
-
-					return ExitMsg{}
-				} else {
-					return fmt.Errorf("invalid target")
-				}
-			}
-		case sunbeam.ActionTypeExit:
-			return c, ExitCmd
-		case sunbeam.ActionTypeReload:
-			if c.input.Params == nil {
-				c.input.Params = make(map[string]any)
-			}
-
-			for k, v := range msg.Reload.Params {
-				c.input.Params[k] = v
-			}
-
-			return c, c.Reload()
 		}
 
 	case error:
@@ -313,22 +214,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return c, c.embed.Init()
 	}
 
-	if c.form != nil {
-		form, cmd := c.form.Update(msg)
-		c.form = form.(*Form)
-		return c, cmd
-	}
-
 	var cmd tea.Cmd
 	c.embed, cmd = c.embed.Update(msg)
 	return c, cmd
 }
 
 func (c *Runner) View() string {
-	if c.form != nil {
-		return c.form.View()
-	}
-
 	return c.embed.View()
 }
 

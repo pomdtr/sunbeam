@@ -121,14 +121,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			}
 
 			return p, PopPageCmd
-		default:
-			for _, action := range p.actions {
-				if fmt.Sprintf("alt+%s", action.Key) == msg.String() {
-					return p, func() tea.Msg {
-						return action
-					}
-				}
-			}
 		}
 	case ShowNotificationMsg:
 		p.Reset()
@@ -154,29 +146,6 @@ func (c *StatusBar) Reset() {
 	c.filtered = c.actions
 }
 
-func ActionTitle(action sunbeam.Action) string {
-	if action.Title != "" {
-		return action.Title
-	}
-
-	switch action.Type {
-	case sunbeam.ActionTypeRun:
-		return "Run"
-	case sunbeam.ActionTypeCopy:
-		return "Copy"
-	case sunbeam.ActionTypeOpen:
-		return "Open"
-	case sunbeam.ActionTypeEdit:
-		return "Edit"
-	case sunbeam.ActionTypeExec:
-		return "Exec"
-	case sunbeam.ActionTypeExit:
-		return "Exit"
-	default:
-		return string(action.Type)
-	}
-}
-
 func (c StatusBar) View() string {
 	var accessory string
 	if len(c.actions) == 0 {
@@ -190,10 +159,9 @@ func (c StatusBar) View() string {
 				subtitle = "enter"
 			} else if i == 1 {
 				subtitle = "alt+enter"
-			} else if action.Key != "" {
-				subtitle = fmt.Sprintf("alt+%s", action.Key)
 			}
-			accessories[i] = renderAction(ActionTitle(action), subtitle, i == c.cursor)
+
+			accessories[i] = renderAction(action.Title, subtitle, i == c.cursor)
 		}
 
 		availableWidth := c.Width
@@ -221,7 +189,8 @@ func (c StatusBar) View() string {
 		}
 
 	} else {
-		accessory = fmt.Sprintf("%s · Actions %s", renderAction(ActionTitle(c.filtered[0]), "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
+		action := c.filtered[0]
+		accessory = fmt.Sprintf("%s · Actions %s", renderAction(action.Title, "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
 	}
 
 	var statusbar string

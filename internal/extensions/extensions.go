@@ -33,6 +33,7 @@ func (e ExtensionMap) List() []Extension {
 
 type Extension struct {
 	Manifest   sunbeam.Manifest
+	Env        map[string]string
 	Entrypoint string `json:"entrypoint"`
 }
 
@@ -51,26 +52,24 @@ const (
 	ExtensionTypeHttp  ExtensionType = "http"
 )
 
-func (e Extension) Command(name string) (sunbeam.CommandSpec, bool) {
+func CheckParams(command sunbeam.Command, params map[string]any) (bool, []string) {
+	missing := make([]string, 0)
+	for _, param := range command.Params {
+		if _, ok := params[param.Name]; !ok && !param.Optional {
+			missing = append(missing, param.Name)
+		}
+	}
+
+	return len(missing) == 0, missing
+}
+
+func (e Extension) Command(name string) (sunbeam.Command, bool) {
 	for _, command := range e.Manifest.Commands {
 		if command.Name == name {
 			return command, true
 		}
 	}
-	return sunbeam.CommandSpec{}, false
-}
-
-func (e Extension) RootCommands() []sunbeam.CommandSpec {
-	rootCommands := make([]sunbeam.CommandSpec, 0)
-	for _, command := range e.Manifest.Commands {
-		if command.Hidden {
-			continue
-		}
-
-		rootCommands = append(rootCommands, command)
-	}
-
-	return rootCommands
+	return sunbeam.Command{}, false
 }
 
 func (e Extension) Run(input sunbeam.Payload) error {
@@ -99,22 +98,6 @@ func (e Extension) Cmd(input sunbeam.Payload) (*exec.Cmd, error) {
 }
 
 func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec.Cmd, error) {
-	if input.Preferences == nil {
-		input.Preferences = make(map[string]any)
-	}
-
-	for _, spec := range e.Manifest.Preferences {
-		if _, ok := input.Preferences[spec.Name]; ok {
-			continue
-		}
-
-		if !spec.Optional {
-			return nil, fmt.Errorf("missing required preference %s", spec.Name)
-		}
-
-		input.Preferences[spec.Name] = spec.Default
-	}
-
 	command, ok := e.Command(input.Command)
 	if !ok {
 		return nil, fmt.Errorf("command %s not found", input.Command)
@@ -132,8 +115,6 @@ func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec
 		if !spec.Optional {
 			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
 		}
-
-		input.Params[spec.Name] = spec.Default
 	}
 
 	cwd, err := os.Getwd()
@@ -150,6 +131,10 @@ func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec
 	cmd := exec.CommandContext(ctx, e.Entrypoint, string(inputBytes))
 	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
+	for k, v := range e.Env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	}
+
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil
 }
@@ -277,6 +262,16 @@ func LoadExtension(origin string) (Extension, error) {
 		return Extension{}, fmt.Errorf("failed to decode manifest: %w", err)
 	}
 
+	for alias, dep := range manifest.Imports {
+		if alias == "std" {
+			continue
+		}
+
+		if _, err := LoadExtension(dep); err != nil {
+			return Extension{}, fmt.Errorf("failed to load dependency: %w", err)
+		}
+	}
+
 	return Extension{
 		Manifest:   manifest,
 		Entrypoint: entrypoint,
@@ -306,42 +301,49 @@ func cacheManifest(entrypoint string, manifestPath string) (sunbeam.Manifest, er
 	return manifest, nil
 }
 
-func Upgrade(extensionConfig config.ExtensionConfig) error {
-	hash, err := Hash(extensionConfig.Origin)
+func Upgrade(origin string) error {
+	hash, err := Hash(origin)
 	if err != nil {
 		return err
 	}
-
 	extensionDir := filepath.Join(utils.CacheDir(), "extensions", hash)
-	manifestPath := filepath.Join(extensionDir, "manifest.json")
-	if IsRemote(extensionConfig.Origin) {
-		originUrl, err := url.Parse(extensionConfig.Origin)
+
+	var entrypoint string
+	if IsRemote(origin) {
+		originUrl, err := url.Parse(origin)
 		if err != nil {
 			return fmt.Errorf("failed to parse origin: %w", err)
 		}
 
-		entrypoint := filepath.Join(extensionDir, filepath.Base(originUrl.Path))
-		if err := DownloadEntrypoint(extensionConfig.Origin, entrypoint); err != nil {
+		entrypoint = filepath.Join(extensionDir, filepath.Base(originUrl.Path))
+		if err := DownloadEntrypoint(origin, entrypoint); err != nil {
 			return err
 		}
-
-		if _, err := cacheManifest(entrypoint, manifestPath); err != nil {
-			return err
+	} else {
+		entrypoint = origin
+		if strings.HasPrefix(entrypoint, "~") {
+			entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
+		} else if !filepath.IsAbs(entrypoint) {
+			entrypoint = filepath.Join(filepath.Dir(config.Path), entrypoint)
 		}
-
-		return nil
 	}
 
-	entrypoint := extensionConfig.Origin
-	if strings.HasPrefix(entrypoint, "~") {
-		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
-	} else if !filepath.IsAbs(entrypoint) {
-		entrypoint = filepath.Join(filepath.Dir(config.Path), entrypoint)
-	}
-
-	if _, err := cacheManifest(entrypoint, manifestPath); err != nil {
+	manifestPath := filepath.Join(extensionDir, "manifest.json")
+	manifest, err := cacheManifest(entrypoint, manifestPath)
+	if err != nil {
 		return err
 	}
+
+	for alias, dep := range manifest.Imports {
+		if alias == "std" {
+			continue
+		}
+
+		if err := Upgrade(dep); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -373,7 +375,16 @@ func ExtractManifest(entrypoint string) (sunbeam.Manifest, error) {
 		return sunbeam.Manifest{}, err
 	}
 
-	var manifest sunbeam.Manifest
+	execPath, err := os.Executable()
+	if err != nil {
+		return sunbeam.Manifest{}, fmt.Errorf("failed to get executable path: %w", err)
+	}
+
+	manifest := sunbeam.Manifest{
+		Imports: map[string]string{
+			"std": execPath,
+		},
+	}
 	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
 		return sunbeam.Manifest{}, err
 	}

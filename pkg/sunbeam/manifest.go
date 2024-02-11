@@ -1,18 +1,19 @@
 package sunbeam
 
 type Manifest struct {
-	Title       string        `json:"title"`
-	Description string        `json:"description,omitempty"`
-	Preferences []Input       `json:"preferences,omitempty"`
-	Commands    []CommandSpec `json:"commands"`
+	Title       string            `json:"title"`
+	Description string            `json:"description,omitempty"`
+	Imports     map[string]string `json:"imports,omitempty"`
+	Commands    []Command         `json:"commands"`
+	Root        []Action          `json:"root,omitempty"`
 }
 
-type CommandSpec struct {
+type Command struct {
 	Name   string      `json:"name"`
-	Title  string      `json:"title"`
 	Hidden bool        `json:"hidden,omitempty"`
-	Params []Input     `json:"params,omitempty"`
+	Title  string      `json:"title"`
 	Mode   CommandMode `json:"mode,omitempty"`
+	Params []Param     `json:"params,omitempty"`
 }
 
 type Platfom string
@@ -40,15 +41,14 @@ const (
 type InputType string
 
 const (
-	InputString  InputType = "string"
-	InputBoolean InputType = "boolean"
-	InputNumber  InputType = "number"
+	ParamString  InputType = "string"
+	ParamBoolean InputType = "boolean"
+	ParamNumber  InputType = "number"
 )
 
-type Input struct {
+type Param struct {
 	Type     InputType `json:"type"`
 	Name     string    `json:"name"`
 	Title    string    `json:"title"`
 	Optional bool      `json:"optional,omitempty"`
-	Default  any       `json:"default,omitempty"`
 }

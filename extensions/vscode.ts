@@ -58,21 +58,27 @@ if (payload.command == "list-projects") {
       actions: [
         {
           title: "Open in VS Code",
-          type: "open",
-          url: entry.folderUri,
+          extension: "std",
+          command: "open",
+          params: {
+            url: entry.folderUri,
+          },
         },
         {
           title: "Open Folder",
-          key: "o",
-          type: "open",
-          url: entry.folderUri,
+          extension: "std",
+          command: "open",
+          params: {
+            url: entry.folderUri,
+          },
         },
         {
           title: "Copy Path",
-          key: "c",
-          type: "copy",
-          exit: true,
-          text: entry.folderUri.replace("file://", ""),
+          extension: "std",
+          command: "copy",
+          params: {
+            text: entry.folderUri.replace("file://", ""),
+          },
         },
       ],
     };

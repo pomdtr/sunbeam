@@ -9,71 +9,32 @@ import (
 	"sort"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
-	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension, rootList tui.Page) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
-		Use:     alias,
-		Short:   extension.Manifest.Title,
-		Long:    extension.Manifest.Description,
-		Args:    cobra.NoArgs,
-		GroupID: CommandGroupExtension,
+		Use:   alias,
+		Short: extension.Manifest.Title,
+		Long:  extension.Manifest.Description,
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var inputBytes []byte
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				b, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-				inputBytes = b
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				encoder.SetEscapeHTML(false)
+
+				return encoder.Encode(extension.Manifest)
 			}
 
-			if len(inputBytes) == 0 {
-				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					encoder := json.NewEncoder(os.Stdout)
-					encoder.SetIndent("", "  ")
-					encoder.SetEscapeHTML(false)
-
-					return encoder.Encode(extension.Manifest)
-				}
-
-				if len(extension.RootCommands()) == 0 && len(extensionConfig.Root) == 0 {
-					return cmd.Usage()
-				}
-
-				history, err := history.Load(history.Path)
-				if err != nil {
-					return err
-				}
-
-				rootList := tui.NewRootList(extension.Manifest.Title, history, func() (config.Config, []sunbeam.ListItem, error) {
-					cfg, err := config.Load(config.Path)
-					if err != nil {
-						return config.Config{}, nil, err
-					}
-
-					items := extensionListItems(alias, extension, extensionConfig)
-					return cfg, items, nil
-				})
-
-				return tui.Draw(rootList)
+			if rootList == nil {
+				return cmd.Help()
 			}
 
-			var input sunbeam.Payload
-			if err := json.Unmarshal(inputBytes, &input); err != nil {
-				return err
-			}
-			if input.Preferences == nil {
-				input.Preferences = extensionConfig.Preferences
-			}
-
-			return runExtension(extension, input)
+			return tui.Draw(rootList)
 		},
 	}
 
@@ -86,14 +47,14 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 	})
 
 	for _, command := range commands {
-		cmd := NewSubCmdCustom(alias, extension, extensionConfig, command)
+		cmd := NewSubCmdCustom(alias, extension, command)
 		rootCmd.AddCommand(cmd)
 	}
 
 	return rootCmd, nil
 }
 
-func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig, command sunbeam.CommandSpec) *cobra.Command {
+func NewSubCmdCustom(alias string, extension extensions.Extension, command sunbeam.Command) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   command.Name,
 		Short: command.Title,
@@ -106,19 +67,19 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 				}
 
 				switch param.Type {
-				case sunbeam.InputString:
+				case sunbeam.ParamString:
 					value, err := cmd.Flags().GetString(param.Name)
 					if err != nil {
 						return err
 					}
 					params[param.Name] = value
-				case sunbeam.InputBoolean:
+				case sunbeam.ParamBoolean:
 					value, err := cmd.Flags().GetBool(param.Name)
 					if err != nil {
 						return err
 					}
 					params[param.Name] = value
-				case sunbeam.InputNumber:
+				case sunbeam.ParamNumber:
 					value, err := cmd.Flags().GetInt(param.Name)
 					if err != nil {
 						return err
@@ -127,24 +88,9 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 				}
 			}
 
-			preferences := extensionConfig.Preferences
-			if preferences == nil {
-				preferences = make(map[string]any)
-			}
-
-			envs, err := tui.ExtractPreferencesFromEnv(alias, extension)
-			if err != nil {
-				return err
-			}
-
-			for name, value := range envs {
-				preferences[name] = value
-			}
-
 			input := sunbeam.Payload{
-				Command:     command.Name,
-				Preferences: preferences,
-				Params:      params,
+				Command: command.Name,
+				Params:  params,
 			}
 
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -160,13 +106,17 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 		},
 	}
 
+	if command.Hidden {
+		cmd.Hidden = true
+	}
+
 	for _, input := range command.Params {
 		switch input.Type {
-		case sunbeam.InputString:
+		case sunbeam.ParamString:
 			cmd.Flags().String(input.Name, "", input.Title)
-		case sunbeam.InputBoolean:
+		case sunbeam.ParamBoolean:
 			cmd.Flags().Bool(input.Name, false, input.Title)
-		case sunbeam.InputNumber:
+		case sunbeam.ParamNumber:
 			cmd.Flags().Int(input.Name, 0, input.Title)
 		}
 

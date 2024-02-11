@@ -7,6 +7,15 @@ import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 const manifest = {
   title: "Hacker News",
   description: "Browse Hacker News",
+  root: [
+    {
+      title: "Hacker News Front Page",
+      command: "browse",
+      params: {
+        topic: "frontpage",
+      },
+    },
+  ],
   commands: [
     {
       name: "browse",
@@ -28,37 +37,47 @@ if (payload.command == "browse") {
   const feed = await new Parser().parseURL(
     `https://hnrss.org/${topic}?description=0&count=25`,
   );
-  const page: sunbeam.List = {
-    items: feed.items?.map((item) => ({
-      title: item.title || "",
-      subtitle: item.categories?.join(", ") || "",
-      accessories: item.isoDate
-        ? [
-          formatDistance(new Date(item.isoDate), new Date(), {
-            addSuffix: true,
-          }),
-        ]
-        : [],
-      actions: [
-        {
-          title: "Open in browser",
-          type: "open",
+
+  const items: sunbeam.ListItem[] = feed.items?.map((item) => ({
+    title: item.title || "",
+    subtitle: item.categories?.join(", ") || "",
+    accessories: item.isoDate
+      ? [
+        formatDistance(new Date(item.isoDate), new Date(), {
+          addSuffix: true,
+        }),
+      ]
+      : [],
+    actions: [
+      {
+        title: "Open in browser",
+        extension: "std",
+        command: "open",
+        params: {
           url: item.link || "",
         },
-        {
-          title: "Open Comments in Browser",
-          type: "open",
+      },
+      {
+        title: "Open Comments in Browser",
+        extension: "std",
+        command: "open",
+        params: {
           url: item.guid || "",
         },
-        {
-          title: "Copy Link",
-          type: "copy",
-          key: "c",
+      },
+      {
+        title: "Copy Link",
+        extension: "std",
+        command: "copy",
+        params: {
           text: item.link || "",
-          exit: true,
         },
-      ],
-    })),
+      },
+    ],
+  })) || [];
+
+  const page: sunbeam.List = {
+    items,
   };
 
   console.log(JSON.stringify(page));

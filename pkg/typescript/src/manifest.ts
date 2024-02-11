@@ -1,13 +1,14 @@
+import type { Action } from "./action.ts";
 export type Manifest = {
   title: string;
-  description: string;
-  preferences?: readonly Input[];
+  description?: string;
+  imports?: Record<string, string>;
+  root?: Action[];
   commands: readonly Command[];
 };
 
 export type Command = {
   name: string;
-  hidden?: boolean;
   title: string;
   params?: readonly Input[];
   mode: "filter" | "search" | "detail" | "tty" | "silent";
@@ -37,15 +38,6 @@ type ParamName<M extends Manifest, N extends CommandName<M>> = NonNullable<
   CommandByName<M, N>["params"]
 >[number]["name"];
 
-type PreferenceName<M extends Manifest> = NonNullable<
-  M["preferences"]
->[number]["name"];
-
-type PreferenceByName<
-  M extends Manifest,
-  N extends PreferenceName<M>,
-> = Extract<NonNullable<M["preferences"]>[number], { name: N }>;
-
 type ParamByName<
   M extends Manifest,
   N extends CommandName<M>,
@@ -57,11 +49,6 @@ export type Payload<M extends Manifest> = {
     & {
       command: N;
       cwd: string;
-      preferences: {
-        [K in PreferenceName<M>]: PreferenceByName<M, K>["optional"] extends
-          true ? InputMap[PreferenceByName<M, K>["type"]] | undefined
-          : InputMap[PreferenceByName<M, K>["type"]];
-      };
       params: CommandByName<M, N>["params"] extends undefined
         ? Record<string, never>
         : {

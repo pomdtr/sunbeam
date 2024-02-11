@@ -34,12 +34,11 @@ if [ "$COMMAND" = "list" ]; then
         actions: [
             {
                 title: "Uninstall",
-                type: "run",
                 command: "uninstall",
+                reload: true,
                 params: {
                     package: .
-                },
-                reload: true
+                }
             }
         ]
     }' | jq -s '{ items: . }'

@@ -29,11 +29,11 @@ if [ "$COMMAND" = "search" ]; then
     # urlencode the query
     QUERY=$(echo "$QUERY" | jq -rR '@uri')
     curl "https://suggestqueries.google.com/complete/search?client=firefox&q=$QUERY" | jq '.[1] | {
-        dynamic: true,
         items: map({
             title: .,
+            emptyText: "No suggestions found",
             actions: [
-                { title: "Search", type: "open", url: "https://www.google.com/search?q=\(.)" }
+                { title: "Search", extension: std, command: "open", params: {url: "https://www.google.com/search?q=\(.)"} }
             ]
         })
     }'

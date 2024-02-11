@@ -15,7 +15,7 @@ const manifest = {
       params: [
         {
           name: "url",
-          title: "URL",
+          title: "Feed URL",
           type: "string",
         },
       ],
@@ -45,15 +45,19 @@ if (payload.command == "show") {
       actions: [
         {
           title: "Open in browser",
-          type: "open",
-          url: item.link || "",
+          extension: "std",
+          command: "open",
+          params: {
+            url: item.link || "",
+          },
         },
         {
           title: "Copy Link",
-          type: "copy",
-          key: "c",
-          text: item.link || "",
-          exit: true,
+          extension: "std",
+          command: "copy",
+          params: {
+            text: item.link || "",
+          },
         },
       ],
     })),

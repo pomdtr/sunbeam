@@ -26,5 +26,5 @@
     "www/website/docs/reference/cli.md",
     "www/website/catalog/index.md"
   ],
-  "markdown.validate.referenceLinks.enabled": "ignore"
+  "markdown.validate.referenceLinks.enabled": "ignore",
 }

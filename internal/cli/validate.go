@@ -11,11 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewValidateCmd() *cobra.Command {
+func NewCmdValidate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "validate",
-		GroupID: CommandGroupCore,
-		Short:   "Validate a Sunbeam schema",
+		Use:   "validate",
+		Short: "Validate a Sunbeam schema",
 	}
 
 	cmd.AddCommand(NewCmdValidateList())

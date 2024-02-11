@@ -36,7 +36,6 @@ if [ "$COMMAND" = "list-docsets" ]; then
       actions: [
         {
           title: "Browse entries",
-          type: "run",
           command: "list-entries",
           params: {
             slug: .slug
@@ -51,8 +50,8 @@ elif [ "$COMMAND" = "list-entries" ]; then
       title: .name,
       subtitle: .type,
       actions: [
-        {title: "Open in Browser", type: "open", url: "https://devdocs.io/\($slug)/\(.path)"},
-        {title: "Copy URL", key: "c", type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}
+        {title: "Open in Browser", extension: "std", command: "open", params: {url: "https://devdocs.io/\($slug)/\(.path)"}},
+        {title: "Copy URL", extension: "std", command: "copy", params: {text: "https://devdocs.io/\($slug)/\(.path)"}}
       ]
     }) | {  items: . }'
 fi

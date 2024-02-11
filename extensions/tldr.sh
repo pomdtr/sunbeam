@@ -25,8 +25,8 @@ if [ "$COMMAND" = "list" ]; then
     tldr --list | jq -R '{
         title: .,
         actions: [
-            {title: "View Page", type: "run", command: "view", params: {page: .}},
-            {title: "Update Cache", key: "r", type: "run", command: "update", reload: true}
+            {title: "View Page", command: "view", params: {page: .}},
+            {title: "Update Cache", command: "update", reload: true}
         ]
     }' | jq -s '{ items: . }'
 elif [ "$COMMAND" = "update" ]; then
@@ -35,7 +35,7 @@ elif [ "$COMMAND" = "view" ]; then
     PAGE=$(echo "$1" | jq -r '.params.page')
     tldr --raw "$PAGE" | jq --arg page "$PAGE" -sR '{
             markdown: ., actions: [
-                {title: "Copy Page", type: "copy", copy: {text: ., exit: true}}
+                {title: "Copy Page", extension: "std", command: "copy", params: {text: .}}
             ]
         }'
 fi

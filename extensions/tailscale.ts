@@ -52,7 +52,6 @@ if (payload.command == "list-devices") {
     actions: [
       {
         title: "SSH to Device",
-        type: "run",
         command: "ssh-to-device",
         params: {
           ip: device.TailscaleIPs[0],
@@ -60,16 +59,19 @@ if (payload.command == "list-devices") {
       },
       {
         title: "Copy SSH Command",
-        type: "copy",
-        text: `ssh ${device.TailscaleIPs[0]}`,
-        exit: true,
+        extension: "std",
+        command: "copy",
+        params: {
+          text: `ssh ${device.TailscaleIPs[0]}`,
+        },
       },
       {
         title: "Copy IP",
-        key: "i",
-        type: "copy",
-        text: device.TailscaleIPs[0],
-        exit: true,
+        extension: "std",
+        command: "copy",
+        params: {
+          text: device.TailscaleIPs[0],
+        },
       },
     ],
   }));

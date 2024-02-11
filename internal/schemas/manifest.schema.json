@@ -9,14 +9,20 @@
         "title": {
             "type": "string"
         },
-        "description": {
-            "type": "string"
+        "imports": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
         },
-        "preferences": {
+        "root": {
             "type": "array",
             "items": {
-                "$ref": "#/definitions/input"
+                "ref": "./action.schema.json"
             }
+        },
+        "description": {
+            "type": "string"
         },
         "commands": {
             "type": "array",
@@ -36,9 +42,6 @@
             "properties": {
                 "name": {
                     "type": "string"
-                },
-                "hidden": {
-                    "type": "boolean"
                 },
                 "title": {
                     "type": "string"

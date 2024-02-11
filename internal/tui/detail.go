@@ -54,9 +54,8 @@ func NewDetail(text string, actions ...sunbeam.Action) *Detail {
 	items := make([]FilterItem, 0)
 	for _, action := range actions {
 		items = append(items, ListItem{
-			Title:    action.Title,
-			Subtitle: action.Key,
-			Actions:  []sunbeam.Action{action},
+			Title:   action.Title,
+			Actions: []sunbeam.Action{action},
 		})
 	}
 

@@ -236,14 +236,6 @@ Manage sunbeam extensions
   -h, --help   help for extension
 ```
 
-## sunbeam extension configure
-
-Configure extension preferences
-
-```
-sunbeam extension configure <alias> [flags]
-```
-
 ### Options
 
 ```

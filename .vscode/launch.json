@@ -7,6 +7,7 @@
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
     },
   ],
 }

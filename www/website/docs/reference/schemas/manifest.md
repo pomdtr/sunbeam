@@ -9,14 +9,7 @@ It contains the title, description and the list of commands provided by the exte
   "title": "DevDocs",
   // the description of the extension, will be shown in usage string
   "description": "Search DevDocs.io",
-  // see input schema
-  "preferences": [
-    {
-      "name": "hidden",
-      "title": "Show hidden entries",
-      "type": "boolean"
-    }
-  ],
+  // the list of commands provided by the extension
   "commands": [
     {
       // unique identifier of the command (required)

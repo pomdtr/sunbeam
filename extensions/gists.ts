@@ -2,18 +2,11 @@
 
 import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
 import { editor } from "https://deno.land/x/sunbeam/editor.ts";
-import * as path from "https://deno.land/std/path/mod.ts";
+import * as path from "https://deno.land/std@0.208.0/path/mod.ts";
 
 const manifest = {
   title: "Gists",
   description: "Manage your gists",
-  preferences: [
-    {
-      name: "token",
-      title: "GitHub Personal Access Token",
-      type: "string",
-    },
-  ],
   commands: [
     {
       name: "manage",
@@ -21,39 +14,14 @@ const manifest = {
       mode: "filter",
     },
     {
-      name: "create",
-      title: "Create Gist",
-      mode: "tty",
-      params: [
-        {
-          name: "filename",
-          title: "Gist Filename",
-          type: "string",
-        },
-        {
-          name: "description",
-          title: "Gist Description",
-          optional: true,
-          type: "string",
-        },
-        {
-          name: "public",
-          title: "Public",
-          type: "boolean",
-        },
-      ],
-    },
-    {
       name: "browse",
       title: "Browse Gist Files",
-      hidden: true,
       mode: "filter",
       params: [{ name: "id", title: "Gist ID", type: "string" }],
     },
     {
       name: "view",
       title: "View Gist File",
-      hidden: true,
       mode: "detail",
       params: [
         { name: "id", title: "Gist ID", type: "string" },
@@ -63,7 +31,6 @@ const manifest = {
     {
       name: "edit",
       title: "Edit Gist File",
-      hidden: true,
       mode: "tty",
       params: [
         { name: "id", title: "Gist ID", type: "string" },
@@ -72,7 +39,6 @@ const manifest = {
     },
     {
       name: "delete",
-      hidden: true,
       title: "Delete Gist",
       mode: "silent",
       params: [{ name: "id", title: "Gist ID", type: "string" }],
@@ -86,9 +52,9 @@ if (Deno.args.length == 0) {
 }
 
 const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-const githubToken = payload.preferences.token;
+const githubToken = Deno.env.get("GITHUB_TOKEN");
 if (!githubToken) {
-  console.error("No github token set");
+  console.error("GITHUB_TOKEN environment variable is required");
   Deno.exit(1);
 }
 
@@ -111,85 +77,57 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
       }
 
       const gists = (await resp.json()) as any[];
-      return {
-        items: gists.map((gist) => ({
-          title: Object.keys(gist.files)[0],
-          subtitle: gist.description || "",
-          accessories: [gist.public ? "Public" : "Private"],
-          actions: [
-            Object.keys(gist.files).length > 1
-              ? {
-                type: "run",
-                title: "Browse Files",
-                command: "browse",
-                params: {
-                  id: gist.id,
-                },
-              }
-              : {
-                type: "run",
-                title: "View File",
-                command: "view",
-                params: {
-                  id: gist.id,
-                  filename: Object.keys(gist.files)[0],
-                },
-              },
-            {
-              type: "open",
-              title: "Open in Browser",
-              url: gist.html_url,
-            },
-            {
-              type: "copy",
-              title: "Copy URL",
-              key: "c",
-              text: gist.html_url,
-              exit: true,
-            },
-            {
-              title: "Create Gist",
-              key: "n",
-              type: "run",
-              command: "create",
-            },
-            {
-              title: "Delete Gist",
-              key: "d",
-              type: "run",
-              command: "delete",
+      const items: sunbeam.ListItem[] = gists.map((gist) => ({
+        title: Object.keys(gist.files)[0],
+        subtitle: gist.description || "",
+        accessories: [gist.public ? "Public" : "Private"],
+        actions: [
+          Object.keys(gist.files).length > 1
+            ? {
+              title: "Browse Files",
+              command: "browse",
               params: {
                 id: gist.id,
               },
-              reload: true,
+            }
+            : {
+              title: "View File",
+              command: "view",
+              params: {
+                id: gist.id,
+                filename: Object.keys(gist.files)[0],
+              },
             },
-          ],
-        })),
-      } as sunbeam.List;
-    }
-    case "create": {
-      const filename = payload.params.filename;
-      const content = await editor({
-        extension: path.extname(filename),
-        content: "",
-      });
-      const resp = await fetchGithub("/gists", {
-        method: "POST",
-        body: JSON.stringify({
-          description: payload.params.description,
-          public: payload.params.public,
-          files: {
-            [filename]: {
-              content,
+          {
+            extension: "std",
+            command: "open",
+            title: "Open in Browser",
+            params: {
+              url: gist.html_url,
             },
           },
-        }),
-      });
+          {
+            title: "Copy URL",
+            extension: "std",
+            command: "copy",
+            params: {
+              text: gist.html_url,
+            },
+          },
+          {
+            title: "Delete Gist",
+            command: "delete",
+            params: {
+              id: gist.id,
+            },
+            reload: true,
+          },
+        ],
+      }));
 
-      if (resp.status != 201) {
-        throw new Error("Failed to create gist");
-      }
-      return;
+      return {
+        items,
+      };
     }
     case "browse": {
       const id = payload.params.id;
@@ -270,8 +208,11 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
           },
           {
             title: "Open in Browser",
-            type: "open",
-            url: gist.html_url,
+            extension: "std",
+            command: "open",
+            params: {
+              url: gist.html_url,
+            },
           },
         ],
       } as sunbeam.Detail;

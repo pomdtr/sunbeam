@@ -17,6 +17,6 @@ export type ListItem = {
   title: string;
   subtitle?: string;
   accessories?: string[];
-  detail?: { text: string; } | { markdown: string; }
+  detail?: { text: string } | { markdown: string };
   actions?: Action[];
 };

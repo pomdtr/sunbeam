@@ -7,14 +7,6 @@ import pathlib
 manifest = {
     "title": "File Browser",
     "description": "Browse files and folders",
-    "preferences": [
-        {
-            "name": "show-hidden",
-            "title": "Show Hidden Files",
-            "type": "boolean",
-            "optional": True,
-        }
-    ],
     "commands": [
         {
             "name": "ls",
@@ -50,12 +42,9 @@ if payload["command"] == "ls":
     if directory.startswith("~"):
         directory = directory.replace("~", str(pathlib.Path.home()))
     root = pathlib.Path(directory)
-    show_hidden = preferences.get("show-hidden", False)
 
     items = []
     for file in root.iterdir():
-        if not show_hidden and file.name.startswith("."):
-            continue
         item = {
             "title": file.name,
             "accessories": [str(file.absolute())],
@@ -65,7 +54,6 @@ if payload["command"] == "ls":
             item["actions"].append(
                 {
                     "title": "Browse",
-                    "type": "run",
                     "command": "ls",
                     "params": {
                         "dir": str(file.absolute()),
@@ -76,19 +64,10 @@ if payload["command"] == "ls":
             [
                 {
                     "title": "Open",
-                    "key": "o",
-                    "type": "open",
-                    "path": str(file.absolute())
-                },
-                {
-                    "title": "Show Hidden Files"
-                    if not show_hidden
-                    else "Hide Hidden Files",
-                    "key": "h",
-                    "type": "reload",
+                    "extension": "std",
+                    "command": "open",
                     "params": {
-                        "show-hidden": not show_hidden,
-                        "dir": str(root.absolute()),
+                        "url": f"file:{str(file.absolute())}",
                     },
                 },
             ]

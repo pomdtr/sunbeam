@@ -54,6 +54,10 @@ func (h History) Update(key string) {
 }
 
 func (h History) Save() error {
+	if h.path == "" {
+		return nil
+	}
+
 	if err := os.MkdirAll(filepath.Dir(h.path), 0755); err != nil {
 		return err
 	}

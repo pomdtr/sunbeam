@@ -36,10 +36,6 @@ This fallback mechanism allows you to have a project specific configs, and a glo
     "extensions": {
         "github": {
             "origin": "~/Developer/github.com/pomdtr/sunbeam/extensions/github.sh",
-            // preferences for the extension, use it to pass config or secrets
-            "preferences": {
-                "token": "xxxx"
-            },
             // additional root items to show
             "root": [
                 {

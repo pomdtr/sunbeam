@@ -5,72 +5,33 @@
         "$schema": {
             "type": "string"
         },
-        "oneliners": {
+        "root": {
             "type": "array",
-            "description": "A list of commands that will be shown in the root list",
             "items": {
+                "$ref": "./action.schema.json"
+            }
+        },
+        "imports": {
+            "type": "object",
+            "additionalProperties": {
                 "type": "object",
-                "required": [
-                    "title",
-                    "command"
-                ],
                 "properties": {
-                    "title": {
+                    "origin": {
                         "type": "string"
                     },
-                    "interactive": {
-                        "type": "boolean"
-                    },
-                    "command": {
-                        "type": "string"
-                    },
-                    "exit": {
-                        "type": "boolean"
-                    },
-                    "cwd": {
-                        "type": "string"
+                    "env": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
-        "extensions": {
+        "env": {
             "type": "object",
-            "patternProperties": {
-                ".+": {
-                    "type": "object",
-                    "required": [
-                        "origin"
-                    ],
-                    "properties": {
-                        "origin": {
-                            "type": "string"
-                        },
-                        "preferences": {
-                            "type": "object"
-                        },
-                        "root": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "required": [
-                                    "title",
-                                    "command"
-                                ],
-                                "properties": {
-                                    "title": {
-                                        "type": "string"
-                                    },
-                                    "command": {
-                                        "type": "string"
-                                    },
-                                    "params": {
-                                        "$ref": "./params.schema.json"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            "additionalProperties": {
+                "type": "string"
             }
         }
     }
