@@ -9,13 +9,14 @@ import (
 	"sort"
 
 	"github.com/mattn/go-isatty"
+	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension, rootList tui.Page) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
 		Use:   alias,
 		Short: extension.Manifest.Title,
@@ -30,9 +31,38 @@ func NewCmdCustom(alias string, extension extensions.Extension, rootList tui.Pag
 				return encoder.Encode(extension.Manifest)
 			}
 
-			if rootList == nil {
+			if len(extension.Manifest.Root) == 0 {
 				return cmd.Help()
 			}
+
+			rootList := tui.NewRootList(extension.Manifest.Title, nil, func() (config.Config, []sunbeam.ListItem, error) {
+				cfg := config.Config{
+					Extensions: map[string]config.ExtensionConfig{
+						alias: {
+							Origin: extension.Entrypoint,
+						},
+					},
+				}
+
+				var items []sunbeam.ListItem
+				for _, action := range extension.Manifest.Root {
+					action.Extension = alias
+					if action.Title == "" {
+						command, ok := extension.Command(action.Command)
+						if !ok {
+							continue
+						}
+						action.Title = command.Title
+					}
+					items = append(items, sunbeam.ListItem{
+						Title:       action.Title,
+						Accessories: []string{alias},
+						Actions:     []sunbeam.Action{action},
+					})
+				}
+
+				return cfg, items, nil
+			})
 
 			return tui.Draw(rootList)
 		},

@@ -139,11 +139,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 
 		extensionMap[alias] = extension
 
-		var rootList tui.Page
-		if len(extension.Manifest.Root) > 0 {
-			rootList = tui.NewRootList(alias, nil, RootListGenerator(alias))
-		}
-		command, err := NewCmdCustom(alias, extension, rootList)
+		command, err := NewCmdCustom(alias, extension)
 		if err != nil {
 			return nil, err
 		}

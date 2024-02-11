@@ -5,7 +5,6 @@ import (
 
 	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
-	"github.com/pomdtr/sunbeam/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -33,12 +32,7 @@ func NewCmdRun(cfg config.Config) *cobra.Command {
 			}
 			extension.Env = cfg.Env
 
-			var rootList tui.Page
-			if len(extension.Manifest.Root) > 0 {
-				rootList = tui.NewRootList(alias, nil, RootListGenerator(alias))
-			}
-
-			command, err := NewCmdCustom(alias, extension, rootList)
+			command, err := NewCmdCustom(alias, extension)
 			if err != nil {
 				return fmt.Errorf("failed to create command: %w", err)
 			}
