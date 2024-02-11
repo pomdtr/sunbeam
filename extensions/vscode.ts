@@ -8,11 +8,24 @@ import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 const manifest = {
   title: "VS Code",
   description: "Manage your VS Code projects",
+  root: [
+    {
+      command: "list-projects",
+    },
+  ],
   commands: [
     {
       name: "list-projects",
       title: "List Projects",
       mode: "filter",
+    },
+    {
+      name: "open-project",
+      title: "Open Project",
+      mode: "silent",
+      params: [
+        { name: "path", title: "Project Path", type: "string" },
+      ],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -58,10 +71,9 @@ if (payload.command == "list-projects") {
       actions: [
         {
           title: "Open in VS Code",
-          extension: "std",
-          command: "open",
+          command: "open-project",
           params: {
-            url: entry.folderUri,
+            path: folderPath,
           },
         },
         {
@@ -85,6 +97,10 @@ if (payload.command == "list-projects") {
   });
 
   const list: sunbeam.List = { items };
-
   console.log(JSON.stringify(list));
+} else if (payload.command == "open-project") {
+  const { path } = payload.params;
+  await new Deno.Command("code", {
+    args: [path],
+  }).output();
 }
