@@ -214,7 +214,7 @@ func RootListGenerator(whitelist ...string) func() (config.Config, []sunbeam.Lis
 			}
 
 			item := sunbeam.ListItem{
-				Id:          fmt.Sprintf("%s:%s", commandRef.Extension, commandRef.Command),
+				Id:          fmt.Sprintf("%s:%s:%s", commandRef.Extension, commandRef.Command, commandRef.Title),
 				Title:       title,
 				Accessories: []string{commandRef.Extension},
 				Actions: []sunbeam.Action{

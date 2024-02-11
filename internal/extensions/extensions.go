@@ -139,18 +139,9 @@ func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec
 	return cmd, nil
 }
 
-func Hash(origin string) (string, error) {
-	if !IsRemote(origin) {
-		abs, err := filepath.Abs(origin)
-		if err != nil {
-			return "", err
-		}
-
-		origin = abs
-	}
-
+func Hash(value string) (string, error) {
 	h := sha1.New()
-	h.Write([]byte(origin))
+	h.Write([]byte(value))
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
