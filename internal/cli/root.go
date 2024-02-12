@@ -159,14 +159,14 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			return err
 		}
 
-		rootList := tui.NewRootList("Sunbeam", &history, RootListGenerator(cfg.Aliases()...))
+		rootList := tui.NewRootList("Sunbeam", &history, RootListGenerator())
 		return tui.Draw(rootList)
 	}
 
 	return rootCmd, nil
 }
 
-func RootListGenerator(whitelist ...string) func() (config.Config, []sunbeam.ListItem, error) {
+func RootListGenerator() func() (config.Config, []sunbeam.ListItem, error) {
 	return func() (config.Config, []sunbeam.ListItem, error) {
 		cfg, err := config.Load(config.Path)
 		if err != nil {
@@ -175,11 +175,17 @@ func RootListGenerator(whitelist ...string) func() (config.Config, []sunbeam.Lis
 
 		var items []sunbeam.ListItem
 		var root []sunbeam.Action
-		for _, action := range cfg.Root {
-			for _, alias := range whitelist {
-				if action.Extension == alias {
-					root = append(root, action)
-				}
+		root = append(root, cfg.Root...)
+
+		for alias, extensionConfig := range cfg.Extensions {
+			extension, err := extensions.LoadExtension(extensionConfig.Origin)
+			if err != nil {
+				return cfg, nil, err
+			}
+
+			for _, action := range extension.Manifest.Root {
+				action.Extension = alias
+				root = append(root, action)
 			}
 		}
 

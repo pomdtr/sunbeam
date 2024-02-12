@@ -77,6 +77,11 @@ func NewCmdStd() *cobra.Command {
 									Title: "Command",
 									Type:  sunbeam.ParamString,
 								},
+								{
+									Name:  "dir",
+									Title: "Directory",
+									Type:  sunbeam.ParamString,
+								},
 							},
 						},
 						{
@@ -166,21 +171,14 @@ func NewCmdStd() *cobra.Command {
 				}
 
 				shell := utils.FindShell()
-
 				cmd := exec.Command(shell, "-c", params.Command)
 				cmd.Dir = params.Dir
 				if cmd.Dir == "" {
-					homeDir, err := os.UserHomeDir()
-					if err != nil {
-						return fmt.Errorf("failed to get home directory: %w", err)
-					}
-
-					cmd.Dir = homeDir
+					cmd.Dir = payload.Cwd
 				}
 				cmd.Stdin = os.Stdin
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-
 				return cmd.Run()
 			default:
 				return fmt.Errorf("unknown command: %s", payload.Command)

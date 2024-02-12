@@ -71,8 +71,7 @@ func NewCmdInstall(cfg config.Config) *cobra.Command {
 				alias = a
 			}
 
-			extension, err := extensions.LoadExtension(origin)
-			if err != nil {
+			if _, err := extensions.LoadExtension(origin); err != nil {
 				return fmt.Errorf("failed to load extension: %w", err)
 			}
 
@@ -82,12 +81,6 @@ func NewCmdInstall(cfg config.Config) *cobra.Command {
 
 			cfg.Extensions[alias] = config.ExtensionConfig{
 				Origin: origin,
-				Env:    cfg.Env,
-			}
-
-			for _, action := range extension.Manifest.Root {
-				action.Extension = alias
-				cfg.Root = append(cfg.Root, action)
 			}
 
 			if err := cfg.Save(); err != nil {
