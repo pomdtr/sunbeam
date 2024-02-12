@@ -1,15 +1,30 @@
 {
-    "$schema": "https://raw.githubusercontent.com/pomdtr/sunbeam/main/internal/schemas/config.schema.json",
-    "oneliners": [
+    "$schema": "https://raw.githubusercontent.com/pomdtr/sunbeam/v2/internal/schemas/config.schema.json",
+    "root": [
+        {
+            "title": "Edit Sunbeam Config",
+            "extension": "std",
+            "command": "edit",
+            "params": {
+                "path": "~/.config/sunbeam/sunbeam.json"
+            },
+            "reload": true
+        },
         {
             "title": "Open Sunbeam Docs",
-            "command": "sunbeam open https://sunbeam.sh/docs",
-            "exit": true
+            "extension": "std",
+            "command": "open",
+            "params": {
+                "url": "https://sunbeam.sh/docs"
+            }
         },
         {
             "title": "Open Sunbeam Repository",
-            "command": "sunbeam open https://github.com/pomdtr/sunbeam",
-            "exit": true
+            "extension": "std",
+            "command": "open",
+            "params": {
+                "url": "https://github.com/pomdtr/sunbeam"
+            }
         }
     ]
 }

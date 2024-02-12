@@ -8,7 +8,7 @@
         "title": {
             "type": "string"
         },
-        "key": {
+        "extension": {
             "type": "string"
         },
         "command": {
