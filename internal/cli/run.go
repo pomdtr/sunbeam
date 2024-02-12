@@ -21,18 +21,17 @@ func NewCmdRun(cfg config.Config) *cobra.Command {
 				return fmt.Errorf("failed to normalize origin: %w", err)
 			}
 
-			alias, err := extractAlias(origin)
-			if err != nil {
-				return fmt.Errorf("failed to get alias: %w", err)
-			}
-
 			extension, err := extensions.LoadExtension(origin)
 			if err != nil {
 				return fmt.Errorf("failed to load extension: %w", err)
 			}
 			extension.Env = cfg.Env
 
-			command, err := NewCmdCustom(alias, extension)
+			cfg.Extensions[args[0]] = config.ExtensionConfig{
+				Origin: origin,
+			}
+
+			command, err := NewCmdCustom(args[0], extension, cfg)
 			if err != nil {
 				return fmt.Errorf("failed to create command: %w", err)
 			}

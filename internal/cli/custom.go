@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension, cfg config.Config) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
 		Use:   alias,
 		Short: extension.Manifest.Title,
@@ -31,21 +31,20 @@ func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command,
 				return encoder.Encode(extension.Manifest)
 			}
 
-			if len(extension.Manifest.Root) == 0 {
+			var actions []sunbeam.Action
+			actions = append(actions, extension.Manifest.Root...)
+			for _, action := range cfg.Root {
+				if action.Extension == alias {
+					actions = append(actions, action)
+				}
+			}
+			if len(actions) == 0 {
 				return cmd.Help()
 			}
 
 			rootList := tui.NewRootList(extension.Manifest.Title, nil, func() (config.Config, []sunbeam.ListItem, error) {
-				cfg := config.Config{
-					Extensions: map[string]config.ExtensionConfig{
-						alias: {
-							Origin: extension.Entrypoint,
-						},
-					},
-				}
-
 				var items []sunbeam.ListItem
-				for _, action := range extension.Manifest.Root {
+				for _, action := range actions {
 					action.Extension = alias
 					if action.Title == "" {
 						command, ok := extension.Command(action.Command)

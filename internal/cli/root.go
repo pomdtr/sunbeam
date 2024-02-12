@@ -124,7 +124,6 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdUpgrade(cfg))
 	rootCmd.AddCommand(NewCmdRun(cfg))
 
-	extensionMap := make(map[string]extensions.Extension)
 	for alias, extensionConfig := range cfg.Extensions {
 		extension, err := extensions.LoadExtension(extensionConfig.Origin)
 		if err != nil {
@@ -137,9 +136,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			extension.Env[k] = v
 		}
 
-		extensionMap[alias] = extension
-
-		command, err := NewCmdCustom(alias, extension)
+		command, err := NewCmdCustom(alias, extension, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +213,7 @@ func RootListGenerator() func() (config.Config, []sunbeam.ListItem, error) {
 			}
 
 			item := sunbeam.ListItem{
-				Id:          fmt.Sprintf("%s:%s:%s", commandRef.Extension, commandRef.Command, commandRef.Title),
+				Id:          fmt.Sprintf("%s:%s", commandRef.Extension, commandRef.Title),
 				Title:       title,
 				Accessories: []string{commandRef.Extension},
 				Actions: []sunbeam.Action{

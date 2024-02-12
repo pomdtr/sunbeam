@@ -78,9 +78,10 @@ func NewCmdStd() *cobra.Command {
 									Type:  sunbeam.ParamString,
 								},
 								{
-									Name:  "dir",
-									Title: "Directory",
-									Type:  sunbeam.ParamString,
+									Name:     "dir",
+									Optional: true,
+									Title:    "Directory",
+									Type:     sunbeam.ParamString,
 								},
 							},
 						},
