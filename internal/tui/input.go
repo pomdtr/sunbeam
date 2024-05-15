@@ -310,7 +310,7 @@ func (n NumberField) Update(msg tea.Msg) (Input, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "1", "2", "3", "4", "5", "6", "7", "8", "9":
+		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "backspace":
 			t, cmd := n.TextField.Update(msg)
 			n.TextField = t.(*TextField)
 			return n, cmd
