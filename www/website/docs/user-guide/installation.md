@@ -6,7 +6,7 @@ You can use a package manager
 brew install pomdtr/tap/sunbeam
 
 # install script
-curl -sSf https://install.sunbeam.sh | sh
+curl -sSf https://install.smallweb.run | sh
 
 # as a nix flake
 nix shell github:pomdtr/sunbeam --command sunbeam

@@ -3,7 +3,7 @@
     "oneliners": [
         {
             "title": "Open Sunbeam Docs",
-            "command": "sunbeam open https://sunbeam.sh/docs",
+            "command": "sunbeam open https://sunbeam.smallweb.run/docs",
             "exit": true
         },
         {
