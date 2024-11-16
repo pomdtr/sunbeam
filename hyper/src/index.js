@@ -58,7 +58,7 @@ function onApp(app) {
     {
       label: 'Browse Documentation',
       click: () => {
-        shell.openExternal('https://sunbeam.smallweb.run/docs');
+        shell.openExternal('https://sunbeam.pomdtr.me/docs');
       },
     },
     {

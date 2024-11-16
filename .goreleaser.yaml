@@ -46,7 +46,7 @@ snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
   - name: sunbeam
-    homepage: https://sunbeam.smallweb.run
+    homepage: https://sunbeam.pomdtr.me
     repository:
       owner: pomdtr
       name: homebrew-tap
@@ -58,7 +58,7 @@ brews:
 
 aurs:
   - name: sunbeam-bin
-    homepage: https://sunbeam.smallweb.run
+    homepage: https://sunbeam.pomdtr.me
     description: Generate powerful UIs from simple scripts written in any language.
     maintainers:
       - "Achille Lacoin <achille.lacoin@gmail.com>"

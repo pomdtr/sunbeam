@@ -1,6 +1,6 @@
 # hyper-sunbeam
 
-Use Hyper as a [Sunbeam](https://sunbeam.smallweb.run) GUI.
+Use Hyper as a [Sunbeam](https://sunbeam.pomdtr.me) GUI.
 
 ![sunbeam running in hyper](https://raw.githubusercontent.com/pomdtr/sunbeam/main/hyper/media/screenshot.jpeg)
 
