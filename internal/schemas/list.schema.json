@@ -8,6 +8,9 @@
         "showDetail": {
             "type": "boolean"
         },
+        "autoRefreshSeconds": {
+            "type": "integer"
+        },
         "actions": {
             "type": "array",
             "items": {

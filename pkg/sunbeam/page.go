@@ -1,10 +1,11 @@
 package sunbeam
 
 type List struct {
-	Items      []ListItem `json:"items,omitempty"`
-	EmptyText  string     `json:"emptyText,omitempty"`
-	ShowDetail bool       `json:"showDetail,omitempty"`
-	Actions    []Action   `json:"actions,omitempty"`
+	Items              []ListItem `json:"items,omitempty"`
+	EmptyText          string     `json:"emptyText,omitempty"`
+	ShowDetail         bool       `json:"showDetail,omitempty"`
+	AutoRefreshSeconds int        `json:"autoRefreshSeconds,omitempty"`
+	Actions            []Action   `json:"actions,omitempty"`
 }
 
 type ListItem struct {
