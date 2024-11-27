@@ -18,6 +18,8 @@ import (
 )
 
 type List struct {
+	// the id is used to know if the tick for auto-refresh is related to  the current list
+	id            string
 	width, height int
 
 	query string
@@ -28,8 +30,10 @@ type List struct {
 	viewport  viewport.Model
 	statusBar StatusBar
 
-	showDetail bool
-	isLoading  bool
+	showDetail           bool
+	isLoading            bool
+	autoRefreshSeconds   int
+	autoRefreshTriggered bool
 
 	focus         ListFocus
 	Actions       []sunbeam.Action
@@ -38,6 +42,11 @@ type List struct {
 }
 
 type ListFocus string
+
+type tickMsg struct {
+	id   string
+	time time.Time
+}
 
 var (
 	ListFocusItems   ListFocus = "items"
@@ -61,6 +70,7 @@ func NewList(items ...sunbeam.ListItem) *List {
 	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
 
 	list := &List{
+		id:        fmt.Sprintf("%d", time.Now().UnixNano()),
 		spinner:   spinner.New(),
 		input:     input,
 		filter:    filter,
@@ -187,6 +197,10 @@ func (c *List) FilterItems(query string) {
 	}
 }
 
+func (c *List) SetAutoRefreshSeconds(autoRefreshSeconds int) {
+	c.autoRefreshSeconds = autoRefreshSeconds
+}
+
 func (c *List) SetShowDetail(showDetail bool) {
 	c.showDetail = showDetail
 	if showDetail && c.filter.Selection() != nil {
@@ -253,6 +267,23 @@ func (c List) Query() string {
 
 func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	case tickMsg:
+		if msg.id == c.id {
+			nextTick := tea.Tick(time.Duration(c.autoRefreshSeconds)*time.Second, func(t time.Time) tea.Msg {
+				return tickMsg{
+					id:   c.id,
+					time: t,
+				}
+			})
+			return c, tea.Batch(
+				func() tea.Msg {
+					return ReloadMsg{}
+				},
+				nextTick,
+			)
+		}
+		return c, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
@@ -276,6 +307,9 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			c.viewport.LineDown(1)
+			return c, nil
+		case "ctrl+p":
+			c.SetShowDetail(!c.showDetail)
 			return c, nil
 		case "ctrl+k":
 			if !c.showDetail {
@@ -362,6 +396,17 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	}
 	c.filter = filter
 	cmds = append(cmds, cmd)
+
+	if c.autoRefreshSeconds > 0 && !c.autoRefreshTriggered {
+		c.autoRefreshTriggered = true
+		cmd := tea.Tick(time.Duration(c.autoRefreshSeconds)*time.Second, func(t time.Time) tea.Msg {
+			return tickMsg{
+				id:   c.id,
+				time: t,
+			}
+		})
+		cmds = append(cmds, cmd)
+	}
 
 	if c.isLoading {
 		c.spinner, cmd = c.spinner.Update(msg)

@@ -4,6 +4,7 @@ export type List = {
   items?: ListItem[];
   actions?: Action[];
   showDetail?: boolean;
+  autoRefreshSeconds?: number;
   emptyText?: string;
 };
 

@@ -397,6 +397,7 @@ func (c *Runner) Reload() tea.Cmd {
 				page.SetEmptyText(list.EmptyText)
 				page.SetActions(list.Actions...)
 				page.SetShowDetail(list.ShowDetail)
+				page.SetAutoRefreshSeconds(list.AutoRefreshSeconds)
 
 				if c.command.Mode == sunbeam.CommandModeSearch {
 					page.OnQueryChange = func(query string) tea.Cmd {
