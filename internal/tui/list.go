@@ -290,7 +290,10 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			selection, ok := c.Selection()
-			if !ok || len(selection.Actions) == 0 {
+			if ok && len(selection.Actions) < 2 {
+				break
+			}
+			if !ok && len(c.Actions) < 2 {
 				break
 			}
 
@@ -344,7 +347,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	oldSelection := c.filter.Selection()
 	newSelection := filter.Selection()
 	if newSelection == nil {
-		c.statusBar.SetActions(c.Actions...)
+		c.statusBar.SetActionsNoSelection(c.Actions...)
 		if c.showDetail {
 			c.updateViewport(sunbeam.ListItemDetail{})
 		}
