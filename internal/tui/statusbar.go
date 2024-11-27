@@ -41,6 +41,13 @@ func NewStatusBar(actions ...sunbeam.Action) StatusBar {
 	}
 }
 
+func (c *StatusBar) SetActionsNoSelection(actions ...sunbeam.Action) {
+	// this is called all the time to set the action for no-selection
+	// we want to keep the current expanded and cursor status rather than updating them
+	c.actions = actions
+	c.filtered = actions
+}
+
 func (c *StatusBar) SetActions(actions ...sunbeam.Action) {
 	c.expanded = false
 	c.cursor = 0

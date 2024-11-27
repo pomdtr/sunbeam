@@ -347,7 +347,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 	oldSelection := c.filter.Selection()
 	newSelection := filter.Selection()
 	if newSelection == nil {
-		c.statusBar.SetActions(c.Actions...)
+		c.statusBar.SetActionsNoSelection(c.Actions...)
 		if c.showDetail {
 			c.updateViewport(sunbeam.ListItemDetail{})
 		}
