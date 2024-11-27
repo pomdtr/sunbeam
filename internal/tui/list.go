@@ -290,7 +290,10 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			selection, ok := c.Selection()
-			if !ok || len(selection.Actions) == 0 {
+			if ok && len(selection.Actions) < 2 {
+				break
+			}
+			if !ok && len(c.Actions) < 2 {
 				break
 			}
 
