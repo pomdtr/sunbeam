@@ -9,10 +9,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/ansi"
+	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/muesli/reflow/wrap"
-	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
@@ -34,13 +34,7 @@ type Detail struct {
 }
 
 func AnsiStyle() ansi.StyleConfig {
-	var style ansi.StyleConfig
-	if termenv.HasDarkBackground() {
-		style = glamour.DarkStyleConfig
-	} else {
-		style = glamour.LightStyleConfig
-	}
-
+	style := styles.PinkStyleConfig
 	style.Document.BlockPrefix = ""
 
 	return style
