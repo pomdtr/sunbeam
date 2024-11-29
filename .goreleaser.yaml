@@ -1,4 +1,5 @@
 # Make sure to check the documentation at https://goreleaser.com
+version: 2
 before:
   hooks:
     - go mod tidy
@@ -8,7 +9,7 @@ before:
     - sh -c 'go run . completion "zsh" >./completions/{{ .ProjectName }}.zsh'
     - sh -c 'go run . completion "fish" >./completions/{{ .ProjectName }}.fish'
 changelog:
-  skip: true
+  disable: true
 builds:
   - main: .
     binary: sunbeam
@@ -43,7 +44,7 @@ release:
     - glob: internal/schemas/config.schema.json
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 brews:
   - name: sunbeam
     homepage: https://sunbeam.pomdtr.me
