@@ -64,7 +64,7 @@ func validateSchema(schema string, input []byte) error {
 
 	if err := schemas[schema].Validate(v); err != nil {
 		if ve, ok := err.(*jsonschema.ValidationError); ok {
-			return fmt.Errorf(formatValidationError(ve))
+			return fmt.Errorf("%s", formatValidationError(ve))
 		}
 		return err
 	}
