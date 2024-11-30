@@ -33,4 +33,3 @@ jobs:
           branch: gh-pages
           folder: www/.vitepress/dist
           token: ${{ secrets.GITHUB_TOKEN }}
-          single-commit: true
