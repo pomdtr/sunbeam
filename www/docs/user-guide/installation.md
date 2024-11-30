@@ -5,9 +5,6 @@ You can use a package manager
 ```bash
 brew install pomdtr/tap/sunbeam
 
-# install script
-curl -sSf https://install.smallweb.run | sh
-
 # as a nix flake
 nix shell github:pomdtr/sunbeam --command sunbeam
 

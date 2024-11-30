@@ -1,0 +1,36 @@
+# Workflow to build your docs with oranda (and mdbook)
+# and deploy them to Github Pages
+name: Web
+
+# We're going to push to the gh-pages branch, so we need that permission
+permissions:
+  contents: write
+
+# What situations do we want to build docs in?
+# All of these work independently and can be removed / commented out
+# if you don't want oranda/mdbook running in that situation
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  web:
+    name: Build and deploy site and docs
+    runs-on: ubuntu-latest
+    steps:
+      # Setup
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: npm install
+        working-directory: www
+      - run: npm run build
+        working-directory: www
+      - name: Deploy to Github Pages
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          branch: gh-pages
+          folder: www/.vitepress/dist
+          token: ${{ secrets.GITHUB_TOKEN }}
+          single-commit: true
