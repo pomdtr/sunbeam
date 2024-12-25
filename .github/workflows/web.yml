@@ -33,7 +33,7 @@ jobs:
           path: www/.vitepress/dist/
           remote_path: /home/pomdtr.me/smallweb/sunbeam-rsync
           remote_host: ssh.smallweb.run
-          remote_user: pomdtr
+          remote_user: pomdtr.me
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
       # - name: Deploy to Github Pages
       #   uses: JamesIves/github-pages-deploy-action@v4.4.1
