@@ -31,7 +31,7 @@ jobs:
         with:
           switches: -rv --delete
           path: www/.vitepress/dist/
-          remote_path: /home/pomdtr.me/sunbeam-rsync
+          remote_path: /home/pomdtr.me/smallweb/sunbeam-rsync
           remote_host: ssh.smallweb.run
           remote_user: pomdtr
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
