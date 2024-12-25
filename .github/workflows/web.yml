@@ -1,14 +1,5 @@
-# Workflow to build your docs with oranda (and mdbook)
-# and deploy them to Github Pages
 name: Web
 
-# We're going to push to the gh-pages branch, so we need that permission
-permissions:
-  contents: write
-
-# What situations do we want to build docs in?
-# All of these work independently and can be removed / commented out
-# if you don't want oranda/mdbook running in that situation
 on:
   push:
     branches:
@@ -32,6 +23,6 @@ jobs:
           switches: -rv --delete
           path: www/.vitepress/dist/
           remote_path: /home/pomdtr.me/smallweb/sunbeam
-          remote_host: ssh.smallweb.run
+          remote_host: ssh.pomdtr.me
           remote_user: pomdtr.me
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
