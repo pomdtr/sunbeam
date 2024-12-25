@@ -27,9 +27,17 @@ jobs:
         working-directory: www
       - run: npm run build
         working-directory: www
-      - name: Deploy to Github Pages
-        uses: JamesIves/github-pages-deploy-action@v4.4.1
+      - uses: burnett01/rsync-deployments@7.0.1
         with:
-          branch: gh-pages
-          folder: www/.vitepress/dist
-          token: ${{ secrets.GITHUB_TOKEN }}
+          switches: -rv --delete
+          path: www/.vitepress/dist/
+          remote_path: /home/pomdtr.me/sunbeam-rsync
+          remote_host: ssh.smallweb.run
+          remote_user: pomdtr
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      # - name: Deploy to Github Pages
+      #   uses: JamesIves/github-pages-deploy-action@v4.4.1
+      #   with:
+      #     branch: gh-pages
+      #     folder: www/.vitepress/dist
+      #     token: ${{ secrets.GITHUB_TOKEN }}
