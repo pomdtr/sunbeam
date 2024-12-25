@@ -6,7 +6,7 @@ title: Home
 hero:
   name: Sunbeam
   text: CLI Launcher
-  tagline: Elevate Your Command Line Experience
+  tagline: Elevate your command line experience.
   actions:
     - theme: brand
       text: View Docs
