@@ -35,9 +35,3 @@ jobs:
           remote_host: ssh.smallweb.run
           remote_user: pomdtr.me
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-      # - name: Deploy to Github Pages
-      #   uses: JamesIves/github-pages-deploy-action@v4.4.1
-      #   with:
-      #     branch: gh-pages
-      #     folder: www/.vitepress/dist
-      #     token: ${{ secrets.GITHUB_TOKEN }}
