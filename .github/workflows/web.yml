@@ -22,7 +22,7 @@ jobs:
         with:
           switches: -rv --delete
           path: www/.vitepress/dist/
-          remote_path: /home/pomdtr.me/smallweb/sunbeam
+          remote_path: /home/pomdtr.me/smallweb/sunbeam/dist
           remote_host: ssh.pomdtr.me
           remote_user: pomdtr.me
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
