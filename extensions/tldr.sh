@@ -33,9 +33,9 @@ elif [ "$COMMAND" = "update" ]; then
     tldr --update
 elif [ "$COMMAND" = "view" ]; then
     PAGE=$(echo "$1" | jq -r '.params.page')
-    tldr --raw "$PAGE" | jq --arg page "$PAGE" -sR '{
+    tldr --raw "$PAGE" | jq -sR '{
             markdown: ., actions: [
-                {title: "Copy Page", type: "copy", copy: {text: ., exit: true}}
+                {title: "Copy Page", type: "copy", text: ., exit: true}
             ]
         }'
 fi
