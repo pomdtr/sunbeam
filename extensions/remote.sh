@@ -11,7 +11,6 @@ if ! [ -x "$(command -v curl)" ]; then
     exit 1
 fi
 
-# if no args
 if [ $# -eq 0 ]; then
     curl -s "$REMOTE_URL"
     exit 0
