@@ -6,6 +6,7 @@ import * as dates from "npm:date-fns";
 const manifest = {
   title: "Deno Deploy",
   description: "Manage your Deno Deploy projects",
+  env: ["DENO_DEPLOY_TOKEN"],
   commands: [
     {
       name: "projects",
@@ -40,11 +41,7 @@ if (Deno.args.length == 0) {
 }
 
 const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-const deployToken = Deno.env.get("DENO_DEPLOY_TOKEN");
-if (!deployToken) {
-  console.error("Missing deploy token");
-  Deno.exit(1);
-}
+const { DENO_DEPLOY_TOKEN } = Deno.env.toObject();
 
 try {
   const res = await run(payload);
@@ -190,7 +187,7 @@ function fetchDeployAPI(endpoint: string, init?: RequestInit) {
     ...init,
     headers: {
       ...init?.headers,
-      Authorization: `Bearer ${deployToken}`,
+      Authorization: `Bearer ${DENO_DEPLOY_TOKEN}`,
     },
   });
 }

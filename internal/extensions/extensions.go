@@ -127,19 +127,12 @@ func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec
 		input.Params[spec.Name] = spec.Default
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	input.Cwd = cwd
-
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
 	}
 
 	cmd := exec.CommandContext(ctx, e.Entrypoint, string(inputBytes))
-	cmd.Dir = filepath.Dir(e.Entrypoint)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil

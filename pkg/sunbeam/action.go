@@ -135,6 +135,5 @@ const (
 type Payload struct {
 	Command string         `json:"command"`
 	Params  map[string]any `json:"params"`
-	Cwd     string         `json:"cwd"`
 	Query   string         `json:"query,omitempty"`
 }

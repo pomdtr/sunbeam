@@ -137,6 +137,12 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(fmt.Errorf("command %s not found", msg.Run.Command))
 			}
 
+			for _, env := range extension.Manifest.Env {
+				if _, ok := os.LookupEnv(env); !ok {
+					return c, c.SetError(fmt.Errorf("environment variable %s is required", env))
+				}
+			}
+
 			missingParams := FindMissingInputs(command.Params, msg.Run.Params)
 			for _, param := range missingParams {
 				if param.Optional {

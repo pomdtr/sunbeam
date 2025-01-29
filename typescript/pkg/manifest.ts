@@ -1,5 +1,6 @@
 export type Manifest = {
   title: string;
+  env?: string[];
   description?: string;
   commands: readonly Command[];
   root?: string;
@@ -47,7 +48,6 @@ export type Payload<M extends Manifest> = {
   [N in CommandName<M>]:
   & {
     command: N;
-    cwd: string;
     params: CommandByName<M, N>["params"] extends undefined
     ? Record<string, never>
     : {

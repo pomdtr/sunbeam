@@ -3,7 +3,8 @@ package sunbeam
 type Manifest struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
-	Root        []Action  `json:"root"`
+	Root        []Action  `json:"root,omitempty"`
+	Env         []string  `json:"env,omitempty"`
 	Commands    []Command `json:"commands"`
 }
 

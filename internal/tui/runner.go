@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 
 	"github.com/acarl005/stripansi"
@@ -150,6 +151,14 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Run.Command))
 				c.embed.SetSize(c.width, c.height)
 				return c, c.embed.Init()
+			}
+
+			for _, env := range c.extension.Manifest.Env {
+				if _, ok := os.LookupEnv(env); !ok {
+					c.embed = NewErrorPage(fmt.Errorf("environment variable %s not set", env))
+					c.embed.SetSize(c.width, c.height)
+					return c, c.embed.Init()
+				}
 			}
 
 			missing := FindMissingInputs(command.Params, msg.Run.Params)
