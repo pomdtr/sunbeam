@@ -21,11 +21,13 @@ if [ $# -eq 0 ]; then
         commands: [
             {
                 name: "list",
+                description: "List installed packages",
                 mode: "filter",
             },
             {
                 name: "info",
                 mode: "detail",
+                description: "Show info about a package",
                 params: [
                     { name: "package", type: "string" }
                 ]
@@ -33,6 +35,7 @@ if [ $# -eq 0 ]; then
             {
                 name: "uninstall",
                 mode: "silent",
+                description: "Uninstall a package",
                 params: [
                     { name: "package", type: "string" }
                 ]
