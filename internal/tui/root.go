@@ -13,7 +13,6 @@ import (
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/utils"
@@ -42,7 +41,6 @@ func NewRootList(title string, history history.History, generator func() ([]sunb
 }
 
 func (c *RootList) Init() tea.Cmd {
-	termenv.DefaultOutput().SetWindowTitle(c.title)
 	return c.Reload()
 }
 
@@ -67,7 +65,6 @@ func (c *RootList) Reload() tea.Cmd {
 }
 
 func (c *RootList) Focus() tea.Cmd {
-	termenv.DefaultOutput().SetWindowTitle(c.title)
 	return c.list.Focus()
 }
 
