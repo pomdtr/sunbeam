@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
 
 import sys
 import json
@@ -11,7 +11,7 @@ manifest = {
         {
             "title": "Browse Home Directory",
             "type": "run",
-            "command": "ls",
+            "command": "browse",
             "params": {
                 "dir": "~",
             },
@@ -19,7 +19,7 @@ manifest = {
         {
             "title": "Browse Current Directory",
             "type": "run",
-            "command": "ls",
+            "command": "browse",
             "params": {
                 "dir": ".",
             },
@@ -27,7 +27,7 @@ manifest = {
     ],
     "commands": [
         {
-            "name": "ls",
+            "name": "browse",
             "mode": "filter",
             "params": [
                 {
@@ -48,7 +48,7 @@ if len(sys.argv) == 1:
     )
     sys.exit(0)
 
-if sys.argv[1] == "ls":
+if sys.argv[1] == "browse":
     # read payload from stdin
     params = json.load(sys.stdin)
     directory = params["dir"] or "."
@@ -71,7 +71,7 @@ if sys.argv[1] == "ls":
                 {
                     "title": "Browse",
                     "type": "run",
-                    "command": "ls",
+                    "command": "browse",
                     "params": {
                         "dir": str(file.absolute()),
                     },
