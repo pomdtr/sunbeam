@@ -19,16 +19,6 @@ import (
 	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
-type ExtensionMap map[string]Extension
-
-func (e ExtensionMap) List() []Extension {
-	extensions := make([]Extension, 0)
-	for _, extension := range e {
-		extensions = append(extensions, extension)
-	}
-	return extensions
-}
-
 type Extension struct {
 	Name       string
 	Manifest   sunbeam.Manifest
@@ -50,18 +40,13 @@ const (
 	ExtensionTypeHttp  ExtensionType = "http"
 )
 
-func (e Extension) Command(name string) (sunbeam.Command, bool) {
+func (e Extension) GetCommand(name string) (sunbeam.Command, bool) {
 	for _, command := range e.Manifest.Commands {
 		if command.Name == name {
 			return command, true
 		}
 	}
 	return sunbeam.Command{}, false
-}
-
-func (e Extension) Run(input sunbeam.Payload) error {
-	_, err := e.Output(input)
-	return err
 }
 
 func (e Extension) RootItems() []sunbeam.ListItem {
@@ -75,18 +60,27 @@ func (e Extension) RootItems() []sunbeam.ListItem {
 			action.Run.Extension = e.Name
 		}
 
+		editAction := sunbeam.Action{
+			Type:  sunbeam.ActionTypeEdit,
+			Title: "Edit Extension",
+			Edit: &sunbeam.EditAction{
+				Path:   e.Entrypoint,
+				Reload: true,
+			},
+		}
+
 		items = append(items, sunbeam.ListItem{
 			Title:    title,
 			Subtitle: e.Manifest.Title,
-			Actions:  []sunbeam.Action{action},
+			Actions:  []sunbeam.Action{action, editAction},
 		})
 	}
 
 	return items
 }
 
-func (ext Extension) Output(input sunbeam.Payload) ([]byte, error) {
-	cmd, err := ext.Cmd(input)
+func (ext Extension) Output(ctx context.Context, command sunbeam.Command, payload sunbeam.Payload) ([]byte, error) {
+	cmd, err := ext.CmdContext(context.Background(), command, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -101,22 +95,13 @@ func (ext Extension) Output(input sunbeam.Payload) ([]byte, error) {
 	}
 }
 
-func (e Extension) Cmd(input sunbeam.Payload) (*exec.Cmd, error) {
-	return e.CmdContext(context.Background(), input)
-}
-
-func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec.Cmd, error) {
-	command, ok := e.Command(input.Command)
-	if !ok {
-		return nil, fmt.Errorf("command %s not found", input.Command)
-	}
-
-	if input.Params == nil {
-		input.Params = make(map[string]any)
+func (e Extension) CmdContext(ctx context.Context, command sunbeam.Command, payload sunbeam.Payload) (*exec.Cmd, error) {
+	if payload == nil {
+		payload = make(map[string]any)
 	}
 
 	for _, spec := range command.Params {
-		if _, ok := input.Params[spec.Name]; ok {
+		if _, ok := payload[spec.Name]; ok {
 			continue
 		}
 
@@ -124,15 +109,19 @@ func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec
 			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
 		}
 
-		input.Params[spec.Name] = spec.Default
+		payload[spec.Name] = spec.Default
 	}
 
-	inputBytes, err := json.Marshal(input)
+	cmd := exec.CommandContext(ctx, e.Entrypoint, command.Name)
+	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
 	}
 
-	cmd := exec.CommandContext(ctx, e.Entrypoint, string(inputBytes))
+	encoder := json.NewEncoder(stdin)
+	encoder.Encode(payload)
+	stdin.Close()
+
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
 	return cmd, nil
@@ -198,6 +187,37 @@ func FindEntrypoint(extensionDir string, name string) (string, error) {
 	}
 
 	return "", fmt.Errorf("entrypoint not found")
+}
+
+func LoadExtensions(extensionDir string) (map[string]Extension, error) {
+	extensionMap := make(map[string]Extension)
+	entries, err := os.ReadDir(extensionDir)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		if strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+
+		extension, err := LoadExtension(filepath.Join(extensionDir, entry.Name()))
+		if err != nil {
+			return nil, fmt.Errorf("error loading extension %s: %w", entry.Name(), err)
+		}
+
+		if _, ok := extensionMap[extension.Name]; ok {
+			return nil, fmt.Errorf("duplicate extension alias: %s", extension.Name)
+		}
+
+		extensionMap[extension.Name] = extension
+	}
+
+	return extensionMap, nil
 }
 
 func LoadExtension(entrypoint string) (Extension, error) {

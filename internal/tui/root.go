@@ -2,6 +2,7 @@ package tui
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -132,15 +133,9 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(err)
 			}
 
-			command, ok := extension.Command(msg.Run.Command)
+			command, ok := extension.GetCommand(msg.Run.Command)
 			if !ok {
 				return c, c.SetError(fmt.Errorf("command %s not found", msg.Run.Command))
-			}
-
-			for _, env := range extension.Manifest.Env {
-				if _, ok := os.LookupEnv(env); !ok {
-					return c, c.SetError(fmt.Errorf("environment variable %s is required", env))
-				}
 			}
 
 			missingParams := FindMissingInputs(command.Params, msg.Run.Params)
@@ -176,22 +171,19 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			c.form = nil
 
-			input := sunbeam.Payload{
-				Command: command.Name,
-				Params:  make(map[string]any),
-			}
+			payload := make(map[string]any)
 
 			for k, v := range msg.Run.Params {
-				input.Params[k] = v
+				payload[k] = v
 			}
 
 			switch command.Mode {
 			case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
-				runner := NewRunner(extension, input)
+				runner := NewRunner(extension, command, payload)
 				return c, PushPageCmd(runner)
 			case sunbeam.CommandModeSilent:
 				return c, func() tea.Msg {
-					output, err := extension.Output(input)
+					output, err := extension.Output(context.Background(), command, payload)
 					if err != nil {
 						return PushPageMsg{NewErrorPage(err)}
 					}

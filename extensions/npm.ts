@@ -1,14 +1,25 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import { toJson } from "jsr:@std/streams";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
 
 const manifest: sunbeam.Manifest = {
   title: "NPM Search",
   description: "Search NPM packages",
+  root: [
+    { title: "Search NPM Packages", type: "run", command: "search" },
+  ],
   commands: [
     {
       name: "search",
       description: "Search NPM Packages",
       mode: "search",
+      params: [
+        {
+          name: "query",
+          description: "Search Query",
+          type: "string",
+        }
+      ]
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -18,17 +29,9 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-if (!payload.query) {
-  const list = { emptyText: "Enter a search query" };
-  console.log(JSON.stringify(list));
-  Deno.exit(0);
-}
-
+const params = await toJson(Deno.stdin.readable) as { query: string }
 const resp = await fetch(
-  `https://registry.npmjs.com/-/v1/search?text=${encodeURIComponent(
-    payload.query,
-  )
+  `https://registry.npmjs.com/-/v1/search?text=${encodeURIComponent(params.query)
   }`,
 );
 const { objects: packages } = await resp.json();

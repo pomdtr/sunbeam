@@ -1,6 +1,6 @@
 {
     "name": "@pomdtr/sunbeam",
-    "version": "0.0.2",
+    "version": "0.0.5",
     "license": "MIT",
     "exports": "./pkg/mod.ts",
     "publish": {

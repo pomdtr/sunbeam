@@ -10,29 +10,33 @@ if [ $# -eq 0 ]; then
 {
     title: "Browse TLDR Pages",
     description: "Browse TLDR Pages",
+    root: [
+        { title: "List Pages", type: "run", command: "list" }
+    ],
     # each command can be called through the cli
     commands: [
-        { name: "list", mode: "filter", title: "Search Pages" },
-        { name: "view", mode: "detail", hidden: true, title: "View page", params: [{ name: "page", type: "string", title: "Page to show" }] },
-        { name: "update", mode: "silent", title: "Update cache" }
+        { name: "list", mode: "filter", description: "Search Pages" },
+        { name: "view", mode: "detail", description: "View page", params: [{ name: "page", type: "string", description: "Page to show" }] }
     ]
 }'
 exit 0
 fi
 
-COMMAND=$(echo "$1" | jq -r '.command')
-if [ "$COMMAND" = "list" ]; then
+# check if tldr is installed
+if ! [ -x "$(command -v tldr)" ]; then
+    echo "tldr is not installed. Please install it." >&2
+    exit 1
+fi
+
+if [ "$1" = "list" ]; then
     tldr --list | jq -R '{
         title: .,
         actions: [
             {title: "View Page", type: "run", command: "view", params: {page: .}},
-            {title: "Update Cache", key: "r", type: "run", command: "update", reload: true}
         ]
     }' | jq -s '{ items: . }'
-elif [ "$COMMAND" = "update" ]; then
-    tldr --update
-elif [ "$COMMAND" = "view" ]; then
-    PAGE=$(echo "$1" | jq -r '.params.page')
+elif [ "$1" = "view" ]; then
+    PAGE=$(cat | jq -r '.page')
     tldr --raw "$PAGE" | jq -sR '{
             markdown: ., actions: [
                 {title: "Copy Page", type: "copy", text: .}

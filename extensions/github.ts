@@ -1,7 +1,8 @@
 #!/usr/bin/env -S deno run -A
 
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
+import { toJson } from "jsr:@std/streams";
 
 const manifest = {
   title: "GitHub",
@@ -15,12 +16,11 @@ const manifest = {
     {
       description: "List Issues",
       name: "issue.list",
-      hidden: true,
       mode: "filter",
       params: [
         {
           name: "repo",
-          title: "Repository Name",
+          description: "Repository Name",
           type: "string",
         },
       ],
@@ -28,12 +28,11 @@ const manifest = {
     {
       description: "List Pull Requests",
       name: "pr.list",
-      hidden: true,
       mode: "filter",
       params: [
         {
           name: "repo",
-          title: "Repository Name",
+          description: "Repository Name",
           type: "string",
         },
       ],
@@ -41,12 +40,11 @@ const manifest = {
     {
       description: "View Readme",
       name: "readme",
-      hidden: true,
       mode: "detail",
       params: [
         {
           name: "repo",
-          title: "Repository Name",
+          description: "Repository Name",
           type: "string",
         },
       ],
@@ -65,16 +63,15 @@ if (!token) {
   Deno.exit(1);
 }
 
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 try {
-  await run(payload);
+  await run(Deno.args[0], await toJson(Deno.stdin.readable) as sunbeam.Payload);
 } catch (err) {
   console.error(err);
   Deno.exit(1);
 }
 
-async function run(payload: sunbeam.Payload<typeof manifest>) {
-  if (payload.command == "search") {
+async function run(command: string, payload: sunbeam.Payload) {
+  if (command == "search") {
     const query = payload.query;
     if (!query) {
       const list: sunbeam.List = {
@@ -150,8 +147,8 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     };
 
     console.log(JSON.stringify(list, null, 2));
-  } else if (payload.command == "issue.list") {
-    const repo = payload.params.repo;
+  } else if (command == "issue.list") {
+    const repo = payload.repo;
     const resp = await fetch(`https://api.github.com/repos/${repo}/issues`, {
       headers: {
         Authorization: `token ${token}`,
@@ -187,8 +184,8 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     };
 
     console.log(JSON.stringify(list, null, 2));
-  } else if (payload.command == "pr.list") {
-    const repo = payload.params.repo;
+  } else if (command == "pr.list") {
+    const repo = payload.repo;
     const resp = await fetch(`https://api.github.com/repos/${repo}/pulls`, {
       headers: {
         Authorization: `token ${token}`,
@@ -225,8 +222,8 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     };
 
     console.log(JSON.stringify(list, null, 2));
-  } else if (payload.command == "readme") {
-    const repo = payload.params.repo;
+  } else if (command == "readme") {
+    const repo = payload.repo;
     const resp = await fetch(`https://api.github.com/repos/${repo}/readme`, {
       headers: {
         Authorization: `token ${token}`,

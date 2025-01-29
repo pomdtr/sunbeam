@@ -2,11 +2,20 @@
 
 import Parser from "npm:rss-parser@3.9.0";
 import { formatDistance } from "npm:date-fns@2.30.0";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
+import { toJson } from "jsr:@std/streams";
 
 const manifest = {
   title: "RSS",
   description: "Manage your RSS feeds",
+  root: [
+    {
+      title: "Julia Evans Blog",
+      type: "run",
+      command: "show",
+      params: { url: "https://jvns.ca/atom.xml" },
+    }
+  ],
   commands: [
     {
       name: "show",
@@ -15,7 +24,7 @@ const manifest = {
       params: [
         {
           name: "url",
-          title: "URL",
+          description: "URL",
           type: "string",
         },
       ],
@@ -28,9 +37,9 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-if (payload.command == "show") {
-  const feed = await new Parser().parseURL(payload.params.url);
+if (Deno.args[0] == "show") {
+  const params = await toJson(Deno.stdin.readable) as { url: string };
+  const feed = await new Parser().parseURL(params.url);
   const page: sunbeam.List = {
     items: feed.items?.map((item) => ({
       title: item.title || "",

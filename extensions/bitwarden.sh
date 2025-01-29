@@ -10,12 +10,11 @@ if [ $# -eq 0 ]; then
     jq -n '{
         title: "Bitwarden Vault",
         description: "Search your Bitwarden passwords",
+        root: [
+            { title: "List Items", type: "run", command: "list-items" }
+        ],
         commands: [
-            {
-                name: "list-passwords",
-                title: "List Passwords",
-                mode: "filter"
-            }
+            { name: "list-items", mode: "filter" }
         ]
     }'
     exit 0
@@ -32,8 +31,7 @@ if [ -z "$BW_SESSION" ]; then
     exit 1
 fi
 
-COMMAND=$(echo "$1" | jq -r '.command')
-if [ "$COMMAND" = "list-passwords" ]; then
+if [ "$1" = "list-items" ]; then
     bkt --ttl=1d -- bw --nointeraction list items --session "$BW_SESSION" | jq 'map({
         title: .name,
         subtitle: (.login.username // ""),

@@ -132,8 +132,4 @@ const (
 	ActionTypeReload ActionType = "reload"
 )
 
-type Payload struct {
-	Command string         `json:"command"`
-	Params  map[string]any `json:"params"`
-	Query   string         `json:"query,omitempty"`
-}
+type Payload map[string]any

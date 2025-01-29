@@ -1,12 +1,12 @@
 #!/usr/bin/env -S deno run -A
 
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
 import * as dates from "npm:date-fns";
+import { toJson } from "jsr:@std/streams";
 
 const manifest = {
   title: "Deno Deploy",
   description: "Manage your Deno Deploy projects",
-  env: ["DENO_DEPLOY_TOKEN"],
   commands: [
     {
       name: "projects",
@@ -21,16 +21,14 @@ const manifest = {
     {
       name: "deployments",
       description: "List Deployments",
-      hidden: true,
       mode: "filter",
-      params: [{ name: "project", title: "Project", type: "string" }],
+      params: [{ name: "project", type: "string" }],
     },
     {
       name: "playground",
       description: "View Playground",
-      hidden: true,
       mode: "detail",
-      params: [{ name: "project", title: "Project", type: "string" }],
+      params: [{ name: "project", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -40,11 +38,12 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 const { DENO_DEPLOY_TOKEN } = Deno.env.toObject();
-
 try {
-  const res = await run(payload);
+  const command = Deno.args[0];
+  const params = await toJson(Deno.stdin.readable) as sunbeam.Payload
+
+  const res = await run(command, params);
   if (res) {
     console.log(JSON.stringify(res));
   }
@@ -53,8 +52,8 @@ try {
   Deno.exit(1);
 }
 
-async function run(payload: sunbeam.Payload<typeof manifest>) {
-  switch (payload.command) {
+async function run(command: string, params: Record<string, any>) {
+  switch (command) {
     case "dashboard": {
       await new Deno.Command("sunbeam", {
         args: ["open", "https://dash.deno.com"],
@@ -107,7 +106,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
       } as sunbeam.List;
     }
     case "playground": {
-      const resp = await fetchDeployAPI(`/projects/${payload.params.project}`);
+      const resp = await fetchDeployAPI(`/projects/${params.project}`);
       if (resp.status != 200) {
         throw new Error("Failed to fetch project");
       }
@@ -136,7 +135,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
       } as sunbeam.Detail;
     }
     case "deployments": {
-      const project = payload.params.project;
+      const project = params.project;
 
       const resp = await fetchDeployAPI(`/projects/${project}/deployments`);
       if (resp.status != 200) {

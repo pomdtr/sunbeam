@@ -22,15 +22,11 @@ func CacheDir() string {
 }
 
 func ExtensionsDir() string {
-	if env, ok := os.LookupEnv("SUNBEAM_DIR"); ok {
-		return env
+	if sunbeamDir, ok := os.LookupEnv("SUNBEAM_EXTENSIONS_DIR"); ok {
+		return sunbeamDir
 	}
 
-	if env, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
-		return filepath.Join(env, "sunbeam", "extensions")
-	}
-
-	return filepath.Join(os.Getenv("HOME"), ".local", "share", "sunbeam", "extensions")
+	return filepath.Join(ConfigDir(), "extensions")
 }
 
 func DataDir() string {

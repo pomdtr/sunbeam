@@ -1,5 +1,6 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import { toJson } from "jsr:@std/streams";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
 
 const manifest = {
   title: "Val Town",
@@ -11,7 +12,6 @@ const manifest = {
       mode: "filter",
       params: [{
         name: "user",
-        title: "User",
         optional: true,
         type: "string",
       }],
@@ -24,9 +24,8 @@ const manifest = {
     {
       description: "View Readme",
       name: "readme",
-      hidden: true,
       mode: "detail",
-      params: [{ name: "id", title: "Val ID", type: "string" }],
+      params: [{ name: "id", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -42,10 +41,10 @@ if (!token) {
   Deno.exit(1);
 }
 
-async function run(payload: sunbeam.Payload<typeof manifest>) {
+async function run(command: string, payload: sunbeam.Payload) {
   const client = new ValTownClient(token!);
-  if (payload.command == "list") {
-    const username = payload.params.user;
+  if (command == "list") {
+    const username = payload.user
     const { id: userID } = await client.fetchJSON(
       username ? `/v1/alias/${username}` : "/v1/me",
     );
@@ -59,7 +58,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     };
 
     console.log(JSON.stringify(list));
-  } else if (payload.command == "search") {
+  } else if (command == "search") {
     const query = payload.query;
     if (query) {
       const { data: vals } = await client.fetchJSON(
@@ -75,8 +74,8 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     } else {
       console.log(JSON.stringify({ emptyText: "No query" }));
     }
-  } else if (payload.command == "readme") {
-    const { readme } = await client.fetchJSON(`/v1/vals/${payload.params.id}`);
+  } else if (command == "readme") {
+    const { readme } = await client.fetchJSON(`/v1/vals/${payload.id}`);
     const detail: sunbeam.Detail = {
       markdown: readme || "No readme",
       actions: readme
@@ -192,7 +191,7 @@ function valToListItem(val: any): sunbeam.ListItem {
 }
 
 try {
-  await run(JSON.parse(Deno.args[0]));
+  await run(Deno.args[1], await toJson(Deno.stdin.readable) as sunbeam.Payload);
 } catch (e) {
   console.error(e);
   Deno.exit(1);

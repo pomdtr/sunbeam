@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 
 	"github.com/acarl005/stripansi"
@@ -25,36 +24,33 @@ type Runner struct {
 
 	extension extensions.Extension
 	command   sunbeam.Command
-	input     sunbeam.Payload
+	payload   sunbeam.Payload
 }
 
-func NewRunner(extension extensions.Extension, input sunbeam.Payload) *Runner {
+func NewRunner(extension extensions.Extension, command sunbeam.Command, payload sunbeam.Payload) *Runner {
 	var embed Page
-	command, ok := extension.Command(input.Command)
-	if ok {
-		switch command.Mode {
-		case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter:
-			list := NewList()
-			list.SetEmptyText("Loading...")
-			if input.Query != "" {
-				list.SetQuery(input.Query)
+	switch command.Mode {
+	case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter:
+		list := NewList()
+		list.SetEmptyText("Loading...")
+		if query, ok := payload["query"]; ok {
+			if queryStr, ok := query.(string); ok {
+				list.SetQuery(queryStr)
 			}
-
-			embed = list
-		case sunbeam.CommandModeDetail:
-			embed = NewDetail("")
-		default:
-			embed = NewErrorPage(fmt.Errorf("invalid view type"))
 		}
-	} else {
-		embed = NewErrorPage(fmt.Errorf("command %s not found", input.Command))
+
+		embed = list
+	case sunbeam.CommandModeDetail:
+		embed = NewDetail("")
+	default:
+		embed = NewErrorPage(fmt.Errorf("invalid view type"))
 	}
 
 	return &Runner{
 		embed:     embed,
 		extension: extension,
 		command:   command,
-		input:     input,
+		payload:   payload,
 	}
 }
 
@@ -146,19 +142,11 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case sunbeam.Action:
 		switch msg.Type {
 		case sunbeam.ActionTypeRun:
-			command, ok := c.extension.Command(msg.Run.Command)
+			command, ok := c.extension.GetCommand(msg.Run.Command)
 			if !ok {
 				c.embed = NewErrorPage(fmt.Errorf("command %s not found", msg.Run.Command))
 				c.embed.SetSize(c.width, c.height)
 				return c, c.embed.Init()
-			}
-
-			for _, env := range c.extension.Manifest.Env {
-				if _, ok := os.LookupEnv(env); !ok {
-					c.embed = NewErrorPage(fmt.Errorf("environment variable %s not set", env))
-					c.embed.SetSize(c.width, c.height)
-					return c, c.embed.Init()
-				}
 			}
 
 			missing := FindMissingInputs(command.Params, msg.Run.Params)
@@ -194,23 +182,20 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			c.form = nil
 
-			input := sunbeam.Payload{
-				Command: msg.Run.Command,
-				Params:  make(map[string]any),
-			}
+			payload := make(map[string]any)
 
 			for k, v := range msg.Run.Params {
-				input.Params[k] = v
+				payload[k] = v
 			}
 
 			switch command.Mode {
 			case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
-				runner := NewRunner(c.extension, input)
+				runner := NewRunner(c.extension, command, payload)
 
 				return c, PushPageCmd(runner)
 			case sunbeam.CommandModeSilent:
 				return c, func() tea.Msg {
-					_, err := c.extension.Output(input)
+					_, err := c.extension.Output(context.Background(), command, payload)
 
 					if err != nil {
 						return PushPageMsg{NewErrorPage(err)}
@@ -266,12 +251,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}
 		case sunbeam.ActionTypeReload:
-			if c.input.Params == nil {
-				c.input.Params = make(map[string]any)
+			if c.payload == nil {
+				c.payload = make(map[string]any)
 			}
 
 			for k, v := range msg.Reload.Params {
-				c.input.Params[k] = v
+				c.payload[k] = v
 			}
 
 			return c, c.Reload()
@@ -312,7 +297,7 @@ func (c *Runner) Reload() tea.Cmd {
 		c.cancel = cancel
 		defer cancel()
 
-		cmd, err := c.extension.CmdContext(ctx, c.input)
+		cmd, err := c.extension.CmdContext(ctx, c.command, c.payload)
 		if err != nil {
 			return err
 		}
@@ -371,7 +356,7 @@ func (c *Runner) Reload() tea.Cmd {
 
 				if c.command.Mode == sunbeam.CommandModeSearch {
 					page.OnQueryChange = func(query string) tea.Cmd {
-						c.input.Query = query
+						c.payload["query"] = query
 						return c.Reload()
 					}
 					page.ResetSelection()
@@ -386,7 +371,7 @@ func (c *Runner) Reload() tea.Cmd {
 			page.SetShowDetail(list.ShowDetail)
 			if c.command.Mode == sunbeam.CommandModeSearch {
 				page.OnQueryChange = func(query string) tea.Cmd {
-					c.input.Query = query
+					c.payload["query"] = query
 					return c.Reload()
 				}
 			}

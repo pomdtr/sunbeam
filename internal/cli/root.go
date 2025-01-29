@@ -2,9 +2,9 @@ package cli
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -54,9 +54,8 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(NewCmdOpen())
 
 	docCmd := &cobra.Command{
-		Use:    "docs",
-		Short:  "Generate documentation for sunbeam",
-		Hidden: true,
+		Use:   "docs",
+		Short: "Generate documentation for sunbeam",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			doc, err := buildDoc(rootCmd)
 			if err != nil {
@@ -77,10 +76,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	rootCmd.AddCommand(docCmd)
 
 	manCmd := &cobra.Command{
-		Use:    "generate-man-pages [path]",
-		Short:  "Generate Man Pages for sunbeam",
-		Hidden: true,
-		Args:   cobra.ExactArgs(1),
+		Use:   "generate-man-pages [path]",
+		Short: "Generate Man Pages for sunbeam",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			header := &doc.GenManHeader{
 				Title:   "MINE",
@@ -114,29 +112,15 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extension Commands:",
 	})
 
-	entries, err := os.ReadDir(utils.ExtensionsDir())
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	} else if os.IsNotExist(err) {
+	exts, err := extensions.LoadExtensions(utils.ExtensionsDir())
+	if errors.Is(err, os.ErrNotExist) {
 		return rootCmd, nil
+	} else if err != nil {
+		return nil, err
 	}
 
-	extensionMap := make(map[string]extensions.Extension)
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-
-		extension, err := extensions.LoadExtension(filepath.Join(utils.ExtensionsDir(), entry.Name()))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error loading extension %s: %s\n", entry.Name(), err)
-			continue
-		}
-
-		alias := strings.TrimSuffix(filepath.Base(extension.Entrypoint), filepath.Ext(extension.Entrypoint))
-		extensionMap[alias] = extension
-
-		command, err := NewCmdCustom(alias, extension)
+	for _, extension := range exts {
+		command, err := NewCmdCustom(extension.Name, extension)
 		if err != nil {
 			return nil, err
 		}
@@ -154,17 +138,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		}
 
 		rootList := tui.NewRootList("Sunbeam", history, func() ([]sunbeam.ListItem, error) {
-			entries, err := os.ReadDir(utils.ExtensionsDir())
+			exts, err := extensions.LoadExtensions(utils.ExtensionsDir())
 			if err != nil {
 				return nil, err
 			}
 
 			var items []sunbeam.ListItem
-			for _, entry := range entries {
-				extension, err := extensions.LoadExtension(filepath.Join(utils.ExtensionsDir(), entry.Name()))
-				if err != nil {
-					continue
-				}
+			for _, extension := range exts {
 				items = append(items, extension.RootItems()...)
 			}
 

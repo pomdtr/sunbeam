@@ -1,19 +1,32 @@
 #!/usr/bin/env -S deno run -A
 
-import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
+import { DB } from "jsr:@pomdtr/sqlite@3.9.1"
 import * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
 import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
+import { toJson } from "jsr:@std/streams/to-json";
 
 const manifest = {
   title: "VS Code",
   description: "Manage your VS Code projects",
+  root: [
+    { title: "List Projects", type: "run", command: "ls" },
+  ],
   commands: [
     {
-      name: "list-projects",
+      name: "ls",
       description: "List Projects",
       mode: "filter",
     },
+    {
+      name: "open",
+      description: "Open Project",
+      mode: "silent",
+      params: [{
+        name: "url",
+        type: "string",
+      }],
+    }
   ],
 } as const satisfies sunbeam.Manifest;
 
@@ -22,9 +35,8 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-
-if (payload.command == "list-projects") {
+const command = Deno.args[0];
+if (command == "ls") {
   const homedir = Deno.env.get("HOME");
   const db = new DB(
     `${homedir}/Library/Application Support/Code/User/globalStorage/state.vscdb`,
@@ -58,8 +70,9 @@ if (payload.command == "list-projects") {
       actions: [
         {
           title: "Open in VS Code",
-          type: "open",
-          target: entry.folderUri,
+          type: "run",
+          command: "open",
+          params: { url: entry.folderUri },
         },
         {
           title: "Open Folder",
@@ -80,4 +93,11 @@ if (payload.command == "list-projects") {
   const list: sunbeam.List = { items };
 
   console.log(JSON.stringify(list));
+} else if (command == "open") {
+  const { url } = await toJson(Deno.stdin.readable) as { url: string }
+  const command = new Deno.Command("open", {
+    args: ["-a", "Visual Studio Code", url],
+  })
+
+  await command.output();
 }

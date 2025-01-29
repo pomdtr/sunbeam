@@ -18,12 +18,6 @@
                 "$ref": "./action.schema.json"
             }
         },
-        "env": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        },
         "commands": {
             "type": "array",
             "items": {
@@ -70,14 +64,13 @@
             "type": "object",
             "required": [
                 "name",
-                "title",
                 "type"
             ],
             "properties": {
                 "name": {
                     "type": "string"
                 },
-                "title": {
+                "description": {
                     "type": "string"
                 },
                 "type": {

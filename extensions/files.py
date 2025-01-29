@@ -7,23 +7,31 @@ import pathlib
 manifest = {
     "title": "File Browser",
     "description": "Browse files and folders",
-    "preferences": [
+    "root": [
         {
-            "name": "show-hidden",
-            "title": "Show Hidden Files",
-            "type": "boolean",
-            "optional": True,
+            "title": "Browse Home Directory",
+            "type": "run",
+            "command": "ls",
+            "params": {
+                "dir": "~",
+            },
+        },
+        {
+            "title": "Browse Current Directory",
+            "type": "run",
+            "command": "ls",
+            "params": {
+                "dir": ".",
+            },
         }
     ],
     "commands": [
         {
             "name": "ls",
-            "title": "List files",
             "mode": "filter",
             "params": [
                 {
                     "name": "dir",
-                    "title": "Directory",
                     "type": "string",
                     "optional": True,
                 },
@@ -31,7 +39,6 @@ manifest = {
         }
     ],
 }
-
 
 if len(sys.argv) == 1:
     json.dump(
@@ -41,26 +48,24 @@ if len(sys.argv) == 1:
     )
     sys.exit(0)
 
-
-payload = json.loads(sys.argv[1])
-if payload["command"] == "ls":
-    params = payload["params"]
-    preferences = payload["preferences"]
-    directory = params["dir"] or payload["cwd"]
+if sys.argv[1] == "ls":
+    # read payload from stdin
+    params = json.load(sys.stdin)
+    directory = params["dir"] or "."
     if directory.startswith("~"):
         directory = directory.replace("~", str(pathlib.Path.home()))
     root = pathlib.Path(directory)
-    show_hidden = preferences.get("show-hidden", False)
 
     items = []
     for file in root.iterdir():
-        if not show_hidden and file.name.startswith("."):
+        if file.name.startswith("."):
             continue
         item = {
             "title": file.name,
             "accessories": [str(file.absolute())],
             "actions": [],
         }
+
         if file.is_dir():
             item["actions"].append(
                 {
@@ -72,25 +77,14 @@ if payload["command"] == "ls":
                     },
                 }
             )
+
         item["actions"].extend(
             [
                 {
                     "title": "Open",
-                    "key": "o",
                     "type": "open",
-                    "path": str(file.absolute())
-                },
-                {
-                    "title": "Show Hidden Files"
-                    if not show_hidden
-                    else "Hide Hidden Files",
-                    "key": "h",
-                    "type": "reload",
-                    "params": {
-                        "show-hidden": not show_hidden,
-                        "dir": str(root.absolute()),
-                    },
-                },
+                    "target": str(file.absolute())
+                }
             ]
         )
 

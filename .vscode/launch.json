@@ -5,7 +5,9 @@
       "name": "sunbeam",
       "type": "go",
       "args": [
-        "rss"
+        "rss",
+        "show",
+        "--feed=https://jvns.ca/atom.xml"
       ],
       "request": "launch",
       "console": "integratedTerminal",

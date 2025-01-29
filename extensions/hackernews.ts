@@ -2,29 +2,35 @@
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2"
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5"
+import { toJson } from "jsr:@std/streams";
 
 const manifest = {
   title: "Hacker News",
   description: "Browse Hacker News",
+  root: [
+    { title: "View Homepage", type: "run", command: "browse", params: { topic: "frontpage" } },
+  ],
   commands: [
     {
       name: "browse",
       description: "Show a feed",
       mode: "filter",
-      params: [{ name: "topic", title: "Topic", type: "string" }],
+      params: [{ name: "topic", description: "Topic", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
+
+
 
 if (Deno.args.length == 0) {
   console.log(JSON.stringify(manifest));
   Deno.exit(0);
 }
 
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-if (payload.command == "browse") {
-  const { topic } = payload.params;
+const command = Deno.args[0];
+if (command == "browse") {
+  const { topic } = await toJson(Deno.stdin.readable) as { topic: string };
   const feed = await new Parser().parseURL(
     `https://hnrss.org/${topic}?description=0&count=25`,
   );

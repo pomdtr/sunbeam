@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
 
 const manifest = {
   title: "Raindrop",
@@ -18,14 +18,15 @@ if (Deno.args.length === 0) {
   Deno.exit(0);
 }
 
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 const raindropToken = Deno.env.get("RAINDROP_TOKEN");
 if (!raindropToken) {
   console.error("No raindrop token found, please set it in your config");
   Deno.exit(1);
 }
 
-if (payload.command == "search-bookmarks") {
+const command = Deno.args[0];
+
+if (command == "search-bookmarks") {
   const resp = await fetch("https://api.raindrop.io/rest/v1/raindrops/0", {
     headers: {
       Authorization: `Bearer ${raindropToken}`,
@@ -61,6 +62,6 @@ if (payload.command == "search-bookmarks") {
 
   console.log(JSON.stringify(list));
 } else {
-  console.error(`Unknown command: ${payload.command}`);
+  console.error(`Unknown command: ${command}`);
   Deno.exit(1);
 }

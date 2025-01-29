@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run -A
 
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import { toJson } from "jsr:@std/streams";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
 
 const manifest = {
   title: "Gists",
@@ -14,26 +15,23 @@ const manifest = {
     {
       name: "browse",
       description: "Browse Gist Files",
-      hidden: true,
       mode: "filter",
-      params: [{ name: "id", title: "Gist ID", type: "string" }],
+      params: [{ name: "id", description: "Gist ID", type: "string" }],
     },
     {
       name: "view",
       description: "View Gist File",
-      hidden: true,
       mode: "detail",
       params: [
-        { name: "id", title: "Gist ID", type: "string" },
-        { name: "filename", title: "Filename", type: "string" },
+        { name: "id", description: "Gist ID", type: "string" },
+        { name: "filename", description: "Filename", type: "string" },
       ],
     },
     {
       name: "delete",
-      hidden: true,
       description: "Delete Gist",
       mode: "silent",
-      params: [{ name: "id", title: "Gist ID", type: "string" }],
+      params: [{ name: "id", description: "Gist ID", type: "string" }],
     },
   ],
 } as const satisfies sunbeam.Manifest;
@@ -42,8 +40,6 @@ if (Deno.args.length == 0) {
   console.log(JSON.stringify(manifest));
   Deno.exit(0);
 }
-
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 const githubToken = Deno.env.get("GITHUB_TOKEN");
 if (!githubToken) {
   console.error("No github token set");
@@ -51,7 +47,7 @@ if (!githubToken) {
 }
 
 try {
-  const res = await run(payload);
+  const res = await run(Deno.args[0], await toJson(Deno.stdin.readable) as sunbeam.Payload);
   if (res) {
     console.log(JSON.stringify(res));
   }
@@ -60,8 +56,8 @@ try {
   Deno.exit(1);
 }
 
-async function run(payload: sunbeam.Payload<typeof manifest>) {
-  switch (payload.command) {
+async function run(command: string, payload: sunbeam.Payload) {
+  switch (command) {
     case "manage": {
       const resp = await fetchGithub("/gists");
       if (resp.status != 200) {
@@ -122,7 +118,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
       } as sunbeam.List;
     }
     case "browse": {
-      const id = payload.params.id;
+      const id = payload.id;
       const resp = await fetchGithub(`/gists/${id}`);
       if (resp.status != 200) {
         throw new Error("Failed to fetch gist");
@@ -156,7 +152,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
       } as sunbeam.List;
     }
     case "view": {
-      const { id, filename } = payload.params;
+      const { id, filename } = payload as { id: string; filename: string };
       const resp = await fetchGithub(`/gists/${id}`);
       if (resp.status != 200) {
         throw new Error("Failed to fetch gist");
@@ -203,7 +199,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
       } as sunbeam.Detail;
     }
     case "delete": {
-      const id = payload.params.id;
+      const id = payload.params
       const resp = await fetchGithub(`/gists/${id}`, {
         method: "DELETE",
       });

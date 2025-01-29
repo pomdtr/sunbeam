@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
 
 const manifest = {
   title: "Tailscale",
@@ -26,9 +26,8 @@ type Device = {
   Online: boolean;
 };
 
-const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-
-if (payload.command == "list-devices") {
+const command = Deno.args[0];
+if (command == "list-devices") {
   const command = new Deno.Command("tailscale", { args: ["status", "--json"] });
   const { stdout } = await command.output();
   const status = JSON.parse(new TextDecoder().decode(stdout));

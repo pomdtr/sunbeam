@@ -28,10 +28,9 @@ if [ $# -eq 0 ]; then
   exit 0
 fi
 
-COMMAND=$(echo "$1" | jq -r '.command')
-if [ "$COMMAND" = "list-docsets" ]; then
+if [ "$1" = "list-docsets" ]; then
   # shellcheck disable=SC2016
-  curl https://devdocs.io/docs/docs.json | jq 'map({
+  curl -s https://devdocs.io/docs/docs.json | jq 'map({
       title: .name,
       subtitle: (.release // "latest"),
       accessories: [ .slug ],
@@ -46,8 +45,8 @@ if [ "$COMMAND" = "list-docsets" ]; then
         }
       ]
     }) | {  items: . }'
-elif [ "$COMMAND" = "list-entries" ]; then
-  SLUG=$(echo "$1" | jq -r '.params.slug')
+elif [ "$1" = "list-entries" ]; then
+  SLUG=$(cat | jq -r '.slug')
   # shellcheck disable=SC2016
   curl "https://devdocs.io/docs/$SLUG/index.json" | jq --arg slug "$SLUG" '.entries | map({
       title: .name,
