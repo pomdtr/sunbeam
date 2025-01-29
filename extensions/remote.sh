@@ -3,7 +3,7 @@
 set -eu
 
 # view source at https://val.town/v/pomdtr/sunbeam_example
-REMOTE_URL="https://pomdtr-sunbeam_example.web.val.run/"
+REMOTE_URL="https://pomdtr-sunbeam_example-cync-9.web.val.run/"
 
 # check if curl is installed
 if ! [ -x "$(command -v curl)" ]; then
