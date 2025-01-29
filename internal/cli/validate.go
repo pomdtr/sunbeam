@@ -26,9 +26,10 @@ func NewValidateCmd() *cobra.Command {
 
 func NewCmdValidateList() *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
-		Short: "Validate a list",
-		Args:  cobra.NoArgs,
+		Use:     "list",
+		Aliases: []string{"filter", "generator"},
+		Short:   "Validate a list",
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("no input provided")
@@ -46,7 +47,7 @@ func NewCmdValidateList() *cobra.Command {
 				return fmt.Errorf("list is invalid: %s", err)
 			}
 
-			fmt.Println("✅ List is valid!")
+			fmt.Println("✅ Valid!")
 			return nil
 		},
 	}
