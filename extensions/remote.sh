@@ -12,8 +12,7 @@ if ! [ -x "$(command -v curl)" ]; then
 fi
 
 if [ $# -eq 0 ]; then
-    curl -s "$REMOTE_URL"
-    exit 0
+    exec curl -s "$REMOTE_URL"
 fi
 
 exec curl -X POST --data "@-" "$REMOTE_URL$1"
