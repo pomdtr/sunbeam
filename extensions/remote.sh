@@ -15,4 +15,4 @@ if [ $# -eq 0 ]; then
     exec curl -s "$REMOTE_URL"
 fi
 
-exec curl -X POST --data "@-" "$REMOTE_URL$1"
+exec curl -s -X POST -d "@-" "$REMOTE_URL$1"
