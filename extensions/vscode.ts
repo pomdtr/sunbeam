@@ -10,7 +10,7 @@ const manifest = {
   title: "VS Code",
   description: "Manage your VS Code projects",
   root: [
-    { title: "List Projects", type: "run", command: "ls" },
+    { title: "Search Recent Projects", type: "run", command: "ls" },
   ],
   commands: [
     {

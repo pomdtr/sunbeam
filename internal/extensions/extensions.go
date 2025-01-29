@@ -72,7 +72,10 @@ func (e Extension) RootItems() []sunbeam.ListItem {
 		items = append(items, sunbeam.ListItem{
 			Title:    title,
 			Subtitle: e.Manifest.Title,
-			Actions:  []sunbeam.Action{action, editAction},
+			Accessories: []string{
+				e.Name,
+			},
+			Actions: []sunbeam.Action{action, editAction},
 		})
 	}
 
