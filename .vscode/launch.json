@@ -4,14 +4,12 @@
     {
       "name": "sunbeam",
       "type": "go",
-      "args": [
-        "rss",
-        "show",
-        "--feed=https://jvns.ca/atom.xml"
-      ],
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",
+      "env": {
+        "SUNBEAM_EXTENSIONS_DIR": "${workspaceFolder}/extensions",
+      }
     },
   ],
 }
