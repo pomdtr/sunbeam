@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/spf13/cobra"
 )
@@ -21,7 +20,6 @@ func NewValidateCmd() *cobra.Command {
 	cmd.AddCommand(NewCmdValidateList())
 	cmd.AddCommand(NewCmdValidateDetail())
 	cmd.AddCommand(NewCmdValidateManifest())
-	cmd.AddCommand(NewCmdValidateConfig())
 
 	return cmd
 }
@@ -106,43 +104,6 @@ func NewCmdValidateManifest() *cobra.Command {
 			}
 
 			fmt.Println("✅ Manifest is valid!")
-			return nil
-		},
-	}
-}
-
-func NewCmdValidateConfig() *cobra.Command {
-	return &cobra.Command{
-		Use:   "config",
-		Short: "Validate a config",
-		Args:  cobra.MaximumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			var inputBytes []byte
-			if len(args) > 0 {
-				b, err := os.ReadFile(args[0])
-				if err != nil {
-					return err
-				}
-				inputBytes = b
-			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
-				b, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-				inputBytes = b
-			} else {
-				b, err := os.ReadFile(config.Path)
-				if err != nil {
-					return err
-				}
-				inputBytes = b
-			}
-
-			if err := schemas.ValidateConfig(inputBytes); err != nil {
-				return fmt.Errorf("config is invalid: %s", err)
-			}
-
-			fmt.Println("✅ Config is valid!")
 			return nil
 		},
 	}

@@ -8,14 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/acarl005/stripansi"
-	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/sunbeam"
@@ -32,6 +30,7 @@ func (e ExtensionMap) List() []Extension {
 }
 
 type Extension struct {
+	Name       string
 	Manifest   sunbeam.Manifest
 	Entrypoint string `json:"entrypoint"`
 }
@@ -51,31 +50,39 @@ const (
 	ExtensionTypeHttp  ExtensionType = "http"
 )
 
-func (e Extension) Command(name string) (sunbeam.CommandSpec, bool) {
+func (e Extension) Command(name string) (sunbeam.Command, bool) {
 	for _, command := range e.Manifest.Commands {
 		if command.Name == name {
 			return command, true
 		}
 	}
-	return sunbeam.CommandSpec{}, false
-}
-
-func (e Extension) RootCommands() []sunbeam.CommandSpec {
-	rootCommands := make([]sunbeam.CommandSpec, 0)
-	for _, command := range e.Manifest.Commands {
-		if command.Hidden {
-			continue
-		}
-
-		rootCommands = append(rootCommands, command)
-	}
-
-	return rootCommands
+	return sunbeam.Command{}, false
 }
 
 func (e Extension) Run(input sunbeam.Payload) error {
 	_, err := e.Output(input)
 	return err
+}
+
+func (e Extension) RootItems() []sunbeam.ListItem {
+	var items []sunbeam.ListItem
+
+	for _, action := range e.Manifest.Root {
+		title := action.Title
+		action.Title = "Run"
+
+		if action.Type == sunbeam.ActionTypeRun {
+			action.Run.Extension = e.Name
+		}
+
+		items = append(items, sunbeam.ListItem{
+			Title:    title,
+			Subtitle: e.Manifest.Title,
+			Actions:  []sunbeam.Action{action},
+		})
+	}
+
+	return items
 }
 
 func (ext Extension) Output(input sunbeam.Payload) ([]byte, error) {
@@ -99,22 +106,6 @@ func (e Extension) Cmd(input sunbeam.Payload) (*exec.Cmd, error) {
 }
 
 func (e Extension) CmdContext(ctx context.Context, input sunbeam.Payload) (*exec.Cmd, error) {
-	if input.Preferences == nil {
-		input.Preferences = make(map[string]any)
-	}
-
-	for _, spec := range e.Manifest.Preferences {
-		if _, ok := input.Preferences[spec.Name]; ok {
-			continue
-		}
-
-		if !spec.Optional {
-			return nil, fmt.Errorf("missing required preference %s", spec.Name)
-		}
-
-		input.Preferences[spec.Name] = spec.Default
-	}
-
 	command, ok := e.Command(input.Command)
 	if !ok {
 		return nil, fmt.Errorf("command %s not found", input.Command)
@@ -200,60 +191,31 @@ func DownloadEntrypoint(origin string, target string) error {
 	return nil
 }
 
-func LoadEntrypoint(origin string, extensionDir string) (string, error) {
-	if IsRemote(origin) {
-		originUrl, err := url.Parse(origin)
-		if err != nil {
-			return "", fmt.Errorf("failed to parse origin: %w", err)
-		}
-
-		entrypoint := filepath.Join(extensionDir, filepath.Base(originUrl.Path))
-		if _, err := os.Stat(entrypoint); err == nil {
-			return entrypoint, nil
-		}
-
-		if err := os.MkdirAll(extensionDir, 0755); err != nil {
-			return "", fmt.Errorf("failed to create directory: %w", err)
-		}
-
-		if err := DownloadEntrypoint(origin, entrypoint); err != nil {
-			return "", err
-		}
-
-		if err := os.Chmod(entrypoint, 0755); err != nil {
-			return "", fmt.Errorf("failed to chmod entrypoint: %w", err)
-		}
-
-		return entrypoint, nil
+func FindEntrypoint(extensionDir string, name string) (string, error) {
+	entries, err := os.ReadDir(extensionDir)
+	if err != nil {
+		return "", err
 	}
 
-	entrypoint := origin
-	if strings.HasPrefix(entrypoint, "~") {
-		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
-	} else if !filepath.IsAbs(entrypoint) {
-		entrypoint = filepath.Join(filepath.Dir(config.Path), entrypoint)
+	for _, entry := range entries {
+		if name == strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name())) {
+			return filepath.Join(extensionDir, entry.Name()), nil
+		}
+
 	}
 
-	return filepath.Abs(entrypoint)
+	return "", fmt.Errorf("entrypoint not found")
 }
 
-func LoadExtension(origin string) (Extension, error) {
-	hash, err := Hash(origin)
-	if err != nil {
-		return Extension{}, err
-	}
-	extensionDir := filepath.Join(utils.CacheDir(), "extensions", hash)
-	entrypoint, err := LoadEntrypoint(origin, extensionDir)
-	if err != nil {
-		return Extension{}, err
-	}
-
+func LoadExtension(entrypoint string) (Extension, error) {
 	entrypointInfo, err := os.Stat(entrypoint)
 	if err != nil {
 		return Extension{}, err
 	}
 
-	manifestPath := filepath.Join(extensionDir, "manifest.json")
+	name := strings.TrimSuffix(filepath.Base(entrypoint), filepath.Ext(entrypoint))
+
+	manifestPath := filepath.Join(utils.CacheDir(), "extensions", name+".json")
 	manifestInfo, err := os.Stat(manifestPath)
 	if err != nil || entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
 		manifest, err := cacheManifest(entrypoint, manifestPath)
@@ -262,6 +224,7 @@ func LoadExtension(origin string) (Extension, error) {
 		}
 
 		return Extension{
+			Name:       name,
 			Manifest:   manifest,
 			Entrypoint: entrypoint,
 		}, nil
@@ -278,6 +241,7 @@ func LoadExtension(origin string) (Extension, error) {
 	}
 
 	return Extension{
+		Name:       name,
 		Manifest:   manifest,
 		Entrypoint: entrypoint,
 	}, nil
@@ -304,45 +268,6 @@ func cacheManifest(entrypoint string, manifestPath string) (sunbeam.Manifest, er
 	}
 
 	return manifest, nil
-}
-
-func Upgrade(extensionConfig config.ExtensionConfig) error {
-	hash, err := Hash(extensionConfig.Origin)
-	if err != nil {
-		return err
-	}
-
-	extensionDir := filepath.Join(utils.CacheDir(), "extensions", hash)
-	manifestPath := filepath.Join(extensionDir, "manifest.json")
-	if IsRemote(extensionConfig.Origin) {
-		originUrl, err := url.Parse(extensionConfig.Origin)
-		if err != nil {
-			return fmt.Errorf("failed to parse origin: %w", err)
-		}
-
-		entrypoint := filepath.Join(extensionDir, filepath.Base(originUrl.Path))
-		if err := DownloadEntrypoint(extensionConfig.Origin, entrypoint); err != nil {
-			return err
-		}
-
-		if _, err := cacheManifest(entrypoint, manifestPath); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	entrypoint := extensionConfig.Origin
-	if strings.HasPrefix(entrypoint, "~") {
-		entrypoint = strings.Replace(entrypoint, "~", os.Getenv("HOME"), 1)
-	} else if !filepath.IsAbs(entrypoint) {
-		entrypoint = filepath.Join(filepath.Dir(config.Path), entrypoint)
-	}
-
-	if _, err := cacheManifest(entrypoint, manifestPath); err != nil {
-		return err
-	}
-	return nil
 }
 
 func ExtractManifest(entrypoint string) (sunbeam.Manifest, error) {

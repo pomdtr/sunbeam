@@ -115,12 +115,14 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 				return action
 			}
 		case "alt+enter":
-			if p.cursor != 0 || len(p.actions) < 2 {
-				break
+			if len(p.filtered) == 0 {
+				return p, nil
 			}
 
+			action := p.filtered[p.cursor]
 			return p, func() tea.Msg {
-				return p.actions[1]
+				action.Exit = true
+				return action
 			}
 		case "ctrl+d":
 			if p.expanded {
@@ -128,14 +130,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			}
 
 			return p, PopPageCmd
-		default:
-			for _, action := range p.actions {
-				if fmt.Sprintf("alt+%s", action.Key) == msg.String() {
-					return p, func() tea.Msg {
-						return action
-					}
-				}
-			}
 		}
 	case ShowNotificationMsg:
 		p.Reset()
@@ -175,10 +169,6 @@ func ActionTitle(action sunbeam.Action) string {
 		return "Open"
 	case sunbeam.ActionTypeEdit:
 		return "Edit"
-	case sunbeam.ActionTypeExec:
-		return "Exec"
-	case sunbeam.ActionTypeExit:
-		return "Exit"
 	default:
 		return string(action.Type)
 	}
@@ -192,15 +182,7 @@ func (c StatusBar) View() string {
 	if c.expanded {
 		accessories := make([]string, len(c.filtered))
 		for i, action := range c.filtered {
-			var subtitle string
-			if i == 0 {
-				subtitle = "enter"
-			} else if i == 1 {
-				subtitle = "alt+enter"
-			} else if action.Key != "" {
-				subtitle = fmt.Sprintf("alt+%s", action.Key)
-			}
-			accessories[i] = renderAction(ActionTitle(action), subtitle, i == c.cursor)
+			accessories[i] = renderAction(ActionTitle(action), "", i == c.cursor)
 		}
 
 		availableWidth := c.Width

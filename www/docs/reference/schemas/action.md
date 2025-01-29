@@ -33,10 +33,8 @@ Open a url or a file with the default app or a specific app.
     "key": "o",
     // the title of the action (required)
     "type": "open",
-    // the url or path to open (required)
-    // only one of url or path can be specified
-    "url": "https://pomdtr.github.io/sunbeam", // open a url
-    "path": "~/.config/sunbeam/sunbeam.json", // open a file
+    // the target to open (required)
+    "target": "https://pomdtr.github.io/sunbeam", // open a url
 }
 ```
 

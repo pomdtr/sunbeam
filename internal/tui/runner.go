@@ -10,7 +10,6 @@ import (
 	"github.com/acarl005/stripansi"
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/schemas"
 	"github.com/pomdtr/sunbeam/internal/utils"
@@ -24,7 +23,7 @@ type Runner struct {
 	cancel        context.CancelFunc
 
 	extension extensions.Extension
-	command   sunbeam.CommandSpec
+	command   sunbeam.Command
 	input     sunbeam.Payload
 }
 
@@ -70,7 +69,6 @@ func (c *Runner) SetIsLoading(isLoading bool) tea.Cmd {
 }
 
 func (c *Runner) Init() tea.Cmd {
-	termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Manifest.Title))
 	return tea.Batch(c.Reload(), c.embed.Init())
 }
 
@@ -78,7 +76,7 @@ func (c *Runner) Focus() tea.Cmd {
 	if c.embed == nil {
 		return nil
 	}
-	termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Manifest.Title))
+
 	return c.embed.Focus()
 }
 
@@ -170,14 +168,15 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						params[k] = v
 					}
 
-					props := msg.Run
-					props.Params = params
-
 					return sunbeam.Action{
-						Title:  msg.Title,
-						Type:   sunbeam.ActionTypeRun,
-						Run:    props,
-						Reload: msg.Reload,
+						Title: msg.Title,
+						Type:  sunbeam.ActionTypeRun,
+						Run: &sunbeam.RunAction{
+							Extension: msg.Run.Extension,
+							Command:   msg.Run.Command,
+							Reload:    msg.Run.Reload,
+							Params:    params,
+						},
 					}
 				}, missing...)
 
@@ -187,9 +186,8 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			c.form = nil
 
 			input := sunbeam.Payload{
-				Command:     msg.Run.Command,
-				Preferences: c.input.Preferences,
-				Params:      make(map[string]any),
+				Command: msg.Run.Command,
+				Params:  make(map[string]any),
 			}
 
 			for k, v := range msg.Run.Params {
@@ -213,37 +211,8 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 						return ReloadMsg{}
 					}
 
-					if msg.Run.Exit {
-						return ExitMsg{}
-					}
-
 					return nil
 				}
-			case sunbeam.CommandModeTTY:
-				cmd, err := c.extension.Cmd(input)
-				if err != nil {
-					c.embed = NewErrorPage(err)
-					c.embed.SetSize(c.width, c.height)
-					return c, c.embed.Init()
-				}
-
-				return c, tea.ExecProcess(cmd, func(err error) tea.Msg {
-					if err != nil {
-						return PushPageMsg{NewErrorPage(err)}
-					}
-
-					if msg.Run.Reload {
-						c.embed.Focus()
-						return ReloadMsg{}
-					}
-
-					if msg.Run.Exit {
-						return ExitMsg{}
-					}
-
-					termenv.DefaultOutput().SetWindowTitle(fmt.Sprintf("%s - %s", c.command.Title, c.extension.Manifest.Title))
-					return c.embed.Focus()
-				})
 			}
 		case sunbeam.ActionTypeEdit:
 			editCmd := exec.Command("sunbeam", "edit", msg.Edit.Path)
@@ -257,7 +226,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return c.Reload()
 				}
 
-				if msg.Edit.Exit {
+				if msg.Exit {
 					return ExitMsg{}
 				}
 
@@ -269,7 +238,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return err
 				}
 
-				if msg.Copy.Exit {
+				if msg.Exit {
 					return ExitMsg{}
 				}
 
@@ -277,24 +246,16 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		case sunbeam.ActionTypeOpen:
 			return c, func() tea.Msg {
-				if msg.Open.Url != "" {
-					if err := utils.Open(msg.Open.Url); err != nil {
-						return err
-					}
-
-					return ExitMsg{}
-				} else if msg.Open.Path != "" {
-					if err := utils.Open(fmt.Sprintf("file://%s", msg.Open.Path)); err != nil {
-						return err
-					}
-
-					return ExitMsg{}
-				} else {
-					return fmt.Errorf("invalid target")
+				if err := utils.Open(msg.Open.Target); err != nil {
+					return err
 				}
+
+				if msg.Exit {
+					return ExitMsg{}
+				}
+
+				return nil
 			}
-		case sunbeam.ActionTypeExit:
-			return c, ExitCmd
 		case sunbeam.ActionTypeReload:
 			if c.input.Params == nil {
 				c.input.Params = make(map[string]any)

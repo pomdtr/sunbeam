@@ -1,26 +1,19 @@
 #!/usr/bin/env -S deno run -A
 
-import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 
 const manifest = {
   title: "GitHub",
   description: "Search GitHub repositories",
-  preferences: [
-    {
-      name: "token",
-      title: "Personal Access Token",
-      type: "string",
-    },
-  ],
   commands: [
     {
-      title: "Search Repositories",
+      description: "Search Repositories",
       name: "search",
       mode: "search",
     },
     {
-      title: "List Issues",
+      description: "List Issues",
       name: "issue.list",
       hidden: true,
       mode: "filter",
@@ -33,7 +26,7 @@ const manifest = {
       ],
     },
     {
-      title: "List Pull Requests",
+      description: "List Pull Requests",
       name: "pr.list",
       hidden: true,
       mode: "filter",
@@ -46,7 +39,7 @@ const manifest = {
       ],
     },
     {
-      title: "View Readme",
+      description: "View Readme",
       name: "readme",
       hidden: true,
       mode: "detail",
@@ -66,6 +59,12 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
+const token = Deno.env.get("GITHUB_TOKEN");
+if (!token) {
+  console.error("No GitHub token set");
+  Deno.exit(1);
+}
+
 const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
 try {
   await run(payload);
@@ -75,7 +74,6 @@ try {
 }
 
 async function run(payload: sunbeam.Payload<typeof manifest>) {
-  const token = payload.preferences.token;
   if (payload.command == "search") {
     const query = payload.query;
     if (!query) {
@@ -88,10 +86,9 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     }
 
     const resp = await fetch(
-      `https://api.github.com/search/repositories?q=${
-        encodeURIComponent(
-          query,
-        )
+      `https://api.github.com/search/repositories?q=${encodeURIComponent(
+        query,
+      )
       }`,
       {
         headers: {
@@ -123,14 +120,11 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             },
             {
               title: "Open In Browser",
-              key: "o",
               type: "open",
-              url: item.html_url,
-              exit: true,
+              target: item.html_url,
             },
             {
               title: "List Issues",
-              key: "i",
               type: "run",
               command: "issue.list",
               params: {
@@ -139,7 +133,6 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             },
             {
               title: "List Pull Requests",
-              key: "p",
               type: "run",
               command: "pr.list",
               params: {
@@ -148,10 +141,8 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             },
             {
               title: "Copy URL",
-              key: "c",
               type: "copy",
               text: item.html_url,
-              exit: true,
             },
           ],
         } as sunbeam.ListItem),
@@ -183,15 +174,12 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             {
               title: "Open In Browser",
               type: "open",
-              url: item.html_url,
-              exit: true,
+              target: item.html_url,
             },
             {
               title: "Copy URL",
-              key: "c",
               type: "copy",
               text: item.html_url,
-              exit: true,
             },
           ],
         } as sunbeam.ListItem),
@@ -223,15 +211,13 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
             {
               title: "Open In Browser",
               type: "open",
-              url: item.html_url,
-              exit: true,
+              target: item.html_url,
             },
             {
               title: "Copy URL",
               key: "c",
               type: "copy",
               text: item.html_url,
-              exit: true,
             },
           ],
         } as sunbeam.ListItem),
@@ -262,11 +248,10 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
         {
           title: "Open in Browser",
           type: "open",
-          url: data.html_url,
+          target: data.html_url,
         },
         {
           title: "List Issues",
-          key: "i",
           type: "run",
           command: "issue.list",
           params: {
@@ -275,7 +260,6 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
         },
         {
           title: "List Pull Requests",
-          key: "p",
           type: "run",
           command: "pr.list",
           params: {

@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
 
 const manifest = {
   title: "Tailscale",
@@ -7,21 +7,9 @@ const manifest = {
   commands: [
     {
       name: "list-devices",
-      title: "Search My Devices",
+      description: "Search My Devices",
       mode: "filter",
-    },
-    {
-      name: "ssh-to-device",
-      title: "SSH to Device",
-      mode: "tty",
-      params: [
-        {
-          name: "ip",
-          title: "Device IP",
-          type: "string",
-        },
-      ],
-    },
+    }
   ],
 } as const satisfies sunbeam.Manifest;
 
@@ -51,25 +39,15 @@ if (payload.command == "list-devices") {
     accessories: [device.OS, device.Online ? "online" : "offline"],
     actions: [
       {
-        title: "SSH to Device",
-        type: "run",
-        command: "ssh-to-device",
-        params: {
-          ip: device.TailscaleIPs[0],
-        },
-      },
-      {
         title: "Copy SSH Command",
         type: "copy",
         text: `ssh ${device.TailscaleIPs[0]}`,
-        exit: true,
       },
       {
         title: "Copy IP",
         key: "i",
         type: "copy",
         text: device.TailscaleIPs[0],
-        exit: true,
       },
     ],
   }));
@@ -77,8 +55,4 @@ if (payload.command == "list-devices") {
   const list: sunbeam.List = { items };
 
   console.log(JSON.stringify(list));
-} else if (payload.command == "ssh-to-device") {
-  const command = new Deno.Command("ssh", { args: [payload.params.ip] });
-  const ps = command.spawn();
-  await ps.status;
 }

@@ -1,20 +1,12 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
-import { editor } from "https://deno.land/x/sunbeam/editor.ts";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
 
 const manifest = {
   title: "Val Town",
   description: "Search and view Val Town vals",
-  preferences: [
-    {
-      name: "token",
-      title: "Access Token",
-      type: "string",
-    },
-  ],
   commands: [
     {
-      title: "List Vals",
+      description: "List Vals",
       name: "list",
       mode: "filter",
       params: [{
@@ -25,19 +17,12 @@ const manifest = {
       }],
     },
     {
-      title: "Search Vals",
+      description: "Search Vals",
       name: "search",
       mode: "search",
     },
     {
-      title: "Edit Val",
-      name: "edit",
-      hidden: true,
-      mode: "tty",
-      params: [{ name: "id", title: "Val ID", type: "string" }],
-    },
-    {
-      title: "View Readme",
+      description: "View Readme",
       name: "readme",
       hidden: true,
       mode: "detail",
@@ -51,9 +36,14 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
+const token = Deno.env.get("VALTOWN_TOKEN");
+if (!token) {
+  console.error("No Val Town token found, please set it in your config");
+  Deno.exit(1);
+}
+
 async function run(payload: sunbeam.Payload<typeof manifest>) {
-  const token = payload.preferences.token;
-  const client = new ValTownClient(token);
+  const client = new ValTownClient(token!);
   if (payload.command == "list") {
     const username = payload.params.user;
     const { id: userID } = await client.fetchJSON(
@@ -85,32 +75,12 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
     } else {
       console.log(JSON.stringify({ emptyText: "No query" }));
     }
-  } else if (payload.command == "edit") {
-    const { id } = payload.params;
-    const { code } = await client.fetchJSON(`/v1/vals/${id}`);
-    const edited = await editor({ extension: "tsx", content: code });
-    if (edited == code) {
-      return;
-    }
-    const resp = await client.fetch(`/v1/vals/${id}/versions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ code: edited }),
-    });
-
-    if (!resp.ok) {
-      throw new Error(
-        `Failed to update val (${resp.status}: ${resp.statusText}`,
-      );
-    }
   } else if (payload.command == "readme") {
     const { readme } = await client.fetchJSON(`/v1/vals/${payload.params.id}`);
     const detail: sunbeam.Detail = {
       markdown: readme || "No readme",
       actions: readme
-        ? [{ type: "copy", title: "Copy Readme", text: readme, exit: true }]
+        ? [{ type: "copy", title: "Copy Readme", text: readme }]
         : [],
     };
     console.log(JSON.stringify(detail));
@@ -118,7 +88,7 @@ async function run(payload: sunbeam.Payload<typeof manifest>) {
 }
 
 class ValTownClient {
-  constructor(private token: string) {}
+  constructor(private token: string) { }
 
   _fetch(url: string, init?: RequestInit) {
     return fetch(url, {
@@ -178,11 +148,10 @@ function valToListItem(val: any): sunbeam.ListItem {
       {
         title: "Open in Browser",
         type: "open",
-        url: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
+        target: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
       },
       {
         title: "Edit Val",
-        key: "e",
         type: "run",
         command: "edit",
         params: {
@@ -193,7 +162,7 @@ function valToListItem(val: any): sunbeam.ListItem {
       {
         title: "Open Web Endpoint",
         type: "open",
-        url: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`,
+        target: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`,
       },
       {
         title: "Copy URL",
@@ -212,7 +181,6 @@ function valToListItem(val: any): sunbeam.ListItem {
       },
       {
         title: "View Readme",
-        key: "s",
         type: "run",
         command: "readme",
         params: {

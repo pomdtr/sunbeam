@@ -2,7 +2,7 @@
 
 import Parser from "npm:rss-parser@3.9.0";
 import { formatDistance } from "npm:date-fns@2.30.0";
-import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
 
 const manifest = {
   title: "RSS",
@@ -10,7 +10,7 @@ const manifest = {
   commands: [
     {
       name: "show",
-      title: "Show a Feed",
+      description: "Show a Feed",
       mode: "filter",
       params: [
         {
@@ -46,14 +46,13 @@ if (payload.command == "show") {
         {
           title: "Open in browser",
           type: "open",
-          url: item.link || "",
+          target: item.link || "",
         },
         {
           title: "Copy Link",
           type: "copy",
           key: "c",
           text: item.link || "",
-          exit: true,
         },
       ],
     })),

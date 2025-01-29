@@ -4,6 +4,9 @@
     {
       "name": "sunbeam",
       "type": "go",
+      "args": [
+        "rss"
+      ],
       "request": "launch",
       "console": "integratedTerminal",
       "program": "${workspaceFolder}",

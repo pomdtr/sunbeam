@@ -130,7 +130,7 @@ if payload["command"] == "ls":
                     "title": "Open",
                     "key": "o",
                     "type": "open",
-                    "path": str(file.absolute()),
+                    "target": str(file.absolute()),
                 },
                 {
                     "title": "Show Hidden Files"

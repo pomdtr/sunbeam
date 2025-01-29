@@ -1,18 +1,17 @@
 package sunbeam
 
 type Manifest struct {
-	Title       string        `json:"title"`
-	Description string        `json:"description,omitempty"`
-	Preferences []Input       `json:"preferences,omitempty"`
-	Commands    []CommandSpec `json:"commands"`
+	Title       string    `json:"title"`
+	Description string    `json:"description,omitempty"`
+	Root        []Action  `json:"root"`
+	Commands    []Command `json:"commands"`
 }
 
-type CommandSpec struct {
-	Name   string      `json:"name"`
-	Title  string      `json:"title"`
-	Hidden bool        `json:"hidden,omitempty"`
-	Params []Input     `json:"params,omitempty"`
-	Mode   CommandMode `json:"mode,omitempty"`
+type Command struct {
+	Name        string      `json:"name"`
+	Description string      `json:"description,omitempty"`
+	Params      []Input     `json:"params,omitempty"`
+	Mode        CommandMode `json:"mode,omitempty"`
 }
 
 type Platfom string
@@ -33,7 +32,6 @@ const (
 	CommandModeSearch CommandMode = "search"
 	CommandModeFilter CommandMode = "filter"
 	CommandModeDetail CommandMode = "detail"
-	CommandModeTTY    CommandMode = "tty"
 	CommandModeSilent CommandMode = "silent"
 )
 

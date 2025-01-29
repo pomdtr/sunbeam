@@ -10,13 +10,6 @@ if [ $# -eq 0 ]; then
     jq -n '{
         title: "Bitwarden Vault",
         description: "Search your Bitwarden passwords",
-        preferences: [
-            {
-                name: "session",
-                title: "Bitwarden Session",
-                type: "string"
-            }
-        ],
         commands: [
             {
                 name: "list-passwords",
@@ -34,9 +27,8 @@ if ! [ -x "$(command -v bkt)" ]; then
     exit 1
 fi
 
-BW_SESSION=$(echo "$1" | jq -r '.preferences.session')
-if [ "$BW_SESSION" = "null" ]; then
-    echo "Bitwarden session not found. Please set it in your config." >&2
+if [ -z "$BW_SESSION" ]; then
+    echo "Please set the BW_SESSION environment variable." >&2
     exit 1
 fi
 
@@ -50,14 +42,11 @@ if [ "$COMMAND" = "list-passwords" ]; then
                 title: "Copy Password",
                 type: "copy",
                 text: (.login.password // ""),
-                exit: true
             },
             {
                 title: "Copy Username",
-                key: "l",
                 type: "copy",
                 text: (.login.username // ""),
-                exit: true
             }
         ]
     }) | { items: .}'

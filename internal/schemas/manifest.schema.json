@@ -2,20 +2,16 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "required": [
-        "title",
         "commands"
     ],
     "properties": {
-        "title": {
-            "type": "string"
-        },
         "description": {
             "type": "string"
         },
-        "preferences": {
+        "root": {
             "type": "array",
             "items": {
-                "$ref": "#/definitions/input"
+                "$ref": "./action.schema.json"
             }
         },
         "commands": {
@@ -29,7 +25,6 @@
         "command": {
             "type": "object",
             "required": [
-                "title",
                 "name",
                 "mode"
             ],
@@ -40,7 +35,7 @@
                 "hidden": {
                     "type": "boolean"
                 },
-                "title": {
+                "description": {
                     "type": "string"
                 },
                 "mode": {

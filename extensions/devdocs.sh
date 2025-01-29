@@ -7,15 +7,17 @@ if [ $# -eq 0 ]; then
   jq -n '{
     title: "DevDocs",
     description: "Search DevDocs.io",
+    root: [
+      { title: "Search Docsets", type: "run", command: "list-docsets" },
+      { title: "Search Golang Entries", type: "run", command: "list-entries", params: { slug: "go" } }
+    ],
     commands: [
       {
         name: "list-docsets",
-        title: "List Docsets",
         mode: "filter"
       },
       {
         name: "list-entries",
-        title: "List Entries from Docset",
         mode: "filter",
         params: [
           { name: "slug", title: "Slug", type: "string" }
@@ -51,8 +53,8 @@ elif [ "$COMMAND" = "list-entries" ]; then
       title: .name,
       subtitle: .type,
       actions: [
-        {title: "Open in Browser", type: "open", url: "https://devdocs.io/\($slug)/\(.path)"},
-        {title: "Copy URL", key: "c", type: "copy", text: "https://devdocs.io/\($slug)/\(.path)", exit: true}
+        {title: "Open in Browser", type: "open", target: "https://devdocs.io/\($slug)/\(.path)"},
+        {title: "Copy URL", key: "c", type: "copy", text: "https://devdocs.io/\($slug)/\(.path)"}
       ]
     }) | {  items: . }'
 fi

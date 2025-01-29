@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
 
 const manifest: sunbeam.Manifest = {
   title: "NPM Search",
@@ -7,7 +7,7 @@ const manifest: sunbeam.Manifest = {
   commands: [
     {
       name: "search",
-      title: "Search NPM Packages",
+      description: "Search NPM Packages",
       mode: "search",
     },
   ],
@@ -26,10 +26,9 @@ if (!payload.query) {
 }
 
 const resp = await fetch(
-  `https://registry.npmjs.com/-/v1/search?text=${
-    encodeURIComponent(
-      payload.query,
-    )
+  `https://registry.npmjs.com/-/v1/search?text=${encodeURIComponent(
+    payload.query,
+  )
   }`,
 );
 const { objects: packages } = await resp.json();
@@ -42,13 +41,12 @@ for (const pkg of packages) {
       {
         type: "open",
         title: "Open Package",
-        url: pkg.package.links.npm,
+        target: pkg.package.links.npm,
       },
       {
         type: "copy",
         title: "Open Package Name",
         text: pkg.package.name,
-        exit: true,
       },
     ],
   };

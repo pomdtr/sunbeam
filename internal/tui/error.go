@@ -9,7 +9,6 @@ func NewErrorPage(err error, additionalActions ...sunbeam.Action) *Detail {
 		Type:  sunbeam.ActionTypeCopy,
 		Copy: &sunbeam.CopyAction{
 			Text: err.Error(),
-			Exit: true,
 		},
 	})
 	actions = append(actions, additionalActions...)

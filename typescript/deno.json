@@ -1,0 +1,12 @@
+{
+    "name": "@pomdtr/sunbeam",
+    "version": "0.0.2",
+    "license": "MIT",
+    "exports": "./pkg/mod.ts",
+    "publish": {
+        "include": [
+            "README.md",
+            "pkg/**/*.ts"
+        ]
+    }
+}

@@ -2,7 +2,7 @@
 
 import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
 import * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
-import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
 import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 
 const manifest = {
@@ -11,7 +11,7 @@ const manifest = {
   commands: [
     {
       name: "list-projects",
-      title: "List Projects",
+      description: "List Projects",
       mode: "filter",
     },
   ],
@@ -59,19 +59,18 @@ if (payload.command == "list-projects") {
         {
           title: "Open in VS Code",
           type: "open",
-          url: entry.folderUri,
+          target: entry.folderUri,
         },
         {
           title: "Open Folder",
           key: "o",
           type: "open",
-          url: entry.folderUri,
+          target: entry.folderUri,
         },
         {
           title: "Copy Path",
           key: "c",
           type: "copy",
-          exit: true,
           text: entry.folderUri.replace("file://", ""),
         },
       ],

@@ -2,7 +2,7 @@
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2"
 
 const manifest = {
   title: "Hacker News",
@@ -10,7 +10,7 @@ const manifest = {
   commands: [
     {
       name: "browse",
-      title: "Show a feed",
+      description: "Show a feed",
       mode: "filter",
       params: [{ name: "topic", title: "Topic", type: "string" }],
     },
@@ -43,19 +43,17 @@ if (payload.command == "browse") {
         {
           title: "Open in browser",
           type: "open",
-          url: item.link || "",
+          target: item.link || "",
         },
         {
           title: "Open Comments in Browser",
           type: "open",
-          url: item.guid || "",
+          target: item.guid || "",
         },
         {
           title: "Copy Link",
           type: "copy",
-          key: "c",
           text: item.link || "",
-          exit: true,
         },
       ],
     })),

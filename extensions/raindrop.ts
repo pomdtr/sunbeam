@@ -1,19 +1,12 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "https://deno.land/x/sunbeam/mod.ts";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.2";
 
 const manifest = {
   title: "Raindrop",
   description: "Manage your raindrop bookmarks",
-  preferences: [
-    {
-      name: "token",
-      title: "Raindrop API Token",
-      type: "string",
-    },
-  ],
   commands: [
     {
-      title: "Search Bookmarks",
+      description: "Search Bookmarks",
       name: "search-bookmarks",
       mode: "filter",
     },
@@ -26,7 +19,7 @@ if (Deno.args.length === 0) {
 }
 
 const payload: sunbeam.Payload<typeof manifest> = JSON.parse(Deno.args[0]);
-const raindropToken = payload.preferences.token;
+const raindropToken = Deno.env.get("RAINDROP_TOKEN");
 if (!raindropToken) {
   console.error("No raindrop token found, please set it in your config");
   Deno.exit(1);
@@ -55,14 +48,12 @@ if (payload.command == "search-bookmarks") {
         {
           title: "Open URL",
           type: "open",
-          url: bookmark.link,
+          target: bookmark.link,
         },
         {
           title: "Copy URL",
-          key: "c",
           type: "copy",
           text: bookmark.link,
-          exit: true,
         },
       ],
     })),

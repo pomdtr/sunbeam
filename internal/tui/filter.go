@@ -4,7 +4,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pomdtr/sunbeam/internal/fzf"
@@ -31,9 +30,6 @@ type Filter struct {
 }
 
 func NewFilter(items ...FilterItem) Filter {
-	viewport := viewport.New(0, 0)
-	viewport.Style = lipgloss.NewStyle().Padding(0, 1)
-
 	return Filter{
 		items:    items,
 		filtered: items,

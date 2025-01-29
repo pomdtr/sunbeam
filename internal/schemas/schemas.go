@@ -19,7 +19,6 @@ var schemaUrls = []string{
 	"list.schema.json",
 	"detail.schema.json",
 	"manifest.schema.json",
-	"config.schema.json",
 }
 
 func init() {
@@ -82,8 +81,4 @@ func ValidateList(input []byte) error {
 
 func ValidateManifest(input []byte) error {
 	return validateSchema("manifest.schema.json", input)
-}
-
-func ValidateConfig(input []byte) error {
-	return validateSchema("config.schema.json", input)
 }

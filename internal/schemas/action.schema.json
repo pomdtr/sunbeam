@@ -62,11 +62,11 @@
             },
             "then": {
                 "type": "object",
+                "required": [
+                    "target"
+                ],
                 "properties": {
-                    "url": {
-                        "type": "string"
-                    },
-                    "path": {
+                    "target": {
                         "type": "string"
                     }
                 }

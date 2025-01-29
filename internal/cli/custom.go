@@ -9,7 +9,6 @@ import (
 	"sort"
 
 	"github.com/mattn/go-isatty"
-	"github.com/pomdtr/sunbeam/internal/config"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/history"
 	"github.com/pomdtr/sunbeam/internal/tui"
@@ -17,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig) (*cobra.Command, error) {
+func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
 		Use:     alias,
 		Short:   extension.Manifest.Title,
@@ -43,7 +42,7 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 					return encoder.Encode(extension.Manifest)
 				}
 
-				if len(extension.RootCommands()) == 0 && len(extensionConfig.Root) == 0 {
+				if len(extension.Manifest.Root) == 0 {
 					return cmd.Usage()
 				}
 
@@ -52,14 +51,8 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 					return err
 				}
 
-				rootList := tui.NewRootList(extension.Manifest.Title, history, func() (config.Config, []sunbeam.ListItem, error) {
-					cfg, err := config.Load(config.Path)
-					if err != nil {
-						return config.Config{}, nil, err
-					}
-
-					items := extensionListItems(alias, extension, extensionConfig)
-					return cfg, items, nil
+				rootList := tui.NewRootList(extension.Manifest.Title, history, func() ([]sunbeam.ListItem, error) {
+					return extension.RootItems(), nil
 				})
 
 				return tui.Draw(rootList)
@@ -68,9 +61,6 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 			var input sunbeam.Payload
 			if err := json.Unmarshal(inputBytes, &input); err != nil {
 				return err
-			}
-			if input.Preferences == nil {
-				input.Preferences = extensionConfig.Preferences
 			}
 
 			return runExtension(extension, input)
@@ -86,17 +76,17 @@ func NewCmdCustom(alias string, extension extensions.Extension, extensionConfig 
 	})
 
 	for _, command := range commands {
-		cmd := NewSubCmdCustom(alias, extension, extensionConfig, command)
+		cmd := NewSubCmdCustom(alias, extension, command)
 		rootCmd.AddCommand(cmd)
 	}
 
 	return rootCmd, nil
 }
 
-func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConfig config.ExtensionConfig, command sunbeam.CommandSpec) *cobra.Command {
+func NewSubCmdCustom(alias string, extension extensions.Extension, command sunbeam.Command) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   command.Name,
-		Short: command.Title,
+		Short: command.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			params := make(map[string]any)
 
@@ -127,24 +117,9 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, extensionConf
 				}
 			}
 
-			preferences := extensionConfig.Preferences
-			if preferences == nil {
-				preferences = make(map[string]any)
-			}
-
-			envs, err := tui.ExtractPreferencesFromEnv(alias, extension)
-			if err != nil {
-				return err
-			}
-
-			for name, value := range envs {
-				preferences[name] = value
-			}
-
 			input := sunbeam.Payload{
-				Command:     command.Name,
-				Preferences: preferences,
-				Params:      params,
+				Command: command.Name,
+				Params:  params,
 			}
 
 			if !isatty.IsTerminal(os.Stdin.Fd()) {
@@ -203,17 +178,6 @@ func runExtension(extension extensions.Extension, input sunbeam.Payload) error {
 		return tui.Draw(runner)
 	case sunbeam.CommandModeSilent:
 		return extension.Run(input)
-	case sunbeam.CommandModeTTY:
-		cmd, err := extension.Cmd(input)
-		if err != nil {
-			return err
-		}
-
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		return cmd.Run()
 	default:
 		return fmt.Errorf("unknown command mode: %s", command.Mode)
 	}
