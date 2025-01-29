@@ -49,7 +49,7 @@ if len(sys.argv) == 1:
 if sys.argv[1] == "browse":
     # read payload from stdin
     params = json.load(sys.stdin)
-    directory = params["dir"] or "."
+    directory = params.get("dir", ".")
     if directory.startswith("~"):
         directory = directory.replace("~", str(pathlib.Path.home()))
     root = pathlib.Path(directory)
