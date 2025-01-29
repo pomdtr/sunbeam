@@ -4,45 +4,43 @@ import sys
 import json
 import pathlib
 
-manifest = {
-    "title": "File Browser",
-    "description": "Browse files and folders",
-    "root": [
-        {
-            "title": "Browse Home Directory",
-            "type": "run",
-            "command": "browse",
-            "params": {
-                "dir": "~",
-            },
-        },
-        {
-            "title": "Browse Current Directory",
-            "type": "run",
-            "command": "browse",
-            "params": {
-                "dir": ".",
-            },
-        }
-    ],
-    "commands": [
-        {
-            "name": "browse",
-            "mode": "filter",
-            "params": [
-                {
-                    "name": "dir",
-                    "type": "string",
-                    "optional": True,
-                },
-            ],
-        }
-    ],
-}
-
 if len(sys.argv) == 1:
     json.dump(
-        manifest,
+        {
+            "title": "File Browser",
+            "description": "Browse files and folders",
+            "root": [
+                {
+                    "title": "Browse Home Directory",
+                    "type": "run",
+                    "command": "browse",
+                    "params": {
+                        "dir": "~",
+                    },
+                },
+                {
+                    "title": "Browse Current Directory",
+                    "type": "run",
+                    "command": "browse",
+                    "params": {
+                        "dir": ".",
+                    },
+                },
+            ],
+            "commands": [
+                {
+                    "name": "browse",
+                    "mode": "filter",
+                    "params": [
+                        {
+                            "name": "dir",
+                            "type": "string",
+                            "optional": True,
+                        },
+                    ],
+                }
+            ],
+        },
         sys.stdout,
         indent=4,
     )
@@ -79,13 +77,7 @@ if sys.argv[1] == "browse":
             )
 
         item["actions"].extend(
-            [
-                {
-                    "title": "Open",
-                    "type": "open",
-                    "target": str(file.absolute())
-                }
-            ]
+            [{"title": "Open", "type": "open", "target": str(file.absolute())}]
         )
 
         items.append(item)
