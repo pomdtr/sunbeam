@@ -301,6 +301,26 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 
 			return c, PopPageCmd
+		case "enter", "alt+enter":
+			if len(c.statusBar.filtered) == 0 {
+				return c, nil
+			}
+
+			action := c.statusBar.filtered[c.statusBar.cursor]
+			if c.statusBar.expanded {
+				c.focus = ListFocusItems
+				c.input.SetValue(c.query)
+				c.input.Placeholder = "Search Items..."
+				c.statusBar.Reset()
+			}
+
+			if msg.String() == "alt+enter" {
+				action.Exit = true
+			}
+
+			return c, func() tea.Msg {
+				return action
+			}
 		case "ctrl+j":
 			if !c.showDetail {
 				break

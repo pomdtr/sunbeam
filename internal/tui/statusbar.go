@@ -105,25 +105,6 @@ func (p StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
 			} else {
 				p.cursor = len(p.filtered) - 1
 			}
-		case "enter":
-			if len(p.filtered) == 0 {
-				return p, nil
-			}
-
-			action := p.filtered[p.cursor]
-			return p, func() tea.Msg {
-				return action
-			}
-		case "alt+enter":
-			if len(p.filtered) == 0 {
-				return p, nil
-			}
-
-			action := p.filtered[p.cursor]
-			return p, func() tea.Msg {
-				action.Exit = true
-				return action
-			}
 		case "ctrl+d":
 			if p.expanded {
 				break
@@ -210,7 +191,11 @@ func (c StatusBar) View() string {
 		}
 
 	} else {
-		accessory = fmt.Sprintf("%s · Actions %s", renderAction(ActionTitle(c.filtered[0]), "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
+		if len(c.filtered) > 1 {
+			accessory = fmt.Sprintf("%s · Actions %s", renderAction(ActionTitle(c.filtered[0]), "enter", false), lipgloss.NewStyle().Faint(true).Render("tab"))
+		} else {
+			accessory = renderAction(ActionTitle(c.filtered[0]), "enter", false)
+		}
 	}
 
 	var statusbar string

@@ -119,6 +119,25 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 			return c, func() tea.Msg {
 				return PopPageMsg{}
 			}
+		case "enter", "alt+enter":
+			if len(c.statusBar.filtered) == 0 {
+				return c, nil
+			}
+
+			action := c.statusBar.filtered[c.statusBar.cursor]
+			if c.statusBar.expanded {
+				c.statusBar.Reset()
+				c.input.SetValue("")
+				c.input.Blur()
+			}
+
+			if msg.String() == "alt+enter" {
+				action.Exit = true
+			}
+
+			return c, func() tea.Msg {
+				return action
+			}
 		}
 	}
 	var cmds []tea.Cmd
