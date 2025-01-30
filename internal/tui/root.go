@@ -125,7 +125,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return c, c.SetError(err)
 			}
 
-			extension, err := extensions.LoadExtension(entrypoint)
+			extension, err := extensions.LoadExtension(entrypoint, true)
 			if err != nil {
 				return c, c.SetError(err)
 			}

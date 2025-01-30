@@ -114,7 +114,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 					return err
 				}
 
-				extension, err := extensions.LoadExtension(c.extension.Entrypoint)
+				extension, err := extensions.LoadExtension(c.extension.Entrypoint, true)
 				if err != nil {
 					return err
 				}
@@ -123,15 +123,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return ReloadMsg{}
 			})
 		case "ctrl+r":
-			return c, func() tea.Msg {
-				manifest, err := extensions.ExtractManifest(c.extension.Entrypoint)
-				if err != nil {
-					return err
-				}
-				c.extension.Manifest = manifest
-
-				return ReloadMsg{}
-			}
+			return c, c.Reload()
 		}
 	case ReloadMsg:
 		return c, c.Reload()

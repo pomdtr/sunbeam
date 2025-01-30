@@ -192,7 +192,7 @@ func FindEntrypoint(extensionDir string, name string) (string, error) {
 	return "", fmt.Errorf("entrypoint not found")
 }
 
-func LoadExtensions(extensionDir string) (map[string]Extension, error) {
+func LoadExtensions(extensionDir string, useCache bool) (map[string]Extension, error) {
 	extensionMap := make(map[string]Extension)
 	entries, err := os.ReadDir(extensionDir)
 	if err != nil && !os.IsNotExist(err) {
@@ -208,7 +208,7 @@ func LoadExtensions(extensionDir string) (map[string]Extension, error) {
 			continue
 		}
 
-		extension, err := LoadExtension(filepath.Join(extensionDir, entry.Name()))
+		extension, err := LoadExtension(filepath.Join(extensionDir, entry.Name()), useCache)
 		if err != nil {
 			return nil, fmt.Errorf("error loading extension %s: %w", entry.Name(), err)
 		}
@@ -223,7 +223,7 @@ func LoadExtensions(extensionDir string) (map[string]Extension, error) {
 	return extensionMap, nil
 }
 
-func LoadExtension(entrypoint string) (Extension, error) {
+func LoadExtension(entrypoint string, useCache bool) (Extension, error) {
 	entrypointInfo, err := os.Stat(entrypoint)
 	if err != nil {
 		return Extension{}, err
@@ -233,7 +233,7 @@ func LoadExtension(entrypoint string) (Extension, error) {
 
 	manifestPath := filepath.Join(utils.CacheDir(), "extensions", name+".json")
 	manifestInfo, err := os.Stat(manifestPath)
-	if err != nil || entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
+	if !useCache || err != nil || entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
 		manifest, err := cacheManifest(entrypoint, manifestPath)
 		if err != nil {
 			return Extension{}, err

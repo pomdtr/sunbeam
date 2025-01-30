@@ -314,7 +314,7 @@ func (c *List) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.statusBar.Reset()
 			}
 
-			if msg.String() == "alt+enter" {
+			if msg.String() == "enter" {
 				action.Exit = true
 			}
 

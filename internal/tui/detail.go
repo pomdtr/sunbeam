@@ -131,7 +131,7 @@ func (c *Detail) Update(msg tea.Msg) (Page, tea.Cmd) {
 				c.input.Blur()
 			}
 
-			if msg.String() == "alt+enter" {
+			if msg.String() == "enter" {
 				action.Exit = true
 			}
 

@@ -15,13 +15,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdCustom(alias string, extension extensions.Extension) (*cobra.Command, error) {
+func NewCmdExtension(alias string, extension extensions.Extension) (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
 		Use:     alias,
 		Short:   extension.Manifest.Title,
 		Long:    extension.Manifest.Description,
 		Args:    cobra.NoArgs,
-		GroupID: CommandGroupExtension,
+		GroupID: "extension",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				encoder := json.NewEncoder(os.Stdout)

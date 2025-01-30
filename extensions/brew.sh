@@ -31,16 +31,7 @@ if [ $# -eq 0 ]; then
                 params: [
                     { name: "package", type: "string" }
                 ]
-            },
-            {
-                name: "uninstall",
-                mode: "silent",
-                description: "Uninstall a package",
-                params: [
-                    { name: "package", type: "string" }
-                ]
             }
-
         ]
     }'
     exit 0
@@ -51,22 +42,16 @@ if [ "$1" = "list" ]; then
         title: .,
         actions: [
             {
-                title: "Uninstall Package",
+                title: "Show Info",
                 type: "run",
-                command: "uninstall",
-                params: {
-                    package: .
-                },
-                reload: true
+                command: "info",
+                params: { package: . }
             }
         ]
     }' | jq -s '{ items: . }'
 elif [ "$1" = "info" ]; then
     PACKAGE=$(cat | jq -r '.package')
     brew info "$PACKAGE" | jq -sR '{ text: . }'
-elif [ "$1" = "uninstall" ]; then
-    PACKAGE=$(cat | jq -r '.package')
-    brew uninstall "$PACKAGE"
 else
     echo "Unknown command: $COMMAND"
     exit 1

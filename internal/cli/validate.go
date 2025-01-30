@@ -12,9 +12,8 @@ import (
 
 func NewValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "validate",
-		GroupID: CommandGroupCore,
-		Short:   "Validate a Sunbeam schema",
+		Use:   "validate",
+		Short: "Validate sunbeam schemas",
 	}
 
 	cmd.AddCommand(NewCmdValidateList())
@@ -28,7 +27,7 @@ func NewCmdValidateList() *cobra.Command {
 	return &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"filter", "generator"},
-		Short:   "Validate a list",
+		Short:   "Validate a filter/generator page",
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
@@ -56,7 +55,7 @@ func NewCmdValidateList() *cobra.Command {
 func NewCmdValidateDetail() *cobra.Command {
 	return &cobra.Command{
 		Use:   "detail",
-		Short: "Validate a detail",
+		Short: "Validate a detail page",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
@@ -85,7 +84,7 @@ func NewCmdValidateDetail() *cobra.Command {
 func NewCmdValidateManifest() *cobra.Command {
 	return &cobra.Command{
 		Use:   "manifest",
-		Short: "Validate a manifest",
+		Short: "Validate an extension manifest",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if isatty.IsTerminal(os.Stdin.Fd()) {
