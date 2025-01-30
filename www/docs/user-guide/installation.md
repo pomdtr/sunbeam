@@ -1,21 +1,34 @@
 # Installation
 
-You can use a package manager
+## Package Manager
+
+### Homebrew
 
 ```bash
 brew install pomdtr/tap/sunbeam
+```
 
-# as a nix flake
+### Nix
+
+```bash
 nix shell github:pomdtr/sunbeam --command sunbeam
+```
 
-# arch linux (btw)
+### Yay (Arch Linux, btw)
+
+```bash
 yay -S sunbeam-bin
+```
 
-# from source
+## From Source
+
+```bash
 go install github.com/pomdtr/sunbeam@main
 ```
 
-or use binaries / packages from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).
+## GitHub Releases
+
+Alternatively, use binaries / packages from the [releases page](https://github.com/pomdtr/sunbeam/releases/latest).
 
 ## Completions
 
