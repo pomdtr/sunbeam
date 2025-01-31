@@ -41,14 +41,11 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if flags.reload {
 				exts, err := LoadExtensions(utils.ExtensionsDir(), false)
-				if errors.Is(err, os.ErrNotExist) {
-					return fmt.Errorf("no extensions found")
-				} else if err != nil {
-					return fmt.Errorf("failed to load extensions: %w", err)
+				if err != nil {
+					return fmt.Errorf("failed to reload extensions: %w", err)
 				}
 
 				fmt.Fprintf(os.Stderr, "Reloaded %d extensions\n", len(exts))
-				return nil
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
