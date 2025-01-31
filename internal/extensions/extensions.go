@@ -105,14 +105,17 @@ func (e Extension) CmdContext(ctx context.Context, command sunbeam.Command, payl
 	}
 
 	cmd := exec.CommandContext(ctx, e.Entrypoint, command.Name)
+
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
 	}
+	defer stdin.Close()
 
 	encoder := json.NewEncoder(stdin)
-	encoder.Encode(payload)
-	stdin.Close()
+	if err := encoder.Encode(payload); err != nil {
+		return nil, err
+	}
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "SUNBEAM=1")
