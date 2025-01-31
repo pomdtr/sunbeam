@@ -49,7 +49,7 @@ func (e Extension) GetCommand(name string) (sunbeam.Command, bool) {
 func (e Extension) RootItems() []sunbeam.ListItem {
 	var items []sunbeam.ListItem
 
-	for _, action := range e.Manifest.Root {
+	for i, action := range e.Manifest.Root {
 		title := action.Title
 		action.Title = "Run"
 
@@ -60,6 +60,7 @@ func (e Extension) RootItems() []sunbeam.ListItem {
 		items = append(items, sunbeam.ListItem{
 			Title:    title,
 			Subtitle: e.Manifest.Title,
+			Id:       fmt.Sprintf("%s-%d", e.Name, i),
 			Accessories: []string{
 				e.Name,
 			},

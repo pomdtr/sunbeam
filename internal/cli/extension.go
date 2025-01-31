@@ -127,7 +127,6 @@ func runExtension(extension extensions.Extension, command sunbeam.Command, paylo
 			return err
 		}
 
-		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 

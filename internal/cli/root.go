@@ -2,6 +2,7 @@ package cli
 
 import (
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -49,7 +50,21 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			}
 
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				return fmt.Errorf("sunbeam must be run in a terminal")
+				exts, err := LoadExtensions(utils.ExtensionsDir(), true)
+				if err != nil {
+					return nil
+				}
+
+				list := sunbeam.List{}
+				for _, extension := range exts {
+					list.Items = append(list.Items, extension.RootItems()...)
+				}
+
+				encoder := json.NewEncoder(os.Stdout)
+				encoder.SetIndent("", "  ")
+				encoder.SetEscapeHTML(false)
+
+				return encoder.Encode(list)
 			}
 
 			history, err := history.Load(history.Path)
