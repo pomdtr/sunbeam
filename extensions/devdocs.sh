@@ -2,7 +2,6 @@
 
 set -e
 
-# if no arguments are passed, return the extension's manifest
 if [ $# -eq 0 ]; then
   jq -n '{
     title: "DevDocs",
@@ -28,7 +27,10 @@ if [ $# -eq 0 ]; then
   exit 0
 fi
 
-if [ "$1" = "list-docsets" ]; then
+COMMAND=$1
+PAYLOAD=$(cat)
+
+if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
   curl -s https://devdocs.io/docs/docs.json | jq 'map({
       title: .name,
@@ -45,8 +47,8 @@ if [ "$1" = "list-docsets" ]; then
         }
       ]
     }) | {  items: . }'
-elif [ "$1" = "list-entries" ]; then
-  SLUG=$(cat | jq -r '.slug')
+elif [ "$COMMAND" = "list-entries" ]; then
+  SLUG=$(echo "$PAYLOAD" | jq -r '.slug')
   # shellcheck disable=SC2016
   curl "https://devdocs.io/docs/$SLUG/index.json" | jq --arg slug "$SLUG" '.entries | map({
       title: .name,
