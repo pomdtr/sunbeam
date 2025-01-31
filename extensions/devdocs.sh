@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-set -e
+set -euo pipefail
 
 if [ $# -eq 0 ]; then
   jq -n '{
@@ -32,7 +32,7 @@ PAYLOAD=$(cat)
 
 if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
-  curl -s https://devdocs.io/docs/docs.json | jq 'map({
+  curl -sSf https://devdocs.io/docs/docs.json | jq 'map({
       title: .name,
       subtitle: (.release // "latest"),
       accessories: [ .slug ],
@@ -47,10 +47,10 @@ if [ "$COMMAND" = "list-docsets" ]; then
         }
       ]
     }) | {  items: . }'
-elif [ "$COMMAND" = "list-entries" ]; then
-  SLUG=$(echo "$PAYLOAD" | jq -r '.slug')
+elif [ "$1" = "list-entries" ]; then
+  SLUG=$(jq -r '.slug' <<< "$PAYLOAD")
   # shellcheck disable=SC2016
-  curl "https://devdocs.io/docs/$SLUG/index.json" | jq --arg slug "$SLUG" '.entries | map({
+  curl -sSf "https://devdocs.io/docs/$SLUG/index.json" | jq --arg slug "$SLUG" '.entries | map({
       title: .name,
       subtitle: .type,
       actions: [
