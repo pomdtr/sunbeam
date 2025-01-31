@@ -22,10 +22,6 @@ var (
 	Version = "dev"
 )
 
-func IsSunbeamRunning() bool {
-	return len(os.Getenv("SUNBEAM")) > 0
-}
-
 func NewRootCmd() (*cobra.Command, error) {
 	var flags struct {
 		reload bool
@@ -91,7 +87,13 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	}
 
 	rootCmd.Flags().BoolVar(&flags.reload, "reload", false, "Reload extension manifests")
-	rootCmd.AddCommand(NewValidateCmd())
+	rootCmd.AddCommand(NewCmdValidate())
+	rootCmd.AddCommand(NewCmdFetch())
+	rootCmd.AddCommand(NewCmdServe())
+
+	if _, found := os.LookupEnv("SUNBEAM"); found {
+		return rootCmd, nil
+	}
 
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    "extension",
