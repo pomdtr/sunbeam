@@ -33,7 +33,6 @@ func NewCmdServe() *cobra.Command {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				encoder := json.NewEncoder(w)
-				encoder.SetIndent("", "  ")
 				encoder.SetEscapeHTML(false)
 
 				_ = encoder.Encode(list)
@@ -56,7 +55,6 @@ func NewCmdServe() *cobra.Command {
 				w.WriteHeader(http.StatusOK)
 
 				encoder := json.NewEncoder(w)
-				encoder.SetIndent("", "  ")
 				encoder.SetEscapeHTML(false)
 				_ = encoder.Encode(extension.Manifest)
 			})

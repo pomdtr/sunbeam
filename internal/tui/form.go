@@ -25,8 +25,8 @@ type Form struct {
 	inputs []Input
 }
 
-func FindMissingInputs(inputs []sunbeam.Input, params map[string]any) []sunbeam.Input {
-	missing := make([]sunbeam.Input, 0)
+func FindMissingInputs(inputs []sunbeam.Param, params map[string]any) []sunbeam.Param {
+	missing := make([]sunbeam.Param, 0)
 	for _, input := range inputs {
 		param, ok := params[input.Name]
 		if !ok {
@@ -44,7 +44,7 @@ func FindMissingInputs(inputs []sunbeam.Input, params map[string]any) []sunbeam.
 	return missing
 }
 
-func NewForm(submitMsg func(map[string]any) tea.Msg, params ...sunbeam.Input) *Form {
+func NewForm(submitMsg func(map[string]any) tea.Msg, params ...sunbeam.Param) *Form {
 	viewport := viewport.New(0, 0)
 
 	var inputs []Input

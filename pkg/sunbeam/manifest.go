@@ -10,7 +10,7 @@ type Manifest struct {
 type Command struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description,omitempty"`
-	Params      []Input     `json:"params,omitempty"`
+	Params      []Param     `json:"params,omitempty"`
 	Mode        CommandMode `json:"mode,omitempty"`
 }
 
@@ -43,10 +43,10 @@ const (
 	InputNumber  InputType = "number"
 )
 
-type Input struct {
+type Param struct {
 	Type        InputType `json:"type"`
 	Name        string    `json:"name"`
-	Description string    `json:"description"`
+	Description string    `json:"description,omitempty"`
 	Optional    bool      `json:"optional,omitempty"`
 	Default     any       `json:"default,omitempty"`
 }
