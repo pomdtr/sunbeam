@@ -2,12 +2,9 @@ package extensions
 
 import (
 	"context"
-	"crypto/sha1"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -121,52 +118,6 @@ func (e Extension) CmdContext(ctx context.Context, command sunbeam.Command, payl
 	return cmd, nil
 }
 
-func Hash(origin string) (string, error) {
-	if !IsRemote(origin) {
-		abs, err := filepath.Abs(origin)
-		if err != nil {
-			return "", err
-		}
-
-		origin = abs
-	}
-
-	h := sha1.New()
-	h.Write([]byte(origin))
-	return hex.EncodeToString(h.Sum(nil)), nil
-}
-
-func IsRemote(origin string) bool {
-	return strings.HasPrefix(origin, "http://") || strings.HasPrefix(origin, "https://")
-}
-
-func DownloadEntrypoint(origin string, target string) error {
-	resp, err := http.Get(origin)
-	if err != nil {
-		return fmt.Errorf("failed to download extension: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("failed to download extension: %s", resp.Status)
-	}
-
-	f, err := os.Create(target)
-	if err != nil {
-		return fmt.Errorf("failed to create entrypoint: %w", err)
-	}
-
-	if _, err := f.ReadFrom(resp.Body); err != nil {
-		return fmt.Errorf("failed to write entrypoint: %w", err)
-	}
-
-	if err := f.Close(); err != nil {
-		return fmt.Errorf("failed to close entrypoint: %w", err)
-	}
-
-	return nil
-}
-
 func FindEntrypoint(extensionDir string, name string) (string, error) {
 	entries, err := os.ReadDir(extensionDir)
 	if err != nil {
@@ -183,48 +134,31 @@ func FindEntrypoint(extensionDir string, name string) (string, error) {
 	return "", fmt.Errorf("entrypoint not found")
 }
 
-func LoadExtensions(extensionDir string, useCache bool) (map[string]Extension, error) {
-	extensionMap := make(map[string]Extension)
-	entries, err := os.ReadDir(extensionDir)
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-
-		if strings.HasPrefix(entry.Name(), ".") {
-			continue
-		}
-
-		extension, err := LoadExtension(filepath.Join(extensionDir, entry.Name()), useCache)
-		if err != nil {
-			return nil, fmt.Errorf("error loading extension %s: %w", entry.Name(), err)
-		}
-
-		if _, ok := extensionMap[extension.Name]; ok {
-			return nil, fmt.Errorf("duplicate extension alias: %s", extension.Name)
-		}
-
-		extensionMap[extension.Name] = extension
-	}
-
-	return extensionMap, nil
-}
-
 func LoadExtension(entrypoint string, useCache bool) (Extension, error) {
+	name := strings.TrimSuffix(filepath.Base(entrypoint), filepath.Ext(entrypoint))
+
 	entrypointInfo, err := os.Stat(entrypoint)
 	if err != nil {
 		return Extension{}, err
 	}
 
-	name := strings.TrimSuffix(filepath.Base(entrypoint), filepath.Ext(entrypoint))
+	// if the entrypoint is a symlink, resolve it
+	if entrypointInfo.Mode()&os.ModeSymlink != 0 {
+		target, err := os.Readlink(entrypoint)
+		if err != nil {
+			return Extension{}, err
+		}
+
+		info, err := os.Stat(target)
+		if err != nil {
+			return Extension{}, err
+		}
+
+		entrypointInfo = info
+	}
 
 	manifestPath := filepath.Join(utils.CacheDir(), "extensions", name+".json")
-	manifestInfo, err := os.Stat(manifestPath)
-	if !useCache || err != nil || entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
+	if manifestInfo, err := os.Stat(manifestPath); err != nil || !useCache || entrypointInfo.ModTime().After(manifestInfo.ModTime()) {
 		manifest, err := cacheManifest(entrypoint, manifestPath)
 		if err != nil {
 			return Extension{}, err

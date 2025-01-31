@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pomdtr/sunbeam/internal/extensions"
@@ -37,23 +39,46 @@ func NewRootCmd() (*cobra.Command, error) {
 
 See https://pomdtr.github.io/sunbeam for more information.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !flags.reload {
-				return cmd.Usage()
+			if flags.reload {
+				exts, err := LoadExtensions(utils.ExtensionsDir(), false)
+				if errors.Is(err, os.ErrNotExist) {
+					return fmt.Errorf("no extensions found")
+				} else if err != nil {
+					return fmt.Errorf("failed to load extensions: %w", err)
+				}
+
+				fmt.Fprintf(os.Stderr, "Reloaded %d extensions\n", len(exts))
+				return nil
 			}
 
-			exts, err := extensions.LoadExtensions(utils.ExtensionsDir(), false)
-			if errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("no extensions found")
-			} else if err != nil {
-				return fmt.Errorf("failed to load extensions: %w", err)
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				return fmt.Errorf("sunbeam must be run in a terminal")
 			}
 
-			fmt.Fprintf(os.Stderr, "Reloaded %d extensions\n", len(exts))
-			return nil
+			history, err := history.Load(history.Path)
+			if err != nil {
+				return err
+			}
+
+			rootList := tui.NewRootList(history, func() ([]sunbeam.ListItem, error) {
+				exts, err := LoadExtensions(utils.ExtensionsDir(), true)
+				if err != nil {
+					return nil, err
+				}
+
+				var items []sunbeam.ListItem
+				for _, extension := range exts {
+					items = append(items, extension.RootItems()...)
+				}
+
+				return items, nil
+			})
+			return tui.Draw(rootList)
+
 		},
 	}
 
-	rootCmd.Flags().BoolVar(&flags.reload, "reload", false, "Reload extensions manifest")
+	rootCmd.Flags().BoolVar(&flags.reload, "reload", false, "Reload extension manifests")
 	rootCmd.AddCommand(NewValidateCmd())
 
 	rootCmd.AddGroup(&cobra.Group{
@@ -61,7 +86,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		Title: "Extensions Commands:",
 	})
 
-	exts, err := extensions.LoadExtensions(utils.ExtensionsDir(), true)
+	exts, err := LoadExtensions(utils.ExtensionsDir(), true)
 	if errors.Is(err, os.ErrNotExist) {
 		return rootCmd, nil
 	} else if err != nil {
@@ -76,32 +101,38 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 		rootCmd.AddCommand(command)
 	}
 
-	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		if !isatty.IsTerminal(os.Stdout.Fd()) {
-			return fmt.Errorf("sunbeam must be run in a terminal")
-		}
+	return rootCmd, nil
+}
 
-		history, err := history.Load(history.Path)
-		if err != nil {
-			return err
-		}
-
-		rootList := tui.NewRootList(history, func() ([]sunbeam.ListItem, error) {
-			exts, err := extensions.LoadExtensions(utils.ExtensionsDir(), true)
-			if err != nil {
-				return nil, err
-			}
-
-			var items []sunbeam.ListItem
-			for _, extension := range exts {
-				items = append(items, extension.RootItems()...)
-			}
-
-			return items, nil
-		})
-		return tui.Draw(rootList)
-
+func LoadExtensions(extensionDir string, useCache bool) (map[string]extensions.Extension, error) {
+	extensionMap := make(map[string]extensions.Extension)
+	entries, err := os.ReadDir(extensionDir)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
 	}
 
-	return rootCmd, nil
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		if strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+
+		extension, err := extensions.LoadExtension(filepath.Join(extensionDir, entry.Name()), useCache)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to load extension %s: %v\n", entry.Name(), err)
+			continue
+		}
+
+		if _, ok := extensionMap[extension.Name]; ok {
+			fmt.Fprintf(os.Stderr, "duplicate extension alias: %s\n", extension.Name)
+			continue
+		}
+
+		extensionMap[extension.Name] = extension
+	}
+
+	return extensionMap, nil
 }
