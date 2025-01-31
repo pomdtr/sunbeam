@@ -60,22 +60,13 @@ func (e Extension) RootItems() []sunbeam.ListItem {
 			action.Run.Extension = e.Name
 		}
 
-		editAction := sunbeam.Action{
-			Type:  sunbeam.ActionTypeEdit,
-			Title: "Edit Extension",
-			Edit: &sunbeam.EditAction{
-				Path:   e.Entrypoint,
-				Reload: true,
-			},
-		}
-
 		items = append(items, sunbeam.ListItem{
 			Title:    title,
 			Subtitle: e.Manifest.Title,
 			Accessories: []string{
 				e.Name,
 			},
-			Actions: []sunbeam.Action{action, editAction},
+			Actions: []sunbeam.Action{action},
 		})
 	}
 

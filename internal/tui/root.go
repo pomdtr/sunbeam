@@ -103,6 +103,24 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		case "ctrl+r":
 			return c, tea.Batch(c.list.SetIsLoading(true), c.Reload())
+		case "ctrl+e":
+			return c, func() tea.Msg {
+				item, ok := c.list.Selection()
+				if !ok {
+					return nil
+				}
+
+				extensionName := item.Actions[0].Run.Extension
+				entrypoint, err := extensions.FindEntrypoint(utils.ExtensionsDir(), extensionName)
+				if err != nil {
+					return fmt.Errorf("extension %s not found", extensionName)
+				}
+
+				return sunbeam.Action{
+					Type: sunbeam.ActionTypeEdit,
+					Edit: &sunbeam.EditAction{Path: entrypoint},
+				}
+			}
 		}
 	case ReloadMsg:
 		return c, tea.Batch(c.list.SetIsLoading(true), c.Reload())
@@ -209,7 +227,7 @@ func (c *RootList) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return ShowNotificationMsg{"Copied!"}
 			}
 		case sunbeam.ActionTypeEdit:
-			editCmd := exec.Command("sunbeam", "edit", msg.Edit.Path)
+			editCmd := exec.Command(utils.FindEditor(), msg.Edit.Path)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err

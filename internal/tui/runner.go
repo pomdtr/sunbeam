@@ -108,7 +108,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			return c, PopPageCmd
 		case "ctrl+e":
-			editCmd := exec.Command("sunbeam", "edit", c.extension.Entrypoint)
+			editCmd := exec.Command(utils.FindEditor(), c.extension.Entrypoint)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err
@@ -201,7 +201,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				}
 			}
 		case sunbeam.ActionTypeEdit:
-			editCmd := exec.Command("sunbeam", "edit", msg.Edit.Path)
+			editCmd := exec.Command(utils.FindEditor(), msg.Edit.Path)
 			return c, tea.ExecProcess(editCmd, func(err error) tea.Msg {
 				if err != nil {
 					return err

@@ -1,8 +1,8 @@
 package tui
 
 import (
-	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 )
 
@@ -84,29 +85,6 @@ func (ti *TextField) Value() any {
 }
 
 func (ti *TextField) Update(msg tea.Msg) (Input, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+e":
-			if !ti.Model.Focused() {
-				break
-			}
-			cmd := exec.Command("sunbeam", "edit")
-
-			buffer := bytes.Buffer{}
-			cmd.Stdout = &buffer
-			cmd.Stdin = strings.NewReader(ti.Model.Value())
-
-			return ti, tea.ExecProcess(cmd, func(err error) tea.Msg {
-				if err != nil {
-					return err
-				}
-
-				ti.Model.SetValue(buffer.String())
-				return nil
-			})
-		}
-	}
 	model, cmd := ti.Model.Update(msg)
 	ti.Model = model
 	return ti, cmd
@@ -171,20 +149,36 @@ func (ta *TextArea) Update(msg tea.Msg) (Input, tea.Cmd) {
 				break
 			}
 
-			cmd := exec.Command("sunbeam", "edit")
+			f, err := os.CreateTemp("", "")
+			if err != nil {
+				return ta, func() tea.Msg {
+					return err
+				}
+			}
 
-			buffer := bytes.Buffer{}
-			cmd.Stdout = &buffer
-			cmd.Stdin = strings.NewReader(ta.Model.Value())
+			if err := os.WriteFile(f.Name(), []byte(ta.Model.Value()), 0644); err != nil {
+				return ta, func() tea.Msg {
+					return err
+				}
+			}
 
+			cmd := exec.Command(utils.FindEditor(), f.Name())
 			return ta, tea.ExecProcess(cmd, func(err error) tea.Msg {
+				defer os.Remove(f.Name())
+
+				if err != nil {
+					return fmt.Errorf("failed to run editor: %w", err)
+				}
+
+				content, err := os.ReadFile(f.Name())
 				if err != nil {
 					return err
 				}
 
-				ta.Model.SetValue(buffer.String())
+				ta.Model.SetValue(string(content))
 				return nil
 			})
+
 		}
 	}
 	model, cmd := ta.Model.Update(msg)
