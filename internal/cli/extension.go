@@ -40,7 +40,7 @@ func NewCmdExtension(alias string, extension extensions.Extension) (*cobra.Comma
 				return err
 			}
 
-			rootList := tui.NewRootList(extension.Manifest.Title, history, func() ([]sunbeam.ListItem, error) {
+			rootList := tui.NewRootList(history, func() ([]sunbeam.ListItem, error) {
 				return extension.RootItems(), nil
 			})
 

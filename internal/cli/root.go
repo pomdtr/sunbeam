@@ -86,7 +86,7 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 			return err
 		}
 
-		rootList := tui.NewRootList("Sunbeam", history, func() ([]sunbeam.ListItem, error) {
+		rootList := tui.NewRootList(history, func() ([]sunbeam.ListItem, error) {
 			exts, err := extensions.LoadExtensions(utils.ExtensionsDir(), true)
 			if err != nil {
 				return nil, err

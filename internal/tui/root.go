@@ -21,7 +21,6 @@ import (
 
 type RootList struct {
 	width, height int
-	title         string
 	err           *Detail
 	list          *List
 	form          *Form
@@ -32,9 +31,8 @@ type RootList struct {
 
 type ReloadMsg struct{}
 
-func NewRootList(title string, history history.History, generator func() ([]sunbeam.ListItem, error)) *RootList {
+func NewRootList(history history.History, generator func() ([]sunbeam.ListItem, error)) *RootList {
 	return &RootList{
-		title:     title,
 		history:   history,
 		generator: generator,
 	}
