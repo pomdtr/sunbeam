@@ -15,30 +15,47 @@ func NewCmdServe() *cobra.Command {
 	var flags struct {
 		addr string
 	}
+
+	type ExtensionItem struct {
+		Name string `json:"name"`
+		Path string `json:"path"`
+		sunbeam.Manifest
+	}
+
 	cmd := &cobra.Command{
 		Use: "serve",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("OK"))
+			})
+
+			http.HandleFunc("GET /extensions", func(w http.ResponseWriter, r *http.Request) {
 				exts, err := LoadExtensions(utils.ExtensionsDir(), true)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
-				list := sunbeam.List{}
-				for _, extension := range exts {
-					list.Items = append(list.Items, extension.RootItems()...)
+				var refs []ExtensionItem
+				for _, ext := range exts {
+					refs = append(refs, ExtensionItem{
+						Name:     ext.Name,
+						Path:     fmt.Sprintf("/extensions/%s", ext.Name),
+						Manifest: ext.Manifest,
+					})
 				}
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
+
 				encoder := json.NewEncoder(w)
 				encoder.SetEscapeHTML(false)
-
-				_ = encoder.Encode(list)
+				_ = encoder.Encode(refs)
 			})
 
-			http.HandleFunc("GET /{extension}", func(w http.ResponseWriter, r *http.Request) {
+			http.HandleFunc("GET /extensions/{extension}", func(w http.ResponseWriter, r *http.Request) {
 				entrypoint, err := extensions.FindEntrypoint(utils.ExtensionsDir(), r.PathValue("extension"))
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusNotFound)
@@ -56,10 +73,14 @@ func NewCmdServe() *cobra.Command {
 
 				encoder := json.NewEncoder(w)
 				encoder.SetEscapeHTML(false)
-				_ = encoder.Encode(extension.Manifest)
+				_ = encoder.Encode(ExtensionItem{
+					Name:     extension.Name,
+					Path:     fmt.Sprintf("/extensions/%s", extension.Name),
+					Manifest: extension.Manifest,
+				})
 			})
 
-			http.HandleFunc("POST /{extension}/{command}", func(w http.ResponseWriter, r *http.Request) {
+			http.HandleFunc("POST /extensions/{extension}/{command}", func(w http.ResponseWriter, r *http.Request) {
 				entrypoint, err := extensions.FindEntrypoint(utils.ExtensionsDir(), r.PathValue("extension"))
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusNotFound)
