@@ -32,7 +32,9 @@ func (a *Action) UnmarshalJSON(bts []byte) error {
 
 	switch a.Type {
 	case ActionTypeRun:
-		a.Run = &RunAction{}
+		a.Run = &RunAction{
+			Params: map[string]any{},
+		}
 		return json.Unmarshal(bts, a.Run)
 	case ActionTypeOpen:
 		a.Open = &OpenAction{}
@@ -44,7 +46,9 @@ func (a *Action) UnmarshalJSON(bts []byte) error {
 		a.Edit = &EditAction{}
 		return json.Unmarshal(bts, a.Edit)
 	case ActionTypeReload:
-		a.Reload = &ReloadAction{}
+		a.Reload = &ReloadAction{
+			Params: map[string]any{},
+		}
 		return json.Unmarshal(bts, a.Reload)
 	}
 

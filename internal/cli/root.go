@@ -118,8 +118,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 	return rootCmd, nil
 }
 
-func LoadExtensions(extensionDir string, useCache bool) (map[string]extensions.Extension, error) {
-	extensionMap := make(map[string]extensions.Extension)
+func LoadExtensions(extensionDir string, useCache bool) ([]extensions.Extension, error) {
+	extensionMap := make(map[string]struct{})
+	exts := make([]extensions.Extension, 0)
 	entries, err := os.ReadDir(extensionDir)
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
@@ -145,8 +146,10 @@ func LoadExtensions(extensionDir string, useCache bool) (map[string]extensions.E
 			continue
 		}
 
-		extensionMap[extension.Name] = extension
+		extensionMap[extension.Name] = struct{}{}
+
+		exts = append(exts, extension)
 	}
 
-	return extensionMap, nil
+	return exts, nil
 }

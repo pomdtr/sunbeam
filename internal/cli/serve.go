@@ -3,23 +3,18 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
-	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 	"github.com/spf13/cobra"
 )
 
 func NewCmdServe() *cobra.Command {
 	var flags struct {
 		addr string
-	}
-
-	type ExtensionItem struct {
-		Name string `json:"name"`
-		Path string `json:"path"`
-		sunbeam.Manifest
 	}
 
 	cmd := &cobra.Command{
@@ -38,21 +33,12 @@ func NewCmdServe() *cobra.Command {
 					return
 				}
 
-				var refs []ExtensionItem
-				for _, ext := range exts {
-					refs = append(refs, ExtensionItem{
-						Name:     ext.Name,
-						Path:     fmt.Sprintf("/extensions/%s", ext.Name),
-						Manifest: ext.Manifest,
-					})
-				}
-
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 
 				encoder := json.NewEncoder(w)
 				encoder.SetEscapeHTML(false)
-				_ = encoder.Encode(refs)
+				_ = encoder.Encode(exts)
 			})
 
 			http.HandleFunc("GET /extensions/{extension}", func(w http.ResponseWriter, r *http.Request) {
@@ -73,11 +59,7 @@ func NewCmdServe() *cobra.Command {
 
 				encoder := json.NewEncoder(w)
 				encoder.SetEscapeHTML(false)
-				_ = encoder.Encode(ExtensionItem{
-					Name:     extension.Name,
-					Path:     fmt.Sprintf("/extensions/%s", extension.Name),
-					Manifest: extension.Manifest,
-				})
+				_ = encoder.Encode(extension)
 			})
 
 			http.HandleFunc("POST /extensions/{extension}/{command}", func(w http.ResponseWriter, r *http.Request) {
@@ -116,6 +98,17 @@ func NewCmdServe() *cobra.Command {
 			})
 
 			fmt.Fprintln(cmd.OutOrStdout(), "Listening on", flags.addr)
+
+			if strings.HasPrefix(flags.addr, "unix/") {
+				socketPath := strings.TrimPrefix(flags.addr, "unix/")
+				listener, err := net.Listen("unix", socketPath)
+				if err != nil {
+					return fmt.Errorf("failed to listen on unix socket: %w", err)
+				}
+
+				return http.Serve(listener, nil)
+			}
+
 			return http.ListenAndServe(flags.addr, nil)
 		},
 	}
