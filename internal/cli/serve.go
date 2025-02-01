@@ -23,7 +23,12 @@ func NewCmdServe() *cobra.Command {
 			http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("OK"))
+
+				encoder := json.NewEncoder(w)
+				encoder.SetEscapeHTML(false)
+				_ = encoder.Encode(map[string]interface{}{
+					"version": Version,
+				})
 			})
 
 			http.HandleFunc("GET /extensions", func(w http.ResponseWriter, r *http.Request) {
