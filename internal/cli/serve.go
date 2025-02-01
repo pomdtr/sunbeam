@@ -114,8 +114,7 @@ func NewCmdServe() *cobra.Command {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				w.Write(output)
-
+				_, _ = w.Write(output)
 			})
 
 			if strings.HasPrefix(flags.addr, "unix/") {
