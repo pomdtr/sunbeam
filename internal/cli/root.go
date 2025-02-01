@@ -51,16 +51,9 @@ See https://pomdtr.github.io/sunbeam for more information.`,
 					return nil
 				}
 
-				list := sunbeam.List{}
-				for _, extension := range exts {
-					list.Items = append(list.Items, extension.RootItems()...)
-				}
-
 				encoder := json.NewEncoder(os.Stdout)
-				encoder.SetIndent("", "  ")
 				encoder.SetEscapeHTML(false)
-
-				return encoder.Encode(list)
+				return encoder.Encode(exts)
 			}
 
 			history, err := history.Load(history.Path)

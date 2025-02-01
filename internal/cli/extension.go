@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 
@@ -70,10 +71,31 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, command sunbe
 		Short: command.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			params := make(map[string]any)
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				bts, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+
+				if len(bts) > 0 {
+					err = json.Unmarshal(bts, &params)
+					if err != nil {
+						return err
+					}
+				}
+			}
 
 			for _, param := range command.Params {
 				if !cmd.Flags().Changed(param.Name) {
-					continue
+					if _, ok := params[param.Name]; ok {
+						continue
+					}
+
+					if param.Optional {
+						continue
+					}
+
+					return fmt.Errorf("missing required input: %s", param.Name)
 				}
 
 				switch param.Type {
@@ -112,7 +134,7 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, command sunbe
 			cmd.Flags().Int(input.Name, 0, input.Description)
 		}
 
-		if !input.Optional {
+		if !input.Optional && isatty.IsTerminal(os.Stdin.Fd()) {
 			_ = cmd.MarkFlagRequired(input.Name)
 		}
 	}
