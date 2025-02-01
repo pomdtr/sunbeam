@@ -1,5 +1,5 @@
 type ActionProps = {
-  title?: string;
+  title: string;
 };
 
 export type CopyAction = {
