@@ -11,5 +11,17 @@
         "SUNBEAM_EXTENSIONS_DIR": "${workspaceFolder}/extensions",
       }
     },
+    {
+      "name": "sunbeam serve",
+      "type": "go",
+      "request": "launch",
+      "program": "${workspaceFolder}",
+      "args": [
+        "serve"
+      ],
+      "env": {
+        "SUNBEAM_EXTENSIONS_DIR": "${workspaceFolder}/extensions",
+      }
+    },
   ],
 }
