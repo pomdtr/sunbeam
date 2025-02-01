@@ -24,7 +24,7 @@ func NewCmdServe() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "serve",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+			http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 
