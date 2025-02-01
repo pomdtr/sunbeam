@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/MadAppGang/httplog"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
 	"github.com/spf13/cobra"
@@ -117,11 +118,11 @@ func NewCmdServe() *cobra.Command {
 				}
 
 				fmt.Fprintln(cmd.OutOrStdout(), "Listening on", socketPath)
-				return http.Serve(listener, nil)
+				return http.Serve(listener, httplog.Logger(http.DefaultServeMux))
 			}
 
 			fmt.Fprintln(cmd.OutOrStdout(), "Listening on", flags.addr)
-			return http.ListenAndServe(flags.addr, nil)
+			return http.ListenAndServe(flags.addr, httplog.Logger(http.DefaultServeMux))
 		},
 	}
 
