@@ -7,8 +7,7 @@ if [ $# -eq 0 ]; then
     title: "DevDocs",
     description: "Search DevDocs.io",
     root: [
-      { title: "Search Docsets", type: "run", command: "list-docsets" },
-      { title: "Search Golang Entries", type: "run", command: "list-entries", params: { slug: "go" } }
+      { title: "Search Docsets", type: "run", command: "list-docsets" }
     ],
     commands: [
       {
