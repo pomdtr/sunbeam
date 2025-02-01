@@ -47,7 +47,7 @@ if len(sys.argv) == 1:
     sys.exit(0)
 
 if sys.argv[1] == "browse":
-    # read payload from stdin
+    # read params from stdin
     params = json.load(sys.stdin)
     directory = params.get("dir", ".")
     if directory.startswith("~"):

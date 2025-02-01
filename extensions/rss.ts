@@ -2,7 +2,7 @@
 
 import Parser from "npm:rss-parser@3.9.0";
 import { formatDistance } from "npm:date-fns@2.30.0";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.11";
 import { toJson } from "jsr:@std/streams";
 
 const manifest = {
@@ -55,7 +55,7 @@ if (Deno.args[0] == "show") {
         {
           title: "Open in browser",
           type: "open",
-          target: item.link || "",
+          url: item.link || "",
         },
         {
           title: "Copy Link",

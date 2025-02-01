@@ -16,6 +16,7 @@ export type Detail = {
 
 export type ListItem = {
   title: string;
+  id?: string;
   subtitle?: string;
   accessories?: string[];
   detail?: { text: string; } | { markdown: string; }

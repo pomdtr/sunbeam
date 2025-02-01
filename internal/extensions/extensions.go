@@ -71,8 +71,8 @@ func (e Extension) RootItems() []sunbeam.ListItem {
 	return items
 }
 
-func (ext Extension) Output(ctx context.Context, command sunbeam.Command, payload sunbeam.Payload) ([]byte, error) {
-	cmd, err := ext.CmdContext(context.Background(), command, payload)
+func (ext Extension) Output(ctx context.Context, command sunbeam.Command, params sunbeam.Params) ([]byte, error) {
+	cmd, err := ext.CmdContext(context.Background(), command, params)
 	if err != nil {
 		return nil, err
 	}
@@ -87,13 +87,13 @@ func (ext Extension) Output(ctx context.Context, command sunbeam.Command, payloa
 	}
 }
 
-func (e Extension) CmdContext(ctx context.Context, command sunbeam.Command, payload sunbeam.Payload) (*exec.Cmd, error) {
-	if payload == nil {
-		payload = make(map[string]any)
+func (e Extension) CmdContext(ctx context.Context, command sunbeam.Command, params sunbeam.Params) (*exec.Cmd, error) {
+	if params == nil {
+		params = make(map[string]any)
 	}
 
 	for _, spec := range command.Params {
-		if _, ok := payload[spec.Name]; ok {
+		if _, ok := params[spec.Name]; ok {
 			continue
 		}
 
@@ -101,7 +101,7 @@ func (e Extension) CmdContext(ctx context.Context, command sunbeam.Command, payl
 			return nil, fmt.Errorf("missing required parameter %s", spec.Name)
 		}
 
-		payload[spec.Name] = spec.Default
+		params[spec.Name] = spec.Default
 	}
 
 	cmd := exec.CommandContext(ctx, e.Entrypoint, command.Name)
@@ -113,7 +113,7 @@ func (e Extension) CmdContext(ctx context.Context, command sunbeam.Command, payl
 	defer stdin.Close()
 
 	encoder := json.NewEncoder(stdin)
-	if err := encoder.Encode(payload); err != nil {
+	if err := encoder.Encode(params); err != nil {
 		return nil, err
 	}
 

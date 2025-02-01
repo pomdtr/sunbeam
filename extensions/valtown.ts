@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 import { toJson } from "jsr:@std/streams";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.11";
 
 const manifest = {
   title: "Val Town",
@@ -41,10 +41,10 @@ if (!token) {
   Deno.exit(1);
 }
 
-async function run(command: string, payload: sunbeam.Payload) {
+async function run(command: string, params: sunbeam.Params) {
   const client = new ValTownClient(token!);
   if (command == "list") {
-    const username = payload.user
+    const username = params.user
     const { id: userID } = await client.fetchJSON(
       username ? `/v1/alias/${username}` : "/v1/me",
     );
@@ -59,7 +59,7 @@ async function run(command: string, payload: sunbeam.Payload) {
 
     console.log(JSON.stringify(list));
   } else if (command == "search") {
-    const query = payload.query;
+    const query = params.query;
     if (query) {
       const { data: vals } = await client.fetchJSON(
         `/v1/search/vals?query=${encodeURIComponent(query)}&limit=50`,
@@ -75,7 +75,7 @@ async function run(command: string, payload: sunbeam.Payload) {
       console.log(JSON.stringify({ emptyText: "No query" }));
     }
   } else if (command == "readme") {
-    const { readme } = await client.fetchJSON(`/v1/vals/${payload.id}`);
+    const { readme } = await client.fetchJSON(`/v1/vals/${params.id}`);
     const detail: sunbeam.Detail = {
       markdown: readme || "No readme",
       actions: readme
@@ -147,7 +147,7 @@ function valToListItem(val: any): sunbeam.ListItem {
       {
         title: "Open in Browser",
         type: "open",
-        target: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
+        url: `https://val.town/v/${val.author.username.slice(1)}/${val.name}`,
       },
       {
         title: "Edit Val",
@@ -161,7 +161,7 @@ function valToListItem(val: any): sunbeam.ListItem {
       {
         title: "Open Web Endpoint",
         type: "open",
-        target: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`,
+        url: `https://${val.author.username.slice(1)}-${val.name}.web.val.run`,
       },
       {
         title: "Copy URL",
@@ -191,7 +191,7 @@ function valToListItem(val: any): sunbeam.ListItem {
 }
 
 try {
-  await run(Deno.args[1], await toJson(Deno.stdin.readable) as sunbeam.Payload);
+  await run(Deno.args[1], await toJson(Deno.stdin.readable) as sunbeam.Params);
 } catch (e) {
   console.error(e);
   Deno.exit(1);

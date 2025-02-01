@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.11";
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
 import { toJson } from "jsr:@std/streams";
 
@@ -16,7 +16,7 @@ const manifest = {
     {
       title: "Open Sunbeam Repo",
       type: "open",
-      target: "https://github.com/pomdtr/sunbeam"
+      url: "https://github.com/pomdtr/sunbeam"
     }
   ],
   commands: [
@@ -77,7 +77,7 @@ if (!token) {
 
 
 const command = Deno.args[0];
-const params = await toJson(Deno.stdin.readable) as sunbeam.Payload;
+const params = await toJson(Deno.stdin.readable) as sunbeam.Params;
 
 if (command == "search-repos") {
   if (!params.query) {
@@ -125,7 +125,7 @@ if (command == "search-repos") {
           {
             title: "Open In Browser",
             type: "open",
-            target: item.html_url,
+            url: item.html_url,
           },
           {
             title: "List Issues",
@@ -177,7 +177,7 @@ if (command == "search-repos") {
           {
             title: "Open In Browser",
             type: "open",
-            target: item.html_url,
+            url: item.html_url,
           },
           {
             title: "Copy URL",
@@ -213,7 +213,7 @@ if (command == "search-repos") {
           {
             title: "Open In Browser",
             type: "open",
-            target: item.html_url,
+            url: item.html_url,
           },
           {
             title: "Copy URL",
@@ -249,7 +249,7 @@ if (command == "search-repos") {
       {
         title: "Open in Browser",
         type: "open",
-        target: data.html_url,
+        url: data.html_url,
       },
       {
         title: "List Issues",

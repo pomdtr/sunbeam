@@ -69,7 +69,7 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, command sunbe
 		Use:   command.Name,
 		Short: command.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			payload := make(map[string]any)
+			params := make(map[string]any)
 
 			for _, param := range command.Params {
 				if !cmd.Flags().Changed(param.Name) {
@@ -82,23 +82,23 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, command sunbe
 					if err != nil {
 						return err
 					}
-					payload[param.Name] = value
+					params[param.Name] = value
 				case sunbeam.InputBoolean:
 					value, err := cmd.Flags().GetBool(param.Name)
 					if err != nil {
 						return err
 					}
-					payload[param.Name] = value
+					params[param.Name] = value
 				case sunbeam.InputNumber:
 					value, err := cmd.Flags().GetInt(param.Name)
 					if err != nil {
 						return err
 					}
-					payload[param.Name] = value
+					params[param.Name] = value
 				}
 			}
 
-			return runExtension(extension, command, payload)
+			return runExtension(extension, command, params)
 		},
 	}
 
@@ -120,9 +120,9 @@ func NewSubCmdCustom(alias string, extension extensions.Extension, command sunbe
 	return cmd
 }
 
-func runExtension(extension extensions.Extension, command sunbeam.Command, payload sunbeam.Payload) error {
+func runExtension(extension extensions.Extension, command sunbeam.Command, params sunbeam.Params) error {
 	if !isatty.IsTerminal(os.Stdout.Fd()) {
-		cmd, err := extension.CmdContext(context.Background(), command, payload)
+		cmd, err := extension.CmdContext(context.Background(), command, params)
 		if err != nil {
 			return err
 		}
@@ -135,10 +135,10 @@ func runExtension(extension extensions.Extension, command sunbeam.Command, paylo
 
 	switch command.Mode {
 	case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
-		runner := tui.NewRunner(extension, command, payload)
+		runner := tui.NewRunner(extension, command, params)
 		return tui.Draw(runner)
 	case sunbeam.CommandModeSilent:
-		cmd, err := extension.CmdContext(context.Background(), command, payload)
+		cmd, err := extension.CmdContext(context.Background(), command, params)
 		if err != nil {
 			return err
 		}

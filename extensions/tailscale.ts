@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.11";
 
 const manifest = {
   title: "Tailscale",

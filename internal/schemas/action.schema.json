@@ -63,10 +63,10 @@
             "then": {
                 "type": "object",
                 "required": [
-                    "target"
+                    "url"
                 ],
                 "properties": {
-                    "target": {
+                    "url": {
                         "type": "string"
                     }
                 }

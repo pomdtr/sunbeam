@@ -2,7 +2,7 @@
 
 import Parser from "npm:rss-parser";
 import { formatDistance } from "npm:date-fns";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5"
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.11"
 import { toJson } from "jsr:@std/streams";
 
 const manifest = {
@@ -49,12 +49,12 @@ if (command == "browse") {
         {
           title: "Open in browser",
           type: "open",
-          target: item.link || "",
+          url: item.link || "",
         },
         {
           title: "Open Comments in Browser",
           type: "open",
-          target: item.guid || "",
+          url: item.guid || "",
         },
         {
           title: "Copy Link",

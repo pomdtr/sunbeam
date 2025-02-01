@@ -42,9 +42,6 @@ func (a *Action) UnmarshalJSON(bts []byte) error {
 	case ActionTypeCopy:
 		a.Copy = &CopyAction{}
 		return json.Unmarshal(bts, a.Copy)
-	case ActionTypeEdit:
-		a.Edit = &EditAction{}
-		return json.Unmarshal(bts, a.Edit)
 	case ActionTypeReload:
 		a.Reload = &ReloadAction{
 			Params: map[string]any{},
@@ -58,18 +55,26 @@ func (a *Action) UnmarshalJSON(bts []byte) error {
 func (a Action) MarshalJSON() ([]byte, error) {
 	switch a.Type {
 	case ActionTypeRun:
-		return json.Marshal(map[string]interface{}{
+		output := map[string]interface{}{
 			"title":   a.Title,
 			"type":    a.Type,
 			"command": a.Run.Command,
-			"params":  a.Run.Params,
-			"reload":  a.Run.Reload,
-		})
+		}
+
+		if a.Run.Params != nil {
+			output["params"] = a.Run.Params
+		}
+
+		if a.Run.Reload {
+			output["reload"] = true
+		}
+
+		return json.Marshal(output)
 	case ActionTypeOpen:
 		return json.Marshal(map[string]interface{}{
-			"title":  a.Title,
-			"type":   a.Type,
-			"target": a.Open.Target,
+			"title": a.Title,
+			"type":  a.Type,
+			"url":   a.Open.Url,
 		})
 
 	case ActionTypeCopy:
@@ -78,19 +83,17 @@ func (a Action) MarshalJSON() ([]byte, error) {
 			"type":  a.Type,
 			"text":  a.Copy.Text,
 		})
-	case ActionTypeEdit:
-		return json.Marshal(map[string]interface{}{
-			"title":  a.Title,
-			"type":   a.Type,
-			"path":   a.Edit.Path,
-			"reload": a.Edit.Reload,
-		})
 	case ActionTypeReload:
-		return json.Marshal(map[string]interface{}{
-			"title":  a.Title,
-			"type":   a.Type,
-			"params": a.Reload.Params,
-		})
+		output := map[string]interface{}{
+			"title": a.Title,
+			"type":  a.Type,
+		}
+
+		if a.Reload.Params != nil {
+			output["params"] = a.Reload.Params
+		}
+
+		return json.Marshal(output)
 	}
 
 	return nil, fmt.Errorf("unknown action type: %s", a.Type)
@@ -123,7 +126,7 @@ type ExecAction struct {
 }
 
 type OpenAction struct {
-	Target string `json:"target,omitempty"`
+	Url string `json:"url,omitempty"`
 }
 
 type ActionType string
@@ -136,4 +139,4 @@ const (
 	ActionTypeReload ActionType = "reload"
 )
 
-type Payload map[string]any
+type Params map[string]any

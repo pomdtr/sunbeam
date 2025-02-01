@@ -24,16 +24,16 @@ type Runner struct {
 
 	extension extensions.Extension
 	command   sunbeam.Command
-	payload   sunbeam.Payload
+	params    sunbeam.Params
 }
 
-func NewRunner(extension extensions.Extension, command sunbeam.Command, payload sunbeam.Payload) *Runner {
+func NewRunner(extension extensions.Extension, command sunbeam.Command, params sunbeam.Params) *Runner {
 	var embed Page
 	switch command.Mode {
 	case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter:
 		list := NewList()
 		list.SetEmptyText("Loading...")
-		if query, ok := payload["query"]; ok {
+		if query, ok := params["query"]; ok {
 			if queryStr, ok := query.(string); ok {
 				list.SetQuery(queryStr)
 			}
@@ -50,7 +50,7 @@ func NewRunner(extension extensions.Extension, command sunbeam.Command, payload 
 		embed:     embed,
 		extension: extension,
 		command:   command,
-		payload:   payload,
+		params:    params,
 	}
 }
 
@@ -174,20 +174,20 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 			c.form = nil
 
-			payload := make(map[string]any)
+			params := make(map[string]any)
 
 			for k, v := range msg.Run.Params {
-				payload[k] = v
+				params[k] = v
 			}
 
 			switch command.Mode {
 			case sunbeam.CommandModeSearch, sunbeam.CommandModeFilter, sunbeam.CommandModeDetail:
-				runner := NewRunner(c.extension, command, payload)
+				runner := NewRunner(c.extension, command, params)
 
 				return c, PushPageCmd(runner)
 			case sunbeam.CommandModeSilent:
 				return c, func() tea.Msg {
-					_, err := c.extension.Output(context.Background(), command, payload)
+					_, err := c.extension.Output(context.Background(), command, params)
 
 					if err != nil {
 						return PushPageMsg{NewErrorPage(err)}
@@ -232,7 +232,7 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 			}
 		case sunbeam.ActionTypeOpen:
 			return c, func() tea.Msg {
-				if err := utils.Open(msg.Open.Target); err != nil {
+				if err := utils.Open(msg.Open.Url); err != nil {
 					return err
 				}
 
@@ -243,12 +243,12 @@ func (c *Runner) Update(msg tea.Msg) (Page, tea.Cmd) {
 				return nil
 			}
 		case sunbeam.ActionTypeReload:
-			if c.payload == nil {
-				c.payload = make(map[string]any)
+			if c.params == nil {
+				c.params = make(map[string]any)
 			}
 
 			for k, v := range msg.Reload.Params {
-				c.payload[k] = v
+				c.params[k] = v
 			}
 
 			return c, c.Reload()
@@ -289,7 +289,7 @@ func (c *Runner) Reload() tea.Cmd {
 		c.cancel = cancel
 		defer cancel()
 
-		cmd, err := c.extension.CmdContext(ctx, c.command, c.payload)
+		cmd, err := c.extension.CmdContext(ctx, c.command, c.params)
 		if err != nil {
 			return err
 		}
@@ -348,7 +348,7 @@ func (c *Runner) Reload() tea.Cmd {
 
 				if c.command.Mode == sunbeam.CommandModeSearch {
 					page.OnQueryChange = func(query string) tea.Cmd {
-						c.payload["query"] = query
+						c.params["query"] = query
 						return c.Reload()
 					}
 					page.ResetSelection()
@@ -363,7 +363,7 @@ func (c *Runner) Reload() tea.Cmd {
 			page.SetShowDetail(list.ShowDetail)
 			if c.command.Mode == sunbeam.CommandModeSearch {
 				page.OnQueryChange = func(query string) tea.Cmd {
-					c.payload["query"] = query
+					c.params["query"] = query
 					return c.Reload()
 				}
 			}

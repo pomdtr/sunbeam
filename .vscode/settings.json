@@ -7,24 +7,11 @@
     ".devbox": true,
     "public": true,
   },
-  "yaml.validate": false,
-  "deno.enablePaths": [
-    "./extensions",
-    "./internal/cli/embed",
-    "./pkg/typescript",
-    "scripts",
-    "./www/install"
-  ],
   "deno.disablePaths": [
-    "./pkg/typescript/npm"
+    "www"
   ],
-  "deno.unstable": true,
   "markdownlint.config": {
     "no-inline-html": false
   },
-  "markdownlint.ignore": [
-    "www/website/docs/reference/cli.md",
-    "www/website/catalog/index.md"
-  ],
   "markdown.validate.referenceLinks.enabled": "ignore"
 }

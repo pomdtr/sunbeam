@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/pomdtr/sunbeam/internal/extensions"
@@ -102,18 +103,24 @@ func NewCmdServe() *cobra.Command {
 
 			})
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Listening on", flags.addr)
-
 			if strings.HasPrefix(flags.addr, "unix/") {
 				socketPath := strings.TrimPrefix(flags.addr, "unix/")
+				if _, err := os.Stat(socketPath); err == nil {
+					if err := os.Remove(socketPath); err != nil {
+						return fmt.Errorf("failed to remove existing socket: %w", err)
+					}
+				}
+
 				listener, err := net.Listen("unix", socketPath)
 				if err != nil {
 					return fmt.Errorf("failed to listen on unix socket: %w", err)
 				}
 
+				fmt.Fprintln(cmd.OutOrStdout(), "Listening on", socketPath)
 				return http.Serve(listener, nil)
 			}
 
+			fmt.Fprintln(cmd.OutOrStdout(), "Listening on", flags.addr)
 			return http.ListenAndServe(flags.addr, nil)
 		},
 	}

@@ -9,7 +9,7 @@ export type CopyAction = {
 
 export type OpenAction = {
   type: "open";
-  target: string
+  url: string
 } & ActionProps;
 
 export type EditAction = {
@@ -20,24 +20,19 @@ export type EditAction = {
 export type RunAction = {
   type: "run";
   command: string;
-  params?: Record<string, Param>;
+  params?: Params;
   reload?: boolean;
 } & ActionProps;
 
-export type Param =
-  | string
-  | number
-  | boolean
-  | { default?: string | number | boolean; optional?: boolean };
-
 export type ReloadAction = {
   type: "reload";
-  params?: Record<string, Param>;
+  params?: Params;
 } & ActionProps;
+
+export type Params = Record<string, string | number | boolean>;
 
 export type Action =
   | CopyAction
   | OpenAction
   | RunAction
-  | EditAction
   | ReloadAction;

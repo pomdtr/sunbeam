@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 
 import { toJson } from "jsr:@std/streams";
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.11";
 
 const manifest = {
   title: "Gists",
@@ -47,7 +47,7 @@ if (!githubToken) {
 }
 
 try {
-  const res = await run(Deno.args[0], await toJson(Deno.stdin.readable) as sunbeam.Payload);
+  const res = await run(Deno.args[0], await toJson(Deno.stdin.readable) as sunbeam.Params);
   if (res) {
     console.log(JSON.stringify(res));
   }
@@ -56,7 +56,7 @@ try {
   Deno.exit(1);
 }
 
-async function run(command: string, payload: sunbeam.Payload) {
+async function run(command: string, params: sunbeam.Params) {
   switch (command) {
     case "manage": {
       const resp = await fetchGithub("/gists");
@@ -92,7 +92,7 @@ async function run(command: string, payload: sunbeam.Payload) {
             {
               type: "open",
               title: "Open in Browser",
-              target: gist.html_url,
+              url: gist.html_url,
             },
             {
               type: "copy",
@@ -118,8 +118,7 @@ async function run(command: string, payload: sunbeam.Payload) {
       } as sunbeam.List;
     }
     case "browse": {
-      const id = payload.id;
-      const resp = await fetchGithub(`/gists/${id}`);
+      const resp = await fetchGithub(`/gists/${params.id}`);
       if (resp.status != 200) {
         throw new Error("Failed to fetch gist");
       }
@@ -134,7 +133,7 @@ async function run(command: string, payload: sunbeam.Payload) {
               type: "run",
               command: "view",
               params: {
-                id,
+                id: params.id,
                 filename,
               },
             },
@@ -143,7 +142,7 @@ async function run(command: string, payload: sunbeam.Payload) {
               type: "run",
               command: "edit",
               params: {
-                id,
+                id: params.id,
                 filename,
               },
             },
@@ -152,7 +151,7 @@ async function run(command: string, payload: sunbeam.Payload) {
       } as sunbeam.List;
     }
     case "view": {
-      const { id, filename } = payload as { id: string; filename: string };
+      const { id, filename } = params as { id: string; filename: string };
       const resp = await fetchGithub(`/gists/${id}`);
       if (resp.status != 200) {
         throw new Error("Failed to fetch gist");
@@ -193,13 +192,13 @@ async function run(command: string, payload: sunbeam.Payload) {
           {
             title: "Open in Browser",
             type: "open",
-            target: gist.html_url,
+            url: gist.html_url,
           },
         ],
       } as sunbeam.Detail;
     }
     case "delete": {
-      const id = payload.params
+      const { id } = params as { id: string };
       const resp = await fetchGithub(`/gists/${id}`, {
         method: "DELETE",
       });

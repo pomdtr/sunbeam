@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 import { toJson } from "jsr:@std/streams";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.11";
 
 const manifest: sunbeam.Manifest = {
   title: "NPM Search",
@@ -44,7 +44,7 @@ for (const pkg of packages) {
       {
         type: "open",
         title: "Open Package",
-        target: pkg.package.links.npm,
+        url: pkg.package.links.npm,
       },
       {
         type: "copy",

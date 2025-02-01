@@ -2,7 +2,7 @@
 
 import { DB } from "jsr:@pomdtr/sqlite@3.9.1"
 import * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.5";
+import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.11";
 import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
 import { toJson } from "jsr:@std/streams/to-json";
 
@@ -78,7 +78,7 @@ if (command == "ls") {
           title: "Open Folder",
           key: "o",
           type: "open",
-          target: entry.folderUri,
+          url: entry.folderUri,
         },
         {
           title: "Copy Path",
