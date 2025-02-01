@@ -28,7 +28,7 @@ if [ $# -eq 0 ]; then
 fi
 
 COMMAND=$1
-PAYLOAD=$(cat)
+PARAMS=$(cat)
 
 if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
@@ -48,7 +48,7 @@ if [ "$COMMAND" = "list-docsets" ]; then
       ]
     }) | {  items: . }'
 elif [ "$1" = "list-entries" ]; then
-  SLUG=$(jq -r '.slug' <<< "$PAYLOAD")
+  SLUG=$(jq -r '.slug' <<< "$PARAMS")
   # shellcheck disable=SC2016
   curl -sSf "https://devdocs.io/docs/$SLUG/index.json" | jq --arg slug "$SLUG" '.entries | map({
       title: .name,

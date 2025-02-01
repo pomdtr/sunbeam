@@ -18,7 +18,9 @@ if [ $# -eq 0 ]; then
   exit 0
 fi
 
-if [ "$1" = "search-apps" ]; then
+COMMAND=$1
+
+if [ "$COMMAND" = "search-apps" ]; then
     smallweb ls --json | jq 'map({
         title: .name,
         accessories: [.url],

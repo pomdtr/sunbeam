@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -euo pipefail
 
 # check if jq is installed
 if ! [ -x "$(command -v jq)" ]; then
@@ -31,7 +33,8 @@ if [ -z "$BW_SESSION" ]; then
     exit 1
 fi
 
-if [ "$1" = "list-items" ]; then
+COMMAND=$1
+if [ "$COMMAND" = "list-items" ]; then
     bkt --ttl=1d -- bw --nointeraction list items --session "$BW_SESSION" | jq 'map({
         title: .name,
         subtitle: (.login.username // ""),

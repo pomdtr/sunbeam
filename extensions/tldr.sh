@@ -1,5 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 # shellcheck disable=SC2016
+
+set -euo pipefail
 
 # This script is an example of how to use tldr with sunbeam
 set -eu
@@ -28,15 +30,18 @@ if ! [ -x "$(command -v tldr)" ]; then
     exit 1
 fi
 
-if [ "$1" = "list" ]; then
+COMMAND=$1
+PARAMS=$(cat)
+
+if [ "$COMMAND" = "list" ]; then
     tldr --list | jq -R '{
         title: .,
         actions: [
-            {title: "View Page", type: "run", command: "view", params: {page: .}},
+            {title: "View Page", type: "run", command: "view", params: {page: .}}
         ]
     }' | jq -s '{ items: . }'
-elif [ "$1" = "view" ]; then
-    PAGE=$(cat | jq -r '.page')
+elif [ "$COMMAND" = "view" ]; then
+    PAGE=$(jq -r '.page' <<< "$PARAMS")
     tldr --raw "$PAGE" | jq -sR '{
             markdown: ., actions: [
                 {title: "Copy Page", type: "copy", text: .}

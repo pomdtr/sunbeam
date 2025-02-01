@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -euo pipefail
 
 # check if jq is installed
 if ! [ -x "$(command -v jq)" ]; then
@@ -37,7 +39,10 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-if [ "$1" = "list" ]; then
+COMMAND=$1
+PARAMS=$(cat)
+
+if [ "$COMMAND" = "list" ]; then
     brew list | jq -R '{
         title: .,
         actions: [
@@ -49,8 +54,8 @@ if [ "$1" = "list" ]; then
             }
         ]
     }' | jq -s '{ items: . }'
-elif [ "$1" = "info" ]; then
-    PACKAGE=$(cat | jq -r '.package')
+elif [ "$COMMAND" = "info" ]; then
+    PACKAGE=$(jq -r '.package' <<< "$PARAMS")
     brew info "$PACKAGE" | jq -sR '{ text: . }'
 else
     echo "Unknown command: $COMMAND"
