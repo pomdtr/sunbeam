@@ -6,11 +6,13 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/MadAppGang/httplog"
 	"github.com/pomdtr/sunbeam/internal/extensions"
 	"github.com/pomdtr/sunbeam/internal/utils"
+	"github.com/pomdtr/sunbeam/pkg/sunbeam"
 	"github.com/spf13/cobra"
 )
 
@@ -88,19 +90,31 @@ func NewCmdServe() *cobra.Command {
 					return
 				}
 
-				cmd, err := extension.CmdContext(r.Context(), command, nil)
+				var params sunbeam.Params
+				if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				cmd, err := extension.CmdContext(r.Context(), command, params)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
-				cmd.Stdout = w
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusOK)
-
-				if err := cmd.Run(); err != nil {
+				output, err := cmd.Output()
+				if err != nil {
+					if exitErr, ok := err.(*exec.ExitError); ok {
+						http.Error(w, fmt.Sprintf("command failed: %s", string(exitErr.Stderr)), http.StatusInternalServerError)
+						return
+					}
+					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
+
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write(output)
 
 			})
 
