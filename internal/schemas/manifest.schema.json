@@ -47,7 +47,6 @@
                         "search",
                         "filter",
                         "detail",
-                        "tty",
                         "silent"
                     ]
                 },
