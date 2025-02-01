@@ -8,27 +8,32 @@ if [ $# -eq 0 ]; then
   jq -n '{
     title: "Sunbeam",
     root: [
-      { title: "Search Extensions", type: "run", command: "search-extensions" }
+      { title: "Search Extensions", type: "run", command: "ls" }
     ],
     commands: [
-      { name: "search-extensions", mode: "filter" }
+      { name: "ls", mode: "filter" },
+      { name: "rm", mode: "silent", params: [{ name: "path", type: "string" }] } 
     ]
   }'
   exit 0
 fi
 
 COMMAND=$1
+PARAMS=$(cat)
 
-if [ "$COMMAND" = "search-extensions" ]; then
-    ls "$EXTENSIONS_DIR" | jq --arg dir "$EXTENSIONS_DIR" -R '{
-        title: .,
+if [ "$COMMAND" = "ls" ]; then
+    find "$EXTENSIONS_DIR" -type f -or -type l | jq --arg dir "$EXTENSIONS_DIR" -R '{
+        title: (. | split("/") | last),
         accessories: [
-            "\($dir)/\(.)"
+            .
         ],
         actions: [
-            { title: "Edit Extension", type: "edit", path: "\($dir)/\(.)" },
-            { title: "Copy Path", type: "copy", text: "\($dir)/\(.)" }
-            
+            { title: "Open extension", type: "open", url: . },
+            { title: "Copy Path", type: "copy", text: . },
+            { title: "Remove Extension", type: "run", command: "rm", params: { path: . }, reload: true }
         ]
     }' | jq -s '{ items: . }'
+elif [ "$COMMAND" = "rm" ]; then
+  EXTENSION_PATH=$(jq -r '.path' <<< "$PARAMS")
+  rm -r "$EXTENSION_PATH"
 fi
