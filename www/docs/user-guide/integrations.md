@@ -138,7 +138,7 @@ bind-key -n C-Space display-popup -E sunbeam
 ### zellij
 
 ```sh
-zellij run --floating --close-on-exit -- htop
+zellij run --floating --close-on-exit -- sunbeam
 ```
 
 Binding this command to a key is not supported yet, as zellij [does not support floating panes in its config file yet](https://github.com/zellij-org/zellij/discussions/2518).
