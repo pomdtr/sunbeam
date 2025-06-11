@@ -40,7 +40,14 @@ if [ $# -eq 0 ]; then
 fi
 
 COMMAND=$1
-PARAMS=$(cat)
+PACKAGE=""
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "--package" ]]; then
+        PACKAGE="$2"
+        break
+    fi
+    shift
+done
 
 if [ "$COMMAND" = "list" ]; then
     brew list | jq -R '{
@@ -55,7 +62,6 @@ if [ "$COMMAND" = "list" ]; then
         ]
     }' | jq -s '{ items: . }'
 elif [ "$COMMAND" = "info" ]; then
-    PACKAGE=$(jq -r '.package' <<< "$PARAMS")
     brew info "$PACKAGE" | jq -sR '{ text: . }'
 else
     echo "Unknown command: $COMMAND"

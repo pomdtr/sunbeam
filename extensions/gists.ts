@@ -1,7 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import { toJson } from "jsr:@std/streams";
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.15";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.16";
 
 const manifest = {
   title: "Gists",
@@ -47,10 +46,8 @@ if (!githubToken) {
 }
 
 try {
-  const res = await run(
-    Deno.args[0],
-    await toJson(Deno.stdin.readable) as sunbeam.Params,
-  );
+  const { command, params } = sunbeam.parseArgs(Deno.args);
+  const res = await run(command, params);
   if (res) {
     console.log(JSON.stringify(res));
   }

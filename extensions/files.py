@@ -47,8 +47,20 @@ if len(sys.argv) == 1:
     sys.exit(0)
 
 if sys.argv[1] == "browse":
-    # read params from stdin
-    params = json.load(sys.stdin)
+    # Parse CLI arguments
+    params = {}
+    i = 2
+    while i < len(sys.argv):
+        if sys.argv[i].startswith("--"):
+            key = sys.argv[i][2:]
+            if i + 1 < len(sys.argv):
+                params[key] = sys.argv[i + 1]
+                i += 2
+            else:
+                i += 1
+        else:
+            i += 1
+    
     directory = params.get("dir", ".")
     if directory.startswith("~"):
         directory = directory.replace("~", str(pathlib.Path.home()))

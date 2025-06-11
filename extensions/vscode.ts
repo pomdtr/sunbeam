@@ -2,9 +2,8 @@
 
 import { DB } from "jsr:@pomdtr/sqlite@3.9.1";
 import * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
-import type * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.15";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.16";
 import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
-import { toJson } from "jsr:@std/streams/to-json";
 
 const manifest = {
   title: "VS Code",
@@ -35,7 +34,7 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-const command = Deno.args[0];
+const { command, params } = sunbeam.parseArgs(Deno.args);
 if (command == "ls") {
   const homedir = Deno.env.get("HOME");
   const db = new DB(
@@ -72,7 +71,7 @@ if (command == "ls") {
           title: "Open in VS Code",
           type: "run",
           command: "open",
-          params: { target: entry.folderUri },
+          params: { url: entry.folderUri },
         },
         {
           title: "Open Folder",
@@ -94,7 +93,7 @@ if (command == "ls") {
 
   console.log(JSON.stringify(list));
 } else if (command == "open") {
-  const { url } = await toJson(Deno.stdin.readable) as { target: string };
+  const { url } = params as { url: string };
   const command = new Deno.Command("open", {
     args: ["-a", "Visual Studio Code", url],
   });

@@ -7,3 +7,4 @@ export type {
   Params,
   RunAction,
 } from "./action.ts";
+export { parseArgs } from "./utils.ts";

@@ -1,8 +1,7 @@
 #!/usr/bin/env -S deno run -A
 
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.15";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.16";
 import * as base64 from "https://deno.land/std@0.202.0/encoding/base64.ts";
-import { toJson } from "jsr:@std/streams";
 
 const manifest = {
   title: "GitHub",
@@ -75,8 +74,7 @@ if (!token) {
   Deno.exit(1);
 }
 
-const command = Deno.args[0];
-const params = await toJson(Deno.stdin.readable) as sunbeam.Params;
+const { command, params } = sunbeam.parseArgs(Deno.args);
 
 if (command == "search-repos") {
   if (!params.query) {

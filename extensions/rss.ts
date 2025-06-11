@@ -2,8 +2,7 @@
 
 import Parser from "npm:rss-parser@3.9.0";
 import { formatDistance } from "npm:date-fns@2.30.0";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.15";
-import { toJson } from "jsr:@std/streams";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.16";
 
 const manifest = {
   title: "RSS",
@@ -43,8 +42,8 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-if (Deno.args[0] == "show") {
-  const params = await toJson(Deno.stdin.readable) as { url: string };
+const { command, params } = sunbeam.parseArgs(Deno.args);
+if (command == "show") {
   const feed = await new Parser().parseURL(params.url);
   const page: sunbeam.List = {
     items: feed.items?.map((item) => ({

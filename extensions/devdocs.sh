@@ -27,7 +27,14 @@ if [ $# -eq 0 ]; then
 fi
 
 COMMAND=$1
-PARAMS=$(cat)
+SLUG=""
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "--slug" ]]; then
+        SLUG="$2"
+        break
+    fi
+    shift
+done
 
 if [ "$COMMAND" = "list-docsets" ]; then
   # shellcheck disable=SC2016
@@ -46,8 +53,7 @@ if [ "$COMMAND" = "list-docsets" ]; then
         }
       ]
     }) | {  items: . }'
-elif [ "$1" = "list-entries" ]; then
-  SLUG=$(jq -r '.slug' <<< "$PARAMS")
+elif [ "$COMMAND" = "list-entries" ]; then
   # shellcheck disable=SC2016
   curl -sSf "https://devdocs.io/docs/$SLUG/index.json" | jq --arg slug "$SLUG" '.entries | map({
       title: .name,

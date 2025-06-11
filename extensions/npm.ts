@@ -1,6 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import { toJson } from "jsr:@std/streams";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.15";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.16";
 
 const manifest: sunbeam.Manifest = {
   title: "NPM Search",
@@ -29,7 +28,7 @@ if (Deno.args.length == 0) {
   Deno.exit(0);
 }
 
-const params = await toJson(Deno.stdin.readable) as { query: string };
+const { command, params } = sunbeam.parseArgs(Deno.args);
 const resp = await fetch(
   `https://registry.npmjs.com/-/v1/search?text=${
     encodeURIComponent(params.query)

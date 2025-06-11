@@ -1,6 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import { toJson } from "jsr:@std/streams";
-import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.15";
+import * as sunbeam from "jsr:@pomdtr/sunbeam@0.0.16";
 
 const manifest = {
   title: "Val Town",
@@ -90,7 +89,7 @@ class ValTownClient {
   constructor(private token: string) {}
 
   _fetch(target: string, init?: RequestInit) {
-    return fetch(url, {
+    return fetch(target, {
       ...init,
       headers: {
         ...init?.headers,
@@ -195,7 +194,8 @@ function valToListItem(val: any): sunbeam.ListItem {
 }
 
 try {
-  await run(Deno.args[1], await toJson(Deno.stdin.readable) as sunbeam.Params);
+  const { command, params } = sunbeam.parseArgs(Deno.args);
+  await run(command, params);
 } catch (e) {
   console.error(e);
   Deno.exit(1);

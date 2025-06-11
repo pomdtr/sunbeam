@@ -31,7 +31,14 @@ if ! [ -x "$(command -v tldr)" ]; then
 fi
 
 COMMAND=$1
-PARAMS=$(cat)
+PAGE=""
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "--page" ]]; then
+        PAGE="$2"
+        break
+    fi
+    shift
+done
 
 if [ "$COMMAND" = "list" ]; then
     tldr --list | jq -R '{
@@ -42,7 +49,6 @@ if [ "$COMMAND" = "list" ]; then
         ]
     }' | jq -s '{ items: . }'
 elif [ "$COMMAND" = "view" ]; then
-    PAGE=$(jq -r '.page' <<< "$PARAMS")
     tldr --raw "$PAGE" | jq -sR '{
             markdown: ., actions: [
                 {title: "Copy Page", type: "copy", text: .}

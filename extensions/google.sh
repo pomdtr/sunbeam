@@ -23,9 +23,18 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-if [ "$1" = "search" ]; then
-    QUERY=$(cat | jq -r '.query')
 
+COMMAND=$1
+QUERY=""
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "--query" ]]; then
+        QUERY="$2"
+        break
+    fi
+    shift
+done
+
+if [ "$COMMAND" = "search" ]; then
     # urlencode the query
     QUERY=$(echo "$QUERY" | jq -rR '@uri')
     curl "https://suggestqueries.google.com/complete/search?client=firefox&q=$QUERY" | jq '.[1] | {

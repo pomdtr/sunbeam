@@ -18,7 +18,14 @@ if [ $# -eq 0 ]; then
 fi
 
 COMMAND=$1
-PARAMS=$(cat)
+EXTENSION_PATH=""
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "--path" ]]; then
+        EXTENSION_PATH="$2"
+        break
+    fi
+    shift
+done
 
 if [ "$COMMAND" = "ls" ]; then
     sunbeam| jq '.[] |{
@@ -33,6 +40,5 @@ if [ "$COMMAND" = "ls" ]; then
         ]
     }' | jq -s '{ items: . }'
 elif [ "$COMMAND" = "rm" ]; then
-  EXTENSION_PATH=$(jq -r '.path' <<< "$PARAMS")
   rm "$EXTENSION_PATH"
 fi

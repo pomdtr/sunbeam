@@ -131,18 +131,13 @@ func (e Extension) CmdContext(ctx context.Context, command sunbeam.Command, para
 		params[spec.Name] = spec.Default
 	}
 
-	cmd := exec.CommandContext(ctx, e.Entrypoint, command.Name)
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, err
+	// Build command line arguments
+	args := []string{command.Name}
+	for key, value := range params {
+		args = append(args, fmt.Sprintf("--%s", key), fmt.Sprintf("%v", value))
 	}
-	defer stdin.Close()
 
-	encoder := json.NewEncoder(stdin)
-	if err := encoder.Encode(params); err != nil {
-		return nil, err
-	}
+	cmd := exec.CommandContext(ctx, e.Entrypoint, args...)
 
 	cmd.Env = os.Environ()
 	for k, v := range LoadEnviron(e.Name) {
